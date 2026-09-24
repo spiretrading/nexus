@@ -1,13 +1,9 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QCoreApplication>
 #include <QKeyEvent>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
-#include "Spire/Styles/ChainExpression.hpp"
-#include "Spire/Styles/LinearExpression.hpp"
-#include "Spire/Styles/RevertExpression.hpp"
-#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -22,376 +18,364 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto get_text_width(const QString& text) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    return QFontMetrics(font).horizontalAdvance(text);
-  }
+  using NullCurrent = StateSelector<void, struct NullCurrentTag>;
 
-  template<typename Model, typename M1, typename M2>
-  QValidator::State test(Model& model, const typename Model::Type& value,
-      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
-        const optional<time_duration>& update) {
-    auto current = [&] () -> optional<time_duration> {
-      if(!value) {
-        auto s1 = m1.lock();
-        auto s2 = m2.lock();
-        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
-          return none;
-        }
-      }
-      return update;
-    }();
-    return model.m_source->test(current);
-  }
+  const auto HOUR = 0;
+  const auto MINUTE = 1;
+  const auto SECOND = 2;
+  const auto FRACTIONAL_SECOND = 3;
+  const auto FIELD_COUNT = 4;
+  const auto DEFAULT_FORMAT = "hh:mm:ss.fff";
+  const auto MAX_FRACTIONAL_DIGITS = 9;
 
-  template<typename Model, typename M1, typename M2>
-  QValidator::State set(Model& model, const typename Model::Type& value,
-      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
-        const optional<time_duration>& update) {
-    auto current = [&] () -> optional<time_duration> {
-      if(!value) {
-        auto s1 = m1.lock();
-        auto s2 = m2.lock();
-        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
-          return none;
-        }
-      }
-      return update;
-    }();
-    auto blocker = shared_connection_block(model.m_source_connection);
-    auto blocker1 = [&] {
-      if(auto s1 = m1.lock()) {
-        return shared_connection_block(s1->m_source_connection);
-      }
-      return shared_connection_block();
-    }();
-    auto blocker2 = [&] {
-      if(auto s2 = m2.lock()) {
-        return shared_connection_block(s2->m_source_connection);
-      }
-      return shared_connection_block();
-    }();
-    if(model.m_source->set(current) != QValidator::State::Invalid) {
-      auto state = QValidator::State::Acceptable;
-      model.m_state = state;
-      model.m_current = value;
-      model.m_update_signal(model.m_current);
-      return state;
+  struct FormatFields {
+    bool m_has_hours;
+    bool m_has_minutes;
+    bool m_has_seconds;
+    int m_fractional_digits;
+  };
+
+  optional<FormatFields> match_format(const QString& format) {
+    static const auto HEADS =
+      QStringList{"hh", "hh:mm", "hh:mm:ss", "mm", "mm:ss", "ss"};
+    auto fields = FormatFields();
+    auto head = format;
+    while(head.endsWith('f')) {
+      head.chop(1);
+      ++fields.m_fractional_digits;
     }
-    return QValidator::State::Invalid;
-  }
-
-  template<typename Model, typename F>
-  void on_current(Model& model, const optional<time_duration>& current, F&& f) {
-    if(current) {
-      model.m_current = std::forward<F>(f)(*current);
-    } else {
-      model.m_current = none;
+    if(fields.m_fractional_digits != 0) {
+      if(fields.m_fractional_digits > MAX_FRACTIONAL_DIGITS) {
+        return none;
+      }
+      if(head.isEmpty()) {
+        return fields;
+      }
+      if(!head.endsWith('.')) {
+        return none;
+      }
+      head.chop(1);
+      if(head.isEmpty()) {
+        return none;
+      }
     }
-    model.m_update_signal(model.m_current);
-  }
-
-  struct HourModel;
-  struct MinuteModel;
-  struct SecondModel;
-
-  template<typename T, typename M>
-  auto to_shared_model(std::weak_ptr<M> model) {
-    if(auto s = model.lock()) {
-      return std::static_pointer_cast<T>(s);
+    if(!HEADS.contains(head)) {
+      return none;
     }
-    return std::shared_ptr<T>();
+    fields.m_has_hours = head.startsWith("hh");
+    fields.m_has_minutes = head.contains("mm");
+    fields.m_has_seconds = head.endsWith("ss");
+    if(fields.m_fractional_digits != 0 && !fields.m_has_seconds) {
+      return none;
+    }
+    return fields;
   }
 
-  struct HourModel : ScalarValueModel<optional<int>> {
+  FormatFields parse_format(const QString& format) {
+    if(auto fields = match_format(format)) {
+      return *fields;
+    }
+    return *match_format(DEFAULT_FORMAT);
+  }
+
+  time_duration::tick_type get_units_per_second(int fractional_digits) {
+    auto units = time_duration::tick_type(1);
+    for(auto i = 0; i < fractional_digits; ++i) {
+      units *= 10;
+    }
+    return units;
+  }
+
+  time_duration to_fractional_seconds(int units, int fractional_digits) {
+    return time_duration(0, 0, 0,
+      static_cast<time_duration::fractional_seconds_type>(
+        units * time_duration::ticks_per_second() /
+          get_units_per_second(fractional_digits)));
+  }
+
+  int to_fraction_units(const time_duration& duration, int fractional_digits) {
+    return static_cast<int>(duration.fractional_seconds() *
+      get_units_per_second(fractional_digits) /
+        time_duration::ticks_per_second());
+  }
+
+  int get_text_width(const QWidget& editor, const QString& text) {
+    return editor.fontMetrics().horizontalAdvance(text);
+  }
+
+  struct FieldModel : ScalarValueModel<optional<int>> {
     mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
-    std::weak_ptr<OptionalIntegerModel> m_minutes;
-    std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
+    std::array<std::weak_ptr<FieldModel>, FIELD_COUNT - 1> m_siblings;
     optional<int> m_current;
     QValidator::State m_state;
+    bool m_is_active;
     scoped_connection m_source_connection;
 
-    HourModel(std::shared_ptr<OptionalDurationModel> source)
+    explicit FieldModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-          m_source_connection(m_source->connect_update_signal(
-            [=] (const auto& current) { on_current(current); })) {
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
-      on_current(m_source->get());
+          m_is_active(true) {
+      m_source_connection = m_source->connect_update_signal(
+        std::bind_front(&FieldModel::on_current, this));
     }
 
-    optional<int> get_minimum() const {
+    virtual optional<time_duration> to_duration(
+      const optional<int>& value) const = 0;
+
+    virtual int to_units(const time_duration& duration) const = 0;
+
+    optional<time_duration> compose(const optional<int>& value) const {
+      if(!value) {
+        auto is_empty = std::none_of(m_siblings.begin(), m_siblings.end(),
+          [] (const auto& sibling) {
+            auto model = sibling.lock();
+            return model && model->m_is_active && model->get();
+          });
+        if(is_empty) {
+          return none;
+        }
+      }
+      return to_duration(value);
+    }
+
+    optional<int> get_minimum() const override {
       return 0;
     }
 
-    optional<int> get_maximum() const {
+    QValidator::State get_state() const override {
+      return m_state;
+    }
+
+    const optional<int>& get() const override {
+      return m_current;
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_source->test(compose(value));
+    }
+
+    QValidator::State set(const Type& value) override {
+      auto current = compose(value);
+      auto blocker = shared_connection_block(m_source_connection);
+      auto blockers = std::array<shared_connection_block, m_siblings.size()>();
+      for(auto i = std::size_t(0); i < m_siblings.size(); ++i) {
+        if(auto sibling = m_siblings[i].lock()) {
+          blockers[i] = shared_connection_block(sibling->m_source_connection);
+        }
+      }
+      if(m_source->set(current) == QValidator::State::Invalid) {
+        return QValidator::State::Invalid;
+      }
+      m_state = QValidator::State::Acceptable;
+      m_current = value;
+      m_update_signal(m_current);
+      return m_state;
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_update_signal.connect(slot);
+    }
+
+    void on_current(const optional<time_duration>& current) {
+      if(current) {
+        m_current = to_units(*current);
+      } else {
+        m_current = none;
+      }
+      m_update_signal(m_current);
+    }
+  };
+
+  struct HourModel : FieldModel {
+    explicit HourModel(std::shared_ptr<OptionalDurationModel> source)
+        : FieldModel(std::move(source)) {
+      on_current(m_source->get());
+    }
+
+    optional<int> get_maximum() const override {
       if(auto maximum = m_source->get_maximum()) {
         return static_cast<int>(maximum->hours());
       }
       return none;
     }
 
-    QValidator::State get_state() const {
-      return m_state;
+    optional<time_duration> to_duration(
+        const optional<int>& value) const override {
+      return m_source->get().get_value_or(hours(0)) +
+        hours(value.get_value_or(0)) - hours(m_current.get_value_or(0));
     }
 
-    const optional<int>& get() const {
-      return m_current;
-    }
-
-    QValidator::State test(const Type& value) const {
-      return ::test(*this, value, m_minutes, m_seconds,
-        m_source->get().get_value_or(hours(0)) +
-          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
-    }
-
-    QValidator::State set(const Type& value) {
-      return ::set<HourModel, MinuteModel, SecondModel>(*this, value,
-        to_shared_model<MinuteModel>(m_minutes),
-        to_shared_model<SecondModel>(m_seconds),
-        m_source->get().get_value_or(hours(0)) +
-          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      return m_update_signal.connect(slot);
-    }
-
-    void on_current(const optional<time_duration>& current) {
-      ::on_current(*this, current,
-        [] (auto current) { return static_cast<int>(current.hours()); });
+    int to_units(const time_duration& duration) const override {
+      return static_cast<int>(duration.hours());
     }
   };
 
-  struct MinuteModel : ScalarValueModel<optional<int>> {
-    mutable UpdateSignal m_update_signal;
-    std::shared_ptr<OptionalDurationModel> m_source;
-    std::weak_ptr<OptionalIntegerModel> m_hours;
-    std::weak_ptr<ScalarValueModel<optional<Decimal>>> m_seconds;
-    optional<int> m_current;
-    QValidator::State m_state;
-    scoped_connection m_source_connection;
-
-    MinuteModel(std::shared_ptr<OptionalDurationModel> source)
-        : m_source(std::move(source)),
-          m_state(m_source->get_state()),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-          m_source_connection(m_source->connect_update_signal(
-            [=] (const auto& current) { on_current(current); })) {
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  struct MinuteModel : FieldModel {
+    explicit MinuteModel(std::shared_ptr<OptionalDurationModel> source)
+        : FieldModel(std::move(source)) {
       on_current(m_source->get());
     }
 
-    optional<int> get_minimum() const {
-      return 0;
-    }
-
-    optional<int> get_maximum() const {
+    optional<int> get_maximum() const override {
       return 59;
     }
 
-    QValidator::State get_state() const {
-      return m_state;
+    optional<time_duration> to_duration(
+        const optional<int>& value) const override {
+      return m_source->get().get_value_or(minutes(0)) +
+        minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0));
     }
 
-    const optional<int>& get() const {
-      return m_current;
-    }
-
-    QValidator::State test(const Type& value) const {
-      return ::test(*this, value, m_hours, m_seconds,
-        m_source->get().get_value_or(minutes(0)) +
-          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
-    }
-
-    QValidator::State set(const Type& value) {
-      return ::set<MinuteModel, HourModel, SecondModel>(*this, value,
-        to_shared_model<HourModel>(m_hours),
-        to_shared_model<SecondModel>(m_seconds),
-        m_source->get().get_value_or(minutes(0)) +
-          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      return m_update_signal.connect(slot);
-    }
-
-    void on_current(const optional<time_duration>& current) {
-      ::on_current(*this, current,
-        [] (auto current) { return static_cast<int>(current.minutes()); });
+    int to_units(const time_duration& duration) const override {
+      return static_cast<int>(duration.minutes());
     }
   };
 
-  struct SecondModel : ScalarValueModel<optional<Decimal>> {
-    mutable UpdateSignal m_update_signal;
-    std::shared_ptr<OptionalDurationModel> m_source;
-    std::weak_ptr<OptionalIntegerModel> m_hours;
-    std::weak_ptr<OptionalIntegerModel> m_minutes;
-    optional<Decimal> m_current;
-    QValidator::State m_state;
-    scoped_connection m_source_connection;
-
-    static auto to_seconds(const Decimal& decimal) {
-      return milliseconds(static_cast<time_duration::sec_type>(
-        (1000 * decimal).convert_to<double>()));
-    }
-
-    SecondModel(std::shared_ptr<OptionalDurationModel> source)
-        : m_source(std::move(source)),
-          m_state(m_source->get_state()),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-          m_source_connection(m_source->connect_update_signal(
-            [=] (const auto& current) { on_current(current); })) {
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  struct SecondModel : FieldModel {
+    explicit SecondModel(std::shared_ptr<OptionalDurationModel> source)
+        : FieldModel(std::move(source)) {
       on_current(m_source->get());
     }
 
-    optional<Decimal> get_minimum() const {
-      return Decimal(0);
+    optional<int> get_maximum() const override {
+      return 59;
     }
 
-    optional<Decimal> get_maximum() const {
-      return Decimal("59.999");
+    optional<time_duration> to_duration(
+        const optional<int>& value) const override {
+      return m_source->get().get_value_or(seconds(0)) +
+        seconds(value.get_value_or(0)) - seconds(m_current.get_value_or(0));
     }
 
-    optional<Decimal> get_increment() const {
-      return Decimal("0.001");
+    int to_units(const time_duration& duration) const override {
+      return static_cast<int>(duration.seconds());
+    }
+  };
+
+  struct FractionalSecondModel : FieldModel {
+    int m_fractional_digits;
+
+    FractionalSecondModel(std::shared_ptr<OptionalDurationModel> source,
+        int fractional_digits)
+        : FieldModel(std::move(source)),
+          m_fractional_digits(fractional_digits) {
+      on_current(m_source->get());
     }
 
-    QValidator::State get_state() const {
-      return m_state;
+    void set_fractional_digits(int fractional_digits) {
+      if(fractional_digits == m_fractional_digits) {
+        return;
+      }
+      m_fractional_digits = fractional_digits;
+      on_current(m_source->get());
     }
 
-    const optional<Decimal>& get() const {
-      return m_current;
+    optional<int> get_maximum() const override {
+      return static_cast<int>(get_units_per_second(m_fractional_digits) - 1);
     }
 
-    QValidator::State test(const Type& value) const {
-      return ::test(*this, value, m_hours, m_minutes,
-        m_source->get().get_value_or(seconds(0)) +
-          to_seconds(value.get_value_or(0)) -
-            to_seconds(m_current.get_value_or(0)));
+    optional<time_duration> to_duration(
+        const optional<int>& value) const override {
+      return m_source->get().get_value_or(seconds(0)) +
+        to_fractional_seconds(value.get_value_or(0), m_fractional_digits) -
+          to_fractional_seconds(
+            m_current.get_value_or(0), m_fractional_digits);
     }
 
-    QValidator::State set(const Type& value) {
-      return ::set<SecondModel, HourModel, MinuteModel>(*this, value,
-        to_shared_model<HourModel>(m_hours),
-        to_shared_model<MinuteModel>(m_minutes),
-        m_source->get().get_value_or(seconds(0)) +
-          to_seconds(value.get_value_or(0)) -
-            to_seconds(m_current.get_value_or(0)));
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      return m_update_signal.connect(slot);
-    }
-
-    void on_current(const optional<time_duration>& current) {
-      ::on_current(*this, current, [] (auto current) -> Decimal {
-        return Decimal((current - hours(current.hours()) -
-          minutes(current.minutes())).total_milliseconds()) / 1000;
-      });
+    int to_units(const time_duration& duration) const override {
+      return to_fraction_units(duration, m_fractional_digits);
     }
   };
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(TextAlign(Qt::AlignLeft));
-    style.get(Any() > Colon()).
+      set(TextAlign(Qt::AlignLeft)).
+      set(Format(QString(DEFAULT_FORMAT)));
+    style.get(Any() > Separator()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Disabled() > Colon()).
+    style.get(NullCurrent() > Separator()).
+      set(TextColor(QColor(0xA0A0A0)));
+    style.get(Disabled() > Separator()).
       set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 
-  auto HOUR_FIELD_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_size(0)).
-      set(padding(0)).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
-    return style;
+  auto make_field(std::shared_ptr<OptionalIntegerModel> current,
+      QHash<Qt::KeyboardModifier, int> modifiers, const QString& placeholder,
+        int leading_zeros, QWidget& event_filter) {
+    auto field = new IntegerBox(std::move(current), std::move(modifiers));
+    field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    field->set_placeholder(placeholder);
+    update_style(*field, [&] (auto& style) {
+      style.get(Any()).
+        set(BackgroundColor(QColor(Qt::transparent))).
+        set(border_size(0)).
+        set(padding(0)).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+        set(LeadingZeros(leading_zeros));
+      style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
+    });
+    find_focus_proxy(*field)->installEventFilter(&event_filter);
+    return field;
   }
 
-  auto MINUTE_FIELD_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_size(0)).
-      set(padding(0)).
-      set(LeadingZeros(2)).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
-    return style;
-  }
-
-  auto SECOND_FIELD_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_size(0)).
-      set(padding(0)).
-      set(LeadingZeros(2)).set(TrailingZeros(3)).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
-    return style;
+  auto make_two_digit_field(std::shared_ptr<OptionalIntegerModel> current,
+      QHash<Qt::KeyboardModifier, int> modifiers, const QString& placeholder,
+        QWidget& event_filter) {
+    auto field = make_field(
+      std::move(current), std::move(modifiers), placeholder, 2, event_filter);
+    auto& editor = *find_focus_proxy(*field);
+    field->setMinimumWidth(std::max(2 * get_character_width(editor.font()),
+      get_text_width(editor, placeholder)));
+    return field;
   }
 
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(current));
-    auto placeholder = "hh";
-    field->setMinimumWidth(
-      std::max(get_text_width("00"), get_text_width(placeholder)));
-    field->set_placeholder(placeholder);
-    update_style(*field, [&] (auto& style) {
-      style = HOUR_FIELD_STYLE(style);
-    });
-    find_focus_proxy(*field)->installEventFilter(&event_filter);
-    return field;
+    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10}});
+    return make_two_digit_field(
+      std::move(current), std::move(modifiers), "hh", event_filter);
   }
 
   auto make_minute_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
-    auto field = new IntegerBox(std::move(current));
-    auto placeholder = "mm";
-    field->setMinimumWidth(
-      std::max(get_text_width("00"), get_text_width(placeholder)));
-    field->set_placeholder(placeholder);
-    update_style(*field, [&] (auto& style) {
-      style = MINUTE_FIELD_STYLE(style);
-    });
-    find_focus_proxy(*field)->installEventFilter(&event_filter);
+    auto modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1},
+      {Qt::AltModifier, 10}, {Qt::ControlModifier, 15},
+      {Qt::ShiftModifier, 30}});
+    return make_two_digit_field(
+      std::move(current), std::move(modifiers), "mm", event_filter);
+  }
+
+  auto make_second_field(std::shared_ptr<OptionalIntegerModel> current,
+      QWidget& event_filter) {
+    auto modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1},
+      {Qt::AltModifier, 10}, {Qt::ControlModifier, 15},
+      {Qt::ShiftModifier, 30}});
+    return make_two_digit_field(
+      std::move(current), std::move(modifiers), "ss", event_filter);
+  }
+
+  auto make_fractional_second_field(
+      std::shared_ptr<OptionalIntegerModel> current, QWidget& event_filter) {
+    auto modifiers = QHash<Qt::KeyboardModifier, int>({{Qt::NoModifier, 1},
+      {Qt::AltModifier, 10}, {Qt::ControlModifier, 100},
+      {Qt::ShiftModifier, 1000}});
+    auto field = make_field(std::move(current), std::move(modifiers),
+      QString(MAX_FRACTIONAL_DIGITS, 'f'), MAX_FRACTIONAL_DIGITS,
+      event_filter);
+    field->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     return field;
   }
 
-  auto make_second_field(
-      std::shared_ptr<ScalarValueModel<optional<Decimal>>> current,
-        QWidget& event_filter) {
-    auto field = new DecimalBox(std::move(current));
-    auto placeholder = "ss.sss";
-    field->setMinimumWidth(
-      std::max(get_text_width("00.000"), get_text_width(placeholder)));
-    field->set_placeholder(placeholder);
-    update_style(*field, [&] (auto& style) {
-      style = SECOND_FIELD_STYLE(style);
-    });
-    find_focus_proxy(*field)->installEventFilter(&event_filter);
-    return field;
-  }
-
-  auto make_colon() {
-    auto colon = make_label(":");
-    colon->setFixedWidth(scale_width(6));
-    match(*colon, Colon());
-    return colon;
+  auto make_separator(const QString& text) {
+    auto separator = make_label(text);
+    separator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    match(*separator, Separator());
+    return separator;
   }
 }
 
@@ -405,64 +389,63 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
       m_submission(m_current->get()),
       m_is_read_only(false),
       m_is_rejected(false),
+      m_is_null(false),
       m_has_update(false) {
   auto container = new QWidget(this);
   container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto hour_model = std::make_shared<HourModel>(m_current);
   auto minute_model = std::make_shared<MinuteModel>(m_current);
   auto second_model = std::make_shared<SecondModel>(m_current);
-  hour_model->m_minutes = minute_model;
-  hour_model->m_seconds = second_model;
-  minute_model->m_hours = hour_model;
-  minute_model->m_seconds = second_model;
-  second_model->m_hours = hour_model;
-  second_model->m_minutes = minute_model;
-  m_hour_field = make_hour_field(std::move(hour_model), *this);
-  m_hour_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-  m_minute_field = make_minute_field(std::move(minute_model), *this);
-  m_minute_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-  m_second_field = make_second_field(std::move(second_model), *this);
-  m_second_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-  auto hour_minute_colon = make_colon();
-  auto minute_second_colon = make_colon();
+  auto fractional_second_model =
+    std::make_shared<FractionalSecondModel>(m_current, 0);
+  auto models = std::array<std::shared_ptr<FieldModel>, FIELD_COUNT>{
+    hour_model, minute_model, second_model, fractional_second_model};
+  for(auto i = std::size_t(0); i < models.size(); ++i) {
+    auto sibling = std::size_t(0);
+    for(auto j = std::size_t(0); j < models.size(); ++j) {
+      if(i != j) {
+        models[i]->m_siblings[sibling] = models[j];
+        ++sibling;
+      }
+    }
+  }
+  m_fields = {make_hour_field(std::move(hour_model), *this),
+    make_minute_field(std::move(minute_model), *this),
+    make_second_field(std::move(second_model), *this),
+    make_fractional_second_field(std::move(fractional_second_model), *this)};
+  m_separators = {make_separator(":"), make_separator(":"), make_separator(".")};
   auto container_layout = make_hbox_layout(container);
-  container_layout->addWidget(m_hour_field);
-  container_layout->addWidget(hour_minute_colon);
-  container_layout->addWidget(m_minute_field);
-  container_layout->addWidget(minute_second_colon);
-  container_layout->addWidget(m_second_field);
+  for(auto i = 0; i < FIELD_COUNT; ++i) {
+    if(i != 0) {
+      container_layout->addWidget(m_separators[i - 1]);
+    }
+    container_layout->addWidget(m_fields[i]);
+  }
   m_input_box = make_input_box(container);
   enclose(*this, *m_input_box);
-  link(*this, *m_hour_field);
-  link(*this, *hour_minute_colon);
-  link(*this, *m_minute_field);
-  link(*this, *minute_second_colon);
-  link(*this, *m_second_field);
+  for(auto field : m_fields) {
+    link(*this, *field);
+  }
+  for(auto separator : m_separators) {
+    link(*this, *separator);
+  }
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   set_style(*this, DEFAULT_STYLE());
+  set_format(DEFAULT_FORMAT);
+  on_current(m_current->get());
   on_style();
   m_style_connection = connect_style_signal(*this,
     std::bind_front(&DurationBox::on_style, this));
-  m_hour_field->connect_submit_signal([=] (const auto& submission) {
-    if(m_hour_field->hasFocus()) {
-      on_submit();
-    }
-  });
-  m_minute_field->connect_submit_signal([=] (const auto& submission) {
-    if(m_minute_field->hasFocus()) {
-      on_submit();
-    }
-  });
-  m_second_field->connect_submit_signal([=] (const auto& submission) {
-    if(m_second_field->hasFocus()) {
-      on_submit();
-    }
-  });
-  m_hour_field->connect_reject_signal([=] (const auto&) { on_reject(); });
-  m_minute_field->connect_reject_signal([=] (const auto&) { on_reject(); });
-  m_second_field->connect_reject_signal([=] (const auto&) { on_reject(); });
+  for(auto field : m_fields) {
+    field->connect_submit_signal([=] (const auto& submission) {
+      if(field->hasFocus()) {
+        on_submit();
+      }
+    });
+    field->connect_reject_signal([=] (const auto&) { on_reject(); });
+  }
   m_current->connect_update_signal(
     std::bind_front(&DurationBox::on_current, this));
 }
@@ -480,9 +463,9 @@ void DurationBox::set_read_only(bool is_read_only) {
     return;
   }
   m_is_read_only = is_read_only;
-  m_hour_field->set_read_only(m_is_read_only);
-  m_minute_field->set_read_only(m_is_read_only);
-  m_second_field->set_read_only(m_is_read_only);
+  for(auto field : m_fields) {
+    field->set_read_only(m_is_read_only);
+  }
   if(m_is_read_only) {
     match(*m_input_box, ReadOnly());
   } else {
@@ -502,8 +485,8 @@ connection DurationBox::connect_submit_signal(
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::FocusOut) {
-    if(!m_is_read_only && !m_hour_field->hasFocus() &&
-        !m_minute_field->hasFocus() && !m_second_field->hasFocus()) {
+    if(!m_is_read_only && std::none_of(m_fields.begin(), m_fields.end(),
+        [] (auto field) { return field->hasFocus(); })) {
       if(m_has_update) {
         on_submit();
       } else {
@@ -512,60 +495,90 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto [field, is_field_empty] = [&] () -> std::pair<QWidget*, bool> {
-      if(m_minute_field->hasFocus()) {
-        return {m_minute_field, !m_minute_field->get_current()->get()};
-      } else if(m_second_field->hasFocus()) {
-        return {m_second_field, !m_second_field->get_current()->get()};
-      } else if(m_hour_field->hasFocus()) {
-        return {m_hour_field, !m_hour_field->get_current()->get()};
+    auto& fields = m_fields;
+    auto field_count = static_cast<int>(fields.size());
+    auto is_set = [] (auto field) {
+      return field->get_current()->get().is_initialized();
+    };
+    auto focused = [&] {
+      for(auto i = 0; i < field_count; ++i) {
+        if(!fields[i]->isHidden() && fields[i]->hasFocus()) {
+          return i;
+        }
       }
-      return {nullptr, true};
+      return -1;
     }();
+    auto find_previous = [&] (int index) {
+      for(auto i = index - 1; i >= 0; --i) {
+        if(!fields[i]->isHidden()) {
+          return i;
+        }
+      }
+      return -1;
+    };
+    auto find_next = [&] (int index) {
+      for(auto i = index + 1; i < field_count; ++i) {
+        if(!fields[i]->isHidden()) {
+          return i;
+        }
+      }
+      return -1;
+    };
+    auto focus_field = [&] (int index) {
+      fields[index]->setFocus();
+      if(auto editor = fields[index]->findChild<QLineEdit*>()) {
+        editor->selectAll();
+      }
+    };
+    auto previous = focused < 0 ? -1 : find_previous(focused);
+    auto next = focused < 0 ? -1 : find_next(focused);
+    auto is_field_empty = focused < 0 || !is_set(fields[focused]);
+    auto has_value = std::any_of(fields.begin(), fields.end(), is_set);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(is_field_empty && (m_hour_field->get_current()->get() ||
-          m_minute_field->get_current()->get() ||
-          m_second_field->get_current()->get())) {
+      if(is_field_empty && has_value) {
         on_submit();
         return true;
       }
-    } else if(key_event.key() == Qt::Key_Left &&
-        (field == m_minute_field || field == m_second_field)) {
-      if(auto editor = field->findChild<QLineEdit*>()) {
+    } else if(focused < 0) {
+      return QWidget::eventFilter(watched, event);
+    } else if(key_event.key() == Qt::Key_Left && previous >= 0) {
+      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0) {
-          if(field == m_minute_field) {
-            m_hour_field->setFocus();
-          } else {
-            m_minute_field->setFocus();
-          }
+          focus_field(previous);
         }
       }
-    } else if(key_event.key() == Qt::Key_Right &&
-        (field == m_hour_field || field == m_minute_field)) {
-      if(auto editor = field->findChild<QLineEdit*>()) {
+    } else if(key_event.key() == Qt::Key_Right && next >= 0) {
+      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == editor->text().size()) {
-          if(field == m_hour_field) {
-            m_minute_field->setFocus();
-          } else {
-            m_second_field->setFocus();
-          }
+          focus_field(next);
         }
       }
-    } else if(key_event.key() == Qt::Key_Backspace &&
-        (field == m_minute_field || field == m_second_field)) {
-      if(auto editor = field->findChild<QLineEdit*>()) {
+    } else if(key_event.key() == Qt::Key_Backspace && previous >= 0) {
+      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0 && !editor->hasSelectedText()) {
-          if(field == m_minute_field) {
-            m_hour_field->setFocus();
-            if(auto hour_editor = m_hour_field->findChild<QLineEdit*>()) {
-              hour_editor->setCursorPosition(hour_editor->text().length());
-            }
-          } else {
-            m_minute_field->setFocus();
-            if(auto minute_editor = m_minute_field->findChild<QLineEdit*>()) {
-              minute_editor->setCursorPosition(minute_editor->text().length());
-            }
+          auto previous_field = fields[previous];
+          previous_field->setFocus();
+          if(auto previous_editor =
+              previous_field->findChild<QLineEdit*>()) {
+            previous_editor->setCursorPosition(
+              previous_editor->text().length());
+            QCoreApplication::sendEvent(previous_editor, &key_event);
           }
+          return true;
+        }
+      }
+    } else if(!m_is_read_only && next >= 0 && key_event.text().size() == 1 &&
+        key_event.text().front().isDigit()) {
+      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
+        auto text = editor->text();
+        auto is_complete = !text.isEmpty() && !editor->hasSelectedText() &&
+          editor->cursorPosition() == text.size();
+        auto is_terminal = focused != 0 &&
+          key_event.text().front() >= '6' &&
+          (text.isEmpty() || editor->selectedText() == text);
+        if(is_complete || is_terminal) {
+          editor->insert(key_event.text());
+          focus_field(next);
           return true;
         }
       }
@@ -574,8 +587,68 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void DurationBox::set_format(const QString& format) {
+  auto format_fields = parse_format(format);
+  m_format = format;
+  auto has_fractional_seconds = format_fields.m_fractional_digits != 0;
+  auto visibility = std::array<bool, FIELD_COUNT>{format_fields.m_has_hours,
+    format_fields.m_has_minutes, format_fields.m_has_seconds,
+    has_fractional_seconds};
+  for(auto i = std::size_t(0); i < m_fields.size(); ++i) {
+    m_fields[i]->setVisible(visibility[i]);
+    std::static_pointer_cast<FieldModel>(
+      m_fields[i]->get_current())->m_is_active = visibility[i];
+  }
+  for(auto i = 0; i < FIELD_COUNT - 1; ++i) {
+    m_separators[i]->setVisible(visibility[i] && visibility[i + 1]);
+  }
+  auto is_truncated = false;
+  auto is_valid = true;
+  for(auto i = std::size_t(0); i < m_fields.size(); ++i) {
+    auto& current = m_fields[i]->get_current();
+    if(!visibility[i] && current->get() && *current->get() != 0) {
+      if(current->set(0) == QValidator::State::Invalid) {
+        is_valid = false;
+      } else {
+        is_truncated = true;
+      }
+    }
+  }
+  if(!is_valid) {
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*m_input_box, Rejected());
+    }
+  } else if(is_truncated) {
+    m_submission = m_current->get();
+    m_has_update = false;
+  }
+  if(!has_fractional_seconds) {
+    return;
+  }
+  auto fractional_digits = format_fields.m_fractional_digits;
+  std::static_pointer_cast<FractionalSecondModel>(
+    m_fields[FRACTIONAL_SECOND]->get_current())->set_fractional_digits(
+      fractional_digits);
+  auto placeholder = QString(fractional_digits, 'f');
+  m_fields[FRACTIONAL_SECOND]->set_placeholder(placeholder);
+  m_fields[FRACTIONAL_SECOND]->setMinimumWidth(get_text_width(
+    *find_focus_proxy(*m_fields[FRACTIONAL_SECOND]), placeholder));
+  update_style(*m_fields[FRACTIONAL_SECOND], [&] (auto& style) {
+    style.get(Any()).set(LeadingZeros(fractional_digits));
+  });
+}
+
 void DurationBox::on_current(const optional<time_duration>& current) {
   m_has_update = current != m_submission;
+  if(m_is_null != !current) {
+    m_is_null = !current;
+    if(m_is_null) {
+      match(*this, NullCurrent());
+    } else {
+      unmatch(*this, NullCurrent());
+    }
+  }
   if(m_is_rejected) {
     m_is_rejected = false;
     unmatch(*m_input_box, Rejected());
@@ -616,21 +689,23 @@ void DurationBox::on_style() {
           body_layout->setAlignment(alignment);
           body_layout->update();
         });
+      },
+      [&] (const Format& format) {
+        stylist.evaluate(format, [=] (const auto& value) {
+          if(value != m_format) {
+            set_format(value);
+          }
+        });
       });
   }
 }
 
-
 void DurationBox::update_empty_fields() {
   if(m_submission) {
-    if(!m_hour_field->get_current()->get()) {
-      m_hour_field->get_current()->set(0);
-    }
-    if(!m_minute_field->get_current()->get()) {
-      m_minute_field->get_current()->set(0);
-    }
-    if(!m_second_field->get_current()->get()) {
-      m_second_field->get_current()->set(Decimal(0));
+    for(auto field : m_fields) {
+      if(!field->get_current()->get()) {
+        field->get_current()->set(0);
+      }
     }
   }
 }
