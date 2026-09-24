@@ -30,14 +30,16 @@ def main():
   parser.add_argument('--common-config', type=Path,
     help='Existing shared configuration to include without modifying it.')
   parser.add_argument('--sender',
-    help='OTC-assigned SenderCompID for the Trades reference snapshot.')
+    help='OTC SenderCompID required for the Trades reference snapshot.')
   parser.add_argument('--recovery', action='store_true',
     help='Enable gap recovery; requires --sender.')
   parser.add_argument('--snapshot', action='store_true',
     help='Load an initial Book and Inside snapshot.')
   args = parser.parse_args()
-  if (args.recovery or args.snapshot) and not args.sender:
-    parser.error('--sender is required for recovery or snapshots.')
+  if not args.sender:
+    parser.error('--sender is required for the Trades reference snapshot.')
+  if '\x01' in args.sender:
+    parser.error('--sender must not contain the FIX SOH delimiter.')
   if args.common_config is not None:
     common_path = args.common_config.resolve()
     if not common_path.is_file():
@@ -59,7 +61,7 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  variables['sender'] = args.sender or ''
+  variables['sender'] = args.sender
   if args.common_config is None:
     with open(directory / 'config.default.yml', encoding='utf-8') as file:
       source = setup_utils.translate(file.read(), variables)

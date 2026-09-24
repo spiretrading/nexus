@@ -29,6 +29,8 @@ namespace Nexus {
     { t.read() } -> std::same_as<OtcLinkMessage>;
     { t.read(std::declval<Beam::Out<std::uint64_t>>()) } ->
       std::same_as<OtcLinkMessage>;
+    { t.read_event(std::declval<Beam::Out<std::uint64_t>>()) } ->
+      std::same_as<boost::optional<OtcLinkMessage>>;
     { t.close() } -> std::same_as<void>;
   };
 
@@ -126,6 +128,15 @@ namespace Nexus {
        * @return A message valid until the next read or client destruction.
        */
       OtcLinkMessage read(Beam::Out<std::uint64_t> session);
+
+      /**
+       * Reads a message or channel reset and its session number.
+       * @param session Receives the event's channel session number.
+       * @return A message valid until the next read or client destruction,
+       *         or none for a channel reset.
+       */
+      boost::optional<OtcLinkMessage> read_event(
+        Beam::Out<std::uint64_t> session);
 
       /** Closes the feeds and interrupts pending reads. */
       void close();
@@ -306,9 +317,25 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   OtcLinkMessage OtcLinkClient<P, R, T>::read(
       Beam::Out<std::uint64_t> session) {
+    while(true) {
+      if(auto message = read_event(session)) {
+        return *message;
+      }
+    }
+  }
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  boost::optional<OtcLinkMessage> OtcLinkClient<P, R, T>::read_event(
+      Beam::Out<std::uint64_t> session) {
     auto message = m_messages.pop();
     m_payload = std::move(message.m_payload);
     *session = message.m_session;
+    if(m_payload.get_size() == 0) {
+      return boost::none;
+    }
     return OtcLinkMessage::parse(
       std::string_view(m_payload.get_data(), m_payload.get_size()));
   }
@@ -391,6 +418,7 @@ namespace Nexus {
     state.m_session = source.m_session;
     state.m_sequencer.reset(1);
     state.m_gap_sequence = boost::none;
+    m_messages.push(Message({}, state.m_session));
   }
 
   template<typename P, typename R, typename T> requires

@@ -26,14 +26,16 @@ namespace {
     Async<void> m_acknowledgement;
     RoutineHandler m_routine;
 
-    Fixture() {
+    Fixture() : Fixture(OtcLinkSpinType::MARKET_DATA) {}
+
+    explicit Fixture(OtcLinkSpinType type) {
       auto server = std::async(std::launch::async, [&] {
         return m_server.accept();
       });
       m_channel.emplace("snapshot", m_server);
       m_server_channel = server.get();
       m_protocol_client.emplace(&*m_channel, &m_time_client);
-      m_client.emplace(OtcLinkSpinType::MARKET_DATA,
+      m_client.emplace(type,
         [&] (std::stop_token token) {
           auto stop = std::stop_callback(token, [&] {
             m_acknowledgement.get_eval().set_exception(EndOfFileException());
@@ -138,9 +140,11 @@ TEST_SUITE("OtcLinkSnapshotClient") {
     }
     SUBCASE("incomplete_spin") {
       fixture.publish(11, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+        fixture.marker(true, OtcLinkSpinType::REFERENCE, 100),
         fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
         fixture.data(92)});
-      progress = "packets=1 messages=2 heartbeats=0 last_packet=11 "
+      progress = "packets=1 messages=4 heartbeats=0 last_packet=11 "
         "expected_spin=market_data last_marker=start/market_data/100";
     }
     SUBCASE("other_spin") {
@@ -153,10 +157,12 @@ TEST_SUITE("OtcLinkSnapshotClient") {
     SUBCASE("completed_before_acknowledgement") {
       is_acknowledged = false;
       fixture.publish(13, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+        fixture.marker(true, OtcLinkSpinType::REFERENCE, 100),
         fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
         fixture.data(93),
         fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 100)});
-      progress = "packets=1 messages=3 heartbeats=0 last_packet=13 "
+      progress = "packets=1 messages=5 heartbeats=0 last_packet=13 "
         "expected_spin=market_data last_marker=end/market_data/100";
     }
     SUBCASE("timer_failure") {
@@ -201,6 +207,8 @@ TEST_SUITE("OtcLinkSnapshotClient") {
     auto future = fixture.load({});
     fixture.m_acknowledgement.get_eval().set();
     fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 0),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 0),
       fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 0)});
     if(is_empty) {
       fixture.publish(2, {
@@ -236,6 +244,8 @@ TEST_SUITE("OtcLinkSnapshotClient") {
     auto stop = std::stop_source();
     auto future = fixture.load(stop.get_token());
     fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100),
       fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
       fixture.data(1)});
     if(action == 0) {
@@ -255,6 +265,75 @@ TEST_SUITE("OtcLinkSnapshotClient") {
         IOException("Snapshot unavailable."));
     }
     REQUIRE_THROWS_AS(future.get(), std::exception);
+  }
+
+  TEST_CASE("partial_reference") {
+    auto fixture = Fixture();
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(10, {
+      fixture.data(90),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)});
+    fixture.publish(11, {
+      fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
+      fixture.data(91),
+      fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 100)});
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    SUBCASE("next_cycle") {
+      fixture.publish(12, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 200),
+        fixture.data(190)});
+      fixture.publish(13, {
+        fixture.data(191),
+        fixture.marker(true, OtcLinkSpinType::REFERENCE, 200)});
+      REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+        std::future_status::timeout);
+      fixture.publish(14, {
+        fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 200),
+        fixture.data(192),
+        fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 200)});
+      auto snapshot = future.get();
+      REQUIRE(snapshot.m_sequence == 201);
+      REQUIRE(snapshot.m_messages.size() == 3);
+      REQUIRE(snapshot.m_messages[0] == fixture.data(190));
+      REQUIRE(snapshot.m_messages[1] == fixture.data(191));
+      REQUIRE(snapshot.m_messages[2] == fixture.data(192));
+    }
+    SUBCASE("deadline") {
+      fixture.m_timer.trigger();
+      auto actual = [&] {
+        try {
+          future.get();
+        } catch(const IOException& exception) {
+          return std::string(exception.what());
+        }
+        return std::string();
+      }();
+      REQUIRE(actual == "OTC Link snapshot deadline expired. "
+        "acknowledgement=received packets=2 messages=5 heartbeats=0 "
+        "last_packet=11 expected_spin=market_data "
+        "last_marker=end/market_data/100");
+    }
+  }
+
+  TEST_CASE("reference_snapshot") {
+    auto fixture = Fixture(OtcLinkSpinType::REFERENCE);
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(10, {
+      fixture.data(90),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)});
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    fixture.publish(11, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 200),
+      fixture.data(191),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 200)});
+    auto snapshot = future.get();
+    REQUIRE(snapshot.m_sequence == 201);
+    REQUIRE(snapshot.m_messages.size() == 1);
+    REQUIRE(snapshot.m_messages[0] == fixture.data(191));
   }
 
   TEST_CASE("snapshot") {

@@ -1,5 +1,6 @@
 #ifndef OTC_LINK_RECOVERY_CLIENT_HPP
 #define OTC_LINK_RECOVERY_CLIENT_HPP
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <stop_token>
@@ -67,6 +68,7 @@ namespace Nexus {
       void close();
 
     private:
+      static constexpr auto BUFFER_SIZE = std::size_t(65536);
       struct Operation {
         struct State {
           std::shared_ptr<Channel> m_channel;
@@ -88,7 +90,10 @@ namespace Nexus {
 
       static void cancel(const std::shared_ptr<Operation>& operation);
       static void check(const Operation& operation);
-      static OtcLinkRecoveryResponse read_response(Channel& channel);
+      static void read_until(Channel& channel, Beam::SharedBuffer& buffer,
+        std::string_view& payload, std::size_t size);
+      static OtcLinkRecoveryResponse read_response(Channel& channel,
+        Beam::SharedBuffer& buffer, std::string_view& payload);
       OtcLinkRecoveryClient(const OtcLinkRecoveryClient&) = delete;
       OtcLinkRecoveryClient& operator =(const OtcLinkRecoveryClient&) = delete;
       std::vector<Beam::SharedBuffer> request(
@@ -116,7 +121,12 @@ namespace Nexus {
         m_connection_builder(std::move(connection_builder)),
         m_timer(std::forward<TF>(timer)),
         m_next_id(1) {
-    OtcLinkRecoveryRequest(m_sender, 0, m_channel, 1, 1).encode();
+    try {
+      OtcLinkRecoveryRequest(m_sender, 0, m_channel, 1, 1).encode();
+    } catch(const std::exception&) {
+      close();
+      throw;
+    }
   }
 
   template<Beam::IsChannel C, typename T> requires
@@ -183,21 +193,37 @@ namespace Nexus {
 
   template<Beam::IsChannel C, typename T> requires
     Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkRecoveryClient<C, T>::read_until(Channel& channel,
+      Beam::SharedBuffer& buffer, std::string_view& payload, std::size_t size) {
+    if(payload.size() >= size) {
+      return;
+    }
+    if(!payload.empty() && payload.data() != buffer.get_data()) {
+      std::memmove(buffer.get_mutable_data(), payload.data(), payload.size());
+    }
+    buffer.shrink(buffer.get_size() - payload.size());
+    while(buffer.get_size() < size) {
+      channel.get_reader().read(
+        Beam::out(buffer), BUFFER_SIZE - buffer.get_size());
+    }
+    payload = std::string_view(buffer.get_data(), buffer.get_size());
+  }
+
+  template<Beam::IsChannel C, typename T> requires
+    Beam::IsTimer<Beam::dereference_t<T>>
   OtcLinkRecoveryResponse OtcLinkRecoveryClient<C, T>::read_response(
-      Channel& channel) {
-    auto response = std::string();
-    auto field = std::string();
-    static constexpr auto MAXIMUM_LENGTH = std::size_t(65536);
-    while(response.size() < MAXIMUM_LENGTH) {
-      auto byte = char();
-      Beam::read(channel.get_reader(), Beam::out(byte));
-      response += byte;
-      field += byte;
-      if(byte == '\x01') {
-        if(field.starts_with("10=")) {
-          return OtcLinkRecoveryResponse::parse(response);
+      Channel& channel, Beam::SharedBuffer& buffer, std::string_view& payload) {
+    auto field = std::size_t(0);
+    for(auto i = std::size_t(0); i < BUFFER_SIZE; ++i) {
+      read_until(channel, buffer, payload, i + 1);
+      if(payload[i] == '\x01') {
+        if(payload.substr(field, i + 1 - field).starts_with("10=")) {
+          auto response = OtcLinkRecoveryResponse::parse(
+            payload.substr(0, i + 1));
+          payload.remove_prefix(i + 1);
+          return response;
         }
-        field.clear();
+        field = i + 1;
       }
     }
     boost::throw_with_location(
@@ -266,7 +292,9 @@ namespace Nexus {
     }
     channel->get_writer().write(
       Beam::SharedBuffer(encoded.data(), encoded.size()));
-    auto response = read_response(*channel);
+    auto buffer = Beam::SharedBuffer();
+    auto payload = std::string_view();
+    auto response = read_response(*channel, buffer, payload);
     if(response.m_id != request.m_id ||
         response.m_channel != request.m_channel ||
         response.m_recipient != request.m_sender) {
@@ -289,25 +317,21 @@ namespace Nexus {
     auto messages = std::vector<Beam::SharedBuffer>();
     messages.reserve(request.m_count);
     for(auto i = std::uint32_t(0); i < request.m_count; ++i) {
-      auto buffer = Beam::SharedBuffer();
-      Beam::read_exact(channel->get_reader(), Beam::out(buffer),
-        sizeof(std::uint16_t));
-      auto length = OtcLinkCursor(std::string_view(
-        buffer.get_data(), buffer.get_size())).read_uint16();
+      read_until(*channel, buffer, payload, sizeof(std::uint16_t));
+      auto length = OtcLinkCursor(payload).read_uint16();
       if(length < OtcLinkMessage::HEADER_LENGTH + sizeof(std::uint32_t)) {
         boost::throw_with_location(
           OtcLinkParserException("Short OTC Link recovery message."));
       }
-      Beam::read_exact(channel->get_reader(), Beam::out(buffer),
-        length - buffer.get_size());
-      auto message = OtcLinkMessage::parse(
-        std::string_view(buffer.get_data(), buffer.get_size()));
+      read_until(*channel, buffer, payload, length);
+      auto message = OtcLinkMessage::parse(payload.substr(0, length));
       if(message.get_cursor().read_uint32() != request.m_sequence + i) {
         boost::throw_with_location(
           OtcLinkParserException("Unexpected OTC Link recovery sequence."));
       }
       check(operation);
-      messages.push_back(std::move(buffer));
+      messages.emplace_back(payload.data(), length);
+      payload.remove_prefix(length);
     }
     return messages;
   }

@@ -59,7 +59,7 @@ server:
     REQUIRE(config.m_reference->m_server.m_sender == "subscriber");
     REQUIRE_FALSE(config.m_snapshot.has_value());
     SUBCASE("trade_snapshot") {
-      source["snapshot"] = YAML::Load("{}");
+      source["snapshot"] = YAML::Clone(source["reference"]);
       REQUIRE_THROWS_AS(
         OtcLinkConfiguration::parse(source), std::runtime_error);
     }

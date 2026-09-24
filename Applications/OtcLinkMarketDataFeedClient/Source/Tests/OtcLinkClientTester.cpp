@@ -88,8 +88,10 @@ namespace {
       write(std::uint32_t(1));
       write(flags);
       write(static_cast<std::uint8_t>(sequences.size()));
+      auto timestamp = local_time::local_date_time(m_time_client.get_time(),
+        TIME_ZONES.time_zone_from_region("America/New_York")).local_time();
       write(static_cast<std::uint32_t>(
-        m_time_client.get_time().time_of_day().total_milliseconds()));
+        timestamp.time_of_day().total_milliseconds()));
       for(auto sequence : sequences) {
         write(static_cast<std::uint16_t>(length));
         write(std::uint8_t(0xFF));
@@ -450,22 +452,11 @@ TEST_SUITE("OtcLinkClient") {
   TEST_CASE("daylight_saving_reset") {
     auto fixture = Fixture(1);
     fixture.m_time_client.set(time_from_string("2026-11-01 05:59:00"));
-    auto source = fixture.make_packet({},
-      static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
-    auto offset = OtcLinkHeader::LENGTH - sizeof(std::uint32_t);
-    auto milliseconds = endian::native_to_big(static_cast<std::uint32_t>(
-      duration_from_string("01:59:00").total_milliseconds()));
-    source.write(offset, &milliseconds, sizeof(milliseconds));
-    fixture.m_feeds[0]->m_server_channel->get_writer().write(source);
-    flush_pending_routines();
+    fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
     fixture.publish(0, {1});
     fixture.require_message(1, 1);
     fixture.m_time_client.set(time_from_string("2026-11-01 06:00:00"));
-    milliseconds = endian::native_to_big(
-      static_cast<std::uint32_t>(hours(1).total_milliseconds()));
-    source.write(offset, &milliseconds, sizeof(milliseconds));
-    fixture.m_feeds[0]->m_server_channel->get_writer().write(source);
-    flush_pending_routines();
+    fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
     fixture.publish(0, {1});
     fixture.m_client->close();
     fixture.require_message(1, 2);
@@ -495,29 +486,25 @@ TEST_SUITE("OtcLinkClient") {
       timestamp = time_from_string("2026-12-24 04:59:00");
     }
     fixture.m_time_client.set(timestamp);
+    auto stale = fixture.make_packet({2}, 0);
     auto previous = fixture.make_packet({},
       static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
-    auto offset = OtcLinkHeader::LENGTH - sizeof(std::uint32_t);
-    auto milliseconds = endian::native_to_big(static_cast<std::uint32_t>(
-      duration_from_string("23:59:00").total_milliseconds()));
-    previous.write(offset, &milliseconds, sizeof(milliseconds));
     fixture.m_feeds[0]->m_server_channel->get_writer().write(previous);
     flush_pending_routines();
     fixture.publish(0, {1});
     fixture.require_message(1, 1);
     fixture.m_time_client.set(timestamp + minutes(1));
-    auto current = previous;
-    milliseconds = 0;
-    current.write(offset, &milliseconds, sizeof(milliseconds));
+    auto current = fixture.make_packet({},
+      static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
     fixture.m_feeds[0]->m_server_channel->get_writer().write(current);
     flush_pending_routines();
     fixture.publish(0, {1});
     fixture.m_feeds[0]->m_server_channel->get_writer().write(previous);
     flush_pending_routines();
-    fixture.publish(0, {2});
+    fixture.m_feeds[0]->m_server_channel->get_writer().write(stale);
+    flush_pending_routines();
     fixture.m_client->close();
     fixture.require_message(1, 2);
-    fixture.require_message(2, 2);
     REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
   }
 

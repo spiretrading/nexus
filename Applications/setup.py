@@ -116,7 +116,7 @@ def main():
   feeds = {
     'AsxTradeItchMarketDataFeedClient': ('asx_', asx_options),
     'CxaPitchMarketDataFeedClient': ('cxa_', cxa_options),
-    'OtcLinkMarketDataFeedClient': ('', []),
+    'OtcLinkMarketDataFeedClient': ('otc_', ['sender']),
     'TmxIpMarketDataFeedClient': ('', [])
   }
   for prefix, options in feeds.values():
@@ -164,6 +164,10 @@ def main():
     if not (path / 'setup.py').is_file():
       parser.error(
         'Missing application setup script: ' + str(path / 'setup.py'))
+  if not arg_vars['otc_sender']:
+    parser.error('--otc_sender is required for the Trades reference snapshot.')
+  if '\x01' in arg_vars['otc_sender']:
+    parser.error('--otc_sender must not contain the FIX SOH delimiter.')
   setup_beam(root, dependencies)
   setup_service_locator(root, arg_vars)
   for server in mysql_servers:

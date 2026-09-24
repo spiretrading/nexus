@@ -10,15 +10,45 @@ using namespace boost;
 using namespace Nexus;
 
 namespace {
+  struct CountingReader {
+    PipedReader* m_reader;
+    std::size_t* m_count;
+
+    bool poll() const {
+      return m_reader->poll();
+    }
+
+    template<IsBuffer B>
+    std::size_t read(Out<B> destination, std::size_t size) {
+      ++*m_count;
+      return m_reader->read(destination, size);
+    }
+  };
+
+  struct CountingChannel : LocalClientChannel {
+    using Reader = CountingReader;
+    Reader m_reader;
+
+    CountingChannel(LocalServerConnection& server, std::size_t& reads)
+      : LocalClientChannel("recovery", server),
+        m_reader(&LocalClientChannel::get_reader(), &reads) {}
+
+    Reader& get_reader() {
+      return m_reader;
+    }
+  };
+
   struct Fixture {
     LocalServerConnection m_server;
     TriggerTimer m_timer;
-    OtcLinkRecoveryClient<LocalClientChannel, TriggerTimer*> m_client;
+    std::size_t m_reads;
+    OtcLinkRecoveryClient<CountingChannel, TriggerTimer*> m_client;
     RoutineHandler m_routine;
 
     Fixture()
-      : m_client("SPIRE", 11, [&] (std::stop_token) {
-          return std::make_shared<LocalClientChannel>("recovery", m_server);
+      : m_reads(0),
+        m_client("SPIRE", 11, [&] (std::stop_token) {
+          return std::make_shared<CountingChannel>(m_server, m_reads);
         }, &m_timer) {}
 
     ~Fixture() {
@@ -67,6 +97,31 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkRecoveryClient") {
+  TEST_CASE("invalid_constructor") {
+    auto sender = std::string("SPIRE");
+    auto channel = std::uint16_t(11);
+    SUBCASE("empty_sender") {
+      sender.clear();
+    }
+    SUBCASE("sender_delimiter") {
+      sender += '\x01';
+    }
+    SUBCASE("zero_channel") {
+      channel = 0;
+    }
+    auto timer = TriggerTimer();
+    auto connections = 0;
+    auto construct = [&] {
+      auto client = OtcLinkRecoveryClient(sender, channel,
+        [&] (std::stop_token) -> std::shared_ptr<LocalClientChannel> {
+          ++connections;
+          throw IOException("Unexpected connection.");
+        }, &timer);
+    };
+    REQUIRE_THROWS_AS(construct(), OtcLinkParserException);
+    REQUIRE(connections == 0);
+  }
+
   TEST_CASE("snapshot_request") {
     auto fixture = Fixture();
     auto task = std::packaged_task([&] {
@@ -182,9 +237,10 @@ TEST_SUITE("OtcLinkRecoveryClient") {
         auto response = fixture.response("35=BX\x01" "59=SPIRE\x01"
           "1346=1\x01" "1355=11\x01" "1348=0\x01" "1182=100\x01"
           "1183=101\x01");
-        server->get_writer().write(
-          SharedBuffer(response.data(), response.size()));
-        server->get_writer().write(fixture.message(100));
+        auto buffer = SharedBuffer(response.data(), response.size());
+        append(buffer, fixture.message(100));
+        append(buffer, fixture.message(101).slice(0, 4));
+        server->get_writer().write(buffer);
       }
       flush_pending_routines();
       if(action == 0) {
@@ -256,13 +312,78 @@ TEST_SUITE("OtcLinkRecoveryClient") {
     }
   }
 
+  TEST_CASE("response_length") {
+    auto fixture = Fixture();
+    auto future = fixture.request(100, 1, {});
+    auto server = fixture.accept(
+      OtcLinkRecoveryRequest("SPIRE", 1, 11, 100, 1));
+    auto body = std::string("35=BX\x01" "59=SPIRE\x01" "1346=1\x01"
+      "1355=11\x01" "1348=0\x01" "1182=100\x01" "1183=100\x01"
+      "58=");
+    auto length = std::size_t(65536);
+    auto is_oversized = false;
+    SUBCASE("maximum") {}
+    SUBCASE("oversized") {
+      ++length;
+      is_oversized = true;
+    }
+    body.append(length - body.size() - 8, 'x');
+    body += '\x01';
+    auto response = fixture.response(body);
+    REQUIRE(response.size() == length);
+    auto buffer = SharedBuffer(response.data(), response.size());
+    append(buffer, fixture.message(100));
+    server->get_writer().write(buffer);
+    if(is_oversized) {
+      REQUIRE_THROWS_AS(future.get(), OtcLinkParserException);
+      REQUIRE(fixture.m_reads == 1);
+    } else {
+      auto messages = future.get();
+      REQUIRE(messages.size() == 1);
+      REQUIRE(messages.front() == fixture.message(100));
+      REQUIRE(fixture.m_reads == 2);
+    }
+  }
+
+  TEST_CASE("maximum_message_length") {
+    auto fixture = Fixture();
+    auto future = fixture.request(100, 2, {});
+    auto server = fixture.accept(
+      OtcLinkRecoveryRequest("SPIRE", 1, 11, 100, 2));
+    auto response = fixture.response("35=BX\x01" "59=SPIRE\x01"
+      "1346=1\x01" "1355=11\x01" "1348=0\x01" "1182=100\x01"
+      "1183=101\x01");
+    auto message = fixture.message(100);
+    auto length = std::uint16_t(65535);
+    auto padding = std::string(length - message.get_size(), 'x');
+    append(message, padding.data(), padding.size());
+    auto encoded = endian::native_to_big(length);
+    message.write(0, &encoded, sizeof(encoded));
+    auto buffer = SharedBuffer(response.data(), response.size());
+    append(buffer, message);
+    append(buffer, fixture.message(101));
+    server->get_writer().write(buffer);
+    auto messages = future.get();
+    REQUIRE(messages.size() == 2);
+    REQUIRE(messages[0] == message);
+    REQUIRE(messages[1] == fixture.message(101));
+    REQUIRE(fixture.m_reads == 3);
+  }
+
   TEST_CASE("request") {
     auto fixture = Fixture();
-    auto fragmented = false;
+    auto fragment = std::size_t(0);
     SUBCASE("fragmented") {
-      fragmented = true;
+      fragment = 1;
     }
     SUBCASE("coalesced") {}
+    SUBCASE("partial_header_surplus") {
+      fragment = 2;
+    }
+    SUBCASE("partial_body_surplus") {
+      fragment = 5;
+    }
+    auto reads = std::size_t(0);
     for(auto id = std::uint64_t(1); id <= 2; ++id) {
       auto future = fixture.request(100, 2, {});
       auto server = fixture.accept(OtcLinkRecoveryRequest(
@@ -270,28 +391,31 @@ TEST_SUITE("OtcLinkRecoveryClient") {
       auto response = fixture.response(std::format("35=BX\x01"
         "59=SPIRE\x01" "1346={}\x01" "1355=11\x01" "1348=0\x01"
         "1182=100\x01" "1183=101\x01", id));
-      if(fragmented) {
-        for(auto byte : response) {
-          server->get_writer().write(SharedBuffer(&byte, sizeof(byte)));
+      auto buffer = SharedBuffer(response.data(), response.size());
+      for(auto sequence : {100U, 101U}) {
+        append(buffer, fixture.message(sequence));
+      }
+      if(fragment == 1) {
+        for(auto i = std::size_t(0); i < buffer.get_size(); ++i) {
+          server->get_writer().write(buffer.slice(i, 1));
         }
-        for(auto sequence : {100U, 101U}) {
-          auto message = fixture.message(sequence);
-          for(auto i = std::size_t(0); i < message.get_size(); ++i) {
-            server->get_writer().write(message.slice(i, 1));
-          }
-        }
+        reads += buffer.get_size();
+      } else if(fragment != 0) {
+        auto split = response.size() + fragment - 1;
+        server->get_writer().write(buffer.slice(0, split));
+        server->get_writer().write(
+          buffer.slice(split, buffer.get_size() - split));
+        reads += 2;
       } else {
-        auto buffer = SharedBuffer(response.data(), response.size());
-        for(auto sequence : {100U, 101U}) {
-          append(buffer, fixture.message(sequence));
-        }
         server->get_writer().write(buffer);
+        ++reads;
       }
       auto messages = future.get();
       REQUIRE(messages.size() == 2);
       REQUIRE(messages[0] == fixture.message(100));
       REQUIRE(messages[1] == fixture.message(101));
-      auto buffer = SharedBuffer();
+      REQUIRE(fixture.m_reads == reads);
+      reset(buffer);
       REQUIRE_THROWS_AS(server->get_reader().read(out(buffer)),
         EndOfFileException);
     }

@@ -56,7 +56,8 @@ TEST_SUITE("OtcLinkRecoveryMessages") {
     }
     SUBCASE("checksum") {
       auto source = checksum(body);
-      source[0] = '4';
+      auto i = source.size() - 2;
+      source[i] = '0' + (source[i] - '0' + 1) % 10;
       REQUIRE_THROWS_AS(
         OtcLinkRecoveryResponse::parse(source), OtcLinkParserException);
       REQUIRE_THROWS_AS(

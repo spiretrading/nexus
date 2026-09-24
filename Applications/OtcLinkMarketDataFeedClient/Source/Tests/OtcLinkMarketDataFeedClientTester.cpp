@@ -1,5 +1,8 @@
+#include <future>
 #include <sstream>
+#include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/MarketDataServiceTests/TestMarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkMarketDataFeedClient.hpp"
@@ -22,6 +25,19 @@ namespace {
   };
 
   using FeedClient = Nexus::Tests::TestMarketDataFeedClient;
+
+  template<typename O>
+  std::shared_ptr<O> require_operation(FeedClient::Queue& operations) {
+    flush_pending_routines();
+    auto operation = operations.try_pop();
+    REQUIRE(operation.has_value());
+    auto actual = std::get_if<O>(&**operation);
+    REQUIRE(actual);
+    auto result = std::shared_ptr<O>(*operation, actual);
+    result->m_result.set();
+    return result;
+  }
+
   constexpr auto TIMESTAMP = std::uint64_t(1700000000123);
 
   struct Encoder {
@@ -212,9 +228,20 @@ namespace {
     }
 
     OtcLinkMessage read(Out<std::uint64_t> session) {
+      while(true) {
+        if(auto message = read_event(session)) {
+          return *message;
+        }
+      }
+    }
+
+    boost::optional<OtcLinkMessage> read_event(Out<std::uint64_t> session) {
       auto message = m_messages.pop();
       m_payload = std::move(message.first);
       *session = message.second;
+      if(m_payload.get_size() == 0) {
+        return boost::none;
+      }
       return OtcLinkMessage::parse(
         std::string_view(m_payload.get_data(), m_payload.get_size()));
     }
@@ -274,14 +301,7 @@ namespace {
 
     template<typename O>
     std::shared_ptr<O> take() {
-      flush_pending_routines();
-      auto operation = m_operations->try_pop();
-      REQUIRE(operation.has_value());
-      auto actual = std::get_if<O>(&**operation);
-      REQUIRE(actual);
-      auto result = std::shared_ptr<O>(*operation, actual);
-      result->m_result.set();
-      return result;
+      return require_operation<O>(*m_operations);
     }
 
     void security() {
@@ -747,6 +767,83 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     fixture.send(quote);
     fixture.send(inside);
     fixture.require_empty();
+  }
+
+  TEST_CASE("reset_heartbeat") {
+    auto server = LocalServerConnection();
+    auto time_client = FixedTimeClient(
+      time_from_string("2023-11-15 00:00:00"));
+    auto timer = TriggerTimer();
+    using ProtocolClient =
+      OtcLinkProtocolClient<LocalClientChannel*, FixedTimeClient*>;
+    auto channels = std::vector<std::unique_ptr<LocalClientChannel>>();
+    auto servers = std::vector<std::unique_ptr<LocalServerChannel>>();
+    auto protocols = std::vector<std::unique_ptr<ProtocolClient>>();
+    auto clients = std::vector<ProtocolClient*>();
+    for(auto i = 0; i != 2; ++i) {
+      auto accepted = std::async(std::launch::async, [&] {
+        return server.accept();
+      });
+      channels.push_back(
+        std::make_unique<LocalClientChannel>("otc_link", server));
+      servers.push_back(accepted.get());
+      protocols.push_back(std::make_unique<ProtocolClient>(
+        channels.back().get(), &time_client));
+      clients.push_back(protocols.back().get());
+    }
+    auto client = OtcLinkClient(
+      seconds(1), seconds(1), clients, &time_client, &timer);
+    auto operations = std::make_shared<FeedClient::Queue>();
+    auto feed_client = FeedClient(operations);
+    auto publisher = OtcLinkMarketDataFeedClient(
+      &feed_client, &client, &time_client);
+    auto publish = [&] (int feed, std::uint8_t flags,
+        const std::vector<SharedBuffer>& messages) {
+      auto length = OtcLinkHeader::LENGTH;
+      for(auto& message : messages) {
+        length += message.get_size();
+      }
+      auto timestamp = boost::local_time::local_date_time(
+        time_client.get_time(),
+        TIME_ZONES.time_zone_from_region("America/New_York")).local_time();
+      auto encoder = Encoder();
+      encoder.write(static_cast<std::uint16_t>(length), std::uint32_t(1),
+        flags, static_cast<std::uint8_t>(messages.size()),
+        static_cast<std::uint32_t>(
+          timestamp.time_of_day().total_milliseconds()));
+      for(auto& message : messages) {
+        append(encoder.m_buffer, message.get_data(), message.get_size());
+      }
+      servers[feed]->get_writer().write(encoder.m_buffer);
+      flush_pending_routines();
+    };
+    auto security = make_security();
+    security.m_sequence = 1;
+    auto quote = make_quote();
+    quote.m_sequence = 2;
+    auto inside = make_inside();
+    inside.m_sequence = 3;
+    publish(0, 0, {encode(security), encode(quote), encode(inside)});
+    publish(1, 0, {encode(security), encode(quote), encode(inside)});
+    require_operation<FeedClient::AddOperation>(*operations);
+    require_operation<FeedClient::AddOrderOperation>(*operations);
+    require_operation<FeedClient::AddOrderOperation>(*operations);
+    require_operation<FeedClient::PublishBboQuoteOperation>(*operations);
+    publish(0, static_cast<std::uint8_t>(
+      OtcLinkHeader::Flag::SEQUENCE_RESET), {});
+    publish(0, static_cast<std::uint8_t>(OtcLinkHeader::Flag::HEARTBEAT), {});
+    require_operation<FeedClient::RemoveOrderOperation>(*operations);
+    require_operation<FeedClient::RemoveOrderOperation>(*operations);
+    auto cleared =
+      require_operation<FeedClient::PublishBboQuoteOperation>(*operations);
+    REQUIRE(cleared->m_quote->m_bid.m_size == 0);
+    REQUIRE(cleared->m_quote->m_ask.m_size == 0);
+    REQUIRE(cleared->m_quote->m_timestamp == time_client.get_time());
+    publish(1, static_cast<std::uint8_t>(
+      OtcLinkHeader::Flag::SEQUENCE_RESET), {});
+    publish(1, static_cast<std::uint8_t>(OtcLinkHeader::Flag::HEARTBEAT), {});
+    REQUIRE(!publisher.get_exception());
+    REQUIRE(!operations->try_pop());
   }
 
   TEST_CASE("reset") {

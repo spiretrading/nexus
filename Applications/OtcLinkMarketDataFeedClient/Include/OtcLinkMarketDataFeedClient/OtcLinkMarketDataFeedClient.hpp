@@ -575,9 +575,11 @@ namespace Nexus {
     }
     book.m_ticker = std::move(ticker);
     m_feed_client->add(TickerInfo(book.m_ticker, {}, {}, {}));
-    for(auto& [id, entry] : m_quotes) {
-      if(entry.m_security == message.m_security) {
-        publish(id, entry, timestamp);
+    if(!is_inserted) {
+      for(auto& [id, entry] : m_quotes) {
+        if(entry.m_security == message.m_security) {
+          publish(id, entry, timestamp);
+        }
       }
     }
     publish(book, timestamp);
@@ -775,30 +777,33 @@ namespace Nexus {
       }
       while(m_open_state.is_open()) {
         auto session = std::uint64_t(0);
-        auto message = OtcLinkMessage();
+        auto message = boost::optional<OtcLinkMessage>();
         try {
-          message = m_otc_client->read(Beam::out(session));
+          message = m_otc_client->read_event(Beam::out(session));
         } catch(const Beam::EndOfFileException&) {
           break;
         }
         if(!m_open_state.is_open()) {
           break;
         }
+        if(!is_trade && session != m_session) {
+          clear(m_time_client->get_time());
+          m_session = session;
+          m_is_market_open = true;
+        }
+        if(!message) {
+          continue;
+        }
         try {
           if(m_is_logging_messages) {
-            log(message);
+            log(*message);
           }
-          if(is_trade && message.m_type != OtcLinkTrade::TYPE) {
+          if(is_trade && message->m_type != OtcLinkTrade::TYPE) {
             continue;
           }
-          if(!is_trade && session != m_session) {
-            clear(m_time_client->get_time());
-            m_session = session;
-            m_is_market_open = true;
-          }
-          dispatch(message);
+          dispatch(*message);
         } catch(const OtcLinkParserException& exception) {
-          log(message, exception);
+          log(*message, exception);
         }
       }
     } catch(const std::exception&) {

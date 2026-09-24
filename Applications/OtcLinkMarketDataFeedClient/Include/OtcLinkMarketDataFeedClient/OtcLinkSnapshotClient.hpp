@@ -44,8 +44,7 @@ namespace Nexus {
 
       /**
        * Constructs an OtcLinkSnapshotClient.
-       * @param type The spin completing this snapshot. Reference spins
-       *        preceding a market-data spin are included.
+       * @param type The spin completing this snapshot.
        * @param request Requests the snapshot, honoring cancellation.
        * @param protocol_client Receives one dedicated snapshot feed.
        * @param timer The timer bounding the complete load.
@@ -223,6 +222,7 @@ namespace Nexus {
       auto snapshot = OtcLinkSnapshot();
       auto start = boost::optional<OtcLinkSpinStart>();
       auto packet_sequence = boost::optional<std::uint32_t>();
+      auto is_reference_complete = false;
       while(true) {
         auto packet = m_protocol_client->read();
         auto& header = packet.get_header();
@@ -273,7 +273,9 @@ namespace Nexus {
               boost::throw_with_location(
                 OtcLinkParserException("Overlapping OTC Link spins."));
             }
-            if(next.m_type == m_type ||
+            if((next.m_type == m_type &&
+                (m_type != OtcLinkSpinType::MARKET_DATA ||
+                  is_reference_complete)) ||
                 (m_type == OtcLinkSpinType::MARKET_DATA &&
                   next.m_type == OtcLinkSpinType::REFERENCE)) {
               start = next;
@@ -296,6 +298,9 @@ namespace Nexus {
                 snapshot.m_sequence = std::uint64_t(end.m_last_sequence) + 1;
                 m_snapshots.push(std::move(snapshot));
                 return;
+              }
+              if(end.m_type == OtcLinkSpinType::REFERENCE) {
+                is_reference_complete = true;
               }
               start = boost::none;
             }
