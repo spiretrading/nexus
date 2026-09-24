@@ -340,7 +340,7 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE(message.m_broker.value() == 79);
     REQUIRE(message.m_public_price.m_type == TmxIpPrice::Type::LIMIT);
     REQUIRE(message.m_public_price.m_value == parse_money("12.34567"));
-    REQUIRE(message.m_quantity == 9999999999ULL);
+    REQUIRE(message.m_quantity == std::uint64_t(9999999999));
     REQUIRE(message.m_header.m_exchange.value() == "TSE");
     REQUIRE(message.m_header.m_timestamp ==
       time_from_string("2026-09-20 09:00:00.123456"));
@@ -404,7 +404,7 @@ TEST_SUITE("TmxIpMessages") {
       auto message = TmxIpTradeReport::parse(StampMessage::parse(source));
       REQUIRE(message.m_action == action);
       REQUIRE(message.m_price.m_value == parse_money("23.125"));
-      REQUIRE(message.m_quantity == 9999999999ULL);
+      REQUIRE(message.m_quantity == std::uint64_t(9999999999));
       REQUIRE(message.m_trade_id.value() == "000000000000001234");
       REQUIRE(message.m_original_trade_id.value() == "PREVIOUS|B");
       REQUIRE(message.m_is_correction.value());
