@@ -38,6 +38,30 @@ namespace {
     }
   };
 
+  struct BlockingWriter {
+    PipedReader* m_reader;
+    Async<void>* m_entered;
+
+    void write(BufferCRef) {
+      m_entered->get_eval().set();
+      auto buffer = SharedBuffer();
+      m_reader->read(out(buffer));
+    }
+  };
+
+  struct BlockingChannel : LocalClientChannel {
+    using Writer = BlockingWriter;
+    Writer m_writer;
+
+    BlockingChannel(LocalServerConnection& server, Async<void>& entered)
+      : LocalClientChannel("recovery", server),
+        m_writer(&LocalClientChannel::get_reader(), &entered) {}
+
+    Writer& get_writer() {
+      return m_writer;
+    }
+  };
+
   struct Fixture {
     LocalServerConnection m_server;
     TriggerTimer m_timer;
@@ -182,18 +206,68 @@ TEST_SUITE("OtcLinkRecoveryClient") {
   }
 
   TEST_CASE("connection_cancellation") {
+    auto action = 0;
+    SUBCASE("timeout") {}
+    SUBCASE("stop") {
+      action = 1;
+    }
+    SUBCASE("close") {
+      action = 2;
+    }
+    for(auto completes : {false, true}) {
+      auto server = LocalServerConnection();
+      auto accepted = std::async(std::launch::async, [&] {
+        return server.accept();
+      });
+      auto channel = std::make_shared<LocalClientChannel>("recovery", server);
+      auto peer = accepted.get();
+      auto timer = TriggerTimer();
+      auto entered = Async<void>();
+      auto client = OtcLinkRecoveryClient("SPIRE", 11,
+        [&] (std::stop_token token) -> std::shared_ptr<LocalClientChannel> {
+          auto stopped = Async<void>();
+          auto callback = std::stop_callback(token, [&] {
+            stopped.get_eval().set();
+          });
+          entered.get_eval().set();
+          stopped.get();
+          if(completes) {
+            return channel;
+          }
+          throw IOException("Canceled connection.");
+        }, &timer);
+      auto stop = std::stop_source();
+      auto task = std::packaged_task([&] {
+        return client.request(1, 1, stop.get_token());
+      });
+      auto future = task.get_future();
+      auto routine = RoutineHandler(spawn(std::move(task)));
+      entered.get();
+      if(action == 0) {
+        timer.trigger();
+      } else if(action == 1) {
+        stop.request_stop();
+      } else {
+        client.close();
+      }
+      REQUIRE_THROWS_AS(future.get(), IOException);
+      routine.wait();
+      if(completes) {
+        auto buffer = SharedBuffer();
+        REQUIRE_THROWS_AS(peer->get_reader().read(out(buffer)),
+          EndOfFileException);
+        REQUIRE(buffer.get_size() == 0);
+      }
+    }
+  }
+
+  TEST_CASE("write_cancellation") {
+    auto server = LocalServerConnection();
     auto timer = TriggerTimer();
     auto entered = Async<void>();
-    auto client = OtcLinkRecoveryClient<LocalClientChannel, TriggerTimer*>(
-      "SPIRE", 11, [&] (std::stop_token token) ->
-          std::shared_ptr<LocalClientChannel> {
-        auto stopped = Async<void>();
-        auto callback = std::stop_callback(token, [&] {
-          stopped.get_eval().set();
-        });
-        entered.get_eval().set();
-        stopped.get();
-        throw IOException("Canceled connection.");
+    auto client = OtcLinkRecoveryClient("SPIRE", 11,
+      [&] (std::stop_token) {
+        return std::make_shared<BlockingChannel>(server, entered);
       }, &timer);
     auto stop = std::stop_source();
     auto task = std::packaged_task([&] {
@@ -201,6 +275,7 @@ TEST_SUITE("OtcLinkRecoveryClient") {
     });
     auto future = task.get_future();
     auto routine = RoutineHandler(spawn(std::move(task)));
+    auto peer = server.accept();
     entered.get();
     SUBCASE("timeout") {
       timer.trigger();
@@ -213,6 +288,10 @@ TEST_SUITE("OtcLinkRecoveryClient") {
     }
     REQUIRE_THROWS_AS(future.get(), IOException);
     routine.wait();
+    auto buffer = SharedBuffer();
+    REQUIRE_THROWS_AS(peer->get_reader().read(out(buffer)),
+      EndOfFileException);
+    REQUIRE(buffer.get_size() == 0);
   }
 
   TEST_CASE("cancellation") {

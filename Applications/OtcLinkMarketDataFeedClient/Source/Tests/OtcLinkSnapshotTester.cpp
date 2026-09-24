@@ -71,10 +71,26 @@ TEST_SUITE("OtcLinkSnapshot") {
       message.m_payload = std::string_view(payload.get_data(), size);
       REQUIRE_THROWS_AS(OtcLinkSpinEnd::parse(message), OtcLinkParserException);
     }
-    auto type = std::uint8_t(0);
-    payload.write(sizeof(std::uint32_t), &type, sizeof(type));
-    message.m_payload =
-      std::string_view(payload.get_data(), payload.get_size());
-    REQUIRE_THROWS_AS(OtcLinkSpinEnd::parse(message), OtcLinkParserException);
+    for(auto is_end : {false, true}) {
+      payload = make(is_end);
+      if(is_end) {
+        message.m_type = OtcLinkSpinEnd::TYPE;
+      } else {
+        message.m_type = OtcLinkSpinStart::TYPE;
+      }
+      message.m_payload =
+        std::string_view(payload.get_data(), payload.get_size());
+      for(auto value : {0, 4, 255}) {
+        auto type = static_cast<std::uint8_t>(value);
+        payload.write(sizeof(std::uint32_t), &type, sizeof(type));
+        if(is_end) {
+          REQUIRE_THROWS_AS(
+            OtcLinkSpinEnd::parse(message), OtcLinkParserException);
+        } else {
+          REQUIRE_THROWS_AS(
+            OtcLinkSpinStart::parse(message), OtcLinkParserException);
+        }
+      }
+    }
   }
 }

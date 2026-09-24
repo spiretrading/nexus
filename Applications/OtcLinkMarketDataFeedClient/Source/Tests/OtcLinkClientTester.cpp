@@ -27,10 +27,34 @@ namespace {
     }
   };
 
+  struct PausingTimeClient : FixedTimeClient {
+    std::atomic_bool m_is_paused;
+    std::atomic_bool m_is_observed;
+    std::promise<void> m_entered;
+    std::promise<void> m_release;
+    std::promise<void> m_observed;
+
+    explicit PausingTimeClient(ptime timestamp)
+      : FixedTimeClient(timestamp),
+        m_is_paused(false),
+        m_is_observed(false) {}
+
+    ptime get_time() {
+      auto timestamp = FixedTimeClient::get_time();
+      if(m_is_paused.exchange(false)) {
+        m_entered.set_value();
+        m_release.get_future().wait();
+      } else if(m_is_observed.exchange(false)) {
+        m_observed.set_value();
+      }
+      return timestamp;
+    }
+  };
+
   using ProtocolClient =
     OtcLinkProtocolClient<LocalClientChannel*, FixedTimeClient*>;
   using Client =
-    OtcLinkClient<ProtocolClient*, FixedTimeClient*, TriggerTimer*>;
+    OtcLinkClient<ProtocolClient*, PausingTimeClient*, TriggerTimer*>;
 
   struct Feed {
     optional<LocalClientChannel> m_channel;
@@ -43,7 +67,7 @@ namespace {
     inline static const auto GAP_TIMEOUT = seconds(5);
     Log m_log;
     LocalServerConnection m_server;
-    FixedTimeClient m_time_client;
+    PausingTimeClient m_time_client;
     TriggerTimer m_timer;
     std::vector<std::unique_ptr<Feed>> m_feeds;
     optional<Client> m_client;
@@ -543,6 +567,38 @@ TEST_SUITE("OtcLinkClient") {
     fixture.require_message(40, 0);
     REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
     REQUIRE(fixture.m_log.m_output.str().empty());
+  }
+
+  TEST_CASE("concurrent_clock_samples") {
+    auto fixture = Fixture(1);
+    fixture.publish(0, {1});
+    fixture.require_message(1, 0);
+    auto packet = fixture.make_packet({2, 4}, 0);
+    auto timestamp = fixture.m_time_client.get_time();
+    auto entered = fixture.m_time_client.m_entered.get_future();
+    auto observed = fixture.m_time_client.m_observed.get_future();
+    fixture.m_time_client.m_is_paused = true;
+    fixture.m_timer.trigger();
+    entered.get();
+    fixture.m_time_client.set(timestamp + time_duration::unit());
+    fixture.m_time_client.m_is_observed = true;
+    fixture.m_feeds[0]->m_server_channel->get_writer().write(packet);
+    auto has_message =
+      observed.wait_for(std::chrono::seconds(1)) == std::future_status::ready;
+    if(has_message) {
+      fixture.require_message(2, 0);
+    }
+    fixture.m_time_client.m_release.set_value();
+    flush_pending_routines();
+    if(!has_message) {
+      fixture.require_message(2, 0);
+    }
+    fixture.publish(0, {3});
+    fixture.m_client->close();
+    fixture.require_message(3, 0);
+    fixture.require_message(4, 0);
+    REQUIRE(fixture.m_log.m_output.str().empty());
+    REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
   }
 
   TEST_CASE("clock_rollback") {

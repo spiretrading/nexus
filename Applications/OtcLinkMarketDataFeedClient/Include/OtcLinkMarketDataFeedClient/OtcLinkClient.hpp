@@ -589,7 +589,6 @@ namespace Nexus {
         } catch(const std::exception& error) {
           failure = "recovery_failed " + std::string(error.what());
         }
-        auto timestamp = m_time_client->get_time();
         Beam::with(m_state, [&] (auto& state) {
           if(state.m_is_finished || state.m_request != request ||
               state.m_session != request->m_session ||
@@ -604,7 +603,7 @@ namespace Nexus {
           } else {
             request->m_failure = std::move(failure);
           }
-          flush(state, timestamp);
+          flush(state, m_time_client->get_time());
         });
       }
     } catch(const Beam::EndOfFileException&) {
@@ -646,11 +645,11 @@ namespace Nexus {
       } catch(const std::exception& error) {
         failure = error.what();
       }
-      auto timestamp = m_time_client->get_time();
       Beam::with(m_state, [&] (auto& state) {
         if(state.m_is_finished || !state.m_is_loading_snapshot) {
           return;
         }
+        auto timestamp = m_time_client->get_time();
         state.m_is_loading_snapshot = false;
         if(!failure) {
           state.m_sequencer.resume(snapshot.m_sequence);
@@ -685,7 +684,6 @@ namespace Nexus {
         if(header.has_flag(OtcLinkHeader::Flag::TEST) || is_replayed_reset) {
           continue;
         }
-        auto timestamp = m_time_client->get_time();
         auto is_finished = Beam::with(m_state, [&] (auto& state) {
           if(state.m_is_finished) {
             return true;
@@ -699,7 +697,7 @@ namespace Nexus {
               state.m_sequencer.add(feed, packet, received);
             }
           }
-          flush(state, timestamp);
+          flush(state, m_time_client->get_time());
           return false;
         });
         if(is_finished) {
@@ -746,10 +744,9 @@ namespace Nexus {
       if(result == Timer::Result::FAIL) {
         boost::throw_with_location(Beam::IOException("OTC Link timer failed."));
       }
-      auto timestamp = m_time_client->get_time();
       auto is_finished = Beam::with(m_state, [&] (auto& state) {
         if(!state.m_is_finished) {
-          flush(state, timestamp);
+          flush(state, m_time_client->get_time());
         }
         return state.m_is_finished;
       });

@@ -186,7 +186,7 @@ namespace Nexus {
       }
       return i->second;
     };
-    auto integer = [&]<std::unsigned_integral T>(unsigned int tag, T& value) {
+    auto integer = [&] (unsigned int tag, std::unsigned_integral auto& value) {
       auto field = text(tag);
       auto result =
         std::from_chars(field.data(), field.data() + field.size(), value);

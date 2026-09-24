@@ -71,6 +71,24 @@ TEST_SUITE("OtcLinkRecoveryMessages") {
           OtcLinkRecoveryResponse::parse(checksum(body + field)),
           OtcLinkParserException);
       }
+      for(auto tag : {"35", "59", "1346", "1355", "1348"}) {
+        auto source = body;
+        auto first = source.find(std::string(tag) + '=');
+        auto last = source.find('\x01', first);
+        source.erase(first, last - first + 1);
+        REQUIRE_THROWS_AS(OtcLinkRecoveryResponse::parse(checksum(source)),
+          OtcLinkParserException);
+        source += std::string(tag) + "=\x01";
+        REQUIRE_THROWS_AS(OtcLinkRecoveryResponse::parse(checksum(source)),
+          OtcLinkParserException);
+      }
+      for(auto tag : {"1346", "1355", "1348", "1182", "1183"}) {
+        auto source = body;
+        auto i = source.find('\x01', source.find(std::string(tag) + '='));
+        source.insert(i, "x");
+        REQUIRE_THROWS_AS(OtcLinkRecoveryResponse::parse(checksum(source)),
+          OtcLinkParserException);
+      }
       for(auto fields : {"1348=0\x01" "1182=100\x01", "1348=5\x01",
           "1348=-1\x01",
           "1348=0\x01" "1182=100\x01" "1183=99\x01",

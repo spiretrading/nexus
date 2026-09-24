@@ -807,6 +807,9 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     SUBCASE("remove") {
       security.m_action = OtcLinkSecurityAction::DELETE;
     }
+    SUBCASE("deleted_status") {
+      security.m_status = 'D';
+    }
     SUBCASE("fixed_income") {
       security.m_asset_class = OtcLinkAssetClass::FIXED_INCOME;
     }
