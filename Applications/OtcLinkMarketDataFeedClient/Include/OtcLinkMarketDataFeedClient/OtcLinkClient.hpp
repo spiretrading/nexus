@@ -382,7 +382,23 @@ namespace Nexus {
     } else if(local_timestamp - timestamp > half_day) {
       timestamp += boost::gregorian::days(1);
     }
-    return timestamp - (local_timestamp - received);
+    auto daylight_status = boost::local_time::local_date_time::check_dst(
+      timestamp.date(), timestamp.time_of_day(), time_zone);
+    if(daylight_status == boost::date_time::invalid_time_label) {
+      boost::throw_with_location(
+        OtcLinkParserException("Invalid OTC Link packet timestamp."));
+    }
+    auto standard_timestamp = timestamp - time_zone->base_utc_offset();
+    if(daylight_status == boost::date_time::is_in_dst) {
+      return standard_timestamp - time_zone->dst_offset();
+    } else if(daylight_status == boost::date_time::ambiguous) {
+      auto daylight_timestamp = standard_timestamp - time_zone->dst_offset();
+      if((daylight_timestamp - received).abs() <
+          (standard_timestamp - received).abs()) {
+        return daylight_timestamp;
+      }
+    }
+    return standard_timestamp;
   }
 
   template<typename P, typename R, typename T> requires
@@ -610,7 +626,7 @@ namespace Nexus {
         return;
       }
       auto snapshot = OtcLinkSnapshot();
-      auto failure = std::string();
+      auto failure = boost::optional<std::string>();
       try {
         snapshot = m_snapshot(m_snapshot_stop_source.get_token());
         if(snapshot.m_sequence == 0 ||
@@ -636,7 +652,7 @@ namespace Nexus {
           return;
         }
         state.m_is_loading_snapshot = false;
-        if(failure.empty()) {
+        if(!failure) {
           state.m_sequencer.resume(snapshot.m_sequence);
           for(auto& message : snapshot.m_messages) {
             m_messages.push(Message(std::move(message), state.m_session));
@@ -644,7 +660,7 @@ namespace Nexus {
         } else {
           state.m_sequencer.resume();
           std::osyncstream(std::cout) << "(snapshot_failed " << timestamp <<
-            ' ' << failure << ')' << std::endl;
+            ' ' << *failure << ')' << std::endl;
         }
         flush(state, timestamp);
       });

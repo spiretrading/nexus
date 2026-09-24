@@ -32,6 +32,27 @@ TEST_SUITE("OtcLinkHeader") {
       REQUIRE_FALSE(header.has_flag(OtcLinkHeader::Flag::REPLAY));
       REQUIRE_FALSE(header.has_flag(OtcLinkHeader::Flag::TEST));
     }
+    SUBCASE("individual_flags") {
+      for(auto [bits, expected] : {
+          std::pair(0x01, OtcLinkHeader::Flag::HEARTBEAT),
+          std::pair(0x02, OtcLinkHeader::Flag::SEQUENCE_RESET),
+          std::pair(0x40, OtcLinkHeader::Flag::REPLAY),
+          std::pair(0x80, OtcLinkHeader::Flag::TEST)}) {
+        auto bytes = std::string(source);
+        bytes[sizeof(std::uint16_t) + sizeof(std::uint32_t)] =
+          static_cast<char>(bits);
+        auto header = OtcLinkHeader::parse(bytes);
+        for(auto flag : {OtcLinkHeader::Flag::HEARTBEAT,
+            OtcLinkHeader::Flag::SEQUENCE_RESET, OtcLinkHeader::Flag::REPLAY,
+            OtcLinkHeader::Flag::TEST}) {
+          if(flag == expected) {
+            REQUIRE(header.has_flag(flag));
+          } else {
+            REQUIRE_FALSE(header.has_flag(flag));
+          }
+        }
+      }
+    }
     SUBCASE("reserved_flags") {
       auto header = OtcLinkHeader::parse(
         "\x00\x0C\x00\x00\x00\x01\x3C\x00\x00\x00\x00\x00"sv);

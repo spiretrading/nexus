@@ -59,7 +59,9 @@ namespace {
     }
   };
 
-  SharedBuffer encode(const OtcLinkSecurity& message) {
+  template<typename S> requires std::same_as<S, OtcLinkSecurity> ||
+    std::same_as<S, OtcLinkFractionalSecurity>
+  SharedBuffer encode(const S& message) {
     auto encoder = Encoder();
     encoder.write(message.m_sequence);
     auto symbol = std::string(message.m_symbol);
@@ -70,6 +72,10 @@ namespace {
       static_cast<std::uint8_t>(message.m_asset_class), message.m_security,
       message.m_flags, static_cast<std::uint8_t>(message.m_tier),
       message.m_reporting_status, message.m_status);
+    if constexpr(std::same_as<S, OtcLinkFractionalSecurity>) {
+      encoder.write(
+        message.m_minimum_notional_value, message.m_minimum_quote_size);
+    }
     return encoder.finish(message.TYPE);
   }
 
@@ -715,6 +721,39 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     fixture.require_empty();
   }
 
+  TEST_CASE("fractional_security") {
+    auto security = OtcLinkFractionalSecurity();
+    static_cast<OtcLinkSecurity&>(security) = make_security();
+    security.m_minimum_notional_value = 100;
+    security.m_minimum_quote_size = 25;
+    auto buffer = encode(security);
+    REQUIRE(OtcLinkMessage::parse(
+      std::string_view(buffer.get_data(), buffer.get_size())).m_type == 23);
+    SUBCASE("live") {
+      auto fixture = Fixture();
+      fixture.send(security);
+      REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
+        parse_ticker("NLST.OTCB"));
+      fixture.send(make_quote());
+      REQUIRE(fixture.take<FeedClient::AddOrderOperation>()->m_ticker ==
+        parse_ticker("NLST.OTCB"));
+      REQUIRE(fixture.take<FeedClient::AddOrderOperation>()->m_ticker ==
+        parse_ticker("NLST.OTCB"));
+      fixture.require_empty();
+    }
+    SUBCASE("reference") {
+      auto fixture = Fixture(OtcLinkSnapshot(100, {buffer}), false);
+      REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
+        parse_ticker("NLST.OTCB"));
+      fixture.send(make_trade());
+      auto publication =
+        fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(publication->m_time_and_sale.get_index() ==
+        parse_ticker("NLST.OTCB"));
+      fixture.require_empty();
+    }
+  }
+
   TEST_CASE("security_changes") {
     auto fixture = Fixture();
     fixture.security();
@@ -725,6 +764,23 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     fixture.take<FeedClient::AddOrderOperation>();
     fixture.take<FeedClient::AddOrderOperation>();
     fixture.send(inside);
+    fixture.take<FeedClient::PublishBboQuoteOperation>();
+    auto other_security = make_security();
+    other_security.m_security = 11;
+    other_security.m_symbol = "OTHER";
+    fixture.send(other_security);
+    REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
+      parse_ticker("OTHER.OTCB"));
+    auto other_quote = make_quote();
+    other_quote.m_security = other_security.m_security;
+    other_quote.m_quote = 21;
+    fixture.send(other_quote);
+    fixture.take<FeedClient::AddOrderOperation>();
+    fixture.take<FeedClient::AddOrderOperation>();
+    auto other_inside = make_inside();
+    other_inside.m_security = other_security.m_security;
+    other_inside.m_inside = 31;
+    fixture.send(other_inside);
     fixture.take<FeedClient::PublishBboQuoteOperation>();
     fixture.send(security);
     fixture.require_empty();
@@ -766,6 +822,32 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     REQUIRE(publication->m_quote->m_ask.m_size == 0);
     fixture.send(quote);
     fixture.send(inside);
+    fixture.require_empty();
+    auto update = OtcLinkQuoteUpdate();
+    update.m_quote = other_quote.m_quote;
+    update.m_flags = 0x4b;
+    update.m_price = 1750000;
+    update.m_size = 250;
+    update.m_timestamp = TIMESTAMP + 1;
+    fixture.send(update);
+    auto order = fixture.take<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_id == "21:A");
+    REQUIRE(order->m_ticker == parse_ticker("OTHER.OTCB"));
+    REQUIRE(order->m_price == Money(Quantity(1.75)));
+    REQUIRE(order->m_size == 250);
+    auto inside_update = OtcLinkInsideUpdate();
+    inside_update.m_inside = other_inside.m_inside;
+    inside_update.m_flags = 0x4b;
+    inside_update.m_price = 1750000;
+    inside_update.m_size = 600;
+    inside_update.m_timestamp = TIMESTAMP + 1;
+    fixture.send(inside_update);
+    publication = fixture.take<FeedClient::PublishBboQuoteOperation>();
+    REQUIRE(publication->m_quote.get_index() == parse_ticker("OTHER.OTCB"));
+    REQUIRE(publication->m_quote->m_bid ==
+      make_bid(Money(Quantity(1.25)), 300));
+    REQUIRE(publication->m_quote->m_ask ==
+      make_ask(Money(Quantity(1.75)), 600));
     fixture.require_empty();
   }
 

@@ -167,7 +167,11 @@ TEST_SUITE("OtcLinkClient") {
 
   TEST_CASE("snapshot_failure") {
     auto action = 0;
+    auto failure = std::string("Unavailable.");
     SUBCASE("request_failure") {}
+    SUBCASE("empty_failure") {
+      failure.clear();
+    }
     SUBCASE("session_reset") {
       action = 1;
     }
@@ -186,7 +190,7 @@ TEST_SUITE("OtcLinkClient") {
     });
     fixture.publish(0, {100, 101});
     if(action == 0) {
-      completion.get_eval().set_exception(IOException("Unavailable."));
+      completion.get_eval().set_exception(IOException(failure));
     } else if(action == 1) {
       fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
       fixture.publish(0, {1});
@@ -197,8 +201,11 @@ TEST_SUITE("OtcLinkClient") {
     }
     flush_pending_routines();
     if(action == 0 || action == 3) {
+      fixture.publish(0, {102});
+      fixture.m_client->close();
       fixture.require_message(100, 0);
       fixture.require_message(101, 0);
+      fixture.require_message(102, 0);
       REQUIRE(fixture.m_log.m_output.str().find("snapshot_failed") !=
         std::string::npos);
     } else if(action == 1) {
@@ -451,15 +458,28 @@ TEST_SUITE("OtcLinkClient") {
 
   TEST_CASE("daylight_saving_reset") {
     auto fixture = Fixture(1);
-    fixture.m_time_client.set(time_from_string("2026-11-01 05:59:00"));
+    auto timestamp = time_from_string("2026-11-01 05:59:00");
+    SUBCASE("fall_back") {}
+    SUBCASE("spring_forward") {
+      timestamp = time_from_string("2026-03-08 06:59:00");
+    }
+    fixture.m_time_client.set(timestamp);
+    auto previous = fixture.make_packet({},
+      static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
+    auto stale = fixture.make_packet({2}, 0);
     fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
     fixture.publish(0, {1});
     fixture.require_message(1, 1);
-    fixture.m_time_client.set(time_from_string("2026-11-01 06:00:00"));
+    fixture.m_time_client.set(timestamp + minutes(1));
     fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
     fixture.publish(0, {1});
+    fixture.m_feeds[0]->m_server_channel->get_writer().write(previous);
+    fixture.m_feeds[0]->m_server_channel->get_writer().write(stale);
+    flush_pending_routines();
+    fixture.publish(0, {2});
     fixture.m_client->close();
     fixture.require_message(1, 2);
+    fixture.require_message(2, 2);
     REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
   }
 
@@ -621,6 +641,15 @@ TEST_SUITE("OtcLinkClient") {
         static_cast<std::uint16_t>(message_length - 1));
       source.write(OtcLinkHeader::LENGTH + message_length,
         &short_length, sizeof(short_length));
+    }
+    SUBCASE("missing_local_time") {
+      fixture.m_time_client.set(time_from_string("2026-03-08 07:00:00"));
+      source = fixture.make_packet({},
+        static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
+      auto timestamp = endian::native_to_big(static_cast<std::uint32_t>(
+        minutes(150).total_milliseconds()));
+      source.write(OtcLinkHeader::LENGTH - sizeof(timestamp),
+        &timestamp, sizeof(timestamp));
     }
     SUBCASE("reset_timestamp") {
       source = fixture.make_packet({},

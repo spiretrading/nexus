@@ -101,6 +101,14 @@ server:
     REQUIRE_FALSE(config.m_snapshot.has_value());
   }
 
+  TEST_CASE("feed_timer_interval") {
+    auto source = make_config();
+    source["feed_timeout"] = "20ms";
+    source["gap_timeout"] = "50ms";
+    auto config = OtcLinkConfiguration::parse(source);
+    REQUIRE(config.get_timer_interval() == milliseconds(20));
+  }
+
   TEST_CASE("optional_services") {
     auto source = make_config();
     source["service"] = "inside";
