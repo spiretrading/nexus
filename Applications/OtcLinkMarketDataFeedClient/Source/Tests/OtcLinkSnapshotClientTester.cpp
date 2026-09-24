@@ -112,6 +112,85 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkSnapshotClient") {
+  TEST_CASE("timeout_diagnostics") {
+    auto fixture = Fixture();
+    auto future = fixture.load({});
+    auto is_acknowledged = true;
+    auto is_timer_failure = false;
+    auto progress = std::string("packets=0 messages=0 heartbeats=0 "
+      "last_packet=none expected_spin=market_data last_marker=none");
+    SUBCASE("awaiting_acknowledgement") {
+      is_acknowledged = false;
+    }
+    SUBCASE("no_packets") {}
+    SUBCASE("heartbeats") {
+      fixture.publish(8, {});
+      progress = "packets=1 messages=0 heartbeats=1 last_packet=8 "
+        "expected_spin=market_data last_marker=none";
+    }
+    SUBCASE("reference_complete") {
+      fixture.publish(10, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+        fixture.data(91),
+        fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)});
+      progress = "packets=1 messages=3 heartbeats=0 last_packet=10 "
+        "expected_spin=market_data last_marker=end/reference/100";
+    }
+    SUBCASE("incomplete_spin") {
+      fixture.publish(11, {
+        fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
+        fixture.data(92)});
+      progress = "packets=1 messages=2 heartbeats=0 last_packet=11 "
+        "expected_spin=market_data last_marker=start/market_data/100";
+    }
+    SUBCASE("other_spin") {
+      fixture.publish(12, {
+        fixture.marker(false, OtcLinkSpinType::OPENING, 100),
+        fixture.marker(true, OtcLinkSpinType::OPENING, 100)});
+      progress = "packets=1 messages=2 heartbeats=0 last_packet=12 "
+        "expected_spin=market_data last_marker=end/opening/100";
+    }
+    SUBCASE("completed_before_acknowledgement") {
+      is_acknowledged = false;
+      fixture.publish(13, {
+        fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
+        fixture.data(93),
+        fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 100)});
+      progress = "packets=1 messages=3 heartbeats=0 last_packet=13 "
+        "expected_spin=market_data last_marker=end/market_data/100";
+    }
+    SUBCASE("timer_failure") {
+      is_timer_failure = true;
+    }
+    if(is_acknowledged) {
+      fixture.m_acknowledgement.get_eval().set();
+      flush_pending_routines();
+    }
+    auto expected = std::string();
+    if(is_timer_failure) {
+      fixture.m_timer.fail();
+      expected = "OTC Link snapshot timer failed.";
+    } else {
+      fixture.m_timer.trigger();
+      expected = "OTC Link snapshot deadline expired.";
+    }
+    if(is_acknowledged) {
+      expected += " acknowledgement=received ";
+    } else {
+      expected += " acknowledgement=pending ";
+    }
+    expected += progress;
+    auto actual = [&] {
+      try {
+        future.get();
+      } catch(const IOException& exception) {
+        return std::string(exception.what());
+      }
+      return std::string();
+    }();
+    REQUIRE(actual == expected);
+  }
+
   TEST_CASE("acknowledged_snapshot") {
     auto is_empty = false;
     SUBCASE("empty") {

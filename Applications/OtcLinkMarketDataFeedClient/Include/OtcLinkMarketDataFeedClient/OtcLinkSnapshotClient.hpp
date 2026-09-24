@@ -1,6 +1,7 @@
 #ifndef OTC_LINK_SNAPSHOT_CLIENT_HPP
 #define OTC_LINK_SNAPSHOT_CLIENT_HPP
 #include <functional>
+#include <sstream>
 #include <stop_token>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -62,6 +63,19 @@ namespace Nexus {
       void close();
 
     private:
+      struct Marker {
+        const char* m_name;
+        OtcLinkSpinType m_type;
+        std::uint32_t m_sequence;
+      };
+      struct Progress {
+        bool m_is_acknowledged = false;
+        std::uint64_t m_packet_count = 0;
+        std::uint64_t m_message_count = 0;
+        std::uint64_t m_heartbeat_count = 0;
+        boost::optional<std::uint32_t> m_last_packet;
+        boost::optional<Marker> m_last_marker;
+      };
       OtcLinkSpinType m_type;
       RequestFunction m_request;
       Beam::local_ptr_t<P> m_protocol_client;
@@ -70,12 +84,14 @@ namespace Nexus {
       bool m_is_loading;
       std::stop_source m_stop_source;
       Beam::Sync<std::exception_ptr> m_exception;
+      Beam::Sync<Progress> m_progress;
       Beam::Queue<bool> m_start;
       Beam::Queue<OtcLinkSnapshot> m_snapshots;
       Beam::RoutineTaskQueue m_tasks;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
+      static const char* get_name(OtcLinkSpinType type);
       OtcLinkSnapshotClient(const OtcLinkSnapshotClient&) = delete;
       OtcLinkSnapshotClient& operator =(const OtcLinkSnapshotClient&) = delete;
       void fail(const std::exception_ptr& exception);
@@ -134,6 +150,9 @@ namespace Nexus {
       m_timer->start();
       m_start.push(true);
       m_request(m_stop_source.get_token());
+      Beam::with(m_progress, [] (auto& progress) {
+        progress.m_is_acknowledged = true;
+      });
       auto snapshot = m_snapshots.pop();
       if(auto exception = m_exception.load()) {
         std::rethrow_exception(exception);
@@ -144,7 +163,7 @@ namespace Nexus {
     } catch(const std::exception&) {
       fail(std::current_exception());
       m_timer->cancel();
-      throw;
+      std::rethrow_exception(m_exception.load());
     }
   }
 
@@ -162,6 +181,21 @@ namespace Nexus {
     m_tasks.close();
     m_tasks.wait();
     m_open_state.close();
+  }
+
+  template<typename P, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  const char* OtcLinkSnapshotClient<P, T>::get_name(OtcLinkSpinType type) {
+    if(type == OtcLinkSpinType::REFERENCE) {
+      return "reference";
+    } else if(type == OtcLinkSpinType::MARKET_DATA) {
+      return "market_data";
+    } else if(type == OtcLinkSpinType::OPENING) {
+      return "opening";
+    } else {
+      return "unknown";
+    }
   }
 
   template<typename P, typename T> requires
@@ -192,6 +226,14 @@ namespace Nexus {
       while(true) {
         auto packet = m_protocol_client->read();
         auto& header = packet.get_header();
+        Beam::with(m_progress, [&] (auto& progress) {
+          ++progress.m_packet_count;
+          progress.m_message_count += header.m_count;
+          progress.m_last_packet = header.m_sequence;
+          if(header.has_flag(OtcLinkHeader::Flag::HEARTBEAT)) {
+            ++progress.m_heartbeat_count;
+          }
+        });
         if(header.has_flag(OtcLinkHeader::Flag::TEST) ||
             header.has_flag(OtcLinkHeader::Flag::REPLAY)) {
           continue;
@@ -223,6 +265,10 @@ namespace Nexus {
         for(auto& message : packet) {
           if(message.m_type == OtcLinkSpinStart::TYPE) {
             auto next = OtcLinkSpinStart::parse(message);
+            Beam::with(m_progress, [&] (auto& progress) {
+              progress.m_last_marker =
+                Marker("start", next.m_type, next.m_last_sequence);
+            });
             if(start) {
               boost::throw_with_location(
                 OtcLinkParserException("Overlapping OTC Link spins."));
@@ -235,6 +281,10 @@ namespace Nexus {
             }
           } else if(message.m_type == OtcLinkSpinEnd::TYPE) {
             auto end = OtcLinkSpinEnd::parse(message);
+            Beam::with(m_progress, [&] (auto& progress) {
+              progress.m_last_marker =
+                Marker("end", end.m_type, end.m_last_sequence);
+            });
             if(start) {
               if(end.m_type != start->m_type ||
                   end.m_last_sequence != start->m_last_sequence ||
@@ -269,10 +319,38 @@ namespace Nexus {
     IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void OtcLinkSnapshotClient<P, T>::on_timer(typename Timer::Result result) {
-    if(result != Timer::Result::CANCELED && m_open_state.is_open()) {
-      fail(std::make_exception_ptr(
-        Beam::IOException("OTC Link snapshot deadline failed or expired.")));
+    if(result == Timer::Result::CANCELED || !m_open_state.is_open()) {
+      return;
     }
+    auto progress = m_progress.load();
+    auto out = std::stringstream();
+    if(result == Timer::Result::EXPIRED) {
+      out << "OTC Link snapshot deadline expired.";
+    } else {
+      out << "OTC Link snapshot timer failed.";
+    }
+    out << " acknowledgement=";
+    if(progress.m_is_acknowledged) {
+      out << "received";
+    } else {
+      out << "pending";
+    }
+    out << " packets=" << progress.m_packet_count <<
+      " messages=" << progress.m_message_count <<
+      " heartbeats=" << progress.m_heartbeat_count << " last_packet=";
+    if(progress.m_last_packet) {
+      out << *progress.m_last_packet;
+    } else {
+      out << "none";
+    }
+    out << " expected_spin=" << get_name(m_type) << " last_marker=";
+    if(auto marker = progress.m_last_marker) {
+      out << marker->m_name << '/' << get_name(marker->m_type) << '/' <<
+        marker->m_sequence;
+    } else {
+      out << "none";
+    }
+    fail(std::make_exception_ptr(Beam::IOException(out.str())));
   }
 }
 

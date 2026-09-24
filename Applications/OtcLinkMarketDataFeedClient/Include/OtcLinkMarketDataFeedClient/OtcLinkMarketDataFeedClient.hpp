@@ -255,22 +255,21 @@ namespace Nexus {
       IsOtcLinkClient<Beam::dereference_t<C>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
   Venue OtcLinkMarketDataFeedClient<M, C, T>::get_venue(OtcLinkTier tier) {
-    switch(tier) {
-      case OtcLinkTier::OTCQX_US:
-      case OtcLinkTier::OTCQX_INTERNATIONAL:
-        return Venues::OTCQ;
-      case OtcLinkTier::OTCQB:
-        return Venues::OTCB;
-      case OtcLinkTier::OTCID:
-        return Venues::OTCD;
-      case OtcLinkTier::PINK_LIMITED:
-        return Venues::PINL;
-      case OtcLinkTier::GREY_MARKET:
-        return Venues::PSGM;
-      case OtcLinkTier::EXPERT_MARKET:
-        return Venues::EXPM;
-      default:
-        return Venue();
+    if(tier == OtcLinkTier::OTCQX_US ||
+        tier == OtcLinkTier::OTCQX_INTERNATIONAL) {
+      return Venues::OTCQ;
+    } else if(tier == OtcLinkTier::OTCQB) {
+      return Venues::OTCB;
+    } else if(tier == OtcLinkTier::OTCID) {
+      return Venues::OTCD;
+    } else if(tier == OtcLinkTier::PINK_LIMITED) {
+      return Venues::PINL;
+    } else if(tier == OtcLinkTier::GREY_MARKET) {
+      return Venues::PSGM;
+    } else if(tier == OtcLinkTier::EXPERT_MARKET) {
+      return Venues::EXPM;
+    } else {
+      return Venue();
     }
   }
 
