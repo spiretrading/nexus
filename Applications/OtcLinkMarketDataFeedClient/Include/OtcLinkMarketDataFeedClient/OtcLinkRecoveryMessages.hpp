@@ -222,9 +222,10 @@ namespace Nexus {
       integer(1183, sequence);
       response.m_last_sequence = sequence;
     }
+    auto is_incomplete_range = response.m_first_sequence.has_value() !=
+      response.m_last_sequence.has_value();
     if(response.m_status == Status::ACCEPTED &&
-        (response.m_first_sequence.has_value() !=
-            response.m_last_sequence.has_value() ||
+        (is_incomplete_range ||
           (response.m_first_sequence &&
             *response.m_last_sequence < *response.m_first_sequence))) {
       fail();
