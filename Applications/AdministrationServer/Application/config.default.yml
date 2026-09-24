@@ -180,5 +180,17 @@ entitlements:
     group: otcm
     applicability:
       - source: OTCM
-        messages: [BBO, BOOK, TAS, IMB]
+        messages: [BBO, BOOK, TAS]
+      - source: OTCQ
+        messages: [BBO, TAS]
+      - source: OTCB
+        messages: [BBO, TAS]
+      - source: OTCD
+        messages: [BBO, TAS]
+      - source: PINL
+        messages: [BBO, TAS]
+      - source: PSGM
+        messages: [BBO, TAS]
+      - source: EXPM
+        messages: [BBO, TAS]
 ...
