@@ -688,16 +688,17 @@ namespace Nexus {
           if(state.m_is_finished) {
             return true;
           }
+          auto timestamp = m_time_client->get_time();
           if(header.has_flag(OtcLinkHeader::Flag::SEQUENCE_RESET)) {
             reset(state, feed, header, received);
           } else if(state.m_feeds[feed].m_session == state.m_session) {
             auto& source = state.m_feeds[feed];
             if(!source.m_reset ||
                 get_timestamp(header, received) >= *source.m_reset) {
-              state.m_sequencer.add(feed, packet, received);
+              state.m_sequencer.add(feed, packet, received, timestamp);
             }
           }
-          flush(state, m_time_client->get_time());
+          flush(state, timestamp);
           return false;
         });
         if(is_finished) {

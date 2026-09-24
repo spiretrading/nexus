@@ -128,6 +128,9 @@ namespace Nexus {
       Quote get_quote(const Entry& entry, Side side) const;
       void publish(std::uint32_t id, Participant& entry,
         boost::posix_time::ptime timestamp);
+      void publish(std::uint32_t id, Participant& entry,
+        boost::posix_time::ptime bid_timestamp,
+        boost::posix_time::ptime ask_timestamp);
       void publish(Book& book, boost::posix_time::ptime timestamp);
       void withdraw(std::uint32_t id, Participant& entry,
         boost::posix_time::ptime timestamp);
@@ -384,6 +387,16 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::publish(std::uint32_t id,
       Participant& entry, boost::posix_time::ptime timestamp) {
+    publish(id, entry, timestamp, timestamp);
+  }
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void OtcLinkMarketDataFeedClient<M, C, T>::publish(std::uint32_t id,
+      Participant& entry, boost::posix_time::ptime bid_timestamp,
+      boost::posix_time::ptime ask_timestamp) {
     auto& book = m_books.at(entry.m_security);
     for(auto side : {Side(Side::BID), Side(Side::ASK)}) {
       auto quote = get_quote(entry, side);
@@ -398,6 +411,7 @@ namespace Nexus {
       } else {
         order += ":A";
       }
+      auto timestamp = pick(side, ask_timestamp, bid_timestamp);
       if(quote.m_size != 0) {
         m_feed_client->add_order(book.m_ticker, Venues::OTCM, entry.m_mpid,
           false, order, side, quote.m_price, quote.m_size, timestamp);
@@ -629,7 +643,8 @@ namespace Nexus {
       }
     }
     auto j = m_quotes.insert_or_assign(message.m_quote, std::move(entry)).first;
-    publish(j->first, j->second, timestamp);
+    publish(j->first, j->second, get_timestamp(message.m_bid_timestamp),
+      get_timestamp(message.m_ask_timestamp));
   }
 
   template<typename M, typename C, typename T> requires

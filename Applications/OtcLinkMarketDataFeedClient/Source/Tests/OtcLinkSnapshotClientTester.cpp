@@ -76,6 +76,11 @@ namespace {
 
     SharedBuffer marker(bool is_end, OtcLinkSpinType type,
         std::uint32_t last_sequence) {
+      return marker(is_end, type, last_sequence, 1000);
+    }
+
+    SharedBuffer marker(bool is_end, OtcLinkSpinType type,
+        std::uint32_t last_sequence, std::uint64_t timestamp) {
       auto payload = SharedBuffer();
       append(payload, endian::native_to_big(std::uint32_t(1)));
       append(payload, static_cast<std::uint8_t>(type));
@@ -84,13 +89,22 @@ namespace {
         message_type = OtcLinkSpinEnd::TYPE;
         append(payload, endian::native_to_big(std::uint32_t(1)));
       }
-      append(payload, endian::native_to_big(std::uint64_t(1000)));
+      append(payload, endian::native_to_big(timestamp));
       append(payload, endian::native_to_big(last_sequence));
       return message(message_type, payload);
     }
 
     void publish(std::uint32_t sequence,
         std::initializer_list<SharedBuffer> messages) {
+      auto flags = std::uint8_t(0);
+      if(messages.size() == 0) {
+        flags = static_cast<std::uint8_t>(OtcLinkHeader::Flag::HEARTBEAT);
+      }
+      publish(sequence, messages, flags);
+    }
+
+    void publish(std::uint32_t sequence,
+        std::initializer_list<SharedBuffer> messages, std::uint8_t flags) {
       auto payload = SharedBuffer();
       for(auto& message : messages) {
         append(payload, message);
@@ -99,10 +113,6 @@ namespace {
       append(buffer, endian::native_to_big(static_cast<std::uint16_t>(
         OtcLinkHeader::LENGTH + payload.get_size())));
       append(buffer, endian::native_to_big(sequence));
-      auto flags = std::uint8_t(0);
-      if(messages.size() == 0) {
-        flags = static_cast<std::uint8_t>(OtcLinkHeader::Flag::HEARTBEAT);
-      }
       append(buffer, flags);
       append(buffer, static_cast<std::uint8_t>(messages.size()));
       append(buffer, std::uint32_t(0));
@@ -265,6 +275,112 @@ TEST_SUITE("OtcLinkSnapshotClient") {
         IOException("Snapshot unavailable."));
     }
     REQUIRE_THROWS_AS(future.get(), std::exception);
+  }
+
+  TEST_CASE("ignored_packets") {
+    auto flag = OtcLinkHeader::Flag::TEST;
+    SUBCASE("test") {}
+    SUBCASE("replay") {
+      flag = OtcLinkHeader::Flag::REPLAY;
+    }
+    auto fixture = Fixture(OtcLinkSpinType::REFERENCE);
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(90),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)},
+      static_cast<std::uint8_t>(flag));
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    fixture.publish(10, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(91)});
+    fixture.publish(30, {fixture.data(99)}, static_cast<std::uint8_t>(flag));
+    fixture.publish(11, {
+      fixture.data(92),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)});
+    auto snapshot = future.get();
+    REQUIRE(snapshot.m_sequence == 101);
+    REQUIRE(snapshot.m_messages.size() == 2);
+    REQUIRE(snapshot.m_messages[0] == fixture.data(91));
+    REQUIRE(snapshot.m_messages[1] == fixture.data(92));
+  }
+
+  TEST_CASE("snapshot_reset") {
+    auto is_capturing = false;
+    SUBCASE("before_capture") {}
+    SUBCASE("during_capture") {
+      is_capturing = true;
+    }
+    auto fixture = Fixture(OtcLinkSpinType::REFERENCE);
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    if(is_capturing) {
+      fixture.publish(10, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+        fixture.data(91)});
+    }
+    fixture.publish(0, {},
+      static_cast<std::uint8_t>(OtcLinkHeader::Flag::SEQUENCE_RESET));
+    if(is_capturing) {
+      REQUIRE_THROWS_AS(future.get(), IOException);
+    } else {
+      fixture.publish(1, {
+        fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+        fixture.data(91),
+        fixture.marker(true, OtcLinkSpinType::REFERENCE, 100)});
+      auto snapshot = future.get();
+      REQUIRE(snapshot.m_sequence == 101);
+      REQUIRE(snapshot.m_messages.size() == 1);
+      REQUIRE(snapshot.m_messages[0] == fixture.data(91));
+    }
+  }
+
+  TEST_CASE("acknowledged_cancellation") {
+    auto is_closed = false;
+    SUBCASE("stop") {}
+    SUBCASE("close") {
+      is_closed = true;
+    }
+    auto fixture = Fixture();
+    auto stop = std::stop_source();
+    auto future = fixture.load(stop.get_token());
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(91)});
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    if(is_closed) {
+      fixture.m_client->close();
+    } else {
+      stop.request_stop();
+    }
+    REQUIRE_THROWS_AS(future.get(), EndOfFileException);
+  }
+
+  TEST_CASE("spin_markers") {
+    auto is_end = true;
+    auto type = OtcLinkSpinType::REFERENCE;
+    auto timestamp = std::uint64_t(1000);
+    SUBCASE("overlapping_starts") {
+      is_end = false;
+    }
+    SUBCASE("different_types") {
+      type = OtcLinkSpinType::MARKET_DATA;
+    }
+    SUBCASE("earlier_end") {
+      --timestamp;
+    }
+    auto fixture = Fixture(OtcLinkSpinType::REFERENCE);
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(91)});
+    fixture.publish(2, {fixture.marker(is_end, type, 100, timestamp)});
+    REQUIRE_THROWS_AS(future.get(), OtcLinkParserException);
   }
 
   TEST_CASE("partial_reference") {

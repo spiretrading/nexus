@@ -560,6 +560,7 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     auto fixture = Fixture();
     fixture.security();
     auto quote = make_quote();
+    quote.m_ask_timestamp += seconds(1).total_milliseconds();
     fixture.send(quote);
     auto bid = fixture.take<FeedClient::AddOrderOperation>();
     REQUIRE(bid->m_ticker == parse_ticker("NLST.OTCB"));
@@ -577,6 +578,8 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     REQUIRE(ask->m_side == Side::ASK);
     REQUIRE(ask->m_price == Money(Quantity(1.5)));
     REQUIRE(ask->m_size == 200);
+    REQUIRE(ask->m_timestamp ==
+      time_from_string("2023-11-14 22:13:21.123"));
     fixture.send(quote);
     fixture.require_empty();
     auto update = OtcLinkQuoteUpdate();
@@ -667,16 +670,20 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     quote.m_bid_timestamp = TIMESTAMP;
     quote.m_ask_price = 150000075;
     quote.m_ask_size = 20000000225;
-    quote.m_ask_timestamp = TIMESTAMP;
+    quote.m_ask_timestamp = TIMESTAMP + seconds(1).total_milliseconds();
     fixture.send(quote);
     auto bid = fixture.take<FeedClient::AddOrderOperation>();
     REQUIRE(bid->m_price ==
       Money(Quantity::from_representation(1250000.25)));
     REQUIRE(bid->m_size == Quantity::from_representation(100000001.25));
+    REQUIRE(bid->m_timestamp ==
+      time_from_string("2023-11-14 22:13:20.123"));
     auto ask = fixture.take<FeedClient::AddOrderOperation>();
     REQUIRE(ask->m_price ==
       Money(Quantity::from_representation(1500000.75)));
     REQUIRE(ask->m_size == Quantity::from_representation(200000002.25));
+    REQUIRE(ask->m_timestamp ==
+      time_from_string("2023-11-14 22:13:21.123"));
     auto update = OtcLinkFractionalQuoteUpdate();
     update.m_quote = quote.m_quote;
     update.m_flags = 0x4a;

@@ -1,3 +1,4 @@
+#include <atomic>
 #include <future>
 #include <limits>
 #include <sstream>
@@ -68,6 +69,7 @@ namespace {
     Log m_log;
     LocalServerConnection m_server;
     PausingTimeClient m_time_client;
+    FixedTimeClient m_receive_time_client;
     TriggerTimer m_timer;
     std::vector<std::unique_ptr<Feed>> m_feeds;
     optional<Client> m_client;
@@ -80,6 +82,12 @@ namespace {
 
     Fixture(int feeds, Client::RecoveryFunction recovery,
         Client::SnapshotFunction snapshot)
+      : Fixture(feeds, std::move(recovery), std::move(snapshot),
+          FEED_TIMEOUT, GAP_TIMEOUT) {}
+
+    Fixture(int feeds, Client::RecoveryFunction recovery,
+        Client::SnapshotFunction snapshot, time_duration feed_timeout,
+        time_duration gap_timeout)
         : m_time_client(time_from_string("2026-09-23 14:00:00")) {
       auto clients = std::vector<ProtocolClient*>();
       for(auto i = 0; i < feeds; ++i) {
@@ -90,18 +98,19 @@ namespace {
         feed->m_channel.emplace("otc_link", m_server);
         feed->m_server_channel = server_channel.get();
         feed->m_client = std::make_unique<ProtocolClient>(
-          &*feed->m_channel, &m_time_client);
+          &*feed->m_channel, &m_receive_time_client);
         clients.push_back(feed->m_client.get());
         m_feeds.push_back(std::move(feed));
       }
       m_client.emplace(
-        FEED_TIMEOUT, GAP_TIMEOUT, clients, &m_time_client, &m_timer,
+        feed_timeout, gap_timeout, clients, &m_time_client, &m_timer,
         std::move(recovery), std::move(snapshot));
       flush_pending_routines();
     }
 
     SharedBuffer make_packet(std::initializer_list<std::uint32_t> sequences,
         std::uint8_t flags) {
+      m_receive_time_client.set(m_time_client.get_time());
       auto buffer = SharedBuffer();
       auto write = [&] (auto value) {
         append(buffer, endian::native_to_big(value));
@@ -191,6 +200,7 @@ TEST_SUITE("OtcLinkClient") {
 
   TEST_CASE("snapshot_failure") {
     auto action = 0;
+    auto is_truncated = false;
     auto failure = std::string("Unavailable.");
     SUBCASE("request_failure") {}
     SUBCASE("empty_failure") {
@@ -204,6 +214,13 @@ TEST_SUITE("OtcLinkClient") {
     }
     SUBCASE("invalid_snapshot") {
       action = 3;
+    }
+    SUBCASE("malformed_payload") {
+      action = 4;
+      SUBCASE("truncated") {
+        is_truncated = true;
+      }
+      SUBCASE("trailing_bytes") {}
     }
     auto completion = Async<OtcLinkSnapshot>();
     auto fixture = Fixture(1, {}, [&] (std::stop_token token) {
@@ -220,11 +237,24 @@ TEST_SUITE("OtcLinkClient") {
       fixture.publish(0, {1});
     } else if(action == 2) {
       fixture.m_client->close();
-    } else {
+    } else if(action == 3) {
       completion.get_eval().set(OtcLinkSnapshot(0));
+    } else {
+      auto packet = fixture.make_packet({98, 99}, 0);
+      auto length = OtcLinkMessage::HEADER_LENGTH + sizeof(std::uint32_t);
+      auto prefix = packet.slice(OtcLinkHeader::LENGTH, length);
+      auto payload = packet.slice(OtcLinkHeader::LENGTH + length, length);
+      if(is_truncated) {
+        payload = SharedBuffer(payload.get_data(), payload.get_size() - 1);
+      } else {
+        append(payload, std::uint8_t(0));
+      }
+      auto snapshot = OtcLinkSnapshot(102);
+      snapshot.m_messages = {prefix, payload};
+      completion.get_eval().set(snapshot);
     }
     flush_pending_routines();
-    if(action == 0 || action == 3) {
+    if(action == 0 || action >= 3) {
       fixture.publish(0, {102});
       fixture.m_client->close();
       fixture.require_message(100, 0);
@@ -597,6 +627,28 @@ TEST_SUITE("OtcLinkClient") {
     fixture.m_client->close();
     fixture.require_message(3, 0);
     fixture.require_message(4, 0);
+    REQUIRE(fixture.m_log.m_output.str().empty());
+    REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
+  }
+
+  TEST_CASE("receive_time_order") {
+    auto fixture = Fixture(2, {}, {}, milliseconds(50), milliseconds(30));
+    auto timestamp = fixture.m_time_client.get_time();
+    fixture.publish(0, {1});
+    fixture.publish(1, {1});
+    fixture.require_message(1, 0);
+    fixture.advance(milliseconds(2));
+    fixture.publish(0, OtcLinkHeader::Flag::HEARTBEAT);
+    auto packet = fixture.make_packet({3}, 0);
+    fixture.m_receive_time_client.set(timestamp + milliseconds(1));
+    fixture.m_feeds[1]->m_server_channel->get_writer().write(packet);
+    flush_pending_routines();
+    fixture.advance(milliseconds(31));
+    fixture.advance(milliseconds(7));
+    fixture.publish(0, {2});
+    fixture.m_client->close();
+    fixture.require_message(2, 0);
+    fixture.require_message(3, 0);
     REQUIRE(fixture.m_log.m_output.str().empty());
     REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
   }

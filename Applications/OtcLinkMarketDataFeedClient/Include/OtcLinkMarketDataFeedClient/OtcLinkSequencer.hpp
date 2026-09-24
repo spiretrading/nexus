@@ -46,6 +46,16 @@ namespace Nexus {
       void add(int feed, const OtcLinkPacket& packet,
         boost::posix_time::ptime timestamp);
 
+      /**
+       * Adds a live packet received before the current processing time.
+       * @param feed The index of the feed receiving the packet.
+       * @param packet The received packet.
+       * @param received The time the packet was received.
+       * @param timestamp The current time used to expire inactive feeds.
+       */
+      void add(int feed, const OtcLinkPacket& packet,
+        boost::posix_time::ptime received, boost::posix_time::ptime timestamp);
+
       /** Adds recovered messages without advancing live-feed positions. */
       void recover(const OtcLinkPacket& packet);
 
@@ -121,6 +131,11 @@ namespace Nexus {
 
   inline void OtcLinkSequencer::add(int feed, const OtcLinkPacket& packet,
       boost::posix_time::ptime timestamp) {
+    add(feed, packet, timestamp, timestamp);
+  }
+
+  inline void OtcLinkSequencer::add(int feed, const OtcLinkPacket& packet,
+      boost::posix_time::ptime received, boost::posix_time::ptime timestamp) {
     auto& header = packet.get_header();
     if(header.has_flag(OtcLinkHeader::Flag::TEST) ||
         header.has_flag(OtcLinkHeader::Flag::SEQUENCE_RESET)) {
@@ -131,7 +146,6 @@ namespace Nexus {
       return;
     }
     auto range = get_range(packet);
-    update(timestamp);
     auto& source = m_feeds[feed];
     if(!range) {
       auto is_current_heartbeat = [&] {
@@ -145,8 +159,9 @@ namespace Nexus {
       };
       if(is_current_heartbeat()) {
         source.m_is_active = true;
-        source.m_timestamp = timestamp;
+        source.m_timestamp = received;
       }
+      update(timestamp);
       return;
     }
     if(!m_expected_sequence) {
@@ -155,11 +170,12 @@ namespace Nexus {
     if(range->second > source.m_position) {
       source.m_is_active = true;
       source.m_position = range->second;
-      source.m_timestamp = timestamp;
+      source.m_timestamp = received;
     }
     if(range->second > *m_expected_sequence) {
       store(packet);
     }
+    update(timestamp);
   }
 
   inline void OtcLinkSequencer::recover(const OtcLinkPacket& packet) {
