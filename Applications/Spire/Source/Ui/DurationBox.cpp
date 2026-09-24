@@ -71,13 +71,6 @@ namespace {
     return fields;
   }
 
-  FormatFields parse_format(const QString& format) {
-    if(auto fields = match_format(format)) {
-      return *fields;
-    }
-    return *match_format(DEFAULT_FORMAT);
-  }
-
   time_duration::tick_type get_units_per_second(int fractional_digits) {
     auto units = time_duration::tick_type(1);
     for(auto i = 0; i < fractional_digits; ++i) {
@@ -377,6 +370,17 @@ namespace {
     match(*separator, Separator());
     return separator;
   }
+
+  class TimeBox : public DurationBox {
+    public:
+      using DurationBox::DurationBox;
+
+    protected:
+      bool test_format(const QString& format) const override {
+        auto fields = match_format(format);
+        return fields && fields->m_has_hours;
+      }
+  };
 }
 
 DurationBox::DurationBox(QWidget* parent)
@@ -481,6 +485,10 @@ connection DurationBox::connect_reject_signal(
 connection DurationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool DurationBox::test_format(const QString& format) const {
+  return match_format(format).is_initialized();
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
@@ -588,8 +596,12 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DurationBox::set_format(const QString& format) {
-  auto format_fields = parse_format(format);
-  m_format = format;
+  if(test_format(format)) {
+    m_format = format;
+  } else {
+    m_format = DEFAULT_FORMAT;
+  }
+  auto format_fields = *match_format(m_format);
   auto has_fractional_seconds = format_fields.m_fractional_digits != 0;
   auto visibility = std::array<bool, FIELD_COUNT>{format_fields.m_has_hours,
     format_fields.m_has_minutes, format_fields.m_has_seconds,
@@ -712,7 +724,7 @@ void DurationBox::update_empty_fields() {
 
 DurationBox* Spire::make_time_box(const optional<time_duration>& time,
     QWidget* parent) {
-  return new DurationBox(make_time_of_day_model(time), parent);
+  return new TimeBox(make_time_of_day_model(time), parent);
 }
 
 DurationBox* Spire::make_time_box(QWidget* parent) {

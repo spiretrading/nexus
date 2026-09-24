@@ -88,6 +88,15 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
+
+      /**
+       * Returns <code>true</code> iff a format may be used to display this
+       * box's value. A format that fails this test is replaced by the default
+       * format <i>hh:mm:ss.fff</i>.
+       * @param format The format to test.
+       */
+      virtual bool test_format(const QString& format) const;
+
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
