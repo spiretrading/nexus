@@ -1,7 +1,8 @@
 ---
 trading_schedules:
   - venues: [XASX, CHIA, XATS, CHIC, XCNQ, CSE2, XCXD, XCX2, LYNX, MATN,
-             NEOE, OMGA, PURE, XTSE, XTSX, XATX, ADRK, XICX, LICA, NEON]
+             NEOE, OMGA, PURE, XTSE, XTSX, XATX, ADRK, XICX, LICA, NEON,
+             OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
     time:
       weekdays: [Sat, Sun]
   - venues: [XASX, CHIA]
@@ -14,6 +15,11 @@ trading_schedules:
             2026-08-03, 2026-09-07, 2026-10-12, 2026-12-25, 2026-12-28,
             2027-01-01, 2027-02-15, 2027-03-26, 2027-05-24, 2027-07-01,
             2027-08-02, 2027-09-06, 2027-10-11, 2027-12-27, 2027-12-28]
+  - venues: [OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
+    dates: [2026-01-01, 2026-01-19, 2026-02-16, 2026-04-03, 2026-05-25,
+            2026-06-19, 2026-07-03, 2026-09-07, 2026-11-26, 2026-12-25,
+            2027-01-01, 2027-01-18, 2027-02-15, 2027-03-26, 2027-05-31,
+            2027-06-18, 2027-07-05, 2027-09-06, 2027-11-25, 2027-12-24]
   - venues: [XTSE, XTSX]
     dates: [2026-12-24, 2027-12-24]
     events:
@@ -101,6 +107,13 @@ trading_schedules:
         time: "08:00:00"
       - code: CLOSE
         time: "13:30:00"
+  - venues: [OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
+    dates: [2026-11-27, 2026-12-24, 2027-11-26]
+    events:
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "13:00:00"
   - venues: [XTSE, XTSX, XCNQ, NEOE, MATN]
     events:
       - code: PRE_OPEN
@@ -143,4 +156,10 @@ trading_schedules:
         time: "10:00:00"
       - code: CLOSE
         time: "16:13:00"
+  - venues: [OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
+    events:
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "16:00:00"
 ...
