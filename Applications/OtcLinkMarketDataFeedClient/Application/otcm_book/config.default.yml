@@ -17,7 +17,8 @@ feeds:
 # snapshot:
 #   address: "224.0.23.196:21001"
 #   interface: "$local_interface:21001"
-#   timeout: 30s
+#   timeout: 1s
+#   retries: 1
 #   server:
 #     address: "192.26.98.86:21100"
 #     interface: "$local_interface:0"

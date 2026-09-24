@@ -1,8 +1,10 @@
 #ifndef OTC_LINK_SNAPSHOT_CLIENT_HPP
 #define OTC_LINK_SNAPSHOT_CLIENT_HPP
 #include <functional>
+#include <iostream>
 #include <sstream>
 #include <stop_token>
+#include <syncstream>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -21,6 +23,16 @@ namespace Nexus {
       std::same_as<OtcLinkSnapshot>;
     { client.close() } -> std::same_as<void>;
   };
+
+  /**
+   * Loads a snapshot, retrying failed attempts.
+   * @param retries The maximum number of retries after the initial attempt.
+   * @param load Loads one attempt using a fresh snapshot client.
+   * @param stop_token Cancels the load and prevents further attempts.
+   */
+  inline OtcLinkSnapshot load_snapshot(
+    int retries, std::function<OtcLinkSnapshot (std::stop_token)> load,
+    std::stop_token stop_token);
 
   /**
    * Loads one complete snapshot from a single snapshot feed.
@@ -104,6 +116,25 @@ namespace Nexus {
   template<typename F, typename P, typename T>
   OtcLinkSnapshotClient(OtcLinkSpinType, F, P&&, T&&) ->
     OtcLinkSnapshotClient<std::remove_cvref_t<P>, std::remove_cvref_t<T>>;
+
+  inline OtcLinkSnapshot load_snapshot(int retries,
+      std::function<OtcLinkSnapshot (std::stop_token)> load,
+      std::stop_token stop_token) {
+    for(auto attempt = 0;; ++attempt) {
+      if(stop_token.stop_requested()) {
+        boost::throw_with_location(Beam::EndOfFileException());
+      }
+      try {
+        return load(stop_token);
+      } catch(const std::exception& error) {
+        if(stop_token.stop_requested() || attempt >= retries) {
+          throw;
+        }
+        std::osyncstream(std::cout) << "(snapshot_retry " << attempt + 1 <<
+          ' ' << error.what() << ')' << std::endl;
+      }
+    }
+  }
 
   template<typename P, typename T> requires
     IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&

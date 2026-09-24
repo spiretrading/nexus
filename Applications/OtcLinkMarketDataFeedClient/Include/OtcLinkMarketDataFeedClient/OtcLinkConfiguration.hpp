@@ -54,6 +54,9 @@ namespace Nexus {
     /** The inactivity timeout while waiting for snapshot messages. */
     boost::posix_time::time_duration m_timeout;
 
+    /** The number of retries after a failed snapshot attempt. */
+    int m_retries;
+
     /** Parses a snapshot's configuration. */
     static OtcLinkSnapshotConfiguration parse(const YAML::Node& config);
   };
@@ -186,7 +189,9 @@ namespace Details {
     return OtcLinkSnapshotConfiguration(OtcLinkFeed::parse(config),
       OtcLinkRecoveryConfiguration::parse(Beam::get_node(config, "server")),
       Details::parse_otc_link_duration(
-        config, "timeout", boost::posix_time::seconds(30)));
+        config, "timeout", boost::posix_time::seconds(1)),
+      Beam::extract<int>(
+        config, "retries", 1, 0, std::numeric_limits<int>::max()));
   }
 
   inline boost::posix_time::time_duration get_timer_interval(

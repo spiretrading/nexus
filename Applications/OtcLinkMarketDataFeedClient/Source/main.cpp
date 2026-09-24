@@ -87,19 +87,20 @@ int main(int argc, const char** argv) {
       };
     }
     auto snapshot_server = std::unique_ptr<ApplicationRecoveryClient>();
-    auto snapshot_client = std::unique_ptr<ApplicationSnapshotClient>();
     auto snapshot = ApplicationOtcClient::SnapshotFunction();
     if(auto settings = configuration.m_snapshot) {
       snapshot_server =
         make_recovery_client(settings->m_server, configuration.m_channel);
-      snapshot_client = std::make_unique<ApplicationSnapshotClient>(
-        OtcLinkSpinType::MARKET_DATA, [&] (std::stop_token token) {
-          snapshot_server->request_snapshot(token);
-        }, make_protocol_client(settings->m_feed,
-          configuration.m_socket_options, *time_client),
-        init(get_timer_interval(*settings)));
-      snapshot = [&] (std::stop_token token) {
-        return snapshot_client->load_snapshot(token);
+      snapshot = [&, settings] (std::stop_token token) {
+        return load_snapshot(settings->m_retries, [&] (std::stop_token token) {
+          auto client = ApplicationSnapshotClient(OtcLinkSpinType::MARKET_DATA,
+            [&] (std::stop_token token) {
+              snapshot_server->request_snapshot(token);
+            }, make_protocol_client(settings->m_feed,
+              configuration.m_socket_options, *time_client),
+            init(get_timer_interval(*settings)));
+          return client.load_snapshot(token);
+        }, token);
       };
     }
     auto client = ApplicationOtcClient(configuration.m_feed_timeout,
@@ -110,13 +111,16 @@ int main(int argc, const char** argv) {
     if(auto settings = configuration.m_reference) {
       auto server = make_recovery_client(
         settings->m_server, OtcLinkConfiguration::INSIDE_CHANNEL);
-      auto snapshot = ApplicationSnapshotClient(OtcLinkSpinType::REFERENCE,
+      reference = load_snapshot(settings->m_retries,
         [&] (std::stop_token token) {
-          server->request_snapshot(token);
-        }, make_protocol_client(settings->m_feed,
-          configuration.m_socket_options, *time_client),
-        init(get_timer_interval(*settings)));
-      reference = snapshot.load_snapshot(std::stop_token());
+          auto snapshot = ApplicationSnapshotClient(OtcLinkSpinType::REFERENCE,
+            [&] (std::stop_token token) {
+              server->request_snapshot(token);
+            }, make_protocol_client(settings->m_feed,
+              configuration.m_socket_options, *time_client),
+            init(get_timer_interval(*settings)));
+          return snapshot.load_snapshot(token);
+        }, std::stop_token());
     }
     auto feed_client = OtcLinkMarketDataFeedClient(
       &market_data_feed_client, &client, time_client.get(),

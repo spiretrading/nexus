@@ -138,6 +138,103 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkSnapshotClient") {
+  TEST_CASE("snapshot_retry") {
+    auto failure = std::string("gap");
+    SUBCASE("gap") {}
+    SUBCASE("timeout") {
+      failure = "timeout";
+    }
+    SUBCASE("request") {
+      failure = "request";
+    }
+    for(auto type : {OtcLinkSpinType::REFERENCE, OtcLinkSpinType::MARKET_DATA}) {
+      auto attempts = 0;
+      auto snapshot = load_snapshot(1, [&] (std::stop_token token) {
+        ++attempts;
+        auto fixture = Fixture(type);
+        auto future = fixture.load(token);
+        if(attempts == 1 && failure == "request") {
+          fixture.m_acknowledgement.get_eval().set_exception(IOException());
+        } else {
+          fixture.m_acknowledgement.get_eval().set();
+          if(attempts == 1) {
+            fixture.publish(1, {
+              fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+              fixture.data(91)});
+            if(failure == "gap") {
+              fixture.publish(3, {fixture.data(92)});
+            } else {
+              fixture.expire(future);
+            }
+          } else {
+            fixture.publish(10, {
+              fixture.marker(false, OtcLinkSpinType::REFERENCE, 200),
+              fixture.data(191),
+              fixture.marker(true, OtcLinkSpinType::REFERENCE, 200)});
+            if(type == OtcLinkSpinType::MARKET_DATA) {
+              fixture.publish(11, {
+                fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 200),
+                fixture.data(192),
+                fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 200)});
+            }
+          }
+        }
+        return future.get();
+      }, {});
+      REQUIRE(attempts == 2);
+      REQUIRE(snapshot.m_sequence == 201);
+      auto fixture = Fixture(type);
+      if(type == OtcLinkSpinType::REFERENCE) {
+        REQUIRE(snapshot.m_messages.size() == 1);
+      } else {
+        REQUIRE(snapshot.m_messages.size() == 2);
+        REQUIRE(snapshot.m_messages[1] == fixture.data(192));
+      }
+      REQUIRE(snapshot.m_messages[0] == fixture.data(191));
+    }
+  }
+
+  TEST_CASE("snapshot_retry_limit") {
+    for(auto retries : {0, 1, 3}) {
+      auto attempts = 0;
+      REQUIRE_THROWS_AS(load_snapshot(retries,
+        [&] (std::stop_token) -> OtcLinkSnapshot {
+          ++attempts;
+          throw IOException();
+        }, {}), IOException);
+      REQUIRE(attempts == retries + 1);
+    }
+    auto attempts = 0;
+    auto snapshot = load_snapshot(1, [&] (std::stop_token) {
+      ++attempts;
+      return OtcLinkSnapshot(123, {});
+    }, {});
+    REQUIRE(attempts == 1);
+    REQUIRE(snapshot.m_sequence == 123);
+  }
+
+  TEST_CASE("snapshot_retry_cancellation") {
+    auto stop = std::stop_source();
+    auto is_canceled = false;
+    SUBCASE("before_attempt") {
+      stop.request_stop();
+      is_canceled = true;
+    }
+    SUBCASE("during_attempt") {}
+    auto attempts = 0;
+    REQUIRE_THROWS_AS(load_snapshot(1,
+      [&] (std::stop_token) -> OtcLinkSnapshot {
+        ++attempts;
+        stop.request_stop();
+        throw EndOfFileException();
+      }, stop.get_token()), EndOfFileException);
+    if(is_canceled) {
+      REQUIRE(attempts == 0);
+    } else {
+      REQUIRE(attempts == 1);
+    }
+  }
+
   TEST_CASE("initial_inactivity") {
     auto is_acknowledged = false;
     SUBCASE("awaiting_acknowledgement") {}

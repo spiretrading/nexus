@@ -57,6 +57,8 @@ server:
     REQUIRE(config.m_reference->m_feed.m_address ==
       IpAddress("224.0.23.214", 21005));
     REQUIRE(config.m_reference->m_server.m_sender == "subscriber");
+    REQUIRE(config.m_reference->m_retries == 1);
+    REQUIRE(config.m_reference->m_timeout == seconds(1));
     REQUIRE_FALSE(config.m_snapshot.has_value());
     SUBCASE("trade_snapshot") {
       source["snapshot"] = YAML::Clone(source["reference"]);
@@ -270,10 +272,22 @@ address: "224.0.23.210:21001"
 interface: "10.0.0.1:21001"
 )");
     snapshot["server"] = server;
-    REQUIRE(OtcLinkRecoveryConfiguration::parse(server).m_timeout ==
-      seconds(1));
-    REQUIRE(OtcLinkSnapshotConfiguration::parse(snapshot).m_timeout ==
-      seconds(30));
+    REQUIRE(
+      OtcLinkRecoveryConfiguration::parse(server).m_timeout == seconds(1));
+    REQUIRE(
+      OtcLinkSnapshotConfiguration::parse(snapshot).m_timeout == seconds(1));
+    REQUIRE(OtcLinkSnapshotConfiguration::parse(snapshot).m_retries == 1);
+    for(auto retries : {0, 2}) {
+      snapshot["retries"] = retries;
+      REQUIRE(
+        OtcLinkSnapshotConfiguration::parse(snapshot).m_retries == retries);
+    }
+    for(auto value : {"-1", "2147483648", "invalid"}) {
+      snapshot["retries"] = value;
+      REQUIRE_THROWS_AS(
+        OtcLinkSnapshotConfiguration::parse(snapshot), std::runtime_error);
+    }
+    snapshot.remove("retries");
     for(auto value : {"0s", "-1s", "infinity", "not-a-date-time"}) {
       server["timeout"] = value;
       REQUIRE_THROWS_AS(
