@@ -255,6 +255,15 @@ namespace {
             make_reference()),
           m_session(0) {}
 
+    Fixture(boost::optional<OtcLinkSnapshot> reference,
+        bool is_logging_messages)
+        : m_operations(std::make_shared<FeedClient::Queue>()),
+          m_feed_client(m_operations),
+          m_time_client(time_from_string("2023-11-15 00:00:00")),
+          m_client(&m_feed_client, &m_otc_client, &m_time_client,
+            std::move(reference), is_logging_messages),
+          m_session(0) {}
+
     ~Fixture() {
       m_client.close();
     }
@@ -290,6 +299,97 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMarketDataFeedClient") {
+  TEST_CASE("message_logging") {
+    auto log = Log();
+    auto is_logging = false;
+    SUBCASE("disabled") {}
+    SUBCASE("enabled") {
+      is_logging = true;
+    }
+    auto encoder = Encoder();
+    encoder.write(std::uint8_t(0), std::uint8_t(0x80), std::uint8_t(0xff));
+    auto payload = encoder.finish(255);
+    auto reference = OtcLinkSnapshot(100, {payload});
+    auto fixture = Fixture(reference, is_logging);
+    fixture.m_otc_client.m_messages.push(std::pair(payload, 0));
+    fixture.require_empty();
+    if(is_logging) {
+      REQUIRE(log.m_output.str() ==
+        "(message 255 0080ff)\n(message 255 0080ff)\n");
+    } else {
+      REQUIRE(log.m_output.str().empty());
+    }
+  }
+
+  TEST_CASE("malformed_message_logging") {
+    auto log = Log();
+    auto is_logging = false;
+    SUBCASE("disabled") {}
+    SUBCASE("enabled") {
+      is_logging = true;
+    }
+    auto fixture = Fixture(boost::none, is_logging);
+    auto payload = Encoder().finish(OtcLinkTrade::TYPE);
+    fixture.m_otc_client.m_messages.push(std::pair(payload, 0));
+    fixture.m_otc_client.m_messages.push(
+      std::pair(Encoder().finish(255), 0));
+    fixture.require_empty();
+    REQUIRE(!fixture.m_client.is_finished());
+    auto output = log.m_output.str();
+    auto message = std::string("(message 17 )\n");
+    REQUIRE(output.starts_with(message));
+    REQUIRE(output.find(message, message.size()) == std::string::npos);
+    REQUIRE(output.find("(bad_message 17 ") == message.size());
+    if(is_logging) {
+      REQUIRE(output.ends_with("(message 255 )\n"));
+    } else {
+      REQUIRE(output.find("(message 255 ") == std::string::npos);
+    }
+  }
+
+  TEST_CASE("unmapped_security") {
+    auto log = Log();
+    auto fixture = Fixture();
+    auto trade = make_trade();
+    SUBCASE("trade") {
+      fixture.send(trade);
+    }
+    SUBCASE("book") {
+      fixture.send(make_quote());
+    }
+    SUBCASE("inside") {
+      fixture.send(make_inside());
+    }
+    fixture.require_empty();
+    REQUIRE(log.m_output.str() ==
+      "(unmapped_security 2023-Nov-15 00:00:00 10)\n");
+    for(auto i = 0; i != 2; ++i) {
+      fixture.send(trade);
+      fixture.send(make_quote());
+      fixture.send(make_inside());
+    }
+    ++trade.m_security;
+    fixture.send(trade);
+    fixture.send(trade);
+    fixture.require_empty();
+    auto expected = std::string(
+      "(unmapped_security 2023-Nov-15 00:00:00 10)\n"
+      "(unmapped_security 2023-Nov-15 00:00:00 11)\n");
+    REQUIRE(log.m_output.str() == expected);
+    fixture.security();
+    trade = make_trade();
+    fixture.send(trade);
+    fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    auto security = make_security();
+    security.m_action = OtcLinkSecurityAction::DELETE;
+    fixture.send(security);
+    fixture.send(trade);
+    ++fixture.m_session;
+    fixture.send(trade);
+    fixture.require_empty();
+    REQUIRE(log.m_output.str() == expected);
+  }
+
   TEST_CASE("malformed_trade") {
     auto log = Log();
     auto fixture = Fixture(TradeFeed());

@@ -193,7 +193,7 @@ namespace Nexus {
         static_cast<unsigned char>(message.m_payload[i]));
     }
     out << ")\n";
-    std::cout << out.str() << std::flush;
+    std::cout << out.str();
   }
 
   template<typename M, typename C> requires
@@ -670,6 +670,7 @@ namespace Nexus {
           if(!m_config.m_is_logging_messages) {
             log(message);
           }
+          std::cout << std::flush;
           throw;
         }
       }

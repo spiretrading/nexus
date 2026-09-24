@@ -70,6 +70,9 @@ namespace Nexus {
     /** The Trade channel's RefApplID. */
     static constexpr auto TRADE_CHANNEL = std::uint16_t(1);
 
+    /** Whether to log every received message. */
+    bool m_is_logging_messages;
+
     /** The country whose registry receives published market data. */
     CountryCode m_country;
 
@@ -185,6 +188,8 @@ namespace Details {
   inline OtcLinkConfiguration OtcLinkConfiguration::parse(
       const YAML::Node& config) {
     auto configuration = OtcLinkConfiguration();
+    configuration.m_is_logging_messages =
+      Beam::extract<bool>(config, "enable_logging", false);
     configuration.m_country =
       parse_country_code(Beam::extract<std::string>(config, "country", "US"));
     if(!configuration.m_country) {

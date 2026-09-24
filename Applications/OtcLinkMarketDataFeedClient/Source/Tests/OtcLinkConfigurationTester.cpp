@@ -19,6 +19,18 @@ feeds:
 }
 
 TEST_SUITE("OtcLinkConfiguration") {
+  TEST_CASE("logging") {
+    auto source = make_config();
+    REQUIRE(!OtcLinkConfiguration::parse(source).m_is_logging_messages);
+    source["enable_logging"] = true;
+    REQUIRE(OtcLinkConfiguration::parse(source).m_is_logging_messages);
+    source["enable_logging"] = false;
+    REQUIRE(!OtcLinkConfiguration::parse(source).m_is_logging_messages);
+    source["enable_logging"] = "invalid";
+    REQUIRE_THROWS_AS(
+      OtcLinkConfiguration::parse(source), std::runtime_error);
+  }
+
   TEST_CASE("trade_channel") {
     auto source = make_config();
     REQUIRE_FALSE(OtcLinkConfiguration::parse(source).m_reference.has_value());

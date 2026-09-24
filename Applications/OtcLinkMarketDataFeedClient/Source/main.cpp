@@ -120,7 +120,7 @@ int main(int argc, const char** argv) {
     }
     auto feed_client = OtcLinkMarketDataFeedClient(
       &market_data_feed_client, &client, time_client.get(),
-      std::move(reference));
+      std::move(reference), configuration.m_is_logging_messages);
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

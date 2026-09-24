@@ -2,6 +2,7 @@
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <functional>
 #include <iomanip>
+#include <syncstream>
 #include <tuple>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -401,9 +402,7 @@ namespace Nexus {
       try {
         if(m_config.m_is_logging_messages) {
           visit(message, [] (const auto& message) {
-            print([&] (auto& out) {
-              out << message;
-            });
+            std::osyncstream(std::cout) << message << '\n';
           });
         }
         dispatch(message);

@@ -59,6 +59,20 @@ namespace Nexus {
       OtcLinkMarketDataFeedClient(MF&& feed_client, CF&& otc_client,
         TF&& time_client, boost::optional<OtcLinkSnapshot> reference);
 
+      /**
+       * Constructs a publisher with message logging control.
+       * @param feed_client Initializes the market data publisher.
+       * @param otc_client Initializes the ordered message source.
+       * @param time_client Initializes the time source.
+       * @param reference The initial security definitions for Trades, if any.
+       * @param is_logging_messages Whether to log every received message.
+       */
+      template<Beam::Initializes<M> MF, Beam::Initializes<C> CF,
+        Beam::Initializes<T> TF>
+      OtcLinkMarketDataFeedClient(MF&& feed_client, CF&& otc_client,
+        TF&& time_client, boost::optional<OtcLinkSnapshot> reference,
+        bool is_logging_messages);
+
       ~OtcLinkMarketDataFeedClient();
 
       /** Returns whether message reception has finished. */
@@ -89,8 +103,10 @@ namespace Nexus {
       Beam::local_ptr_t<C> m_otc_client;
       Beam::local_ptr_t<T> m_time_client;
       std::unordered_map<std::uint32_t, Book> m_books;
+      std::unordered_set<std::uint32_t> m_unmapped_securities;
       std::unordered_map<std::uint32_t, Participant> m_quotes;
       std::unordered_map<std::uint32_t, Entry> m_insides;
+      bool m_is_logging_messages;
       std::uint64_t m_session;
       bool m_is_market_open;
       Beam::Sync<std::exception_ptr> m_exception;
@@ -101,11 +117,13 @@ namespace Nexus {
       static Venue get_venue(OtcLinkTier tier);
       static boost::posix_time::ptime get_timestamp(std::uint64_t timestamp);
       static Quantity convert(std::uint64_t value, std::uint64_t scale);
-      static void log(
-        const OtcLinkMessage& message, const std::exception& exception);
+      static void log(const OtcLinkMessage& message);
       OtcLinkMarketDataFeedClient(const OtcLinkMarketDataFeedClient&) = delete;
       OtcLinkMarketDataFeedClient& operator =(
         const OtcLinkMarketDataFeedClient&) = delete;
+      void log(const OtcLinkMessage& message,
+        const std::exception& exception) const;
+      void log_unmapped(std::uint32_t security);
       Quote get_quote(const Entry& entry, Side side) const;
       void publish(std::uint32_t id, Participant& entry,
         boost::posix_time::ptime timestamp);
@@ -143,6 +161,11 @@ namespace Nexus {
     boost::optional<OtcLinkSnapshot>) -> OtcLinkMarketDataFeedClient<
       std::remove_cvref_t<M>, std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
+  template<typename M, typename C, typename T>
+  OtcLinkMarketDataFeedClient(M&&, C&&, T&&,
+    boost::optional<OtcLinkSnapshot>, bool) -> OtcLinkMarketDataFeedClient<
+      std::remove_cvref_t<M>, std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
+
   template<typename M, typename C, typename T> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsOtcLinkClient<Beam::dereference_t<C>> &&
@@ -164,9 +187,23 @@ namespace Nexus {
   OtcLinkMarketDataFeedClient<M, C, T>::OtcLinkMarketDataFeedClient(
       MF&& feed_client, CF&& otc_client, TF&& time_client,
       boost::optional<OtcLinkSnapshot> reference)
+    : OtcLinkMarketDataFeedClient(std::forward<MF>(feed_client),
+        std::forward<CF>(otc_client), std::forward<TF>(time_client),
+        std::move(reference), false) {}
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<Beam::Initializes<M> MF, Beam::Initializes<C> CF,
+    Beam::Initializes<T> TF>
+  OtcLinkMarketDataFeedClient<M, C, T>::OtcLinkMarketDataFeedClient(
+      MF&& feed_client, CF&& otc_client, TF&& time_client,
+      boost::optional<OtcLinkSnapshot> reference, bool is_logging_messages)
       : m_feed_client(std::forward<MF>(feed_client)),
         m_otc_client(std::forward<CF>(otc_client)),
         m_time_client(std::forward<TF>(time_client)),
+        m_is_logging_messages(is_logging_messages),
         m_session(0),
         m_is_market_open(true),
         m_is_finished(false) {
@@ -269,15 +306,41 @@ namespace Nexus {
       IsOtcLinkClient<Beam::dereference_t<C>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::log(
-      const OtcLinkMessage& message, const std::exception& exception) {
+      const OtcLinkMessage& message) {
     auto out = std::osyncstream(std::cout);
-    out << "(bad_message " << static_cast<unsigned int>(message.m_type) <<
-      ' ' << exception.what() << ' ' << std::hex << std::setfill('0');
+    out << "(message " << static_cast<unsigned int>(message.m_type) << ' ' <<
+      std::hex << std::setfill('0');
     for(auto value : message.m_payload) {
       out << std::setw(2) <<
         static_cast<unsigned int>(static_cast<unsigned char>(value));
     }
-    out << ')' << std::endl;
+    out << ')' << '\n';
+  }
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void OtcLinkMarketDataFeedClient<M, C, T>::log(
+      const OtcLinkMessage& message, const std::exception& exception) const {
+    if(!m_is_logging_messages) {
+      log(message);
+    }
+    std::osyncstream(std::cout) << "(bad_message " <<
+      static_cast<unsigned int>(message.m_type) << ' ' <<
+      exception.what() << ')' << std::endl;
+  }
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void OtcLinkMarketDataFeedClient<M, C, T>::log_unmapped(
+      std::uint32_t security) {
+    if(m_unmapped_securities.insert(security).second) {
+      std::osyncstream(std::cout) << "(unmapped_security " <<
+        m_time_client->get_time() << ' ' << security << ')' << std::endl;
+    }
   }
 
   template<typename M, typename C, typename T> requires
@@ -444,6 +507,7 @@ namespace Nexus {
       const OtcLinkTrade& message) {
     auto i = m_books.find(message.m_security);
     if(i == m_books.end()) {
+      log_unmapped(message.m_security);
       return;
     }
     auto sale = TimeAndSale();
@@ -533,6 +597,7 @@ namespace Nexus {
       return;
     }
     if(!m_books.contains(message.m_security)) {
+      log_unmapped(message.m_security);
       if(i != m_quotes.end()) {
         withdraw(i->first, i->second, timestamp);
         m_quotes.erase(i);
@@ -604,8 +669,11 @@ namespace Nexus {
       m_insides.erase(i);
       publish(book, timestamp);
     }
-    if(message.m_action == OtcLinkInsideAction::DELETE ||
-        !m_books.contains(message.m_security)) {
+    if(message.m_action == OtcLinkInsideAction::DELETE) {
+      return;
+    }
+    if(!m_books.contains(message.m_security)) {
+      log_unmapped(message.m_security);
       return;
     }
     m_insides.insert_or_assign(message.m_inside, std::move(entry));
@@ -677,6 +745,9 @@ namespace Nexus {
           }
           auto message = OtcLinkMessage::parse(
             std::string_view(payload.get_data(), payload.get_size()));
+          if(m_is_logging_messages) {
+            log(message);
+          }
           if(message.m_type == OtcLinkSecurity::TYPE ||
               message.m_type == OtcLinkFractionalSecurity::TYPE) {
             try {
@@ -698,6 +769,9 @@ namespace Nexus {
         }
         if(!m_open_state.is_open()) {
           break;
+        }
+        if(m_is_logging_messages) {
+          log(message);
         }
         if(is_trade && message.m_type != OtcLinkTrade::TYPE) {
           continue;
