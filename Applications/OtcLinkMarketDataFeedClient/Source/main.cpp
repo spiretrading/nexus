@@ -97,7 +97,7 @@ int main(int argc, const char** argv) {
           snapshot_server->request_snapshot(token);
         }, make_protocol_client(settings->m_feed,
           configuration.m_socket_options, *time_client),
-        init(settings->m_timeout));
+        init(get_timer_interval(*settings)));
       snapshot = [&] (std::stop_token token) {
         return snapshot_client->load_snapshot(token);
       };
@@ -115,7 +115,7 @@ int main(int argc, const char** argv) {
           server->request_snapshot(token);
         }, make_protocol_client(settings->m_feed,
           configuration.m_socket_options, *time_client),
-        init(settings->m_timeout));
+        init(get_timer_interval(*settings)));
       reference = snapshot.load_snapshot(std::stop_token());
     }
     auto feed_client = OtcLinkMarketDataFeedClient(

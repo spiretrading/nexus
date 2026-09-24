@@ -59,6 +59,20 @@ namespace {
       return future;
     }
 
+    void tick() {
+      m_timer.trigger();
+      flush_pending_routines();
+    }
+
+    void expire(std::future<OtcLinkSnapshot>& future) {
+      for(auto i = 0; i < 3 && future.wait_for(std::chrono::seconds(0)) ==
+          std::future_status::timeout; ++i) {
+        tick();
+      }
+      REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+        std::future_status::ready);
+    }
+
     SharedBuffer message(std::uint8_t type, const SharedBuffer& payload) {
       auto buffer = SharedBuffer();
       append(buffer, endian::native_to_big(static_cast<std::uint16_t>(
@@ -124,6 +138,91 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkSnapshotClient") {
+  TEST_CASE("initial_inactivity") {
+    auto is_acknowledged = false;
+    SUBCASE("awaiting_acknowledgement") {}
+    SUBCASE("acknowledged") {
+      is_acknowledged = true;
+    }
+    auto fixture = Fixture();
+    auto future = fixture.load({});
+    if(is_acknowledged) {
+      fixture.m_acknowledgement.get_eval().set();
+      flush_pending_routines();
+    }
+    fixture.tick();
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    fixture.tick();
+    REQUIRE_THROWS_AS(future.get(), IOException);
+  }
+
+  TEST_CASE("snapshot_activity") {
+    auto fixture = Fixture();
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.tick();
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    auto messages = std::vector<SharedBuffer>{
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(91),
+      fixture.marker(true, OtcLinkSpinType::REFERENCE, 100),
+      fixture.marker(false, OtcLinkSpinType::MARKET_DATA, 100),
+      fixture.data(92), fixture.data(93)};
+    auto sequence = std::uint32_t(1);
+    for(auto& message : messages) {
+      fixture.publish(sequence, {message});
+      ++sequence;
+      fixture.tick();
+      fixture.tick();
+      REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+        std::future_status::timeout);
+    }
+    fixture.publish(sequence, {
+      fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 100)});
+    auto snapshot = future.get();
+    REQUIRE(snapshot.m_sequence == 101);
+    REQUIRE(snapshot.m_messages.size() == 3);
+    REQUIRE(snapshot.m_messages[0] == fixture.data(91));
+    REQUIRE(snapshot.m_messages[1] == fixture.data(92));
+    REQUIRE(snapshot.m_messages[2] == fixture.data(93));
+  }
+
+  TEST_CASE("snapshot_inactivity") {
+    auto flag = OtcLinkHeader::Flag::HEARTBEAT;
+    auto is_duplicate = false;
+    SUBCASE("heartbeats") {}
+    SUBCASE("test") {
+      flag = OtcLinkHeader::Flag::TEST;
+    }
+    SUBCASE("replay") {
+      flag = OtcLinkHeader::Flag::REPLAY;
+    }
+    SUBCASE("duplicate") {
+      is_duplicate = true;
+    }
+    auto fixture = Fixture();
+    auto future = fixture.load({});
+    fixture.m_acknowledgement.get_eval().set();
+    fixture.publish(1, {
+      fixture.marker(false, OtcLinkSpinType::REFERENCE, 100),
+      fixture.data(91)});
+    fixture.tick();
+    fixture.tick();
+    REQUIRE(future.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::timeout);
+    if(is_duplicate) {
+      fixture.publish(1, {fixture.data(91)});
+    } else if(flag == OtcLinkHeader::Flag::HEARTBEAT) {
+      fixture.publish(2, {});
+    } else {
+      fixture.publish(2, {fixture.data(92)}, static_cast<std::uint8_t>(flag));
+    }
+    fixture.tick();
+    REQUIRE_THROWS_AS(future.get(), IOException);
+  }
+
   TEST_CASE("timeout_diagnostics") {
     auto fixture = Fixture();
     auto future = fixture.load({});
@@ -187,8 +286,8 @@ TEST_SUITE("OtcLinkSnapshotClient") {
       fixture.m_timer.fail();
       expected = "OTC Link snapshot timer failed.";
     } else {
-      fixture.m_timer.trigger();
-      expected = "OTC Link snapshot deadline expired.";
+      fixture.expire(future);
+      expected = "OTC Link snapshot inactivity timeout expired.";
     }
     if(is_acknowledged) {
       expected += " acknowledgement=received ";
@@ -227,7 +326,7 @@ TEST_SUITE("OtcLinkSnapshotClient") {
       REQUIRE(snapshot.m_sequence == 1);
       REQUIRE(snapshot.m_messages.empty());
     } else {
-      fixture.m_timer.trigger();
+      fixture.expire(future);
       REQUIRE_THROWS_AS(future.get(), IOException);
     }
   }
@@ -265,7 +364,7 @@ TEST_SUITE("OtcLinkSnapshotClient") {
       fixture.publish(2, {
         fixture.marker(true, OtcLinkSpinType::MARKET_DATA, 101)});
     } else if(action == 2) {
-      fixture.m_timer.trigger();
+      fixture.expire(future);
     } else if(action == 3) {
       stop.request_stop();
     } else if(action == 4) {
@@ -416,8 +515,8 @@ TEST_SUITE("OtcLinkSnapshotClient") {
       REQUIRE(snapshot.m_messages[1] == fixture.data(191));
       REQUIRE(snapshot.m_messages[2] == fixture.data(192));
     }
-    SUBCASE("deadline") {
-      fixture.m_timer.trigger();
+    SUBCASE("inactivity") {
+      fixture.expire(future);
       auto actual = [&] {
         try {
           future.get();
@@ -426,7 +525,7 @@ TEST_SUITE("OtcLinkSnapshotClient") {
         }
         return std::string();
       }();
-      REQUIRE(actual == "OTC Link snapshot deadline expired. "
+      REQUIRE(actual == "OTC Link snapshot inactivity timeout expired. "
         "acknowledgement=received packets=2 messages=5 heartbeats=0 "
         "last_packet=11 expected_spin=market_data "
         "last_marker=end/market_data/100");

@@ -109,6 +109,14 @@ server:
     REQUIRE(config.get_timer_interval() == milliseconds(20));
   }
 
+  TEST_CASE("snapshot_timer_interval") {
+    auto configuration = OtcLinkSnapshotConfiguration();
+    configuration.m_timeout = seconds(1);
+    REQUIRE(get_timer_interval(configuration) == milliseconds(500));
+    configuration.m_timeout = time_duration::unit();
+    REQUIRE(get_timer_interval(configuration) == time_duration::unit());
+  }
+
   TEST_CASE("optional_services") {
     auto source = make_config();
     source["service"] = "inside";

@@ -51,12 +51,16 @@ namespace Nexus {
     /** The server publishing the selected snapshot feed. */
     OtcLinkRecoveryConfiguration m_server;
 
-    /** The deadline for acknowledgement and the complete snapshot. */
+    /** The inactivity timeout while waiting for snapshot messages. */
     boost::posix_time::time_duration m_timeout;
 
     /** Parses a snapshot's configuration. */
     static OtcLinkSnapshotConfiguration parse(const YAML::Node& config);
   };
+
+  /** Returns the interval for snapshot inactivity checks. */
+  boost::posix_time::time_duration get_timer_interval(
+    const OtcLinkSnapshotConfiguration& configuration);
 
   /** The configuration for an OTC Link Book, Inside, or Trades service. */
   struct OtcLinkConfiguration {
@@ -183,6 +187,12 @@ namespace Details {
       OtcLinkRecoveryConfiguration::parse(Beam::get_node(config, "server")),
       Details::parse_otc_link_duration(
         config, "timeout", boost::posix_time::seconds(30)));
+  }
+
+  inline boost::posix_time::time_duration get_timer_interval(
+      const OtcLinkSnapshotConfiguration& configuration) {
+    return std::max(
+      configuration.m_timeout / 2, boost::posix_time::time_duration::unit());
   }
 
   inline OtcLinkConfiguration OtcLinkConfiguration::parse(
