@@ -106,8 +106,21 @@ int main(int argc, const char** argv) {
       configuration.m_gap_timeout, std::move(feed_clients), time_client.get(),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()),
       std::move(recovery), std::move(snapshot));
+    auto reference = boost::optional<OtcLinkSnapshot>();
+    if(auto settings = configuration.m_reference) {
+      auto server = make_recovery_client(
+        settings->m_server, OtcLinkConfiguration::INSIDE_CHANNEL);
+      auto snapshot = ApplicationSnapshotClient(OtcLinkSpinType::REFERENCE,
+        [&] (std::stop_token token) {
+          server->request_snapshot(token);
+        }, make_protocol_client(settings->m_feed,
+          configuration.m_socket_options, *time_client),
+        init(settings->m_timeout));
+      reference = snapshot.load_snapshot(std::stop_token());
+    }
     auto feed_client = OtcLinkMarketDataFeedClient(
-      &market_data_feed_client, &client, time_client.get());
+      &market_data_feed_client, &client, time_client.get(),
+      std::move(reference));
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

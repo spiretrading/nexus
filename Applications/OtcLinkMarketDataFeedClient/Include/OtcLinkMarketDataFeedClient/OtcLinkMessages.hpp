@@ -714,11 +714,65 @@ namespace Nexus {
     static OtcLinkFractionalInsideUpdate parse(const OtcLinkMessage& message);
   };
 
+  /** A trade reported on the OTC Link Trade channel. */
+  struct OtcLinkTrade {
+
+    /** The wire message type. */
+    static constexpr auto TYPE = std::uint8_t(17);
+
+    /** The minimum message length, including its header. */
+    static constexpr auto LENGTH = OtcLinkMessage::HEADER_LENGTH + 43;
+
+    /** The number of price units per dollar. */
+    static constexpr auto PRICE_SCALE = std::uint64_t(1000000);
+
+    /** Identifies trade status attributes. */
+    enum class Status : std::uint8_t {
+
+      /** The trade has non-regular conditions. */
+      IRREGULAR = 0x01
+    };
+
+    /** The channel message sequence. */
+    std::uint32_t m_sequence;
+
+    /** The trade identifier. */
+    std::uint32_t m_trade;
+
+    /** The trade flags, currently deprecated or reserved. */
+    std::uint8_t m_flags;
+
+    /** The OTC Markets security identifier. */
+    std::uint32_t m_security;
+
+    /** The trade status bits. */
+    std::uint8_t m_status;
+
+    /** The executing venue; borrows the source message. */
+    std::string_view m_venue;
+
+    /** The execution price in PRICE_SCALE units. */
+    std::uint64_t m_price;
+
+    /** The number of shares executed. */
+    std::uint32_t m_size;
+
+    /** The execution time in milliseconds since the UTC epoch. */
+    std::uint64_t m_timestamp;
+
+    /** Parses a trade message. */
+    static OtcLinkTrade parse(const OtcLinkMessage& message);
+
+    /** Returns whether a trade status attribute is set. */
+    bool has_status(Status status) const;
+  };
+
   /** Concept satisfied by callables accepting an OTC Link message type. */
   template<typename F>
   concept IsOtcLinkVisitor =
     !std::is_member_pointer_v<std::remove_cvref_t<F>> && (
       std::invocable<F, const OtcLinkMessage&> ||
+      std::invocable<F, OtcLinkTrade> ||
       std::invocable<F, OtcLinkQuote> ||
       std::invocable<F, OtcLinkQuoteUpdate> ||
       std::invocable<F, OtcLinkFractionalQuote> ||
@@ -1004,8 +1058,40 @@ namespace OtcLinkDetails {
       cursor);
   }
 
+  inline OtcLinkTrade OtcLinkTrade::parse(const OtcLinkMessage& message) {
+    auto cursor = OtcLinkDetails::get_cursor(message, TYPE);
+    auto trade = OtcLinkTrade();
+    trade.m_sequence = cursor.read_uint32();
+    trade.m_trade = cursor.read_uint32();
+    constexpr auto ADD = 2;
+    if(cursor.read_uint8() != ADD) {
+      boost::throw_with_location(
+        OtcLinkParserException("Invalid OTC Link trade action."));
+    }
+    trade.m_flags = cursor.read_uint8();
+    trade.m_security = cursor.read_uint32();
+    trade.m_status = cursor.read_uint8();
+    constexpr auto VENUE_LENGTH = 3;
+    trade.m_venue = cursor.read_bytes(VENUE_LENGTH);
+    constexpr auto DEPRECATED_LENGTH = 5;
+    cursor.read_bytes(DEPRECATED_LENGTH);
+    trade.m_price = cursor.read_uint64();
+    trade.m_size = cursor.read_uint32();
+    trade.m_timestamp = cursor.read_uint64();
+    return trade;
+  }
+
+  inline bool OtcLinkTrade::has_status(Status status) const {
+    return (m_status & static_cast<std::uint8_t>(status)) != 0;
+  }
+
   template<IsOtcLinkVisitor F, IsOtcLinkVisitor... G>
   decltype(auto) visit(const OtcLinkMessage& message, F&& f, G&&... g) {
+    if constexpr(std::invocable<F, OtcLinkTrade>) {
+      if(message.m_type == OtcLinkTrade::TYPE) {
+        return std::forward<F>(f)(OtcLinkTrade::parse(message));
+      }
+    }
     if constexpr(std::invocable<F, OtcLinkSecurity>) {
       if(message.m_type == OtcLinkSecurity::TYPE) {
         return std::forward<F>(f)(OtcLinkSecurity::parse(message));
@@ -1082,9 +1168,9 @@ namespace OtcLinkDetails {
     } else if constexpr(sizeof...(G) != 0) {
       return visit(message, std::forward<G>(g)...);
     } else if constexpr(OtcLinkDetails::is_void_invocable<F,
-        OtcLinkSecurity, OtcLinkFractionalSecurity, OtcLinkMarketOpen,
-        OtcLinkMarketClose, OtcLinkSpinStart, OtcLinkSpinEnd, OtcLinkQuote,
-        OtcLinkQuoteUpdate, OtcLinkFractionalQuote,
+        OtcLinkTrade, OtcLinkSecurity, OtcLinkFractionalSecurity,
+        OtcLinkMarketOpen, OtcLinkMarketClose, OtcLinkSpinStart, OtcLinkSpinEnd,
+        OtcLinkQuote, OtcLinkQuoteUpdate, OtcLinkFractionalQuote,
         OtcLinkFractionalQuoteUpdate, OtcLinkInside, OtcLinkInsideUpdate,
         OtcLinkFractionalInside, OtcLinkFractionalInsideUpdate>) {
       return;

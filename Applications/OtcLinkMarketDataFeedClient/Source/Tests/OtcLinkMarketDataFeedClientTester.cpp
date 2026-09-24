@@ -117,6 +117,28 @@ namespace {
     return encoder.finish(message.TYPE);
   }
 
+  SharedBuffer encode(const OtcLinkTrade& message) {
+    auto encoder = Encoder();
+    constexpr auto ADD = std::uint8_t(2);
+    encoder.write(message.m_sequence, message.m_trade, ADD, message.m_flags,
+      message.m_security, message.m_status);
+    append(encoder.m_buffer, message.m_venue.data(), message.m_venue.size());
+    append(encoder.m_buffer, "     ", 5);
+    encoder.write(message.m_price, message.m_size, message.m_timestamp);
+    return encoder.finish(message.TYPE);
+  }
+
+  OtcLinkTrade make_trade() {
+    auto trade = OtcLinkTrade();
+    trade.m_trade = 40;
+    trade.m_security = 10;
+    trade.m_venue = "ATS";
+    trade.m_price = 1250000;
+    trade.m_size = 123;
+    trade.m_timestamp = TIMESTAMP;
+    return trade;
+  }
+
   SharedBuffer encode(const OtcLinkMarketClose& message) {
     auto encoder = Encoder();
     encoder.write(message.m_sequence, message.m_timestamp, message.m_count);
@@ -202,6 +224,13 @@ namespace {
     }
   };
 
+  boost::optional<OtcLinkSnapshot> make_reference() {
+    return OtcLinkSnapshot(500000, {encode(make_security()),
+      encode(make_quote()), encode(make_inside()), encode(make_trade())});
+  }
+
+  struct TradeFeed {};
+
   struct Fixture {
     std::shared_ptr<FeedClient::Queue> m_operations;
     FeedClient m_feed_client;
@@ -216,6 +245,14 @@ namespace {
           m_feed_client(m_operations),
           m_time_client(time_from_string("2023-11-15 00:00:00")),
           m_client(&m_feed_client, &m_otc_client, &m_time_client),
+          m_session(0) {}
+
+    explicit Fixture(TradeFeed)
+        : m_operations(std::make_shared<FeedClient::Queue>()),
+          m_feed_client(m_operations),
+          m_time_client(time_from_string("2023-11-15 00:00:00")),
+          m_client(&m_feed_client, &m_otc_client, &m_time_client,
+            make_reference()),
           m_session(0) {}
 
     ~Fixture() {
@@ -253,6 +290,113 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMarketDataFeedClient") {
+  TEST_CASE("malformed_trade") {
+    auto log = Log();
+    auto fixture = Fixture(TradeFeed());
+    fixture.take<FeedClient::AddOperation>();
+    auto trade = make_trade();
+    auto buffer = encode(trade);
+    SUBCASE("action") {
+      constexpr auto ACTION_OFFSET =
+        OtcLinkMessage::HEADER_LENGTH + 2 * sizeof(std::uint32_t);
+      buffer.get_mutable_data()[ACTION_OFFSET] = 3;
+    }
+    SUBCASE("timestamp") {
+      trade.m_timestamp = std::numeric_limits<std::uint64_t>::max();
+      buffer = encode(trade);
+    }
+    fixture.m_otc_client.m_messages.push(std::pair(std::move(buffer), 0));
+    trade = make_trade();
+    fixture.m_otc_client.m_messages.push(std::pair(encode(trade), 0));
+    auto publication = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(publication->m_time_and_sale->m_size == trade.m_size);
+    REQUIRE(!log.m_output.str().empty());
+    fixture.require_empty();
+  }
+
+  TEST_CASE("trade_channel") {
+    auto fixture = Fixture(TradeFeed());
+    auto trade = make_trade();
+    fixture.send(trade);
+    auto definition = fixture.take<FeedClient::AddOperation>();
+    REQUIRE(definition->m_info.m_ticker == parse_ticker("NLST.OTCB"));
+    auto publication = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(publication->m_time_and_sale.get_index() ==
+      parse_ticker("NLST.OTCB"));
+    fixture.require_empty();
+    REQUIRE(!fixture.m_client.is_finished());
+    fixture.send(make_quote());
+    fixture.send(make_inside());
+    fixture.require_empty();
+    ++fixture.m_session;
+    fixture.send(OtcLinkMarketOpen());
+    fixture.send(trade);
+    publication = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(publication->m_time_and_sale.get_index() ==
+      parse_ticker("NLST.OTCB"));
+    fixture.require_empty();
+    fixture.m_client.close();
+    REQUIRE(fixture.m_client.is_finished());
+    REQUIRE(!fixture.m_client.get_exception());
+  }
+
+  TEST_CASE("reference_completion") {
+    auto fixture = Fixture(TradeFeed());
+    flush_pending_routines();
+    SUBCASE("close_during_publication") {
+      fixture.m_client.close();
+      REQUIRE(fixture.m_client.is_finished());
+      REQUIRE(!fixture.m_client.get_exception());
+    }
+    SUBCASE("publication_failure") {
+      auto operation = fixture.m_operations->try_pop();
+      REQUIRE(operation.has_value());
+      auto add = std::get_if<FeedClient::AddOperation>(&**operation);
+      REQUIRE(add);
+      add->m_result.set(
+        std::make_exception_ptr(IOException("Publish failed.")));
+      flush_pending_routines();
+      REQUIRE(fixture.m_client.is_finished());
+      REQUIRE_THROWS_AS(
+        std::rethrow_exception(fixture.m_client.get_exception()), IOException);
+    }
+  }
+
+  TEST_CASE("trades") {
+    auto fixture = Fixture();
+    auto trade = make_trade();
+    fixture.send(trade);
+    fixture.require_empty();
+    fixture.security();
+    SUBCASE("regular") {}
+    SUBCASE("irregular") {
+      trade.m_status = 0x01;
+    }
+    fixture.send(trade);
+    auto publication = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    auto& sale = publication->m_time_and_sale;
+    REQUIRE(sale.get_index() == parse_ticker("NLST.OTCB"));
+    REQUIRE(sale->m_timestamp == time_from_string("2023-11-14 22:13:20.123"));
+    REQUIRE(sale->m_price == Money(Quantity(1.25)));
+    REQUIRE(sale->m_size == 123);
+    REQUIRE(sale->m_market_center == "ATS");
+    REQUIRE(sale->m_buyer_mpid.empty());
+    REQUIRE(sale->m_seller_mpid.empty());
+    if(trade.m_status == 0) {
+      REQUIRE(sale->m_condition.m_type ==
+        TimeAndSale::Condition::Type::REGULAR);
+      REQUIRE(sale->m_condition.m_code == "@");
+    } else {
+      REQUIRE(sale->m_condition.m_type == TimeAndSale::Condition::Type::NONE);
+      REQUIRE(sale->m_condition.m_code == "I");
+    }
+    auto security = make_security();
+    security.m_action = OtcLinkSecurityAction::DELETE;
+    fixture.send(security);
+    fixture.send(trade);
+    fixture.require_empty();
+  }
+
   TEST_CASE("participant_quotes") {
     auto fixture = Fixture();
     fixture.security();

@@ -29,11 +29,12 @@ def main():
     help='Password. Prompts when omitted unless --common-config is supplied.')
   parser.add_argument('--common-config', type=Path,
     help='Existing shared configuration to include without modifying it.')
-  parser.add_argument('--sender', help='OTC-assigned SenderCompID.')
+  parser.add_argument('--sender',
+    help='OTC-assigned SenderCompID for the Trades reference snapshot.')
   parser.add_argument('--recovery', action='store_true',
     help='Enable gap recovery; requires --sender.')
   parser.add_argument('--snapshot', action='store_true',
-    help='Load an initial snapshot; requires --sender.')
+    help='Load an initial Book and Inside snapshot.')
   args = parser.parse_args()
   if (args.recovery or args.snapshot) and not args.sender:
     parser.error('--sender is required for recovery or snapshots.')
@@ -79,9 +80,9 @@ def main():
     lines = []
     is_enabled = False
     for line in source.splitlines(keepends=True):
-      if line.startswith('# recovery:'):
+      if line.startswith('# ') and line[2:].strip() == 'recovery:':
         is_enabled = args.recovery
-      elif line.startswith('# snapshot:'):
+      elif line.startswith('# ') and line[2:].strip() == 'snapshot:':
         is_enabled = args.snapshot
       if is_enabled and line.startswith('# '):
         line = line[2:]

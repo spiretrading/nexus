@@ -58,8 +58,17 @@ namespace Nexus {
     static OtcLinkSnapshotConfiguration parse(const YAML::Node& config);
   };
 
-  /** The configuration for an OTC Link Book or Inside service. */
+  /** The configuration for an OTC Link Book, Inside, or Trades service. */
   struct OtcLinkConfiguration {
+
+    /** The Quote Book channel's RefApplID. */
+    static constexpr auto BOOK_CHANNEL = std::uint16_t(11);
+
+    /** The Quote Inside channel's RefApplID. */
+    static constexpr auto INSIDE_CHANNEL = std::uint16_t(14);
+
+    /** The Trade channel's RefApplID. */
+    static constexpr auto TRADE_CHANNEL = std::uint16_t(1);
 
     /** The country whose registry receives published market data. */
     CountryCode m_country;
@@ -87,6 +96,9 @@ namespace Nexus {
 
     /** The optional initial snapshot. */
     boost::optional<OtcLinkSnapshotConfiguration> m_snapshot;
+
+    /** The initial security reference snapshot for the Trades service. */
+    boost::optional<OtcLinkSnapshotConfiguration> m_reference;
 
     /** Parses the application's configuration. */
     static OtcLinkConfiguration parse(const YAML::Node& config);
@@ -118,6 +130,20 @@ namespace Details {
     return Beam::IpAddress(std::move(host), static_cast<std::uint16_t>(port));
   }
 
+  inline std::vector<OtcLinkFeed> parse_otc_link_feeds(
+      const YAML::Node& config) {
+    auto result = std::vector<OtcLinkFeed>();
+    auto feeds = Beam::get_node(config, "feeds");
+    if(!feeds.IsSequence() || feeds.size() == 0) {
+      boost::throw_with_location(
+        std::runtime_error("A nonempty list of feeds is required."));
+    }
+    for(auto feed : feeds) {
+      result.push_back(OtcLinkFeed::parse(feed));
+    }
+    return result;
+  }
+
   inline boost::posix_time::time_duration parse_otc_link_duration(
       const YAML::Node& config, const char* key,
       boost::posix_time::time_duration fallback) {
@@ -128,16 +154,14 @@ namespace Details {
 }
 
   inline OtcLinkFeed OtcLinkFeed::parse(const YAML::Node& config) {
-    return OtcLinkFeed(
-      Details::parse_otc_link_address(config, "address", true),
+    return OtcLinkFeed(Details::parse_otc_link_address(config, "address", true),
       Details::parse_otc_link_address(config, "interface", false));
   }
 
   inline OtcLinkRecoveryConfiguration OtcLinkRecoveryConfiguration::parse(
       const YAML::Node& config) {
     auto server = OtcLinkRecoveryConfiguration();
-    server.m_address =
-      Details::parse_otc_link_address(config, "address", true);
+    server.m_address = Details::parse_otc_link_address(config, "address", true);
     server.m_interface =
       Details::parse_otc_link_address(config, "interface", false);
     server.m_sender = Beam::extract<std::string>(config, "sender");
@@ -168,20 +192,15 @@ namespace Details {
     }
     auto service = Beam::extract<std::string>(config, "service");
     if(service == "book") {
-      configuration.m_channel = 11;
+      configuration.m_channel = BOOK_CHANNEL;
     } else if(service == "inside") {
-      configuration.m_channel = 14;
+      configuration.m_channel = INSIDE_CHANNEL;
+    } else if(service == "trades") {
+      configuration.m_channel = TRADE_CHANNEL;
     } else {
       boost::throw_with_location(std::runtime_error("Unknown OTC service."));
     }
-    auto feeds = Beam::get_node(config, "feeds");
-    if(!feeds.IsSequence() || feeds.size() == 0) {
-      boost::throw_with_location(
-        std::runtime_error("A nonempty list of feeds is required."));
-    }
-    for(auto feed : feeds) {
-      configuration.m_feeds.push_back(OtcLinkFeed::parse(feed));
-    }
+    configuration.m_feeds = Details::parse_otc_link_feeds(config);
     static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE =
       std::size_t(128 * 1024 * 1024);
     configuration.m_socket_options.m_receive_buffer_size =
@@ -200,7 +219,18 @@ namespace Details {
       configuration.m_recovery = OtcLinkRecoveryConfiguration::parse(recovery);
     }
     if(auto snapshot = config["snapshot"]) {
+      if(service == "trades") {
+        boost::throw_with_location(
+          std::runtime_error("The OTC Link Trade channel has no snapshot."));
+      }
       configuration.m_snapshot = OtcLinkSnapshotConfiguration::parse(snapshot);
+    }
+    if(service == "trades") {
+      configuration.m_reference = OtcLinkSnapshotConfiguration::parse(
+        Beam::get_node(config, "reference"));
+    } else if(config["reference"]) {
+      boost::throw_with_location(std::runtime_error(
+        "A reference snapshot is only used by the Trades service."));
     }
     return configuration;
   }

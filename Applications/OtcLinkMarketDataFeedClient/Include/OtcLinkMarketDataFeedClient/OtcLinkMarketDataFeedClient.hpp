@@ -14,7 +14,7 @@
 namespace Nexus {
 
   /**
-   * Publishes OTC Link participant books and the OTC Link-only inside.
+   * Publishes OTC Link books, inside quotes, and trades.
    * @tparam M The client publishing market data.
    * @tparam C The client delivering an ordered OTC Link-only channel.
    * @tparam T The time client used when clearing a reset channel.
@@ -45,6 +45,19 @@ namespace Nexus {
         Beam::Initializes<T> TF>
       OtcLinkMarketDataFeedClient(
         MF&& feed_client, CF&& otc_client, TF&& time_client);
+
+      /**
+       * Constructs a Trades publisher with a security reference snapshot.
+       * @param feed_client Initializes the market data publisher.
+       * @param otc_client Supplies ordered Trade messages.
+       * @param time_client Initializes the time source.
+       * @param reference The initial security definitions. If absent,
+       *        publishes all messages from otc_client.
+       */
+      template<Beam::Initializes<M> MF, Beam::Initializes<C> CF,
+        Beam::Initializes<T> TF>
+      OtcLinkMarketDataFeedClient(MF&& feed_client, CF&& otc_client,
+        TF&& time_client, boost::optional<OtcLinkSnapshot> reference);
 
       ~OtcLinkMarketDataFeedClient();
 
@@ -103,6 +116,7 @@ namespace Nexus {
       void clear(boost::posix_time::ptime timestamp);
       void clear_quotes(boost::posix_time::ptime timestamp);
       void set_market_open(bool is_open, boost::posix_time::ptime timestamp);
+      void process(const OtcLinkTrade& message);
       void process(const OtcLinkSecurity& message);
       template<typename Q> requires std::same_as<Q, OtcLinkQuote> ||
         std::same_as<Q, OtcLinkFractionalQuote>
@@ -117,12 +131,17 @@ namespace Nexus {
         std::same_as<Q, OtcLinkFractionalInsideUpdate>
       void process(const Q& message);
       void dispatch(const OtcLinkMessage& message);
-      void read_loop();
+      void read_loop(boost::optional<OtcLinkSnapshot> reference);
   };
 
   template<typename M, typename C, typename T>
   OtcLinkMarketDataFeedClient(M&&, C&&, T&&) -> OtcLinkMarketDataFeedClient<
     std::remove_cvref_t<M>, std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
+
+  template<typename M, typename C, typename T>
+  OtcLinkMarketDataFeedClient(M&&, C&&, T&&,
+    boost::optional<OtcLinkSnapshot>) -> OtcLinkMarketDataFeedClient<
+      std::remove_cvref_t<M>, std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
   template<typename M, typename C, typename T> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
@@ -132,14 +151,27 @@ namespace Nexus {
     Beam::Initializes<T> TF>
   OtcLinkMarketDataFeedClient<M, C, T>::OtcLinkMarketDataFeedClient(
       MF&& feed_client, CF&& otc_client, TF&& time_client)
+    : OtcLinkMarketDataFeedClient(std::forward<MF>(feed_client),
+        std::forward<CF>(otc_client), std::forward<TF>(time_client),
+        boost::none) {}
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<Beam::Initializes<M> MF, Beam::Initializes<C> CF,
+    Beam::Initializes<T> TF>
+  OtcLinkMarketDataFeedClient<M, C, T>::OtcLinkMarketDataFeedClient(
+      MF&& feed_client, CF&& otc_client, TF&& time_client,
+      boost::optional<OtcLinkSnapshot> reference)
       : m_feed_client(std::forward<MF>(feed_client)),
         m_otc_client(std::forward<CF>(otc_client)),
         m_time_client(std::forward<TF>(time_client)),
         m_session(0),
         m_is_market_open(true),
         m_is_finished(false) {
-    m_read_loop = Beam::spawn(
-      std::bind_front(&OtcLinkMarketDataFeedClient::read_loop, this));
+    m_read_loop = Beam::spawn(std::bind_front(
+      &OtcLinkMarketDataFeedClient::read_loop, this, std::move(reference)));
   }
 
   template<typename M, typename C, typename T> requires
@@ -409,6 +441,30 @@ namespace Nexus {
       IsOtcLinkClient<Beam::dereference_t<C>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::process(
+      const OtcLinkTrade& message) {
+    auto i = m_books.find(message.m_security);
+    if(i == m_books.end()) {
+      return;
+    }
+    auto sale = TimeAndSale();
+    sale.m_timestamp = get_timestamp(message.m_timestamp);
+    sale.m_price = Money(convert(message.m_price, OtcLinkTrade::PRICE_SCALE));
+    sale.m_size = message.m_size;
+    sale.m_market_center = message.m_venue;
+    if(message.has_status(OtcLinkTrade::Status::IRREGULAR)) {
+      sale.m_condition.m_code = "I";
+    } else {
+      sale.m_condition.m_type = TimeAndSale::Condition::Type::REGULAR;
+      sale.m_condition.m_code = "@";
+    }
+    m_feed_client->publish(TickerTimeAndSale(sale, i->second.m_ticker));
+  }
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void OtcLinkMarketDataFeedClient<M, C, T>::process(
       const OtcLinkSecurity& message) {
     auto timestamp = get_timestamp(message.m_timestamp);
     auto venue = get_venue(message.m_tier);
@@ -610,8 +666,28 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsOtcLinkClient<Beam::dereference_t<C>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void OtcLinkMarketDataFeedClient<M, C, T>::read_loop() {
+  void OtcLinkMarketDataFeedClient<M, C, T>::read_loop(
+      boost::optional<OtcLinkSnapshot> reference) {
+    auto is_trade = reference.has_value();
     try {
+      if(reference) {
+        for(auto& payload : reference->m_messages) {
+          if(!m_open_state.is_open()) {
+            break;
+          }
+          auto message = OtcLinkMessage::parse(
+            std::string_view(payload.get_data(), payload.get_size()));
+          if(message.m_type == OtcLinkSecurity::TYPE ||
+              message.m_type == OtcLinkFractionalSecurity::TYPE) {
+            try {
+              dispatch(message);
+            } catch(const OtcLinkParserException& exception) {
+              log(message, exception);
+            }
+          }
+        }
+        reference = boost::none;
+      }
       while(m_open_state.is_open()) {
         auto session = std::uint64_t(0);
         auto message = OtcLinkMessage();
@@ -623,7 +699,10 @@ namespace Nexus {
         if(!m_open_state.is_open()) {
           break;
         }
-        if(session != m_session) {
+        if(is_trade && message.m_type != OtcLinkTrade::TYPE) {
+          continue;
+        }
+        if(!is_trade && session != m_session) {
           clear(m_time_client->get_time());
           m_session = session;
           m_is_market_open = true;

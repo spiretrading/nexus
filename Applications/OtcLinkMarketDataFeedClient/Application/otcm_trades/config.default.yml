@@ -1,0 +1,26 @@
+---
+<<: !include "$common_config"
+
+service: trades
+feeds:
+  - address: "224.0.23.218:21008"
+    interface: "$local_interface:21008"
+  - address: "224.0.23.217:21008"
+    interface: "$local_interface:21008"
+
+# recovery:
+#   address: "192.26.98.86:21100"
+#   interface: "$local_interface:0"
+#   sender: "$sender"
+#   timeout: 1s
+
+reference:
+  address: "224.0.23.214:21005"
+  interface: "$local_interface:21005"
+  timeout: 30s
+  server:
+    address: "192.26.98.86:21100"
+    interface: "$local_interface:0"
+    sender: "$sender"
+    timeout: 1s
+...

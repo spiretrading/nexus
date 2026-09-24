@@ -19,6 +19,57 @@ feeds:
 }
 
 TEST_SUITE("OtcLinkConfiguration") {
+  TEST_CASE("trade_channel") {
+    auto source = make_config();
+    REQUIRE_FALSE(OtcLinkConfiguration::parse(source).m_reference.has_value());
+    source["reference"] = YAML::Load(R"(
+address: "224.0.23.214:21005"
+interface: "10.0.0.1:21005"
+server:
+  address: "192.26.98.86:21100"
+  interface: "10.0.0.1:0"
+  sender: subscriber
+)");
+    source["service"] = "trades";
+    source["feeds"] = YAML::Load(R"(
+- address: "224.0.23.218:21008"
+  interface: "10.0.0.1:21008"
+- address: "224.0.23.217:21008"
+  interface: "10.0.0.1:21008"
+)");
+    auto config = OtcLinkConfiguration::parse(source);
+    REQUIRE(config.m_channel == 1);
+    REQUIRE(config.m_feeds.size() == 2);
+    REQUIRE(config.m_feeds[0].m_address == IpAddress("224.0.23.218", 21008));
+    REQUIRE(config.m_reference.has_value());
+    REQUIRE(config.m_reference->m_feed.m_address ==
+      IpAddress("224.0.23.214", 21005));
+    REQUIRE(config.m_reference->m_server.m_sender == "subscriber");
+    REQUIRE_FALSE(config.m_snapshot.has_value());
+    SUBCASE("trade_snapshot") {
+      source["snapshot"] = YAML::Load("{}");
+      REQUIRE_THROWS_AS(
+        OtcLinkConfiguration::parse(source), std::runtime_error);
+    }
+    SUBCASE("reference_service") {
+      for(auto service : {"book", "inside"}) {
+        source["service"] = service;
+        REQUIRE_THROWS_AS(
+          OtcLinkConfiguration::parse(source), std::runtime_error);
+      }
+    }
+    SUBCASE("missing_reference") {
+      source.remove("reference");
+      REQUIRE_THROWS_AS(
+        OtcLinkConfiguration::parse(source), std::runtime_error);
+    }
+    SUBCASE("missing_reference_server") {
+      source["reference"].remove("server");
+      REQUIRE_THROWS_AS(
+        OtcLinkConfiguration::parse(source), std::runtime_error);
+    }
+  }
+
   TEST_CASE("defaults") {
     auto config = OtcLinkConfiguration::parse(make_config());
     REQUIRE(config.m_country == Countries::US);

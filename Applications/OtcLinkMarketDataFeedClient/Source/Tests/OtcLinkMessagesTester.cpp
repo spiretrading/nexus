@@ -79,6 +79,49 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMessages") {
+  TEST_CASE("trade") {
+    auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08", 8) +
+      std::string("\x02\xfe\x10\x20\x30\x40\x81", 7) + "ATS     " +
+      std::string("\x00\x00\x00\x01\x02\x03\x04\x05", 8) +
+      std::string("\x10\x20\x30\x40", 4) +
+      std::string("\x00\x00\x01\x8c\x12\x34\x56\x78", 8);
+    auto message = make_message(OtcLinkTrade::TYPE, payload);
+    auto trade = OtcLinkTrade::parse(message);
+    REQUIRE(message.m_length == OtcLinkTrade::LENGTH);
+    REQUIRE(trade.m_sequence == 0x01020304);
+    REQUIRE(trade.m_trade == 0x05060708);
+    REQUIRE(trade.m_flags == 0xfe);
+    REQUIRE(trade.m_security == 0x10203040);
+    REQUIRE(trade.m_status == 0x81);
+    REQUIRE(trade.has_status(OtcLinkTrade::Status::IRREGULAR));
+    REQUIRE(trade.m_venue == "ATS");
+    REQUIRE(trade.m_price == 0x0000000102030405);
+    REQUIRE(trade.m_size == 0x10203040);
+    REQUIRE(trade.m_timestamp == 0x0000018c12345678);
+    REQUIRE(visit(message, [] (const OtcLinkTrade& trade) {
+      return trade.m_trade;
+    }) == trade.m_trade);
+    REQUIRE_NOTHROW(validate(message));
+    for(auto i = std::size_t(0); i < payload.size(); ++i) {
+      REQUIRE_THROWS_AS(OtcLinkTrade::parse(make_message(OtcLinkTrade::TYPE,
+        std::string_view(payload).substr(0, i))), OtcLinkParserException);
+    }
+    message.m_type = OtcLinkQuote::TYPE;
+    REQUIRE_THROWS_AS(OtcLinkTrade::parse(message), OtcLinkParserException);
+    constexpr auto ACTION_OFFSET = 2 * sizeof(std::uint32_t);
+    payload[ACTION_OFFSET] = 3;
+    REQUIRE_THROWS_AS(validate(make_message(OtcLinkTrade::TYPE, payload)),
+      OtcLinkParserException);
+    payload[ACTION_OFFSET] = 2;
+    constexpr auto STATUS_OFFSET =
+      ACTION_OFFSET + 2 * sizeof(std::uint8_t) + sizeof(std::uint32_t);
+    payload[STATUS_OFFSET] = 0x80;
+    payload += "extension";
+    trade = OtcLinkTrade::parse(make_message(OtcLinkTrade::TYPE, payload));
+    REQUIRE_FALSE(trade.has_status(OtcLinkTrade::Status::IRREGULAR));
+    REQUIRE(trade.m_timestamp == 0x0000018c12345678);
+  }
+
   TEST_CASE_TEMPLATE(
       "inside_update", T, OtcLinkInsideUpdate, OtcLinkFractionalInsideUpdate) {
     auto payload = make_inside_update(T::TYPE);
