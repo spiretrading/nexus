@@ -1,6 +1,6 @@
 #ifndef SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
 #define SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
-#include <boost/circular_buffer.hpp>
+#include <deque>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -38,18 +38,69 @@ namespace Spire {
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
       std::shared_ptr<BookViewModel::PreviewOrderModel> m_preview;
       BookViewModel::PreviewOrderModel::Type m_previous_preview;
-      mutable boost::circular_buffer<BookEntry> m_reads;
+      std::deque<BookEntry> m_entries;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_book_quotes_connection;
       boost::signals2::scoped_connection m_user_orders_connection;
       boost::signals2::scoped_connection m_preview_connection;
 
+      template<typename T>
+      void apply(const typename ListModel<T>::Operation& operation,
+        const ListModel<T>& source, int offset);
       void on_book_quote_operation(
         const BookQuoteListModel::Operation& operation);
       void on_user_order_operation(
         const BookViewModel::UserOrderListModel::Operation& operation);
       void on_preview(const boost::optional<Nexus::OrderFields>& preview);
   };
+
+  /**
+   * Moves a BookEntry to a new position within a list of BookEntries.
+   * @param entries The list of BookEntries to update.
+   * @param source The index of the BookEntry to move.
+   * @param destination The index to move the BookEntry to.
+   */
+  void move_book_entry(
+    std::deque<BookEntry>& entries, int source, int destination);
+
+  template<typename T>
+  void MergedBookEntryListModel::apply(
+      const typename ListModel<T>::Operation& operation,
+      const ListModel<T>& source, int offset) {
+    visit(operation,
+      [&] (typename ListModel<T>::StartTransaction) {
+        m_transaction.start();
+      },
+      [&] (typename ListModel<T>::EndTransaction) {
+        m_transaction.end();
+      },
+      [&] (const typename ListModel<T>::AddOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries.insert(
+          std::next(m_entries.begin(), index), source.get(operation.m_index));
+        m_transaction.push(AddOperation(index));
+      },
+      [&] (const typename ListModel<T>::PreRemoveOperation& operation) {
+        m_transaction.push(PreRemoveOperation(offset + operation.m_index));
+      },
+      [&] (const typename ListModel<T>::RemoveOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries.erase(std::next(m_entries.begin(), index));
+        m_transaction.push(RemoveOperation(index));
+      },
+      [&] (const typename ListModel<T>::MoveOperation& operation) {
+        auto source_index = offset + operation.m_source;
+        auto destination = offset + operation.m_destination;
+        move_book_entry(m_entries, source_index, destination);
+        m_transaction.push(MoveOperation(source_index, destination));
+      },
+      [&] (const typename ListModel<T>::UpdateOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries[index] = operation.get_value();
+        m_transaction.push(UpdateOperation(
+          index, operation.get_previous(), operation.get_value()));
+      });
+  }
 }
 
 #endif

@@ -269,8 +269,10 @@ std::vector<QWidget*> Spire::import_settings(
   }
   if(categories.test(UserSettings::Category::BOOK_VIEW) &&
       settings.m_book_view_properties) {
+    auto properties = *settings.m_book_view_properties;
+    repair_book_view_properties(properties);
     user_profile->GetBookViewPropertiesWindowFactory()->get_properties()->set(
-      *settings.m_book_view_properties);
+      properties);
   }
   if(categories.test(UserSettings::Category::WATCHLIST) &&
       settings.m_dashboards) {

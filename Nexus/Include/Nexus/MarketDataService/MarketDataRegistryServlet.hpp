@@ -120,7 +120,7 @@ namespace Nexus {
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       TickerSnapshot on_load_ticker_snapshot(
         ServiceProtocolClient& client, Ticker ticker);
-      SessionTechnicals on_load_session_technicals(
+      SequencedSessionTechnicals on_load_session_technicals(
         ServiceProtocolClient& client, Ticker ticker);
       std::vector<TickerInfo> on_query_ticker_info(
         ServiceProtocolClient& client, const TickerInfoQuery& query);
@@ -509,7 +509,7 @@ namespace Nexus {
   template<typename C, typename R, typename D, typename A> requires
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  SessionTechnicals MarketDataRegistryServlet<C, R, D, A>::
+  SequencedSessionTechnicals MarketDataRegistryServlet<C, R, D, A>::
       on_load_session_technicals(ServiceProtocolClient& client, Ticker ticker) {
     if(auto technicals = m_registry->find_session_technicals(ticker)) {
       return *technicals;

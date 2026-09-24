@@ -19,6 +19,7 @@ currencies: currencies.yml
 destinations: destinations.yml
 venues: venues.yml
 time_zones: date_time_zonespec.csv
+trading_schedules: trading_schedules.yml
 exchange_rates:
   - symbol: USD/CAD
     rate: 1.33

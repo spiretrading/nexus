@@ -11,10 +11,12 @@
 #include "Nexus/Definitions/TickerStatus.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 
 namespace Nexus {
   using SequencedBboQuote = Beam::SequencedValue<BboQuote>;
   using SequencedBookQuote = Beam::SequencedValue<BookQuote>;
+  using SequencedSessionTechnicals = Beam::SequencedValue<SessionTechnicals>;
   using SequencedTimeAndSale = Beam::SequencedValue<TimeAndSale>;
   using SequencedTickerStatus = Beam::SequencedValue<TickerStatus>;
   using TickerBboQuote = Beam::IndexedValue<BboQuote, Ticker>;

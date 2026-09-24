@@ -1,6 +1,5 @@
 import argparse
 import beam
-import mysql.connector
 import nexus
 import sys
 import yaml

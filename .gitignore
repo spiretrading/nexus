@@ -28,6 +28,7 @@ Dependencies/
 ## Ignore the generated web-app files.
 mod_time.txt
 .build_hash.txt
+.build_state.json
 WebApi/library/
 Applications/WebPortal/Application/web_app/
 Applications/WebPortal/WebApp/tests/*/application/
@@ -79,6 +80,8 @@ Nexus/Config/SimulationMatcher/SimulationMatcherTests
 Nexus/Config/SoupBinTcp/SoupBinTcpTests
 Nexus/Config/Stamp/StampTests
 Nexus/Config/TechnicalAnalysis/TechnicalAnalysisTests
+Nexus/Libraries/
+Nexus/Tests/
 
 
 ## Ignore CMake files
@@ -91,6 +94,10 @@ CMakeFiles
 CMakeScripts
 Testing
 Makefile
+build.ninja
+build-*.ninja
+.ninja_deps
+.ninja_log
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
@@ -435,3 +442,7 @@ config.yml
 
 # MacOS files.
 **/.DS_Store
+
+# Generated project outputs
+Nexus/Config/Python/**/nexus.exp
+Nexus/Config/Python/**/nexus.pyd

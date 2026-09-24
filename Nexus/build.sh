@@ -3,23 +3,51 @@ set -o errexit
 set -o pipefail
 DIRECTORY=""
 ROOT=""
+SCRIPT_DIR=""
 DEPENDENCIES=""
 CONFIG=""
+
+get_job_count() {
+  local cores mem jobs
+  if [[ -f /proc/cpuinfo ]]; then
+    cores=$(grep -c "processor" /proc/cpuinfo)
+  else
+    cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+  fi
+  if [[ -f /proc/meminfo ]]; then
+    mem=$(awk '/MemTotal/ {print int($2 / 16777216)}' /proc/meminfo)
+  else
+    mem=$(sysctl -n hw.memsize 2>/dev/null |
+      awk '{print int($1 / 17179869184)}' || echo 4)
+  fi
+  cores=$((cores - 2))
+  [[ $cores -lt 1 ]] && cores=1
+  [[ $mem -lt 1 ]] && mem=1
+  jobs=$((cores < mem ? cores : mem))
+  echo "$jobs"
+}
 
 main() {
   resolve_paths
   parse_args "$@"
-  local config_lower="${CONFIG,,}"
-  if [[ "$config_lower" == "clean" ]]; then
+  shopt -s nocasematch
+  if [[ "$CONFIG" == "clean" ]]; then
+    shopt -u nocasematch
     clean_build "clean"
-    return "$?"
+    return $?
   fi
-  if [[ "$config_lower" == "reset" ]]; then
+  if [[ "$CONFIG" == "reset" ]]; then
+    shopt -u nocasematch
     clean_build "reset"
-    return "$?"
+    return $?
   fi
+  shopt -u nocasematch
   configure || return 1
-  run_build
+  generated_files begin || return 1
+  local build_error=0
+  run_build || build_error=$?
+  generated_files end || return 1
+  return "$build_error"
 }
 
 resolve_paths() {
@@ -30,6 +58,7 @@ resolve_paths() {
     [[ $source != /* ]] && source="$dir/$source"
   done
   DIRECTORY="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+  SCRIPT_DIR="$DIRECTORY"
   ROOT="$(pwd -P)"
 }
 
@@ -71,14 +100,34 @@ parse_args() {
 }
 
 clean_build() {
-  local mode="$1"
-  if [[ "$mode" == "reset" ]]; then
-    rm -rf Dependencies
-    git clean -ffxd
-  else
-    git clean -ffxd -e "*Dependencies*"
-    rm -f "Dependencies/cache_files/nexus.txt"
+  local clean_type="$1"
+  local clean_error=0
+  if [[ -f "$ROOT/CMakeCache.txt" ]]; then
+    generated_files begin || return 1
+    cmake -DBUILD_DIRECTORY:PATH="$ROOT" \
+      -P "$SCRIPT_DIR/Config/native_clean.cmake" || clean_error=1
+    local scripts=("$ROOT"/CMakeFiles/clean_outputs_*.cmake)
+    if [[ "$clean_error" == "0" && -f "${scripts[0]}" ]]; then
+      for script in "${scripts[@]}"; do
+        cmake -P "$script" || clean_error=1
+      done
+    fi
+    generated_files end || return 1
   fi
+  if [[ "$clean_error" == "0" ]]; then
+    generated_files clean || clean_error=1
+  fi
+  if [[ "$clean_error" == "0" && "$clean_type" == "reset" ]]; then
+    cmake -DBUILD_DIRECTORY:PATH="$ROOT" \
+      -P "$SCRIPT_DIR/Config/reset.cmake" || clean_error=1
+  fi
+  return "$clean_error"
+}
+
+generated_files() {
+  cmake -DBUILD_DIRECTORY:PATH="$ROOT" \
+    -DDEPENDENCIES_DIRECTORY:PATH="$DEPENDENCIES" -DACTION="$1" \
+    -P "$SCRIPT_DIR/Config/generated_files.cmake"
 }
 
 configure() {
@@ -89,17 +138,27 @@ configure() {
       CONFIG="Release"
     fi
   fi
-  local config_lower="${CONFIG,,}"
-  case "$config_lower" in
-    release)        CONFIG="Release" ;;
-    debug)          CONFIG="Debug" ;;
-    relwithdebinfo) CONFIG="RelWithDebInfo" ;;
-    minsizerel)     CONFIG="MinSizeRel" ;;
+  shopt -s nocasematch
+  case "$CONFIG" in
+    release)
+      CONFIG="Release"
+      ;;
+    debug)
+      CONFIG="Debug"
+      ;;
+    relwithdebinfo)
+      CONFIG="RelWithDebInfo"
+      ;;
+    minsizerel)
+      CONFIG="MinSizeRel"
+      ;;
     *)
+      shopt -u nocasematch
       echo "Error: Invalid configuration \"$CONFIG\"."
       return 1
       ;;
   esac
+  shopt -u nocasematch
   if [[ -n "$DEPENDENCIES" ]]; then
     "$DIRECTORY/configure.sh" "$CONFIG" -DD="$DEPENDENCIES"
   else
@@ -110,29 +169,9 @@ configure() {
 run_build() {
   local jobs
   jobs=$(get_job_count)
-  cmake --build "$ROOT" --target install --config "$CONFIG" \
-    --parallel "$jobs" || return 1
+  cmake --build "$ROOT" --config "$CONFIG" --parallel "$jobs" || return 1
+  cmake --install "$ROOT" --config "$CONFIG" || return 1
   echo "$CONFIG" > "CMakeFiles/config.txt"
-}
-
-get_job_count() {
-  local cores mem jobs
-  if [[ -f /proc/cpuinfo ]]; then
-    cores=$(grep -c "processor" /proc/cpuinfo)
-  else
-    cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
-  fi
-  if [[ -f /proc/meminfo ]]; then
-    mem=$(awk '/MemTotal/ {print int($2 / 15728640)}' /proc/meminfo)
-  else
-    mem=$(sysctl -n hw.memsize 2>/dev/null |
-      awk '{print int($1 / 16106127360)}' || echo 4)
-  fi
-  ((cores -= 2))
-  [[ $cores -lt 1 ]] && cores=1
-  [[ $mem -lt 1 ]] && mem=1
-  jobs=$((cores < mem ? cores : mem))
-  echo "$jobs"
 }
 
 main "$@"

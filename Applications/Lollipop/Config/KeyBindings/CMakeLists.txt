@@ -12,11 +12,10 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(KeyBindings ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(KeyBindings)
+target_link_libraries(KeyBindings BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(KeyBindings PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_key_bindings)
-install(TARGETS KeyBindings CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS KeyBindings CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(KeyBindings "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

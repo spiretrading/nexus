@@ -14,7 +14,7 @@ namespace {
 
 TEST_SUITE("FieldValueModel") {
   TEST_CASE("construct") {
-    auto source = std::make_shared<LocalValueModel<Point>>(Point(10, 20));
+    auto source = make_local_value_model(Point(10, 20));
     auto x = make_field_value_model(source, &Point::m_x);
     auto y = make_field_value_model(source, &Point::m_y);
     REQUIRE(x->get() == 10);

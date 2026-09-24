@@ -14,7 +14,7 @@ SignInUiTester::SignInUiTester()
       m_track(std::make_shared<LocalTrackModel>(Track::CURRENT)),
       m_download_progress(std::make_shared<LocalProgressModel>(0)),
       m_installation_progress(std::make_shared<LocalProgressModel>(0)),
-      m_time_left(std::make_shared<LocalValueModel<time_duration>>(seconds(0))),
+      m_time_left(make_local_value_model<time_duration>(seconds(0))),
       m_window(nullptr) {
   setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
   auto layout = new QVBoxLayout(this);

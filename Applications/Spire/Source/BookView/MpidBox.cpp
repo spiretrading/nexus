@@ -1,9 +1,8 @@
 #include "Spire/BookView/MpidBox.hpp"
-#include <QEvent>
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -15,15 +14,26 @@ namespace {
   const auto USER_ORDER_TYPE_INDEX = 1;
   const auto PREVIEW_TYPE_INDEX = 2;
 
+  OrderStatus to_highlight_status(OrderStatus status) {
+    if(status == OrderStatus::CANCELED || status == OrderStatus::FILLED ||
+        status == OrderStatus::REJECTED) {
+      return status;
+    } else if(status == OrderStatus::PARTIALLY_FILLED) {
+      return OrderStatus::FILLED;
+    } else if(status == OrderStatus::EXPIRED ||
+        status == OrderStatus::DONE_FOR_DAY) {
+      return OrderStatus::CANCELED;
+    }
+    return OrderStatus::NONE;
+  }
+
   QString make_id(const BookEntry& entry) {
     if(auto quote = get<BookQuote>(&entry)) {
       return QString::fromStdString(quote->m_mpid);
     } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
       return QString::fromStdString('@' + order->m_destination);
-    } else if(auto preview = get<OrderFields>(&entry)) {
-      return QString::fromStdString('@' + preview->m_destination);
     }
-    return {};
+    return QString::fromStdString('@' + get<OrderFields>(entry).m_destination);
   }
 }
 
@@ -31,11 +41,15 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     std::shared_ptr<ValueModel<int>> level,
     std::shared_ptr<ValueModel<bool>> is_top_mpid)
     : m_current(std::move(current)),
-      m_current_status(OrderStatus::NONE),
       m_level(std::move(level)),
+      m_is_top_mpid(std::move(is_top_mpid)),
+      m_current_status(OrderStatus::NONE),
+      m_current_transition(0),
       m_current_level(m_level->get()),
-      m_is_top_mpid(std::move(is_top_mpid)) {
-  auto label = make_label(make_read_only_to_text_model(m_current, &make_id));
+      m_is_reset(true),
+      m_is_settled(false) {
+  auto label = make_label(make_deduplicated_value_model(
+    make_read_only_to_text_model(m_current, &make_id)));
   enclose(*this, *label);
   proxy_style(*this, *label);
   update_style(*this, [] (auto& style) {
@@ -65,6 +79,10 @@ const std::shared_ptr<ValueModel<bool>>& MpidBox::is_top_mpid() const {
   return m_is_top_mpid;
 }
 
+void MpidBox::reset() {
+  m_is_reset = true;
+}
+
 void MpidBox::update_row_state(int type_index) {
   if(type_index == m_current_type_index) {
     return;
@@ -76,8 +94,14 @@ void MpidBox::update_row_state(int type_index) {
       unmatch(*this, UserOrderRow(OrderStatus::NONE));
       if(m_current_status != OrderStatus::NONE) {
         unmatch(*this, UserOrderRow(m_current_status));
+        m_current_status = OrderStatus::NONE;
       }
-    } else {
+      if(m_is_settled) {
+        unmatch(*this, SettledRow());
+        m_is_settled = false;
+      }
+      m_current_transition = 0;
+    } else if(*m_current_type_index == PREVIEW_TYPE_INDEX) {
       unmatch(*this, PreviewRow());
     }
   }
@@ -86,7 +110,7 @@ void MpidBox::update_row_state(int type_index) {
     match(*this, PriceLevelRow(m_current_level));
   } else if(type_index == USER_ORDER_TYPE_INDEX) {
     match(*this, UserOrderRow(OrderStatus::NONE));
-  } else {
+  } else if(type_index == PREVIEW_TYPE_INDEX) {
     match(*this, PreviewRow());
   }
 }
@@ -98,7 +122,9 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
         unmatch(*this, VenueRow(m_current_venue));
       }
       m_current_venue = quote->m_venue;
-      match(*this, VenueRow(quote->m_venue));
+      if(m_current_venue) {
+        match(*this, VenueRow(m_current_venue));
+      }
     }
   } else if(m_current_venue) {
     unmatch(*this, VenueRow(m_current_venue));
@@ -108,27 +134,44 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
 
 void MpidBox::update_status(const BookEntry& entry) {
   auto order = get<BookViewModel::UserOrder>(&entry);
-  if(!order) {
-    return;
-  }
-  auto status = [&] () -> OrderStatus {
-    if(order->m_status == OrderStatus::CANCELED ||
-        order->m_status == OrderStatus::FILLED ||
-        order->m_status == OrderStatus::REJECTED) {
-      return order->m_status;
-    } else if(order->m_status == OrderStatus::PARTIALLY_FILLED) {
-      return OrderStatus::FILLED;
+  auto transition = [&] () -> std::uint64_t {
+    if(!order) {
+      return 0;
     }
-    return OrderStatus::NONE;
+    return order->m_transition;
   }();
-  if(status == OrderStatus::NONE) {
+  auto status = [&] () -> OrderStatus {
+    if(!order || transition == 0) {
+      return OrderStatus::NONE;
+    }
+    return to_highlight_status(order->m_highlight);
+  }();
+  auto is_settled = [&] {
+    if(m_is_reset) {
+      return status != OrderStatus::NONE;
+    }
+    return m_is_settled && transition == m_current_transition;
+  }();
+  m_is_reset = false;
+  if(status == m_current_status && transition == m_current_transition &&
+      is_settled == m_is_settled) {
     return;
   }
   if(m_current_status != OrderStatus::NONE) {
     unmatch(*this, UserOrderRow(m_current_status));
   }
-  match(*this, UserOrderRow(status));
+  if(m_is_settled) {
+    unmatch(*this, SettledRow());
+  }
   m_current_status = status;
+  m_current_transition = transition;
+  m_is_settled = is_settled;
+  if(m_is_settled) {
+    match(*this, SettledRow());
+  }
+  if(m_current_status != OrderStatus::NONE) {
+    match(*this, UserOrderRow(m_current_status));
+  }
 }
 
 void MpidBox::on_current(const BookEntry& entry) {

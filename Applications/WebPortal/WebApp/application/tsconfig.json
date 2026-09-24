@@ -12,10 +12,11 @@
     "sourceMap": true,
     "strictNullChecks": false,
     "target": "es2022",
-    "types": []
+    "types": [],
+    "inlineSources": true
   },
   "include": [
-    "./source/*.ts",
-    "./source/*.tsx"
+    "./source/**/*.ts",
+    "./source/**/*.tsx"
   ]
 }

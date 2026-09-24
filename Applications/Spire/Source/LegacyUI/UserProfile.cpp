@@ -34,10 +34,9 @@ namespace {
   }
 
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
-      BlotterSettings& blotter, MarketDataClient market_data_client,
-      TimeClient time_client) {
+      BlotterSettings& blotter, MarketDataClient market_data_client) {
     return std::make_unique<ServiceBookViewModel>(
-      ticker, blotter, std::move(market_data_client), std::move(time_client));
+      ticker, blotter, std::move(market_data_client));
   }
 }
 
@@ -70,8 +69,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
       m_book_view_models([this] (const auto& ticker) {
-        return book_view_model_builder(ticker, *m_blotterSettings,
-          m_clients.get_market_data_client(), m_clients.get_time_client());
+        return book_view_model_builder(
+          ticker, *m_blotterSettings, m_clients.get_market_data_client());
       }),
       m_book_view_model_builder([this] (const auto& ticker) {
         return m_book_view_models.load(ticker);

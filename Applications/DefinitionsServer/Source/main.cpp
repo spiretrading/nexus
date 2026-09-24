@@ -113,7 +113,9 @@ int main(int argc, const char** argv) {
       venues);
     auto rates = parse_exchange_rates(get_node(config, "exchange_rates"));
     auto schemas = make_compliance_rule_schemas();
-    auto schedule = TradingSchedule();
+    auto schedule = parse_trading_schedule(
+      get_node(load_file(extract<std::string>(config, "trading_schedules",
+        "trading_schedules.yml")), "trading_schedules"), venues);
     auto definitions_server = DefinitionsServletContainer(
       init(&service_locator_client, init(std::move(minimum_client_version),
         std::move(organization_name), std::move(time_zone_database),

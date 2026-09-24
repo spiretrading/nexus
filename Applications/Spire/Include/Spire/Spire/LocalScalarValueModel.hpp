@@ -54,7 +54,7 @@ namespace Spire {
 
   template<typename T>
   LocalScalarValueModel<T>::LocalScalarValueModel(Type value)
-    : m_model(std::make_shared<LocalValueModel<Type>>(std::move(value))) {}
+    : m_model(make_local_value_model(std::move(value))) {}
 
   template<typename T>
   void LocalScalarValueModel<T>::set_minimum(

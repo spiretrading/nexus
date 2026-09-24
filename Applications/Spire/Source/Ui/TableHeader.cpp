@@ -80,8 +80,7 @@ TableHeader::TableHeader(
   }
   auto spacer_model = TableHeaderItem::Model{"", "",
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE};
-  auto spacer = new TableHeaderItem(
-    std::make_shared<LocalValueModel<TableHeaderItem::Model>>(spacer_model));
+  auto spacer = new TableHeaderItem(make_local_value_model(spacer_model));
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   spacer->setFocusPolicy(Qt::NoFocus);
   spacer->set_is_resizeable(false);

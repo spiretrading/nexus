@@ -220,6 +220,12 @@ namespace Nexus::Python {
   void export_market_data_service(pybind11::module& module);
 
   /**
+   * Exports the TestMarketDataFeedClient and its operation types.
+   * @param module The module to export to.
+   */
+  void export_test_market_data_feed_client(pybind11::module& module);
+
+  /**
    * Exports the application definitions.
    * @param module The module to export to.
    */

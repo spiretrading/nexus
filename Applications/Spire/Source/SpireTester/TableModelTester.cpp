@@ -26,6 +26,10 @@ namespace {
 void Spire::require_transaction(
     const std::deque<TableModel::Operation>& operations,
     const std::vector<TableModel::Operation>& expected) {
+  if(expected.empty()) {
+    REQUIRE(operations.empty());
+    return;
+  }
   auto offset = 0;
   if(expected.size() == 1) {
     if(operations.size() != 1) {
@@ -34,6 +38,7 @@ void Spire::require_transaction(
       offset = 1;
     }
   } else {
+    REQUIRE(!operations.empty());
     if(get<TableModel::StartTransaction>(&operations[0]) == nullptr) {
       REQUIRE(operations.size() == 2);
       REQUIRE(get<TableModel::PreRemoveOperation>(&operations[0]) != nullptr);
@@ -52,6 +57,12 @@ void Spire::require_transaction(
       [&] (const TableModel::PreRemoveOperation& expected) {
         auto operation =
           get<TableModel::PreRemoveOperation>(&operations[i + offset]);
+        REQUIRE(operation != nullptr);
+        REQUIRE(operation->m_index == expected.m_index);
+      },
+      [&] (const TableModel::RemoveOperation& expected) {
+        auto operation =
+          get<TableModel::RemoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },

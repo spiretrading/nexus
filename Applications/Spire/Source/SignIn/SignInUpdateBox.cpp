@@ -98,7 +98,7 @@ SignInUpdateBox::SignInUpdateBox(
       m_proxy_progress(
         make_proxy_value_model(std::make_shared<LocalProgressModel>(0))),
       m_time_left(std::move(time_left)),
-      m_activity(std::make_shared<LocalValueModel<Activity>>(Activity::NONE)) {
+      m_activity(make_local_value_model(Activity::NONE)) {
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   auto box = new Box(body);

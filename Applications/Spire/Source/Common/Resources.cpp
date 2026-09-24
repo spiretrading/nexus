@@ -4,14 +4,11 @@
 #include <QFontDatabase>
 #include <QtPlugin>
 
-#ifdef _MSC_VER
+#if defined(_WIN32) && defined(QT_STATIC)
   Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
-#elif __linux__
-  Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)
+  Q_IMPORT_PLUGIN(QGifPlugin)
+  Q_IMPORT_PLUGIN(QSvgIconPlugin)
 #endif
-
-Q_IMPORT_PLUGIN(QGifPlugin);
-Q_IMPORT_PLUGIN(QSvgIconPlugin);
 
 void local_resources() {
   Q_INIT_RESOURCE(Resources);

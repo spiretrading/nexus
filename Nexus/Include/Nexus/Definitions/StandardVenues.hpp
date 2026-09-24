@@ -14,7 +14,7 @@ namespace Details {
         entry.m_market_center = "ASX";
         entry.m_time_zone = "Australia/Sydney";
         entry.m_currency = Currencies::AUD;
-        entry.m_description = "Australian Stock Market";
+        entry.m_description = "Australian Securities Exchange";
         entry.m_display_name = "ASX";
         database.add(entry);
       }
@@ -25,7 +25,7 @@ namespace Details {
         entry.m_market_center = "CXA";
         entry.m_time_zone = "Australia/Sydney";
         entry.m_currency = Currencies::AUD;
-        entry.m_description = "CHI-X Australia";
+        entry.m_description = "TMX Australia Exchange";
         entry.m_display_name = "CXA";
         database.add(entry);
       }
@@ -36,7 +36,7 @@ namespace Details {
         entry.m_market_center = "ALP";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "Alpha Exchange";
+        entry.m_description = "TSX Alpha Exchange - Alpha Classic";
         entry.m_display_name = "XATS";
         database.add(entry);
       }
@@ -47,7 +47,7 @@ namespace Details {
         entry.m_market_center = "CHI";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "CHI-X Canada ATS";
+        entry.m_description = "Nasdaq Canada - CXC";
         entry.m_display_name = "CHIC";
         database.add(entry);
       }
@@ -80,7 +80,7 @@ namespace Details {
         entry.m_market_center = "CHD";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "NASDAQ CXD";
+        entry.m_description = "Nasdaq Canada - CXD";
         entry.m_display_name = "CXD";
         database.add(entry);
       }
@@ -91,7 +91,7 @@ namespace Details {
         entry.m_market_center = "CHT";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "CX2";
+        entry.m_description = "Nasdaq Canada - CX2";
         entry.m_display_name = "CX2";
         database.add(entry);
       }
@@ -113,7 +113,7 @@ namespace Details {
         entry.m_market_center = "TCM";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "MATCH Now";
+        entry.m_description = "Cboe Canada - MATCHNow";
         entry.m_display_name = "MATN";
         database.add(entry);
       }
@@ -124,8 +124,8 @@ namespace Details {
         entry.m_market_center = "AQL";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "Aequitas NEO Exchange";
-        entry.m_display_name = "NEOE";
+        entry.m_description = "Cboe Canada - NEO-L";
+        entry.m_display_name = "NEOL";
         database.add(entry);
       }
       {
@@ -146,7 +146,7 @@ namespace Details {
         entry.m_market_center = "PUR";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
-        entry.m_description = "Pure Trading";
+        entry.m_description = "Canadian Securities Exchange - PURE";
         entry.m_display_name = "PURE";
         database.add(entry);
       }
@@ -172,6 +172,94 @@ namespace Details {
         entry.m_display_name = "TSXV";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("XATX");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ALX";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "Alpha-X";
+        entry.m_display_name = "ALX";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ADRK");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ALD";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "Alpha DRK";
+        entry.m_display_name = "ALD";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("XICX");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ICX";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "Instinet Canada Cross";
+        entry.m_display_name = "ICX";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("LICA");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "LIQ";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "Liquidnet Canada";
+        entry.m_display_name = "LIQ";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("NEON");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "AQN";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "Cboe Canada - NEO-N";
+        entry.m_display_name = "NEON";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ASPC");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ASP";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX ASPEN";
+        entry.m_display_name = "ASPC";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ASPV");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ASV";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX ASPEN VERT";
+        entry.m_display_name = "ASPV";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("INCC");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "INC";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX MIDPOINT";
+        entry.m_display_name = "INCC";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -189,15 +277,23 @@ namespace Details {
   }
 
   namespace Venues {
+    inline const auto ALD = VENUES.from("ADRK").m_venue;
+    inline const auto ALX = VENUES.from("XATX").m_venue;
+    inline const auto ASPC = VENUES.from("ASPC").m_venue;
+    inline const auto ASPV = VENUES.from("ASPV").m_venue;
     inline const auto ASX = VENUES.from("XASX").m_venue;
-    inline const auto CXA = VENUES.from("CHIA").m_venue;
+    inline const auto CHIC = VENUES.from("CHIC").m_venue;
     inline const auto CSE = VENUES.from("XCNQ").m_venue;
     inline const auto CSE2 = VENUES.from("CSE2").m_venue;
-    inline const auto CHIC = VENUES.from("CHIC").m_venue;
+    inline const auto CXA = VENUES.from("CHIA").m_venue;
     inline const auto CXD = VENUES.from("XCXD").m_venue;
+    inline const auto ICX = VENUES.from("XICX").m_venue;
+    inline const auto INCC = VENUES.from("INCC").m_venue;
+    inline const auto LIQ = VENUES.from("LICA").m_venue;
     inline const auto LYNX = VENUES.from("LYNX").m_venue;
     inline const auto MATN = VENUES.from("MATN").m_venue;
     inline const auto NEOE = VENUES.from("NEOE").m_venue;
+    inline const auto NEON = VENUES.from("NEON").m_venue;
     inline const auto OMGA = VENUES.from("OMGA").m_venue;
     inline const auto PURE = VENUES.from("PURE").m_venue;
     inline const auto TSX = VENUES.from("XTSE").m_venue;

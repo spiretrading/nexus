@@ -12,12 +12,14 @@ DefaultQuantityModel::DefaultQuantityModel(
     : m_user_profile(user_profile.get()),
       m_ticker(std::move(ticker)),
       m_side(side) {
-  const auto UPDATE_INTERVAL_MS = 300;
-  m_update_timer.setInterval(UPDATE_INTERVAL_MS);
+  static const auto UPDATE_INTERVAL = std::chrono::milliseconds(300);
+  m_update_timer.setInterval(UPDATE_INTERVAL);
+  QObject::connect(&m_update_timer, &QTimer::timeout, [=, this] {
+    on_update();
+  });
   on_update();
   m_update_timer.start();
 }
-
 
 const DefaultQuantityModel::Type& DefaultQuantityModel::get() const {
   return m_current.get();

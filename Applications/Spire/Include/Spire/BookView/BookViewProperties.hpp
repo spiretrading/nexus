@@ -91,8 +91,8 @@ namespace Spire {
       REJECTED
     };
 
-    /** The number of the order highlight state. */
-    static const auto ORDER_HIGHLIGHT_STATE_COUNT = 5;
+    /** The number of order highlight states. */
+    static constexpr auto ORDER_HIGHLIGHT_STATE_COUNT = 5;
 
     /** Specifies a venue's highlight properties. */
     struct VenueHighlight {
@@ -165,6 +165,12 @@ namespace Spire {
   /** Returns the text representation of a OrderHighlightState. */
   const QString& to_text(
     BookViewHighlightProperties::OrderHighlightState state);
+
+  /**
+   * Repairs BookViewProperties that came from outside of this application.
+   * @param properties The properties to repair.
+   */
+  void repair_book_view_properties(BookViewProperties& properties);
 
   /**
    * Loads BookViewProperties from a file.

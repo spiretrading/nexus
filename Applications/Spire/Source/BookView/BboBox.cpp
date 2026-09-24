@@ -1,4 +1,5 @@
 #include "Spire/BookView/BboBox.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -17,27 +18,28 @@ namespace {
   const auto BORDER_TOP_COLOR = QColor(0xC8C8C8);
   const auto DOWNTICK_BORDER_TOP_COLOR = QColor(0xE63F44);
   const auto UPTICK_BORDER_TOP_COLOR = QColor(0x1FD37A);
-  const auto MINIMUM_FONT_TATIO = 0.4;
-  const auto MAXIMUM_FONT_TATIO = 1.8;
+  const auto MINIMUM_FONT_RATIO = 0.4;
+  const auto MAXIMUM_FONT_RATIO = 1.8;
   const auto FONT_ADJUSTMENT = 6.89;
   const auto WIDTH_SCALE_FACTOR = 0.48276;
 
   auto make_quantity_label(std::shared_ptr<QuoteModel> quote) {
-    auto label = make_label(make_to_text_model(make_transform_value_model(
-      make_field_value_model(std::move(quote), &Quote::m_size),
+    auto label = make_label(make_to_text_model(make_deduplicated_value_model(
+      make_transform_value_model(
+        make_field_value_model(std::move(quote), &Quote::m_size),
         [] (auto quantity) {
           if(quantity == 0) {
             return Quantity(0);
           }
           return std::max<Quantity>(1, floor_to(quantity / 100, 1));
-        })));
+        }))));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }
 
   auto make_price_label(std::shared_ptr<QuoteModel> quote) {
-    auto label = make_label(make_to_text_model(
-      make_field_value_model(std::move(quote), &Quote::m_price)));
+    auto label = make_label(make_to_text_model(make_deduplicated_value_model(
+      make_field_value_model(std::move(quote), &Quote::m_price))));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }
@@ -45,7 +47,7 @@ namespace {
   auto get_gap_width(int font_size, int parent_width) {
     return std::clamp(
       WIDTH_SCALE_FACTOR * parent_width - FONT_ADJUSTMENT * font_size,
-      MINIMUM_FONT_TATIO * font_size, MAXIMUM_FONT_TATIO * font_size);
+      MINIMUM_FONT_RATIO * font_size, MAXIMUM_FONT_RATIO * font_size);
   }
 }
 
@@ -63,14 +65,14 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
   m_body_layout->addStretch(1);
   m_body_layout->addWidget(m_money_label);
   auto gap_width = get_gap_width(m_font_size, width());
-  m_gap1 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
-  m_body_layout->addItem(m_gap1);
+  m_leading_gap = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
+  m_body_layout->addItem(m_leading_gap);
   auto label = make_label(tr("/"));
   label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   link(*this, *label);
   m_body_layout->addWidget(label);
-  m_gap2 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
-  m_body_layout->addItem(m_gap2);
+  m_trailing_gap = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
+  m_body_layout->addItem(m_trailing_gap);
   auto quantity_label = make_quantity_label(m_quote);
   link(*this, *quantity_label);
   m_body_layout->addWidget(quantity_label);
@@ -89,8 +91,7 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
       set(padding(scale_width(4)));
     style.get(Downtick()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
     style.get(Uptick()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
-    style.get(Any() > is_a<TextBox>()).
-      set(Font(font));
+    style.get(Any() > is_a<TextBox>()).set(Font(font));
   });
   on_quote(m_quote->get());
   m_style_connection = connect_style_signal(*m_money_label,
@@ -108,8 +109,8 @@ void BboBox::resizeEvent(QResizeEvent* event) {
 
 void BboBox::update_gap_width() {
   auto gap_width = get_gap_width(m_font_size, width());
-  m_gap1->changeSize(gap_width, 0, QSizePolicy::Fixed);
-  m_gap2->changeSize(gap_width, 0, QSizePolicy::Fixed);
+  m_leading_gap->changeSize(gap_width, 0, QSizePolicy::Fixed);
+  m_trailing_gap->changeSize(gap_width, 0, QSizePolicy::Fixed);
   m_body_layout->invalidate();
 }
 
@@ -130,7 +131,7 @@ void BboBox::on_style() {
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const FontSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
+        stylist.evaluate(size, [=, this] (auto size) {
           m_font_size = size;
         });
       });

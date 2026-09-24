@@ -4,7 +4,7 @@
   "description": "Tests the account page.",
   "license": "GPL-3.0",
   "allowScripts": {
-    "esbuild": false
+    "esbuild": true
   },
   "devDependencies": {
     "@types/react": "17.0.80",
@@ -26,5 +26,9 @@
     "react-dom": "17.0.2",
     "react-router-dom": "5.3.4",
     "web_portal": "file:Dependencies/library"
+  },
+  "private": true,
+  "scripts": {
+    "build": "node node_modules/webpack/bin/webpack.js"
   }
 }

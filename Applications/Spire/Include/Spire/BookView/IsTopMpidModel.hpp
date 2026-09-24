@@ -12,13 +12,13 @@ namespace Spire {
 
       /**
        * Constructs an IsTopMpidModel by checking if an MPID at a given price is
-       * the top-most MPID based on a list top MPID prices.
+       * the top-most MPID based on a list of top MPID prices.
        * @param top_mpid_prices The list of top MPID prices.
-       * @param mpid The MPID of the quote to track.
+       * @param entry The book entry whose venue is tracked.
        * @param price The price of the quote to track.
        */
-      IsTopMpidModel(std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
-        std::shared_ptr<BookEntryModel> mpid,
+      IsTopMpidModel(std::shared_ptr<TopMpidPriceListModel> top_mpid_prices,
+        std::shared_ptr<BookEntryModel> entry,
         std::shared_ptr<ValueModel<Nexus::Money>> price);
 
       const bool& get() const override;
@@ -26,21 +26,21 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ListModel<TopMpidPrice>> m_top_mpid_prices;
-      std::shared_ptr<BookEntryModel> m_mpid;
-      Nexus::Venue m_venue;
+      std::shared_ptr<TopMpidPriceListModel> m_top_mpid_prices;
+      std::shared_ptr<BookEntryModel> m_entry;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
-      std::shared_ptr<ValueModel<TopMpidPrice>> m_top_mpid;
+      Nexus::Venue m_venue;
+      std::shared_ptr<TopMpidPriceListModel::TopPriceModel> m_top_price;
       LocalValueModel<bool> m_current;
-      boost::signals2::scoped_connection m_mpid_connection;
+      boost::signals2::scoped_connection m_entry_connection;
       boost::signals2::scoped_connection m_price_connection;
-      boost::signals2::scoped_connection m_top_mpid_prices_connection;
+      boost::signals2::scoped_connection m_top_price_connection;
 
-      void initialize_top_mpid();
-      void on_mpid(const BookEntry& mpid);
-      void on_top_mpid(const TopMpidPrice& top);
+      void set_venue(Nexus::Venue venue);
+      void update_current();
+      void on_entry(const BookEntry& entry);
       void on_price(Nexus::Money price);
-      void on_operation(const ListModel<TopMpidPrice>::Operation& operation);
+      void on_top_price(const boost::optional<Nexus::Money>& price);
   };
 }
 

@@ -93,9 +93,8 @@ namespace {
 
   auto make_highlight_swatch(const std::shared_ptr<AnyListModel>& list,
       int index) {
-    auto swatch = new HighlightSwatch(
-      std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
-        std::any_cast<HighlightPicker::Highlight>(list->get(index))));
+    auto swatch = new HighlightSwatch(make_local_value_model(
+      std::any_cast<HighlightPicker::Highlight>(list->get(index))));
     swatch->setFixedSize(scale(22, 18));
     return swatch;
   }

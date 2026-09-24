@@ -1,6 +1,7 @@
 #ifndef NEXUS_TRADING_SCHEDULE_HPP
 #define NEXUS_TRADING_SCHEDULE_HPP
 #include <algorithm>
+#include <concepts>
 #include <ostream>
 #include <string>
 #include <tuple>
@@ -27,8 +28,7 @@ namespace Nexus {
         std::string m_code;
 
         /**
-         * The point in time when the event occurs in the time zone of the
-         * venue.
+         * The event's UTC timestamp, or venue-local time when used in a rule.
          */
         boost::posix_time::ptime m_timestamp;
 
@@ -57,8 +57,8 @@ namespace Nexus {
         std::vector<boost::gregorian::greg_year> m_years;
 
         /**
-         * The events taking place matching this rule, only time of day is
-         * considered.
+         * The events taking place matching this rule, using venue-local times
+         * of day.
          */
         std::vector<Event> m_events;
 
@@ -70,30 +70,27 @@ namespace Nexus {
 
       /**
        * Constructs a TradingSchedule.
-       * @param rules The list of rules in order of precedence to match against.
+       * @param rules The rules in precedence order.
        */
       explicit TradingSchedule(std::vector<Rule> rules) noexcept;
 
       /**
-       * Returns a list of events matching a date and venue.
-       * @param date The date to match.
+       * Returns UTC events for the venue's day containing a UTC timestamp.
+       * @param timestamp The UTC timestamp identifying the day to match.
        * @param venue The venue to match.
-       * @return A list of events taking place on the specified <i>date</i> and
-       *         <i>venue</i>.
        */
-      std::vector<Event> find(boost::gregorian::date date, Venue venue) const;
+      std::vector<Event> find(
+        boost::posix_time::ptime timestamp, Venue venue) const;
 
       /**
-       * Returns a list of events matching a date, venue, and predicate.
-       * @param date The date to match.
+       * Returns matching UTC events for the venue's day at a UTC timestamp.
+       * @param timestamp The UTC timestamp identifying the day to match.
        * @param venue The venue to match.
-       * @param f The predicate the event must satisfy.
-       * @return A list of events taking place on the specified <i>date</i> and
-       *         <i>venue</i> and matching <i>f</i>.
+       * @param f The predicate the UTC event must satisfy.
        */
-      template<typename F>
+      template<std::predicate<const TradingSchedule::Event&> F>
       std::vector<Event> find(
-        boost::gregorian::date date, Venue venue, F f) const;
+        boost::posix_time::ptime timestamp, Venue venue, F f) const;
 
     private:
       friend struct Beam::Shuttle<TradingSchedule>;
@@ -255,23 +252,26 @@ namespace Nexus {
     : m_rules(std::move(rules)) {}
 
   inline std::vector<TradingSchedule::Event> TradingSchedule::find(
-      boost::gregorian::date date, Venue venue) const {
-    return find(date, venue, [] (const auto&) { return true; });
+      boost::posix_time::ptime timestamp, Venue venue) const {
+    return find(timestamp, venue, [] (const auto&) { return true; });
   }
 
-  template<typename F>
+  template<std::predicate<const TradingSchedule::Event&> F>
   std::vector<TradingSchedule::Event> TradingSchedule::find(
-      boost::gregorian::date date, Venue venue, F f) const {
+      boost::posix_time::ptime timestamp, Venue venue, F f) const {
+    auto date = utc_to_venue(venue, timestamp).date();
     auto events = std::vector<TradingSchedule::Event>();
     for(auto& rule : m_rules) {
       if(is_match(venue, date, rule)) {
         for(auto& event : rule.m_events) {
-          if(f(event)) {
-            events.push_back(event);
-            events.back().m_timestamp =
-              boost::posix_time::ptime(date, event.m_timestamp.time_of_day());
+          auto dated_event = Event(event.m_code,
+            venue_to_utc(venue,
+              boost::posix_time::ptime(date, event.m_timestamp.time_of_day())));
+          if(f(dated_event)) {
+            events.push_back(dated_event);
           }
         }
+        break;
       }
     }
     return events;

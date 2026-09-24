@@ -157,8 +157,7 @@ namespace {
 FontStyleBox* Spire::make_font_style_box(
     std::shared_ptr<ValueModel<QString>> font_family, QWidget* parent) {
   return make_font_style_box(std::move(font_family),
-    std::make_shared<LocalValueModel<QString>>(
-      get_initial_style(font_family->get())), parent);
+    make_local_value_model(get_initial_style(font_family->get())), parent);
 }
 
 FontStyleBox* Spire::make_font_style_box(

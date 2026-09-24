@@ -2,7 +2,7 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/StandardTimeZones.hpp"
-#include "Nexus/Definitions/Venue.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -34,6 +34,29 @@ namespace {
 }
 
 TEST_SUITE("Venue") {
+  TEST_CASE("canadian_market_centers") {
+    struct Market {
+      const char* m_center;
+      const char* m_mic;
+      const char* m_display_name;
+    };
+    auto markets = std::vector<Market>({
+      {"ALX", "XATX", "ALX"}, {"ALD", "ADRK", "ALD"},
+      {"ICX", "XICX", "ICX"}, {"LIQ", "LICA", "LIQ"},
+      {"AQN", "NEON", "NEON"}, {"ASP", "ASPC", "ASPC"},
+      {"ASV", "ASPV", "ASPV"}, {"INC", "INCC", "INCC"}});
+    for(auto& market : markets) {
+      CAPTURE(market.m_center);
+      auto& entry = from_market_center(market.m_center);
+      REQUIRE(entry.m_venue == Venue(market.m_mic));
+      REQUIRE(entry.m_country_code == Countries::CA);
+      REQUIRE(entry.m_currency == Currencies::CAD);
+      REQUIRE(entry.m_time_zone == "America/Toronto");
+      REQUIRE(entry.m_display_name == market.m_display_name);
+      REQUIRE(parse_venue(market.m_display_name) == entry.m_venue);
+    }
+  }
+
   TEST_CASE("equality") {
     auto default_v1 = Venue();
     auto default_v2 = Venue();

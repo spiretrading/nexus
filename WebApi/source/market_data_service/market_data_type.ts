@@ -9,14 +9,14 @@ export enum MarketDataType {
   /** Represents BookQuote data. */
   BOOK_QUOTE,
 
-  /** Represents MarketQuote data. */
-  MARKET_QUOTE,
-
   /** Represents BboQuote data. */
   BBO_QUOTE,
 
   /** Represents OrderImbalance data. */
-  ORDER_IMBALANCE
+  ORDER_IMBALANCE,
+
+  /** Represents TickerStatus data. */
+  TICKER_STATUS
 }
 
 export class MarketDataTypeSet extends Beam.EnumSet<MarketDataType> {}

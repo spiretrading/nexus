@@ -6,7 +6,7 @@ using namespace Spire;
 
 TEST_SUITE("AnyValueModel") {
   TEST_CASE("wrapper") {
-    auto source = std::make_shared<LocalValueModel<int>>(123);
+    auto source = make_local_value_model(123);
     auto operations = std::deque<std::any>();
     auto& any_model = static_cast<AnyValueModel&>(*source);
     any_model.connect_update_signal([&] (const auto& value) {

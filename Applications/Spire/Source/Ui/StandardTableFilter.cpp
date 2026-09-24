@@ -51,7 +51,7 @@ struct StandardTableFilter::DateColumnFilter : ColumnFilter {
   scoped_connection m_current_connection;
 
   DateColumnFilter()
-      : m_current(std::make_shared<LocalValueModel<DateRange>>(DEFAULT_RANGE)) {
+      : m_current(make_local_value_model(DEFAULT_RANGE)) {
     m_current->connect_update_signal(
       std::bind_front(&DateColumnFilter::on_current, this));
   }
