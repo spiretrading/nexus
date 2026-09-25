@@ -643,14 +643,18 @@ void DurationBox::set_format(const QString& format) {
       }
     }
   }
+  if(is_truncated) {
+    m_submission = m_current->get();
+    m_has_update = false;
+    if(m_current->get_state() != QValidator::State::Acceptable) {
+      is_valid = false;
+    }
+  }
   if(!is_valid) {
     if(!m_is_rejected) {
       m_is_rejected = true;
       match(*m_input_box, Rejected());
     }
-  } else if(is_truncated) {
-    m_submission = m_current->get();
-    m_has_update = false;
   }
   if(!has_fractional_seconds) {
     return;
