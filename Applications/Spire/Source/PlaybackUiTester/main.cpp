@@ -5,11 +5,12 @@
 #include <QTextEdit>
 #include <QTimeEdit>
 #include <QVBoxLayout>
-#include "Spire/Playback/ReplayAttachMenuButton.hpp"
+#include <boost/uuid/uuid_io.hpp>
 #include "Spire/Playback/ReplayWindow.hpp"
-#include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -40,46 +41,75 @@ namespace {
     }
   }
 
-  auto to_text_with_identifier(const TargetMenuItem::Target& target) {
-    return QString("%1 [ID:%2]").
-      arg(to_text(target)).
-      arg(QString::fromStdString(target.m_identifier));
+  auto to_text(const std::shared_ptr<PropertyHub>& hub,
+      const ListModel<PropertyHubMember*>& roster) {
+    auto is_member = [&] (auto member) {
+      return member->get_hub()->get() == hub;
+    };
+    auto count = std::count_if(roster.begin(), roster.end(), is_member);
+    auto ticker = hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get();
+    auto name = [&] {
+      if(count == 1) {
+        return (*std::find_if(roster.begin(), roster.end(), is_member))->
+          get_name();
+      }
+      auto label = ticker ? Spire::to_text(ticker) : QObject::tr("Unassigned");
+      if(count == 0) {
+        return label;
+      }
+      return QString("%1 (%2)").arg(label).arg(count);
+    }();
+    return QString("%1 [%2]").arg(name).
+      arg(QString::fromStdString(to_string(hub->get_id())).left(8));
   }
 
-  auto populate_targets() {
-    auto targets = std::vector<SelectableTarget>();
-    auto identifier = 0;
-    targets.push_back({{to_string(identifier++), "Book View", QColor(),
-      Ticker(), 1}, false});
-    targets.push_back({{to_string(identifier++), "", QColor(0xBF9541),
-      Ticker(), 2}, false});
-    targets.push_back({{to_string(identifier++), "", QColor(0x00BFA0),
-      Ticker(), 2}, false});
-    targets.push_back({{to_string(identifier++), "Book View", QColor(Qt::red),
-      Ticker(), 1}, false});
-    targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
-      Ticker(), 1}, false});
-    targets.push_back({{to_string(identifier++), "", QColor(0xFF7B00),
-      parse_ticker("ABX.TSX"), 3}, true});
-    targets.push_back({{to_string(identifier++), "Book View", QColor(),
-      parse_ticker("ABX.TSX"), 1}, false});
-    targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
-      parse_ticker("ABX.TSX"), 1}, false});
-    targets.push_back({{to_string(identifier++), "", QColor(Qt::blue),
-      parse_ticker("ARE.TSX"), 2}, false});
-    targets.push_back({{to_string(identifier++), "", QColor(0x993EF2),
-      parse_ticker("MFC.TSX"), 2}, false});
-    targets.push_back({{to_string(identifier++), "Time and Sales",
-      QColor(Qt::green), parse_ticker("TD.TSX"), 2}, false});
-    return targets;
+  struct Candidate {
+    std::shared_ptr<PropertyHub> m_hub;
+    std::vector<std::unique_ptr<QWidget>> m_windows;
+    std::vector<std::unique_ptr<PropertyHubMember>> m_members;
+    bool m_is_selected;
+  };
+
+  auto make_candidate(const QString& name, const Ticker& ticker, int count,
+      bool is_selected) {
+    auto candidate = Candidate();
+    candidate.m_hub = std::make_shared<PropertyHub>();
+    candidate.m_hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(ticker);
+    auto title = [&] () -> QString {
+      if(ticker && !name.isEmpty()) {
+        return Spire::to_text(ticker) + " " + QChar(0x2013) + " " + name;
+      }
+      return name;
+    }();
+    for(auto i = 0; i < count; ++i) {
+      auto window = std::make_unique<QWidget>();
+      window->setWindowTitle(title);
+      candidate.m_windows.push_back(std::move(window));
+    }
+    candidate.m_is_selected = is_selected;
+    return candidate;
   }
 
-  auto make_check_box(std::shared_ptr<ListModel<SelectableTarget>> targets,
-      int index) {
-    auto check_box = new CheckBox(make_field_value_model(
-      make_list_value_model(targets, index), &SelectableTarget::m_selected));
-    check_box->set_label(to_text_with_identifier(targets->get(index).m_target));
-    return check_box;
+  auto populate_candidates() {
+    auto candidates = std::vector<Candidate>();
+    candidates.push_back(make_candidate("Book View", Ticker(), 1, false));
+    candidates.push_back(make_candidate("", Ticker(), 2, false));
+    candidates.push_back(make_candidate("", Ticker(), 2, false));
+    candidates.push_back(make_candidate("Book View", Ticker(), 1, false));
+    candidates.push_back(make_candidate("Time and Sales", Ticker(), 1, false));
+    candidates.push_back(
+      make_candidate("", parse_ticker("ABX.TSX"), 3, true));
+    candidates.push_back(
+      make_candidate("Book View", parse_ticker("ABX.TSX"), 1, false));
+    candidates.push_back(
+      make_candidate("Time and Sales", parse_ticker("ABX.TSX"), 1, false));
+    candidates.push_back(
+      make_candidate("", parse_ticker("ARE.TSX"), 2, false));
+    candidates.push_back(
+      make_candidate("", parse_ticker("MFC.TSX"), 2, false));
+    candidates.push_back(
+      make_candidate("Time and Sales", parse_ticker("TD.TSX"), 2, false));
+    return candidates;
   }
 
   class UtcTimeClient {
@@ -95,19 +125,22 @@ namespace {
 }
 
 struct DemoPlaybackController : private QObject {
+  std::shared_ptr<ArrayListModel<PropertyHubMember*>> m_roster;
   ReplayWindow m_replay_window;
   std::shared_ptr<BooleanModel> m_timer_enabled;
   std::shared_ptr<ValueModel<ReplayWindow::State>> m_play_state;
   QTimer m_timer;
 
   DemoPlaybackController()
-      : m_replay_window(ReplayWindow(
+      : m_roster(std::make_shared<ArrayListModel<PropertyHubMember*>>()),
+        m_replay_window(ReplayWindow(
           std::make_shared<LocalTimelineModel>(
             Timeline{ptime(microsec_clock::universal_time().date(),
               time_duration(4, 0, 0)), time_duration(8, 0, 0)}),
           TimeClient(UtcTimeClient()),
           std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-          std::make_shared<ArrayListModel<SelectableTarget>>(),
+          m_roster,
+          std::make_shared<ArrayListModel<std::shared_ptr<PropertyHub>>>(),
           std::make_shared<LocalPlaybackSpeedModel>(1),
           microsec_clock::universal_time().date() - months(6))),
         m_timer_enabled(std::make_shared<LocalBooleanModel>(false)),
@@ -149,18 +182,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 struct ReplayWindowTester : QWidget {
   DemoPlaybackController* m_controller;
-  std::vector<SelectableTarget> m_candidate_targets;
+  std::vector<Candidate> m_candidates;
   QDateTimeEdit* m_start_time;
   QTimeEdit* m_playhead;
   QTextEdit* m_event_log;
   scoped_connection m_timeline_connection;
   scoped_connection m_playhead_connection;
   scoped_connection m_state_connection;
-  scoped_connection m_targets_connection;
+  scoped_connection m_attachments_connection;
 
   ReplayWindowTester(DemoPlaybackController& controller)
       : m_controller(&controller),
-        m_candidate_targets(populate_targets()) {
+        m_candidates(populate_candidates()) {
     setAttribute(Qt::WA_ShowWithoutActivating);
     auto layout = new QVBoxLayout(this);
     auto form_layout = new QFormLayout();
@@ -190,14 +223,17 @@ struct ReplayWindowTester : QWidget {
     auto candidates_group_layout = new QVBoxLayout(candidates_group);
     auto list_widget = new QListWidget();
     candidates_group_layout->addWidget(list_widget);
-    for(auto i = 0; i < m_candidate_targets.size(); ++i) {
-      auto& target = m_candidate_targets[i];
-      m_controller->m_replay_window.get_targets()->push(target);
-      list_widget->addItem(to_text_with_identifier(target.m_target));
+    for(auto i = 0; i < static_cast<int>(m_candidates.size()); ++i) {
+      auto& candidate = m_candidates[i];
+      add_members(candidate);
+      if(candidate.m_is_selected) {
+        m_controller->m_replay_window.get_attachments()->push(candidate.m_hub);
+      }
+      list_widget->addItem(
+        to_text(candidate.m_hub, *m_controller->m_roster));
       auto list_item = list_widget->item(i);
       list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
-      list_item->setData(Qt::UserRole,
-        QString::fromStdString(target.m_target.m_identifier));
+      list_item->setData(Qt::UserRole, i);
       list_item->setCheckState(Qt::Checked);
     }
     connect(list_widget, &QListWidget::itemChanged,
@@ -214,9 +250,10 @@ struct ReplayWindowTester : QWidget {
         std::bind_front(&ReplayWindowTester::on_playhead_update, this));
     m_state_connection = m_controller->m_replay_window.connect_state_signal(
       std::bind_front(&ReplayWindowTester::on_state_update, this));
-    m_targets_connection =
-      m_controller->m_replay_window.get_targets()->connect_operation_signal(
-        std::bind_front(&ReplayWindowTester::on_targets_operation, this));
+    m_attachments_connection =
+      m_controller->m_replay_window.get_attachments()->
+        connect_operation_signal(std::bind_front(
+          &ReplayWindowTester::on_attachments_operation, this));
     m_controller->m_replay_window.installEventFilter(this);
   }
 
@@ -289,41 +326,39 @@ struct ReplayWindowTester : QWidget {
     m_event_log->append(QString("State: %1").arg(to_text(state)));
   }
 
-  void on_list_item_changed(QListWidgetItem* item) {
-    auto& targets = m_controller->m_replay_window.get_targets();
-    if(item->checkState() == Qt::Checked) {
-      auto index = item->listWidget()->row(item);
-      if(index >= 0 && index < m_candidate_targets.size()) {
-        targets->push(m_candidate_targets[index]);
-      }
-    } else {
-      auto i = std::find_if(targets->begin(), targets->end(),
-        [&] (const SelectableTarget& target) {
-          return target.m_target.m_identifier ==
-            item->data(Qt::UserRole).toString().toStdString();
-        });
-      if(i != targets->end()) {
-        targets->remove(i);
-      }
+  void add_members(Candidate& candidate) {
+    for(auto& window : candidate.m_windows) {
+      candidate.m_members.push_back(std::make_unique<PropertyHubMember>(
+        m_controller->m_roster, *window, ":/Icons/bookview.svg",
+        candidate.m_hub));
     }
   }
 
-  void on_targets_operation(
-      const SelectableTargetListModel::Operation& operation) {
+  void on_list_item_changed(QListWidgetItem* item) {
+    auto index = item->data(Qt::UserRole).toInt();
+    if(index < 0 || index >= static_cast<int>(m_candidates.size())) {
+      return;
+    }
+    auto& candidate = m_candidates[index];
+    if(item->checkState() != Qt::Checked) {
+      candidate.m_members.clear();
+    } else if(candidate.m_members.empty()) {
+      add_members(candidate);
+    }
+  }
+
+  void on_attachments_operation(
+      const PropertyHubListModel::Operation& operation) {
+    auto& attachments = *m_controller->m_replay_window.get_attachments();
+    auto& roster = *m_controller->m_roster;
     visit(operation,
-      [&] (const SelectableTargetListModel::UpdateOperation& operation) {
-        if(operation.get_previous().m_selected !=
-            operation.get_value().m_selected) {
-          auto select_status = [&] {
-            if(operation.get_value().m_selected) {
-              return "Selected";
-            } else {
-              return "Deselected";
-            }
-          }();
-          m_event_log->append(QString("%1 target: %2").arg(select_status).
-            arg(to_text_with_identifier(operation.get_value().m_target)));
-        }
+      [&] (const PropertyHubListModel::AddOperation& operation) {
+        m_event_log->append(QString("Attached: %1").
+          arg(to_text(attachments.get(operation.m_index), roster)));
+      },
+      [&] (const PropertyHubListModel::PreRemoveOperation& operation) {
+        m_event_log->append(QString("Detached: %1").
+          arg(to_text(attachments.get(operation.m_index), roster)));
       });
   }
 };
