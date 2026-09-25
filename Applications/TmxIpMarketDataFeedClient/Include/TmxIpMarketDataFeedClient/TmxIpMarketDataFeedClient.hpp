@@ -156,10 +156,15 @@ namespace Nexus {
       OpeningQuote* find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
       void publish(const TmxIpMbxMessage& message);
+      void publish(const TmxIpMocImbalance& message);
       void publish(const TmxIpOpeningAuction& message);
       void publish(const TmxIpCbboQuote& message);
       void publish_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
+      void publish_imbalance(std::string_view symbol,
+        const TmxIpMessageHeader& header, Side side,
+        boost::optional<std::uint64_t> quantity,
+        const boost::optional<TmxIpPrice>& price);
       void log_error(
         const StampMessage& message, const std::exception& error);
       void read_loop();
@@ -1076,6 +1081,11 @@ namespace Nexus {
   void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
       const TmxIpMbxMessage& message) {
     update_orders(message);
+    if(message.m_action == "AssignCOP" && message.m_imbalance_side) {
+      publish_imbalance(message.m_symbol, message.m_header,
+        *message.m_imbalance_side, message.m_imbalance_quantity,
+        message.m_calculated_opening_price);
+    }
     if(message.m_action != "AssignCOP" ||
         message.m_calculated_opening_price.m_type != TmxIpPrice::Type::LIMIT) {
       return;
@@ -1092,13 +1102,7 @@ namespace Nexus {
       quote->m_paired_quantity = *message.m_theoretical_opening_quantity;
     }
     if(message.m_imbalance_side) {
-      if(*message.m_imbalance_side == "BuySide") {
-        quote->m_imbalance_side = Side::BID;
-      } else if(*message.m_imbalance_side == "SellSide") {
-        quote->m_imbalance_side = Side::ASK;
-      } else {
-        quote->m_imbalance_side = Side::NONE;
-      }
+      quote->m_imbalance_side = *message.m_imbalance_side;
     }
     if(message.m_imbalance_quantity) {
       quote->m_imbalance_quantity = *message.m_imbalance_quantity;
@@ -1112,7 +1116,24 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+      const TmxIpMocImbalance& message) {
+    publish_imbalance(message.m_symbol, message.m_header, message.m_side,
+      message.m_quantity, message.m_reference_price);
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
       const TmxIpOpeningAuction& message) {
+    if(message.m_action == "OddlotImbalance" && message.m_symbol &&
+        message.m_imbalance_side) {
+      publish_imbalance(*message.m_symbol, message.m_header,
+        *message.m_imbalance_side, message.m_imbalance_quantity,
+        message.m_calculated_opening_price);
+    }
     auto is_numeric = !message.m_calculated_opening_price ||
       message.m_calculated_opening_price->m_type == TmxIpPrice::Type::LIMIT;
     if(!message.m_symbol || !is_numeric) {
@@ -1209,6 +1230,45 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish_imbalance(
+      std::string_view symbol, const TmxIpMessageHeader& header, Side side,
+      boost::optional<std::uint64_t> quantity,
+      const boost::optional<TmxIpPrice>& price) {
+    if(!m_config.m_venue || (side != Side::NONE && !quantity)) {
+      return;
+    }
+    auto info = find_ticker(symbol);
+    if(!info || !m_open_state.is_open()) {
+      return;
+    }
+    auto venue = get_venue(info->m_ticker, header);
+    if(!venue) {
+      return;
+    }
+    auto timestamp = header.m_trading_timestamp.value_or(header.m_timestamp);
+    if(timestamp.date() !=
+        utc_to_venue(venue, m_time_client->get_time()).date()) {
+      return;
+    }
+    auto size = quantity.value_or(0);
+    if(side == Side::NONE) {
+      size = 0;
+    } else if(size == 0) {
+      side = Side::NONE;
+    }
+    auto reference_price = Money::ZERO;
+    if(price && price->m_type == TmxIpPrice::Type::LIMIT) {
+      reference_price = price->m_value;
+    }
+    m_feed_client->publish(VenueOrderImbalance(OrderImbalance(info->m_ticker,
+      side, size, reference_price, venue_to_utc(venue, timestamp)), venue));
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::log_error(
       const StampMessage& message, const std::exception& error) {
     if(!m_config.m_is_logging_messages) {
@@ -1260,6 +1320,7 @@ namespace Nexus {
             [&] (const TmxIpClearOrderBook& message) { publish(message); },
             [&] (const TmxIpTradeReport& message) { publish(message); },
             [&] (const TmxIpMbxMessage& message) { publish(message); },
+            [&] (const TmxIpMocImbalance& message) { publish(message); },
             [&] (const TmxIpOpeningAuction& message) { publish(message); },
             [&] (const TmxIpCbboQuote& message) { publish(message); },
             [] (const auto&) {});

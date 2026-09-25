@@ -499,7 +499,7 @@ TEST_SUITE("TmxIpMessages") {
       REQUIRE(message.m_orders[1].m_key.value() == "002|ORDER2");
       REQUIRE(!message.m_orders[1].m_price);
       REQUIRE(message.m_market_state.value() == "Pre-open");
-      REQUIRE(message.m_imbalance_side.value() == "BuySide");
+      REQUIRE(message.m_imbalance_side.value() == Side::BID);
       REQUIRE(message.m_imbalance_quantity.value() == 200);
       REQUIRE(message.m_theoretical_opening_quantity.value() == 1000);
       REQUIRE(message.m_paired_quantity.value() == 800);
@@ -513,6 +513,51 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE(message.m_calculated_opening_price.m_type ==
       TmxIpPrice::Type::LIMIT);
     REQUIRE(message.m_calculated_opening_price.m_value == Money::ZERO);
+  }
+
+  TEST_CASE("moc_imbalance") {
+    for(auto [text, side] : {std::pair("BuySide", Side::BID),
+        {"SellSide", Side::ASK}, {"NA", Side::NONE},
+        {"InsufficientOrders", Side::NONE}}) {
+      auto source = encode_message(std::string("6=MocImbalanceStatus;") +
+        "55=ABX;57=20260920155000123;247=TSE;636=AQL;631=30.125;492=" +
+        text + ";493=999999999;698=800;691=100;692=BuySide;693=30.25");
+      auto stamp = StampMessage::parse(source);
+      auto message = TmxIpMocImbalance::parse(stamp);
+      REQUIRE(message.m_symbol == "ABX");
+      REQUIRE(message.m_header.m_trading_timestamp.value() ==
+        time_from_string("2026-09-20 15:50:00.123"));
+      REQUIRE(message.m_header.m_exchange.value() == "TSE");
+      REQUIRE(message.m_header.m_book_type.value() == "AQL");
+      REQUIRE(message.m_side == side);
+      REQUIRE(message.m_quantity.value() == 999999999);
+      REQUIRE(message.m_reference_price.m_type == TmxIpPrice::Type::LIMIT);
+      REQUIRE(message.m_reference_price.m_value == parse_money("30.125"));
+      REQUIRE(visit(stamp, [] (const TmxIpMocImbalance& message) {
+        return message.m_side;
+      }) == side);
+      REQUIRE_NOTHROW(validate(stamp));
+    }
+    auto source = encode_message("6=MocImbalanceStatus;55=ABX;"
+      "57=20260920155000123;631=0;492=NA");
+    auto message = TmxIpMocImbalance::parse(StampMessage::parse(source));
+    REQUIRE(!message.m_quantity);
+    REQUIRE(message.m_reference_price.m_value == Money::ZERO);
+    for(auto fields : {
+        "6=MocImbalanceStatus;57=20260920155000123;631=30;492=BuySide",
+        "6=MocImbalanceStatus;55=ABX;631=30;492=BuySide",
+        "6=MocImbalanceStatus;55=ABX;57=20260920155000123;492=BuySide",
+        "6=MocImbalanceStatus;55=ABX;57=20260920155000123;631=30",
+        "6=MocImbalanceStatus;55=ABX;57=20260920155000123;631=30;492=BAD",
+        "6=MocImbalanceStatus;55=ABX;57=20260920155000123;631=BAD;492=NA",
+        "6=MocImbalanceStatus;55=ABX;57=20260920155000123;631=30;"
+          "492=BuySide;493=-1"}) {
+      source = encode_message(fields);
+      REQUIRE_THROWS_AS(TmxIpMocImbalance::parse(StampMessage::parse(source)),
+        std::exception);
+      REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
+        std::exception);
+    }
   }
 
   TEST_CASE("opening_auction") {

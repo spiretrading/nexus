@@ -507,7 +507,7 @@ namespace Nexus {
     boost::optional<std::string_view> m_market_state;
 
     /** CDF imbalance side (tag 492). */
-    boost::optional<std::string_view> m_imbalance_side;
+    boost::optional<Side> m_imbalance_side;
 
     /** CDF imbalance quantity (tag 493). */
     boost::optional<std::uint64_t> m_imbalance_quantity;
@@ -523,6 +523,34 @@ namespace Nexus {
 
     /** Parses the message and its required trading fields. */
     static TmxIpMbxMessage parse(const StampMessage& message);
+  };
+
+  /**
+   * A CDF closing auction imbalance.
+   * Text views remain valid while the source STAMP buffer is unchanged.
+   */
+  struct TmxIpMocImbalance {
+
+    /** The CDF business class. */
+    static constexpr auto TYPE = std::string_view("MocImbalanceStatus");
+
+    /** The message timestamps and venue. */
+    TmxIpMessageHeader m_header;
+
+    /** CDF symbol (tag 55). */
+    std::string_view m_symbol;
+
+    /** CDF imbalance side (tag 492). */
+    Side m_side;
+
+    /** CDF imbalance quantity in shares (tag 493). */
+    boost::optional<std::uint64_t> m_quantity;
+
+    /** CDF imbalance reference price (tag 631). */
+    TmxIpPrice m_reference_price;
+
+    /** Parses the message and its required trading fields. */
+    static TmxIpMocImbalance parse(const StampMessage& message);
   };
 
   /**
@@ -625,6 +653,7 @@ namespace Nexus {
     std::invocable<F, TmxIpStockStatus> ||
     std::invocable<F, TmxIpMarketStateChange> ||
     std::invocable<F, TmxIpMbxMessage> ||
+    std::invocable<F, TmxIpMocImbalance> ||
     std::invocable<F, TmxIpOpeningAuction> ||
     std::invocable<F, TmxIpCbboQuote> ||
     std::invocable<F, const StampMessage&>;
@@ -757,6 +786,13 @@ namespace TmxIpDetails {
       TmxIpParserException("Invalid CDF opening imbalance side."));
   }
 
+  inline Side imbalance_side(std::string_view source) {
+    if(source == "InsufficientOrders") {
+      return Side::NONE;
+    }
+    return opening_side(source);
+  }
+
   inline boost::posix_time::ptime timestamp(std::string_view source) {
     constexpr auto DATE_TIME_LENGTH = std::size_t(14);
     if(source.size() < DATE_TIME_LENGTH) {
@@ -855,6 +891,11 @@ namespace TmxIpDetails {
         return std::forward<F>(f)(TmxIpMbxMessage::parse(message));
       }
     }
+    if constexpr(std::invocable<F, TmxIpMocImbalance>) {
+      if(business_class == TmxIpMocImbalance::TYPE) {
+        return std::forward<F>(f)(TmxIpMocImbalance::parse(message));
+      }
+    }
     if constexpr(std::invocable<F, TmxIpOpeningAuction>) {
       if(business_class == TmxIpOpeningAuction::TYPE) {
         return std::forward<F>(f)(TmxIpOpeningAuction::parse(message));
@@ -878,6 +919,7 @@ namespace TmxIpDetails {
         is_void_invocable<F, TmxIpStockStatus> &&
         is_void_invocable<F, TmxIpMarketStateChange> &&
         is_void_invocable<F, TmxIpMbxMessage> &&
+        is_void_invocable<F, TmxIpMocImbalance> &&
         is_void_invocable<F, TmxIpOpeningAuction> &&
         is_void_invocable<F, TmxIpCbboQuote>) {
       return;
@@ -1242,7 +1284,7 @@ namespace TmxIpDetails {
     value.m_market_state =
       fields.read_optional(TmxIpFields::MARKET_STATE, text<64>);
     value.m_imbalance_side =
-      fields.read_optional(TmxIpFields::IMBALANCE_SIDE, text<32>);
+      fields.read_optional(TmxIpFields::IMBALANCE_SIDE, imbalance_side);
     value.m_imbalance_quantity =
       fields.read_optional(TmxIpFields::IMBALANCE_VOLUME, number<9>);
     value.m_theoretical_opening_quantity =
@@ -1262,6 +1304,29 @@ namespace TmxIpDetails {
       }
       value.m_orders.push_back(record);
     }
+    return value;
+  }
+
+  inline TmxIpMocImbalance TmxIpMocImbalance::parse(
+      const StampMessage& message) {
+    using namespace TmxIpDetails;
+    auto fields = StampFieldReader(message.m_business_content);
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
+      boost::throw_with_location(
+        TmxIpParserException("Unexpected CDF business class."));
+    }
+    auto value = TmxIpMocImbalance();
+    value.m_header = header(message, fields);
+    if(!value.m_header.m_trading_timestamp) {
+      boost::throw_with_location(
+        TmxIpParserException("Missing CDF trading timestamp."));
+    }
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    value.m_side = fields.read(TmxIpFields::IMBALANCE_SIDE, imbalance_side);
+    value.m_quantity =
+      fields.read_optional(TmxIpFields::IMBALANCE_VOLUME, number<9>);
+    value.m_reference_price =
+      fields.read(TmxIpFields::IMBALANCE_REFERENCE_PRICE, TmxIpPrice::parse);
     return value;
   }
 

@@ -1432,6 +1432,100 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE_FALSE(client.get_exception());
   }
 
+  TEST_CASE("order_imbalance") {
+    auto fixture = Fixture(Venues::NEOE);
+    fixture.m_time.set(time_from_string("2026-09-21 20:00:00"));
+    auto fields = std::string("|6=MocImbalanceStatus|631=25.50"
+      "|492=BuySide|493=123");
+    auto side = Side(Side::BID);
+    auto quantity = Quantity(123);
+    auto price = Money(25.50);
+    SUBCASE("closing_buy") {}
+    SUBCASE("closing_sell") {
+      fields = "|6=MocImbalanceStatus|631=25.50|492=SellSide|493=123";
+      side = Side::ASK;
+    }
+    SUBCASE("balanced") {
+      fields = "|6=MocImbalanceStatus|631=25.50|492=NA";
+      side = Side::NONE;
+      quantity = 0;
+    }
+    SUBCASE("insufficient_orders") {
+      fields = "|6=MocImbalanceStatus|631=25.50|492=InsufficientOrders";
+      side = Side::NONE;
+      quantity = 0;
+    }
+    SUBCASE("assign_cop") {
+      fields = "|6=MBXMessage|5=AssignCOP|191=25.50"
+        "|492=BuySide|493=123|698=1000";
+    }
+    SUBCASE("opening_odd_lot") {
+      fields = "|6=OpeningAuction|5=OddlotImbalance|191=25.50"
+        "|572=BuySide|573=123";
+    }
+    SUBCASE("opening_without_price") {
+      fields = "|6=OpeningAuction|5=OddlotImbalance|572=BuySide|573=123";
+      price = Money::ZERO;
+    }
+    SUBCASE("closing_without_numeric_price") {
+      fields = "|6=MocImbalanceStatus|631=MKT|492=BuySide|493=123";
+      price = Money::ZERO;
+    }
+    fixture.publish(fields + "|55=ABX|636=AQL|247=TSE"
+      "|57=20260921160000000");
+    auto operation =
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
+    REQUIRE(operation->m_imbalance == VenueOrderImbalance(
+      OrderImbalance(parse_ticker("ABX.TSX"), side, quantity, price,
+        time_from_string("2026-09-21 20:00:00")), Venues::NEOE));
+    fixture.require_empty();
+  }
+
+  TEST_CASE("incomplete_imbalance") {
+    auto venue = Venues::NEOE;
+    auto fields = std::string("|6=MocImbalanceStatus|55=ABX|631=25.50"
+      "|492=BuySide|493=123|57=20260921160000000");
+    auto is_unknown = false;
+    SUBCASE("quantity") {
+      fields = "|6=MocImbalanceStatus|55=ABX|631=25.50"
+        "|492=BuySide|57=20260921160000000";
+    }
+    SUBCASE("opening_side") {
+      fields = "|6=OpeningAuction|5=OddlotImbalance|55=ABX"
+        "|573=123|57=20260921160000000";
+    }
+    SUBCASE("paired_volume") {
+      fields = "|6=OpeningAuction|5=PairedVolume|55=ABX"
+        "|578=123|57=20260921160000000";
+    }
+    SUBCASE("assign_limit") {
+      fields = "|6=MBXMessage|5=AssignLimit|55=ABX|191=25.50"
+        "|492=BuySide|493=123|57=20260921160000000";
+    }
+    SUBCASE("venue") {
+      venue = {};
+    }
+    SUBCASE("book_type") {
+      fields += "|636=AQN";
+    }
+    SUBCASE("previous_session") {
+      fields = "|6=MocImbalanceStatus|55=ABX|631=25.50"
+        "|492=BuySide|493=123|57=20260918160000000";
+    }
+    SUBCASE("unknown_symbol") {
+      is_unknown = true;
+      fields = "|6=MocImbalanceStatus|55=UNKNOWN|631=25.50"
+        "|492=BuySide|493=123|57=20260921160000000";
+    }
+    auto fixture = Fixture(venue);
+    fixture.m_time.set(time_from_string("2026-09-21 20:00:00"));
+    fixture.publish(fields);
+    if(is_unknown) {
+      fixture.query()->m_result.set(std::vector<TickerInfo>());
+    }
+    fixture.require_empty();
+  }
+
   TEST_CASE("opening_quote") {
     auto fixture = Fixture();
     fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.50"
@@ -1447,6 +1541,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     SUBCASE("buy_imbalance") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
         "|572=BuySide|573=30|57=20260921090002000");
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.50), 1230));
       REQUIRE(quote->m_ask == make_ask(Money(25.50), 1200));
@@ -1454,11 +1549,13 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     SUBCASE("sell_imbalance") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
         "|572=SellSide|573=40|57=20260921090002000");
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.50), 1200));
       REQUIRE(quote->m_ask == make_ask(Money(25.50), 1240));
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
         "|572=NA|573=0|57=20260921090003000");
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       quote = fixture.quote();
       REQUIRE(quote->m_bid.m_size == 1200);
       REQUIRE(quote->m_ask.m_size == 1200);
@@ -1466,6 +1563,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     SUBCASE("new_price") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
         "|572=SellSide|573=40|57=20260921090002000");
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       fixture.quote();
       SUBCASE("cop") {
         fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.60"
@@ -1478,6 +1576,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       SUBCASE("imbalance") {
         fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
           "|191=25.60|572=SellSide|573=40|57=20260921090003000");
+        fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       }
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.60), 1200));
@@ -1494,6 +1593,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     SUBCASE("source_session") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
         "|572=SellSide|573=40|57=20260921090002000");
+      fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid.m_size == 1200);
       REQUIRE(quote->m_ask.m_size == 1240);
@@ -1535,6 +1635,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       TickerInfo(parse_ticker("NEO.NEOE"), "", "", 100)});
     neo_fixture.publish("|6=MBXMessage|5=AssignCOP|55=NEO|247=AQL|191=12"
       "|57=20260921090000000|698=900|492=SellSide|493=200");
+    neo_fixture.operation<FeedClient::PublishOrderImbalanceOperation>();
     quote = neo_fixture.quote();
     REQUIRE(quote.get_index() == parse_ticker("NEO.NEOE"));
     REQUIRE(quote->m_bid.m_size == 900);
