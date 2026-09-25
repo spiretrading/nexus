@@ -11,6 +11,7 @@
 #include "OtcLinkMarketDataFeedClient/OtcLinkConfiguration.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkMarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkRecoveryClient.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkReferenceLoader.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkSnapshotClient.hpp"
 #include "Version.hpp"
 
@@ -107,28 +108,49 @@ int main(int argc, const char** argv) {
       configuration.m_gap_timeout, std::move(feed_clients), time_client.get(),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()),
       std::move(recovery), std::move(snapshot));
+    auto reference_server = std::unique_ptr<ApplicationRecoveryClient>();
+    auto load_reference = ApplicationOtcClient::SnapshotFunction();
     auto reference = boost::optional<OtcLinkSnapshot>();
     if(auto settings = configuration.m_reference) {
-      auto server = make_recovery_client(
+      reference_server = make_recovery_client(
         settings->m_server, OtcLinkConfiguration::INSIDE_CHANNEL);
-      reference = load_snapshot(settings->m_retries,
-        [&] (std::stop_token token) {
-          auto snapshot = ApplicationSnapshotClient(OtcLinkSpinType::REFERENCE,
-            [&] (std::stop_token token) {
-              server->request_snapshot(token);
-            }, make_protocol_client(settings->m_feed,
-              configuration.m_socket_options, *time_client),
-            init(get_timer_interval(*settings)));
-          return snapshot.load_snapshot(token);
-        }, std::stop_token());
+      load_reference = [&, settings] (std::stop_token token) {
+        return load_snapshot(settings->m_retries,
+          [&] (std::stop_token token) {
+            auto snapshot = ApplicationSnapshotClient(
+              OtcLinkSpinType::REFERENCE, [&] (std::stop_token token) {
+                reference_server->request_snapshot(token);
+              }, make_protocol_client(settings->m_feed,
+                configuration.m_socket_options, *time_client),
+              init(get_timer_interval(*settings)));
+            return snapshot.load_snapshot(token);
+          }, token);
+      };
+      reference = load_reference(std::stop_token());
     }
     auto feed_client = OtcLinkMarketDataFeedClient(
       &market_data_feed_client, &client, time_client.get(),
       std::move(reference), configuration.m_is_logging_messages);
+    auto reference_loader =
+      std::unique_ptr<OtcLinkReferenceLoader<LiveNtpTimeClient*, LiveTimer>>();
+    if(load_reference) {
+      reference_loader =
+        std::make_unique<OtcLinkReferenceLoader<LiveNtpTimeClient*, LiveTimer>>(
+          definitions_client.load_trading_schedule(), time_client.get(),
+          init(boost::posix_time::seconds(1)), [&] (std::stop_token token) {
+            auto snapshot = load_reference(token);
+            if(!token.stop_requested()) {
+              feed_client.update_reference(std::move(snapshot));
+            }
+          });
+    }
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     auto is_interrupted = received_kill_event();
+    if(reference_loader) {
+      reference_loader->close();
+    }
     feed_client.close();
     auto exception = feed_client.get_exception();
     if(!is_interrupted && exception) {

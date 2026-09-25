@@ -110,6 +110,8 @@ trading_schedules:
   - venues: [OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
     dates: [2026-11-27, 2026-12-24, 2027-11-26]
     events:
+      - code: PRE_OPEN
+        time: "06:00:00"
       - code: OPEN
         time: "09:30:00"
       - code: CLOSE
@@ -158,6 +160,8 @@ trading_schedules:
         time: "16:13:00"
   - venues: [OTCM, OTCQ, OTCB, OTCD, PINL, EXPM, PSGM, OTCN, OTCI]
     events:
+      - code: PRE_OPEN
+        time: "06:00:00"
       - code: OPEN
         time: "09:30:00"
       - code: CLOSE

@@ -499,6 +499,34 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     REQUIRE(!fixture.m_client.get_exception());
   }
 
+  TEST_CASE("reference_refresh") {
+    auto fixture = Fixture(TradeFeed());
+    fixture.take<FeedClient::AddOperation>();
+    auto security = make_security();
+    security.m_symbol = "NEW";
+    security.m_tier = OtcLinkTier::OTCQX_US;
+    auto added = make_security();
+    ++added.m_security;
+    added.m_symbol = "ADDED";
+    fixture.m_client.update_reference(
+      OtcLinkSnapshot(800000, {encode(security), encode(added)}));
+    auto trade = make_trade();
+    fixture.send(trade);
+    REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
+      parse_ticker("NEW.OTCQ"));
+    REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
+      parse_ticker("ADDED.OTCB"));
+    REQUIRE(fixture.take<FeedClient::PublishTimeAndSaleOperation>()->
+      m_time_and_sale.get_index() == parse_ticker("NEW.OTCQ"));
+    ++trade.m_security;
+    fixture.send(trade);
+    REQUIRE(fixture.take<FeedClient::PublishTimeAndSaleOperation>()->
+      m_time_and_sale.get_index() == parse_ticker("ADDED.OTCB"));
+    fixture.m_client.update_reference(OtcLinkSnapshot(900000, {}));
+    fixture.send(trade);
+    fixture.require_empty();
+  }
+
   TEST_CASE("reference_completion") {
     auto fixture = Fixture(TradeFeed());
     flush_pending_routines();
