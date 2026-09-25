@@ -42,8 +42,7 @@ int main(int argc, const char** argv) {
     auto market_data_client =
       ApplicationMarketDataClient(Ref(service_locator_client));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), configuration.m_sampling,
-      configuration.m_country);
+      Ref(service_locator_client), configuration.m_sampling, Countries::CA);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto feed_clients =
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();

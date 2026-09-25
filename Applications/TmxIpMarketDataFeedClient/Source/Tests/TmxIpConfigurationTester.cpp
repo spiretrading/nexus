@@ -112,7 +112,6 @@ TEST_SUITE("TmxIpConfiguration") {
     auto source = make_config();
     SUBCASE("defaults") {
       auto config = TmxIpConfiguration::parse(source);
-      REQUIRE(config.m_country == Countries::CA);
       REQUIRE(config.m_sampling == milliseconds(100));
       REQUIRE(config.m_rollover_time == minutes(30));
       REQUIRE(!config.m_is_logging_messages);
@@ -139,7 +138,6 @@ TEST_SUITE("TmxIpConfiguration") {
         std::numeric_limits<std::uint16_t>::max());
     }
     SUBCASE("overrides") {
-      source["country"] = "AU";
       source["rollover_time"] = "06:00:00";
       source["sampling"] = "250ms";
       source["enable_logging"] = true;
@@ -149,7 +147,6 @@ TEST_SUITE("TmxIpConfiguration") {
       source["gap_timeout"] = "10s";
       source["recovery"]["timeout"] = "15s";
       auto config = TmxIpConfiguration::parse(source);
-      REQUIRE(config.m_country == Countries::AU);
       REQUIRE(config.m_rollover_time == hours(6));
       REQUIRE(config.m_sampling == milliseconds(250));
       REQUIRE(config.m_is_logging_messages);
@@ -280,13 +277,6 @@ TEST_SUITE("TmxIpConfiguration") {
           REQUIRE_THROWS_AS(
             TmxIpConfiguration::parse(source), std::runtime_error);
         }
-      }
-    }
-    SUBCASE("country") {
-      for(auto country : {"", "ZZ", "INVALID"}) {
-        source["country"] = country;
-        REQUIRE_THROWS_AS(
-          TmxIpConfiguration::parse(source), std::runtime_error);
       }
     }
     SUBCASE("logging") {

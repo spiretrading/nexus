@@ -52,9 +52,6 @@ namespace Nexus {
     /** Whether to log complete STAMP messages. */
     bool m_is_logging_messages;
 
-    /** The country whose market data registry receives published updates. */
-    CountryCode m_country;
-
     /** The CDF venue; unspecified for consolidated services. */
     Venue m_venue;
 
@@ -157,12 +154,6 @@ namespace Details {
       auto configuration = TmxIpConfiguration();
       configuration.m_is_logging_messages =
         Beam::extract<bool>(config, "enable_logging", false);
-      configuration.m_country =
-        parse_country_code(Beam::extract<std::string>(config, "country", "CA"));
-      if(!configuration.m_country) {
-        boost::throw_with_location(
-          std::runtime_error("Invalid market data country."));
-      }
       if(config["venue"]) {
         configuration.m_venue =
           parse_venue(Beam::extract<std::string>(config, "venue"));

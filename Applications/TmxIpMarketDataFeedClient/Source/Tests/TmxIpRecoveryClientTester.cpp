@@ -107,6 +107,51 @@ namespace {
 }
 
 TEST_SUITE("TmxIpRecoveryClient") {
+  TEST_CASE("rollover_ranges") {
+    auto fixture = Fixture();
+    auto first = fixture.start(TmxIpRecoveryRequest(10, 10));
+    fixture.m_connections.pop();
+    auto buffer = SharedBuffer();
+    read_exact(first->get_reader(), out(buffer), TmxIpRecoveryRequest::LENGTH);
+    SUBCASE("completed") {
+      first->get_writer().write(from<SharedBuffer>(acknowledgement(10, 10)));
+      fixture.publish("HDR  000000010000000010", 0);
+      fixture.publish("old", 10);
+      fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
+      REQUIRE(fixture.m_result.get().m_sent_count == 1);
+      REQUIRE(fixture.m_client->read().m_payload == "old");
+      fixture.m_client->reset(1);
+    }
+    SUBCASE("failed") {
+      fixture.m_timer.trigger();
+      REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+      fixture.m_client->reset(1);
+    }
+    SUBCASE("pending") {
+      fixture.m_client->reset(1);
+      REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+    }
+    auto results = Queue<TmxIpRecoveryResult>();
+    auto routine = RoutineHandler(spawn([&] {
+      try {
+        results.push(fixture.m_client->request(TmxIpRecoveryRequest(10, 10)));
+      } catch(const std::exception&) {
+        results.close(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(fixture.m_connections.try_pop().has_value());
+    auto next = fixture.m_server.accept();
+    next->get_writer().write(from<SharedBuffer>(acknowledgement(10, 10)));
+    fixture.publish("HDR  000000010000000010", 0);
+    fixture.publish("new", 10);
+    fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
+    REQUIRE(results.pop().m_sent_count == 1);
+    auto session = std::uint64_t();
+    REQUIRE(fixture.m_client->read(out(session)).m_payload == "new");
+    REQUIRE(session == 1);
+  }
+
   TEST_CASE("recovery_header") {
     auto fixture = Fixture();
     fixture.m_client->reset(1);
@@ -166,7 +211,6 @@ TEST_SUITE("TmxIpRecoveryClient") {
     fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
     REQUIRE(fixture.m_result.get().m_sent_count == 1);
     fixture.m_client->reset(1);
-    fixture.reject(TmxIpRecoveryRequest(1, 1));
     auto next = fixture.start(TmxIpRecoveryRequest(2, 2));
     next->get_writer().write(from<SharedBuffer>(acknowledgement(2, 2)));
     fixture.publish("HDR  000000001000000001", 0);
@@ -201,8 +245,6 @@ TEST_SUITE("TmxIpRecoveryClient") {
     REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
     REQUIRE_THROWS_AS(
       fixture.m_client->request(TmxIpRecoveryRequest(1, 1), 0), IOException);
-    fixture.reject(TmxIpRecoveryRequest(1, 1));
-    fixture.reject(TmxIpRecoveryRequest(2, 3));
     auto next = fixture.start(TmxIpRecoveryRequest(3, 3));
     next->get_writer().write(from<SharedBuffer>(acknowledgement(3, 3)));
     fixture.publish("HDR  000000001000000002", 0);
@@ -223,32 +265,6 @@ TEST_SUITE("TmxIpRecoveryClient") {
     fixture.m_connections.pop();
     auto buffer = SharedBuffer();
     read_exact(first->get_reader(), out(buffer), TmxIpRecoveryRequest::LENGTH);
-    SUBCASE("completed") {
-      first->get_writer().write(from<SharedBuffer>(acknowledgement(10, 12)));
-      fixture.publish("HDR  000000010000000012", 0);
-      fixture.publish("first", 10);
-      fixture.publish("second", 11);
-      fixture.publish("third", 12);
-      fixture.publish(std::format("TLR  000000003000000003{:100}", ""), 0);
-      REQUIRE(fixture.m_result.get().m_sent_count == 3);
-      REQUIRE(fixture.m_client->read().m_payload == "first");
-      REQUIRE(fixture.m_client->read().m_payload == "second");
-      REQUIRE(fixture.m_client->read().m_payload == "third");
-      fixture.m_client->reset(1);
-    }
-    SUBCASE("partial") {
-      first->get_writer().write(from<SharedBuffer>(acknowledgement(11, 12)));
-      fixture.publish("HDR  000000011000000012", 0);
-      fixture.publish("partial", 11);
-      fixture.publish(std::format("TLR  000000003000000001{:100}", ""), 0);
-      REQUIRE(fixture.m_result.wait_for(std::chrono::seconds(1)) ==
-        std::future_status::ready);
-      auto result = fixture.m_result.get();
-      REQUIRE(result.m_requested_count == 3);
-      REQUIRE(result.m_sent_count == 1);
-      REQUIRE(fixture.m_client->read().m_payload == "partial");
-      fixture.m_client->reset(1);
-    }
     SUBCASE("deadline") {
       fixture.m_timer.trigger();
       REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
@@ -259,6 +275,7 @@ TEST_SUITE("TmxIpRecoveryClient") {
       fixture.publish(std::format("ERRORCANCELED{:100}", "canceled"), 0);
       REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
     }
+    fixture.m_client->reset(0);
     for(auto& range : {TmxIpRecoveryRequest(10, 12),
         TmxIpRecoveryRequest(11, 11), TmxIpRecoveryRequest(9, 10),
         TmxIpRecoveryRequest(12, 13), TmxIpRecoveryRequest(9, 13)}) {
@@ -268,9 +285,6 @@ TEST_SUITE("TmxIpRecoveryClient") {
     REQUIRE_FALSE(connection.has_value());
     fixture.m_client->reset(2);
     fixture.m_client->reset(3);
-    fixture.reject(TmxIpRecoveryRequest(10, 12));
-    connection = fixture.m_connections.try_pop();
-    REQUIRE_FALSE(connection.has_value());
     auto next = fixture.start(TmxIpRecoveryRequest(13, 13));
     next->get_writer().write(from<SharedBuffer>(acknowledgement(13, 13)));
     fixture.publish("HDR  000000010000000012", 0);

@@ -171,7 +171,6 @@ namespace Nexus {
       struct State {
         std::shared_ptr<Operation> m_operation;
         std::exception_ptr m_exception;
-        std::vector<TmxIpRecoveryRequest> m_ranges;
         std::vector<TmxIpRecoveryRequest> m_quarantined_ranges;
         std::uint64_t m_session = 0;
       };
@@ -324,10 +323,10 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   void TmxIpRecoveryClient<C, P, T>::reset(std::uint64_t session) {
     Beam::with(m_state, [&] (auto& state) {
-      for(auto& range : state.m_ranges) {
-        add(state.m_quarantined_ranges, range);
+      if(state.m_session == session) {
+        return;
       }
-      state.m_ranges.clear();
+      state.m_quarantined_ranges.clear();
       state.m_session = session;
       if(auto operation = state.m_operation) {
         m_tasks.push([=] {
@@ -453,7 +452,6 @@ namespace Nexus {
             "TMX IP recovery request overlaps a quarantined range."));
         }
       }
-      add(state.m_ranges, request);
       state.m_operation = operation;
     });
     try {
@@ -467,7 +465,9 @@ namespace Nexus {
       return result;
     } catch(const std::exception&) {
       Beam::with(m_state, [&] (auto& state) {
-        add(state.m_quarantined_ranges, request);
+        if(state.m_session == session) {
+          add(state.m_quarantined_ranges, request);
+        }
       });
       finish(*operation, *slot);
       throw;

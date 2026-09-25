@@ -6,7 +6,6 @@ service_locator:
 
 enable_logging: false
 sampling: 100ms
-country: CA
 rollover_time: "00:30:00"
 feed_timeout: 1s
 gap_timeout: 1s

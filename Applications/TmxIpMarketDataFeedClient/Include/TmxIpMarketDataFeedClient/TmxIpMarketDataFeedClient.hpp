@@ -112,7 +112,7 @@ namespace Nexus {
       std::unordered_map<std::string, boost::optional<TickerInfo>> m_tickers;
       std::unordered_map<Ticker, OpeningQuote> m_opening_quotes;
       std::unordered_map<Venue, Session> m_sessions;
-      std::unordered_map<std::string, Book> m_books;
+      std::unordered_map<Ticker, Book> m_books;
       boost::gregorian::date m_auction_date;
       std::unordered_set<std::string> m_auction_trades;
       Beam::Sync<std::exception_ptr> m_exception;
@@ -141,6 +141,8 @@ namespace Nexus {
         boost::posix_time::ptime timestamp);
       void remove(Book& book, const std::string& key,
         boost::posix_time::ptime timestamp);
+      void update(const TickerInfo& info, boost::posix_time::ptime timestamp);
+      void publish(const TmxIpSymbolStatus& message);
       void publish(const TmxIpOrderBook& message);
       void publish(const TmxIpOrderCancelReport& message);
       void publish(const TmxIpClearOrderBook& message);
@@ -364,10 +366,12 @@ namespace Nexus {
       const Book& book, Side side, boost::optional<std::uint64_t> broker,
       std::string_view id) {
     auto key = std::string();
-    if(side == Side::BID) {
-      key = "B:";
-    } else {
-      key = "S:";
+    if(book.m_venue == Venues::NEON) {
+      if(side == Side::BID) {
+        key = "B:";
+      } else {
+        key = "S:";
+      }
     }
     if(book.m_venue == Venues::TSX || book.m_venue == Venues::TSXV ||
         book.m_venue == Venues::XATS || book.m_venue == Venues::ALX) {
@@ -387,7 +391,8 @@ namespace Nexus {
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   Quantity TmxIpMarketDataFeedClient<C, D, T, M>::get_quantity(
       const Book& book, const OrderEntry& order) {
-    if(order.m_price.m_type != TmxIpPrice::Type::LIMIT ||
+    if(book.m_board_lot <= 0 ||
+        order.m_price.m_type != TmxIpPrice::Type::LIMIT ||
         order.m_price.m_value <= Money::ZERO) {
       return 0;
     }
@@ -424,21 +429,19 @@ namespace Nexus {
       return nullptr;
     }
     auto info = find_ticker(symbol);
-    if(!info || info->m_board_lot <= 0 || !m_open_state.is_open()) {
+    if(!info || !m_open_state.is_open()) {
       return nullptr;
     }
     auto venue = get_venue(info->m_ticker, header);
     if(!venue) {
       return nullptr;
     }
-    auto& source = VENUES.from(venue).m_market_center;
-    auto prefix = std::string(source) + ':' + std::string(symbol) + ':';
-    auto [i, is_inserted] = m_books.try_emplace(prefix);
+    auto [i, is_inserted] = m_books.try_emplace(info->m_ticker);
     if(is_inserted) {
       i->second.m_ticker = info->m_ticker;
       i->second.m_venue = venue;
       i->second.m_mpid = VENUES.from(venue).m_display_name;
-      i->second.m_prefix = std::move(prefix);
+      i->second.m_prefix = std::string(symbol) + ':';
       i->second.m_board_lot = info->m_board_lot;
     }
     return &i->second;
@@ -539,6 +542,103 @@ namespace Nexus {
     if(quantity != 0) {
       m_feed_client->remove_order(book.m_prefix + key, timestamp);
     }
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::update(
+      const TickerInfo& info, boost::posix_time::ptime timestamp) {
+    auto& previous = m_tickers[info.m_ticker.get_symbol()];
+    if(!previous || (previous->m_ticker == info.m_ticker &&
+        previous->m_board_lot == info.m_board_lot)) {
+      previous = info;
+      return;
+    }
+    if(previous->m_ticker != info.m_ticker) {
+      m_opening_quotes.erase(previous->m_ticker);
+    }
+    auto node = m_books.extract(previous->m_ticker);
+    previous = info;
+    if(node.empty()) {
+      return;
+    }
+    auto& book = node.mapped();
+    timestamp = venue_to_utc(book.m_venue, timestamp);
+    for(auto& [key, order] : book.m_orders) {
+      if(get_quantity(book, order) != 0) {
+        m_feed_client->remove_order(book.m_prefix + key, timestamp);
+      }
+    }
+    book.m_ticker = info.m_ticker;
+    book.m_board_lot = info.m_board_lot;
+    auto venue = get_venue(info.m_ticker, {});
+    if(venue != book.m_venue) {
+      book.m_venue = venue;
+      book.m_mpid = VENUES.from(venue).m_display_name;
+    }
+    for(auto& [key, order] : book.m_orders) {
+      auto quantity = get_quantity(book, order);
+      if(quantity != 0) {
+        m_feed_client->add_order(book.m_ticker, book.m_venue,
+          get_mpid(book, order.m_broker), false, book.m_prefix + key,
+          order.m_side, order.m_price.m_value, quantity, timestamp);
+      }
+    }
+    node.key() = info.m_ticker;
+    m_books.insert(std::move(node));
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+      const TmxIpSymbolStatus& message) {
+    auto listing = Venue();
+    if(message.m_listing_market) {
+      auto code = *message.m_listing_market;
+      if(code == "T") {
+        listing = Venues::TSX;
+      } else if(code == "V") {
+        listing = Venues::TSXV;
+      } else if(code == "N") {
+        listing = Venues::CSE;
+      } else if(code == "E") {
+        listing = Venues::NEOE;
+      } else if(code == "O") {
+        listing = Venues::OMGA;
+      } else {
+        return;
+      }
+    }
+    auto symbol = std::string(message.m_symbol);
+    auto info = TickerInfo();
+    auto i = m_tickers.find(symbol);
+    if(i != m_tickers.end() && i->second) {
+      info = *i->second;
+    } else if(!listing || !message.m_name || !message.m_board_lot) {
+      if(auto previous = find_ticker(message.m_symbol)) {
+        info = *previous;
+      }
+    }
+    if(listing) {
+      info.m_ticker = Ticker(symbol, listing);
+    } else if(!info.m_ticker.get_venue()) {
+      return;
+    }
+    if(message.m_name) {
+      info.m_name = *message.m_name;
+    }
+    if(message.m_board_lot) {
+      info.m_board_lot = Quantity(*message.m_board_lot);
+    }
+    m_feed_client->add(info);
+    update(info, message.m_header.m_trading_timestamp.value_or(
+      message.m_header.m_timestamp));
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -845,15 +945,13 @@ namespace Nexus {
           }
           price = *record.m_price;
         }
-        for(auto side : {Side::BID, Side::ASK}) {
-          auto key = get_order_key(*book, side, broker,
-            record.m_key->substr(separator + 1));
-          auto i = book->m_orders.find(key);
-          if(i != book->m_orders.end()) {
-            auto order = i->second;
-            order.m_price = price;
-            update(*book, key, order, timestamp);
-          }
+        auto key = get_order_key(
+          *book, Side::NONE, broker, record.m_key->substr(separator + 1));
+        auto i = book->m_orders.find(key);
+        if(i != book->m_orders.end()) {
+          auto order = i->second;
+          order.m_price = price;
+          update(*book, key, order, timestamp);
         }
       }
     }
@@ -866,13 +964,9 @@ namespace Nexus {
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::load_tickers() {
     auto query = TickerInfoQuery();
-    query.set_index(m_config.m_country);
+    query.set_index(Countries::CA);
     query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     for(auto& info : m_market_data_client->query(query)) {
-      if(VENUES.from(info.m_ticker.get_venue()).m_country_code !=
-          m_config.m_country) {
-        continue;
-      }
       auto [i, is_inserted] =
         m_tickers.try_emplace(info.m_ticker.get_symbol(), info);
       if(!is_inserted && i->second && i->second->m_ticker != info.m_ticker) {
@@ -892,15 +986,13 @@ namespace Nexus {
     if(is_inserted) {
       try {
         auto query = TickerInfoQuery();
-        query.set_index(m_config.m_country);
+        query.set_index(Countries::CA);
         query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
         auto ticker = TickerAccessor(Beam::MemberAccessExpression("ticker",
           typeid(Ticker), Beam::ParameterExpression(0, typeid(TickerInfo))));
         query.set_filter(ticker.get_symbol() == std::string(symbol));
         for(auto& info : m_market_data_client->query(query)) {
-          if(info.m_ticker.get_symbol() != symbol ||
-              VENUES.from(info.m_ticker.get_venue()).m_country_code !=
-                m_config.m_country) {
+          if(info.m_ticker.get_symbol() != symbol) {
             continue;
           }
           if(i->second && i->second->m_ticker != info.m_ticker) {
@@ -1162,6 +1254,7 @@ namespace Nexus {
         }
         try {
           visit(message,
+            [&] (const TmxIpSymbolStatus& message) { publish(message); },
             [&] (const TmxIpOrderBook& message) { publish(message); },
             [&] (const TmxIpOrderCancelReport& message) { publish(message); },
             [&] (const TmxIpClearOrderBook& message) { publish(message); },
