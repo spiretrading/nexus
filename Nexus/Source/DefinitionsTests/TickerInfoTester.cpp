@@ -10,8 +10,9 @@ using namespace Nexus::Venues;
 
 TEST_SUITE("TickerInfo") {
   TEST_CASE("stream") {
-    auto info =
-      TickerInfo(Ticker("ABC", TSX), "Test Company", "Technology", 100);
+    auto info = TickerInfo(Ticker("ABC", TSX),
+      "Soci\xc3\xa9t\xc3\xa9 \xe2\x80\x9cTest\xe2\x80\x9d\xe2\x84\xa2",
+      "Technology", 100);
     auto expected = std::ostringstream();
     expected << '(' << info.m_ticker << ' ' << info.m_name << ' '<<
       info.m_sector << ' ' << info.m_board_lot << ')';
