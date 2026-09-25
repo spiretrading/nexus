@@ -328,6 +328,15 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto expected = initial;
     expected.m_name = "Barrick Mining";
     SUBCASE("name") {}
+    SUBCASE("utf8_name") {
+      expected.m_name = "Crown Capital Partners Inc. (the \xe2\x80\x9c"
+        "Company\xe2\x80\x9d)";
+      fields = "|177=" + expected.m_name;
+    }
+    SUBCASE("trademark_name") {
+      expected.m_name = "FIDELITY ADVANTAGE ETHER ETF\xe2\x84\xa2";
+      fields = "|177=" + expected.m_name;
+    }
     SUBCASE("absent_fields") {
       fields.clear();
       expected = initial;
