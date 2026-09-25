@@ -92,6 +92,12 @@ namespace {
         time_duration::ticks_per_second());
   }
 
+  time_duration truncate(const time_duration& duration, int fractional_digits) {
+    return duration - time_duration(0, 0, 0, duration.fractional_seconds()) +
+      to_fractional_seconds(
+        to_fraction_units(duration, fractional_digits), fractional_digits);
+  }
+
   int get_text_width(const QWidget& editor, const QString& text) {
     return editor.fontMetrics().horizontalAdvance(text);
   }
@@ -626,6 +632,17 @@ void DurationBox::set_format(const QString& format) {
       }
     }
   }
+  auto fractional_digits = format_fields.m_fractional_digits;
+  if(auto current = m_current->get()) {
+    auto truncated = truncate(*current, fractional_digits);
+    if(truncated != *current) {
+      if(m_current->set(truncated) == QValidator::State::Invalid) {
+        is_valid = false;
+      } else {
+        is_truncated = true;
+      }
+    }
+  }
   if(!is_valid) {
     if(!m_is_rejected) {
       m_is_rejected = true;
@@ -638,7 +655,6 @@ void DurationBox::set_format(const QString& format) {
   if(!has_fractional_seconds) {
     return;
   }
-  auto fractional_digits = format_fields.m_fractional_digits;
   std::static_pointer_cast<FractionalSecondModel>(
     m_fields[FRACTIONAL_SECOND]->get_current())->set_fractional_digits(
       fractional_digits);
