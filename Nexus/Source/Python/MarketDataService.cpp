@@ -6,6 +6,7 @@
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/AsyncHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/BookQuoteToBboQuoteModel.hpp"
 #include "Nexus/MarketDataService/CachedHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/DataStoreMarketDataClient.hpp"
@@ -56,6 +57,14 @@ void Nexus::Python::export_async_historical_data_store(module& module) {
     ToPythonHistoricalDataStore<AsyncHistoricalDataStore<HistoricalDataStore>>;
   export_historical_data_store<DataStore>(module, "AsyncHistoricalDataStore").
     def(init<HistoricalDataStore&>(), keep_alive<1, 2>());
+}
+
+void Nexus::Python::export_book_quote_to_bbo_quote_model(module& module) {
+  class_<BookQuoteToBboQuoteModel>(module, "BookQuoteToBboQuoteModel").
+    def(init<>()).
+    def_property_readonly(
+      "bbo", &BookQuoteToBboQuoteModel::get_bbo, return_value_policy::copy).
+    def("update", &BookQuoteToBboQuoteModel::update);
 }
 
 void Nexus::Python::export_cached_historical_data_store(module& module) {
@@ -195,6 +204,7 @@ void Nexus::Python::export_market_data_service(module& module) {
       module, "MarketDataFeedClient"));
   export_market_data_service_application_definitions(module);
   export_async_historical_data_store(module);
+  export_book_quote_to_bbo_quote_model(module);
   export_cached_historical_data_store(module);
   export_client_historical_data_store(module);
   export_data_store_market_data_client(module);

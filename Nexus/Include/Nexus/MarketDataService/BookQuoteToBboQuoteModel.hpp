@@ -1,5 +1,5 @@
-#ifndef NEXUS_BBO_QUOTE_MODEL_HPP
-#define NEXUS_BBO_QUOTE_MODEL_HPP
+#ifndef NEXUS_BOOK_QUOTE_TO_BBO_QUOTE_MODEL_HPP
+#define NEXUS_BOOK_QUOTE_TO_BBO_QUOTE_MODEL_HPP
 #include <algorithm>
 #include <vector>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -8,11 +8,9 @@
 namespace Nexus {
 
   /** Maintains a BboQuote from a stream of BookQuote updates. */
-  class BboQuoteModel {
+  class BookQuoteToBboQuoteModel {
     public:
-
-      /** Constructs a BboQuoteModel. */
-      BboQuoteModel() = default;
+      BookQuoteToBboQuoteModel() = default;
 
       /** Returns the current BboQuote. */
       const BboQuote& get_bbo() const;
@@ -32,67 +30,55 @@ namespace Nexus {
       bool recompute_bbo(Side side, boost::posix_time::ptime timestamp);
   };
 
-  inline const BboQuote& BboQuoteModel::get_bbo() const {
+  inline const BboQuote& BookQuoteToBboQuoteModel::get_bbo() const {
     return m_bbo;
   }
 
-  inline bool BboQuoteModel::update(const BookQuote& quote) {
+  inline bool BookQuoteToBboQuoteModel::update(const BookQuote& quote) {
     auto& book = pick(quote.m_quote.m_side, m_asks, m_bids);
-    auto [lower, upper] = std::ranges::equal_range(book, quote,
-      [&](const auto& lhs, const auto& rhs) {
+    auto [i, j] = std::ranges::equal_range(
+      book, quote, [&] (const auto& lhs, const auto& rhs) {
         return offer_comparator(
           quote.m_quote.m_side, lhs.m_quote.m_price, rhs.m_quote.m_price) > 0;
       });
-    auto i = std::find_if(lower, upper, [&](const auto& entry) {
-      return entry.m_mpid == quote.m_mpid;
+    auto k = std::ranges::find_if(i, j, [&] (const auto& entry) {
+      return entry.m_venue == quote.m_venue && entry.m_mpid == quote.m_mpid;
     });
     if(quote.m_quote.m_size == 0) {
-      if(i != upper) {
-        book.erase(i);
+      if(k != j) {
+        book.erase(k);
       } else {
         return false;
       }
-    } else if(i != upper) {
-      *i = quote;
+    } else if(k != j) {
+      *k = quote;
     } else {
-      book.insert(upper, quote);
+      book.insert(j, quote);
     }
     auto& bbo = pick(quote.m_quote.m_side, m_bbo.m_ask, m_bbo.m_bid);
-    if(bbo.m_size != 0 && offer_comparator(quote.m_quote.m_side,
-        quote.m_quote.m_price, bbo.m_price) > 0) {
+    if(bbo.m_size != 0 && offer_comparator(
+        quote.m_quote.m_side, quote.m_quote.m_price, bbo.m_price) > 0) {
       return false;
     }
     return recompute_bbo(quote.m_quote.m_side, quote.m_timestamp);
   }
 
-  inline bool BboQuoteModel::recompute_bbo(
+  inline bool BookQuoteToBboQuoteModel::recompute_bbo(
       Side side, boost::posix_time::ptime timestamp) {
     auto& book = pick(side, m_asks, m_bids);
     auto& bbo = pick(side, m_bbo.m_ask, m_bbo.m_bid);
-    if(book.empty()) {
-      if(bbo.m_size == 0) {
-        return false;
+    auto quote = Quote(Money::ZERO, 0, side);
+    if(!book.empty()) {
+      quote.m_price = book.back().m_quote.m_price;
+      for(auto i = book.rbegin();
+          i != book.rend() && i->m_quote.m_price == quote.m_price; ++i) {
+        quote.m_size += i->m_quote.m_size;
       }
-      bbo = Quote(Money::ZERO, 0, side);
-      m_bbo.m_timestamp = timestamp;
-      return true;
     }
-    auto& back = book.back().m_quote;
-    if(bbo.m_price == back.m_price && bbo.m_size == back.m_size) {
+    if(quote == bbo) {
       return false;
     }
-    auto best = book.rbegin();
-    auto i = best + 1;
-    while(i != book.rend() && i->m_quote.m_price == best->m_quote.m_price) {
-      if(i->m_quote.m_size > best->m_quote.m_size) {
-        best = i;
-      }
-      ++i;
-    }
-    if(best != book.rbegin()) {
-      std::iter_swap(best, book.rbegin());
-    }
-    bbo = book.back().m_quote;
+    bbo = quote;
     m_bbo.m_timestamp = timestamp;
     return true;
   }

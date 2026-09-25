@@ -28,6 +28,12 @@ namespace Nexus::Python {
   void export_async_historical_data_store(pybind11::module& module);
 
   /**
+   * Exports the BookQuoteToBboQuoteModel class.
+   * @param module The module to export to.
+   */
+  void export_book_quote_to_bbo_quote_model(pybind11::module& module);
+
+  /**
    * Exports the CachedHistoricalDataStore class.
    * @param module The module to export to.
    */
