@@ -5,6 +5,8 @@ find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 add_library(Playback ${header_files} ${source_files})
+beam_configure_target(Playback)
+target_link_libraries(Playback BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Playback PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
@@ -21,6 +23,8 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(PlaybackUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(PlaybackUiTester)
+target_link_libraries(PlaybackUiTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(PlaybackUiTester
@@ -134,6 +138,8 @@ install(
 file(GLOB_RECURSE header_files ../../Include/Spire/PlaybackTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/PlaybackTester/*.cpp)
 add_executable(PlaybackTester ${header_files} ${source_files})
+beam_configure_target(PlaybackTester)
+target_link_libraries(PlaybackTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(PlaybackTester
@@ -244,6 +250,8 @@ install(TARGETS PlaybackTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
 file(GLOB_RECURSE header_files ../../Include/Spire/ReplayUiTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/ReplayUiTester/*.cpp)
 add_executable(ReplayUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(ReplayUiTester)
+target_link_libraries(ReplayUiTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(ReplayUiTester
