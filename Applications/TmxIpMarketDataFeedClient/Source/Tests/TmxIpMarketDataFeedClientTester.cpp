@@ -331,6 +331,40 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.require_empty();
   }
 
+  TEST_CASE("symbol_status_unpublished_orders") {
+    auto fixture = Fixture(Venues::CSE,
+      {TickerInfo(parse_ticker("ABX.CSE"), "", "", 100)});
+    fixture.m_time.set(time_from_string("2026-09-21 14:00:00"));
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+      "|57=20260921090000000|40=ODD|70=79|196=25|64=50");
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX"
+      "|57=20260921090000000|40=MARKET|70=79|196=0|64=500");
+    fixture.require_empty();
+    fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+      "|57=20260921090001000|554=T");
+    REQUIRE(fixture.operation<FeedClient::AddOperation>()->m_info.m_ticker ==
+      parse_ticker("ABX.TSX"));
+    fixture.require_empty();
+    fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+      "|57=20260921090002000|115=25");
+    fixture.operation<FeedClient::AddOperation>();
+    auto quote = fixture.book_quote();
+    REQUIRE(quote.get_index() == parse_ticker("ABX.TSX"));
+    REQUIRE(quote->m_venue == Venues::PURE);
+    REQUIRE(quote->m_mpid == "PURE");
+    REQUIRE(quote->m_quote == make_bid(Money(25), 50));
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=PriceAssigned|55=ABX"
+      "|57=20260921090003000|40=MARKET|196=26|64=0");
+    quote = fixture.book_quote();
+    REQUIRE(quote.get_index() == parse_ticker("ABX.TSX"));
+    REQUIRE(quote->m_quote == make_ask(Money(26), 500));
+    fixture.publish("|6=ClearOrderInfo|5=ClearOrderBook|55=ABX"
+      "|57=20260921090004000");
+    fixture.remove_quote();
+    fixture.remove_quote();
+    fixture.require_empty();
+  }
+
   TEST_CASE("symbol_status_metadata") {
     auto initial =
       TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "Mining", 100);
@@ -504,6 +538,42 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(update->m_mpid == "RBCC");
     REQUIRE(update->m_quote.m_price == Money(25.51));
     REQUIRE(update->m_quote.m_size == 200);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("order_side") {
+    auto fixture = Fixture(Venues::NEOE,
+      {TickerInfo(parse_ticker("ABX.NEOE"), "", "", 100)}, {{79, "CIBC"}});
+    fixture.m_time.set(time_from_string("2026-09-21 14:00:00"));
+    auto quantity = std::string("550");
+    SUBCASE("displayed") {}
+    SUBCASE("below_board_lot") {
+      quantity = "50";
+    }
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+      "|57=20260921090000000|40=123|70=79|196=25|64=" + quantity);
+    if(quantity == "550") {
+      auto quote = fixture.book_quote();
+      REQUIRE(quote->m_quote == make_bid(Money(25), 500));
+    }
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX"
+      "|57=20260921090001000|40=123|196=26|64=250");
+    if(quantity == "550") {
+      REQUIRE(fixture.remove_quote()->m_quote.m_side == Side::BID);
+    }
+    auto quote = fixture.book_quote();
+    REQUIRE(quote->m_mpid == "CIBC");
+    REQUIRE(quote->m_quote == make_ask(Money(26), 200));
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=PriceAssigned|55=ABX"
+      "|57=20260921090002000|40=123|196=27|64=0");
+    fixture.remove_quote();
+    quote = fixture.book_quote();
+    REQUIRE(quote->m_mpid == "CIBC");
+    REQUIRE(quote->m_quote == make_ask(Money(27), 200));
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Cancelled|55=ABX"
+      "|57=20260921090003000|40=123|196=27|64=250");
+    fixture.remove_quote();
     fixture.require_empty();
   }
 
