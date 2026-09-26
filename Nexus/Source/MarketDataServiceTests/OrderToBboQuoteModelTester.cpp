@@ -7,7 +7,6 @@ using namespace Nexus;
 namespace {
   using Model = OrderToBboQuoteModel<BookQuoteOrderAdapter<int>>;
   struct Order {
-    Side m_side;
     int m_price;
     Quantity m_quantity;
     std::string m_mpid;
@@ -18,9 +17,9 @@ namespace {
     using Order = ::Order;
     const int* m_scale;
 
-    BookQuote make_quote(const Order& order, ptime timestamp) const {
+    BookQuote make_quote(const Order& order, Side side, ptime timestamp) const {
       return BookQuote(order.m_mpid, false, Venue("XTSE"),
-        Quote(Money(order.m_price) / *m_scale, order.m_quantity, order.m_side),
+        Quote(Money(order.m_price) / *m_scale, order.m_quantity, side),
         timestamp);
     }
   };
@@ -51,12 +50,12 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto scale = 1;
     auto model = OrderToBboQuoteModel(Adapter(&scale));
     auto timestamp = time_from_string("2026-09-25 10:00:00");
-    auto order = Order(side, 10, 0, "MPID1");
+    auto order = Order(10, 0, "MPID1");
     auto update = model.add(side, 1, order, timestamp);
     REQUIRE(update.m_quotes.empty());
     REQUIRE_FALSE(update.m_is_bbo_changed);
     REQUIRE(model.get_book(side).find_order(1)->m_quantity == 0);
-    REQUIRE(model.add(opposite, 1, Order(opposite, 11, 200, "MPID2"),
+    REQUIRE(model.add(opposite, 1, Order(11, 200, "MPID2"),
       timestamp).m_is_bbo_changed);
     auto expected = BookQuote("MPID1", false, Venue("XTSE"),
       Quote(Money(10), 100, side), timestamp);
@@ -100,9 +99,9 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto scale = 1;
     auto model = OrderToBboQuoteModel(Adapter(&scale));
     auto timestamp = time_from_string("2026-09-25 10:00:00");
-    model.add(Side::BID, 1, Order(Side::BID, 10, 100, "MPID1"), timestamp);
-    model.add(Side::ASK, 1, Order(Side::ASK, 20, 200, "MPID2"), timestamp);
-    model.add(Side::ASK, 2, Order(Side::ASK, 15, 0, "MPID3"), timestamp);
+    model.add(Side::BID, 1, Order(10, 100, "MPID1"), timestamp);
+    model.add(Side::ASK, 1, Order(20, 200, "MPID2"), timestamp);
+    model.add(Side::ASK, 2, Order(15, 0, "MPID3"), timestamp);
     auto next_scale = 2;
     timestamp += seconds(1);
     auto update = model.set_adapter(Adapter(&next_scale), timestamp);

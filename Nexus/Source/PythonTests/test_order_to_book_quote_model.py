@@ -194,8 +194,10 @@ class TestOrderToBookQuoteModel(unittest.TestCase):
         adapter = self.model.adapter
         self.assertIsInstance(adapter, nexus.BookQuoteOrderAdapter)
         self.assertEqual(self.model.set_adapter(adapter, timestamp), [])
-        quote = adapter.make_quote(order, timestamp)
+        quote = adapter.make_quote(order, nexus.Side.ASK, timestamp)
         self.assertEqual(quote.timestamp, timestamp)
+        self.assertEqual(quote.quote.side, nexus.Side.ASK)
+        self.assertEqual(order.quote.side, nexus.Side.BID)
         other = nexus.OrderToBookQuoteModel(nexus.Side.BID, adapter)
         self.assertFalse(other)
 

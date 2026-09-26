@@ -7,7 +7,6 @@ using namespace Nexus;
 
 namespace {
   struct Order {
-    Side m_side;
     int m_price;
     Quantity m_quantity;
     std::string m_mpid;
@@ -21,13 +20,13 @@ namespace {
     int m_scale = 1;
     Quantity m_board_lot = 100;
 
-    BookQuote make_quote(const Order& order, ptime timestamp) const {
+    BookQuote make_quote(const Order& order, Side side, ptime timestamp) const {
       auto quantity = Quantity();
       if(order.m_is_priced) {
         quantity = floor_to(order.m_quantity, m_board_lot);
       }
       return BookQuote(order.m_mpid, order.m_is_primary, Venue("XTSE"),
-        Quote(Money(order.m_price) / m_scale, quantity, order.m_side),
+        Quote(Money(order.m_price) / m_scale, quantity, side),
         timestamp);
     }
   };
@@ -60,7 +59,7 @@ TEST_SUITE("OrderToBookQuoteModel") {
     }
     auto model = OrderToBookQuoteModel(side, Adapter());
     auto timestamp = time_from_string("2026-09-25 10:00:00");
-    auto order = Order(side, 10, 99, "MPID1");
+    auto order = Order(10, 99, "MPID1");
     REQUIRE(model.add(1, order, timestamp).empty());
     REQUIRE(model.empty());
     REQUIRE(model.find_order(1)->m_quantity == 99);
@@ -115,9 +114,9 @@ TEST_SUITE("OrderToBookQuoteModel") {
   TEST_CASE("adapter_settings") {
     auto model = OrderToBookQuoteModel(Side::BID, Adapter());
     auto timestamp = time_from_string("2026-09-25 10:00:00");
-    model.add(1, Order(Side::BID, 10, 550, "MPID1"), timestamp);
-    model.add(2, Order(Side::BID, 20, 50, "MPID2"), timestamp);
-    model.add(3, Order(Side::BID, 30, 200, "MPID3", false, false), timestamp);
+    model.add(1, Order(10, 550, "MPID1"), timestamp);
+    model.add(2, Order(20, 50, "MPID2"), timestamp);
+    model.add(3, Order(30, 200, "MPID3", false, false), timestamp);
     auto adapter = model.get_adapter();
     adapter.m_scale = 10;
     adapter.m_board_lot = 25;
@@ -152,9 +151,9 @@ TEST_SUITE("OrderToBookQuoteModel") {
   TEST_CASE("selected_orders") {
     auto model = OrderToBookQuoteModel(Side::BID, Adapter());
     auto timestamp = time_from_string("2026-09-25 10:00:00");
-    model.add(1, Order(Side::BID, 10, 100, "MPID1", true), timestamp);
-    model.add(2, Order(Side::BID, 10, 200, "MPID1"), timestamp);
-    model.add(3, Order(Side::BID, 11, 200, "MPID2", true, false), timestamp);
+    model.add(1, Order(10, 100, "MPID1", true), timestamp);
+    model.add(2, Order(10, 200, "MPID1"), timestamp);
+    model.add(3, Order(11, 200, "MPID2", true, false), timestamp);
     timestamp += seconds(1);
     auto updates = model.update_if([] (const auto& order) {
       return order.m_is_primary;

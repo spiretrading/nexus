@@ -34,7 +34,7 @@ namespace Details {
         std::hash<typename A::OrderId>, const typename A::OrderId&>;
       requires std::copyable<typename A::Order>;
       { adapter.make_quote(std::declval<const typename A::Order&>(),
-          boost::posix_time::ptime()) } -> std::same_as<BookQuote>;
+          Side(), boost::posix_time::ptime()) } -> std::same_as<BookQuote>;
     };
 
   /**
@@ -51,9 +51,9 @@ namespace Details {
     /** The individual order. */
     using Order = BookQuote;
 
-    /** Returns an order's quote at an update timestamp. */
+    /** Returns an order's quote for a side and update timestamp. */
     BookQuote make_quote(
-      const Order& order, boost::posix_time::ptime timestamp) const;
+      const Order& order, Side side, boost::posix_time::ptime timestamp) const;
   };
 
   /**
@@ -197,8 +197,9 @@ namespace Details {
   template<std::copy_constructible I> requires
     std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
   BookQuote BookQuoteOrderAdapter<I>::make_quote(
-      const Order& order, boost::posix_time::ptime timestamp) const {
+      const Order& order, Side side, boost::posix_time::ptime timestamp) const {
     auto quote = order;
+    quote.m_quote.m_side = side;
     quote.m_timestamp = timestamp;
     return quote;
   }
@@ -280,7 +281,8 @@ namespace Details {
     if(i != m_orders.end()) {
       return replace(i->second, std::move(order), timestamp);
     }
-    auto contribution = std::as_const(m_adapter).make_quote(order, timestamp);
+    auto contribution =
+      std::as_const(m_adapter).make_quote(order, m_side, timestamp);
     auto updates = Updates();
     if(contribution.m_quote.m_size > 0) {
       updates.push_back(update_quote(contribution, contribution.m_quote.m_size,
@@ -422,7 +424,8 @@ namespace Details {
   template<IsOrderQuoteAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::replace(
       Entry& entry, Order order, boost::posix_time::ptime timestamp) {
-    auto contribution = std::as_const(m_adapter).make_quote(order, timestamp);
+    auto contribution =
+      std::as_const(m_adapter).make_quote(order, m_side, timestamp);
     auto& previous = entry.m_contribution;
     auto updates = Updates();
     if(previous.m_quote.m_size > 0 && contribution.m_quote.m_size > 0 &&
