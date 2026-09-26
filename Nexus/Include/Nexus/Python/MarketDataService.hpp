@@ -257,6 +257,12 @@ namespace Nexus::Python {
   void export_mysql_historical_data_store(pybind11::module& module);
 
   /**
+   * Exports the OrderToBookQuoteModel class with string order identifiers.
+   * @param module The module to export to.
+   */
+  void export_order_to_book_quote_model(pybind11::module& module);
+
+  /**
    * Exports the TickerSnapshot class.
    * @param module The module to export to.
    */

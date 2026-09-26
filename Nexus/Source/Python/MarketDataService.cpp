@@ -2,6 +2,7 @@
 #include <Aspen/Python/Box.hpp>
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
+#include <pybind11/stl.h>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
@@ -15,6 +16,7 @@
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
+#include "Nexus/MarketDataService/OrderToBookQuoteModel.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
@@ -30,6 +32,12 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace Nexus::Tests;
 using namespace pybind11;
+
+namespace pybind11::detail {
+  template<>
+  struct type_caster<OrderToBookQuoteModel<std::string>::Updates> :
+      list_caster<OrderToBookQuoteModel<std::string>::Updates, BookQuote> {};
+}
 
 namespace {
   auto historical_data_store = std::unique_ptr<class_<HistoricalDataStore>>();
@@ -215,6 +223,7 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_market_data_reactors(module);
   export_market_data_type(module);
   export_mysql_historical_data_store(module);
+  export_order_to_book_quote_model(module);
   export_ticker_snapshot(module);
   export_sqlite_historical_data_store(module);
   module.def("query_real_time_book_quotes_with_snapshot",
@@ -340,6 +349,18 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
           Viper::MySql::Connection(host, port, username, password, database));
       });
     }));
+}
+
+void Nexus::Python::export_order_to_book_quote_model(module& module) {
+  using Model = OrderToBookQuoteModel<std::string>;
+  class_<Model>(module, "OrderToBookQuoteModel").
+    def(init<>()).
+    def("add", &Model::add).
+    def("modify_size", &Model::modify_size).
+    def("offset_size", &Model::offset_size).
+    def("modify_price", &Model::modify_price).
+    def("remove", &Model::remove).
+    def("clear", &Model::clear);
 }
 
 void Nexus::Python::export_ticker_snapshot(module& module) {
