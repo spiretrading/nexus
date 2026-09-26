@@ -17,10 +17,24 @@ namespace {
     using Order = ::Order;
     const int* m_scale;
 
-    BookQuote make_quote(const Order& order, Side side, ptime timestamp) const {
-      return BookQuote(order.m_mpid, false, Venue("XTSE"),
-        Quote(Money(order.m_price) / *m_scale, order.m_quantity, side),
-        timestamp);
+    Money get_price(const Order& order) const {
+      return Money(order.m_price) / *m_scale;
+    }
+
+    Quantity get_quantity(const Order& order) const {
+      return order.m_quantity;
+    }
+
+    const std::string& get_mpid(const Order& order) const {
+      return order.m_mpid;
+    }
+
+    Venue get_venue(const Order& order) const {
+      return Venue("XTSE");
+    }
+
+    bool is_primary_mpid(const Order& order) const {
+      return false;
     }
   };
 

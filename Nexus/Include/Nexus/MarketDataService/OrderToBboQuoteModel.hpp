@@ -9,13 +9,13 @@ namespace Nexus {
 
   /**
    * Maintains a BboQuote from order updates.
-   * @tparam A Adapts original orders to book quotes.
+   * @tparam A Exposes the attributes of original orders.
    */
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   class OrderToBboQuoteModel {
     public:
 
-      /** Converts original orders to book quotes. */
+      /** Exposes the attributes of original orders. */
       using Adapter = A;
 
       /** The type used to identify orders. */
@@ -42,7 +42,7 @@ namespace Nexus {
       /** Constructs a model using an order adapter. */
       explicit OrderToBboQuoteModel(Adapter adapter);
 
-      /** Returns the adapter used to produce quotes. */
+      /** Returns the adapter exposing order attributes. */
       const Adapter& get_adapter() const;
 
       /**
@@ -175,26 +175,26 @@ namespace Nexus {
       bool update(const Book& book, const Updates& updates);
   };
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel(A) -> OrderToBboQuoteModel<A>;
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::OrderToBboQuoteModel() requires
     std::default_initializable<Adapter>
     : OrderToBboQuoteModel(Adapter()) {}
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::OrderToBboQuoteModel(Adapter adapter)
     : m_bids(Side::BID, adapter),
       m_asks(Side::ASK, std::move(adapter)) {}
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   const OrderToBboQuoteModel<A>::Adapter&
       OrderToBboQuoteModel<A>::get_adapter() const {
     return m_bids.get_adapter();
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::set_adapter(
       Adapter adapter, boost::posix_time::ptime timestamp) {
     auto bids = m_bids.set_adapter(adapter, timestamp);
@@ -202,25 +202,25 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   const BboQuote& OrderToBboQuoteModel<A>::get_bbo() const {
     return m_bbo;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   const OrderToBboQuoteModel<A>::Book&
       OrderToBboQuoteModel<A>::get_book(Side side) const {
     return pick(side, m_asks, m_bids);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::add(Side side,
       const OrderId& id, Order order, boost::posix_time::ptime timestamp) {
     auto& book = pick(side, m_asks, m_bids);
     return update(side, book.add(id, std::move(order), timestamp), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::add(
       const OrderId& id, BookQuote order) requires
       std::same_as<Order, BookQuote> {
@@ -235,7 +235,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   template<std::invocable<typename A::Order&> F>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::update(Side side,
       const OrderId& id, F f, boost::posix_time::ptime timestamp) {
@@ -243,7 +243,7 @@ namespace Nexus {
     return update(side, book.update(id, std::move(f), timestamp), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::refresh(
       boost::posix_time::ptime timestamp) {
     auto bids = m_bids.refresh(timestamp);
@@ -251,7 +251,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::modify_size(
       const OrderId& id, Quantity size,
       boost::posix_time::ptime timestamp) requires
@@ -261,7 +261,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::offset_size(
       const OrderId& id, Quantity delta,
       boost::posix_time::ptime timestamp) requires
@@ -271,7 +271,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::modify_price(
       const OrderId& id, Money price,
       boost::posix_time::ptime timestamp) requires
@@ -281,14 +281,14 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::remove(
       Side side, const OrderId& id, boost::posix_time::ptime timestamp) {
     auto& book = pick(side, m_asks, m_bids);
     return update(side, book.remove(id, timestamp), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::remove(
       const OrderId& id, boost::posix_time::ptime timestamp) {
     auto bids = m_bids.remove(id, timestamp);
@@ -296,7 +296,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::clear(
       boost::posix_time::ptime timestamp) {
     auto bids = m_bids.clear(timestamp);
@@ -304,7 +304,7 @@ namespace Nexus {
     return update(std::move(bids), std::move(asks), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::update(
       Side side, Updates quotes, boost::posix_time::ptime timestamp) {
     if(side == Side::BID) {
@@ -313,7 +313,7 @@ namespace Nexus {
     return update(Updates(), std::move(quotes), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBboQuoteModel<A>::Update OrderToBboQuoteModel<A>::update(
       Updates bids, Updates asks, boost::posix_time::ptime timestamp) {
     auto is_bid_changed = update(m_bids, bids);
@@ -330,7 +330,7 @@ namespace Nexus {
     return Update(std::move(bids), is_bbo_changed);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   bool OrderToBboQuoteModel<A>::update(
       const Book& book, const Updates& updates) {
     if(updates.empty()) {

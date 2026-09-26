@@ -22,9 +22,9 @@ namespace Details {
   };
 }
 
-  /** Concept satisfied by adapters converting orders into BookQuotes. */
+  /** Concept satisfied by adapters exposing order attributes. */
   template<typename A>
-  concept IsOrderQuoteAdapter = std::copyable<A> &&
+  concept IsOrderAdapter = std::copyable<A> &&
     requires(const A& adapter) {
       typename A::OrderId;
       typename A::Order;
@@ -33,12 +33,20 @@ namespace Details {
       requires std::invocable<
         std::hash<typename A::OrderId>, const typename A::OrderId&>;
       requires std::copyable<typename A::Order>;
-      { adapter.make_quote(std::declval<const typename A::Order&>(),
-          Side(), boost::posix_time::ptime()) } -> std::same_as<BookQuote>;
+      { adapter.get_price(std::declval<const typename A::Order&>()) } ->
+        std::same_as<Money>;
+      { adapter.get_quantity(std::declval<const typename A::Order&>()) } ->
+        std::same_as<Quantity>;
+      { adapter.get_mpid(std::declval<const typename A::Order&>()) } ->
+        std::convertible_to<std::string>;
+      { adapter.get_venue(std::declval<const typename A::Order&>()) } ->
+        std::same_as<Venue>;
+      { adapter.is_primary_mpid(std::declval<const typename A::Order&>()) } ->
+        std::same_as<bool>;
     };
 
   /**
-   * Uses individual BookQuotes as order contributions.
+   * Exposes the order attributes of individual BookQuotes.
    * @tparam I The type used to identify orders.
    */
   template<std::copy_constructible I> requires
@@ -51,20 +59,31 @@ namespace Details {
     /** The individual order. */
     using Order = BookQuote;
 
-    /** Returns an order's quote for a side and update timestamp. */
-    BookQuote make_quote(
-      const Order& order, Side side, boost::posix_time::ptime timestamp) const;
+    /** Returns an order's price. */
+    Money get_price(const Order& order) const;
+
+    /** Returns an order's quantity. */
+    Quantity get_quantity(const Order& order) const;
+
+    /** Returns an order's MPID. */
+    const std::string& get_mpid(const Order& order) const;
+
+    /** Returns an order's venue. */
+    Venue get_venue(const Order& order) const;
+
+    /** Returns whether an order's MPID is primary. */
+    bool is_primary_mpid(const Order& order) const;
   };
 
   /**
    * Maintains one side of an order book by aggregating order contributions.
-   * @tparam A The adapter defining orders and their quote contributions.
+   * @tparam A The adapter exposing order attributes.
    */
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   class OrderToBookQuoteModel {
     public:
 
-      /** Converts stored orders into quote contributions. */
+      /** Exposes the attributes of stored orders. */
       using Adapter = A;
 
       /** The type used to identify orders. */
@@ -97,14 +116,14 @@ namespace Details {
       /**
        * Constructs an empty book.
        * @param side The side to maintain.
-       * @param adapter Converts orders into contributions on this side.
+       * @param adapter Provides the attributes of stored orders.
        */
       OrderToBookQuoteModel(Side side, Adapter adapter);
 
       /** Returns the side maintained by this model. */
       Side get_side() const;
 
-      /** Returns the adapter used to convert orders. */
+      /** Returns the adapter exposing order attributes. */
       const Adapter& get_adapter() const;
 
       /** Replaces the adapter and refreshes all order contributions. */
@@ -185,6 +204,8 @@ namespace Details {
       OrderMap m_orders;
       std::vector<std::pair<BookQuote, int>> m_quotes;
 
+      BookQuote make_quote(
+        const Order& order, boost::posix_time::ptime timestamp) const;
       Updates replace(
         Entry& entry, Order order, boost::posix_time::ptime timestamp);
       BookQuote update_quote(
@@ -196,43 +217,64 @@ namespace Details {
 
   template<std::copy_constructible I> requires
     std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
-  BookQuote BookQuoteOrderAdapter<I>::make_quote(
-      const Order& order, Side side, boost::posix_time::ptime timestamp) const {
-    auto quote = order;
-    quote.m_quote.m_side = side;
-    quote.m_timestamp = timestamp;
-    return quote;
+  Money BookQuoteOrderAdapter<I>::get_price(const Order& order) const {
+    return order.m_quote.m_price;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<std::copy_constructible I> requires
+    std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
+  Quantity BookQuoteOrderAdapter<I>::get_quantity(const Order& order) const {
+    return order.m_quote.m_size;
+  }
+
+  template<std::copy_constructible I> requires
+    std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
+  const std::string& BookQuoteOrderAdapter<I>::get_mpid(
+      const Order& order) const {
+    return order.m_mpid;
+  }
+
+  template<std::copy_constructible I> requires
+    std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
+  Venue BookQuoteOrderAdapter<I>::get_venue(const Order& order) const {
+    return order.m_venue;
+  }
+
+  template<std::copy_constructible I> requires
+    std::equality_comparable<I> && std::invocable<std::hash<I>, const I&>
+  bool BookQuoteOrderAdapter<I>::is_primary_mpid(const Order& order) const {
+    return order.m_is_primary_mpid;
+  }
+
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::OrderToBookQuoteModel(Side side) requires
     std::default_initializable<Adapter>
     : OrderToBookQuoteModel(side, Adapter()) {}
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::OrderToBookQuoteModel(Side side, Adapter adapter)
     : m_side(side),
       m_adapter(std::move(adapter)) {}
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   Side OrderToBookQuoteModel<A>::get_side() const {
     return m_side;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   const OrderToBookQuoteModel<A>::Adapter&
       OrderToBookQuoteModel<A>::get_adapter() const {
     return m_adapter;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::set_adapter(
       Adapter adapter, boost::posix_time::ptime timestamp) {
     m_adapter = std::move(adapter);
     return refresh(timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   boost::optional<const typename OrderToBookQuoteModel<A>::Order&>
       OrderToBookQuoteModel<A>::find_order(const OrderId& id) const {
     auto i = m_orders.find(id);
@@ -242,47 +284,46 @@ namespace Details {
     return i->second.m_order;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Orders
       OrderToBookQuoteModel<A>::get_orders() const {
     return Orders(m_orders, {});
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   const BookQuote& OrderToBookQuoteModel<A>::operator [](
       std::size_t index) const {
     return m_quotes[m_quotes.size() - index - 1].first;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Iterator OrderToBookQuoteModel<A>::begin() const {
     return (m_quotes | std::views::reverse | std::views::keys).begin();
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Iterator OrderToBookQuoteModel<A>::end() const {
     return (m_quotes | std::views::reverse | std::views::keys).end();
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   std::size_t OrderToBookQuoteModel<A>::size() const {
     return m_quotes.size();
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   bool OrderToBookQuoteModel<A>::empty() const {
     return m_quotes.empty();
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::add(
       const OrderId& id, Order order, boost::posix_time::ptime timestamp) {
     auto i = m_orders.find(id);
     if(i != m_orders.end()) {
       return replace(i->second, std::move(order), timestamp);
     }
-    auto contribution =
-      std::as_const(m_adapter).make_quote(order, m_side, timestamp);
+    auto contribution = make_quote(order, timestamp);
     auto updates = Updates();
     if(contribution.m_quote.m_size > 0) {
       updates.push_back(update_quote(contribution, contribution.m_quote.m_size,
@@ -292,7 +333,7 @@ namespace Details {
     return updates;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::add(
       const OrderId& id, BookQuote order) requires
         std::same_as<Order, BookQuote> {
@@ -303,7 +344,7 @@ namespace Details {
     return add(id, std::move(order), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   template<std::invocable<typename A::Order&> F>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::update(
       const OrderId& id, F f, boost::posix_time::ptime timestamp) {
@@ -316,7 +357,7 @@ namespace Details {
     return replace(i->second, std::move(order), timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   template<std::predicate<const typename A::Order&> P,
     std::invocable<typename A::Order&> F>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::update_if(
@@ -335,14 +376,14 @@ namespace Details {
     return updates;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::refresh(
       boost::posix_time::ptime timestamp) {
     return update_if([] (const auto&) { return true; }, [] (auto&) {},
       timestamp);
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::modify_size(
       const OrderId& id, Quantity size,
       boost::posix_time::ptime timestamp) requires
@@ -357,7 +398,7 @@ namespace Details {
     return add(id, std::move(order));
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::offset_size(
       const OrderId& id, Quantity delta,
       boost::posix_time::ptime timestamp) requires
@@ -372,7 +413,7 @@ namespace Details {
     return add(id, std::move(order));
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::modify_price(
       const OrderId& id, Money price,
       boost::posix_time::ptime timestamp) requires
@@ -387,7 +428,7 @@ namespace Details {
     return add(id, std::move(order));
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::remove(
       const OrderId& id, boost::posix_time::ptime timestamp) {
     auto i = m_orders.find(id);
@@ -405,7 +446,7 @@ namespace Details {
     return updates;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::clear(
       boost::posix_time::ptime timestamp) {
     auto updates = Updates();
@@ -421,11 +462,20 @@ namespace Details {
     return updates;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
+  BookQuote OrderToBookQuoteModel<A>::make_quote(
+      const Order& order, boost::posix_time::ptime timestamp) const {
+    return BookQuote(
+      m_adapter.get_mpid(order), m_adapter.is_primary_mpid(order),
+      m_adapter.get_venue(order),
+      Quote(m_adapter.get_price(order), m_adapter.get_quantity(order), m_side),
+      timestamp);
+  }
+
+  template<IsOrderAdapter A>
   OrderToBookQuoteModel<A>::Updates OrderToBookQuoteModel<A>::replace(
       Entry& entry, Order order, boost::posix_time::ptime timestamp) {
-    auto contribution =
-      std::as_const(m_adapter).make_quote(order, m_side, timestamp);
+    auto contribution = make_quote(order, timestamp);
     auto& previous = entry.m_contribution;
     auto updates = Updates();
     if(previous.m_quote.m_size > 0 && contribution.m_quote.m_size > 0 &&
@@ -455,7 +505,7 @@ namespace Details {
     return updates;
   }
 
-  template<IsOrderQuoteAdapter A>
+  template<IsOrderAdapter A>
   BookQuote OrderToBookQuoteModel<A>::update_quote(
       const BookQuote& order, Quantity delta, int primary_delta) {
     auto i = std::ranges::lower_bound(m_quotes, order,

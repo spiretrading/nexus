@@ -12,6 +12,7 @@ namespace {
     std::string m_mpid;
     bool m_is_primary = false;
     bool m_is_priced = true;
+    Venue m_venue = Venue("XTSE");
   };
 
   struct Adapter {
@@ -20,14 +21,27 @@ namespace {
     int m_scale = 1;
     Quantity m_board_lot = 100;
 
-    BookQuote make_quote(const Order& order, Side side, ptime timestamp) const {
-      auto quantity = Quantity();
-      if(order.m_is_priced) {
-        quantity = floor_to(order.m_quantity, m_board_lot);
+    Money get_price(const Order& order) const {
+      return Money(order.m_price) / m_scale;
+    }
+
+    Quantity get_quantity(const Order& order) const {
+      if(!order.m_is_priced) {
+        return Quantity();
       }
-      return BookQuote(order.m_mpid, order.m_is_primary, Venue("XTSE"),
-        Quote(Money(order.m_price) / m_scale, quantity, side),
-        timestamp);
+      return floor_to(order.m_quantity, m_board_lot);
+    }
+
+    const std::string& get_mpid(const Order& order) const {
+      return order.m_mpid;
+    }
+
+    Venue get_venue(const Order& order) const {
+      return order.m_venue;
+    }
+
+    bool is_primary_mpid(const Order& order) const {
+      return order.m_is_primary;
     }
   };
 
@@ -96,6 +110,18 @@ TEST_SUITE("OrderToBookQuoteModel") {
     REQUIRE(updates.size() == 1);
     REQUIRE(updates.front().m_quote == Quote(Money(12), 100, side));
     REQUIRE(updates.front().m_mpid == "MPID2");
+    timestamp += seconds(1);
+    updates = model.update(1, [] (auto& order) {
+      order.m_venue = Venue("XTSX");
+      order.m_is_primary = true;
+    }, timestamp);
+    auto expected = std::vector<BookQuote>{
+      BookQuote("MPID2", false, Venue("XTSE"),
+        Quote(Money(12), 0, side), timestamp),
+      BookQuote("MPID2", true, Venue("XTSX"),
+        Quote(Money(12), 100, side), timestamp)};
+    REQUIRE(std::ranges::equal(updates, expected));
+    REQUIRE(model.find_order(1)->m_venue == Venue("XTSX"));
     updates = model.update(1, [] (auto& order) {
       order.m_quantity = 0;
     }, timestamp);
