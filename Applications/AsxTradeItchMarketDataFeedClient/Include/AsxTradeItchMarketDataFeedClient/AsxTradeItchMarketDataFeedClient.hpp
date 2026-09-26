@@ -72,13 +72,14 @@ namespace Nexus {
         Venue get_venue(const Order& order) const;
         bool is_primary_mpid(const Order& order) const;
       };
-      using Model = OrderToBboQuoteModel<OrderAdapter>;
+      using BboQuoteModel = OrderToBboQuoteModel<OrderAdapter>;
       struct Book {
         Ticker m_ticker;
         TimeAndSale::Condition::Type m_auction_type;
-        Model m_model;
+        BboQuoteModel m_bbo_model;
       };
       AsxTradeItchConfiguration m_config;
+      std::string m_market_center;
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<C> m_client;
       std::unordered_map<std::uint32_t, Book> m_books;
@@ -98,7 +99,7 @@ namespace Nexus {
         const AsxTradeItchMarketDataFeedClient&) = delete;
       boost::posix_time::ptime get_timestamp(std::uint32_t nanoseconds) const;
       Book* find_book(std::uint32_t id);
-      void publish(const Book& book, const Model::Update& update);
+      void publish(const Book& book, const BboQuoteModel::Update& update);
       void publish(const Book& book, Side side, Money price,
         std::uint64_t quantity, const std::string& owner,
         const std::string& counterparty, bool is_cross,
@@ -108,9 +109,8 @@ namespace Nexus {
         std::same_as<D, AsxTradeItchOrderBookDirectory> ||
           std::same_as<D, AsxTradeItchCombinationOrderBookDirectory>
       void add(const D& message);
-      template<typename A> requires
-        std::same_as<A, AsxTradeItchAddOrder> ||
-          std::same_as<A, AsxTradeItchAddOrderWithParticipant>
+      template<typename A> requires std::same_as<A, AsxTradeItchAddOrder> ||
+        std::same_as<A, AsxTradeItchAddOrderWithParticipant>
       void add(const A& message);
       template<typename E> requires
         std::same_as<E, AsxTradeItchOrderExecuted> ||
@@ -136,6 +136,8 @@ namespace Nexus {
   AsxTradeItchMarketDataFeedClient<M, C>::AsxTradeItchMarketDataFeedClient(
       AsxTradeItchConfiguration config, MF&& feed_client, CF&& client)
       : m_config(std::move(config)),
+        m_market_center(
+          VENUES.from(m_config.m_disseminating_venue).m_display_name),
         m_feed_client(std::forward<MF>(feed_client)),
         m_client(std::forward<CF>(client)),
         m_is_finished(false) {
@@ -265,7 +267,7 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   Money AsxTradeItchMarketDataFeedClient<M, C>::get_price(
       const Book& book, std::int32_t price) {
-    return book.m_model.get_adapter().get_price(price);
+    return book.m_bbo_model.get_adapter().get_price(price);
   }
 
   template<typename M, typename C> requires
@@ -291,9 +293,9 @@ namespace Nexus {
       if(m_excluded_books.contains(id)) {
         return nullptr;
       }
-      boost::throw_with_location(Beam::IOException(
-        "Unknown ITCH book " + std::to_string(id) +
-        ". Start with a Glimpse snapshot."));
+      boost::throw_with_location(
+        Beam::IOException("Unknown ITCH book " + std::to_string(id) +
+          ". Start with a Glimpse snapshot."));
     }
     return &book->second;
   }
@@ -302,13 +304,13 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::publish(
-      const Book& book, const Model::Update& update) {
+      const Book& book, const BboQuoteModel::Update& update) {
     for(auto& quote : update.m_quotes) {
       m_feed_client->publish(TickerBookQuote(quote, book.m_ticker));
     }
     if(update.m_is_bbo_changed) {
       m_feed_client->publish(
-        TickerBboQuote(book.m_model.get_bbo(), book.m_ticker));
+        TickerBboQuote(book.m_bbo_model.get_bbo(), book.m_ticker));
     }
   }
 
@@ -352,8 +354,7 @@ namespace Nexus {
     }
     m_feed_client->publish(TickerTimeAndSale(
       TimeAndSale(timestamp, price, quantity, std::move(condition),
-        VENUES.from(m_config.m_disseminating_venue).m_display_name,
-        std::move(buyer), std::move(seller)), book.m_ticker));
+        m_market_center, std::move(buyer), std::move(seller)), book.m_ticker));
   }
 
   template<typename M, typename C> requires
@@ -361,7 +362,7 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::clear(
       Book& book, boost::posix_time::ptime timestamp) {
-    publish(book, book.m_model.clear(timestamp));
+    publish(book, book.m_bbo_model.clear(timestamp));
   }
 
   template<typename M, typename C> requires
@@ -396,12 +397,12 @@ namespace Nexus {
       book.m_auction_type = {};
     }
     auto is_repriced =
-      is_inserted || book.m_model.get_adapter().m_price_scale != scale;
+      is_inserted || book.m_bbo_model.get_adapter().m_price_scale != scale;
     book.m_ticker = ticker;
     m_feed_client->add(TickerInfo(
       ticker, message.m_long_name, std::string(), message.m_round_lot_size));
     if(is_repriced) {
-      publish(book, book.m_model.set_adapter(
+      publish(book, book.m_bbo_model.set_adapter(
         OrderAdapter(scale, m_config.m_disseminating_venue), timestamp));
     }
   }
@@ -409,9 +410,8 @@ namespace Nexus {
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
-  template<typename A> requires
-    std::same_as<A, AsxTradeItchAddOrder> ||
-      std::same_as<A, AsxTradeItchAddOrderWithParticipant>
+  template<typename A> requires std::same_as<A, AsxTradeItchAddOrder> ||
+    std::same_as<A, AsxTradeItchAddOrderWithParticipant>
   void AsxTradeItchMarketDataFeedClient<M, C>::add(const A& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
     auto entry = find_book(message.m_order_book_id);
@@ -427,7 +427,7 @@ namespace Nexus {
       }
       return std::string("AU000");
     }();
-    publish(book, book.m_model.add(message.m_side, message.m_order_id,
+    publish(book, book.m_bbo_model.add(message.m_side, message.m_order_id,
       OrderEntry(std::move(mpid), message.m_price, message.m_quantity),
       timestamp));
   }
@@ -435,9 +435,8 @@ namespace Nexus {
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
-  template<typename E> requires
-    std::same_as<E, AsxTradeItchOrderExecuted> ||
-      std::same_as<E, AsxTradeItchOrderExecutedAtPrice>
+  template<typename E> requires std::same_as<E, AsxTradeItchOrderExecuted> ||
+    std::same_as<E, AsxTradeItchOrderExecutedAtPrice>
   void AsxTradeItchMarketDataFeedClient<M, C>::execute(const E& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
     auto entry = find_book(message.m_order_book_id);
@@ -446,7 +445,7 @@ namespace Nexus {
     }
     auto& book = *entry;
     auto order =
-      book.m_model.get_book(message.m_side).find_order(message.m_order_id);
+      book.m_bbo_model.get_book(message.m_side).find_order(message.m_order_id);
     auto price = Money();
     if constexpr(std::same_as<E, AsxTradeItchOrderExecutedAtPrice>) {
       price = get_price(book, message.m_price);
@@ -458,11 +457,11 @@ namespace Nexus {
     }
     if(order && order->m_quantity != 0 && message.m_executed_quantity != 0) {
       if(Quantity(message.m_executed_quantity) >= order->m_quantity) {
-        publish(book, book.m_model.remove(
+        publish(book, book.m_bbo_model.remove(
           message.m_side, message.m_order_id, timestamp));
       } else {
-        publish(book, book.m_model.update(message.m_side, message.m_order_id,
-          [&] (auto& order) {
+        publish(book, book.m_bbo_model.update(
+          message.m_side, message.m_order_id, [&] (auto& order) {
             order.m_quantity -= Quantity(message.m_executed_quantity);
           }, timestamp));
       }
@@ -489,7 +488,7 @@ namespace Nexus {
       return;
     }
     auto& book = *entry;
-    publish(book, book.m_model.update(message.m_side, message.m_order_id,
+    publish(book, book.m_bbo_model.update(message.m_side, message.m_order_id,
       [&] (auto& order) {
         order.m_price = message.m_price;
         order.m_quantity = message.m_quantity;
@@ -507,8 +506,8 @@ namespace Nexus {
       return;
     }
     auto& book = *entry;
-    publish(
-      book, book.m_model.remove(message.m_side, message.m_order_id, timestamp));
+    publish(book, book.m_bbo_model.remove(
+      message.m_side, message.m_order_id, timestamp));
   }
 
   template<typename M, typename C> requires
