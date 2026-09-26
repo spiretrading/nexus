@@ -356,20 +356,37 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
 }
 
 void Nexus::Python::export_order_to_bbo_quote_model(module& module) {
-  using Model = OrderToBboQuoteModel<std::string>;
+  using Model = OrderToBboQuoteModel<BookQuoteOrderAdapter<std::string>>;
   auto model = class_<Model>(module, "OrderToBboQuoteModel");
   class_<Model::Update>(model, "Update").
     def_readonly("quotes", &Model::Update::m_quotes).
     def_readonly("is_bbo_changed", &Model::Update::m_is_bbo_changed);
   model.
     def(init<>()).
+    def(init<Model::Adapter>()).
+    def_property_readonly("adapter", &Model::get_adapter,
+      return_value_policy::copy).
+    def("set_adapter", &Model::set_adapter).
     def("get_book", &Model::get_book, return_value_policy::copy).
     def_property_readonly("bbo", &Model::get_bbo, return_value_policy::copy).
-    def("add", &Model::add).
+    def("add", overload_cast<const std::string&, BookQuote>(&Model::add)).
+    def("add", overload_cast<Side, const std::string&, BookQuote,
+      boost::posix_time::ptime>(&Model::add)).
+    def("update", [] (Model& model, Side side, const std::string& id,
+        const std::function<BookQuote(BookQuote)>& f,
+        boost::posix_time::ptime timestamp) {
+      return model.update(side, id, [&] (auto& order) {
+        order = f(order);
+      }, timestamp);
+    }, "Updates an order using a callable returning its replacement.").
+    def("refresh", &Model::refresh).
     def("modify_size", &Model::modify_size).
     def("offset_size", &Model::offset_size).
     def("modify_price", &Model::modify_price).
-    def("remove", &Model::remove).
+    def("remove", overload_cast<Side, const std::string&,
+      boost::posix_time::ptime>(&Model::remove)).
+    def("remove", overload_cast<const std::string&,
+      boost::posix_time::ptime>(&Model::remove)).
     def("clear", &Model::clear);
 }
 

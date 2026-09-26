@@ -13,6 +13,38 @@ class TestOrderToBboQuoteModel(unittest.TestCase):
             nexus.Quote(nexus.Money.parse(price), nexus.Quantity(size), side),
             self.timestamp)
 
+    def test_original_orders(self):
+        self.model = nexus.OrderToBboQuoteModel(nexus.BookQuoteOrderAdapter())
+        self.assertIsInstance(self.model.adapter, nexus.BookQuoteOrderAdapter)
+        bid = self.order(nexus.Side.BID, '10', 0)
+        ask = self.order(nexus.Side.ASK, '11', 200)
+        self.assertFalse(self.model.add(
+            nexus.Side.BID, '1', bid, self.timestamp).is_bbo_changed)
+        self.assertEqual(
+            self.model.get_book(nexus.Side.BID).find_order('1'), bid)
+        self.assertTrue(self.model.add(
+            nexus.Side.ASK, '1', ask, self.timestamp).is_bbo_changed)
+
+        def resize(order):
+            order.quote.size = nexus.Quantity(100)
+            return order
+
+        update = self.model.update(nexus.Side.BID, '1', resize, self.timestamp)
+        bid.quote.size = nexus.Quantity(100)
+        self.assertEqual(update.quotes, [bid])
+        self.assertTrue(update.is_bbo_changed)
+        self.assertEqual(self.model.bbo.bid, bid.quote)
+        self.assertEqual(self.model.bbo.ask, ask.quote)
+        self.assertFalse(self.model.set_adapter(
+            nexus.BookQuoteOrderAdapter(), self.timestamp).is_bbo_changed)
+        self.assertEqual(self.model.refresh(self.timestamp).quotes, [])
+        self.assertTrue(self.model.remove(
+            nexus.Side.BID, '1', self.timestamp).is_bbo_changed)
+        self.assertIsNone(self.model.get_book(nexus.Side.BID).find_order('1'))
+        self.assertEqual(
+            self.model.get_book(nexus.Side.ASK).find_order('1'), ask)
+        self.assertEqual(self.model.bbo.ask, ask.quote)
+
     def test_default_bbo(self):
         self.assertEqual(self.model.bbo, nexus.BboQuote())
 
