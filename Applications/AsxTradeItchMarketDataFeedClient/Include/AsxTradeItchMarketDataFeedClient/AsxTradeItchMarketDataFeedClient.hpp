@@ -1,6 +1,5 @@
 #ifndef ASX_TRADE_ITCH_MARKET_DATA_FEED_CLIENT_HPP
 #define ASX_TRADE_ITCH_MARKET_DATA_FEED_CLIENT_HPP
-#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <functional>
@@ -97,9 +96,8 @@ namespace Nexus {
         const std::string& counterparty, bool is_cross,
         boost::posix_time::ptime timestamp);
       void clear(Book& book, boost::posix_time::ptime timestamp);
-      Model::Update submit(Book& book, const std::string& id,
-        const Order& order, Side side, Quantity quantity,
-        boost::posix_time::ptime timestamp);
+      Model::Update submit(Book& book, std::uint64_t id, const Order& order,
+        Side side, Quantity quantity, boost::posix_time::ptime timestamp);
       template<typename D> requires
         std::same_as<D, AsxTradeItchOrderBookDirectory> ||
           std::same_as<D, AsxTradeItchCombinationOrderBookDirectory>
@@ -334,11 +332,11 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   AsxTradeItchMarketDataFeedClient<M, C>::Model::Update
       AsxTradeItchMarketDataFeedClient<M, C>::submit(
-        Book& book, const std::string& id, const Order& order, Side side,
+        Book& book, std::uint64_t id, const Order& order, Side side,
         Quantity quantity, boost::posix_time::ptime timestamp) {
-    return book.m_model.add(
-      id, BookQuote(order.m_mpid, false, m_config.m_disseminating_venue,
-        Quote(get_price(book, order.m_price), quantity, side), timestamp));
+    return book.m_model.add(get_id(id, side), BookQuote(
+      order.m_mpid, false, m_config.m_disseminating_venue,
+      Quote(get_price(book, order.m_price), quantity, side), timestamp));
   }
 
   template<typename M, typename C> requires
@@ -381,12 +379,9 @@ namespace Nexus {
       auto previous = book.m_model.get_bbo();
       for(auto side : {Side(Side::BID), Side(Side::ASK)}) {
         for(auto& [id, order] : pick(side, book.m_asks, book.m_bids)) {
-          auto model_id = get_id(id, side);
-          if(auto quote = book.m_model.get_book(side).find_order(model_id)) {
-            auto update = submit(
-              book, model_id, order, side, quote->m_quote.m_size, timestamp);
-            publish(book, update.m_quotes);
-          }
+          auto update = book.m_model.modify_price(
+            get_id(id, side), get_price(book, order.m_price), timestamp);
+          publish(book, update.m_quotes);
         }
       }
       auto& bbo = book.m_model.get_bbo();
@@ -420,8 +415,8 @@ namespace Nexus {
     }();
     auto order = side.insert_or_assign(message.m_order_id,
       Order(std::move(mpid), message.m_price)).first;
-    publish(book, submit(book, get_id(message.m_order_id, message.m_side),
-      order->second, message.m_side, message.m_quantity, timestamp));
+    publish(book, submit(book, message.m_order_id, order->second,
+      message.m_side, message.m_quantity, timestamp));
   }
 
   template<typename M, typename C> requires
@@ -452,10 +447,9 @@ namespace Nexus {
       auto id = get_id(message.m_order_id, message.m_side);
       auto quote = book.m_model.get_book(message.m_side).find_order(id);
       if(quote) {
-        auto quantity = std::min(
-          quote->m_quote.m_size, Quantity(message.m_executed_quantity));
+        auto quantity = Quantity(message.m_executed_quantity);
         if(quantity != 0) {
-          auto is_removed = quantity == quote->m_quote.m_size;
+          auto is_removed = quantity >= quote->m_quote.m_size;
           auto update = book.m_model.offset_size(id, -quantity, timestamp);
           if(is_removed) {
             side.erase(order);
@@ -494,8 +488,8 @@ namespace Nexus {
     }
     auto& order = i->second;
     order.m_price = message.m_price;
-    publish(book, submit(book, get_id(message.m_order_id, message.m_side),
-      order, message.m_side, message.m_quantity, timestamp));
+    publish(book, submit(book, message.m_order_id, order, message.m_side,
+      message.m_quantity, timestamp));
   }
 
   template<typename M, typename C> requires
@@ -510,14 +504,9 @@ namespace Nexus {
     }
     auto& book = *entry;
     auto& side = pick(message.m_side, book.m_asks, book.m_bids);
-    auto i = side.find(message.m_order_id);
-    if(i == side.end()) {
-      return;
-    }
-    auto update = book.m_model.remove(
-      get_id(message.m_order_id, message.m_side), timestamp);
-    side.erase(i);
-    publish(book, update);
+    side.erase(message.m_order_id);
+    publish(book, book.m_model.remove(
+      get_id(message.m_order_id, message.m_side), timestamp));
   }
 
   template<typename M, typename C> requires
