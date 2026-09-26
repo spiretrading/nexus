@@ -115,6 +115,7 @@ namespace Nexus {
         Side m_imbalance_side;
         Quantity m_imbalance_quantity;
       };
+      using OpeningQuoteMatch = std::pair<const Ticker&, OpeningQuote&>;
       struct Session {
         boost::gregorian::date m_date;
         boost::optional<boost::posix_time::ptime> m_opening;
@@ -175,15 +176,15 @@ namespace Nexus {
       const TickerInfo* find_ticker(std::string_view symbol);
       bool is_eligible(Venue venue, bool is_opening,
         boost::posix_time::ptime timestamp);
-      OpeningQuote* find_opening_quote(
+      boost::optional<OpeningQuoteMatch> find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
-      bool update(const TmxIpMbxMessage& message);
+      boost::optional<OpeningQuoteMatch> update(const TmxIpMbxMessage& message);
       void publish(const TmxIpMbxMessage& message);
       void publish(const TmxIpMocImbalance& message);
       void publish(const TmxIpOpeningAuction& message);
       void publish(const TmxIpCbboQuote& message);
-      void publish_opening_quote(
-        std::string_view symbol, const TmxIpMessageHeader& header);
+      void publish_opening_quote(const Ticker& ticker,
+        const OpeningQuote& opening, const TmxIpMessageHeader& header);
       void publish_imbalance(std::string_view symbol,
         const TmxIpMessageHeader& header, Side side,
         boost::optional<std::uint64_t> quantity,
@@ -1166,27 +1167,28 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
-  typename TmxIpMarketDataFeedClient<C, D, T, M>::OpeningQuote*
+  boost::optional<
+    typename TmxIpMarketDataFeedClient<C, D, T, M>::OpeningQuoteMatch>
       TmxIpMarketDataFeedClient<C, D, T, M>::find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header) {
     auto info = find_ticker(symbol);
-    if(!info || get_venue(info->m_ticker, header) !=
-        info->m_ticker.get_venue()) {
-      return nullptr;
+    if(!info ||
+        get_venue(info->m_ticker, header) != info->m_ticker.get_venue()) {
+      return boost::none;
     }
     auto now = m_time_client->get_time();
     auto venue = info->m_ticker.get_venue();
     auto date = utc_to_venue(venue, now).date();
     auto timestamp = header.m_trading_timestamp.value_or(header.m_timestamp);
     if(timestamp.date() != date || !is_eligible(venue, true, now)) {
-      return nullptr;
+      return boost::none;
     }
     auto& quote = m_opening_quotes[info->m_ticker];
     if(quote.m_date != date) {
       quote = OpeningQuote();
       quote.m_date = date;
     }
-    return &quote;
+    return OpeningQuoteMatch(info->m_ticker, quote);
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -1194,30 +1196,33 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
-  bool TmxIpMarketDataFeedClient<C, D, T, M>::update(
-      const TmxIpMbxMessage& message) {
+  boost::optional<
+    typename TmxIpMarketDataFeedClient<C, D, T, M>::OpeningQuoteMatch>
+      TmxIpMarketDataFeedClient<C, D, T, M>::update(
+        const TmxIpMbxMessage& message) {
     if(message.m_action != "AssignCOP" ||
         message.m_calculated_opening_price.m_type != TmxIpPrice::Type::LIMIT) {
-      return false;
+      return boost::none;
     }
-    auto quote = find_opening_quote(message.m_symbol, message.m_header);
-    if(!quote) {
-      return false;
+    auto match = find_opening_quote(message.m_symbol, message.m_header);
+    if(!match) {
+      return boost::none;
     }
+    auto& quote = match->second;
     auto price = message.m_calculated_opening_price.m_value;
-    quote->m_price = price;
+    quote.m_price = price;
     if(message.m_paired_quantity) {
-      quote->m_paired_quantity = *message.m_paired_quantity;
+      quote.m_paired_quantity = *message.m_paired_quantity;
     } else if(message.m_theoretical_opening_quantity) {
-      quote->m_paired_quantity = *message.m_theoretical_opening_quantity;
+      quote.m_paired_quantity = *message.m_theoretical_opening_quantity;
     }
     if(message.m_imbalance_side) {
-      quote->m_imbalance_side = *message.m_imbalance_side;
+      quote.m_imbalance_side = *message.m_imbalance_side;
     }
     if(message.m_imbalance_quantity) {
-      quote->m_imbalance_quantity = *message.m_imbalance_quantity;
+      quote.m_imbalance_quantity = *message.m_imbalance_quantity;
     }
-    return true;
+    return match;
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -1232,10 +1237,10 @@ namespace Nexus {
         *message.m_imbalance_side, message.m_imbalance_quantity,
         message.m_calculated_opening_price);
     }
-    auto is_updated = update(message);
+    auto match = update(message);
     update_orders(message);
-    if(is_updated) {
-      publish_opening_quote(message.m_symbol, message.m_header);
+    if(match) {
+      publish_opening_quote(match->first, match->second, message.m_header);
     }
   }
 
@@ -1268,25 +1273,26 @@ namespace Nexus {
     if(!message.m_symbol || !is_numeric) {
       return;
     }
-    auto quote = find_opening_quote(*message.m_symbol, message.m_header);
-    if(!quote) {
+    auto match = find_opening_quote(*message.m_symbol, message.m_header);
+    if(!match) {
       return;
     }
+    auto& [ticker, quote] = *match;
     if(message.m_calculated_opening_price) {
       auto price = message.m_calculated_opening_price->m_value;
-      quote->m_price = price;
+      quote.m_price = price;
     }
     if(message.m_action == "PairedVolume" && message.m_paired_quantity) {
-      quote->m_paired_quantity = *message.m_paired_quantity;
+      quote.m_paired_quantity = *message.m_paired_quantity;
     } else if(message.m_action == "OddlotImbalance") {
       if(message.m_imbalance_side) {
-        quote->m_imbalance_side = *message.m_imbalance_side;
+        quote.m_imbalance_side = *message.m_imbalance_side;
       }
       if(message.m_imbalance_quantity) {
-        quote->m_imbalance_quantity = *message.m_imbalance_quantity;
+        quote.m_imbalance_quantity = *message.m_imbalance_quantity;
       }
     }
-    publish_opening_quote(*message.m_symbol, message.m_header);
+    publish_opening_quote(ticker, quote, message.m_header);
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -1330,14 +1336,12 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::publish_opening_quote(
-      std::string_view symbol, const TmxIpMessageHeader& header) {
-    auto& info = *m_tickers.at(std::string(symbol));
-    auto& opening = m_opening_quotes.at(info.m_ticker);
+      const Ticker& ticker, const OpeningQuote& opening,
+      const TmxIpMessageHeader& header) {
     if(!opening.m_price || !m_open_state.is_open()) {
       return;
     }
-    if(!is_eligible(
-        info.m_ticker.get_venue(), true, m_time_client->get_time())) {
+    if(!is_eligible(ticker.get_venue(), true, m_time_client->get_time())) {
       return;
     }
     auto bid = opening.m_paired_quantity;
@@ -1347,11 +1351,11 @@ namespace Nexus {
     } else if(opening.m_imbalance_side == Side::ASK) {
       ask += opening.m_imbalance_quantity;
     }
-    auto timestamp = venue_to_utc(info.m_ticker.get_venue(),
+    auto timestamp = venue_to_utc(ticker.get_venue(),
       header.m_trading_timestamp.value_or(header.m_timestamp));
     m_feed_client->publish(
-      TickerBboQuote(BboQuote(Quote(*opening.m_price, bid, Side::BID),
-        Quote(*opening.m_price, ask, Side::ASK), timestamp), info.m_ticker));
+      TickerBboQuote(BboQuote(make_bid(*opening.m_price, bid),
+        make_ask(*opening.m_price, ask), timestamp), ticker));
   }
 
   template<typename C, typename D, typename T, typename M> requires
