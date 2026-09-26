@@ -20,7 +20,7 @@ namespace Nexus {
       using OrderId = O;
 
       /** Maintains the orders and aggregate quotes for one side. */
-      using Book = OrderToBookQuoteModel<OrderId>;
+      using Book = OrderToBookQuoteModel<BookQuoteOrderAdapter<OrderId>>;
 
       /** The quote changes produced by an order operation. */
       struct Update {

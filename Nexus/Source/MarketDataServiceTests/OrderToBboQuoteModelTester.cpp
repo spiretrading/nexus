@@ -46,7 +46,7 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto& quotes = update.m_quotes;
     REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
-    REQUIRE(book.find_order(1));
+    REQUIRE(book.find_order(1).has_value());
     REQUIRE(*book.find_order(1) == expected);
     REQUIRE(book[0] == expected);
     update = model.add(2, fixture.order(side, Money(10), 200));
@@ -81,7 +81,7 @@ TEST_SUITE("OrderToBboQuoteModel") {
     expected.m_quote.m_size = 0;
     REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
-    REQUIRE_FALSE(book.find_order(2));
+    REQUIRE_FALSE(book.find_order(2).has_value());
     update = model.clear(fixture.m_timestamp);
     lower.m_quote.m_size = 0;
     REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{lower});
