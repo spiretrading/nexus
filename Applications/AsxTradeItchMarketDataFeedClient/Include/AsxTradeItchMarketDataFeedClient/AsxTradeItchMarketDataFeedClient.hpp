@@ -66,8 +66,11 @@ namespace Nexus {
         Venue m_venue;
 
         Money get_price(std::int32_t price) const;
-        BookQuote make_quote(const Order& order, Side side,
-          boost::posix_time::ptime timestamp) const;
+        Money get_price(const Order& order) const;
+        Quantity get_quantity(const Order& order) const;
+        const std::string& get_mpid(const Order& order) const;
+        Venue get_venue(const Order& order) const;
+        bool is_primary_mpid(const Order& order) const;
       };
       using Model = OrderToBboQuoteModel<OrderAdapter>;
       struct Book {
@@ -188,10 +191,42 @@ namespace Nexus {
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
-  BookQuote AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::make_quote(
-      const Order& order, Side side, boost::posix_time::ptime timestamp) const {
-    return BookQuote(order.m_mpid, false, m_venue,
-      Quote(get_price(order.m_price), order.m_quantity, side), timestamp);
+  Money AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::get_price(
+      const Order& order) const {
+    return get_price(order.m_price);
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  Quantity AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::get_quantity(
+      const Order& order) const {
+    return order.m_quantity;
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  const std::string&
+      AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::get_mpid(
+        const Order& order) const {
+    return order.m_mpid;
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  Venue AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::get_venue(
+      const Order& order) const {
+    return m_venue;
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  bool AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::is_primary_mpid(
+      const Order& order) const {
+    return true;
   }
 
   template<typename M, typename C> requires

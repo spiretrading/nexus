@@ -278,9 +278,13 @@ namespace {
     void require_book(const std::string& symbol, Side side, Money price,
         Quantity size, const std::string& mpid) {
       auto operation = take<FeedClient::PublishBookQuoteOperation>();
-      REQUIRE(operation->m_quote == TickerBookQuote(BookQuote(mpid, false,
-        Venues::ASX, Quote(price, size, side), TIMESTAMP),
-        Ticker(symbol, Venues::ASX)));
+      auto expected = BookQuote(
+        mpid, true, Venues::ASX, Quote(price, size, side), TIMESTAMP);
+      if(size == 0) {
+        expected.m_is_primary_mpid = operation->m_quote->m_is_primary_mpid;
+      }
+      REQUIRE(operation->m_quote ==
+        TickerBookQuote(expected, Ticker(symbol, Venues::ASX)));
     }
 
     void require_bbo(const std::string& symbol, Quote bid, Quote ask) {
@@ -869,7 +873,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       }
       expected.emplace_back("AU000", false, Venues::ASX,
         Quote(price * Money::CENT, 0, side), TIMESTAMP);
-      expected.emplace_back("AU000", false, Venues::ASX,
+      expected.emplace_back("AU000", true, Venues::ASX,
         Quote(price / 10 * Money::CENT, price * 10, side), TIMESTAMP);
     }
     for(auto i = std::size_t(0); i != expected.size(); ++i) {
