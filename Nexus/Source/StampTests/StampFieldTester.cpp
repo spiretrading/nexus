@@ -42,6 +42,20 @@ TEST_SUITE("StampField") {
     REQUIRE(field.m_value.data() == source.data() + source.find('=') + 1);
   }
 
+  TEST_CASE("non_ascii_text") {
+    for(auto value : {
+        "Crown Capital Partners Inc. (the \xe2\x80\x9c"
+          "Company\xe2\x80\x9d)"sv,
+        "FIDELITY ADVANTAGE ETHER ETF\xe2\x84\xa2"sv,
+        "Soci\xc3\xa9t\xc3\xa9"sv,
+        "\xf0\x9f\x8c\x90"sv}) {
+      auto source = "\x1e" "177=" + std::string(value);
+      auto field = StampField::parse(source);
+      REQUIRE(field.m_identifier == 177);
+      REQUIRE(field.m_value == value);
+    }
+  }
+
   TEST_CASE("malformed_field") {
     for(auto source : {""sv, "55=ABX"sv, "\x1e"sv, "\x1e" "55"sv,
         "\x1e" "=ABX"sv, "\x1e" "0=ABX"sv, "\x1e" "10000=ABX"sv,
@@ -52,7 +66,7 @@ TEST_SUITE("StampField") {
         "\x1e" "55.000000=ABX"sv, "\x1e" "55.1.2=ABX"sv,
         "\x1e" "55.1X=ABX"sv, "\x1e" "55=ABX\0"sv,
         "\x1e" "55=ABX\x1e"sv, "\x1e" "55=ABX\x7f"sv,
-        "\x1e" "55=ABX\x80"sv}) {
+        "\x1e" "55=ABX\t"sv}) {
       CAPTURE(source);
       REQUIRE_THROWS_AS(StampField::parse(source), StampParserException);
     }
