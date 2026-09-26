@@ -579,13 +579,14 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     SUBCASE("ask") {
       side = Side::ASK;
     }
+    auto opposite = Quote(Money(), 0, get_opposite(side));
     auto require_size = [&] (Quantity size) {
       if(side == Side::BID) {
         fixture.require_bbo(
-          "BHP", make_bid(10 * Money::CENT, size), make_ask(Money(), 0));
+          "BHP", make_bid(10 * Money::CENT, size), opposite);
       } else {
         fixture.require_bbo(
-          "BHP", make_bid(Money(), 0), make_ask(10 * Money::CENT, size));
+          "BHP", opposite, make_ask(10 * Money::CENT, size));
       }
     };
     fixture.publish(AsxTradeItchAddOrderWithParticipant(
@@ -593,6 +594,9 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     fixture.require_book("BHP", side, 10 * Money::CENT, 100, "AU123");
     require_size(100);
     fixture.add(2, 1, "BHP", side, 1000, 200);
+    require_size(300);
+    fixture.add(1, 1, "BHP", opposite.m_side, 1200, 50);
+    opposite = Quote(12 * Money::CENT, 50, opposite.m_side);
     require_size(300);
     fixture.publish(AsxTradeItchOrderExecuted(
       NANOSECONDS, 1, 1, side, 40, {}, "AU123", "AU456"));
@@ -620,12 +624,20 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     fixture.publish(AsxTradeItchOrderExecutedAtPrice(
       NANOSECONDS, 2, 1, side, 200, {}, "AU123", "AU456", 1050, 'N', 'Y'));
     fixture.require_book("BHP", side, 10 * Money::CENT, 0);
-    fixture.require_bbo("BHP", make_bid(Money(), 0), make_ask(Money(), 0));
+    if(side == Side::BID) {
+      fixture.require_bbo("BHP", make_bid(Money(), 0), opposite);
+    } else {
+      fixture.require_bbo("BHP", opposite, make_ask(Money(), 0));
+    }
     sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
     REQUIRE(sale->m_time_and_sale->m_price == parse_money("0.1050"));
     REQUIRE(sale->m_time_and_sale->m_size == 200);
     REQUIRE(sale->m_time_and_sale->m_condition.m_type ==
       TimeAndSale::Condition::Type::REGULAR);
+    fixture.publish(
+      AsxTradeItchOrderDelete(NANOSECONDS, 1, 1, opposite.m_side));
+    fixture.require_book("BHP", opposite.m_side, 12 * Money::CENT, 0);
+    fixture.require_bbo("BHP", make_bid(Money(), 0), make_ask(Money(), 0));
     fixture.require_empty();
   }
 

@@ -77,7 +77,7 @@ namespace Nexus {
       void close();
 
     private:
-      using Model = OrderToBboQuoteModel<std::string>;
+      using Model = OrderToBboQuoteModel<BookQuoteOrderAdapter<std::string>>;
       struct OrderEntry {
         Side m_side;
         TmxIpPrice m_price;
