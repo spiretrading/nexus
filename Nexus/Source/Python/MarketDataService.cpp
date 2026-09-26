@@ -2,10 +2,12 @@
 #include <Aspen/Python/Box.hpp>
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
+#include <pybind11/stl.h>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/AsyncHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/BookQuoteToBboQuoteModel.hpp"
 #include "Nexus/MarketDataService/CachedHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/DataStoreMarketDataClient.hpp"
@@ -14,6 +16,8 @@
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
+#include "Nexus/MarketDataService/OrderToBboQuoteModel.hpp"
+#include "Nexus/MarketDataService/OrderToBookQuoteModel.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
@@ -29,6 +33,12 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace Nexus::Tests;
 using namespace pybind11;
+
+namespace pybind11::detail {
+  template<>
+  struct type_caster<OrderToBookQuoteModel<std::string>::Updates> :
+      list_caster<OrderToBookQuoteModel<std::string>::Updates, BookQuote> {};
+}
 
 namespace {
   auto historical_data_store = std::unique_ptr<class_<HistoricalDataStore>>();
@@ -56,6 +66,14 @@ void Nexus::Python::export_async_historical_data_store(module& module) {
     ToPythonHistoricalDataStore<AsyncHistoricalDataStore<HistoricalDataStore>>;
   export_historical_data_store<DataStore>(module, "AsyncHistoricalDataStore").
     def(init<HistoricalDataStore&>(), keep_alive<1, 2>());
+}
+
+void Nexus::Python::export_book_quote_to_bbo_quote_model(module& module) {
+  class_<BookQuoteToBboQuoteModel>(module, "BookQuoteToBboQuoteModel").
+    def(init<>()).
+    def_property_readonly(
+      "bbo", &BookQuoteToBboQuoteModel::get_bbo, return_value_policy::copy).
+    def("update", &BookQuoteToBboQuoteModel::update);
 }
 
 void Nexus::Python::export_cached_historical_data_store(module& module) {
@@ -195,6 +213,7 @@ void Nexus::Python::export_market_data_service(module& module) {
       module, "MarketDataFeedClient"));
   export_market_data_service_application_definitions(module);
   export_async_historical_data_store(module);
+  export_book_quote_to_bbo_quote_model(module);
   export_cached_historical_data_store(module);
   export_client_historical_data_store(module);
   export_data_store_market_data_client(module);
@@ -205,6 +224,8 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_market_data_reactors(module);
   export_market_data_type(module);
   export_mysql_historical_data_store(module);
+  export_order_to_bbo_quote_model(module);
+  export_order_to_book_quote_model(module);
   export_ticker_snapshot(module);
   export_sqlite_historical_data_store(module);
   module.def("query_real_time_book_quotes_with_snapshot",
@@ -330,6 +351,60 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
           Viper::MySql::Connection(host, port, username, password, database));
       });
     }));
+}
+
+void Nexus::Python::export_order_to_bbo_quote_model(module& module) {
+  using Model = OrderToBboQuoteModel<std::string>;
+  auto model = class_<Model>(module, "OrderToBboQuoteModel");
+  class_<Model::Update>(model, "Update").
+    def_readonly("quotes", &Model::Update::m_quotes).
+    def_readonly("is_bbo_changed", &Model::Update::m_is_bbo_changed);
+  model.
+    def(init<>()).
+    def("get_book", &Model::get_book, return_value_policy::copy).
+    def_property_readonly("bbo", &Model::get_bbo, return_value_policy::copy).
+    def("add", &Model::add).
+    def("modify_size", &Model::modify_size).
+    def("offset_size", &Model::offset_size).
+    def("modify_price", &Model::modify_price).
+    def("remove", &Model::remove).
+    def("clear", &Model::clear);
+}
+
+void Nexus::Python::export_order_to_book_quote_model(module& module) {
+  using Model = OrderToBookQuoteModel<std::string>;
+  class_<Model>(module, "OrderToBookQuoteModel").
+    def(init<Side>()).
+    def_property_readonly("side", &Model::get_side).
+    def_property_readonly(
+      "orders", &Model::get_orders, return_value_policy::copy).
+    def("find_order", &Model::find_order, return_value_policy::copy).
+    def("__len__", &Model::size).
+    def("__bool__", [] (const Model& model) {
+      return !model.empty();
+    }).
+    def("__getitem__", [] (const Model& model, ssize_t index) {
+      if(index < 0) {
+        index += static_cast<ssize_t>(model.size());
+      }
+      if(index < 0 || static_cast<std::size_t>(index) >= model.size()) {
+        throw index_error();
+      }
+      return model[static_cast<std::size_t>(index)];
+    }).
+    def("__iter__", [] (const Model& model) {
+      auto quotes = pybind11::list();
+      for(auto& quote : model) {
+        quotes.append(cast(quote, return_value_policy::copy));
+      }
+      return quotes.attr("__iter__")();
+    }).
+    def("add", &Model::add).
+    def("modify_size", &Model::modify_size).
+    def("offset_size", &Model::offset_size).
+    def("modify_price", &Model::modify_price).
+    def("remove", &Model::remove).
+    def("clear", &Model::clear);
 }
 
 void Nexus::Python::export_ticker_snapshot(module& module) {
