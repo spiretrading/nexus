@@ -129,10 +129,10 @@ namespace Details {
       /** Replaces the adapter and refreshes all order contributions. */
       Updates set_adapter(Adapter adapter, boost::posix_time::ptime timestamp);
 
-      /** Returns an original order, or none if it is absent. */
+      /** Returns an original order. */
       boost::optional<const Order&> find_order(const OrderId& id) const;
 
-      /** Returns a view of original orders, including unpublished orders. */
+      /** Returns a view of original orders. */
       Orders get_orders() const;
 
       /** Returns the aggregate quote at a best-to-worst index. */
@@ -165,7 +165,8 @@ namespace Details {
        * @return The updated aggregate quotes, or empty if the order is absent.
        */
       template<std::invocable<typename A::Order&> F>
-      Updates update(const OrderId& id, F f, boost::posix_time::ptime timestamp);
+      Updates update(
+        const OrderId& id, F f, boost::posix_time::ptime timestamp);
 
       /** Modifies matching orders and updates their contributions. */
       template<std::predicate<const typename A::Order&> P,
