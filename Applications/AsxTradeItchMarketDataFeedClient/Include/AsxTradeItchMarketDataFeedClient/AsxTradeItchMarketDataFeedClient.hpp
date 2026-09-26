@@ -96,8 +96,8 @@ namespace Nexus {
         const std::string& counterparty, bool is_cross,
         boost::posix_time::ptime timestamp);
       void clear(Book& book, boost::posix_time::ptime timestamp);
-      Model::Update submit(Book& book, std::uint64_t id, const Order& order,
-        Side side, Quantity quantity, boost::posix_time::ptime timestamp);
+      void submit(Book& book, std::uint64_t id, const Order& order, Side side,
+        Quantity quantity, boost::posix_time::ptime timestamp);
       template<typename D> requires
         std::same_as<D, AsxTradeItchOrderBookDirectory> ||
           std::same_as<D, AsxTradeItchCombinationOrderBookDirectory>
@@ -330,13 +330,12 @@ namespace Nexus {
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
-  AsxTradeItchMarketDataFeedClient<M, C>::Model::Update
-      AsxTradeItchMarketDataFeedClient<M, C>::submit(
-        Book& book, std::uint64_t id, const Order& order, Side side,
-        Quantity quantity, boost::posix_time::ptime timestamp) {
-    return book.m_model.add(get_id(id, side), BookQuote(
+  void AsxTradeItchMarketDataFeedClient<M, C>::submit(
+      Book& book, std::uint64_t id, const Order& order, Side side,
+      Quantity quantity, boost::posix_time::ptime timestamp) {
+    publish(book, book.m_model.add(get_id(id, side), BookQuote(
       order.m_mpid, false, m_config.m_disseminating_venue,
-      Quote(get_price(book, order.m_price), quantity, side), timestamp));
+      Quote(get_price(book, order.m_price), quantity, side), timestamp)));
   }
 
   template<typename M, typename C> requires
@@ -415,8 +414,8 @@ namespace Nexus {
     }();
     auto order = side.insert_or_assign(message.m_order_id,
       Order(std::move(mpid), message.m_price)).first;
-    publish(book, submit(book, message.m_order_id, order->second,
-      message.m_side, message.m_quantity, timestamp));
+    submit(book, message.m_order_id, order->second, message.m_side,
+      message.m_quantity, timestamp);
   }
 
   template<typename M, typename C> requires
@@ -443,31 +442,27 @@ namespace Nexus {
       }
       price = get_price(book, order->second.m_price);
     }
-    if(order != side.end()) {
+    if(order != side.end() && message.m_executed_quantity != 0) {
       auto id = get_id(message.m_order_id, message.m_side);
-      auto quote = book.m_model.get_book(message.m_side).find_order(id);
-      if(quote) {
+      if(auto quote = book.m_model.get_book(message.m_side).find_order(id)) {
         auto quantity = Quantity(message.m_executed_quantity);
-        if(quantity != 0) {
-          auto is_removed = quantity >= quote->m_quote.m_size;
-          auto update = book.m_model.offset_size(id, -quantity, timestamp);
-          if(is_removed) {
-            side.erase(order);
-          }
-          publish(book, update);
+        auto is_removed = quantity >= quote->m_quote.m_size;
+        auto update = book.m_model.offset_size(id, -quantity, timestamp);
+        if(is_removed) {
+          side.erase(order);
         }
+        publish(book, update);
       }
     }
+    auto is_cross = false;
     if constexpr(std::same_as<E, AsxTradeItchOrderExecutedAtPrice>) {
-      if(message.m_printable == 'Y') {
-        publish(book, message.m_side, price, message.m_executed_quantity,
-          message.m_owner, message.m_counterparty,
-          message.m_occurred_at_cross == 'Y', timestamp);
+      if(message.m_printable != 'Y') {
+        return;
       }
-    } else {
-      publish(book, message.m_side, price, message.m_executed_quantity,
-        message.m_owner, message.m_counterparty, false, timestamp);
+      is_cross = message.m_occurred_at_cross == 'Y';
     }
+    publish(book, message.m_side, price, message.m_executed_quantity,
+      message.m_owner, message.m_counterparty, is_cross, timestamp);
   }
 
   template<typename M, typename C> requires
@@ -488,8 +483,8 @@ namespace Nexus {
     }
     auto& order = i->second;
     order.m_price = message.m_price;
-    publish(book, submit(book, message.m_order_id, order, message.m_side,
-      message.m_quantity, timestamp));
+    submit(book, message.m_order_id, order, message.m_side, message.m_quantity,
+      timestamp);
   }
 
   template<typename M, typename C> requires
