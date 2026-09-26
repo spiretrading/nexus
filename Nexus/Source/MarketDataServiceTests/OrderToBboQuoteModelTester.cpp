@@ -5,8 +5,28 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  using Model = OrderToBboQuoteModel<BookQuoteOrderAdapter<int>>;
+  struct Order {
+    Side m_side;
+    int m_price;
+    Quantity m_quantity;
+    std::string m_mpid;
+  };
+
+  struct Adapter {
+    using OrderId = int;
+    using Order = ::Order;
+    const int* m_scale;
+
+    BookQuote make_quote(const Order& order, ptime timestamp) const {
+      return BookQuote(order.m_mpid, false, Venue("XTSE"),
+        Quote(Money(order.m_price) / *m_scale, order.m_quantity, order.m_side),
+        timestamp);
+    }
+  };
+
   struct Fixture {
-    OrderToBboQuoteModel<int> m_model;
+    Model m_model;
     ptime m_timestamp = time_from_string("2026-09-25 10:00:00");
 
     BookQuote order(Side side, Money price, Quantity size) {
@@ -21,8 +41,105 @@ namespace {
 }
 
 TEST_SUITE("OrderToBboQuoteModel") {
+  TEST_CASE("original_orders") {
+    auto side = Side(Side::BID);
+    SUBCASE("bid") {}
+    SUBCASE("ask") {
+      side = Side::ASK;
+    }
+    auto opposite = get_opposite(side);
+    auto scale = 1;
+    auto model = OrderToBboQuoteModel(Adapter(&scale));
+    auto timestamp = time_from_string("2026-09-25 10:00:00");
+    auto order = Order(side, 10, 0, "MPID1");
+    auto update = model.add(side, 1, order, timestamp);
+    REQUIRE(update.m_quotes.empty());
+    REQUIRE_FALSE(update.m_is_bbo_changed);
+    REQUIRE(model.get_book(side).find_order(1)->m_quantity == 0);
+    REQUIRE(model.add(opposite, 1, Order(opposite, 11, 200, "MPID2"),
+      timestamp).m_is_bbo_changed);
+    auto expected = BookQuote("MPID1", false, Venue("XTSE"),
+      Quote(Money(10), 100, side), timestamp);
+    update = model.update(side, 1, [] (auto& order) {
+      order.m_quantity = 100;
+    }, timestamp);
+    REQUIRE(update.m_quotes == Model::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(model.get_book(side).find_order(1)->m_quantity == 100);
+    REQUIRE(model.get_book(opposite).find_order(1)->m_quantity == 200);
+    REQUIRE(model.get_book(side).find_order(1)->m_mpid == "MPID1");
+    auto& bbo = model.get_bbo();
+    REQUIRE(pick(side, bbo.m_ask, bbo.m_bid) == expected.m_quote);
+    REQUIRE(pick(opposite, bbo.m_ask, bbo.m_bid) ==
+      Quote(Money(11), 200, opposite));
+    timestamp += seconds(1);
+    update = model.update(side, 1, [] (auto& order) {
+      order.m_quantity -= 40;
+    }, timestamp);
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(pick(side, bbo.m_ask, bbo.m_bid).m_size == 60);
+    REQUIRE(bbo.m_timestamp == timestamp);
+    REQUIRE(model.remove(side, 1, timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(model.get_book(side).find_order(1).has_value());
+    REQUIRE(model.get_book(opposite).find_order(1).has_value());
+    REQUIRE(pick(side, bbo.m_ask, bbo.m_bid).m_size == 0);
+    REQUIRE(pick(opposite, bbo.m_ask, bbo.m_bid).m_size == 200);
+    update = model.update(side, 1, [] (auto&) {
+      FAIL("An absent order must not be updated.");
+    }, timestamp);
+    REQUIRE(update.m_quotes.empty());
+    REQUIRE_FALSE(update.m_is_bbo_changed);
+    REQUIRE_FALSE(model.remove(side, 1, timestamp).m_is_bbo_changed);
+    model.add(side, 1, order, timestamp);
+    REQUIRE(model.clear(timestamp).m_is_bbo_changed);
+    REQUIRE(model.get_book(side).get_orders().empty());
+    REQUIRE(model.get_book(opposite).get_orders().empty());
+  }
+
+  TEST_CASE("adapter") {
+    auto scale = 1;
+    auto model = OrderToBboQuoteModel(Adapter(&scale));
+    auto timestamp = time_from_string("2026-09-25 10:00:00");
+    model.add(Side::BID, 1, Order(Side::BID, 10, 100, "MPID1"), timestamp);
+    model.add(Side::ASK, 1, Order(Side::ASK, 20, 200, "MPID2"), timestamp);
+    model.add(Side::ASK, 2, Order(Side::ASK, 15, 0, "MPID3"), timestamp);
+    auto next_scale = 2;
+    timestamp += seconds(1);
+    auto update = model.set_adapter(Adapter(&next_scale), timestamp);
+    REQUIRE(model.get_adapter().m_scale == &next_scale);
+    REQUIRE(model.get_book(Side::ASK).get_adapter().m_scale == &next_scale);
+    REQUIRE(update.m_quotes.size() == 4);
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(model.get_bbo() == BboQuote(Quote(Money(5), 100, Side::BID),
+      Quote(Money(10), 200, Side::ASK), timestamp));
+    REQUIRE(model.get_book(Side::BID).find_order(1)->m_price == 10);
+    REQUIRE(model.get_book(Side::ASK).find_order(1)->m_price == 20);
+    REQUIRE(model.get_book(Side::ASK).find_order(2)->m_price == 15);
+    next_scale = 5;
+    timestamp += seconds(1);
+    update = model.refresh(timestamp);
+    REQUIRE(update.m_quotes.size() == 4);
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(model.get_bbo() == BboQuote(Quote(Money(2), 100, Side::BID),
+      Quote(Money(4), 200, Side::ASK), timestamp));
+    update = model.update(Side::ASK, 2, [] (auto& order) {
+      order.m_quantity = 50;
+    }, timestamp);
+    REQUIRE(update.m_quotes.size() == 1);
+    REQUIRE(update.m_quotes.front().m_mpid == "MPID3");
+    REQUIRE(update.m_quotes.front().m_quote == Quote(Money(3), 50, Side::ASK));
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(model.get_bbo().m_ask == Quote(Money(3), 50, Side::ASK));
+    auto previous = model.get_bbo();
+    timestamp += seconds(1);
+    update = model.refresh(timestamp);
+    REQUIRE(update.m_quotes.empty());
+    REQUIRE_FALSE(update.m_is_bbo_changed);
+    REQUIRE(model.get_bbo() == previous);
+  }
+
   TEST_CASE("default_bbo") {
-    auto model = OrderToBboQuoteModel<int>();
+    auto model = Model();
     REQUIRE(model.get_bbo() == BboQuote());
   }
 
@@ -44,47 +161,47 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto expected = fixture.order(side, Money(10), 100);
     auto update = model.add(1, expected);
     auto& quotes = update.m_quotes;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(quotes == Model::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
     REQUIRE(book.find_order(1).has_value());
     REQUIRE(*book.find_order(1) == expected);
     REQUIRE(book[0] == expected);
     update = model.add(2, fixture.order(side, Money(10), 200));
     expected.m_quote.m_size = 300;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(quotes == Model::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
     auto lower = fixture.order(side, worse, 50);
     update = model.add(3, lower);
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{lower});
+    REQUIRE(quotes == Model::Book::Updates{lower});
     REQUIRE_FALSE(update.m_is_bbo_changed);
     fixture.m_timestamp += seconds(1);
     expected.m_timestamp = fixture.m_timestamp;
     update = model.modify_size(1, 125, fixture.m_timestamp);
     expected.m_quote.m_size = 325;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(quotes == Model::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
     update = model.offset_size(2, -25, fixture.m_timestamp);
     expected.m_quote.m_size = 300;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(quotes == Model::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
     update = model.modify_price(1, worse, fixture.m_timestamp);
     expected.m_quote.m_size = 175;
     lower.m_quote.m_size = 175;
     lower.m_timestamp = fixture.m_timestamp;
     REQUIRE(quotes ==
-      OrderToBboQuoteModel<int>::Book::Updates{expected, lower});
+      Model::Book::Updates{expected, lower});
     REQUIRE(update.m_is_bbo_changed);
     REQUIRE(book.find_order(1)->m_quote == Quote(worse, 125, side));
     REQUIRE(book.get_orders().size() == 3);
     REQUIRE(book.size() == 2);
     update = model.remove(2, fixture.m_timestamp);
     expected.m_quote.m_size = 0;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(quotes == Model::Book::Updates{expected});
     REQUIRE(update.m_is_bbo_changed);
     REQUIRE_FALSE(book.find_order(2).has_value());
     update = model.clear(fixture.m_timestamp);
     lower.m_quote.m_size = 0;
-    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{lower});
+    REQUIRE(quotes == Model::Book::Updates{lower});
     REQUIRE(update.m_is_bbo_changed);
     REQUIRE(book.empty());
     REQUIRE(book.get_orders().empty());
@@ -186,7 +303,7 @@ TEST_SUITE("OrderToBboQuoteModel") {
     order.m_quote.m_size = 150;
     auto update = model.add(1, order);
     REQUIRE(update.m_is_bbo_changed);
-    REQUIRE(update.m_quotes == OrderToBboQuoteModel<int>::Book::Updates{order});
+    REQUIRE(update.m_quotes == Model::Book::Updates{order});
     REQUIRE(model.get_bbo().m_ask == ask.m_quote);
     REQUIRE(*model.get_book(Side::ASK).find_order(3) == ask);
     REQUIRE(model.get_bbo().m_bid == Quote(Money(10), 250, Side::BID));
@@ -257,7 +374,7 @@ TEST_SUITE("OrderToBboQuoteModel") {
     fixture.m_timestamp += seconds(1);
     auto update = model.clear(fixture.m_timestamp);
     REQUIRE(update.m_is_bbo_changed);
-    REQUIRE(update.m_quotes == OrderToBboQuoteModel<int>::Book::Updates{
+    REQUIRE(update.m_quotes == Model::Book::Updates{
       fixture.order(Side::BID, Money(10), 0),
       fixture.order(Side::BID, Money(9), 0),
       fixture.order(Side::ASK, Money(11), 0),
