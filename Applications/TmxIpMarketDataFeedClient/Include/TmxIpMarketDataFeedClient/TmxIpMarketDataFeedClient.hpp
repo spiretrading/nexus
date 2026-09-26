@@ -682,7 +682,6 @@ namespace Nexus {
     }
     auto& book = node.mapped();
     timestamp = venue_to_utc(book.get_venue(), timestamp);
-    auto previous_bbo = book.m_bbo_model.get_bbo();
     auto is_listing_changed = book.m_ticker != info.m_ticker;
     auto orders = std::vector<std::tuple<Side, std::string, OrderEntry>>();
     if(is_listing_changed) {
@@ -698,15 +697,13 @@ namespace Nexus {
     auto adapter = OrderAdapter(venue, VENUES.from(venue).m_display_name,
       info.m_board_lot, venue == info.m_ticker.get_venue(),
       &m_config.m_mpid_mappings);
-    publish(book,
-      book.m_bbo_model.set_adapter(std::move(adapter), timestamp).m_quotes);
+    auto update = book.m_bbo_model.set_adapter(std::move(adapter), timestamp);
+    publish(book, update.m_quotes);
     for(auto& [side, key, order] : orders) {
       publish(book, book.m_bbo_model.add(
         side, key, std::move(order), timestamp).m_quotes);
     }
-    auto& bbo = book.m_bbo_model.get_bbo();
-    if(is_listing_changed || bbo.m_bid != previous_bbo.m_bid ||
-        bbo.m_ask != previous_bbo.m_ask) {
+    if(is_listing_changed || update.m_is_bbo_changed) {
       publish_bbo(book);
     }
     node.key() = info.m_ticker;
