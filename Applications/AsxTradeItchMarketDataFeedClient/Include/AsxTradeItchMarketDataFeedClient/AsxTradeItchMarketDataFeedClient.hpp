@@ -58,7 +58,6 @@ namespace Nexus {
         std::string m_mpid;
         std::int32_t m_price;
         Quantity m_quantity;
-        Side m_side;
       };
       struct OrderAdapter {
         using OrderId = std::uint64_t;
@@ -67,13 +66,13 @@ namespace Nexus {
         Venue m_venue;
 
         Money get_price(std::int32_t price) const;
-        BookQuote make_quote(
-          const Order& order, boost::posix_time::ptime timestamp) const;
+        BookQuote make_quote(const Order& order, Side side,
+          boost::posix_time::ptime timestamp) const;
       };
       using Model = OrderToBboQuoteModel<OrderAdapter>;
       struct Book {
         Ticker m_ticker;
-        std::string m_state;
+        TimeAndSale::Condition::Type m_auction_type;
         Model m_model;
       };
       AsxTradeItchConfiguration m_config;
@@ -190,10 +189,9 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   BookQuote AsxTradeItchMarketDataFeedClient<M, C>::OrderAdapter::make_quote(
-      const Order& order, boost::posix_time::ptime timestamp) const {
+      const Order& order, Side side, boost::posix_time::ptime timestamp) const {
     return BookQuote(order.m_mpid, false, m_venue,
-      Quote(get_price(order.m_price), order.m_quantity, order.m_side),
-      timestamp);
+      Quote(get_price(order.m_price), order.m_quantity, side), timestamp);
   }
 
   template<typename M, typename C> requires
@@ -293,10 +291,10 @@ namespace Nexus {
     if(!is_cross) {
       condition.m_type = TimeAndSale::Condition::Type::REGULAR;
       condition.m_code = "@";
-    } else if(book.m_state == "CSPA" || book.m_state == "PRE_CSPA") {
+    } else if(book.m_auction_type == TimeAndSale::Condition::Type::CLOSE) {
       condition.m_type = TimeAndSale::Condition::Type::CLOSE;
       condition.m_code = "C";
-    } else if(book.m_state == "PRE_OPEN" || book.m_state == "OSPA") {
+    } else if(book.m_auction_type == TimeAndSale::Condition::Type::OPEN) {
       condition.m_type = TimeAndSale::Condition::Type::OPEN;
       condition.m_code = "O";
     } else {
@@ -360,7 +358,7 @@ namespace Nexus {
     auto& book = entry->second;
     if(!is_inserted && book.m_ticker != ticker) {
       clear(book, timestamp);
-      book.m_state.clear();
+      book.m_auction_type = {};
     }
     auto is_repriced =
       is_inserted || book.m_model.get_adapter().m_price_scale != scale;
@@ -395,8 +393,8 @@ namespace Nexus {
       return std::string("AU000");
     }();
     publish(book, book.m_model.add(message.m_side, message.m_order_id,
-      OrderEntry(std::move(mpid), message.m_price, message.m_quantity,
-        message.m_side), timestamp));
+      OrderEntry(std::move(mpid), message.m_price, message.m_quantity),
+      timestamp));
   }
 
   template<typename M, typename C> requires
@@ -558,7 +556,15 @@ namespace Nexus {
       },
       [&] (const AsxTradeItchOrderBookState& message) {
         if(auto book = find_book(message.m_order_book_id)) {
-          book->m_state = message.m_state;
+          book->m_auction_type = [&] {
+            if(message.m_state == "CSPA" || message.m_state == "PRE_CSPA") {
+              return TimeAndSale::Condition::Type::CLOSE;
+            } else if(message.m_state == "PRE_OPEN" ||
+                message.m_state == "OSPA") {
+              return TimeAndSale::Condition::Type::OPEN;
+            }
+            return TimeAndSale::Condition::Type::NONE;
+          }();
         }
       },
       [&] (const AsxTradeItchSystemEvent& message) {

@@ -712,22 +712,50 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
         "ASX", "AU000", "AU000"), parse_ticker("BHP.ASX")));
     fixture.require_empty();
-    fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 1, "CSPA"));
     trade.m_occurred_at_cross = 'Y';
     trade.m_side = Side::ASK;
     trade.m_owner = "AU123";
     trade.m_counterparty = "AU456";
+    using Type = TimeAndSale::Condition::Type;
+    for(auto [state, type, code] : {
+        std::tuple("CSPA", Type::CLOSE, "C"),
+        std::tuple("PRE_CSPA", Type::CLOSE, "C"),
+        std::tuple("PRE_OPEN", Type::OPEN, "O"),
+        std::tuple("OPEN", Type::NONE, "AUCTION"),
+        std::tuple("OSPA", Type::OPEN, "O"),
+        std::tuple("UNKNOWN", Type::NONE, "AUCTION"),
+        std::tuple("", Type::NONE, "AUCTION")}) {
+      fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 1, state));
+      fixture.publish(trade);
+      sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(sale->m_time_and_sale->m_condition ==
+        TimeAndSale::Condition(type, code));
+      REQUIRE(sale->m_time_and_sale->m_buyer_mpid == "AU456");
+      REQUIRE(sale->m_time_and_sale->m_seller_mpid == "AU123");
+      trade.m_occurred_at_cross = 'N';
+      fixture.publish(trade);
+      sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(sale->m_time_and_sale->m_condition ==
+        TimeAndSale::Condition(Type::REGULAR, "@"));
+      trade.m_occurred_at_cross = 'Y';
+    }
+    fixture.directory(2, "RIO");
+    trade.m_order_book_id = 2;
     fixture.publish(trade);
     sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
     REQUIRE(sale->m_time_and_sale->m_condition ==
-      TimeAndSale::Condition(TimeAndSale::Condition::Type::CLOSE, "C"));
-    REQUIRE(sale->m_time_and_sale->m_buyer_mpid == "AU456");
-    REQUIRE(sale->m_time_and_sale->m_seller_mpid == "AU123");
-    fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 1, "PRE_OPEN"));
+      TimeAndSale::Condition(Type::NONE, "AUCTION"));
+    fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 2, "PRE_OPEN"));
     fixture.publish(trade);
     sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
     REQUIRE(sale->m_time_and_sale->m_condition ==
-      TimeAndSale::Condition(TimeAndSale::Condition::Type::OPEN, "O"));
+      TimeAndSale::Condition(Type::OPEN, "O"));
+    fixture.directory(2, "CBA");
+    fixture.publish(trade);
+    sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(sale->m_time_and_sale.get_index() == parse_ticker("CBA.ASX"));
+    REQUIRE(sale->m_time_and_sale->m_condition ==
+      TimeAndSale::Condition(Type::NONE, "AUCTION"));
     fixture.require_empty();
   }
 
