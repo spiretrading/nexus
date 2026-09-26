@@ -6,8 +6,34 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  struct Order {
+    Side m_side;
+    int m_price;
+    Quantity m_quantity;
+    std::string m_mpid;
+    bool m_is_primary = false;
+    bool m_is_priced = true;
+  };
+
+  struct Adapter {
+    using OrderId = std::uint64_t;
+    using Order = ::Order;
+    int m_scale = 1;
+    Quantity m_board_lot = 100;
+
+    BookQuote make_quote(const Order& order, ptime timestamp) const {
+      auto quantity = Quantity();
+      if(order.m_is_priced) {
+        quantity = floor_to(order.m_quantity, m_board_lot);
+      }
+      return BookQuote(order.m_mpid, order.m_is_primary, Venue("XTSE"),
+        Quote(Money(order.m_price) / m_scale, quantity, order.m_side),
+        timestamp);
+    }
+  };
+
   struct Fixture {
-    OrderToBookQuoteModel<int> m_model;
+    OrderToBookQuoteModel<BookQuoteOrderAdapter<int>> m_model;
     ptime m_timestamp;
 
     Fixture()
@@ -26,6 +52,143 @@ namespace {
 }
 
 TEST_SUITE("OrderToBookQuoteModel") {
+  TEST_CASE("original_orders") {
+    auto side = Side(Side::BID);
+    SUBCASE("bid") {}
+    SUBCASE("ask") {
+      side = Side::ASK;
+    }
+    auto model = OrderToBookQuoteModel(side, Adapter());
+    auto timestamp = time_from_string("2026-09-25 10:00:00");
+    auto order = Order(side, 10, 99, "MPID1");
+    REQUIRE(model.add(1, order, timestamp).empty());
+    REQUIRE(model.empty());
+    REQUIRE(model.find_order(1)->m_quantity == 99);
+    REQUIRE(model.get_orders().size() == 1);
+    auto updates = model.update(1, [] (auto& order) {
+      order.m_quantity = 250;
+    }, timestamp);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front().m_quote == Quote(Money(10), 200, side));
+    REQUIRE(model.find_order(1)->m_quantity == 250);
+    REQUIRE(model.update(1, [] (auto& order) {
+      order.m_quantity = 299;
+    }, timestamp).empty());
+    REQUIRE(model.find_order(1)->m_quantity == 299);
+    updates = model.update(1, [] (auto& order) {
+      order.m_quantity -= 100;
+    }, timestamp);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front().m_quote.m_size == 100);
+    REQUIRE(model.find_order(1)->m_quantity == 199);
+    updates = model.update(1, [] (auto& order) {
+      order.m_is_priced = false;
+    }, timestamp);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front().m_quote.m_size == 0);
+    REQUIRE(model.empty());
+    REQUIRE(model.find_order(1).has_value());
+    REQUIRE(model.refresh(timestamp).empty());
+    updates = model.update(1, [] (auto& order) {
+      order.m_is_priced = true;
+      order.m_price = 12;
+      order.m_mpid = "MPID2";
+    }, timestamp);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front().m_quote == Quote(Money(12), 100, side));
+    REQUIRE(updates.front().m_mpid == "MPID2");
+    updates = model.update(1, [] (auto& order) {
+      order.m_quantity = 0;
+    }, timestamp);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front().m_quote.m_size == 0);
+    REQUIRE(model.find_order(1).has_value());
+    REQUIRE(model.remove(1, timestamp).empty());
+    REQUIRE_FALSE(model.find_order(1).has_value());
+    auto is_called = false;
+    REQUIRE(model.update(1, [&] (auto&) {
+      is_called = true;
+    }, timestamp).empty());
+    REQUIRE_FALSE(is_called);
+  }
+
+  TEST_CASE("adapter_settings") {
+    auto model = OrderToBookQuoteModel(Side::BID, Adapter());
+    auto timestamp = time_from_string("2026-09-25 10:00:00");
+    model.add(1, Order(Side::BID, 10, 550, "MPID1"), timestamp);
+    model.add(2, Order(Side::BID, 20, 50, "MPID2"), timestamp);
+    model.add(3, Order(Side::BID, 30, 200, "MPID3", false, false), timestamp);
+    auto adapter = model.get_adapter();
+    adapter.m_scale = 10;
+    adapter.m_board_lot = 25;
+    timestamp += seconds(1);
+    auto updates = model.set_adapter(adapter, timestamp);
+    auto expected = std::vector<BookQuote>{
+      BookQuote("MPID1", false, Venue("XTSE"),
+        Quote(Money(10), 0, Side::BID), timestamp),
+      BookQuote("MPID1", false, Venue("XTSE"),
+        Quote(Money(1), 550, Side::BID), timestamp),
+      BookQuote("MPID2", false, Venue("XTSE"),
+        Quote(Money(2), 50, Side::BID), timestamp)};
+    REQUIRE(std::ranges::is_permutation(updates, expected));
+    REQUIRE(model.get_adapter().m_scale == 10);
+    REQUIRE(model[0].m_quote == Quote(Money(2), 50, Side::BID));
+    REQUIRE(model[1].m_quote == Quote(Money(1), 550, Side::BID));
+    REQUIRE(model.find_order(1)->m_price == 10);
+    REQUIRE(model.find_order(1)->m_quantity == 550);
+    REQUIRE(model.refresh(timestamp).empty());
+    adapter.m_board_lot = 1000;
+    updates = model.set_adapter(adapter, timestamp);
+    REQUIRE(updates.size() == 2);
+    REQUIRE(model.empty());
+    REQUIRE(model.get_orders().size() == 3);
+    for(auto& quote : updates) {
+      REQUIRE(quote.m_quote.m_size == 0);
+    }
+    REQUIRE(model.clear(timestamp).empty());
+    REQUIRE(model.get_orders().empty());
+  }
+
+  TEST_CASE("selected_orders") {
+    auto model = OrderToBookQuoteModel(Side::BID, Adapter());
+    auto timestamp = time_from_string("2026-09-25 10:00:00");
+    model.add(1, Order(Side::BID, 10, 100, "MPID1", true), timestamp);
+    model.add(2, Order(Side::BID, 10, 200, "MPID1"), timestamp);
+    model.add(3, Order(Side::BID, 11, 200, "MPID2", true, false), timestamp);
+    timestamp += seconds(1);
+    auto updates = model.update_if([] (const auto& order) {
+      return order.m_is_primary;
+    }, [] (auto& order) {
+      order.m_price = 12;
+      order.m_is_primary = false;
+      order.m_is_priced = true;
+    }, timestamp);
+    REQUIRE(updates.size() == 3);
+    REQUIRE(model.size() == 3);
+    REQUIRE(model.find_order(2)->m_price == 10);
+    for(auto& quote : model) {
+      REQUIRE_FALSE(quote.m_is_primary_mpid);
+      REQUIRE(quote.m_timestamp == timestamp);
+      REQUIRE(quote.m_quote.m_size > 0);
+    }
+    REQUIRE(model.get_orders().size() == 3);
+    for(auto [id, order] : model.get_orders()) {
+      REQUIRE(&order == &*model.find_order(id));
+    }
+    REQUIRE(model.update_if([] (const auto&) { return false; },
+      [] (auto&) { FAIL("An unmatched order was modified."); },
+      timestamp).empty());
+    auto is_called = false;
+    REQUIRE_THROWS_AS(model.update(1, [&] (auto& order) {
+      order.m_price = 99;
+      is_called = true;
+      throw std::runtime_error("Update failed.");
+    }, timestamp), std::runtime_error);
+    REQUIRE(is_called);
+    REQUIRE(model.find_order(1)->m_price == 12);
+    REQUIRE(model.clear(timestamp).size() == 3);
+  }
+
   TEST_CASE("side") {
     auto bids = Fixture(Side::BID);
     auto asks = Fixture(Side::ASK);
@@ -40,16 +203,20 @@ TEST_SUITE("OrderToBookQuoteModel") {
   TEST_CASE("orders") {
     auto fixture = Fixture();
     auto& model = fixture.m_model;
-    REQUIRE_FALSE(model.find_order(1));
+    REQUIRE_FALSE(model.find_order(1).has_value());
     REQUIRE(model.get_orders().empty());
     auto first = fixture.order(100);
     auto second = fixture.order(200);
     model.add(1, first);
     model.add(2, second);
-    REQUIRE(model.find_order(1));
+    REQUIRE(model.find_order(1).has_value());
     REQUIRE(*model.find_order(1) == first);
-    REQUIRE(model.get_orders() ==
-      OrderToBookQuoteModel<int>::Orders{{1, first}, {2, second}});
+    auto orders = std::unordered_map<int, BookQuote>();
+    for(auto [id, order] : model.get_orders()) {
+      orders.emplace(id, order);
+    }
+    REQUIRE(orders ==
+      std::unordered_map<int, BookQuote>{{1, first}, {2, second}});
     REQUIRE(model[0].m_quote.m_size == 300);
     fixture.m_timestamp += seconds(1);
     model.modify_size(1, 150, fixture.m_timestamp);
@@ -58,15 +225,15 @@ TEST_SUITE("OrderToBookQuoteModel") {
     REQUIRE(*model.find_order(1) == first);
     model.modify_price(1, Money(11), fixture.m_timestamp);
     first.m_quote.m_price = Money(11);
-    REQUIRE(model.get_orders().at(1) == first);
+    REQUIRE(*model.find_order(1) == first);
     second.m_mpid = "MPID2";
     model.add(2, second);
     REQUIRE(*model.find_order(2) == second);
     model.remove(1, fixture.m_timestamp);
-    REQUIRE_FALSE(model.find_order(1));
+    REQUIRE_FALSE(model.find_order(1).has_value());
     REQUIRE(model.get_orders().size() == 1);
     model.clear(fixture.m_timestamp);
-    REQUIRE_FALSE(model.find_order(2));
+    REQUIRE_FALSE(model.find_order(2).has_value());
     REQUIRE(model.get_orders().empty());
   }
 
@@ -237,7 +404,8 @@ TEST_SUITE("OrderToBookQuoteModel") {
     auto fixture = Fixture();
     fixture.m_model.add(1, fixture.order(100));
     fixture.m_model.add(2, fixture.order(200));
-    auto updates = OrderToBookQuoteModel<int>::Updates();
+    auto updates =
+      OrderToBookQuoteModel<BookQuoteOrderAdapter<int>>::Updates();
     SUBCASE("zero") {
       updates = fixture.m_model.modify_size(1, 0, fixture.m_timestamp);
     }

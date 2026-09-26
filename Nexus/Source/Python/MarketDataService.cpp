@@ -35,9 +35,11 @@ using namespace Nexus::Tests;
 using namespace pybind11;
 
 namespace pybind11::detail {
+  using BookUpdates =
+    OrderToBookQuoteModel<BookQuoteOrderAdapter<std::string>>::Updates;
+
   template<>
-  struct type_caster<OrderToBookQuoteModel<std::string>::Updates> :
-      list_caster<OrderToBookQuoteModel<std::string>::Updates, BookQuote> {};
+  struct type_caster<BookUpdates> : list_caster<BookUpdates, BookQuote> {};
 }
 
 namespace {
@@ -372,12 +374,24 @@ void Nexus::Python::export_order_to_bbo_quote_model(module& module) {
 }
 
 void Nexus::Python::export_order_to_book_quote_model(module& module) {
-  using Model = OrderToBookQuoteModel<std::string>;
+  using Model = OrderToBookQuoteModel<BookQuoteOrderAdapter<std::string>>;
+  class_<Model::Adapter>(module, "BookQuoteOrderAdapter").
+    def(init<>()).
+    def("make_quote", &Model::Adapter::make_quote);
   class_<Model>(module, "OrderToBookQuoteModel").
     def(init<Side>()).
+    def(init<Side, Model::Adapter>()).
     def_property_readonly("side", &Model::get_side).
-    def_property_readonly(
-      "orders", &Model::get_orders, return_value_policy::copy).
+    def_property_readonly("adapter", &Model::get_adapter,
+      return_value_policy::copy).
+    def("set_adapter", &Model::set_adapter).
+    def_property_readonly("orders", [] (const Model& model) {
+      auto orders = dict();
+      for(auto [id, order] : model.get_orders()) {
+        orders[cast(id)] = cast(order, return_value_policy::copy);
+      }
+      return orders;
+    }).
     def("find_order", &Model::find_order, return_value_policy::copy).
     def("__len__", &Model::size).
     def("__bool__", [] (const Model& model) {
@@ -399,7 +413,25 @@ void Nexus::Python::export_order_to_book_quote_model(module& module) {
       }
       return quotes.attr("__iter__")();
     }).
-    def("add", &Model::add).
+    def("add", overload_cast<const std::string&, BookQuote>(&Model::add)).
+    def("add", overload_cast<const std::string&, BookQuote,
+      boost::posix_time::ptime>(&Model::add)).
+    def("update", [] (Model& model, const std::string& id,
+        const std::function<BookQuote(BookQuote)>& f,
+        boost::posix_time::ptime timestamp) {
+      return model.update(id, [&] (auto& order) {
+        order = f(order);
+      }, timestamp);
+    }, "Updates an order using a callable returning its replacement.").
+    def("update_if", [] (Model& model,
+        const std::function<bool(BookQuote)>& predicate,
+        const std::function<BookQuote(BookQuote)>& f,
+        boost::posix_time::ptime timestamp) {
+      return model.update_if(predicate, [&] (auto& order) {
+        order = f(order);
+      }, timestamp);
+    }, "Updates matching orders using a callable returning replacements.").
+    def("refresh", &Model::refresh).
     def("modify_size", &Model::modify_size).
     def("offset_size", &Model::offset_size).
     def("modify_price", &Model::modify_price).

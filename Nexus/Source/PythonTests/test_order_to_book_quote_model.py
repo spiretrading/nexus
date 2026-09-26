@@ -172,6 +172,51 @@ class TestOrderToBookQuoteModel(unittest.TestCase):
             self.timestamp), [self.order(0)])
         self.assertEqual(self.model.remove('1', self.timestamp), [])
 
+    def test_original_orders(self):
+        order = self.order(0)
+        self.assertEqual(self.model.add('1', order, self.timestamp), [])
+        self.assertIsNotNone(self.model.find_order('1'))
+        self.assertFalse(self.model)
+        timestamp = datetime(2026, 9, 25, 10, 1)
+
+        def replace(order):
+            order.quote.size = nexus.Quantity(100)
+            return order
+
+        updates = self.model.update('1', replace, timestamp)
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0].quote.size, nexus.Quantity(100))
+        self.assertEqual(updates[0].timestamp, timestamp)
+        self.assertEqual(self.model.find_order('1').quote.size,
+            nexus.Quantity(100))
+        self.assertEqual(self.model.refresh(timestamp), [])
+        self.assertEqual(self.model.update('missing', replace, timestamp), [])
+        adapter = self.model.adapter
+        self.assertIsInstance(adapter, nexus.BookQuoteOrderAdapter)
+        self.assertEqual(self.model.set_adapter(adapter, timestamp), [])
+        quote = adapter.make_quote(order, timestamp)
+        self.assertEqual(quote.timestamp, timestamp)
+        other = nexus.OrderToBookQuoteModel(nexus.Side.BID, adapter)
+        self.assertFalse(other)
+
+    def test_selected_orders(self):
+        self.model.add('1', self.order(100))
+        self.model.add('2', self.order(200))
+
+        def replace(order):
+            order.quote.size = nexus.Quantity(50)
+            return order
+
+        updates = self.model.update_if(
+            lambda order: order.quote.size == nexus.Quantity(100),
+            replace, self.timestamp)
+        self.assertEqual(updates, [self.order(250)])
+        self.assertEqual(self.model.find_order('1'), self.order(50))
+        self.assertEqual(self.model.find_order('2'), self.order(200))
+        self.assertEqual(self.model.update_if(lambda order: False,
+            replace, self.timestamp), [])
+        self.assertEqual(self.model[0], self.order(250))
+
     def test_bbo_composition(self):
         bbo = nexus.BookQuoteToBboQuoteModel()
         for quote in self.model.add('1', self.order(100)):
