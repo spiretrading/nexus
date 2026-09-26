@@ -141,6 +141,8 @@ namespace Nexus {
       std::string get_broker_name(boost::optional<std::uint64_t> broker) const;
       void update(Book& book, const std::string& key, OrderEntry order,
         boost::posix_time::ptime timestamp);
+      Model::Update submit(Book& book, const std::string& key,
+        const OrderEntry& order, boost::posix_time::ptime timestamp);
       void remove(Book& book, const std::string& key,
         boost::posix_time::ptime timestamp);
       void clear(Book& book, boost::posix_time::ptime timestamp);
@@ -161,6 +163,7 @@ namespace Nexus {
         boost::posix_time::ptime timestamp);
       OpeningQuote* find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
+      bool update(const TmxIpMbxMessage& message);
       void publish(const TmxIpMbxMessage& message);
       void publish(const TmxIpMocImbalance& message);
       void publish(const TmxIpOpeningAuction& message);
@@ -513,10 +516,22 @@ namespace Nexus {
       }
     }
     book.m_orders.insert_or_assign(key, order);
-    publish(book, book.m_model.add(key,
+    publish(book, submit(book, key, order, timestamp));
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  typename TmxIpMarketDataFeedClient<C, D, T, M>::Model::Update
+      TmxIpMarketDataFeedClient<C, D, T, M>::submit(Book& book,
+        const std::string& key, const OrderEntry& order,
+        boost::posix_time::ptime timestamp) {
+    return book.m_model.add(key,
       BookQuote(get_mpid(book, order.m_broker), false, book.m_venue,
         Quote(order.m_price.m_value, get_quantity(book, order), order.m_side),
-        timestamp)));
+        timestamp));
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -616,10 +631,10 @@ namespace Nexus {
     }
     auto& book = node.mapped();
     timestamp = venue_to_utc(book.m_venue, timestamp);
-    auto update = book.m_model.clear(timestamp);
-    publish(book, update.m_quotes);
-    if(book.m_ticker != info.m_ticker && update.m_is_bbo_changed) {
-      publish_bbo(book);
+    auto previous_bbo = book.m_model.get_bbo();
+    auto is_listing_changed = book.m_ticker != info.m_ticker;
+    if(is_listing_changed) {
+      publish(book, book.m_model.clear(timestamp));
     }
     book.m_ticker = info.m_ticker;
     book.m_board_lot = info.m_board_lot;
@@ -629,12 +644,13 @@ namespace Nexus {
       book.m_mpid = VENUES.from(venue).m_display_name;
     }
     for(auto& [key, order] : book.m_orders) {
-      publish(book, book.m_model.add(key,
-        BookQuote(get_mpid(book, order.m_broker), false, book.m_venue,
-          Quote(order.m_price.m_value, get_quantity(book, order),
-            order.m_side), timestamp)).m_quotes);
+      publish(book, submit(book, key, order, timestamp).m_quotes);
     }
-    publish_bbo(book);
+    auto& bbo = book.m_model.get_bbo();
+    if(is_listing_changed || bbo.m_bid != previous_bbo.m_bid ||
+        bbo.m_ask != previous_bbo.m_ask) {
+      publish_bbo(book);
+    }
     node.key() = info.m_ticker;
     m_books.insert(std::move(node));
   }
@@ -1118,22 +1134,15 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
-  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+  bool TmxIpMarketDataFeedClient<C, D, T, M>::update(
       const TmxIpMbxMessage& message) {
-    if(message.m_action == "AssignCOP" && message.m_imbalance_side) {
-      publish_imbalance(message.m_symbol, message.m_header,
-        *message.m_imbalance_side, message.m_imbalance_quantity,
-        message.m_calculated_opening_price);
-    }
     if(message.m_action != "AssignCOP" ||
         message.m_calculated_opening_price.m_type != TmxIpPrice::Type::LIMIT) {
-      update_orders(message);
-      return;
+      return false;
     }
     auto quote = find_opening_quote(message.m_symbol, message.m_header);
     if(!quote) {
-      update_orders(message);
-      return;
+      return false;
     }
     auto price = message.m_calculated_opening_price.m_value;
     quote->m_price = price;
@@ -1148,8 +1157,26 @@ namespace Nexus {
     if(message.m_imbalance_quantity) {
       quote->m_imbalance_quantity = *message.m_imbalance_quantity;
     }
+    return true;
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+      const TmxIpMbxMessage& message) {
+    if(message.m_action == "AssignCOP" && message.m_imbalance_side) {
+      publish_imbalance(message.m_symbol, message.m_header,
+        *message.m_imbalance_side, message.m_imbalance_quantity,
+        message.m_calculated_opening_price);
+    }
+    auto is_updated = update(message);
     update_orders(message);
-    publish_opening_quote(message.m_symbol, message.m_header);
+    if(is_updated) {
+      publish_opening_quote(message.m_symbol, message.m_header);
+    }
   }
 
   template<typename C, typename D, typename T, typename M> requires

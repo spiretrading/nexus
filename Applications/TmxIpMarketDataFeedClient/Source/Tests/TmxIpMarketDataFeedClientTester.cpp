@@ -305,7 +305,9 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(info.m_ticker == ticker);
     REQUIRE(info.m_name == "Barrick");
     REQUIRE(info.m_sector == "Mining");
-    fixture.remove_quote();
+    if(ticker != order.get_index() || quantity == 0) {
+      fixture.remove_quote();
+    }
     if(quantity != 0) {
       auto update = fixture.book_quote();
       REQUIRE(update.get_index() == ticker);
@@ -1045,7 +1047,6 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       "|57=20260921090001000|115=200", 1);
     REQUIRE(fixture.operation<FeedClient::AddOperation>()->m_info ==
       TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "", 200));
-    fixture.remove_quote();
     REQUIRE(fixture.book_quote()->m_quote.m_size == Quantity(400));
     fixture.publish(fields, 2);
     fixture.remove_quote();
@@ -1653,9 +1654,36 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
         "|57=20260921090001000|115=200");
       fixture.operation<FeedClient::AddOperation>();
-      fixture.remove_quote();
       REQUIRE(fixture.book_quote()->m_quote == make_bid(Money(25), 400));
       REQUIRE(fixture.quote()->m_bid == make_bid(Money(25), 400));
+    }
+    SUBCASE("unchanged_quantity") {
+      fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+        "|57=20260921090001000|115=250");
+      fixture.operation<FeedClient::AddOperation>();
+    }
+    SUBCASE("non_best_quantity") {
+      fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+        "|57=20260921090001000|40=456|196=24|64=300");
+      REQUIRE(fixture.book_quote()->m_quote == make_bid(Money(24), 300));
+      fixture.require_empty();
+      fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+        "|57=20260921090002000|115=250");
+      fixture.operation<FeedClient::AddOperation>();
+      REQUIRE(fixture.book_quote()->m_quote == make_bid(Money(24), 250));
+    }
+    SUBCASE("below_board_lot") {
+      fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+        "|57=20260921090001000|115=1000");
+      fixture.operation<FeedClient::AddOperation>();
+      fixture.remove_quote();
+      REQUIRE(fixture.quote()->m_bid == make_bid(Money::ZERO, 0));
+      fixture.require_empty();
+      fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
+        "|57=20260921090002000|115=100");
+      fixture.operation<FeedClient::AddOperation>();
+      REQUIRE(fixture.book_quote()->m_quote == make_bid(Money(25), 500));
+      REQUIRE(fixture.quote()->m_bid == make_bid(Money(25), 500));
     }
     SUBCASE("listing") {
       fixture.publish("|6=SymbolInfo|5=SymbolStatus|55=ABX"
