@@ -8,16 +8,101 @@ using namespace Nexus;
 namespace {
   struct Fixture {
     OrderToBookQuoteModel<int> m_model;
-    ptime m_timestamp = time_from_string("2026-09-25 10:00:00");
+    ptime m_timestamp;
+
+    Fixture()
+      : Fixture(Side::BID) {}
+
+    explicit Fixture(Side side)
+      : m_model(side),
+        m_timestamp(time_from_string("2026-09-25 10:00:00")) {}
+
 
     BookQuote order(Quantity size) {
       return BookQuote("MPID1", false, Venue("XTSE"),
-        Quote(Money(10), size, Side::BID), m_timestamp);
+        Quote(Money(10), size, m_model.get_side()), m_timestamp);
     }
   };
 }
 
 TEST_SUITE("OrderToBookQuoteModel") {
+  TEST_CASE("side") {
+    auto bids = Fixture(Side::BID);
+    auto asks = Fixture(Side::ASK);
+    REQUIRE(bids.m_model.get_side() == Side::BID);
+    REQUIRE(asks.m_model.get_side() == Side::ASK);
+    bids.m_model.add(1, bids.order(100));
+    asks.m_model.add(1, asks.order(200));
+    REQUIRE(bids.m_model[0] == bids.order(100));
+    REQUIRE(asks.m_model[0] == asks.order(200));
+  }
+
+  TEST_CASE("book") {
+    auto side = Side(Side::BID);
+    SUBCASE("bid") {}
+    SUBCASE("ask") {
+      side = Side::ASK;
+    }
+    auto fixture = Fixture(side);
+    auto& model = fixture.m_model;
+    REQUIRE(model.empty());
+    REQUIRE(model.size() == 0);
+    REQUIRE(model.begin() == model.end());
+    auto first = fixture.order(100);
+    auto second = fixture.order(200);
+    second.m_quote.m_price = Money(12);
+    auto third = fixture.order(300);
+    third.m_quote.m_price = Money(11);
+    model.add(1, first);
+    model.add(2, second);
+    model.add(3, third);
+    auto expected = std::vector<BookQuote>{first, third, second};
+    if(side == Side::BID) {
+      std::ranges::reverse(expected);
+    }
+    REQUIRE_FALSE(model.empty());
+    REQUIRE(model.size() == 3);
+    REQUIRE(std::ranges::equal(model, expected));
+    for(auto i = std::size_t(0); i < expected.size(); ++i) {
+      REQUIRE(model[i] == expected[i]);
+    }
+    model.remove(3, fixture.m_timestamp);
+    expected.erase(expected.begin() + 1);
+    REQUIRE(std::ranges::equal(model, expected));
+    auto price = Money(9);
+    if(side == Side::BID) {
+      price = Money(13);
+    }
+    model.modify_price(1, price, fixture.m_timestamp);
+    first.m_quote.m_price = price;
+    REQUIRE(model.size() == 2);
+    REQUIRE(model[0] == first);
+    REQUIRE(model[1] == second);
+    model.add(4, first);
+    first.m_quote.m_size = 200;
+    REQUIRE(model.size() == 2);
+    REQUIRE(model[0] == first);
+    auto updates = model.clear(fixture.m_timestamp);
+    REQUIRE(updates.size() == 2);
+    REQUIRE(updates[0].m_quote.m_price == first.m_quote.m_price);
+    REQUIRE(updates[1].m_quote.m_price == second.m_quote.m_price);
+    REQUIRE(model.empty());
+    REQUIRE(model.begin() == model.end());
+  }
+
+  TEST_CASE("book_entry_input") {
+    auto fixture = Fixture();
+    auto& model = fixture.m_model;
+    model.add(1, fixture.order(100));
+    model.add(2, model[0]);
+    REQUIRE(model[0] == fixture.order(200));
+    model.add(1, model[0]);
+    REQUIRE(model[0] == fixture.order(300));
+    model.remove(1, fixture.m_timestamp);
+    REQUIRE(model.size() == 1);
+    REQUIRE(model[0] == fixture.order(100));
+  }
+
   TEST_CASE("aggregate") {
     auto fixture = Fixture();
     auto order = fixture.order(100);
@@ -50,9 +135,6 @@ TEST_SUITE("OrderToBookQuoteModel") {
     SUBCASE("mpid") {
       second.m_mpid = "MPID2";
     }
-    SUBCASE("side") {
-      second.m_quote.m_side = Side::ASK;
-    }
     SUBCASE("price") {
       second.m_quote.m_price = Money(11);
     }
@@ -83,7 +165,6 @@ TEST_SUITE("OrderToBookQuoteModel") {
     SUBCASE("different_entry") {
       replacement.m_venue = Venue("CHIC");
       replacement.m_mpid = "MPID2";
-      replacement.m_quote.m_side = Side::ASK;
       replacement.m_quote.m_price = Money(11);
       replacement.m_timestamp += seconds(1);
       auto updates = fixture.m_model.add(1, replacement);

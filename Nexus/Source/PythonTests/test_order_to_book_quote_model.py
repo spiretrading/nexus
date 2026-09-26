@@ -5,13 +5,63 @@ import nexus
 
 class TestOrderToBookQuoteModel(unittest.TestCase):
     def setUp(self):
-        self.model = nexus.OrderToBookQuoteModel()
+        self.model = nexus.OrderToBookQuoteModel(nexus.Side.BID)
         self.timestamp = datetime(2026, 9, 25, 10, 0)
 
     def order(self, size):
         return nexus.BookQuote('MPID1', False, nexus.Venue('XTSE'),
             nexus.Quote(nexus.Money.parse('10'), nexus.Quantity(size),
                 nexus.Side.BID), self.timestamp)
+
+    def test_side(self):
+        self.assertEqual(self.model.side, nexus.Side.BID)
+        self.model.add('1', self.order(100))
+        order = self.order(200)
+        order.quote.side = nexus.Side.ASK
+        self.assertEqual(self.model[0], self.order(100))
+        asks = nexus.OrderToBookQuoteModel(nexus.Side.ASK)
+        self.assertEqual(asks.side, nexus.Side.ASK)
+        self.assertEqual(asks.add('1', order), [order])
+        self.assertEqual(asks[0], order)
+
+    def test_book(self):
+        for side in (nexus.Side.BID, nexus.Side.ASK):
+            with self.subTest(side=side):
+                model = nexus.OrderToBookQuoteModel(side)
+                self.assertFalse(model)
+                self.assertEqual(len(model), 0)
+                self.assertEqual(list(model), [])
+                with self.assertRaises(IndexError):
+                    model[0]
+                expected = []
+                for price in (10, 12, 11):
+                    order = self.order(100)
+                    order.quote.side = side
+                    order.quote.price = nexus.Money.parse(str(price))
+                    model.add(str(price), order)
+                    expected.append(order)
+                expected.sort(key=lambda quote: quote.quote.price,
+                    reverse=side == nexus.Side.BID)
+                self.assertTrue(model)
+                self.assertEqual(len(model), 3)
+                self.assertEqual(list(model), expected)
+                self.assertEqual(model[0], expected[0])
+                self.assertEqual(model[-1], expected[-1])
+                with self.assertRaises(IndexError):
+                    model[3]
+                with self.assertRaises(IndexError):
+                    model[-4]
+                copy = model[0]
+                copy.quote.size = nexus.Quantity(500)
+                self.assertEqual(model[0].quote.size, nexus.Quantity(100))
+                iterator = iter(model)
+                first = next(iterator)
+                first.quote.size = nexus.Quantity(500)
+                self.assertEqual(model[0].quote.size, nexus.Quantity(100))
+                model.clear(self.timestamp)
+                self.assertEqual(list(iterator), expected[1:])
+                self.assertFalse(model)
+                self.assertEqual(list(model), [])
 
     def test_aggregate(self):
         self.assertEqual(self.model.add('1', self.order(100)),
@@ -37,7 +87,6 @@ class TestOrderToBookQuoteModel(unittest.TestCase):
         replacement = self.order(50)
         replacement.venue = nexus.Venue('CHIC')
         replacement.mpid = 'MPID2'
-        replacement.quote.side = nexus.Side.ASK
         replacement.quote.price = nexus.Money.parse('11')
         self.assertEqual(self.model.add('1', replacement),
             [self.order(200), replacement])

@@ -1,17 +1,20 @@
 #ifndef NEXUS_ORDER_TO_BOOK_QUOTE_MODEL_HPP
 #define NEXUS_ORDER_TO_BOOK_QUOTE_MODEL_HPP
+#include <algorithm>
 #include <concepts>
 #include <functional>
+#include <ranges>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 #include <boost/container/small_vector.hpp>
-#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/BookQuote.hpp"
 
 namespace Nexus {
 
   /**
-   * Aggregates orders into BookQuotes.
+   * Maintains one side of an order book by aggregating orders into BookQuotes.
    * @tparam O The type used to identify orders.
    */
   template<std::copy_constructible O> requires
@@ -25,15 +28,34 @@ namespace Nexus {
       /** The aggregate quotes changed by an operation. */
       using Updates = boost::container::small_vector<BookQuote, 2>;
 
-      OrderToBookQuoteModel() = default;
+      /** Iterates over aggregate quotes from best to worst. */
+      using Iterator = decltype((std::declval<
+        const std::vector<std::pair<BookQuote, int>>&>() |
+          std::views::reverse | std::views::keys).begin());
+
+      /**
+       * Constructs an empty book for a side.
+       * @param side The side to maintain.
+       */
+      explicit OrderToBookQuoteModel(Side side);
+
+      /** Returns the side maintained by this model. */
+      Side get_side() const;
+
+      /** Returns the aggregate quote at a best-to-worst index. */
+      const BookQuote& operator [](std::size_t index) const;
+      Iterator begin() const;
+      Iterator end() const;
+      std::size_t size() const;
+      bool empty() const;
 
       /**
        * Adds or replaces an order.
        * @param id The order's identifier.
-       * @param order The individual order's quote.
+       * @param order The individual order's quote, on this model's side.
        * @return The updated aggregate quotes.
        */
-      Updates add(const OrderId& id, const BookQuote& order);
+      Updates add(const OrderId& id, BookQuote order);
 
       /**
        * Sets an order's size, removing it if the size is nonpositive.
@@ -81,22 +103,60 @@ namespace Nexus {
       Updates clear(boost::posix_time::ptime timestamp);
 
     private:
-      using Key = std::tuple<Venue, std::string, Side, Money>;
-      struct Entry {
-        Quantity m_size;
-        int m_primary_count = 0;
-      };
+      Side m_side;
       std::unordered_map<OrderId, BookQuote> m_orders;
-      std::unordered_map<Key, Entry, boost::hash<Key>> m_quotes;
+      std::vector<std::pair<BookQuote, int>> m_quotes;
 
-      BookQuote update(const BookQuote& order, Quantity delta,
-        int primary_delta);
+      BookQuote update(
+        const BookQuote& order, Quantity delta, int primary_delta);
   };
 
   template<std::copy_constructible O> requires
     std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  OrderToBookQuoteModel<O>::OrderToBookQuoteModel(Side side)
+    : m_side(side) {}
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  Side OrderToBookQuoteModel<O>::get_side() const {
+    return m_side;
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  const BookQuote& OrderToBookQuoteModel<O>::operator [](
+      std::size_t index) const {
+    return m_quotes[m_quotes.size() - index - 1].first;
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  OrderToBookQuoteModel<O>::Iterator OrderToBookQuoteModel<O>::begin() const {
+    return (m_quotes | std::views::reverse | std::views::keys).begin();
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  OrderToBookQuoteModel<O>::Iterator OrderToBookQuoteModel<O>::end() const {
+    return (m_quotes | std::views::reverse | std::views::keys).end();
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  std::size_t OrderToBookQuoteModel<O>::size() const {
+    return m_quotes.size();
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  bool OrderToBookQuoteModel<O>::empty() const {
+    return m_quotes.empty();
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
   OrderToBookQuoteModel<O>::Updates OrderToBookQuoteModel<O>::add(
-      const OrderId& id, const BookQuote& order) {
+      const OrderId& id, BookQuote order) {
     if(order.m_quote.m_size <= 0) {
       return remove(id, order.m_timestamp);
     }
@@ -105,7 +165,6 @@ namespace Nexus {
     if(i != m_orders.end()) {
       auto& previous = i->second;
       if(previous.m_venue == order.m_venue && previous.m_mpid == order.m_mpid &&
-          previous.m_quote.m_side == order.m_quote.m_side &&
           previous.m_quote.m_price == order.m_quote.m_price) {
         auto delta = order.m_quote.m_size - previous.m_quote.m_size;
         auto primary_delta =
@@ -114,19 +173,21 @@ namespace Nexus {
           return updates;
         }
         updates.push_back(update(order, delta, primary_delta));
-        previous = order;
+        previous = std::move(order);
         return updates;
       }
       auto removal = previous;
       removal.m_timestamp = order.m_timestamp;
       updates.push_back(update(
         removal, -removal.m_quote.m_size, -int(removal.m_is_primary_mpid)));
-      previous = order;
-    } else {
-      m_orders.emplace(id, order);
     }
     updates.push_back(
       update(order, order.m_quote.m_size, int(order.m_is_primary_mpid)));
+    if(i != m_orders.end()) {
+      i->second = std::move(order);
+    } else {
+      m_orders.emplace(id, std::move(order));
+    }
     return updates;
   }
 
@@ -141,7 +202,7 @@ namespace Nexus {
     auto order = i->second;
     order.m_quote.m_size = size;
     order.m_timestamp = timestamp;
-    return add(id, order);
+    return add(id, std::move(order));
   }
 
   template<std::copy_constructible O> requires
@@ -155,7 +216,7 @@ namespace Nexus {
     auto order = i->second;
     order.m_quote.m_size += delta;
     order.m_timestamp = timestamp;
-    return add(id, order);
+    return add(id, std::move(order));
   }
 
   template<std::copy_constructible O> requires
@@ -169,7 +230,7 @@ namespace Nexus {
     auto order = i->second;
     order.m_quote.m_price = price;
     order.m_timestamp = timestamp;
-    return add(id, order);
+    return add(id, std::move(order));
   }
 
   template<std::copy_constructible O> requires
@@ -195,10 +256,11 @@ namespace Nexus {
       boost::posix_time::ptime timestamp) {
     auto updates = Updates();
     updates.reserve(m_quotes.size());
-    for(auto& [key, entry] : m_quotes) {
-      auto& [venue, mpid, side, price] = key;
-      updates.emplace_back(mpid, entry.m_primary_count != 0, venue,
-        Quote(price, 0, side), timestamp);
+    for(auto& quote : *this) {
+      auto removal = quote;
+      removal.m_quote.m_size = 0;
+      removal.m_timestamp = timestamp;
+      updates.push_back(std::move(removal));
     }
     m_orders.clear();
     m_quotes.clear();
@@ -209,16 +271,29 @@ namespace Nexus {
     std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
   BookQuote OrderToBookQuoteModel<O>::update(
       const BookQuote& order, Quantity delta, int primary_delta) {
-    auto key = Key(
-      order.m_venue, order.m_mpid, order.m_quote.m_side, order.m_quote.m_price);
-    auto i = m_quotes.try_emplace(std::move(key)).first;
-    auto& entry = i->second;
-    entry.m_size += delta;
-    entry.m_primary_count += primary_delta;
-    auto quote = order;
-    quote.m_quote.m_size = entry.m_size;
-    quote.m_is_primary_mpid = entry.m_primary_count != 0;
-    if(entry.m_size == 0) {
+    auto i = std::ranges::lower_bound(m_quotes, order,
+      [&] (const auto& lhs, const auto& rhs) {
+        if(lhs.m_quote.m_price != rhs.m_quote.m_price) {
+          return offer_comparator(
+            m_side, lhs.m_quote.m_price, rhs.m_quote.m_price) > 0;
+        }
+        return std::tie(lhs.m_venue, lhs.m_mpid) >
+          std::tie(rhs.m_venue, rhs.m_mpid);
+      }, &std::pair<BookQuote, int>::first);
+    if(i == m_quotes.end() || i->first.m_venue != order.m_venue ||
+        i->first.m_mpid != order.m_mpid ||
+        i->first.m_quote.m_price != order.m_quote.m_price) {
+      auto quote = order;
+      quote.m_quote.m_size = 0;
+      i = m_quotes.emplace(i, std::move(quote), 0);
+    }
+    auto& [entry, primary_count] = *i;
+    entry.m_quote.m_size += delta;
+    primary_count += primary_delta;
+    entry.m_is_primary_mpid = primary_count != 0;
+    entry.m_timestamp = order.m_timestamp;
+    auto quote = entry;
+    if(entry.m_quote.m_size == 0) {
       m_quotes.erase(i);
     }
     return quote;

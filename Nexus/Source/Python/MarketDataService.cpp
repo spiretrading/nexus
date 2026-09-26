@@ -354,7 +354,28 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
 void Nexus::Python::export_order_to_book_quote_model(module& module) {
   using Model = OrderToBookQuoteModel<std::string>;
   class_<Model>(module, "OrderToBookQuoteModel").
-    def(init<>()).
+    def(init<Side>()).
+    def_property_readonly("side", &Model::get_side).
+    def("__len__", &Model::size).
+    def("__bool__", [] (const Model& model) {
+      return !model.empty();
+    }).
+    def("__getitem__", [] (const Model& model, ssize_t index) {
+      if(index < 0) {
+        index += static_cast<ssize_t>(model.size());
+      }
+      if(index < 0 || static_cast<std::size_t>(index) >= model.size()) {
+        throw index_error();
+      }
+      return model[static_cast<std::size_t>(index)];
+    }).
+    def("__iter__", [] (const Model& model) {
+      auto quotes = pybind11::list();
+      for(auto& quote : model) {
+        quotes.append(cast(quote, return_value_policy::copy));
+      }
+      return quotes.attr("__iter__")();
+    }).
     def("add", &Model::add).
     def("modify_size", &Model::modify_size).
     def("offset_size", &Model::offset_size).
