@@ -16,6 +16,7 @@
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
+#include "Nexus/MarketDataService/OrderToBboQuoteModel.hpp"
 #include "Nexus/MarketDataService/OrderToBookQuoteModel.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
@@ -223,6 +224,7 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_market_data_reactors(module);
   export_market_data_type(module);
   export_mysql_historical_data_store(module);
+  export_order_to_bbo_quote_model(module);
   export_order_to_book_quote_model(module);
   export_ticker_snapshot(module);
   export_sqlite_historical_data_store(module);
@@ -349,6 +351,19 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
           Viper::MySql::Connection(host, port, username, password, database));
       });
     }));
+}
+
+void Nexus::Python::export_order_to_bbo_quote_model(module& module) {
+  using Model = OrderToBboQuoteModel<std::string>;
+  class_<Model>(module, "OrderToBboQuoteModel").
+    def(init<>()).
+    def_property_readonly("bbo", &Model::get_bbo, return_value_policy::copy).
+    def("add", &Model::add).
+    def("modify_size", &Model::modify_size).
+    def("offset_size", &Model::offset_size).
+    def("modify_price", &Model::modify_price).
+    def("remove", &Model::remove).
+    def("clear", &Model::clear);
 }
 
 void Nexus::Python::export_order_to_book_quote_model(module& module) {
