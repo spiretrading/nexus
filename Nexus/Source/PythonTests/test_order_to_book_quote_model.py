@@ -24,6 +24,30 @@ class TestOrderToBookQuoteModel(unittest.TestCase):
         self.assertEqual(asks.add('1', order), [order])
         self.assertEqual(asks[0], order)
 
+    def test_orders(self):
+        self.assertIsNone(self.model.find_order('1'))
+        self.assertEqual(self.model.orders, {})
+        first = self.order(100)
+        second = self.order(200)
+        self.model.add('1', first)
+        self.model.add('2', second)
+        self.assertEqual(self.model.find_order('1'), first)
+        self.assertEqual(self.model.orders, {'1': first, '2': second})
+        snapshot = self.model.orders
+        order = self.model.find_order('1')
+        order.quote.size = nexus.Quantity(500)
+        snapshot['2'].quote.size = nexus.Quantity(600)
+        self.assertEqual(self.model.find_order('1'), first)
+        self.assertEqual(self.model.find_order('2'), second)
+        self.model.remove('1', self.timestamp)
+        self.assertIsNone(self.model.find_order('1'))
+        self.assertEqual(self.model.orders, {'2': second})
+        self.model.clear(self.timestamp)
+        self.assertEqual(self.model.orders, {})
+        del self.model
+        self.assertEqual(order.quote.size, nexus.Quantity(500))
+        self.assertEqual(snapshot['2'].quote.size, nexus.Quantity(600))
+
     def test_book(self):
         for side in (nexus.Side.BID, nexus.Side.ASK):
             with self.subTest(side=side):

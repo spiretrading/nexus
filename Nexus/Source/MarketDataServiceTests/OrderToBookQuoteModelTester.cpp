@@ -37,6 +37,39 @@ TEST_SUITE("OrderToBookQuoteModel") {
     REQUIRE(asks.m_model[0] == asks.order(200));
   }
 
+  TEST_CASE("orders") {
+    auto fixture = Fixture();
+    auto& model = fixture.m_model;
+    REQUIRE_FALSE(model.find_order(1));
+    REQUIRE(model.get_orders().empty());
+    auto first = fixture.order(100);
+    auto second = fixture.order(200);
+    model.add(1, first);
+    model.add(2, second);
+    REQUIRE(model.find_order(1));
+    REQUIRE(*model.find_order(1) == first);
+    REQUIRE(model.get_orders() ==
+      OrderToBookQuoteModel<int>::Orders{{1, first}, {2, second}});
+    REQUIRE(model[0].m_quote.m_size == 300);
+    fixture.m_timestamp += seconds(1);
+    model.modify_size(1, 150, fixture.m_timestamp);
+    first.m_quote.m_size = 150;
+    first.m_timestamp = fixture.m_timestamp;
+    REQUIRE(*model.find_order(1) == first);
+    model.modify_price(1, Money(11), fixture.m_timestamp);
+    first.m_quote.m_price = Money(11);
+    REQUIRE(model.get_orders().at(1) == first);
+    second.m_mpid = "MPID2";
+    model.add(2, second);
+    REQUIRE(*model.find_order(2) == second);
+    model.remove(1, fixture.m_timestamp);
+    REQUIRE_FALSE(model.find_order(1));
+    REQUIRE(model.get_orders().size() == 1);
+    model.clear(fixture.m_timestamp);
+    REQUIRE_FALSE(model.find_order(2));
+    REQUIRE(model.get_orders().empty());
+  }
+
   TEST_CASE("book") {
     auto side = Side(Side::BID);
     SUBCASE("bid") {}

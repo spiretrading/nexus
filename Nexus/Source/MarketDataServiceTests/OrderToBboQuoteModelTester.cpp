@@ -26,6 +26,74 @@ TEST_SUITE("OrderToBboQuoteModel") {
     REQUIRE(model.get_bbo() == BboQuote());
   }
 
+  TEST_CASE("book_updates") {
+    auto side = Side(Side::BID);
+    auto worse = Money(9);
+    SUBCASE("bid") {}
+    SUBCASE("ask") {
+      side = Side::ASK;
+      worse = Money(11);
+    }
+    auto fixture = Fixture();
+    auto& model = fixture.m_model;
+    auto& book = model.get_book(side);
+    auto& opposite_book = model.get_book(get_opposite(side));
+    REQUIRE(book.get_side() == side);
+    REQUIRE(book.empty());
+    REQUIRE(opposite_book.empty());
+    auto expected = fixture.order(side, Money(10), 100);
+    auto update = model.add(1, expected);
+    auto& quotes = update.m_quotes;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(book.find_order(1));
+    REQUIRE(*book.find_order(1) == expected);
+    REQUIRE(book[0] == expected);
+    update = model.add(2, fixture.order(side, Money(10), 200));
+    expected.m_quote.m_size = 300;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    auto lower = fixture.order(side, worse, 50);
+    update = model.add(3, lower);
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{lower});
+    REQUIRE_FALSE(update.m_is_bbo_changed);
+    fixture.m_timestamp += seconds(1);
+    expected.m_timestamp = fixture.m_timestamp;
+    update = model.modify_size(1, 125, fixture.m_timestamp);
+    expected.m_quote.m_size = 325;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    update = model.offset_size(2, -25, fixture.m_timestamp);
+    expected.m_quote.m_size = 300;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    update = model.modify_price(1, worse, fixture.m_timestamp);
+    expected.m_quote.m_size = 175;
+    lower.m_quote.m_size = 175;
+    lower.m_timestamp = fixture.m_timestamp;
+    REQUIRE(quotes ==
+      OrderToBboQuoteModel<int>::Book::Updates{expected, lower});
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(book.find_order(1)->m_quote == Quote(worse, 125, side));
+    REQUIRE(book.get_orders().size() == 3);
+    REQUIRE(book.size() == 2);
+    update = model.remove(2, fixture.m_timestamp);
+    expected.m_quote.m_size = 0;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{expected});
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE_FALSE(book.find_order(2));
+    update = model.clear(fixture.m_timestamp);
+    lower.m_quote.m_size = 0;
+    REQUIRE(quotes == OrderToBboQuoteModel<int>::Book::Updates{lower});
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(book.empty());
+    REQUIRE(book.get_orders().empty());
+    REQUIRE(opposite_book.empty());
+    update = model.remove(1, fixture.m_timestamp);
+    REQUIRE(quotes.empty());
+    REQUIRE_FALSE(update.m_is_bbo_changed);
+  }
+
   TEST_CASE("aggregate") {
     auto side = Side(Side::BID);
     SUBCASE("bid") {}
@@ -35,24 +103,24 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto fixture = Fixture();
     auto& model = fixture.m_model;
     auto order = fixture.order(side, Money(10), 100);
-    REQUIRE(model.add(1, order));
+    REQUIRE(model.add(1, order).m_is_bbo_changed);
     order.m_quote.m_size = 50;
-    REQUIRE(model.add(2, order));
+    REQUIRE(model.add(2, order).m_is_bbo_changed);
     order.m_mpid = "MPID2";
     order.m_quote.m_size = 200;
-    REQUIRE(model.add(3, order));
+    REQUIRE(model.add(3, order).m_is_bbo_changed);
     order.m_mpid = "MPID1";
     order.m_venue = Venue("CHIC");
     order.m_quote.m_size = 75;
-    REQUIRE(model.add(4, order));
+    REQUIRE(model.add(4, order).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 425, side));
     fixture.m_timestamp += seconds(1);
-    REQUIRE(model.modify_size(1, 125, fixture.m_timestamp));
+    REQUIRE(model.modify_size(1, 125, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 450, side));
     REQUIRE(model.get_bbo().m_timestamp == fixture.m_timestamp);
-    REQUIRE(model.offset_size(3, -50, fixture.m_timestamp));
+    REQUIRE(model.offset_size(3, -50, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 400, side));
-    REQUIRE(model.remove(4, fixture.m_timestamp));
+    REQUIRE(model.remove(4, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 325, side));
   }
 
@@ -70,24 +138,29 @@ TEST_SUITE("OrderToBboQuoteModel") {
     model.add(1, fixture.order(side, Money(10), 100));
     auto previous = model.get_bbo();
     fixture.m_timestamp += seconds(1);
-    REQUIRE_FALSE(model.add(2, fixture.order(side, worse, 200)));
-    REQUIRE_FALSE(model.modify_size(2, 250, fixture.m_timestamp));
-    REQUIRE_FALSE(model.offset_size(2, 50, fixture.m_timestamp));
+    REQUIRE_FALSE(
+      model.add(2, fixture.order(side, worse, 200)).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.modify_size(2, 250, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.offset_size(2, 50, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == previous);
-    REQUIRE(model.modify_price(2, better, fixture.m_timestamp));
+    REQUIRE(
+      model.modify_price(2, better, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(better, 300, side));
     REQUIRE(model.get_bbo().m_timestamp == fixture.m_timestamp);
-    REQUIRE(model.modify_price(2, Money(10), fixture.m_timestamp));
+    REQUIRE(
+      model.modify_price(2, Money(10), fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 400, side));
-    REQUIRE(model.modify_price(2, worse, fixture.m_timestamp));
+    REQUIRE(model.modify_price(2, worse, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 100, side));
     previous = model.get_bbo();
     fixture.m_timestamp += seconds(1);
-    REQUIRE_FALSE(model.remove(2, fixture.m_timestamp));
+    REQUIRE_FALSE(model.remove(2, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == previous);
-    REQUIRE(model.add(3, fixture.order(side, better, 50)));
+    REQUIRE(model.add(3, fixture.order(side, better, 50)).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(better, 50, side));
-    REQUIRE(model.remove(3, fixture.m_timestamp));
+    REQUIRE(model.remove(3, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(fixture.quote(side) == Quote(Money(10), 100, side));
   }
 
@@ -97,44 +170,29 @@ TEST_SUITE("OrderToBboQuoteModel") {
     auto order = fixture.order(Side::BID, Money(10), 100);
     model.add(1, order);
     model.add(2, order);
+    auto ask = fixture.order(Side::ASK, Money(11), 200);
+    model.add(3, ask);
     auto previous = model.get_bbo();
     fixture.m_timestamp += seconds(1);
     order.m_timestamp = fixture.m_timestamp;
-    REQUIRE_FALSE(model.add(1, order));
+    REQUIRE_FALSE(model.add(1, order).m_is_bbo_changed);
     order.m_mpid = "MPID2";
-    REQUIRE_FALSE(model.add(1, order));
+    REQUIRE_FALSE(model.add(1, order).m_is_bbo_changed);
     order.m_venue = Venue("CHIC");
-    REQUIRE_FALSE(model.add(1, order));
+    REQUIRE_FALSE(model.add(1, order).m_is_bbo_changed);
     order.m_is_primary_mpid = true;
-    REQUIRE_FALSE(model.add(1, order));
+    REQUIRE_FALSE(model.add(1, order).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == previous);
     order.m_quote.m_size = 150;
-    REQUIRE(model.add(1, order));
+    auto update = model.add(1, order);
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(update.m_quotes == OrderToBboQuoteModel<int>::Book::Updates{order});
+    REQUIRE(model.get_bbo().m_ask == ask.m_quote);
+    REQUIRE(*model.get_book(Side::ASK).find_order(3) == ask);
     REQUIRE(model.get_bbo().m_bid == Quote(Money(10), 250, Side::BID));
     REQUIRE(model.get_bbo().m_timestamp == fixture.m_timestamp);
-    REQUIRE(model.remove(1, fixture.m_timestamp));
+    REQUIRE(model.remove(1, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo().m_bid == Quote(Money(10), 100, Side::BID));
-  }
-
-  TEST_CASE("side_replacement") {
-    auto fixture = Fixture();
-    auto& model = fixture.m_model;
-    model.add(1, fixture.order(Side::BID, Money(10), 100));
-    model.add(2, fixture.order(Side::BID, Money(9), 50));
-    model.add(3, fixture.order(Side::ASK, Money(12), 300));
-    fixture.m_timestamp += seconds(1);
-    REQUIRE(model.add(1, fixture.order(Side::ASK, Money(11), 200)));
-    REQUIRE(model.get_bbo() == BboQuote(Quote(Money(9), 50, Side::BID),
-      Quote(Money(11), 200, Side::ASK), fixture.m_timestamp));
-    REQUIRE(model.offset_size(1, 25, fixture.m_timestamp));
-    REQUIRE(model.get_bbo().m_ask == Quote(Money(11), 225, Side::ASK));
-    REQUIRE(model.get_bbo().m_bid == Quote(Money(9), 50, Side::BID));
-    REQUIRE(model.add(1, fixture.order(Side::BID, Money(10), 75)));
-    REQUIRE(model.get_bbo() == BboQuote(Quote(Money(10), 75, Side::BID),
-      Quote(Money(12), 300, Side::ASK), fixture.m_timestamp));
-    REQUIRE(model.remove(1, fixture.m_timestamp));
-    REQUIRE(model.get_bbo().m_bid == Quote(Money(9), 50, Side::BID));
-    REQUIRE(model.get_bbo().m_ask == Quote(Money(12), 300, Side::ASK));
   }
 
   TEST_CASE("nonpositive_size") {
@@ -144,24 +202,22 @@ TEST_SUITE("OrderToBboQuoteModel") {
     model.add(2, fixture.order(Side::ASK, Money(10), 200));
     fixture.m_timestamp += seconds(1);
     SUBCASE("zero") {
-      REQUIRE(model.modify_size(1, 0, fixture.m_timestamp));
+      REQUIRE(model.modify_size(1, 0, fixture.m_timestamp).m_is_bbo_changed);
     }
     SUBCASE("negative") {
-      REQUIRE(model.modify_size(1, -50, fixture.m_timestamp));
+      REQUIRE(model.modify_size(1, -50, fixture.m_timestamp).m_is_bbo_changed);
     }
     SUBCASE("offset") {
-      REQUIRE(model.offset_size(1, -150, fixture.m_timestamp));
+      REQUIRE(model.offset_size(1, -150, fixture.m_timestamp).m_is_bbo_changed);
     }
     SUBCASE("replacement") {
-      REQUIRE(model.add(1, fixture.order(Side::BID, Money(10), 0)));
-    }
-    SUBCASE("opposite_side_replacement") {
-      REQUIRE(model.add(1, fixture.order(Side::ASK, Money(11), 0)));
+      REQUIRE(
+        model.add(1, fixture.order(Side::BID, Money(10), 0)).m_is_bbo_changed);
     }
     REQUIRE(model.get_bbo() == BboQuote(Quote(Money::ZERO, 0, Side::BID),
       Quote(Money(10), 200, Side::ASK), fixture.m_timestamp));
-    REQUIRE_FALSE(model.remove(1, fixture.m_timestamp));
-    REQUIRE(model.offset_size(2, -200, fixture.m_timestamp));
+    REQUIRE_FALSE(model.remove(1, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE(model.offset_size(2, -200, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo().m_ask == Quote(Money::ZERO, 0, Side::ASK));
   }
 
@@ -171,36 +227,50 @@ TEST_SUITE("OrderToBboQuoteModel") {
     model.add(1, fixture.order(Side::ASK, Money(10), 100));
     auto previous = model.get_bbo();
     fixture.m_timestamp += seconds(1);
-    REQUIRE_FALSE(model.modify_size(1, 100, fixture.m_timestamp));
-    REQUIRE_FALSE(model.offset_size(1, 0, fixture.m_timestamp));
-    REQUIRE_FALSE(model.modify_price(1, Money(10), fixture.m_timestamp));
-    REQUIRE_FALSE(model.modify_size(2, 200, fixture.m_timestamp));
-    REQUIRE_FALSE(model.offset_size(2, 50, fixture.m_timestamp));
-    REQUIRE_FALSE(model.modify_price(2, Money(11), fixture.m_timestamp));
-    REQUIRE_FALSE(model.remove(2, fixture.m_timestamp));
-    REQUIRE_FALSE(model.add(2, fixture.order(Side::BID, Money(10), 0)));
+    REQUIRE_FALSE(
+      model.modify_size(1, 100, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.offset_size(1, 0, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.modify_price(1, Money(10), fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.modify_size(2, 200, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.offset_size(2, 50, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.modify_price(2, Money(11), fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(model.remove(2, fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(
+      model.add(2, fixture.order(Side::BID, Money(10), 0)).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == previous);
   }
 
   TEST_CASE("clear") {
     auto fixture = Fixture();
     auto& model = fixture.m_model;
-    REQUIRE_FALSE(model.clear(fixture.m_timestamp));
+    REQUIRE_FALSE(model.clear(fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == BboQuote());
     model.add(1, fixture.order(Side::BID, Money(10), 100));
     model.add(2, fixture.order(Side::BID, Money(9), 200));
     model.add(3, fixture.order(Side::ASK, Money(11), 300));
     model.add(4, fixture.order(Side::ASK, Money(12), 400));
     fixture.m_timestamp += seconds(1);
-    REQUIRE(model.clear(fixture.m_timestamp));
+    auto update = model.clear(fixture.m_timestamp);
+    REQUIRE(update.m_is_bbo_changed);
+    REQUIRE(update.m_quotes == OrderToBboQuoteModel<int>::Book::Updates{
+      fixture.order(Side::BID, Money(10), 0),
+      fixture.order(Side::BID, Money(9), 0),
+      fixture.order(Side::ASK, Money(11), 0),
+      fixture.order(Side::ASK, Money(12), 0)});
     REQUIRE(model.get_bbo() == BboQuote(Quote(Money::ZERO, 0, Side::BID),
       Quote(Money::ZERO, 0, Side::ASK), fixture.m_timestamp));
     auto previous = model.get_bbo();
     fixture.m_timestamp += seconds(1);
-    REQUIRE_FALSE(model.clear(fixture.m_timestamp));
-    REQUIRE_FALSE(model.remove(1, fixture.m_timestamp));
+    REQUIRE_FALSE(model.clear(fixture.m_timestamp).m_is_bbo_changed);
+    REQUIRE_FALSE(model.remove(1, fixture.m_timestamp).m_is_bbo_changed);
     REQUIRE(model.get_bbo() == previous);
-    REQUIRE(model.add(1, fixture.order(Side::ASK, Money(11), 50)));
+    REQUIRE(
+      model.add(1, fixture.order(Side::ASK, Money(11), 50)).m_is_bbo_changed);
     REQUIRE(model.get_bbo().m_ask == Quote(Money(11), 50, Side::ASK));
     REQUIRE(model.get_bbo().m_timestamp == fixture.m_timestamp);
   }

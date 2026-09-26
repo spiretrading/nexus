@@ -25,6 +25,9 @@ namespace Nexus {
       /** The type used to identify orders. */
       using OrderId = O;
 
+      /** The individual orders indexed by identifier. */
+      using Orders = std::unordered_map<OrderId, BookQuote>;
+
       /** The aggregate quotes changed by an operation. */
       using Updates = boost::container::small_vector<BookQuote, 2>;
 
@@ -41,6 +44,16 @@ namespace Nexus {
 
       /** Returns the side maintained by this model. */
       Side get_side() const;
+
+      /**
+       * Finds an individual order.
+       * @param id The order's identifier.
+       * @return The order, or nullptr if it is absent.
+       */
+      const BookQuote* find_order(const OrderId& id) const;
+
+      /** Returns the individual orders indexed by identifier. */
+      const Orders& get_orders() const;
 
       /** Returns the aggregate quote at a best-to-worst index. */
       const BookQuote& operator [](std::size_t index) const;
@@ -104,7 +117,7 @@ namespace Nexus {
 
     private:
       Side m_side;
-      std::unordered_map<OrderId, BookQuote> m_orders;
+      Orders m_orders;
       std::vector<std::pair<BookQuote, int>> m_quotes;
 
       BookQuote update(
@@ -120,6 +133,24 @@ namespace Nexus {
     std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
   Side OrderToBookQuoteModel<O>::get_side() const {
     return m_side;
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  const BookQuote* OrderToBookQuoteModel<O>::find_order(
+      const OrderId& id) const {
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
+      return nullptr;
+    }
+    return &i->second;
+  }
+
+  template<std::copy_constructible O> requires
+    std::equality_comparable<O> && std::invocable<std::hash<O>, const O&>
+  const OrderToBookQuoteModel<O>::Orders&
+      OrderToBookQuoteModel<O>::get_orders() const {
+    return m_orders;
   }
 
   template<std::copy_constructible O> requires

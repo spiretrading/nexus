@@ -355,8 +355,13 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
 
 void Nexus::Python::export_order_to_bbo_quote_model(module& module) {
   using Model = OrderToBboQuoteModel<std::string>;
-  class_<Model>(module, "OrderToBboQuoteModel").
+  auto model = class_<Model>(module, "OrderToBboQuoteModel");
+  class_<Model::Update>(model, "Update").
+    def_readonly("quotes", &Model::Update::m_quotes).
+    def_readonly("is_bbo_changed", &Model::Update::m_is_bbo_changed);
+  model.
     def(init<>()).
+    def("get_book", &Model::get_book, return_value_policy::copy).
     def_property_readonly("bbo", &Model::get_bbo, return_value_policy::copy).
     def("add", &Model::add).
     def("modify_size", &Model::modify_size).
@@ -371,6 +376,9 @@ void Nexus::Python::export_order_to_book_quote_model(module& module) {
   class_<Model>(module, "OrderToBookQuoteModel").
     def(init<Side>()).
     def_property_readonly("side", &Model::get_side).
+    def_property_readonly(
+      "orders", &Model::get_orders, return_value_policy::copy).
+    def("find_order", &Model::find_order, return_value_policy::copy).
     def("__len__", &Model::size).
     def("__bool__", [] (const Model& model) {
       return !model.empty();
