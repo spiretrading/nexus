@@ -394,7 +394,12 @@ void Nexus::Python::export_order_to_book_quote_model(module& module) {
   using Model = OrderToBookQuoteModel<BookQuoteOrderAdapter<std::string>>;
   class_<Model::Adapter>(module, "BookQuoteOrderAdapter").
     def(init<>()).
-    def("make_quote", &Model::Adapter::make_quote);
+    def("get_price", &Model::Adapter::get_price).
+    def("get_quantity", &Model::Adapter::get_quantity).
+    def("get_mpid", &Model::Adapter::get_mpid,
+      return_value_policy::copy).
+    def("get_venue", &Model::Adapter::get_venue).
+    def("is_primary_mpid", &Model::Adapter::is_primary_mpid);
   class_<Model>(module, "OrderToBookQuoteModel").
     def(init<Side>()).
     def(init<Side, Model::Adapter>()).
