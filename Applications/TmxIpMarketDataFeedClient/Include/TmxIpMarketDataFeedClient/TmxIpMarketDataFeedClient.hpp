@@ -858,11 +858,13 @@ namespace Nexus {
       remove(*book, key, timestamp);
     } else if(message.m_confirmation == "PriceAssigned") {
       if(auto previous = find_order(*book, key)) {
-        auto order = previous->second;
-        order.m_price = message.m_public_price;
-        order.m_is_market = order.m_price.m_type != TmxIpPrice::Type::LIMIT ||
-          order.m_price.m_value == Money::ZERO;
-        update(*book, previous->first, key, order, timestamp);
+        publish(*book, book->m_bbo_model.update(previous->first, key,
+          [&] (auto& order) {
+            order.m_price = message.m_public_price;
+            order.m_is_market =
+              order.m_price.m_type != TmxIpPrice::Type::LIMIT ||
+              order.m_price.m_value == Money::ZERO;
+          }, timestamp));
       }
     }
   }
