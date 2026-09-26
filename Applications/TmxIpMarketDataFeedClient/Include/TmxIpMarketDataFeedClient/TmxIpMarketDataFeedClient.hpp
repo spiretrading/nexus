@@ -15,6 +15,7 @@
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Nexus/MarketDataService/OrderToBboQuoteModel.hpp"
 #include "Nexus/Queries/TickerAccessor.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpClient.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpConfiguration.hpp"
@@ -76,6 +77,7 @@ namespace Nexus {
       void close();
 
     private:
+      using Model = OrderToBboQuoteModel<std::string>;
       struct OrderEntry {
         Side m_side;
         TmxIpPrice m_price;
@@ -87,9 +89,9 @@ namespace Nexus {
         Ticker m_ticker;
         Venue m_venue;
         std::string m_mpid;
-        std::string m_prefix;
         Quantity m_board_lot;
         std::unordered_map<std::string, OrderEntry> m_orders;
+        Model m_model;
       };
       struct OpeningQuote {
         boost::gregorian::date m_date;
@@ -141,6 +143,10 @@ namespace Nexus {
         boost::posix_time::ptime timestamp);
       void remove(Book& book, const std::string& key,
         boost::posix_time::ptime timestamp);
+      void clear(Book& book, boost::posix_time::ptime timestamp);
+      void publish(const Book& book, const Model::Update& update);
+      void publish(const Book& book, const Model::Book::Updates& quotes);
+      void publish_bbo(const Book& book);
       void update(const TickerInfo& info, boost::posix_time::ptime timestamp);
       void publish(const TmxIpSymbolStatus& message);
       void publish(const TmxIpOrderBook& message);
@@ -446,7 +452,6 @@ namespace Nexus {
       i->second.m_ticker = info->m_ticker;
       i->second.m_venue = venue;
       i->second.m_mpid = VENUES.from(venue).m_display_name;
-      i->second.m_prefix = std::string(symbol) + ':';
       i->second.m_board_lot = info->m_board_lot;
     }
     return &i->second;
@@ -494,41 +499,24 @@ namespace Nexus {
     if(key.empty()) {
       return;
     }
-    auto quantity = get_quantity(book, order);
-    auto i = book.m_orders.find(key);
-    auto previous_quantity = Quantity(0);
-    auto previous_price = Money();
-    auto is_broker_changed = false;
-    if(i != book.m_orders.end()) {
-      if(!order.m_broker) {
-        order.m_broker = i->second.m_broker;
-      }
-      is_broker_changed = book.m_venue == book.m_ticker.get_venue() &&
-        order.m_broker != i->second.m_broker;
-      previous_quantity = get_quantity(book, i->second);
-      previous_price = i->second.m_price.m_value;
-    }
     if(order.m_quantity == 0) {
       remove(book, key, timestamp);
       return;
     }
+    auto i = book.m_orders.find(key);
     if(i != book.m_orders.end()) {
-      i->second = order;
-    } else {
-      book.m_orders.emplace(key, order);
+      if(!order.m_broker) {
+        order.m_broker = i->second.m_broker;
+      }
+      if(order.m_side != i->second.m_side) {
+        publish(book, book.m_model.remove(key, timestamp));
+      }
     }
-    if(!is_broker_changed && quantity == previous_quantity &&
-        (quantity == 0 || order.m_price.m_value == previous_price)) {
-      return;
-    }
-    auto id = book.m_prefix + key;
-    if(quantity == 0) {
-      m_feed_client->remove_order(id, timestamp);
-    } else {
-      m_feed_client->add_order(book.m_ticker, book.m_venue,
-        get_mpid(book, order.m_broker), false, id, order.m_side,
-        order.m_price.m_value, quantity, timestamp);
-    }
+    book.m_orders.insert_or_assign(key, order);
+    publish(book, book.m_model.add(key,
+      BookQuote(get_mpid(book, order.m_broker), false, book.m_venue,
+        Quote(order.m_price.m_value, get_quantity(book, order), order.m_side),
+        timestamp)));
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -538,15 +526,71 @@ namespace Nexus {
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::remove(Book& book,
       const std::string& key, boost::posix_time::ptime timestamp) {
-    auto i = book.m_orders.find(key);
-    if(i == book.m_orders.end()) {
+    book.m_orders.erase(key);
+    publish(book, book.m_model.remove(key, timestamp));
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::clear(
+      Book& book, boost::posix_time::ptime timestamp) {
+    book.m_orders.clear();
+    publish(book, book.m_model.clear(timestamp));
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+      const Book& book, const Model::Update& update) {
+    publish(book, update.m_quotes);
+    if(update.m_is_bbo_changed) {
+      publish_bbo(book);
+    }
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
+      const Book& book, const Model::Book::Updates& quotes) {
+    for(auto& quote : quotes) {
+      m_feed_client->publish(TickerBookQuote(quote, book.m_ticker));
+    }
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish_bbo(const Book& book) {
+    if(book.m_venue != book.m_ticker.get_venue() || !m_open_state.is_open()) {
       return;
     }
-    auto quantity = get_quantity(book, i->second);
-    book.m_orders.erase(i);
-    if(quantity != 0) {
-      m_feed_client->remove_order(book.m_prefix + key, timestamp);
+    auto now = m_time_client->get_time();
+    if(!is_eligible(book.m_venue, true, now)) {
+      return;
     }
+    auto date = utc_to_venue(book.m_venue, now).date();
+    auto& quote = book.m_model.get_bbo();
+    if(quote.m_timestamp.is_not_a_date_time() ||
+        utc_to_venue(book.m_venue, quote.m_timestamp).date() != date) {
+      return;
+    }
+    auto i = m_opening_quotes.find(book.m_ticker);
+    if(i != m_opening_quotes.end() && i->second.m_date == date &&
+        i->second.m_price) {
+      return;
+    }
+    m_feed_client->publish(TickerBboQuote(quote, book.m_ticker));
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -572,10 +616,10 @@ namespace Nexus {
     }
     auto& book = node.mapped();
     timestamp = venue_to_utc(book.m_venue, timestamp);
-    for(auto& [key, order] : book.m_orders) {
-      if(get_quantity(book, order) != 0) {
-        m_feed_client->remove_order(book.m_prefix + key, timestamp);
-      }
+    auto update = book.m_model.clear(timestamp);
+    publish(book, update.m_quotes);
+    if(book.m_ticker != info.m_ticker && update.m_is_bbo_changed) {
+      publish_bbo(book);
     }
     book.m_ticker = info.m_ticker;
     book.m_board_lot = info.m_board_lot;
@@ -585,13 +629,12 @@ namespace Nexus {
       book.m_mpid = VENUES.from(venue).m_display_name;
     }
     for(auto& [key, order] : book.m_orders) {
-      auto quantity = get_quantity(book, order);
-      if(quantity != 0) {
-        m_feed_client->add_order(book.m_ticker, book.m_venue,
-          get_mpid(book, order.m_broker), false, book.m_prefix + key,
-          order.m_side, order.m_price.m_value, quantity, timestamp);
-      }
+      publish(book, book.m_model.add(key,
+        BookQuote(get_mpid(book, order.m_broker), false, book.m_venue,
+          Quote(order.m_price.m_value, get_quantity(book, order),
+            order.m_side), timestamp)).m_quotes);
     }
+    publish_bbo(book);
     node.key() = info.m_ticker;
     m_books.insert(std::move(node));
   }
@@ -768,10 +811,7 @@ namespace Nexus {
     auto timestamp = venue_to_utc(book->m_venue,
       message.m_header.m_trading_timestamp.value_or(
         message.m_header.m_timestamp));
-    while(!book->m_orders.empty()) {
-      auto key = book->m_orders.begin()->first;
-      remove(*book, key, timestamp);
-    }
+    clear(*book, timestamp);
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -1080,7 +1120,6 @@ namespace Nexus {
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
       const TmxIpMbxMessage& message) {
-    update_orders(message);
     if(message.m_action == "AssignCOP" && message.m_imbalance_side) {
       publish_imbalance(message.m_symbol, message.m_header,
         *message.m_imbalance_side, message.m_imbalance_quantity,
@@ -1088,10 +1127,12 @@ namespace Nexus {
     }
     if(message.m_action != "AssignCOP" ||
         message.m_calculated_opening_price.m_type != TmxIpPrice::Type::LIMIT) {
+      update_orders(message);
       return;
     }
     auto quote = find_opening_quote(message.m_symbol, message.m_header);
     if(!quote) {
+      update_orders(message);
       return;
     }
     auto price = message.m_calculated_opening_price.m_value;
@@ -1107,6 +1148,7 @@ namespace Nexus {
     if(message.m_imbalance_quantity) {
       quote->m_imbalance_quantity = *message.m_imbalance_quantity;
     }
+    update_orders(message);
     publish_opening_quote(message.m_symbol, message.m_header);
   }
 
@@ -1298,10 +1340,7 @@ namespace Nexus {
         if(next_session != session) {
           auto timestamp = m_time_client->get_time();
           for(auto& [key, book] : m_books) {
-            while(!book.m_orders.empty()) {
-              auto id = book.m_orders.begin()->first;
-              remove(book, id, timestamp);
-            }
+            clear(book, timestamp);
           }
           m_books.clear();
           m_opening_quotes.clear();
