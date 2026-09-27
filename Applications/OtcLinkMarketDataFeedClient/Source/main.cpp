@@ -151,6 +151,7 @@ int main(int argc, const char** argv) {
     if(reference_loader) {
       reference_loader->close();
     }
+    service_locator_client.close();
     feed_client.close();
     auto exception = feed_client.get_exception();
     if(!is_interrupted && exception) {

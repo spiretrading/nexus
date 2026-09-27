@@ -92,11 +92,11 @@ int main(int argc, const char** argv) {
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    service_locator_client.close();
     feed_client.close();
     if(auto exception = feed_client.get_exception()) {
       std::rethrow_exception(exception);
     }
-    service_locator_client.close();
   } catch(...) {
     report_current_exception();
     return -1;

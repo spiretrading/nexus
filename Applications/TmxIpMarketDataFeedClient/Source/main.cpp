@@ -88,6 +88,7 @@ int main(int argc, const char** argv) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     auto is_interrupted = received_kill_event();
+    service_locator_client.close();
     feed_client.close();
     auto exception = feed_client.get_exception();
     if(!is_interrupted && exception) {

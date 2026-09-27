@@ -117,8 +117,8 @@ int main(int argc, const char** argv) {
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    feed_client.close();
     service_locator_client.close();
+    feed_client.close();
   } catch(...) {
     report_current_exception();
     return -1;
