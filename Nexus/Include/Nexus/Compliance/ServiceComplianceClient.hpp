@@ -83,9 +83,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Beam::add_message_slot<ComplianceRuleEntryMessage>(
       out(m_client_handler.get_slots()), std::bind_front(
         &ServiceComplianceClient::on_compliance_rule_entry, this));
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
-    Beam::rethrow_nested_service_exception(
-      "Failed to connect to the compliance server.");
+    Beam::throw_nested_with_location(Beam::ConnectException(
+      "Failed to connect to the compliance server."));
   }
 
   template<typename B>

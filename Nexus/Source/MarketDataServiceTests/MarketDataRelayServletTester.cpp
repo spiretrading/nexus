@@ -1,4 +1,6 @@
+#include <atomic>
 #include <future>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
@@ -10,6 +12,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/MarketDataService/DistributedMarketDataClient.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataRelayServlet.hpp"
@@ -24,9 +27,32 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  struct AvailableMarketDataClient : TestMarketDataClient {
+    std::atomic_bool* m_available;
+
+    AvailableMarketDataClient(
+        ScopedQueueWriter<std::shared_ptr<Operation>> operations,
+        std::atomic_bool& available)
+        : TestMarketDataClient(std::move(operations)),
+          m_available(&available) {}
+
+    using TestMarketDataClient::query;
+
+    void query(const TickerQuery& query,
+        ScopedQueueWriter<SequencedTickerStatus> queue) {
+      if(!*m_available) {
+        throw ConnectException();
+      }
+      TestMarketDataClient::query(query, std::move(queue));
+    }
+  };
+
   struct Fixture {
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
       MetaMarketDataRelayServlet<MarketDataClient, AdministrationClient>>;
+    bool m_discover;
+    QueueWriterPublisher<ServiceUpdate> m_services;
+    std::atomic_bool m_available;
     FixedTimeClient m_time_client;
     ServiceLocatorTestEnvironment m_service_locator_environment;
     AdministrationServiceTestEnvironment m_administration_environment;
@@ -61,12 +87,31 @@ namespace {
     }
 
     auto make_relay_client() {
+      if(m_discover) {
+        return std::make_unique<MarketDataClient>(std::in_place_type<
+          DistributedMarketDataClient<std::shared_ptr<TriggerTimer>>>,
+          [=, this] (ScopedQueueWriter<ServiceUpdate> queue) {
+            m_services.monitor(std::move(queue));
+          }, [] (const auto&) {
+            return Scope(TSX);
+          }, [=, this] (const Scope&) {
+            return std::make_shared<MarketDataClient>(
+              std::in_place_type<AvailableMarketDataClient>, m_operations,
+              m_available);
+          }, std::make_shared<TriggerTimer>());
+      }
       return std::make_unique<MarketDataClient>(
-        std::in_place_type<TestMarketDataClient>, m_operations);
+        std::in_place_type<AvailableMarketDataClient>, m_operations,
+        m_available);
     }
 
     Fixture()
-        : m_time_client(time_from_string("2024-07-04 12:00:00")),
+      : Fixture(false) {}
+
+    explicit Fixture(bool discover)
+        : m_discover(discover),
+          m_available(true),
+          m_time_client(time_from_string("2024-07-04 12:00:00")),
           m_server_connection(std::make_shared<LocalServerConnection>()),
           m_administration_environment(
             make_administration_service_test_environment(
@@ -97,6 +142,75 @@ namespace {
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
+  TEST_CASE("query_ticker_status_waits_for_scope") {
+    auto fixture = Fixture(true);
+    auto ticker = parse_ticker("TST.TSX");
+    auto result = Async<QueryTickerStatusService::Return>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        result.get_eval().set(fixture.m_client->send_request<
+          QueryTickerStatusService>(make_real_time_query(ticker)));
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    REQUIRE(!fixture.m_operations->try_pop());
+    fixture.m_services.push(ServiceUpdate::add(ServiceEntry(
+      "market_data_service", JsonObject(), 1, DirectoryEntry::ROOT_ACCOUNT)));
+    auto info = fixture.m_operations->pop();
+    auto& info_query =
+      std::get<TestMarketDataClient::TickerInfoQueryOperation>(*info);
+    info_query.m_result.set({TickerInfo(ticker, "Test", "Tech", 100)});
+    auto initial = fixture.m_operations->pop();
+    std::get<TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+      *initial).m_queue.close();
+    auto subscription = fixture.m_operations->pop();
+    auto& subscription_query = std::get<
+      TestMarketDataClient::QuerySequencedTickerStatusOperation>(*subscription);
+    REQUIRE(subscription_query.m_query.get_index() == ticker);
+    auto snapshot = fixture.m_operations->pop();
+    std::get<TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+      *snapshot).m_queue.close();
+    REQUIRE(result.get().m_id != -1);
+  }
+
+  TEST_CASE("query_ticker_status_after_connection_failure") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = make_real_time_query(ticker);
+    fixture.m_available = false;
+    auto first_result = std::async(std::launch::async, [&] {
+      return fixture.m_client->send_request<QueryTickerStatusService>(query);
+    });
+    auto info = fixture.m_operations->pop();
+    auto& info_query =
+      std::get<TestMarketDataClient::TickerInfoQueryOperation>(*info);
+    info_query.m_result.set({TickerInfo(ticker, "Test", "Tech", 100)});
+    REQUIRE_THROWS_AS(first_result.get(), ServiceRequestException);
+    fixture.m_available = true;
+    auto result = std::async(std::launch::async, [&] {
+      return fixture.m_client->send_request<QueryTickerStatusService>(query);
+    });
+    auto initial = fixture.m_operations->pop();
+    auto& initial_query = std::get<
+      TestMarketDataClient::QuerySequencedTickerStatusOperation>(*initial);
+    initial_query.m_queue.close();
+    auto subscription = fixture.m_operations->pop();
+    auto& subscription_query = std::get<
+      TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+        *subscription);
+    REQUIRE(subscription_query.m_query.get_index() == ticker);
+    REQUIRE(
+      subscription_query.m_query.get_range().get_end() == Beam::Sequence::LAST);
+    auto snapshot = fixture.m_operations->pop();
+    auto& snapshot_query = std::get<
+      TestMarketDataClient::QuerySequencedTickerStatusOperation>(*snapshot);
+    snapshot_query.m_queue.close();
+    REQUIRE(result.get().m_id != -1);
+  }
+
   TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("TST.TSX");

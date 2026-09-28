@@ -39,12 +39,18 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_locator_client = \
-    beam.ApplicationServiceLocatorClient(username, password, address)
-  administration_client = nexus.ApplicationAdministrationClient(
-    service_locator_client)
+  service_locator_client = beam.connect(
+    beam.ApplicationServiceLocatorClient, username, password, address)
+  administration_client = beam.connect(
+    nexus.ApplicationAdministrationClient, service_locator_client)
   for account in service_locator_client.load_all_accounts():
     administration_client.store(account, nexus.RiskState())
 
 if __name__ == '__main__':
-  main()
+  try:
+    main()
+  except KeyboardInterrupt:
+    pass
+  except beam.AuthenticationException as error:
+    sys.stderr.write('%s\n' % error)
+    sys.exit(1)

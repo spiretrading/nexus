@@ -5,11 +5,11 @@
 #include <functional>
 #include <string_view>
 #include <Beam/IO/Channel.hpp>
-#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -161,7 +161,8 @@ namespace Nexus {
         auto login_rejected_packet =
           parse_login_rejected_packet(login_response);
         if(login_rejected_packet.m_reason == 'A') {
-          boost::throw_with_location(Beam::ConnectException("Not authorized."));
+          boost::throw_with_location(
+            Beam::AuthenticationException("Not authorized."));
         } else if(login_rejected_packet.m_reason == 'S') {
           boost::throw_with_location(
             Beam::ConnectException("Session unavailable."));
@@ -181,6 +182,8 @@ namespace Nexus {
       close();
       throw;
     }
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(
       Beam::ConnectException("SoupBinTCP client failed to connect."));

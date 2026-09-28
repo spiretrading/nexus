@@ -103,8 +103,13 @@ TEST_SUITE("SoupBinTcpClient") {
     }
     fixture.m_server_channel->get_writer().write(
       make_login_rejected_packet(reason));
-    REQUIRE_THROWS_AS(SoupBinTcpClient("user", "pass",
-      &*fixture.m_client_channel, &fixture.m_timer), ConnectException);
+    if(reason == 'A') {
+      REQUIRE_THROWS_AS(SoupBinTcpClient("user", "pass",
+        &*fixture.m_client_channel, &fixture.m_timer), AuthenticationException);
+    } else {
+      REQUIRE_THROWS_AS(SoupBinTcpClient("user", "pass",
+        &*fixture.m_client_channel, &fixture.m_timer), ConnectException);
+    }
   }
 
   TEST_CASE("login_response") {

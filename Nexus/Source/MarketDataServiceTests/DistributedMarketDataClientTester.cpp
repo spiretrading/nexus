@@ -1,10 +1,14 @@
+#include <atomic>
 #include <future>
 #include <thread>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/MarketDataService/DataStoreMarketDataClient.hpp"
 #include "Nexus/MarketDataService/DistributedMarketDataClient.hpp"
+#include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
 using namespace Beam;
@@ -45,10 +49,67 @@ namespace {
     return clients;
   }
 
+  struct DiscoveryFixture {
+    ScopeMap<std::shared_ptr<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>> m_operations;
+    ScopeMap<std::shared_ptr<MarketDataClient>> m_clients;
+    QueueWriterPublisher<ServiceUpdate> m_services;
+    std::shared_ptr<TriggerTimer> m_timer;
+    std::atomic_bool m_fail_connection;
+    std::atomic_bool m_fail_authentication;
+    Queue<Scope> m_attempts;
+    std::unique_ptr<DistributedMarketDataClient<
+      std::shared_ptr<TriggerTimer>>> m_client;
+
+    DiscoveryFixture()
+      : DiscoveryFixture(std::vector<ServiceEntry>()) {}
+
+    explicit DiscoveryFixture(std::vector<ServiceEntry> services)
+        : m_operations(make_operations_queues()),
+          m_clients(make_market_data_clients(m_operations)),
+          m_timer(std::make_shared<TriggerTimer>()),
+          m_fail_connection(false),
+          m_fail_authentication(false) {
+      m_client = std::make_unique<
+        DistributedMarketDataClient<std::shared_ptr<TriggerTimer>>>(
+        [&] (ScopedQueueWriter<ServiceUpdate> queue) {
+          for(auto& service : services) {
+            queue.push(ServiceUpdate::add(service));
+          }
+          m_services.monitor(std::move(queue));
+        }, [] (const auto& service) {
+          if(service.get_name() == "tsx") {
+            return Scope(TSX);
+          }
+          return Scope(AU);
+        }, [=, this] (const Scope& scope) {
+          m_attempts.push(scope);
+          if(m_fail_authentication) {
+            throw AuthenticationException();
+          }
+          if(m_fail_connection && scope == AU) {
+            throw ConnectException();
+          }
+          return m_clients.get(scope);
+        }, m_timer);
+      flush_pending_routines();
+    }
+
+    void update(const ServiceUpdate& update) {
+      m_services.push(update);
+      flush_pending_routines();
+    }
+
+    void retry() {
+      m_timer->trigger();
+      flush_pending_routines();
+    }
+  };
+
   struct Fixture {
     ScopeMap<std::shared_ptr<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>> m_operations;
-    DistributedMarketDataClient m_client;
+    DistributedMarketDataClient<Timer> m_client;
 
     Fixture()
       : m_operations(make_operations_queues()),
@@ -57,6 +118,272 @@ namespace {
 }
 
 TEST_SUITE("DistributedMarketDataClient") {
+  TEST_CASE("discover_scopes") {
+    auto tsx = ServiceEntry("tsx", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    auto fixture = DiscoveryFixture({tsx});
+    REQUIRE(fixture.m_attempts.pop() == TSX);
+    auto quotes = std::make_shared<Queue<BboQuote>>();
+    fixture.m_client->query(
+      make_real_time_query(parse_ticker("ABC.TSX")), quotes);
+    auto subscription = require_operation<
+      TestMarketDataClient::QueryBboQuoteOperation>(
+        fixture.m_operations.get(TSX)->pop());
+    auto australian = ServiceEntry("au", JsonObject(), 2,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(australian));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    auto australian_quotes = std::make_shared<Queue<BboQuote>>();
+    fixture.m_client->query(make_real_time_query(parse_ticker("S32.ASX")),
+      australian_quotes);
+    auto australian_subscription = require_operation<
+      TestMarketDataClient::QueryBboQuoteOperation>(
+        fixture.m_operations.get(AU)->pop());
+    fixture.update(ServiceUpdate::remove(tsx));
+    fixture.update(ServiceUpdate::add(tsx));
+    fixture.update(ServiceUpdate::add(australian));
+    fixture.update(ServiceUpdate::add(ServiceEntry("au", JsonObject(), 3,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    fixture.retry();
+    REQUIRE(!fixture.m_attempts.try_pop());
+    auto quote = BboQuote(make_bid(Money::ONE, 100),
+      make_ask(2 * Money::ONE, 200), time_from_string("2026-09-28 12:00:00"));
+    subscription->m_queue.push(quote);
+    australian_subscription->m_queue.push(quote);
+    REQUIRE(quotes->pop() == quote);
+    REQUIRE(australian_quotes->pop() == quote);
+  }
+
+  TEST_CASE("discover_scopes_empty_snapshot") {
+    auto fixture = DiscoveryFixture();
+    REQUIRE(!fixture.m_attempts.try_pop());
+    auto result = Async<void>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        fixture.m_client->query(make_real_time_query(parse_ticker("ABC.TSX")),
+          std::make_shared<Queue<BboQuote>>());
+        result.get_eval().set();
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.update(ServiceUpdate::add(ServiceEntry("tsx", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(fixture.m_attempts.pop() == TSX);
+    result.get();
+    require_operation<TestMarketDataClient::QueryBboQuoteOperation>(
+      fixture.m_operations.get(TSX)->pop());
+  }
+
+  TEST_CASE("query_ticker_info_waits_for_scope") {
+    auto fixture = DiscoveryFixture();
+    fixture.update(ServiceUpdate::add(ServiceEntry("tsx", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    auto ticker = parse_ticker("S32.ASX");
+    auto result = Async<std::vector<TickerInfo>>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        result.get_eval().set(
+          fixture.m_client->query(make_ticker_info_query(ticker)));
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    REQUIRE(!fixture.m_operations.get(TSX)->try_pop());
+    fixture.m_fail_connection = true;
+    fixture.update(ServiceUpdate::add(ServiceEntry("au", JsonObject(), 2,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.m_fail_connection = false;
+    fixture.retry();
+    auto operation = require_operation<TestMarketDataClient::
+      TickerInfoQueryOperation>(fixture.m_operations.get(AU)->pop());
+    auto info = TickerInfo(ticker, "South32", "Materials", 100);
+    operation->m_result.set({info});
+    REQUIRE(result.get() == std::vector{info});
+  }
+
+  TEST_CASE("pending_query_close") {
+    auto fixture = DiscoveryFixture();
+    auto query = std::function<void ()>();
+
+    SUBCASE("ticker_info") {
+      query = [&] {
+        fixture.m_client->query(
+          make_ticker_info_query(parse_ticker("ABC.TSX")));
+      };
+    }
+
+    SUBCASE("prefix") {
+      query = [&] {
+        fixture.m_client->load_ticker_info_from_prefix("ABC");
+      };
+    }
+
+    SUBCASE("imbalance") {
+      query = [&] {
+        fixture.m_client->query(make_real_time_query(TSX),
+          std::make_shared<Queue<OrderImbalance>>());
+      };
+    }
+
+    auto result = Async<void>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        query();
+        result.get_eval().set();
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.m_client->close();
+    REQUIRE_THROWS_AS(result.get(), EndOfFileException);
+  }
+
+  TEST_CASE("pending_query_subscription_close") {
+    auto fixture = DiscoveryFixture();
+    auto result = Async<std::vector<TickerInfo>>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        result.get_eval().set(fixture.m_client->query(
+          make_ticker_info_query(parse_ticker("ABC.TSX"))));
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.m_services.close();
+    REQUIRE_THROWS_AS(result.get(), PipeBrokenException);
+  }
+
+  TEST_CASE("discover_scopes_connection_failure") {
+    auto fixture = DiscoveryFixture();
+    fixture.m_fail_connection = true;
+    fixture.update(ServiceUpdate::add(ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    fixture.update(ServiceUpdate::add(ServiceEntry("tsx", JsonObject(), 2,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(fixture.m_attempts.pop() == TSX);
+    fixture.retry();
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE(!fixture.m_attempts.try_pop());
+    fixture.m_fail_connection = false;
+    fixture.retry();
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    fixture.m_client->query(make_real_time_query(parse_ticker("S32.ASX")),
+      std::make_shared<Queue<BboQuote>>());
+    require_operation<TestMarketDataClient::QueryBboQuoteOperation>(
+      fixture.m_operations.get(AU)->pop());
+    fixture.retry();
+    REQUIRE(!fixture.m_attempts.try_pop());
+  }
+
+  TEST_CASE("discover_scopes_authentication_failure") {
+    auto fixture = DiscoveryFixture();
+    auto result = Async<std::vector<TickerInfo>>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        result.get_eval().set(fixture.m_client->query(
+          make_ticker_info_query(parse_ticker("S32.ASX"))));
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.m_fail_authentication = true;
+    auto service = ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(service));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE_THROWS_AS(result.get(), AuthenticationException);
+    fixture.retry();
+    fixture.update(ServiceUpdate::add(service));
+    REQUIRE(!fixture.m_attempts.try_pop());
+    REQUIRE_THROWS_AS(fixture.m_client->query(
+      make_ticker_info_query(parse_ticker("S32.ASX"))),
+      AuthenticationException);
+  }
+
+  TEST_CASE("discover_scopes_withdrawn_registration") {
+    auto fixture = DiscoveryFixture();
+    fixture.m_fail_connection = true;
+    auto first = ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    auto second = ServiceEntry("au", JsonObject(), 2,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(first));
+    fixture.update(ServiceUpdate::add(second));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    fixture.retry();
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE(!fixture.m_attempts.try_pop());
+    fixture.update(ServiceUpdate::remove(first));
+    fixture.retry();
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    fixture.update(ServiceUpdate::remove(second));
+    fixture.retry();
+    REQUIRE(!fixture.m_attempts.try_pop());
+    fixture.m_fail_connection = false;
+    fixture.update(ServiceUpdate::add(second));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+  }
+
+  TEST_CASE("discover_scopes_replaced_registration") {
+    auto fixture = DiscoveryFixture();
+    fixture.m_fail_connection = true;
+    auto original = ServiceEntry("tsx", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(original));
+    REQUIRE(fixture.m_attempts.pop() == TSX);
+    auto replacement = ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(replacement));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    fixture.update(ServiceUpdate::remove(original));
+    fixture.retry();
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE(!fixture.m_attempts.try_pop());
+    fixture.update(ServiceUpdate::remove(replacement));
+    fixture.retry();
+    REQUIRE(!fixture.m_attempts.try_pop());
+    fixture.m_client->query(make_real_time_query(parse_ticker("ABC.TSX")),
+      std::make_shared<Queue<BboQuote>>());
+    require_operation<TestMarketDataClient::QueryBboQuoteOperation>(
+      fixture.m_operations.get(TSX)->pop());
+  }
+
+  TEST_CASE("discover_scopes_close") {
+    auto fixture = DiscoveryFixture();
+    fixture.m_fail_connection = true;
+    fixture.update(ServiceUpdate::add(ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+
+    SUBCASE("client") {
+      fixture.m_client->close();
+    }
+
+    SUBCASE("subscription") {
+      fixture.m_services.close();
+      flush_pending_routines();
+    }
+
+    fixture.retry();
+    fixture.update(ServiceUpdate::add(ServiceEntry("tsx", JsonObject(), 2,
+      DirectoryEntry::ROOT_ACCOUNT)));
+    REQUIRE(!fixture.m_attempts.try_pop());
+  }
+
   TEST_CASE("query_sequenced_order_imbalances") {
     auto fixture = Fixture();
     auto imbalances = std::make_shared<Queue<SequencedOrderImbalance>>();
@@ -502,17 +829,25 @@ TEST_SUITE("DistributedMarketDataClient") {
 
   TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
+    auto ticker = parse_ticker("ABC.TSX");
+
+    SUBCASE("exact") {}
+
+    SUBCASE("parent") {
+      ticker = parse_ticker("S32.ASX");
+    }
+
     auto query = TickerInfoQuery();
-    query.set_index(parse_ticker("ABC.TSX"));
-    auto operations = fixture.m_operations.get(TSX);
+    query.set_index(ticker);
+    auto operations = fixture.m_operations.get(ticker);
     auto result = std::async(std::launch::async, [&] {
       return fixture.m_client.query(query);
     });
     auto received_query = require_operation<
       TestMarketDataClient::TickerInfoQueryOperation>(operations->pop());
-    REQUIRE(received_query->m_query.get_index() == parse_ticker("ABC.TSX"));
+    REQUIRE(received_query->m_query.get_index() == ticker);
     auto test_ticker_info = TickerInfo();
-    test_ticker_info.m_ticker = parse_ticker("ABC.TSX");
+    test_ticker_info.m_ticker = ticker;
     test_ticker_info.m_name = "Alphabet Inc.";
     test_ticker_info.m_sector = "Technology";
     test_ticker_info.m_board_lot = 100;
@@ -520,6 +855,46 @@ TEST_SUITE("DistributedMarketDataClient") {
     auto received_ticker_info = result.get();
     REQUIRE(received_ticker_info.size() == 1);
     REQUIRE(received_ticker_info.front() == test_ticker_info);
+  }
+
+  TEST_CASE("query_ticker_info_across_scopes") {
+    auto canadian_store = LocalHistoricalDataStore();
+    auto australian_store = LocalHistoricalDataStore();
+    auto combined_store = LocalHistoricalDataStore();
+    for(auto symbol : {"ABC.TSX", "XYZ.TSX"}) {
+      auto info = TickerInfo();
+      info.m_ticker = parse_ticker(symbol);
+      canadian_store.store(info);
+      combined_store.store(info);
+    }
+    for(auto symbol : {"ABC.TSX", "BHP.ASX", "S32.ASX"}) {
+      auto info = TickerInfo();
+      info.m_ticker = parse_ticker(symbol);
+      australian_store.store(info);
+      combined_store.store(info);
+    }
+    auto clients = ScopeMap<std::shared_ptr<MarketDataClient>>(nullptr);
+    clients.set(TSX, std::make_shared<MarketDataClient>(std::in_place_type<
+      DataStoreMarketDataClient<LocalHistoricalDataStore*>>, &canadian_store));
+    clients.set(AU, std::make_shared<MarketDataClient>(
+      std::in_place_type<DataStoreMarketDataClient<LocalHistoricalDataStore*>>,
+      &australian_store));
+    auto client = DistributedMarketDataClient(clients);
+    auto query = TickerInfoQuery();
+    query.set_index(Scope::GLOBAL);
+    for(auto limit : {SnapshotLimit::from_head(2), SnapshotLimit::from_tail(2),
+        SnapshotLimit::UNLIMITED, SnapshotLimit::NONE}) {
+      query.set_snapshot_limit(limit);
+      for(auto offset : {0, 1, 10}) {
+        query.set_offset(offset);
+        for(auto anchor : {optional<Ticker>(),
+            optional<Ticker>(parse_ticker("S32.ASX"))}) {
+          query.set_anchor(anchor);
+          REQUIRE(
+            client.query(query) == combined_store.load_ticker_info(query));
+        }
+      }
+    }
   }
 
   TEST_CASE("load_snapshot") {
