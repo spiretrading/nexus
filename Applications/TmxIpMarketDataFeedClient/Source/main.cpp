@@ -88,11 +88,9 @@ int main(int argc, const char** argv) {
     while(!feed_client.is_finished() && !received_kill_event()) {
       sleep_for(boost::posix_time::milliseconds(100));
     }
-    auto is_interrupted = received_kill_event();
     service_locator_client.close();
     feed_client.close();
-    auto exception = feed_client.get_exception();
-    if(!is_interrupted && exception) {
+    if(auto exception = feed_client.get_exception()) {
       std::rethrow_exception(exception);
     }
   } catch(...) {
