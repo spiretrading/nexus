@@ -85,7 +85,7 @@ namespace {
             service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
           if(services.empty()) {
             throw_with_location(
-              ConnectException("No market data services available."));
+              Beam::ConnectException("No market data services available."));
           }
           auto& service = services.front();
           auto addresses = parse<std::vector<IpAddress>>(
