@@ -9,7 +9,7 @@
 #include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -54,7 +54,6 @@ namespace {
 
   std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>
       build_mock_feed_clients(const YAML::Node& config,
-        const std::vector<IpAddress>& addresses,
         ApplicationMarketDataClient& market_data_client,
         ApplicationServiceLocatorClient& service_locator_client,
         LiveNtpTimeClient& time_client) {
@@ -78,12 +77,22 @@ namespace {
           feed_tickers.insert(feed_tickers.end(), tickers.begin() +
             i * tickers_per_feed, tickers.end());
         }
-        auto application_market_data_feed =
-          std::make_unique<ApplicationMarketDataFeedClient>(feed_tickers,
+        auto application_market_data_feed = connect([&] {
+          auto services =
+            service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
+          if(services.empty()) {
+            throw_with_location(
+              ConnectException("No market data services available."));
+          }
+          auto& service = services.front();
+          auto addresses = parse<std::vector<IpAddress>>(
+            get<std::string>(service.get_properties().at("addresses")));
+          return std::make_unique<ApplicationMarketDataFeedClient>(feed_tickers,
             market_data_client, init(init(addresses),
               SessionAuthenticator(Ref(service_locator_client)),
               init(sampling), init(seconds(10))), &time_client,
             init(bbo_period), init(time_and_sales_period));
+        });
         feed_clients.push_back(std::move(application_market_data_feed));
       }
       return feed_clients;
@@ -96,29 +105,24 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
-    auto market_data_services =
-      service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
-    if(market_data_services.empty()) {
-      throw_with_location(
-        std::runtime_error("No market data services available."));
-    }
-    auto& market_data_service = market_data_services.front();
-    auto market_data_addresses = parse<std::vector<IpAddress>>(
-      get<std::string>(market_data_service.get_properties().at("addresses")));
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
     auto market_data_client =
-      ApplicationMarketDataClient(Ref(service_locator_client));
-    auto feed_clients = build_mock_feed_clients(config,
-      market_data_addresses, market_data_client, service_locator_client,
-      *time_client);
+      connect<ApplicationMarketDataClient>(Ref(service_locator_client));
+    auto feed_clients = build_mock_feed_clients(
+      config, market_data_client, service_locator_client, *time_client);
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

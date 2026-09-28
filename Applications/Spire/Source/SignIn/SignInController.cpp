@@ -1,13 +1,13 @@
 #include "Spire/SignIn/SignInController.hpp"
 #include <filesystem>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpSocketChannelFactory.hpp>
 #include <QDeadlineTimer>
 #include <QProcess>
 #include <QSharedMemory>
 #include <QStandardPaths>
-#include <QThread>
 #include <QUuid>
 #include "Nexus/Clients/Clients.hpp"
 #include "Spire/SignIn/SignInException.hpp"
@@ -103,7 +103,7 @@ namespace {
         terminate(process_id);
         throw std::runtime_error("The process timed out.");
       }
-      QThread::msleep(100);
+      sleep_for(milliseconds(100));
     }
   }
 

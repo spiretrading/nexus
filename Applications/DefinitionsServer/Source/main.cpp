@@ -5,8 +5,8 @@
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -84,7 +84,7 @@ int main(int argc, const char** argv) {
       return ServiceConfiguration::parse(
         get_node(config, "server"), DEFINITIONS_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto minimum_client_version =
       extract<std::string>(config, "minimum_spire_version");
@@ -133,6 +133,9 @@ int main(int argc, const char** argv) {
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

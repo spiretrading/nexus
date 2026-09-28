@@ -117,6 +117,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       Beam::out(m_client_handler.get_slots()),
       std::bind_front(&ServiceOrderExecutionClient::on_order_update, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(Beam::ConnectException(
       "Failed to connect to the order execution server."));

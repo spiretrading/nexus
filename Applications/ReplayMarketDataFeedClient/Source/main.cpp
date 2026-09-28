@@ -9,7 +9,7 @@
 #include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
@@ -60,7 +60,6 @@ namespace {
 
   auto build_replay_clients(const YAML::Node& config,
       std::vector<Ticker> tickers, DataStore* data_store,
-      const std::vector<IpAddress>& addresses,
       ApplicationServiceLocatorClient& service_locator_client,
       LiveNtpTimeClient* time_client) {
     return try_or_nest([&] {
@@ -81,12 +80,22 @@ namespace {
         ticker_subset.insert(ticker_subset.end(),
           std::min(tickers.begin() + i * chunks, tickers.end()),
           std::min(tickers.begin() + (i + 1) * chunks, tickers.end()));
-        replay_clients.emplace_back(
-          std::make_unique<ApplicationMarketDataFeedClient>(
-            std::move(ticker_subset), start_time, init(init(addresses),
+        replay_clients.emplace_back(connect([&] {
+          auto services =
+            service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
+          if(services.empty()) {
+            throw_with_location(
+              Beam::ConnectException("No market data services available."));
+          }
+          auto& service = services.front();
+          auto addresses = parse<std::vector<IpAddress>>(
+            get<std::string>(service.get_properties().at("addresses")));
+          return std::make_unique<ApplicationMarketDataFeedClient>(
+            ticker_subset, start_time, init(init(addresses),
               SessionAuthenticator(Ref(service_locator_client)),
               init(sampling), init(seconds(10))), data_store,
-            time_client, timer_builder));
+            time_client, timer_builder);
+        }));
       }
       return replay_clients;
     }, std::runtime_error("Failed to build replay clients."));
@@ -98,33 +107,28 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" REPLAY_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
     auto data_store_path = extract<std::string>(config, "data_store");
     auto historical_data_store = DataStore([=] {
       return SqlConnection(Sqlite3::Connection(data_store_path));
     });
     auto tickers = parse_tickers(extract<std::string>(
       config, "tickers_path", "tickers.yml"));
-    auto market_data_services =
-      service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
-    if(market_data_services.empty()) {
-      throw_with_location(
-        std::runtime_error("No market data services available."));
-    }
-    auto& market_data_service = market_data_services.front();
-    auto market_data_addresses = parse<std::vector<IpAddress>>(
-      get<std::string>(market_data_service.get_properties().at("addresses")));
     auto feed_clients = build_replay_clients(config, tickers,
-      &historical_data_store, market_data_addresses, service_locator_client,
-      time_client.get());
+      &historical_data_store, service_locator_client, time_client.get());
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

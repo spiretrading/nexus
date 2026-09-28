@@ -31,6 +31,17 @@ namespace {
 }
 
 TEST_SUITE("ServiceDefinitionsClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestDefinitionsClient(builder)), AuthenticationException);
+  }
+
   TEST_CASE("load_minimum_spire_client_version") {
     auto fixture = Fixture();
     auto version = std::string("v.1.2.3");

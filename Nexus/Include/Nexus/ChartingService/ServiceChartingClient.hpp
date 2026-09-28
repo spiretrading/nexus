@@ -79,6 +79,8 @@ namespace Nexus {
     Beam::add_message_slot<TickerQueryMessage>(
       out(m_client_handler.get_slots()),
       std::bind_front(&ServiceChartingClient::on_ticker_query, this));
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(
       Beam::ConnectException("Failed to connect to the charting server."));

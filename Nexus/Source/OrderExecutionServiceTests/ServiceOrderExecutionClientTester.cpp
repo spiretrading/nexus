@@ -31,6 +31,18 @@ namespace {
 }
 
 TEST_SUITE("ServiceOrderExecutionClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceOrderExecutionClient(builder)),
+      AuthenticationException);
+  }
+
   TEST_CASE("load_order") {
     auto fixture = Fixture();
     auto id = 123;

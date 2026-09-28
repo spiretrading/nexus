@@ -145,6 +145,8 @@ namespace Nexus {
                 return Beam::parse<std::vector<Beam::IpAddress>>(
                   boost::get<std::string>(
                     service->get_properties().at("addresses")));
+              } catch(const Beam::AuthenticationException&) {
+                throw;
               } catch(const std::exception&) {
                 Beam::throw_nested_with_location(Beam::ConnectException(
                   "Failed to connect to the market data server."));
@@ -174,6 +176,8 @@ namespace Nexus {
                 return Beam::parse<std::vector<Beam::IpAddress>>(
                   boost::get<std::string>(
                     service.get_properties().at("addresses")));
+              } catch(const Beam::AuthenticationException&) {
+                throw;
               } catch(const std::exception&) {
                 Beam::throw_nested_with_location(Beam::ConnectException(
                   "Failed to connect to the market data server."));

@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <fstream>
 #include <unordered_set>
-#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
 #include <QMessageBox>
@@ -175,21 +174,8 @@ int main(int argc, char* argv[]) {
   auto service_client_factory =
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
-        std::unique_ptr<ApplicationServiceLocatorClient>();
-      try {
-        service_locator_client =
-          std::make_unique<ApplicationServiceLocatorClient>(
-            username, password, address);
-      } catch(const std::exception& e) {
-        try {
-          std::rethrow_if_nested(e);
-        } catch(const std::exception& e) {
-          if(std::string(e.what()) == "Invalid username or password.") {
-            throw AuthenticationException();
-          }
-        }
-        throw;
-      }
+        std::make_unique<ApplicationServiceLocatorClient>(
+          username, password, address);
       auto clients =
         std::make_unique<SpireClients>(std::move(service_locator_client));
       return Clients(std::move(clients));

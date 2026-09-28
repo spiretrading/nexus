@@ -362,44 +362,50 @@ namespace Nexus {
         query.get_filter(), typeid(typename MarketDataType::Value));
       result.m_id = subscriptions.init(query.get_index(), request.get_client(),
         Beam::Range::TOTAL, std::move(filter));
-      auto& subscription = real_time_subscriptions.get(query.get_index());
-      subscription.call([&] {
-        auto& query_entry = get_real_time_query_entry(query.get_index());
-        auto initial_value_queue =
-          std::make_shared<Beam::Queue<MarketDataType>>();
-        query_entry.m_market_data_client->query(
-          Beam::make_latest_query(query.get_index()), initial_value_queue);
-        auto initial_values = std::vector<MarketDataType>();
-        Beam::flush(initial_value_queue, std::back_inserter(initial_values));
-        auto initial_sequence = [&] {
-          if(initial_values.empty()) {
-            return Beam::Sequence::FIRST;
-          } else {
-            return Beam::increment(initial_values.back().get_sequence());
-          }
-        }();
-        auto real_time_query = Query();
-        real_time_query.set_index(query.get_index());
-        real_time_query.set_interruption_policy(
-          Beam::InterruptionPolicy::RECOVER_DATA);
-        real_time_query.set_range(initial_sequence, Beam::Sequence::LAST);
-        query_entry.m_market_data_client->query(real_time_query,
-          query_entry.m_tasks.template get_slot<MarketDataType>(
-            [=, this, &subscriptions] (const auto& value) {
-              on_real_time_update(query.get_index(), value, subscriptions);
-            }));
-      });
-      auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
-      auto client = m_market_data_clients.load();
-      auto snapshot_query = query;
-      snapshot_query.set_range(
-        query.get_range().get_start(), Beam::Sequence::PRESENT);
-      client->query(snapshot_query, queue);
-      Beam::flush(queue, std::back_inserter(result.m_snapshot));
-      subscriptions.commit(query.get_index(), std::move(result),
-        [&] (auto&& result) {
-          request.set(std::forward<decltype(result)>(result));
+      try {
+        auto& subscription = real_time_subscriptions.get(query.get_index());
+        subscription.call([&] {
+          auto& query_entry = get_real_time_query_entry(query.get_index());
+          auto initial_value_queue =
+            std::make_shared<Beam::Queue<MarketDataType>>();
+          query_entry.m_market_data_client->query(
+            Beam::make_latest_query(query.get_index()), initial_value_queue);
+          auto initial_values = std::vector<MarketDataType>();
+          Beam::flush(initial_value_queue, std::back_inserter(initial_values));
+          auto initial_sequence = [&] {
+            if(initial_values.empty()) {
+              return Beam::Sequence::FIRST;
+            } else {
+              return Beam::increment(initial_values.back().get_sequence());
+            }
+          }();
+          auto real_time_query = Query();
+          real_time_query.set_index(query.get_index());
+          real_time_query.set_interruption_policy(
+            Beam::InterruptionPolicy::RECOVER_DATA);
+          real_time_query.set_range(initial_sequence, Beam::Sequence::LAST);
+          query_entry.m_market_data_client->query(real_time_query,
+            query_entry.m_tasks.template get_slot<MarketDataType>(
+              [=, this, &subscriptions] (const auto& value) {
+                on_real_time_update(query.get_index(), value, subscriptions);
+              }));
         });
+        auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
+        auto client = m_market_data_clients.load();
+        auto snapshot_query = query;
+        snapshot_query.set_range(
+          query.get_range().get_start(), Beam::Sequence::PRESENT);
+        client->query(snapshot_query, queue);
+        Beam::flush(queue, std::back_inserter(result.m_snapshot));
+        subscriptions.commit(query.get_index(), std::move(result),
+          [&] (auto&& result) {
+            request.set(std::forward<decltype(result)>(result));
+          });
+      } catch(...) {
+        subscriptions.discard(
+          query.get_index(), request.get_client(), result.m_id);
+        throw;
+      }
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_market_data_clients.load();

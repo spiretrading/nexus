@@ -43,6 +43,18 @@ namespace {
 }
 
 TEST_SUITE("ServiceAdministrationClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceAdministrationClient(builder)),
+      AuthenticationException);
+  }
+
   TEST_CASE("load_accounts_by_roles") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(16, "entitled_account");
