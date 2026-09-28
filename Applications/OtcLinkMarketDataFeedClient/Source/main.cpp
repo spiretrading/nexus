@@ -127,7 +127,9 @@ int main(int argc, const char** argv) {
             return snapshot.load_snapshot(token);
           }, token);
       };
-      reference = load_reference(std::stop_token());
+      reference = load_initial_reference([&] {
+        return load_reference(std::stop_token());
+      }, time_client->get_time());
     }
     auto feed_client = OtcLinkMarketDataFeedClient(
       &market_data_feed_client, &client, time_client.get(),

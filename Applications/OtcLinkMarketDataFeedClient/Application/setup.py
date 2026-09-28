@@ -30,7 +30,8 @@ def main():
   parser.add_argument('--common-config', type=Path,
     help='Existing shared configuration to include without modifying it.')
   parser.add_argument('--sender',
-    help='OTC SenderCompID required for the Trades reference snapshot.')
+    help='OTC SenderCompID prefix; appends B for Book, I for Inside, '
+      'and M for Trades.')
   parser.add_argument('--recovery', action='store_true',
     help='Enable gap recovery; requires --sender.')
   parser.add_argument('--snapshot', action='store_true',
@@ -61,16 +62,17 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  variables['sender'] = args.sender
   if args.common_config is None:
     with open(directory / 'config.default.yml', encoding='utf-8') as file:
       source = setup_utils.translate(file.read(), variables)
     with open(common_path, 'w', encoding='utf-8') as file:
       file.write(source)
+  sender_suffixes = {'otcm_book': 'B', 'otcm_inside': 'I', 'otcm_trades': 'M'}
   for folder in sorted(directory.glob('otcm_*')):
     default_path = folder / 'config.default.yml'
     if not default_path.is_file():
       continue
+    variables['sender'] = args.sender + sender_suffixes[folder.name]
     with open(default_path, encoding='utf-8') as file:
       source = file.read()
     output_directory = Path(folder.name)

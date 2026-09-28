@@ -10,6 +10,7 @@
 #include <Beam/TimeService/Timer.hpp>
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkSnapshot.hpp"
 
 namespace Nexus {
 
@@ -28,7 +29,7 @@ namespace Nexus {
       using LoadFunction = std::function<void (std::stop_token)>;
 
       /**
-       * Constructs a reference loader after the startup snapshot is loaded.
+       * Constructs a reference loader after the startup snapshot attempt.
        * @param schedule The schedule defining OTC pre-open events.
        * @param time_client The source of the current time.
        * @param timer The timer checking for scheduled refreshes.
@@ -63,6 +64,15 @@ namespace Nexus {
   template<typename R, typename T, typename F>
   OtcLinkReferenceLoader(TradingSchedule, R&&, T&&, F) ->
     OtcLinkReferenceLoader<std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
+
+  /**
+   * Loads startup security definitions, logging failures without terminating.
+   * @param load Loads the reference snapshot.
+   * @param timestamp The time of the startup attempt.
+   * @return The snapshot, or an empty snapshot if loading fails.
+   */
+  inline OtcLinkSnapshot load_initial_reference(
+    std::function<OtcLinkSnapshot ()> load, boost::posix_time::ptime timestamp);
 
   template<typename R, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<R>> &&
@@ -133,6 +143,18 @@ namespace Nexus {
     }
     if(m_open_state.is_open()) {
       m_timer->start();
+    }
+  }
+
+  inline OtcLinkSnapshot load_initial_reference(
+      std::function<OtcLinkSnapshot ()> load,
+      boost::posix_time::ptime timestamp) {
+    try {
+      return load();
+    } catch(const std::exception& e) {
+      std::osyncstream(std::cout) << "(reference_failed " << timestamp <<
+        ' ' << e.what() << ')' << std::endl;
+      return OtcLinkSnapshot();
     }
   }
 }

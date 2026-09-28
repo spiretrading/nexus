@@ -27,6 +27,43 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkReferenceLoader") {
+  TEST_CASE("initial_reference") {
+    auto timestamp = time_from_string("2026-09-24 09:59:00");
+    auto snapshot = OtcLinkSnapshot(123, {SharedBuffer("reference", 9)});
+    auto reference = load_initial_reference([&] {
+      return snapshot;
+    }, timestamp);
+    REQUIRE(reference.m_sequence == snapshot.m_sequence);
+    REQUIRE(reference.m_messages == snapshot.m_messages);
+  }
+
+  TEST_CASE("initial_reference_failure") {
+    auto time_client = FixedTimeClient(
+      time_from_string("2026-09-24 09:59:00"));
+    auto reference = boost::optional<OtcLinkSnapshot>();
+    REQUIRE_NOTHROW(reference = load_initial_reference(
+      [] () -> OtcLinkSnapshot { throw IOException(); },
+      time_client.get_time()));
+    REQUIRE(reference.has_value());
+    REQUIRE(reference->m_messages.empty());
+    auto timer = TriggerTimer();
+    auto calls = 0;
+    auto loader = OtcLinkReferenceLoader(make_schedule(), &time_client,
+      &timer, [&] (std::stop_token) {
+        ++calls;
+        reference = OtcLinkSnapshot(123, {SharedBuffer("reference", 9)});
+      });
+    timer.trigger();
+    flush_pending_routines();
+    REQUIRE(calls == 0);
+    time_client.set(time_from_string("2026-09-24 10:00:00"));
+    timer.trigger();
+    flush_pending_routines();
+    REQUIRE(calls == 1);
+    REQUIRE(reference->m_sequence == 123);
+    REQUIRE(reference->m_messages.size() == 1);
+  }
+
   TEST_CASE("pre_open") {
     auto timestamp = time_from_string("2026-09-24 10:00:00");
     SUBCASE("daylight_time") {}
@@ -131,6 +168,7 @@ TEST_SUITE("OtcLinkReferenceLoader") {
           completion.get_eval().set();
         });
         completion.get();
+        throw IOException();
       });
     SUBCASE("pending_refresh") {
       time_client.set(time_from_string("2026-09-24 10:00:00"));
