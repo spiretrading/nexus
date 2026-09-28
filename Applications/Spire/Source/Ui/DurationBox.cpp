@@ -288,6 +288,59 @@ namespace {
     }
   };
 
+  bool overwrite_fractional_second(IntegerBox& field, const QKeyEvent& event) {
+    auto is_digit = event.text().size() == 1 &&
+      event.text().front() >= '0' && event.text().front() <= '9';
+    auto is_backspace = event.key() == Qt::Key_Backspace;
+    auto is_delete = event.key() == Qt::Key_Delete;
+    if(!is_digit && !is_backspace && !is_delete) {
+      return false;
+    }
+    auto editor = field.findChild<QLineEdit*>();
+    if(!editor) {
+      return false;
+    }
+    auto text = editor->text();
+    auto start = editor->hasSelectedText() ?
+      editor->selectionStart() : editor->cursorPosition();
+    auto end = editor->hasSelectedText() ? editor->selectionEnd() : start;
+    if(is_backspace && start == end) {
+      if(start == 0) {
+        return false;
+      }
+      --start;
+    } else if(is_delete && start == end) {
+      if(start >= text.size()) {
+        return true;
+      }
+      ++end;
+    }
+    if(!is_digit && start == 0 && end >= text.size()) {
+      field.get_current()->set(none);
+      return true;
+    }
+    auto digits = std::static_pointer_cast<FractionalSecondModel>(
+      field.get_current())->m_fractional_digits;
+    if(is_digit && start >= digits) {
+      return true;
+    }
+    text = text.leftJustified(digits, '0');
+    for(auto i = start; i < end && i < digits; ++i) {
+      text[i] = '0';
+    }
+    auto cursor = start;
+    if(is_digit) {
+      text[start] = event.text().front();
+      cursor = start + 1;
+    } else if(is_delete) {
+      cursor = end;
+    }
+    if(field.get_current()->set(text.toInt()) != QValidator::State::Invalid) {
+      editor->setCursorPosition(cursor);
+    }
+    return true;
+  }
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
@@ -555,6 +608,9 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(focused < 0) {
       return QWidget::eventFilter(watched, event);
+    } else if(focused == FRACTIONAL_SECOND && !m_is_read_only &&
+        overwrite_fractional_second(*fields[focused], key_event)) {
+      return true;
     } else if(key_event.key() == Qt::Key_Left && previous >= 0) {
       if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0) {
