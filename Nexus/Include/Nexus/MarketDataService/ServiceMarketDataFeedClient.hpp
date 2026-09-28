@@ -178,6 +178,8 @@ namespace Nexus {
       close();
       throw;
     }
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(Beam::ConnectException(
       "Failed to connect to the market data feed server."));

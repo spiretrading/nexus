@@ -6,9 +6,9 @@
 #include <memory>
 #include <optional>
 #include <unordered_set>
-#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/ServiceLocator/ServiceUpdate.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -403,11 +403,14 @@ namespace Nexus {
     if(!m_open_state.is_open()) {
       return;
     }
-    auto exists = m_market_data_clients.with([&] (const auto& clients) {
+    auto skip = m_market_data_clients.with([&] (const auto& clients) {
+      if(m_discovery_exception) {
+        return true;
+      }
       auto entry = clients.find(scope);
       return std::get<0>(*entry) == scope && std::get<1>(*entry);
     });
-    if(exists) {
+    if(skip) {
       return;
     }
     try {
@@ -416,6 +419,12 @@ namespace Nexus {
         clients.set(scope, client);
         m_available.notify_all();
       });
+    } catch(const Beam::AuthenticationException&) {
+      m_market_data_clients.with([&] (const auto&) {
+        m_discovery_exception = std::current_exception();
+        m_available.notify_all();
+      });
+      Beam::report_current_exception();
     } catch(const Beam::ConnectException&) {
     } catch(...) {
       Beam::report_current_exception();

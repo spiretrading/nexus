@@ -147,7 +147,7 @@ class TestSoupBinTcpClient(unittest.TestCase):
 
     def test_login_rejection(self):
         self.sender.writer.write(frame('J', b'A'))
-        with self.assertRaises(beam.ConnectException):
+        with self.assertRaises(beam.AuthenticationException):
             nexus.SoupBinTcpClient('user', 'pass', self.channel, self.timer)
 
     def test_login_timeout(self):

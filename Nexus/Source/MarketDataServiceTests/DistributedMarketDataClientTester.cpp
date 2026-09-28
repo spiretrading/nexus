@@ -56,6 +56,7 @@ namespace {
     QueueWriterPublisher<ServiceUpdate> m_services;
     std::shared_ptr<TriggerTimer> m_timer;
     std::atomic_bool m_fail_connection;
+    std::atomic_bool m_fail_authentication;
     Queue<Scope> m_attempts;
     std::unique_ptr<DistributedMarketDataClient<
       std::shared_ptr<TriggerTimer>>> m_client;
@@ -67,7 +68,8 @@ namespace {
         : m_operations(make_operations_queues()),
           m_clients(make_market_data_clients(m_operations)),
           m_timer(std::make_shared<TriggerTimer>()),
-          m_fail_connection(false) {
+          m_fail_connection(false),
+          m_fail_authentication(false) {
       m_client = std::make_unique<
         DistributedMarketDataClient<std::shared_ptr<TriggerTimer>>>(
         [&] (ScopedQueueWriter<ServiceUpdate> queue) {
@@ -82,6 +84,9 @@ namespace {
           return Scope(AU);
         }, [=, this] (const Scope& scope) {
           m_attempts.push(scope);
+          if(m_fail_authentication) {
+            throw AuthenticationException();
+          }
           if(m_fail_connection && scope == AU) {
             throw ConnectException();
           }
@@ -279,6 +284,33 @@ TEST_SUITE("DistributedMarketDataClient") {
       fixture.m_operations.get(AU)->pop());
     fixture.retry();
     REQUIRE(!fixture.m_attempts.try_pop());
+  }
+
+  TEST_CASE("discover_scopes_authentication_failure") {
+    auto fixture = DiscoveryFixture();
+    auto result = Async<std::vector<TickerInfo>>();
+    auto request = RoutineHandler(spawn([&] {
+      try {
+        result.get_eval().set(fixture.m_client->query(
+          make_ticker_info_query(parse_ticker("S32.ASX"))));
+      } catch(...) {
+        result.get_eval().set_exception(std::current_exception());
+      }
+    }));
+    flush_pending_routines();
+    REQUIRE(result.get_state() == BaseAsync::State::PENDING);
+    fixture.m_fail_authentication = true;
+    auto service = ServiceEntry("au", JsonObject(), 1,
+      DirectoryEntry::ROOT_ACCOUNT);
+    fixture.update(ServiceUpdate::add(service));
+    REQUIRE(fixture.m_attempts.pop() == AU);
+    REQUIRE_THROWS_AS(result.get(), AuthenticationException);
+    fixture.retry();
+    fixture.update(ServiceUpdate::add(service));
+    REQUIRE(!fixture.m_attempts.try_pop());
+    REQUIRE_THROWS_AS(fixture.m_client->query(
+      make_ticker_info_query(parse_ticker("S32.ASX"))),
+      AuthenticationException);
   }
 
   TEST_CASE("discover_scopes_withdrawn_registration") {

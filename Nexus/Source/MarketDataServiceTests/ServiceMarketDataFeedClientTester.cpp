@@ -30,6 +30,17 @@ namespace {
 }
 
 TEST_SUITE("ServiceMarketDataFeedClient") {
+  TEST_CASE("authentication_failure") {
+    auto fixture = ServiceClientFixture();
+    auto channel = std::make_unique<TestServiceProtocolClientBuilder::Channel>(
+      "test", *fixture.m_server_connection);
+    auto timer = TriggerTimer();
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceMarketDataFeedClient(std::move(channel),
+        [] (auto&) { throw AuthenticationException(); }, &timer, init())),
+      AuthenticationException);
+  }
+
   TEST_CASE("add_ticker_info") {
     auto fixture = Fixture();
     auto info = TickerInfo(parse_ticker("S32.ASX"), "S32 Inc.", "", 100);

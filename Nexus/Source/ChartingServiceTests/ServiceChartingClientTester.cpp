@@ -26,6 +26,17 @@ namespace {
 }
 
 TEST_SUITE("ServiceChartingClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceChartingClient(builder)), AuthenticationException);
+  }
+
   TEST_CASE("load_price_series") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("TST.TSX");
