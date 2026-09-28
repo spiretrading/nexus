@@ -5,8 +5,8 @@
 #include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
@@ -52,18 +52,20 @@ int main(int argc, const char** argv) {
       return ServiceConfiguration::parse(
         get_node(config, "server"), RISK_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto administration_client =
-      ApplicationAdministrationClient(Ref(service_locator_client));
+      connect<ApplicationAdministrationClient>(Ref(service_locator_client));
     auto market_data_client =
-      ApplicationMarketDataClient(Ref(service_locator_client));
+      connect<ApplicationMarketDataClient>(Ref(service_locator_client));
     auto order_execution_client =
-      ApplicationOrderExecutionClient(Ref(service_locator_client));
-    auto time_client = make_live_ntp_time_client(service_locator_client);
+      connect<ApplicationOrderExecutionClient>(Ref(service_locator_client));
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
     auto mysql_config = try_or_nest([&] {
       return MySqlConfig::parse(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
@@ -97,6 +99,9 @@ int main(int argc, const char** argv) {
     market_data_client.close();
     administration_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }
