@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <thread>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
@@ -32,18 +31,20 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" TMX_IP_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto schedule = definitions_client.load_trading_schedule();
     auto configuration = TmxIpConfiguration::parse(config);
     auto market_data_client =
-      ApplicationMarketDataClient(Ref(service_locator_client));
-    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      connect<ApplicationMarketDataClient>(Ref(service_locator_client));
+    auto market_data_feed_client = connect<ApplicationMarketDataFeedClient>(
       Ref(service_locator_client), configuration.m_sampling, Countries::CA);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
     auto feed_clients =
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : configuration.m_feeds) {
@@ -85,7 +86,7 @@ int main(int argc, const char** argv) {
       std::move(schedule), &client, &market_data_client, time_client.get(),
       &market_data_feed_client);
     while(!feed_client.is_finished() && !received_kill_event()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      sleep_for(boost::posix_time::milliseconds(100));
     }
     auto is_interrupted = received_kill_event();
     service_locator_client.close();
@@ -95,6 +96,9 @@ int main(int argc, const char** argv) {
       std::rethrow_exception(exception);
     }
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

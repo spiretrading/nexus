@@ -1,4 +1,3 @@
-#include <thread>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -62,14 +61,16 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" OTC_LINK_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto configuration = OtcLinkConfiguration::parse(config);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
-    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
+    auto market_data_feed_client = connect<ApplicationMarketDataFeedClient>(
       Ref(service_locator_client), configuration.m_sampling,
       configuration.m_country);
     auto feed_clients =
@@ -145,7 +146,7 @@ int main(int argc, const char** argv) {
           });
     }
     while(!feed_client.is_finished() && !received_kill_event()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      sleep_for(boost::posix_time::milliseconds(100));
     }
     auto is_interrupted = received_kill_event();
     if(reference_loader) {
@@ -158,6 +159,9 @@ int main(int argc, const char** argv) {
       std::rethrow_exception(exception);
     }
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

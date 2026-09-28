@@ -1,4 +1,3 @@
-#include <thread>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
@@ -44,12 +43,18 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" ASX_TRADE_ITCH_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto configuration = AsxTradeItchConfiguration::parse(config);
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
+    auto market_data_feed_client = connect<ApplicationMarketDataFeedClient>(
+      Ref(service_locator_client), configuration.m_sampling,
+      configuration.m_country);
     auto feed_clients =
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : configuration.m_feeds) {
@@ -81,16 +86,12 @@ int main(int argc, const char** argv) {
     auto client = AsxTradeItchClient(configuration.m_feed_timeout,
       configuration.m_gap_timeout, configuration.m_request_timeout,
       std::move(feed_clients), std::move(recovery_client),
-      std::move(glimpse_client),
-      make_live_ntp_time_client(service_locator_client),
+      std::move(glimpse_client), std::move(time_client),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()));
-    auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), configuration.m_sampling,
-      configuration.m_country);
     auto feed_client = AsxTradeItchMarketDataFeedClient(
       configuration, &market_data_feed_client, &client);
     while(!feed_client.is_finished() && !received_kill_event()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      sleep_for(milliseconds(100));
     }
     service_locator_client.close();
     feed_client.close();
@@ -98,6 +99,9 @@ int main(int argc, const char** argv) {
       std::rethrow_exception(exception);
     }
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

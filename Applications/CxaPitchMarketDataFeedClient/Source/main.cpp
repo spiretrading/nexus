@@ -1,5 +1,4 @@
 #include <stdexcept>
-#include <thread>
 #include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
@@ -51,13 +50,18 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" CXA_PITCH_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto time_client = connect([&] {
+      return make_live_ntp_time_client(service_locator_client);
+    });
     auto feed_configuration = CxaPitchConfiguration::parse(config);
+    auto market_data_feed_client = connect<ApplicationMarketDataFeedClient>(
+      Ref(service_locator_client), feed_configuration.m_sampling,
+      feed_configuration.m_country);
     auto make_session = [] (
         const CxaPitchSession& session, std::stop_token stop_token) {
       static const auto HEARTBEAT = seconds(1);
@@ -106,20 +110,20 @@ int main(int argc, const char** argv) {
       std::move(feed_clients), std::move(recovery_clients),
       std::move(gap_client), std::move(spin_client), time_client.get(),
       std::make_unique<LiveTimer>(feed_configuration.get_timer_interval()));
-    auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), feed_configuration.m_sampling,
-      feed_configuration.m_country);
     auto feed_client = CxaPitchMarketDataFeedClient(
       feed_configuration, &market_data_feed_client, &client);
     while(!received_kill_event()) {
       if(auto exception = feed_client.get_exception()) {
         std::rethrow_exception(exception);
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      sleep_for(milliseconds(100));
     }
     service_locator_client.close();
     feed_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }
