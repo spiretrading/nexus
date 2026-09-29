@@ -108,8 +108,7 @@ HexColorBox::HexColorBox(QWidget* parent)
   : HexColorBox(std::make_shared<LocalValueModel<QColor>>(), parent) {}
 
 HexColorBox::HexColorBox(QColor current, QWidget* parent)
-  : HexColorBox(std::make_shared<LocalValueModel<QColor>>(std::move(current)),
-      parent) {}
+  : HexColorBox(make_local_value_model(std::move(current)), parent) {}
 
 HexColorBox::HexColorBox(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)

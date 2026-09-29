@@ -1,7 +1,11 @@
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
+#include <stdexcept>
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/VenueHighlightsTableView.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EnumBox.hpp"
@@ -17,29 +21,27 @@ namespace {
   using OrderVisibility = BookViewHighlightProperties::OrderVisibility;
   using VenueHighlight = BookViewHighlightProperties::VenueHighlight;
 
-  auto apply_header_label_style(int bottom_padding, StyleSheet& style) {
+  auto make_font(QFont::Weight weight, int size) {
     auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(12));
+    font.setWeight(weight);
+    font.setPixelSize(scale_width(size));
+    return font;
+  }
+
+  void apply_header_label_style(int bottom_padding, StyleSheet& style) {
     style.get(Any()).
-      set(Font(font)).
+      set(Font(make_font(QFont::Medium, 12))).
       set(PaddingBottom(scale_height(bottom_padding)));
   }
 
-  auto apply_description_label_style(StyleSheet& style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(10));
+  void apply_description_label_style(StyleSheet& style) {
     style.get(Any()).
-      set(Font(font)).
+      set(Font(make_font(QFont::Normal, 10))).
       set(TextColor(QColor(0x808080)));
   }
 
-  auto apply_highlight_box_style(StyleSheet& style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(10));
-    style.get(Any() > is_a<TextBox>()).set(Font(font));
+  void apply_highlight_box_style(StyleSheet& style) {
+    style.get(Any() > is_a<TextBox>()).set(Font(make_font(QFont::Medium, 10)));
   }
 
   auto make_venues_title() {
@@ -64,7 +66,7 @@ namespace {
     return box;
   }
 
-  auto setup_visibility_box() {
+  auto get_visibility_settings() {
     static auto settings = [] {
       auto settings = EnumBox<OrderVisibility>::Settings(
         [] (const auto& value) {
@@ -90,7 +92,7 @@ namespace {
     update_style(*label, [] (auto& style) {
       style.get(Any()).set(PaddingRight(scale_width(8)));
     });
-    auto settings = setup_visibility_box();
+    auto settings = get_visibility_settings();
     settings.m_current = std::move(visibility);
     auto visibility_box = new EnumBox<OrderVisibility>(std::move(settings));
     visibility_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -112,7 +114,7 @@ namespace {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
-      style.get(Any()).set(PaddingRight(scale_height(8)));
+      style.get(Any()).set(PaddingRight(scale_width(8)));
     });
     auto highlight_box = new HighlightBox(std::move(current));
     highlight_box->setFixedSize(scale(120, 19));
@@ -127,10 +129,8 @@ namespace {
   class FixedSizeArrayValueToListModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-      using OperationSignal = ListModel<T>::OperationSignal;
+      using OperationSignal = typename ListModel<T>::OperationSignal;
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-      using StartTransaction = typename ListModel<T>::StartTransaction;
-      using EndTransaction = typename ListModel<T>::EndTransaction;
 
       explicit FixedSizeArrayValueToListModel(
         std::shared_ptr<ValueModel<std::array<Type, N>>> source)
@@ -168,13 +168,19 @@ namespace {
         return m_transaction.connect_operation_signal(slot);
       }
 
-      void transact(const std::function<void()>& transaction) override {
+      void transact(const std::function<void ()>& transaction) override {
         m_transaction.transact(transaction);
       }
 
+    private:
+      std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
+      std::array<Type, N> m_data;
+      ListModelTransactionLog<Type> m_transaction;
+      scoped_connection m_connection;
+
       void on_update(const std::array<Type, N>& data) {
         m_transaction.transact([&] {
-          for(auto i = 0; i < data.size(); ++i) {
+          for(auto i = 0; i != get_size(); ++i) {
             if(m_data[i] != data[i]) {
               auto previous = m_data[i];
               m_data[i] = data[i];
@@ -184,12 +190,6 @@ namespace {
           }
         });
       }
-
-    private:
-      std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
-      std::array<Type, N> m_data;
-      ListModelTransactionLog<Type> m_transaction;
-      scoped_connection m_connection;
   };
 
   using OrderHighlightStateListModel =

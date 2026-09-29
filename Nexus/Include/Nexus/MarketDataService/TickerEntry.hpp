@@ -58,6 +58,9 @@ namespace Nexus {
       /** Returns the most recently published BboQuote. */
       const SequencedTickerBboQuote& get_bbo_quote() const;
 
+      /** Returns the most recently published TimeAndSale. */
+      const SequencedTickerTimeAndSale& get_time_and_sale() const;
+
       /**
        * Publishes a BboQuote.
        * @param bbo_quote The BboQuote to publish.
@@ -110,6 +113,7 @@ namespace Nexus {
       Ticker m_ticker;
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
+      Beam::Sequence m_next_book_quote_sequence;
       Beam::Sequencer m_time_and_sale_sequencer;
       Beam::Sequencer m_ticker_status_sequencer;
       SessionTechnicals m_session_technicals;
@@ -188,6 +192,8 @@ namespace Nexus {
       : m_ticker(std::move(ticker)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
+        m_next_book_quote_sequence(
+          initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
           initial_sequences.m_next_time_and_sale_sequence),
         m_ticker_status_sequencer(
@@ -220,6 +226,7 @@ namespace Nexus {
     auto snapshot = TickerSnapshot(m_ticker);
     snapshot.m_bbo_quote = m_bbo_quote;
     snapshot.m_time_and_sale = m_time_and_sale;
+    snapshot.m_book_quote_sequence = m_next_book_quote_sequence;
     for(auto& ask : m_asks) {
       if((*ask.m_quote)->m_quote.m_size > 0) {
         snapshot.m_asks.push_back(ask.m_quote);
@@ -235,6 +242,11 @@ namespace Nexus {
 
   inline const SequencedTickerBboQuote& TickerEntry::get_bbo_quote() const {
     return m_bbo_quote;
+  }
+
+  inline const SequencedTickerTimeAndSale&
+      TickerEntry::get_time_and_sale() const {
+    return m_time_and_sale;
   }
 
   inline boost::optional<SequencedTickerBboQuote> TickerEntry::publish(
@@ -309,6 +321,7 @@ namespace Nexus {
         entry.m_source_id = source_id;
       }
     }
+    m_next_book_quote_sequence = Beam::increment(i->m_quote.get_sequence());
     return i->m_quote;
   }
 

@@ -17,6 +17,8 @@ endif(WIN32)
 include_directories(${PROJECT_BINARY_DIR})
 add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
+beam_configure_target(Spire)
+target_link_libraries(Spire BeamRoutines)
 target_compile_definitions(Spire PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
@@ -31,48 +33,45 @@ target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-  optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
+if(WIN32)
+  target_link_libraries(Spire
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
+    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH})
+endif()
 if(UNIX)
   target_compile_options(Spire PRIVATE -fPIC)
-  target_link_libraries(Spire
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
 endif()
 if(WIN32)
   target_link_libraries(Spire
@@ -83,4 +82,4 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
-install(TARGETS Spire DESTINATION ${PROJECT_BINARY_DIR}/Application)
+beam_install_target(Spire "${PROJECT_BINARY_DIR}/Application")

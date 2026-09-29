@@ -14,7 +14,7 @@ namespace Spire {
        * Constructs a TechnicalsPanel.
        * @param technicals The session technicals to display.
        * @param default_bid_quantity The default bid quantity to display.
-       * @param default_bid_quantity The default ask quantity to display.
+       * @param default_ask_quantity The default ask quantity to display.
        * @param parent The parent widget.
        */
       TechnicalsPanel(std::shared_ptr<SessionTechnicalsModel> technicals,

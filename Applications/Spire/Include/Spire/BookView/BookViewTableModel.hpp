@@ -6,8 +6,8 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/AnyRef.hpp"
-#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
@@ -23,10 +23,13 @@ namespace Spire {
   /** The type of ValueModel used for a BookEntry. */
   using BookEntryModel = ValueModel<BookEntry>;
 
+  /** Returns the price of a BookEntry. */
+  Nexus::Money get_price(const BookEntry& entry);
+
   /** The type used for a list of BookEntries. */
   using BookEntryListModel = ListModel<BookEntry>;
 
-  /* Enumerates the columns of the BookViewTableModel. */
+  /** Enumerates the columns of the BookViewTableModel. */
   enum class BookViewColumn {
 
     /** The MPID column. */
@@ -40,10 +43,11 @@ namespace Spire {
   };
 
   /** The number of columns in a TableModel representing a BookView. */
-  static const auto BOOK_VIEW_COLUMN_SIZE = 3;
+  constexpr auto BOOK_VIEW_COLUMN_COUNT = 3;
 
   /** Implements the comparator used by the BookEntry TableModel. */
-  bool book_view_comparator(const AnyRef& left, const AnyRef& right);
+  bool book_view_comparator(const AnyRef& left, int left_row,
+    const AnyRef& right, int right_row, int column);
 
   /** Makes a TableModel as a view over a list of BookEntries. */
   std::shared_ptr<TableModel> make_book_view_table_model(

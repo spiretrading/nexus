@@ -11,7 +11,7 @@ const std::type_info& AnyRef::AnyTypeInfo::get_type(void* ptr) const noexcept {
   return static_cast<std::any*>(ptr)->type();
 }
 
-std::any AnyRef::AnyTypeInfo::to_any(void* ptr) const noexcept {
+std::any AnyRef::AnyTypeInfo::to_any(void* ptr) const {
   return *static_cast<std::any*>(ptr);
 }
 
@@ -23,10 +23,12 @@ void AnyRef::AnyTypeInfo::assign(void* ptr, const std::any& value) const {
 }
 
 void* AnyRef::AnyTypeInfo::copy(const void* ptr) const {
-  return nullptr;
+  return new std::any(*static_cast<const std::any*>(ptr));
 }
 
-void AnyRef::AnyTypeInfo::drop(const void* ptr) const noexcept {}
+void AnyRef::AnyTypeInfo::drop(const void* ptr) const noexcept {
+  delete static_cast<const std::any*>(ptr);
+}
 
 AnyRef::AnyRef() noexcept
   : AnyRef(nullptr) {}
@@ -35,12 +37,15 @@ AnyRef::AnyRef(std::nullptr_t) noexcept
   : AnyRef(nullptr, TypeInfo<void>::get(), Qualifiers::NONE) {}
 
 AnyRef::AnyRef(std::any& value) noexcept
-  : AnyRef(
-      &const_cast<std::any&>(value), AnyTypeInfo::get(), Qualifiers::NONE) {}
+  : AnyRef(&value, AnyTypeInfo::get(), Qualifiers::NONE) {}
 
 AnyRef::AnyRef(const std::any& value) noexcept
   : AnyRef(&const_cast<std::any&>(value), AnyTypeInfo::get(),
       Qualifiers::CONSTANT) {}
+
+AnyRef::AnyRef(std::any value, by_value_t)
+  : AnyRef(
+      new std::any(std::move(value)), AnyTypeInfo::get(), Qualifiers::OWNED) {}
 
 AnyRef::AnyRef(const AnyRef& any) {
   if(any.m_qualifiers == Qualifiers::OWNED) {
@@ -52,15 +57,8 @@ AnyRef::AnyRef(const AnyRef& any) {
   m_qualifiers = any.m_qualifiers;
 }
 
-AnyRef::AnyRef(AnyRef& any) {
-  if(any.m_qualifiers == Qualifiers::OWNED) {
-    m_ptr = any.m_type->copy(any.m_ptr);
-  } else {
-    m_ptr = any.m_ptr;
-  }
-  m_type = any.m_type;
-  m_qualifiers = any.m_qualifiers;
-}
+AnyRef::AnyRef(AnyRef& any)
+  : AnyRef(std::as_const(any)) {}
 
 AnyRef::AnyRef(AnyRef&& any) noexcept
   : AnyRef(std::exchange(any.m_ptr, nullptr),
@@ -74,7 +72,10 @@ AnyRef::~AnyRef() {
 }
 
 bool AnyRef::has_value() const noexcept {
-  return m_ptr != nullptr;
+  if(m_type == &AnyTypeInfo::get()) {
+    return static_cast<const std::any*>(m_ptr)->has_value();
+  }
+  return m_ptr;
 }
 
 const std::type_info& AnyRef::get_type() const noexcept {
@@ -100,14 +101,28 @@ bool AnyRef::is_const_volatile() const noexcept {
 }
 
 AnyRef& AnyRef::assign(const std::any& value) {
-  if(is_set(m_qualifiers, Qualifiers::CONSTANT)) {
+  if(is_const() || is_volatile()) {
     throw std::bad_any_cast();
   }
   m_type->assign(m_ptr, value);
   return *this;
 }
 
+AnyRef& AnyRef::operator =(const AnyRef& any) {
+  if(this != &any) {
+    *this = AnyRef(any);
+  }
+  return *this;
+}
+
+AnyRef& AnyRef::operator =(AnyRef& any) {
+  return *this = std::as_const(any);
+}
+
 AnyRef& AnyRef::operator =(AnyRef&& any) noexcept {
+  if(this == &any) {
+    return *this;
+  }
   if(m_qualifiers == Qualifiers::OWNED) {
     m_type->drop(m_ptr);
   }
@@ -128,6 +143,9 @@ AnyRef::AnyRef(
     m_type(&type),
     m_qualifiers(qualifiers) {}
 
-std::any Spire::to_any(const AnyRef& any) noexcept {
+std::any Spire::to_any(const AnyRef& any) {
+  if(any.is_volatile()) {
+    throw std::bad_any_cast();
+  }
   return any.m_type->to_any(any.m_ptr);
 }

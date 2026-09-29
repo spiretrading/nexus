@@ -93,8 +93,9 @@ TEST_SUITE("DefinitionsServlet") {
     }
     SUBCASE("load_trading_schedule") {
       auto result = m_client->send_request<LoadTradingScheduleService>();
-      auto e1 = result.find(date(2025, 7, 1), ASX);
-      REQUIRE(e1 == m_trading_schedule.find(date(2025, 7, 1), ASX));
+      auto timestamp = time_from_string("2025-07-01 00:00:00");
+      auto events = result.find(timestamp, ASX);
+      REQUIRE(events == m_trading_schedule.find(timestamp, ASX));
     }
   }
 }

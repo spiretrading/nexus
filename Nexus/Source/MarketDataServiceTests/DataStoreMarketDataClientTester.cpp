@@ -228,7 +228,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
     auto fixture = Fixture();
     auto technicals =
       fixture.m_client.load_session_technicals(parse_ticker("TST.TSX"));
-    test_json_equality(technicals, SessionTechnicals());
+    test_json_equality(technicals, SequencedSessionTechnicals());
   }
 
   TEST_CASE("load_ticker_info_from_prefix") {

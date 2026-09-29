@@ -583,12 +583,14 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::LoadSessionTechnicalsOperation>(
           operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_technicals = SessionTechnicals();
-      test_technicals.m_open = 2 * Money::ONE;
-      test_technicals.m_previous_close = Money::ONE + Money::CENT;
-      test_technicals.m_high = 2 * Money::ONE;
-      test_technicals.m_low = Money::CENT;
-      test_technicals.m_volume = Quantity(100);
+      auto technicals = SessionTechnicals();
+      technicals.m_open = 2 * Money::ONE;
+      technicals.m_previous_close = Money::ONE + Money::CENT;
+      technicals.m_high = 2 * Money::ONE;
+      technicals.m_low = Money::CENT;
+      technicals.m_volume = Quantity(100);
+      auto test_technicals =
+        SequencedSessionTechnicals(technicals, Beam::Sequence(5));
       received_operation->m_result.set(test_technicals);
       auto received_technicals = result.get();
       test_json_equality(received_technicals, test_technicals);
@@ -604,12 +606,14 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::LoadSessionTechnicalsOperation>(
           operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_technicals = SessionTechnicals();
-      test_technicals.m_open = 152 * Money::ONE;
-      test_technicals.m_previous_close = 151 * Money::ONE;
-      test_technicals.m_high = 152 * Money::ONE;
-      test_technicals.m_low = 148 * Money::ONE;
-      test_technicals.m_volume = Quantity(10000);
+      auto technicals = SessionTechnicals();
+      technicals.m_open = 152 * Money::ONE;
+      technicals.m_previous_close = 151 * Money::ONE;
+      technicals.m_high = 152 * Money::ONE;
+      technicals.m_low = 148 * Money::ONE;
+      technicals.m_volume = Quantity(10000);
+      auto test_technicals =
+        SequencedSessionTechnicals(technicals, Beam::Sequence(5));
       received_operation->m_result.set(test_technicals);
       auto received_technicals = result.get();
       test_json_equality(received_technicals, test_technicals);
@@ -618,7 +622,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     SUBCASE("unavailable") {
       auto ticker = parse_ticker("BHP.TSXV");
       auto technicals = fixture.m_client.load_session_technicals(ticker);
-      test_json_equality(technicals, SessionTechnicals());
+      test_json_equality(technicals, SequencedSessionTechnicals());
     }
   }
 

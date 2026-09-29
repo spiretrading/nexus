@@ -1,5 +1,6 @@
 #ifndef SPIRE_LOCAL_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_VALUE_MODEL_HPP
+#include <memory>
 #include <utility>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
@@ -35,6 +36,15 @@ namespace Spire {
       mutable typename UpdateSignal m_update_signal;
       Type m_value;
   };
+
+  /**
+   * Constructs a LocalValueModel over a given value.
+   * @param value The initial value.
+   */
+  template<typename T>
+  auto make_local_value_model(T value) {
+    return std::make_shared<LocalValueModel<T>>(std::move(value));
+  }
 
   template<typename T>
   LocalValueModel<T>::LocalValueModel()

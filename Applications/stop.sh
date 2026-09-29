@@ -14,8 +14,12 @@ services=(
   "ServiceLocator"
 )
 
+status=0
 for directory in "${services[@]}"; do
-  pushd $directory/Application > /dev/null
-  ./stop.sh
-  popd > /dev/null
+  application="$directory/Application"
+  if [[ ! -d "$application" ]]; then
+    application="$directory"
+  fi
+  (cd "$application" && ./stop.sh "$@") || status=$?
 done
+exit "$status"

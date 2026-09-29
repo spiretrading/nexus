@@ -6,14 +6,13 @@ qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(SignIn ${header_files} ${source_files})
+beam_configure_target(SignIn)
+target_link_libraries(SignIn BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(SignIn PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_sign_in)
-install(TARGETS SignIn CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS SignIn CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(SignIn "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE test_header_files ../../Include/Spire/SignInUiTester/*.hpp)
 file(GLOB_RECURSE test_source_files ../../Source/SignInUiTester/*.cpp)
 if(WIN32)
@@ -23,32 +22,11 @@ elseif(APPLE)
 endif()
 add_executable(
   SignInUiTester ${app_type} ${test_header_files} ${test_source_files})
+beam_configure_target(SignInUiTester)
+target_link_libraries(SignInUiTester BeamRoutines)
 target_compile_definitions(SignInUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-if(UNIX)
-  target_link_libraries(SignInUiTester
-    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
-  if(EXISTS ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(SignInUiTester
-      debug ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
-      optimized ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
-  endif()
-  target_link_libraries(SignInUiTester
-    debug ${QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
-    optimized ${QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_DBUS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_DBUS_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XML_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
-endif()
 target_link_libraries(SignInUiTester Styles Library SignIn Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
@@ -58,35 +36,36 @@ target_link_libraries(SignInUiTester Styles Library SignIn Resources
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
+  target_link_libraries(SignInUiTester
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH})
   target_link_libraries(SignInUiTester
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
     optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
@@ -101,29 +80,4 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
-if(UNIX)
-  target_link_libraries(SignInUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_EDID_LIBRARY_DEBUG_PATH}
-    optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
-    X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
-endif()
-install(TARGETS SignInUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(SignInUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

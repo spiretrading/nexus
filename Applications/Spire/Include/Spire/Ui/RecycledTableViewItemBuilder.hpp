@@ -84,7 +84,7 @@ namespace Spire {
   template<typename B>
   std::deque<QWidget*>& RecycledTableViewItemBuilder<B>::get_pool(int column) {
     while(static_cast<int>(m_pool.size()) < column + 1) {
-      m_pool.push_back({});
+      m_pool.emplace_back();
     }
     return m_pool[column];
   }

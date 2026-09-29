@@ -91,7 +91,8 @@ Nexus Administration Web Services
 
     :param id: The id of the modification to load.
     :type id: number
-    :statuscode 200: :py:class:`nexus.administration_service.EntitlementModifcation`
+    :statuscode 200:
+      :py:class:`nexus.administration_service.EntitlementModification`
       The entitlement modification with the specified id.
 
 .. http:post:: /api/administration_service/submit_entitlement_modification_request

@@ -133,6 +133,7 @@ TEST_SUITE("TickerEntry") {
     auto ts1 = TimeAndSale(time_from_string("2024-07-11 13:00:00"),
       10 * Money::CENT, 100, TimeAndSale::Condition(), "TSX", "", "");
     expected_snapshot.m_time_and_sale = entry.publish(ts1, 1).get();
+    expected_snapshot.m_book_quote_sequence = Beam::Sequence(22);
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
     auto bbo2 = BboQuote(make_bid(12 * Money::CENT, 300),
@@ -146,6 +147,7 @@ TEST_SUITE("TickerEntry") {
     auto book_ask2 = BookQuote("MP2", false, TSX,
       make_ask(14 * Money::CENT, 600), time_from_string("2024-07-11 13:00:02"));
     expected_snapshot.m_asks.push_back(entry.publish(book_ask2, 1).get());
+    expected_snapshot.m_book_quote_sequence = Beam::Sequence(24);
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
     auto book_bid1_update = BookQuote("MP1", false, TSX,
@@ -154,6 +156,7 @@ TEST_SUITE("TickerEntry") {
     auto book_ask1_update = BookQuote("MP1", false, TSX,
       make_ask(11 * Money::CENT, 800), time_from_string("2024-07-11 13:00:03"));
     expected_snapshot.m_asks[0] = entry.publish(book_ask1_update, 1).get();
+    expected_snapshot.m_book_quote_sequence = Beam::Sequence(26);
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
     auto ts2 = TimeAndSale(time_from_string("2024-07-11 13:00:04"),
@@ -161,6 +164,28 @@ TEST_SUITE("TickerEntry") {
     expected_snapshot.m_time_and_sale = entry.publish(ts2, 1).get();
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
+  }
+
+  TEST_CASE("snapshot_sequence_without_book_quotes") {
+    auto initial_sequences = TickerEntry::InitialSequences();
+    initial_sequences.m_next_book_quote_sequence = Beam::Sequence(50);
+    auto ticker = parse_ticker("TST.TSX");
+    auto entry = TickerEntry(ticker, Money::ONE, initial_sequences);
+    auto snapshot = entry.load_snapshot();
+    REQUIRE(snapshot.is_initialized());
+    REQUIRE(snapshot->m_bids.empty());
+    REQUIRE(snapshot->m_book_quote_sequence == Beam::Sequence(50));
+    auto quote = BookQuote("MP1", false, TSX, make_bid(10 * Money::CENT, 100),
+      time_from_string("2024-07-11 13:00:00"));
+    entry.publish(quote, 1);
+    auto removal = BookQuote("MP1", false, TSX,
+      make_bid(10 * Money::CENT, -100),
+      time_from_string("2024-07-11 13:00:01"));
+    entry.publish(removal, 1);
+    auto empty = entry.load_snapshot();
+    REQUIRE(empty.is_initialized());
+    REQUIRE(empty->m_bids.empty());
+    REQUIRE(empty->m_book_quote_sequence == Beam::Sequence(52));
   }
 
   TEST_CASE("session_technicals") {
