@@ -6,9 +6,9 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
   ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
-  NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  TickerInput, StyleDeclarationValueInput,
-  TextInput } from '../viewer/propertyInput';
+  NumberInput, NumberSliderInput, MoneyInput, ReadonlyInput, TextInput } from
+    '../viewer/propertyInput';
+import { EditListModalExample } from './edit_list_modal_example';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
 
@@ -354,6 +354,25 @@ const modal =
           style: {width: '640px', height: '480px'}
         }));
     });
+
+const editListModal =
+  new ComponentSchema('EditListModal',
+    [new PropertySchema('title', 'Edit Items', TextInput),
+      new PropertySchema('titleSingle', 'Edit Item', TextInput),
+      new PropertySchema('listHeading', 'Added Items', TextInput),
+      new PropertySchema('listHeadingSingle', 'Added Item', TextInput),
+      new PropertySchema('items',
+        ['Alpha', 'Beta', 'Gamma', 'Delta', 'Item, with comma', 'Item "quoted"'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('selected', ['Alpha'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('selectionMode',
+        WebPortal.EditListModal.SelectionMode.MULTIPLE,
+        EnumInput(WebPortal.EditListModal.SelectionMode)),
+      new PropertySchema('readOnly', false, BooleanInput)],
+    [new SignalSchema('onSubmit', 'selected'),
+      new SignalSchema('onClose', '')],
+    EditListModalExample);
 
 const decimalInput =
   new ComponentSchema('DecimalInput',
@@ -1179,8 +1198,9 @@ const tableHeaderCell =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     countrySelect, currencySelect, dateInput, disclosure, dateTimeInput,
-    decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
-    filterChip, filterInput, hLine, iconLabelButton, input, integerField,
+    decimalInput, durationInput, editListModal, emptyMessage, errorMessage,
+    expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
+    integerField,
     labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
     pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
     rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
