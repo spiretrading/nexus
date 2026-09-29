@@ -19,7 +19,7 @@ interface Properties<T> {
   /** The heading in single selection mode. Falls back to listHeading. */
   listHeadingSingle?: string;
 
-  /** Resolves queries for suggestions and CSV import. */
+  /** Resolves suggestions, typed entries, and CSV entries. */
   model: QueryModel<T>;
 
   /** The committed selection. Changes reset the editor's working selection. */
@@ -53,10 +53,12 @@ interface State<T> {
   submission: T[];
   query: string;
   highlighted: number;
+  suggestionSelected: boolean;
   removal: number;
   expanded: boolean;
   error: string;
   importing: boolean;
+  adding: boolean;
   suggestions: readonly T[];
   searching: boolean;
   searchError: string;
@@ -75,10 +77,12 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       submission: selected.slice(),
       query: '',
       highlighted: 0,
+      suggestionSelected: false,
       removal: -1,
       expanded: false,
       error: '',
       importing: false,
+      adding: false,
       suggestions: [],
       searching: false,
       searchError: ''
@@ -106,7 +110,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       const selected = this.normalize(this.props.selected);
       this.setState({selected, submission: selected.slice(), query: '',
         removal: -1, highlighted: 0, expanded: false, error: '',
-        importing: false, suggestions: [], searching: false, searchError: ''});
+        importing: false, adding: false, suggestions: [], searching: false,
+        searchError: ''});
     } else if(previous.model !== this.props.model) {
       this.cancelImport();
       this.setState({importing: false, error: ''});
@@ -159,14 +164,14 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
         </header>
         <Content readOnly={this.props.readOnly}
             onClose={this.onClose} onSubmit={this.onSubmit}
-            disabled={!changed || this.state.importing}>
+            disabled={!changed || this.state.importing || this.state.adding}>
           <Form readOnly={this.props.readOnly}>
             {!this.props.readOnly &&
               <div className={css(STYLES.search)}>
                 <Input ref={this.input} role='combobox'
                   aria-label={this.props.placeholder ?? 'Find an item'}
                   aria-autocomplete='list'
-                  aria-busy={this.state.searching}
+                  aria-busy={this.state.searching || this.state.adding}
                   aria-expanded={this.state.expanded}
                   aria-controls={`${this.identifier}-suggestions`}
                   aria-activedescendant={(() => {
@@ -191,7 +196,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
                           id={`${this.identifier}-match-${i}`}
                           aria-selected={i === this.state.highlighted}
                           className={css(STYLES.suggestion)}
-                          onPointerEnter={() => this.setState({highlighted: i})}
+                          onPointerEnter={() => this.setState({highlighted: i,
+                            suggestionSelected: true})}
                           onMouseDown={this.onSuggestionMouseDown}
                           onClick={() => this.add(item)}>
                         {this.props.getLabel(item)}
@@ -229,6 +235,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
                 {this.state.error}
               </p>}
             {this.state.importing && <p role='status'>Importing...</p>}
+            {this.state.adding && <p role='status'>Adding item...</p>}
           </Form>
         </Content>
       </dialog>);
@@ -278,8 +285,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       selected = [item];
     }
     this.setState({selected, query: '', highlighted: 0, removal: -1,
-      error: '', expanded: false, searching: false, searchError: ''});
-    this.input.current.focus();
+      error: '', expanded: false, adding: false, searching: false,
+      searchError: ''});
   }
 
   private cancelImport(): void {
@@ -289,6 +296,36 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       this.reader.onerror = null;
       this.reader.abort();
       this.reader = null;
+    }
+  }
+
+  private async addQuery(fallback: T): Promise<void> {
+    if(this.state.adding) {
+      return;
+    }
+    const version = this.searchVersion;
+    const query = this.state.query;
+    this.setState({expanded: true, adding: true, error: ''});
+    try {
+      const item = await this.props.model.parse(query);
+      if(version !== this.searchVersion) {
+        return;
+      }
+      if(item !== null) {
+        this.add(item);
+      } else if(fallback !== null) {
+        this.add(fallback);
+      } else if(!this.state.searching) {
+        this.setState({error: `Unknown or ambiguous item: ${query}`});
+      }
+    } catch {
+      if(version === this.searchVersion) {
+        this.setState({error: 'Unable to resolve this item. Try again.'});
+      }
+    } finally {
+      if(version === this.searchVersion) {
+        this.setState({adding: false});
+      }
     }
   }
 
@@ -303,7 +340,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   private search(query: string): void {
     this.cancelSearch();
     const model = this.props.model;
-    this.setState({suggestions: [], searching: false, searchError: ''});
+    this.setState({suggestions: [], searching: false, searchError: '',
+      adding: false, suggestionSelected: false});
     if(query === '' || this.props.readOnly) {
       return;
     }
@@ -350,6 +388,9 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   };
 
   private onSubmit = () => {
+    if(this.state.adding || this.state.importing) {
+      return;
+    }
     this.setState({submission: this.state.selected.slice()});
     this.props.onSubmit?.(this.state.selected.slice());
   };
@@ -377,12 +418,20 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       } else {
         highlighted = Math.max(highlighted - 1, 0);
       }
-      this.setState({highlighted: Math.max(0, highlighted)});
+      this.setState({highlighted: Math.max(0, highlighted),
+        suggestionSelected: matches.length !== 0});
     } else if(event.key === 'Enter') {
       event.preventDefault();
       const item = matches[this.state.highlighted];
-      if(item !== undefined && this.state.expanded) {
+      if(item !== undefined && this.state.expanded &&
+          this.state.suggestionSelected) {
         this.add(item);
+      } else if(this.state.query !== '' && !this.props.readOnly) {
+        let fallback: T = null;
+        if(this.state.expanded) {
+          fallback = item ?? null;
+        }
+        this.addQuery(fallback);
       }
     } else if(event.key === 'Escape' && this.state.expanded) {
       event.preventDefault();

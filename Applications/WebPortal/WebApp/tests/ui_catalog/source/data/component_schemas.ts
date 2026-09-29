@@ -7,10 +7,11 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
   CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
-  ReadonlyInput, TextInput } from '../viewer/propertyInput';
+  ReadonlyInput, ScopeValueInput, TextInput } from '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ListInputExample } from './list_input_example';
+import { ScopeInputExample } from './scope_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
   './schemas';
 
@@ -586,12 +587,14 @@ const pagination =
 
 const scopeInput =
   new ComponentSchema('ScopeInput',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
+    [new PropertySchema('value',
+        new Nexus.Scope(Nexus.Ticker.parse('ABX.TSX')), ScopeValueInput),
       new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.ScopeInput);
+    ScopeInputExample, 300);
 
 const scopeItemInput =
   new ComponentSchema('ScopeItemInput',
@@ -1215,10 +1218,10 @@ export const componentSections = [
     integerField,
     labeledCheckbox, link, listInput, modal, moneyInput, navigationHeader,
     navigationTab,
-    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
+    pageLayout, pagination, scopeItemInput, relativeDate, roleIcon,
     rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton, segmentedControl, timeOfDayInput]),
-  new ComponentSection('App Kit', [accountGroupListInput]),
+  new ComponentSection('App Kit', [accountGroupListInput, scopeInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
