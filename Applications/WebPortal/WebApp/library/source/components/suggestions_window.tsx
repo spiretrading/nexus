@@ -73,10 +73,6 @@ export class SuggestionsWindow<T> extends React.Component<Properties<T>> {
               onClick={() => this.props.onSubmit(item)}>
             {this.props.getLabel(item)}
           </li>)}
-        {this.props.loading &&
-          <li role='presentation' className={css(STYLES.message)}>
-            <span role='status'>Searching...</span>
-          </li>}
         {this.props.error &&
           <li role='presentation' className={css(STYLES.message)}>
             <span role='alert'>{this.props.error}</span>

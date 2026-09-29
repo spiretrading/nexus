@@ -94,6 +94,8 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
         aria-activedescendant={active}
         aria-busy={this.state.searching || this.state.resolving}
         aria-invalid={Boolean(this.state.error) || rest['aria-invalid']}
+        data-pending={!this.state.error && (this.state.resolving ||
+          this.state.query !== this.getText(this.props.value))}
         value={this.state.query} style={{width: '100%', ...rest.style}}
         onChange={this.onQuery} onKeyDown={this.onKeyDown}
         onBlur={this.onBlur}/>
