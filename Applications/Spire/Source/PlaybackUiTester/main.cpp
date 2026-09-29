@@ -53,7 +53,12 @@ namespace {
         return (*std::find_if(roster.begin(), roster.end(), is_member))->
           get_name();
       }
-      auto label = ticker ? Spire::to_text(ticker) : QObject::tr("Unassigned");
+      auto label = [&] {
+        if(ticker) {
+          return Spire::to_text(ticker);
+        }
+        return QObject::tr("Unassigned");
+      }();
       if(count == 0) {
         return label;
       }
