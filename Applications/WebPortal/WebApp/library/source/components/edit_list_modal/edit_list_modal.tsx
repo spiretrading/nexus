@@ -1,8 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { QueryModel } from '../../models';
+import { FilteredQueryModel, QueryModel } from '../../models';
 import { Button } from '../button';
-import { Input } from '../input';
+import { ComboBox } from '../combo_box';
 import { parseCsv } from './csv';
 
 interface Properties<T> {
@@ -51,17 +51,10 @@ interface Properties<T> {
 interface State<T> {
   selected: T[];
   submission: T[];
-  query: string;
-  highlighted: number;
-  suggestionSelected: boolean;
   removal: number;
-  expanded: boolean;
   error: string;
   importing: boolean;
   adding: boolean;
-  suggestions: readonly T[];
-  searching: boolean;
-  searchError: string;
 }
 
 /** Edits a selection from a list of choices without changing the caller's data
@@ -75,25 +68,18 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     this.state = {
       selected,
       submission: selected.slice(),
-      query: '',
-      highlighted: 0,
-      suggestionSelected: false,
       removal: -1,
-      expanded: false,
       error: '',
       importing: false,
-      adding: false,
-      suggestions: [],
-      searching: false,
-      searchError: ''
+      adding: false
     };
     this.dialog = React.createRef<HTMLDialogElement>();
-    this.input = React.createRef<HTMLInputElement>();
+    this.input = React.createRef<ComboBox<T>>();
     this.upload = React.createRef<HTMLInputElement>();
     this.reader = null;
-    this.searchVersion = 0;
+    this.sourceModel = null;
+    this.queryModel = null;
     this.importVersion = 0;
-    this.searchTimer = null;
     this.identifier = `edit-list-${EditListModal.nextIdentifier++}`;
   }
 
@@ -101,36 +87,35 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     this.dialog.current.showModal();
   }
 
-  public componentDidUpdate(previous: Properties<T>): void {
+  public componentDidUpdate(previous: Properties<T>, state: State<T>): void {
     if(previous.selected !== this.props.selected ||
         previous.selectionMode !== this.props.selectionMode ||
         previous.readOnly !== this.props.readOnly) {
       this.cancelImport();
-      this.cancelSearch();
+      this.input.current?.reset();
       const selected = this.normalize(this.props.selected);
-      this.setState({selected, submission: selected.slice(), query: '',
-        removal: -1, highlighted: 0, expanded: false, error: '',
-        importing: false, adding: false, suggestions: [], searching: false,
-        searchError: ''});
+      this.setState({selected, submission: selected.slice(), removal: -1,
+        error: '', importing: false, adding: false});
     } else if(previous.model !== this.props.model) {
       this.cancelImport();
       this.setState({importing: false, error: ''});
-      this.search(this.state.query);
-    }
-    if(this.state.expanded) {
-      this.dialog.current.querySelector(
-        `#${this.identifier}-match-${this.state.highlighted}`)?.scrollIntoView(
-          {block: 'nearest'});
+    } else if(state.selected !== this.state.selected ||
+        previous.isEqual !== this.props.isEqual) {
+      this.input.current?.refresh();
     }
   }
 
   public componentWillUnmount(): void {
     this.cancelImport();
-    this.cancelSearch();
     this.dialog.current.close();
   }
 
   public render(): JSX.Element {
+    if(this.sourceModel !== this.props.model) {
+      this.sourceModel = this.props.model;
+      this.queryModel = new FilteredQueryModel(this.props.model, item =>
+        !this.state.selected.some(selected => this.equals(item, selected)));
+    }
     const single = this.isSingle();
     const heading = (() => {
       if(single) {
@@ -147,7 +132,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       }
       return this.props.title;
     })();
-    const matches = this.getMatches();
     const changed = this.state.selected.length !==
       this.state.submission.length || this.state.selected.some((item, i) =>
         !this.equals(item, this.state.submission[i]));
@@ -168,54 +152,14 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
           <Form readOnly={this.props.readOnly}>
             {!this.props.readOnly &&
               <div className={css(STYLES.search)}>
-                <Input ref={this.input} role='combobox'
+                <ComboBox ref={this.input} value={null} model={this.queryModel}
+                  getLabel={this.props.getLabel} isEqual={this.props.isEqual}
+                  commitOnBlur={false}
                   aria-label={this.props.placeholder ?? 'Find an item'}
-                  aria-autocomplete='list'
-                  aria-busy={this.state.searching || this.state.adding}
-                  aria-expanded={this.state.expanded}
-                  aria-controls={`${this.identifier}-suggestions`}
-                  aria-activedescendant={(() => {
-                    if(this.state.expanded &&
-                        matches[this.state.highlighted] !== undefined) {
-                      return `${this.identifier}-match-${
-                        this.state.highlighted}`;
-                    }
-                    return undefined;
-                  })()}
-                  autoComplete='off'
                   placeholder={this.props.placeholder ?? 'Find an item'}
-                  value={this.state.query} style={{width: '100%'}}
-                  onChange={this.onQuery}
-                  onBlur={this.onBlur} onKeyDown={this.onKeyDown}/>
-                {this.state.expanded &&
-                  <ul id={`${this.identifier}-suggestions`} role='listbox'
-                      aria-label='Available items'
-                      className={css(STYLES.suggestions)}>
-                    {matches.map((item, i) =>
-                      <li key={i} role='option'
-                          id={`${this.identifier}-match-${i}`}
-                          aria-selected={i === this.state.highlighted}
-                          className={css(STYLES.suggestion)}
-                          onPointerEnter={() => this.setState({highlighted: i,
-                            suggestionSelected: true})}
-                          onMouseDown={this.onSuggestionMouseDown}
-                          onClick={() => this.add(item)}>
-                        {this.props.getLabel(item)}
-                      </li>)}
-                    {this.state.searching &&
-                      <li role='presentation' className={css(STYLES.noMatches)}>
-                        <span role='status'>Searching...</span>
-                      </li>}
-                    {this.state.searchError &&
-                      <li role='presentation' className={css(STYLES.noMatches)}>
-                        <span role='alert'>{this.state.searchError}</span>
-                      </li>}
-                    {matches.length === 0 && !this.state.searching &&
-                        !this.state.searchError &&
-                      <li role='presentation' className={css(STYLES.noMatches)}>
-                        No matches
-                      </li>}
-                  </ul>}
+                  onChange={this.onAdd}
+                  onValidationError={this.onValidationError}
+                  onResolvingChange={this.onResolvingChange}/>
               </div>}
             <Section readOnly={this.props.readOnly} single={single}
                 heading={heading}>
@@ -265,30 +209,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     return result;
   }
 
-  private getMatches(): T[] {
-    return this.normalizeChoices(this.state.suggestions).filter(item =>
-      !this.state.selected.some(selected => this.equals(item, selected)));
-  }
-
-  private normalizeChoices(items: readonly T[]): T[] {
-    if(!this.props.isEqual) {
-      return Array.from(new Set(items));
-    }
-    return items.filter((item, i, items) =>
-      items.findIndex(other => this.equals(item, other)) === i);
-  }
-
-  private add(item: T): void {
-    this.cancelSearch();
-    let selected = this.normalize([...this.state.selected, item]);
-    if(this.isSingle()) {
-      selected = [item];
-    }
-    this.setState({selected, query: '', highlighted: 0, removal: -1,
-      error: '', expanded: false, adding: false, searching: false,
-      searchError: ''});
-  }
-
   private cancelImport(): void {
     ++this.importVersion;
     if(this.reader) {
@@ -297,70 +217,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       this.reader.abort();
       this.reader = null;
     }
-  }
-
-  private async addQuery(fallback: T): Promise<void> {
-    if(this.state.adding) {
-      return;
-    }
-    const version = this.searchVersion;
-    const query = this.state.query;
-    this.setState({expanded: true, adding: true, error: ''});
-    try {
-      const item = await this.props.model.parse(query);
-      if(version !== this.searchVersion) {
-        return;
-      }
-      if(item !== null) {
-        this.add(item);
-      } else if(fallback !== null) {
-        this.add(fallback);
-      } else if(!this.state.searching) {
-        this.setState({error: `Unknown or ambiguous item: ${query}`});
-      }
-    } catch {
-      if(version === this.searchVersion) {
-        this.setState({error: 'Unable to resolve this item. Try again.'});
-      }
-    } finally {
-      if(version === this.searchVersion) {
-        this.setState({adding: false});
-      }
-    }
-  }
-
-  private cancelSearch(): void {
-    ++this.searchVersion;
-    if(this.searchTimer !== null) {
-      window.clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
-  }
-
-  private search(query: string): void {
-    this.cancelSearch();
-    const model = this.props.model;
-    this.setState({suggestions: [], searching: false, searchError: '',
-      adding: false, suggestionSelected: false});
-    if(query === '' || this.props.readOnly) {
-      return;
-    }
-    const version = this.searchVersion;
-    this.setState({searching: true});
-    this.searchTimer = window.setTimeout(async () => {
-      this.searchTimer = null;
-      try {
-        const suggestions = await model.submit(query);
-        if(version === this.searchVersion) {
-          this.setState({suggestions, searching: false, highlighted: 0});
-        }
-      } catch {
-        if(version === this.searchVersion) {
-          this.setState({searching: false,
-            searchError: 'Unable to load items. Try typing again.'});
-        }
-      }
-    }, 200);
   }
 
   private onCancel = (event: React.SyntheticEvent) => {
@@ -383,7 +239,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   private onClose = () => {
     this.cancelImport();
-    this.cancelSearch();
+    this.input.current?.reset();
     this.props.onClose?.();
   };
 
@@ -395,53 +251,24 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     this.props.onSubmit?.(this.state.selected.slice());
   };
 
-  private onQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({query: event.target.value, highlighted: 0,
-      expanded: event.target.value !== ''});
-    this.search(event.target.value);
-  };
-
-  private onBlur = () => {
-    this.setState({expanded: false});
-  };
-
-  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    const matches = this.getMatches();
-    if(event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      if(!this.state.expanded) {
-        return;
-      }
-      event.preventDefault();
-      let highlighted = this.state.highlighted;
-      if(event.key === 'ArrowDown') {
-        highlighted = Math.min(highlighted + 1, matches.length - 1);
-      } else {
-        highlighted = Math.max(highlighted - 1, 0);
-      }
-      this.setState({highlighted: Math.max(0, highlighted),
-        suggestionSelected: matches.length !== 0});
-    } else if(event.key === 'Enter') {
-      event.preventDefault();
-      const item = matches[this.state.highlighted];
-      if(item !== undefined && this.state.expanded &&
-          this.state.suggestionSelected) {
-        this.add(item);
-      } else if(this.state.query !== '' && !this.props.readOnly) {
-        let fallback: T = null;
-        if(this.state.expanded) {
-          fallback = item ?? null;
-        }
-        this.addQuery(fallback);
-      }
-    } else if(event.key === 'Escape' && this.state.expanded) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.setState({expanded: false});
+  private onAdd = (item: T) => {
+    if(item === null) {
+      return;
     }
+    let selected = this.normalize([...this.state.selected, item]);
+    if(this.isSingle()) {
+      selected = [item];
+    }
+    this.setState({selected, removal: -1, error: '', adding: false});
+    this.input.current.reset();
   };
 
-  private onSuggestionMouseDown = (event: React.MouseEvent) => {
-    event.preventDefault();
+  private onResolvingChange = (adding: boolean) => {
+    this.setState({adding});
+  };
+
+  private onValidationError = (error: string) => {
+    this.setState({error});
   };
 
   private onSelect = (removal: number) => {
@@ -488,7 +315,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
         }
         this.setState(state => ({
           selected: this.normalize([...state.selected, ...imported]),
-          importing: false, error: '', removal: -1, highlighted: 0
+          importing: false, error: '', removal: -1
         }));
       } catch(error) {
         if(version !== this.importVersion) {
@@ -510,12 +337,12 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   private static nextIdentifier = 0;
   private dialog: React.RefObject<HTMLDialogElement>;
-  private input: React.RefObject<HTMLInputElement>;
+  private input: React.RefObject<ComboBox<T>>;
   private upload: React.RefObject<HTMLInputElement>;
   private reader: FileReader;
-  private searchVersion: number;
+  private sourceModel: QueryModel<T>;
+  private queryModel: QueryModel<T>;
   private importVersion: number;
-  private searchTimer: number;
   private identifier: string;
 }
 
@@ -693,27 +520,6 @@ const STYLES = StyleSheet.create({
   submission: {paddingTop: '30px'},
   form: {borderBottom: '1px solid #E6E6E6', paddingBottom: '30px'},
   search: {position: 'relative', marginBottom: '18px'},
-  suggestions: {
-    position: 'absolute',
-    zIndex: 2,
-    left: 0,
-    right: 0,
-    top: '100%',
-    maxHeight: '170px',
-    overflowY: 'auto',
-    listStyle: 'none',
-    padding: 0,
-    margin: '4px 0 0',
-    background: '#FFFFFF',
-    boxShadow: '0 2px 5px rgb(0 0 0 / 30%)'
-  },
-  suggestion: {
-    padding: '9px 10px',
-    cursor: 'pointer',
-    ':hover': {background: '#F8F8F8'},
-    ':is([aria-selected="true"])': {background: '#684BC7', color: '#FFFFFF'}
-  },
-  noMatches: {padding: '9px 10px'},
   section: {
     boxSizing: 'border-box',
     height: '246px',

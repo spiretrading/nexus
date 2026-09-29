@@ -2,8 +2,10 @@ import { StyleSheetTestUtils } from 'aphrodite/no-important';
 import * as assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import * as React from 'react';
+import { ComboBox } from '../../source/components/combo_box';
 import { EditListModal } from
   '../../source/components/edit_list_modal/edit_list_modal';
+import { SuggestionsWindow } from '../../source/components/suggestions_window';
 import { LocalQueryModel, QueryModel } from '../../source/models';
 
 function find(element: React.ReactElement, predicate: (props: any) => boolean):
@@ -22,17 +24,20 @@ function find(element: React.ReactElement, predicate: (props: any) => boolean):
   return null;
 }
 
-function makeModal<T>(model: QueryModel<T>, selected: T[]) {
-  const modal = new EditListModal({model, selected, getLabel: String,
-    title: 'Edit', listHeading: 'Selected'});
-  modal.setState = update => {
+function makeSynchronous<C extends React.Component<any, any>>(component: C): C {
+  component.setState = update => {
     if(typeof update === 'function') {
-      Object.assign(modal.state, update(modal.state, modal.props));
+      Object.assign(component.state, update(component.state, component.props));
     } else {
-      Object.assign(modal.state, update);
+      Object.assign(component.state, update);
     }
   };
-  return modal;
+  return component;
+}
+
+function makeModal<T>(model: QueryModel<T>, selected: T[]) {
+  return makeSynchronous(new EditListModal({model, selected, getLabel: String,
+    title: 'Edit', listHeading: 'Selected'}));
 }
 
 describe('EditListModal queries', () => {
@@ -59,13 +64,16 @@ describe('EditListModal queries', () => {
         }
       };
       const modal = makeModal(model, ['Selected']);
-      const input = find(modal.render(), props => props.role === 'combobox');
+      const editor = find(modal.render(), props => props.model !== undefined);
+      const combo = makeSynchronous(new ComboBox<string>(editor.props));
+      const input = find(combo.render(), props => props.role === 'combobox');
       for(const query of ['  id:42 !  ', '   ']) {
         input.props.onChange({target: {value: query}});
         const callback = pending;
         pending = null;
         await callback();
-        const suggestions = find(modal.render(),
+        const window = find(combo.render(), props => props.items !== undefined);
+        const suggestions = find(new SuggestionsWindow(window.props).render(),
           props => props.role === 'listbox');
         const labels = React.Children.toArray(suggestions.props.children).
           filter(React.isValidElement<any>).

@@ -1,3 +1,4 @@
+export * from './filtered_query_model';
 export * from './http_ticker_query_model';
 export * from './local_query_model';
 export * from './local_ticker_query_model';

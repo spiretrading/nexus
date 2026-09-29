@@ -22,8 +22,17 @@ interface Properties<T> extends
   /** The validation message for an unresolved value. */
   invalidMessage?: string;
 
+  /** Resolves typed text when focus leaves the input. Defaults to true. */
+  commitOnBlur?: boolean;
+
   /** Called when a value is selected, entered, or cleared. */
   onChange?: (value: T) => void;
+
+  /** Called when resolving a typed value starts or finishes. */
+  onResolvingChange?: (resolving: boolean) => void;
+
+  /** Handles validation messages instead of displaying them in the dropdown. */
+  onValidationError?: (message: string) => void;
 }
 
 interface State<T> {
@@ -52,16 +61,37 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
     this.identifier = `combo-${ComboBox.nextIdentifier++}`;
   }
 
-  public componentDidUpdate(previous: Properties<T>): void {
+  /** Discards pending queries and restores the committed value. */
+  public reset(): void {
+    this.cancelSearch();
+    ++this.resolveVersion;
+    this.setState({query: this.getText(this.props.value), expanded: false,
+      suggestions: [], searching: false, resolving: false, lookupError: '',
+      error: ''});
+  }
+
+  /** Reloads suggestions for the current query without changing the input. */
+  public refresh(): void {
+    this.cancelSearch();
+    this.setState({suggestions: [], highlighted: 0, suggestionSelected: false,
+      searching: false, lookupError: ''});
+    if(this.state.expanded && !this.props.readOnly && !this.props.disabled) {
+      this.search(this.state.query);
+    }
+  }
+
+  public componentDidUpdate(previous: Properties<T>, state: State<T>): void {
     if(previous.value !== this.props.value ||
         previous.model !== this.props.model ||
         previous.readOnly !== this.props.readOnly ||
         previous.disabled !== this.props.disabled) {
-      this.cancelSearch();
-      ++this.resolveVersion;
-      this.setState({query: this.getText(this.props.value), expanded: false,
-        suggestions: [], searching: false, resolving: false, lookupError: '',
-        error: ''});
+      this.reset();
+    }
+    if(state.resolving !== this.state.resolving) {
+      this.props.onResolvingChange?.(this.state.resolving);
+    }
+    if(state.error !== this.state.error) {
+      this.props.onValidationError?.(this.state.error);
     }
     let message = this.state.error;
     if(!message && (this.state.resolving ||
@@ -78,11 +108,16 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
 
   public render(): JSX.Element {
     const {value, model, getLabel, isEqual, invalidMessage, onChange, onKeyDown,
-      onBlur, ...rest} = this.props;
+      onBlur, commitOnBlur, onResolvingChange, onValidationError, ...rest} =
+        this.props;
+    const suggestions = this.state.suggestions;
     const expanded = this.state.expanded && !rest.readOnly && !rest.disabled;
+    let error = this.state.lookupError;
+    if(!onValidationError) {
+      error = this.state.error || error;
+    }
     const active = (() => {
-      if(expanded &&
-          this.state.suggestions[this.state.highlighted] !== undefined) {
+      if(expanded && suggestions[this.state.highlighted] !== undefined) {
         return `${this.identifier}-${this.state.highlighted}`;
       }
       return undefined;
@@ -100,10 +135,9 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
         onChange={this.onQuery} onKeyDown={this.onKeyDown}
         onBlur={this.onBlur}/>
       {expanded && <SuggestionsWindow anchor={this.input.current}
-        id={this.identifier} items={this.state.suggestions}
+        id={this.identifier} items={suggestions}
         selected={this.state.highlighted} getLabel={getLabel}
-        loading={this.state.searching || this.state.resolving}
-        error={this.state.error || this.state.lookupError}
+        loading={this.state.searching || this.state.resolving} error={error}
         onHighlight={this.onHighlight} onSubmit={this.onSelect}/>}
     </>;
   }
@@ -213,15 +247,15 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
         this.props.readOnly || this.props.disabled) {
       return;
     }
+    const suggestions = this.state.suggestions;
     if(event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      if(!this.state.expanded || this.state.suggestions.length === 0) {
+      if(!this.state.expanded || suggestions.length === 0) {
         return;
       }
       event.preventDefault();
       let highlighted = this.state.highlighted;
       if(event.key === 'ArrowDown') {
-        highlighted =
-          Math.min(highlighted + 1, this.state.suggestions.length - 1);
+        highlighted = Math.min(highlighted + 1, suggestions.length - 1);
       } else {
         highlighted = Math.max(highlighted - 1, 0);
       }
@@ -230,7 +264,7 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
       event.preventDefault();
       let fallback: T = null;
       if(this.state.expanded) {
-        fallback = this.state.suggestions[this.state.highlighted] ?? null;
+        fallback = suggestions[this.state.highlighted] ?? null;
       }
       if(this.state.suggestionSelected && fallback !== null) {
         this.commit(fallback);
@@ -241,17 +275,15 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
         this.state.query !== this.getText(this.props.value))) {
       event.preventDefault();
       event.stopPropagation();
-      this.cancelSearch();
-      ++this.resolveVersion;
-      this.setState({query: this.getText(this.props.value), expanded: false,
-        searching: false, resolving: false, lookupError: '', error: ''});
+      this.reset();
     }
   };
 
   private onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     this.cancelSearch();
     this.setState({expanded: false, searching: false});
-    if(!this.props.readOnly && !this.props.disabled &&
+    if(this.props.commitOnBlur !== false && !this.props.readOnly &&
+        !this.props.disabled &&
         this.state.query !== this.getText(this.props.value)) {
       this.resolve(null);
     }

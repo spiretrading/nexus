@@ -43,7 +43,10 @@ export class SuggestionsWindow<T> extends React.Component<Properties<T>> {
     this.updatePosition();
     this.window.current.showPopover();
     this.observer = new ResizeObserver(this.updatePosition);
-    this.observer.observe(this.props.anchor);
+    for(let element = this.props.anchor; element;
+        element = element.parentElement) {
+      this.observer.observe(element);
+    }
     window.addEventListener('resize', this.updatePosition);
     window.addEventListener('scroll', this.onScroll, true);
   }
@@ -51,6 +54,7 @@ export class SuggestionsWindow<T> extends React.Component<Properties<T>> {
   public componentDidUpdate(): void {
     this.window.current.querySelector(
       '[aria-selected="true"]')?.scrollIntoView({block: 'nearest'});
+    this.updatePosition();
   }
 
   public componentWillUnmount(): void {
