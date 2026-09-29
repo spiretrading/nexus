@@ -20,11 +20,7 @@ using namespace Spire::Styles;
 namespace {
   using NullCurrent = StateSelector<void, struct NullCurrentTag>;
 
-  const auto HOUR = 0;
-  const auto MINUTE = 1;
-  const auto SECOND = 2;
   const auto FRACTIONAL_SECOND = 3;
-  const auto FIELD_COUNT = 4;
   const auto DEFAULT_FORMAT = "hh:mm:ss.fff";
   const auto MAX_FRACTIONAL_DIGITS = 9;
 
@@ -105,7 +101,7 @@ namespace {
   struct FieldModel : ScalarValueModel<optional<int>> {
     mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDurationModel> m_source;
-    std::array<std::weak_ptr<FieldModel>, FIELD_COUNT - 1> m_siblings;
+    std::vector<std::weak_ptr<FieldModel>> m_siblings;
     optional<int> m_current;
     QValidator::State m_state;
     bool m_is_active;
@@ -157,10 +153,10 @@ namespace {
     QValidator::State set(const Type& value) override {
       auto current = compose(value);
       auto blocker = shared_connection_block(m_source_connection);
-      auto blockers = std::array<shared_connection_block, m_siblings.size()>();
-      for(auto i = std::size_t(0); i < m_siblings.size(); ++i) {
-        if(auto sibling = m_siblings[i].lock()) {
-          blockers[i] = shared_connection_block(sibling->m_source_connection);
+      auto blockers = std::vector<shared_connection_block>();
+      for(auto& sibling : m_siblings) {
+        if(auto model = sibling.lock()) {
+          blockers.emplace_back(model->m_source_connection);
         }
       }
       if(m_source->set(current) == QValidator::State::Invalid) {
@@ -288,9 +284,13 @@ namespace {
     }
   };
 
-  bool overwrite_fractional_second(IntegerBox& field, const QKeyEvent& event) {
-    auto is_digit = event.text().size() == 1 &&
+  bool is_digit_key(const QKeyEvent& event) {
+    return event.text().size() == 1 &&
       event.text().front() >= '0' && event.text().front() <= '9';
+  }
+
+  bool handle_fractional_second(IntegerBox& field, const QKeyEvent& event) {
+    auto is_digit = is_digit_key(event);
     auto is_backspace = event.key() == Qt::Key_Backspace;
     auto is_delete = event.key() == Qt::Key_Delete;
     if(!is_digit && !is_backspace && !is_delete) {
@@ -301,9 +301,18 @@ namespace {
       return false;
     }
     auto text = editor->text();
-    auto start = editor->hasSelectedText() ?
-      editor->selectionStart() : editor->cursorPosition();
-    auto end = editor->hasSelectedText() ? editor->selectionEnd() : start;
+    auto start = [&] {
+      if(editor->hasSelectedText()) {
+        return editor->selectionStart();
+      }
+      return editor->cursorPosition();
+    }();
+    auto end = [&] {
+      if(editor->hasSelectedText()) {
+        return editor->selectionEnd();
+      }
+      return start;
+    }();
     if(is_backspace && start == end) {
       if(start == 0) {
         return false;
@@ -315,10 +324,6 @@ namespace {
       }
       ++end;
     }
-    if(!is_digit && start == 0 && end >= text.size()) {
-      field.get_current()->set(none);
-      return true;
-    }
     auto digits = std::static_pointer_cast<FractionalSecondModel>(
       field.get_current())->m_fractional_digits;
     if(is_digit && start >= digits) {
@@ -327,6 +332,10 @@ namespace {
     text = text.leftJustified(digits, '0');
     for(auto i = start; i < end && i < digits; ++i) {
       text[i] = '0';
+    }
+    if(!is_digit && text.toInt() == 0) {
+      field.get_current()->set(none);
+      return true;
     }
     auto cursor = start;
     if(is_digit) {
@@ -345,12 +354,12 @@ namespace {
     auto style = StyleSheet();
     style.get(Any()).
       set(TextAlign(Qt::AlignLeft)).
-      set(Format(QString(DEFAULT_FORMAT)));
-    style.get(Any() > Separator()).
+      set(DurationFormat(QString(DEFAULT_FORMAT)));
+    style.get(Any() > DurationSeparator()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(NullCurrent() > Separator()).
+    style.get(NullCurrent() > DurationSeparator()).
       set(TextColor(QColor(0xA0A0A0)));
-    style.get(Disabled() > Separator()).
+    style.get(Disabled() > DurationSeparator()).
       set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
@@ -426,7 +435,7 @@ namespace {
   auto make_separator(const QString& text) {
     auto separator = make_label(text);
     separator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-    match(*separator, Separator());
+    match(*separator, DurationSeparator());
     return separator;
   }
 
@@ -435,7 +444,7 @@ namespace {
       using DurationBox::DurationBox;
 
     protected:
-      bool test_format(const QString& format) const override {
+      bool is_valid_format(const QString& format) const override {
         auto fields = match_format(format);
         return fields && fields->m_has_hours;
       }
@@ -464,11 +473,9 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
   auto models = std::array<std::shared_ptr<FieldModel>, FIELD_COUNT>{
     hour_model, minute_model, second_model, fractional_second_model};
   for(auto i = std::size_t(0); i < models.size(); ++i) {
-    auto sibling = std::size_t(0);
     for(auto j = std::size_t(0); j < models.size(); ++j) {
       if(i != j) {
-        models[i]->m_siblings[sibling] = models[j];
-        ++sibling;
+        models[i]->m_siblings.push_back(models[j]);
       }
     }
   }
@@ -476,7 +483,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     make_minute_field(std::move(minute_model), *this),
     make_second_field(std::move(second_model), *this),
     make_fractional_second_field(std::move(fractional_second_model), *this)};
-  m_separators = {make_separator(":"), make_separator(":"), make_separator(".")};
+  m_separators =
+    {make_separator(":"), make_separator(":"), make_separator(".")};
   auto container_layout = make_hbox_layout(container);
   for(auto i = 0; i < FIELD_COUNT; ++i) {
     if(i != 0) {
@@ -546,7 +554,7 @@ connection DurationBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-bool DurationBox::test_format(const QString& format) const {
+bool DurationBox::is_valid_format(const QString& format) const {
   return match_format(format).is_initialized();
 }
 
@@ -562,14 +570,12 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto& fields = m_fields;
-    auto field_count = static_cast<int>(fields.size());
     auto is_set = [] (auto field) {
       return field->get_current()->get().is_initialized();
     };
     auto focused = [&] {
-      for(auto i = 0; i < field_count; ++i) {
-        if(!fields[i]->isHidden() && fields[i]->hasFocus()) {
+      for(auto i = 0; i < FIELD_COUNT; ++i) {
+        if(!m_fields[i]->isHidden() && m_fields[i]->hasFocus()) {
           return i;
         }
       }
@@ -577,30 +583,40 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     }();
     auto find_previous = [&] (int index) {
       for(auto i = index - 1; i >= 0; --i) {
-        if(!fields[i]->isHidden()) {
+        if(!m_fields[i]->isHidden()) {
           return i;
         }
       }
       return -1;
     };
     auto find_next = [&] (int index) {
-      for(auto i = index + 1; i < field_count; ++i) {
-        if(!fields[i]->isHidden()) {
+      for(auto i = index + 1; i < FIELD_COUNT; ++i) {
+        if(!m_fields[i]->isHidden()) {
           return i;
         }
       }
       return -1;
     };
     auto focus_field = [&] (int index) {
-      fields[index]->setFocus();
-      if(auto editor = fields[index]->findChild<QLineEdit*>()) {
+      m_fields[index]->setFocus();
+      if(auto editor = m_fields[index]->findChild<QLineEdit*>()) {
         editor->selectAll();
       }
     };
-    auto previous = focused < 0 ? -1 : find_previous(focused);
-    auto next = focused < 0 ? -1 : find_next(focused);
-    auto is_field_empty = focused < 0 || !is_set(fields[focused]);
-    auto has_value = std::any_of(fields.begin(), fields.end(), is_set);
+    auto previous = [&] {
+      if(focused < 0) {
+        return -1;
+      }
+      return find_previous(focused);
+    }();
+    auto next = [&] {
+      if(focused < 0) {
+        return -1;
+      }
+      return find_next(focused);
+    }();
+    auto is_field_empty = focused < 0 || !is_set(m_fields[focused]);
+    auto has_value = std::any_of(m_fields.begin(), m_fields.end(), is_set);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
       if(is_field_empty && has_value) {
         on_submit();
@@ -609,24 +625,24 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(focused < 0) {
       return QWidget::eventFilter(watched, event);
     } else if(focused == FRACTIONAL_SECOND && !m_is_read_only &&
-        overwrite_fractional_second(*fields[focused], key_event)) {
+        handle_fractional_second(*m_fields[focused], key_event)) {
       return true;
     } else if(key_event.key() == Qt::Key_Left && previous >= 0) {
-      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
+      if(auto editor = m_fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0) {
           focus_field(previous);
         }
       }
     } else if(key_event.key() == Qt::Key_Right && next >= 0) {
-      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
+      if(auto editor = m_fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == editor->text().size()) {
           focus_field(next);
         }
       }
     } else if(key_event.key() == Qt::Key_Backspace && previous >= 0) {
-      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
+      if(auto editor = m_fields[focused]->findChild<QLineEdit*>()) {
         if(editor->cursorPosition() == 0 && !editor->hasSelectedText()) {
-          auto previous_field = fields[previous];
+          auto previous_field = m_fields[previous];
           previous_field->setFocus();
           if(auto previous_editor =
               previous_field->findChild<QLineEdit*>()) {
@@ -637,9 +653,8 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
           return true;
         }
       }
-    } else if(!m_is_read_only && next >= 0 && key_event.text().size() == 1 &&
-        key_event.text().front().isDigit()) {
-      if(auto editor = fields[focused]->findChild<QLineEdit*>()) {
+    } else if(!m_is_read_only && next >= 0 && is_digit_key(key_event)) {
+      if(auto editor = m_fields[focused]->findChild<QLineEdit*>()) {
         auto text = editor->text();
         auto is_complete = !text.isEmpty() && !editor->hasSelectedText() &&
           editor->cursorPosition() == text.size();
@@ -658,7 +673,7 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void DurationBox::set_format(const QString& format) {
-  if(test_format(format)) {
+  if(is_valid_format(format)) {
     m_format = format;
   } else {
     m_format = DEFAULT_FORMAT;
@@ -706,11 +721,9 @@ void DurationBox::set_format(const QString& format) {
       is_valid = false;
     }
   }
-  if(!is_valid) {
-    if(!m_is_rejected) {
-      m_is_rejected = true;
-      match(*m_input_box, Rejected());
-    }
+  if(!is_valid && !m_is_rejected) {
+    m_is_rejected = true;
+    match(*m_input_box, Rejected());
   }
   if(!has_fractional_seconds) {
     return;
@@ -778,7 +791,7 @@ void DurationBox::on_style() {
           body_layout->update();
         });
       },
-      [&] (const Format& format) {
+      [&] (const DurationFormat& format) {
         stylist.evaluate(format, [=] (const auto& value) {
           if(value != m_format) {
             set_format(value);

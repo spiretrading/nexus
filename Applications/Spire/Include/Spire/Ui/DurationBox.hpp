@@ -12,13 +12,14 @@ namespace Spire {
 namespace Styles {
 
   /** Selects every separator displayed between two fields. */
-  using Separator = StateSelector<void, struct DurationBoxSeparatorTag>;
+  using DurationSeparator =
+    StateSelector<void, struct DurationBoxSeparatorTag>;
 
   /**
    * The format used to display a duration. It must be of the form
    * <i>hh:mm:ss.fffffffff</i>.
    */
-  using Format = BasicProperty<QString, struct DurationBoxFormatTag>;
+  using DurationFormat = BasicProperty<QString, struct DurationBoxFormatTag>;
 }
 
   /** A ScalarValueModel over a boost::posix_time::time_duration. */
@@ -73,10 +74,10 @@ namespace Styles {
       /** Returns the current value model. */
       const std::shared_ptr<OptionalDurationModel>& get_current() const;
 
-      //! Returns <code>true</code> iff this box is read-only.
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
-      //! Sets whether the box is read-only.
+      /** Sets whether the box is read-only. */
       void set_read_only(bool is_read_only);
 
       /** Connects a slot to the value submission signal. */
@@ -91,11 +92,10 @@ namespace Styles {
 
       /**
        * Returns <code>true</code> iff a format may be used to display this
-       * box's value. A format that fails this test is replaced by the default
-       * format <i>hh:mm:ss.fff</i>.
+       * box's value.
        * @param format The format to test.
        */
-      virtual bool test_format(const QString& format) const;
+      virtual bool is_valid_format(const QString& format) const;
 
       bool eventFilter(QObject* watched, QEvent* event) override;
 

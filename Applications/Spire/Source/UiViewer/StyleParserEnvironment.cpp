@@ -394,7 +394,7 @@ void Spire::register_selectors() {
   register_state_selector("active_element", TableHeaderItem::ActiveElement());
   register_state_selector("container", TableHeaderItem::Container());
   register_state_selector("prompt", Prompt());
-  register_state_selector("separator", Separator());
+  register_state_selector("separator", DurationSeparator());
   register_state_selector("track", Track());
   register_state_selector("thumb", Thumb());
   register_state_selector("track_rail", TrackRail());
@@ -618,7 +618,7 @@ void Spire::register_property_converters() {
       auto properties = std::vector<Property>();
       if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
         if(auto format = convert_string(boost::get<Token::Type>(values[0]))) {
-          properties.push_back(Format(QString::fromStdString(*format)));
+          properties.push_back(DurationFormat(QString::fromStdString(*format)));
         }
       }
       return properties;
