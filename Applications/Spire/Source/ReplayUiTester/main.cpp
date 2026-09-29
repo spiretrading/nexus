@@ -1,6 +1,10 @@
 #include <vector>
 #include <QApplication>
 #include <QTextEdit>
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Nexus/TestEnvironment/TestEnvironment.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/ReplayUiTester/GeneratedTimeAndSalesModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -74,6 +78,9 @@ namespace {
 
 struct ReplayUiTester : QWidget {
   ptime m_start;
+  TestEnvironment m_environment;
+  Clients m_clients;
+  UserProfile m_user_profile;
   std::shared_ptr<TickerInfoQueryModel> m_tickers;
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
   std::shared_ptr<ArrayListModel<SelectableTarget>> m_targets;
@@ -84,6 +91,9 @@ struct ReplayUiTester : QWidget {
 
   ReplayUiTester()
       : m_start(microsec_clock::universal_time() - HISTORY),
+        m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
+        m_user_profile("", false, false, {}, {},
+          get_default_additional_tag_database(), {}, {}, {}, m_clients),
         m_tickers(populate_tickers()),
         m_factory(std::make_shared<TimeAndSalesPropertiesWindowFactory>()),
         m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
@@ -129,7 +139,8 @@ struct ReplayUiTester : QWidget {
   }
 
   void open_time_and_sales_window() {
-    auto window = new TimeAndSalesWindow(m_tickers, m_factory,
+    auto window = new TimeAndSalesWindow(Ref(m_user_profile), m_tickers,
+      m_factory,
       std::bind_front(&ReplayUiTester::time_and_sales_model_builder, this));
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->show();
