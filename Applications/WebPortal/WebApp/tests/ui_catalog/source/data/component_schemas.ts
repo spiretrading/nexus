@@ -374,6 +374,23 @@ const editListModal =
       new SignalSchema('onClose', '')],
     EditListModalExample);
 
+const listInput =
+  new ComponentSchema('ListInput',
+    [new PropertySchema('title', 'Edit Items', TextInput),
+      new PropertySchema('listHeading', 'Added Items', TextInput),
+      new PropertySchema('items',
+        ['Alpha', 'Beta', 'Gamma', 'Delta', 'Item, with comma', 'Item "quoted"'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('value', ['Alpha'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('placeholder', 'Select items', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    (props: any) => React.createElement(WebPortal.ListInput, {
+      ...props, getLabel: String, 'aria-label': 'Selected items'
+    }), 300);
+
 const decimalInput =
   new ComponentSchema('DecimalInput',
     [new PropertySchema('value', 100, NumberInput),
@@ -1201,7 +1218,8 @@ export const componentSections = [
     decimalInput, durationInput, editListModal, emptyMessage, errorMessage,
     expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
     integerField,
-    labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
+    labeledCheckbox, link, listInput, modal, moneyInput, navigationHeader,
+    navigationTab,
     pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
     rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton, segmentedControl, timeOfDayInput]),

@@ -21,6 +21,7 @@ export * from './input';
 export * from './integer_input';
 export * from './labeled_checkbox';
 export * from './link';
+export * from './list_input';
 export * from './modal';
 export * from './money_input';
 export * from './navigation_header';
