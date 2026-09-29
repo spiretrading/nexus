@@ -70,7 +70,8 @@ namespace Nexus {
     field.m_value = source.substr(separator + 1);
     auto has_invalid_character =
       std::ranges::any_of(field.m_value, [] (auto character) {
-        return character < ' ' || character > '~';
+        auto value = static_cast<unsigned char>(character);
+        return value < 0x20 || value == 0x7f;
       });
     if(has_invalid_character) {
       boost::throw_with_location(

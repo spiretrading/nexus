@@ -6,8 +6,8 @@
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -44,7 +44,7 @@ namespace {
     MarketDataRelayServletContainer, IncomingMarketDataClient,
     ApplicationAdministrationClient*>;
 
-  Scope parse_scope(const JsonObject& node, const CountryDatabase& countries) {
+  Scope parse_scope(const JsonObject& node) {
     auto scope = Scope();
     if(auto countries_node = node.get("countries")) {
       if(auto country_list = get<std::vector<JsonValue>>(&*countries_node)) {
@@ -70,38 +70,25 @@ int main(int argc, const char** argv) {
       return ServiceConfiguration::parse(
         get_node(config, "server"), MARKET_DATA_RELAY_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto administration_client =
-      ApplicationAdministrationClient(Ref(service_locator_client));
-    auto countries = definitions_client.load_country_database();
-    auto market_data_client_builder = [&] {
-      auto entries = service_locator_client.locate(
-        MARKET_DATA_REGISTRY_SERVICE_NAME);
-      if(entries.empty()) {
-        throw_with_location(ConnectException(
-          "No " + MARKET_DATA_REGISTRY_SERVICE_NAME + " services available."));
-      }
-      auto clients = ScopeMap<std::shared_ptr<MarketDataClient>>(nullptr);
-      for(auto& entry : entries) {
-        auto scope = parse_scope(entry.get_properties(), countries);
-        auto market_data_client =
-          std::make_shared<MarketDataClient>(std::in_place_type<
-            ServiceMarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-            make_basic_market_data_client_session_builder<
-              IncomingMarketDataClientSessionBuilder>(
-                Ref(service_locator_client), [=] (const auto& candidate_entry) {
-                  auto candidate_scope =
-                    parse_scope(candidate_entry.get_properties(), countries);
-                  return scope <= candidate_scope;
-                }, MARKET_DATA_REGISTRY_SERVICE_NAME));
-        clients.set(scope, std::move(market_data_client));
-      }
-      return std::make_unique<MarketDataClient>(
-        std::in_place_type<DistributedMarketDataClient>, std::move(clients));
+      connect<ApplicationAdministrationClient>(Ref(service_locator_client));
+    auto service_monitor = [&] (ScopedQueueWriter<ServiceUpdate> queue) {
+      service_locator_client.monitor(
+        MARKET_DATA_REGISTRY_SERVICE_NAME, std::move(queue));
+    };
+    auto client_builder = [&] (const Scope& scope) {
+      return std::make_shared<MarketDataClient>(std::in_place_type<
+        ServiceMarketDataClient<IncomingMarketDataClientSessionBuilder>>,
+        make_basic_market_data_client_session_builder<
+          IncomingMarketDataClientSessionBuilder>(
+            Ref(service_locator_client), [=] (const auto& entry) {
+              return scope <= parse_scope(entry.get_properties());
+            }, MARKET_DATA_REGISTRY_SERVICE_NAME));
     };
     auto client_timeout =
       extract<time_duration>(config, "connection_timeout", milliseconds(500));
@@ -110,8 +97,13 @@ int main(int argc, const char** argv) {
     auto max_connections = static_cast<std::size_t>(
       extract<int>(config, "max_connections", 10 * min_connections));
     auto base_registry_servlet = BaseMarketDataRelayServlet(client_timeout,
-      market_data_client_builder, min_connections, max_connections,
-      &administration_client);
+      [&] {
+        return std::make_unique<MarketDataClient>(
+          std::in_place_type<DistributedMarketDataClient<LiveTimer>>,
+          service_monitor, [] (const auto& entry) {
+            return parse_scope(entry.get_properties());
+          }, client_builder, init(seconds(30)));
+      }, min_connections, max_connections, &administration_client);
     auto server = MarketDataRelayServletContainer(
       init(&service_locator_client, &base_registry_servlet),
       init(service_config.m_interface),
@@ -120,6 +112,9 @@ int main(int argc, const char** argv) {
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

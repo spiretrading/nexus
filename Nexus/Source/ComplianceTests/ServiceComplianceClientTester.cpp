@@ -39,6 +39,28 @@ namespace {
 }
 
 TEST_SUITE("ServiceComplianceClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceComplianceClient(builder)), AuthenticationException);
+  }
+
+  TEST_CASE("connection_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw ConnectException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestServiceComplianceClient(builder)), ConnectException);
+  }
+
   TEST_CASE("load") {
     auto fixture = Fixture();
     auto directory_entry = DirectoryEntry::make_account(1, "test_account");

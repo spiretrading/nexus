@@ -17,6 +17,7 @@ export class PageLayout extends React.Component<{}> {
       flex: '1 1 auto',
       minHeight: 0,
       overflowY: 'auto',
+      scrollbarGutter: 'stable',
       backgroundColor: '#FFFFFF'
     },
     inner: {

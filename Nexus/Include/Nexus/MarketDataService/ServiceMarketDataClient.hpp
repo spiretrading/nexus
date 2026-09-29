@@ -121,6 +121,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       template add_message_handler<TimeAndSaleMessage>();
     m_ticker_status_publisher.
       template add_message_handler<TickerStatusMessage>();
+  } catch(const Beam::AuthenticationException&) {
+    throw;
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(
       Beam::ConnectException("Failed to connect to the market data server."));

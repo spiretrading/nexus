@@ -2,8 +2,8 @@
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
@@ -90,10 +90,10 @@ int main(int argc, const char** argv) {
       return ServiceConfiguration::parse(
         get_node(config, "server"), ADMINISTRATION_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto service_locator_client = ApplicationServiceLocatorClient(
+    auto service_locator_client = connect<ApplicationServiceLocatorClient>(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(Ref(service_locator_client));
+      connect<ApplicationDefinitionsClient>(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto entitlements = parse_entitlements(get_node(config, "entitlements"),
       definitions_client.load_currency_database(), service_locator_client);
@@ -114,6 +114,9 @@ int main(int argc, const char** argv) {
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

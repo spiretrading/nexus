@@ -1,5 +1,5 @@
 #include <Beam/Network/TcpServerSocket.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/ToString.hpp>
@@ -46,7 +46,8 @@ int main(int argc, const char** argv) {
       return ServiceLocatorClientConfig::parse(
         get_node(config, "service_locator"));
     }, std::runtime_error("Error parsing section 'service_locator'."));
-    auto clients = ServiceClients(service_locator_client_config.m_username,
+    auto clients = connect<ServiceClients>(
+      service_locator_client_config.m_username,
       service_locator_client_config.m_password,
       service_locator_client_config.m_address);
     load_definitions(clients.get_definitions_client());
@@ -76,6 +77,9 @@ int main(int argc, const char** argv) {
     wait_for_kill_event();
     clients.close();
   } catch(...) {
+    if(received_kill_event()) {
+      return 0;
+    }
     report_current_exception();
     return -1;
   }

@@ -29,6 +29,17 @@ namespace {
 }
 
 TEST_SUITE("ServiceMarketDataClient") {
+  TEST_CASE("authentication_failure") {
+    auto builder = TestServiceProtocolClientBuilder([] () ->
+        std::unique_ptr<TestServiceProtocolClientBuilder::Channel> {
+      throw AuthenticationException();
+    }, [] {
+      return std::make_unique<TriggerTimer>();
+    });
+    REQUIRE_THROWS_AS(static_cast<void>(
+      Fixture::TestMarketDataClient(builder)), AuthenticationException);
+  }
+
   TEST_CASE("real_time_bbo_quote_query") {
     auto fixture = Fixture();
     auto query = TickerQuery();

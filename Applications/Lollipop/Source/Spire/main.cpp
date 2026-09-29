@@ -1,6 +1,5 @@
 #include <filesystem>
 #include <fstream>
-#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/Uri.hpp>
 #include <boost/functional/factory.hpp>
@@ -244,23 +243,10 @@ int main(int argc, char* argv[]) {
     try {
       auto loader = QtPromise([&] {
         auto service_locator_client =
-          std::unique_ptr<ApplicationServiceLocatorClient>();
-        try {
-          service_locator_client =
-            std::make_unique<ApplicationServiceLocatorClient>(
-              usernameArgument.getValue(), passwordArgument.getValue(),
-              IpAddress(hostArgument.getValue(),
-                static_cast<unsigned short>(portArgument.getValue())));
-        } catch(const std::exception& e) {
-          try {
-            std::rethrow_if_nested(e);
-          } catch(const std::exception& e) {
-            if(std::string(e.what()) == "Invalid username or password.") {
-              throw AuthenticationException();
-            }
-          }
-          throw;
-        }
+          std::make_unique<ApplicationServiceLocatorClient>(
+            usernameArgument.getValue(), passwordArgument.getValue(),
+            IpAddress(hostArgument.getValue(),
+              static_cast<unsigned short>(portArgument.getValue())));
         auto service_clients = std::make_unique<SpireClients>(
           std::move(service_locator_client));
         return Clients(std::move(service_clients));

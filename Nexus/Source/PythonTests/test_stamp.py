@@ -64,7 +64,10 @@ class TestStamp(unittest.TestCase):
                 (b'\x1e55=ABX', 55, 0, 'ABX'),
                 (b'\x1e55.2=ABX', 55, 2, 'ABX'),
                 (b'\x1e9999.9999=', 9999, 9999, ''),
-                (b'\x1e1= a=b ', 1, 0, ' a=b ')):
+                (b'\x1e1= a=b ', 1, 0, ' a=b '),
+                (b'\x1e177=Soci\xc3\xa9t\xc3\xa9', 177, 0,
+                    'Soci\u00e9t\u00e9'),
+                (b'\x1e177=ETF\xe2\x84\xa2', 177, 0, 'ETF\u2122')):
             with self.subTest(source=source):
                 field = nexus.StampField.parse(source)
                 self.assertEqual(field.identifier, identifier)
@@ -139,7 +142,7 @@ class TestStamp(unittest.TestCase):
     def test_malformed_input(self):
         self.assertTrue(issubclass(nexus.StampParserException, ValueError))
         for source in (b'', b'55=ABX', b'\x1e55', b'\x1e0=ABX',
-                b'\x1e55.-1=ABX', b'\x1e55=\xff'):
+                b'\x1e55.-1=ABX', b'\x1e55=\x7f'):
             with self.subTest(field=source):
                 with self.assertRaises(nexus.StampParserException):
                     nexus.StampField.parse(source)

@@ -121,7 +121,7 @@ namespace Nexus {
       add_column("price", &TimeAndSale::m_price).
       add_column("size", &TimeAndSale::m_size).
       extend(Viper::Row<TimeAndSale::Condition>().
-        add_column("condition_code", Viper::varchar(4),
+        add_column("condition_code", Viper::varchar(64),
           &TimeAndSale::Condition::m_code).
         add_column("condition_type", &TimeAndSale::Condition::m_type),
           &TimeAndSale::m_condition).
