@@ -269,28 +269,5 @@ class TestPeggedOrder(unittest.TestCase):
 def main():
   unittest.main()
 
-  # Start a PeggedOrder on the bid for 1000 shares with no limit price and a
-  # peg difference of 0.01.
-  # Set the BBO to 1.00 / 1.01.
-  # Expect a limit bid order submission for 0.99 for 1000 shares.
-  # Fill the order submission without accepting it first.
-  # Expect the PeggedOrder to terminate and close its orders publisher.
-  def test_fill_without_new(self):
-    order_fields = nexus.make_market_order_fields(
-      self.ticker, nexus.Side.BID, 1000)
-    order = pegged_order.PeggedOrder(
-      self.clients, order_fields, nexus.Money.CENT)
-    orders = beam.Queue()
-    order.orders.monitor(orders)
-    self.environment.update_bbo_price(
-      self.ticker, nexus.Money.parse('1.00'), nexus.Money.parse('1.01'))
-    expected_order = self.submissions.pop()
-    self.assertEqual(expected_order.info.fields.quantity, 1000)
-    self.environment.fill(expected_order, 1000)
-    order.wait()
-    self.assertEqual(orders.pop().info.id, expected_order.info.id)
-    self.assertRaises(beam.PipeBrokenException, orders.pop)
-    self.assertIsNone(self.submissions.try_pop())
-
 if __name__ == '__main__':
   main()

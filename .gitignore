@@ -464,5 +464,6 @@ config.yml
 **/.DS_Store
 
 # Generated project outputs
+Applications/*/Application/setup_utils.py
 Nexus/Config/Python/**/nexus.exp
 Nexus/Config/Python/**/nexus.pyd
