@@ -4,13 +4,16 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
-  BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
-  ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
-  NumberInput, NumberSliderInput, MoneyInput, ReadonlyInput, TextInput } from
-    '../viewer/propertyInput';
+  BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
+  BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
+  CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
+  ReadonlyInput, TextInput } from '../viewer/propertyInput';
+import { EditAccountGroupModalExample } from
+  './edit_account_group_modal_example';
 import { EditListModalExample } from './edit_list_modal_example';
-import {ComponentSchema, ComponentSection, PropertySchema,
-  SignalSchema} from './schemas';
+import { ListInputExample } from './list_input_example';
+import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
+  './schemas';
 
 const accountLink =
   new ComponentSchema('AccountLink',
@@ -355,6 +358,23 @@ const modal =
         }));
     });
 
+const editAccountGroupModal =
+  new ComponentSchema('EditAccountGroupModal',
+    [new PropertySchema('selected',
+        [Beam.DirectoryEntry.makeAccount(1, 'Alice')],
+        ArrayInput(new PropertySchema('entry',
+          Beam.DirectoryEntry.makeAccount(1, 'Alice'),
+          BeamDirectoryEntryInput))),
+      new PropertySchema('selectionMode',
+        WebPortal.EditListModal.SelectionMode.MULTIPLE,
+        EnumInput(WebPortal.EditListModal.SelectionMode)),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
+    [new SignalSchema('onSubmit', 'selected'),
+      new SignalSchema('onClose', '')],
+    EditAccountGroupModalExample);
+
 const editListModal =
   new ComponentSchema('EditListModal',
     [new PropertySchema('title', 'Edit Items', TextInput),
@@ -387,9 +407,7 @@ const listInput =
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    (props: any) => React.createElement(WebPortal.ListInput, {
-      ...props, getLabel: String, 'aria-label': 'Selected items'
-    }), 300);
+    ListInputExample, 300);
 
 const decimalInput =
   new ComponentSchema('DecimalInput',
@@ -1223,6 +1241,7 @@ export const componentSections = [
     pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
     rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton, segmentedControl, timeOfDayInput]),
+  new ComponentSection('App Kit', [editAccountGroupModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,

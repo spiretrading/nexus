@@ -9,6 +9,7 @@ export * from './disclosure';
 export * from './decimal_input';
 export * from './date_time_input';
 export * from './duration_input';
+export * from './edit_account_group_modal';
 export * from './edit_list_modal';
 export * from './empty_message';
 export * from './error_message';

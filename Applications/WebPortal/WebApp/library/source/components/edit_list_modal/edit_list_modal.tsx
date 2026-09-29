@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { QueryModel } from '../../models';
 import { Button } from '../button';
 import { Input } from '../input';
 import { parseCsv } from './csv';
@@ -18,13 +19,13 @@ interface Properties<T> {
   /** The heading in single selection mode. Falls back to listHeading. */
   listHeadingSingle?: string;
 
-  /** The choices available for selection and CSV import. */
-  items: readonly T[];
+  /** Resolves queries for suggestions and CSV import. */
+  model: QueryModel<T>;
 
   /** The committed selection. Changes reset the editor's working selection. */
   selected: readonly T[];
 
-  /** Returns the text displayed for an item and matched during CSV import. */
+  /** Returns the text displayed for an item. */
   getLabel: (item: T) => string;
 
   /** Compares items for selection and deduplication.
@@ -56,12 +57,15 @@ interface State<T> {
   expanded: boolean;
   error: string;
   importing: boolean;
+  suggestions: readonly T[];
+  searching: boolean;
+  searchError: string;
 }
 
 /** Edits a selection from a list of choices without changing the caller's data
  *  until submission. CSV files may contain comma-separated or newline-separated
- *  labels. Matching ignores case and surrounding whitespace; invalid or
- *  ambiguous entries reject the entire import. */
+ *  queries resolved by the model; unresolved entries reject the entire import.
+ */
 export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   constructor(props: Properties<T>) {
     super(props);
@@ -74,12 +78,18 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       removal: -1,
       expanded: false,
       error: '',
-      importing: false
+      importing: false,
+      suggestions: [],
+      searching: false,
+      searchError: ''
     };
     this.dialog = React.createRef<HTMLDialogElement>();
     this.input = React.createRef<HTMLInputElement>();
     this.upload = React.createRef<HTMLInputElement>();
     this.reader = null;
+    this.searchVersion = 0;
+    this.importVersion = 0;
+    this.searchTimer = null;
     this.identifier = `edit-list-${EditListModal.nextIdentifier++}`;
   }
 
@@ -92,10 +102,15 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
         previous.selectionMode !== this.props.selectionMode ||
         previous.readOnly !== this.props.readOnly) {
       this.cancelImport();
+      this.cancelSearch();
       const selected = this.normalize(this.props.selected);
       this.setState({selected, submission: selected.slice(), query: '',
         removal: -1, highlighted: 0, expanded: false, error: '',
-        importing: false});
+        importing: false, suggestions: [], searching: false, searchError: ''});
+    } else if(previous.model !== this.props.model) {
+      this.cancelImport();
+      this.setState({importing: false, error: ''});
+      this.search(this.state.query);
     }
     if(this.state.expanded) {
       this.dialog.current.querySelector(
@@ -106,6 +121,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   public componentWillUnmount(): void {
     this.cancelImport();
+    this.cancelSearch();
     this.dialog.current.close();
   }
 
@@ -150,6 +166,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
                 <Input ref={this.input} role='combobox'
                   aria-label={this.props.placeholder ?? 'Find an item'}
                   aria-autocomplete='list'
+                  aria-busy={this.state.searching}
                   aria-expanded={this.state.expanded}
                   aria-controls={`${this.identifier}-suggestions`}
                   aria-activedescendant={(() => {
@@ -179,7 +196,16 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
                           onClick={() => this.add(item)}>
                         {this.props.getLabel(item)}
                       </li>)}
-                    {matches.length === 0 &&
+                    {this.state.searching &&
+                      <li role='presentation' className={css(STYLES.noMatches)}>
+                        <span role='status'>Searching...</span>
+                      </li>}
+                    {this.state.searchError &&
+                      <li role='presentation' className={css(STYLES.noMatches)}>
+                        <span role='alert'>{this.state.searchError}</span>
+                      </li>}
+                    {matches.length === 0 && !this.state.searching &&
+                        !this.state.searchError &&
                       <li role='presentation' className={css(STYLES.noMatches)}>
                         No matches
                       </li>}
@@ -208,13 +234,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       </dialog>);
   }
 
-  private static nextIdentifier = 0;
-  private dialog: React.RefObject<HTMLDialogElement>;
-  private input: React.RefObject<HTMLInputElement>;
-  private upload: React.RefObject<HTMLInputElement>;
-  private reader: FileReader;
-  private identifier: string;
-
   private isSingle(): boolean {
     return this.props.selectionMode === EditListModal.SelectionMode.SINGLE;
   }
@@ -240,37 +259,70 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   }
 
   private getMatches(): T[] {
-    const query = this.state.query.trim().toLocaleLowerCase();
-    return this.normalizeChoices().filter(item =>
-      !this.state.selected.some(selected => this.equals(item, selected)) &&
-      this.props.getLabel(item).toLocaleLowerCase().startsWith(query));
+    return this.normalizeChoices(this.state.suggestions).filter(item =>
+      !this.state.selected.some(selected => this.equals(item, selected)));
   }
 
-  private normalizeChoices(): T[] {
+  private normalizeChoices(items: readonly T[]): T[] {
     if(!this.props.isEqual) {
-      return Array.from(new Set(this.props.items));
+      return Array.from(new Set(items));
     }
-    return this.props.items.filter((item, i, items) =>
+    return items.filter((item, i, items) =>
       items.findIndex(other => this.equals(item, other)) === i);
   }
 
   private add(item: T): void {
+    this.cancelSearch();
     let selected = this.normalize([...this.state.selected, item]);
     if(this.isSingle()) {
       selected = [item];
     }
     this.setState({selected, query: '', highlighted: 0, removal: -1,
-      error: '', expanded: false});
+      error: '', expanded: false, searching: false, searchError: ''});
     this.input.current.focus();
   }
 
   private cancelImport(): void {
+    ++this.importVersion;
     if(this.reader) {
       this.reader.onload = null;
       this.reader.onerror = null;
       this.reader.abort();
       this.reader = null;
     }
+  }
+
+  private cancelSearch(): void {
+    ++this.searchVersion;
+    if(this.searchTimer !== null) {
+      window.clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
+  }
+
+  private search(query: string): void {
+    this.cancelSearch();
+    const model = this.props.model;
+    this.setState({suggestions: [], searching: false, searchError: ''});
+    if(query === '' || this.props.readOnly) {
+      return;
+    }
+    const version = this.searchVersion;
+    this.setState({searching: true});
+    this.searchTimer = window.setTimeout(async () => {
+      this.searchTimer = null;
+      try {
+        const suggestions = await model.submit(query);
+        if(version === this.searchVersion) {
+          this.setState({suggestions, searching: false, highlighted: 0});
+        }
+      } catch {
+        if(version === this.searchVersion) {
+          this.setState({searching: false,
+            searchError: 'Unable to load items. Try typing again.'});
+        }
+      }
+    }, 200);
   }
 
   private onCancel = (event: React.SyntheticEvent) => {
@@ -293,6 +345,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   private onClose = () => {
     this.cancelImport();
+    this.cancelSearch();
     this.props.onClose?.();
   };
 
@@ -304,6 +357,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   private onQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({query: event.target.value, highlighted: 0,
       expanded: event.target.value !== ''});
+    this.search(event.target.value);
   };
 
   private onBlur = () => {
@@ -363,28 +417,34 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       return;
     }
     this.cancelImport();
+    const version = this.importVersion;
     const reader = new FileReader();
     this.reader = reader;
     this.setState({importing: true, error: ''});
-    reader.onload = () => {
+    reader.onload = async () => {
       this.reader = null;
       try {
         const entries = parseCsv(reader.result as string);
-        const choices = this.normalizeChoices();
-        const imported = entries.map(entry => {
-          const matches = choices.filter(item =>
-            this.props.getLabel(item).trim().toLocaleLowerCase() ===
-              entry.toLocaleLowerCase());
-          if(matches.length !== 1) {
+        const imported: T[] = [];
+        const model = this.props.model;
+        for(const entry of entries) {
+          const item = await model.parse(entry);
+          if(version !== this.importVersion) {
+            return;
+          }
+          if(item === null) {
             throw new Error(`Unknown or ambiguous item: ${entry}`);
           }
-          return matches[0];
-        });
+          imported.push(item);
+        }
         this.setState(state => ({
           selected: this.normalize([...state.selected, ...imported]),
           importing: false, error: '', removal: -1, highlighted: 0
         }));
       } catch(error) {
+        if(version !== this.importVersion) {
+          return;
+        }
         let message = 'The file could not be imported.';
         if(error instanceof Error) {
           message = error.message;
@@ -398,6 +458,16 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     };
     reader.readAsText(file);
   };
+
+  private static nextIdentifier = 0;
+  private dialog: React.RefObject<HTMLDialogElement>;
+  private input: React.RefObject<HTMLInputElement>;
+  private upload: React.RefObject<HTMLInputElement>;
+  private reader: FileReader;
+  private searchVersion: number;
+  private importVersion: number;
+  private searchTimer: number;
+  private identifier: string;
 }
 
 export namespace EditListModal {

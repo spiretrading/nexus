@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, EditListModal } from 'web_portal';
+import { Button, EditListModal, LocalQueryModel } from 'web_portal';
 
 interface Properties {
   title: string;
@@ -23,6 +23,8 @@ export class EditListModalExample extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {isOpen: false};
+    this.items = null;
+    this.model = null;
   }
 
   public render(): JSX.Element {
@@ -31,12 +33,22 @@ export class EditListModalExample extends React.Component<Properties, State> {
         <Button label='Open editor' onClick={this.onOpen}/>
         <p>Selection: {this.props.selected.join(', ') || '(empty)'}</p>
         {this.state.isOpen &&
-          <EditListModal {...this.props} getLabel={this.getLabel}
+          <EditListModal {...this.props}
+            model={this.getModel()} getLabel={String}
             onSubmit={this.onSubmit} onClose={this.onClose}/>}
       </div>);
   }
 
-  private getLabel = (item: string) => item;
+  private getModel(): LocalQueryModel<string> {
+    if(this.items !== this.props.items) {
+      this.items = this.props.items;
+      this.model = new LocalQueryModel(String);
+      for(const item of this.items) {
+        this.model.add(item);
+      }
+    }
+    return this.model;
+  }
 
   private onOpen = () => {
     this.setState({isOpen: true});
@@ -51,4 +63,7 @@ export class EditListModalExample extends React.Component<Properties, State> {
     this.props.onSubmit(selected);
     this.setState({isOpen: false});
   };
+
+  private items: readonly string[];
+  private model: LocalQueryModel<string>;
 }

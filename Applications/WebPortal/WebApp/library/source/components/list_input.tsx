@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { QueryModel } from '../models';
 import { EditListModal } from './edit_list_modal';
 import { Input } from './input';
 
@@ -10,8 +11,8 @@ interface Properties<T> extends
   /** The selected items displayed in the input. */
   value: readonly T[];
 
-  /** The available choices in the editor. */
-  items: readonly T[];
+  /** Resolves queries for suggestions and CSV import in the editor. */
+  model: QueryModel<T>;
 
   /** Returns the label displayed for an item. */
   getLabel: (item: T) => string;
@@ -51,7 +52,7 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
   }
 
   public render(): JSX.Element {
-    const {value, items, getLabel, isEqual, title, listHeading, onChange,
+    const {value, model, getLabel, isEqual, title, listHeading, onChange,
       readOnly, className, style, onFocus, onClick, ...rest} = this.props;
     return (
       <>
@@ -64,15 +65,12 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
           onFocus={this.onFocus} onClick={this.onClick}/>
         {this.state.isOpen &&
           <EditListModal title={title} listHeading={listHeading}
-            items={items} selected={value} getLabel={getLabel} isEqual={isEqual}
+            model={model} selected={value} getLabel={getLabel} isEqual={isEqual}
             selectionMode={EditListModal.SelectionMode.MULTIPLE}
             readOnly={readOnly} onSubmit={this.onSubmit}
             onClose={this.onClose}/>}
       </>);
   }
-
-  private input: React.RefObject<HTMLInputElement>;
-  private closing: boolean;
 
   private open(): void {
     if(!this.props.disabled && !this.closing && !this.state.isOpen) {
@@ -106,6 +104,9 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
     this.onClose();
     this.props.onChange?.(value);
   };
+
+  private input: React.RefObject<HTMLInputElement>;
+  private closing: boolean;
 }
 
 const STYLES = StyleSheet.create({

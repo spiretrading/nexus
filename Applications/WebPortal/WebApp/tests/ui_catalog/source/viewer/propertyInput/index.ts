@@ -3,6 +3,7 @@ export * from './array_input';
 export * from './beam_account_input';
 export * from './beam_date_input';
 export * from './beam_date_time_input';
+export * from './beam_directory_entry_input';
 export * from './beam_duration_input';
 export * from './beam_time_of_day_input';
 export * from './boolean_input';
