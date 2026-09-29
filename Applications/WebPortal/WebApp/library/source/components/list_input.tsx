@@ -26,6 +26,10 @@ interface Properties<T> extends
   /** The heading above the selected items in the editor. */
   listHeading: string;
 
+  /** The editor component. Defaults to EditListModal. */
+  editListModal?:
+    React.JSXElementConstructor<React.ComponentProps<typeof EditListModal<T>>>;
+
   /** Called when the user submits a new selection.
    * @param value - The updated selection.
    */
@@ -52,8 +56,10 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
   }
 
   public render(): JSX.Element {
-    const {value, model, getLabel, isEqual, title, listHeading, onChange,
-      readOnly, className, style, onFocus, onClick, ...rest} = this.props;
+    const {value, model, getLabel, isEqual, title, listHeading, editListModal,
+      onChange, readOnly, className, style, onFocus, onClick, ...rest} =
+        this.props;
+    const Modal = editListModal ?? EditListModal<T>;
     return (
       <>
         <Input {...rest} ref={this.input} type='text' readOnly
@@ -64,7 +70,7 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
           style={{width: '100%', ...style}}
           onFocus={this.onFocus} onClick={this.onClick}/>
         {this.state.isOpen &&
-          <EditListModal title={title} listHeading={listHeading}
+          <Modal title={title} listHeading={listHeading}
             model={model} selected={value} getLabel={getLabel} isEqual={isEqual}
             selectionMode={EditListModal.SelectionMode.MULTIPLE}
             readOnly={readOnly} onSubmit={this.onSubmit}
