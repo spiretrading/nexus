@@ -1,6 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
+import { QueryModel } from '../../../models';
 import { SubmissionInput } from '..';
 import { ComplianceModel } from './compliance_model';
 import { NewRuleModal } from './new_rule_modal';
@@ -16,6 +17,12 @@ interface Properties {
 
   /** The page's model. */
   model: ComplianceModel;
+
+  /** The model used to look up tickers. */
+  tickerQueryModel: QueryModel<Nexus.Ticker>;
+
+  /** The model used to look up scope entries. */
+  scopeQueryModel: QueryModel<Nexus.Scope>;
 
   /** Whether an error occurred. */
   isError?: boolean;
@@ -55,6 +62,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     this.state = {
       isAddRuleModalOpen: false
     };
+    this.content = React.createRef<HTMLDivElement>();
   }
 
   public render(): JSX.Element {
@@ -77,8 +85,10 @@ export class CompliancePage extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={contentStyle}>
+      <div ref={this.content} style={contentStyle}>
         <RulesList
+          tickerQueryModel={this.props.tickerQueryModel}
+          scopeQueryModel={this.props.scopeQueryModel}
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.model.currencyDatabase}
           complianceList={this.props.model.entries}
@@ -95,7 +105,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           <div style={CompliancePage.STYLE.paddingLarge}/>
           <SubmissionInput roles={this.props.roles}
             isError={this.props.isError} status={this.props.status}
-            isEnabled={this.props.canSubmit} onSubmit={this.props.onSubmit}/>
+            isEnabled={this.props.canSubmit} onSubmit={this.onSubmit}/>
         </div>
       </div>);
   }
@@ -103,6 +113,18 @@ export class CompliancePage extends React.Component<Properties, State> {
   private onToggleAddRuleModal = () => {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
+
+  private onSubmit = () => {
+    const fields = this.content.current.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input, select, textarea');
+    for(const field of Array.from(fields)) {
+      if(!field.reportValidity()) {
+        return;
+      }
+    }
+    this.props.onSubmit?.();
+  };
 
   private static readonly STYLE = {
     paddingSmall: {
@@ -167,4 +189,5 @@ export class CompliancePage extends React.Component<Properties, State> {
       color: '#36BB55'
     } as React.CSSProperties
   };
+  private content: React.RefObject<HTMLDivElement>;
 }

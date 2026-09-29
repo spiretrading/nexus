@@ -7,11 +7,13 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
   CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
-  ReadonlyInput, ScopeValueInput, TextInput } from '../viewer/propertyInput';
+  ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
+  '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ListInputExample } from './list_input_example';
 import { ScopeInputExample } from './scope_input_example';
+import { TickerInputExample } from './ticker_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
   './schemas';
 
@@ -596,16 +598,6 @@ const scopeInput =
     [new SignalSchema('onChange', 'value')],
     ScopeInputExample, 300);
 
-const scopeItemInput =
-  new ComponentSchema('ScopeItemInput',
-    [new PropertySchema('value', '', TextInput),
-      new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.ScopeItemInput,
-      {...props, style: {width: '100%', ...props.style}}));
-
 const relativeDate =
   new ComponentSchema('RelativeDate',
     [new PropertySchema('datetime', new Date(), DateInput),
@@ -637,24 +629,16 @@ const skeleton =
     [],
     WebPortal.Skeleton);
 
-const tickersInput =
-  new ComponentSchema('TickersInput',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value')],
-    WebPortal.TickersInput);
-
 const tickerInput =
   new ComponentSchema('TickerInput',
-    [new PropertySchema('value', '', TextInput),
+    [new PropertySchema('value', Nexus.Ticker.parse('ABX.TSX'),
+        TickerValueInput),
       new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.TickerInput,
-      {...props, style: {width: '100%', ...props.style}}));
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    TickerInputExample, 300);
 
 const segmentButton =
   new ComponentSchema('SegmentButton',
@@ -1218,10 +1202,11 @@ export const componentSections = [
     integerField,
     labeledCheckbox, link, listInput, modal, moneyInput, navigationHeader,
     navigationTab,
-    pageLayout, pagination, scopeItemInput, relativeDate, roleIcon,
-    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
+    pageLayout, pagination, relativeDate, roleIcon,
+    rolePanel, segmentedSpinner, select, skeleton,
     segmentButton, segmentedControl, timeOfDayInput]),
-  new ComponentSection('App Kit', [accountGroupListInput, scopeInput]),
+  new ComponentSection('App Kit', [accountGroupListInput, scopeInput,
+    tickerInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,

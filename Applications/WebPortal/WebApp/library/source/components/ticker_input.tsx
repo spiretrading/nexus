@@ -1,39 +1,46 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Input } from './input';
+import { QueryModel } from '../models';
+import { ComboBox } from './combo_box';
 
 interface Properties extends
-    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+    Omit<React.InputHTMLAttributes<HTMLInputElement>,
+      'value' | 'defaultValue' | 'onChange'> {
 
-  /** Called when the displayed value changes.
-   * @param value - The new value.
-   */
-  onChange?: (value: string) => void;
+  /** The selected ticker. Defaults to an empty field. */
+  value?: Nexus.Ticker;
 
-  /** Called when the value is submitted.
-   * @param value - The ticker.
-   */
-  onEnter?: (value: Nexus.Ticker) => void;
+  /** The model used to parse tickers and load suggestions. */
+  model: QueryModel<Nexus.Ticker>;
+
+  /** Called with one ticker, or Ticker.NONE when the field is cleared. */
+  onChange?: (value: Nexus.Ticker) => void;
 }
 
-/** The component that uses user input to get a ticker. */
-export function TickerInput({onChange, onEnter, ...rest}: Properties):
-    JSX.Element {
-  const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange?.(event.target.value.toUpperCase());
-  };
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if(event.key === 'Enter') {
-      const ticker = Nexus.Ticker.parse(String(rest.value ?? ''));
-      if(!ticker.equals(Nexus.Ticker.NONE)) {
-        onEnter?.(ticker);
-      }
+/** Selects one ticker or accepts a properly formatted ticker directly. */
+export class TickerInput extends React.Component<Properties> {
+  public render(): JSX.Element {
+    const {value, model, onChange, ...rest} = this.props;
+    let selected = value ?? null;
+    if(selected?.equals(Nexus.Ticker.NONE)) {
+      selected = null;
     }
+    return <ComboBox {...rest} value={selected} model={model}
+      getLabel={getLabel} isEqual={isEqual}
+      placeholder={this.props.placeholder ?? 'Enter ticker'}
+      invalidMessage='Enter a qualified ticker, such as ABX.TSX.'
+      onChange={this.onChange}/>;
+  }
+
+  private onChange = (value: Nexus.Ticker) => {
+    this.props.onChange?.(value ?? Nexus.Ticker.NONE);
   };
-  return (
-    <Input
-      placeholder='Find symbol here'
-      {...rest}
-      onChange={onInputChange}
-      onKeyDown={onKeyDown}/>);
+}
+
+function getLabel(ticker: Nexus.Ticker): string {
+  return ticker.toString();
+}
+
+function isEqual(first: Nexus.Ticker, second: Nexus.Ticker): boolean {
+  return first.equals(second);
 }

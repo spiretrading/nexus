@@ -47,6 +47,8 @@ export class ComplianceController extends React.Component<Properties, State> {
     }
     return <CompliancePage displaySize={this.props.displaySize}
       roles={this.props.roles} model={this.state.model}
+      tickerQueryModel={this.props.service.tickerQueryModel}
+      scopeQueryModel={this.props.service.scopeQueryModel}
       isError={this.state.hasError} status={this.state.status}
       canSubmit={this.state.canSubmit} onRuleAdd={this.onRuleAdd}
       onRuleChange={this.onRuleChange} onSubmit={this.onSubmit}/>;

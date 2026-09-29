@@ -1,8 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
-import { combineScopes, getScopeLabel, HttpTickerQueryModel, QueryModel,
-  ScopeQueryModel, splitScope } from '../models';
+import { combineScopes, getScopeLabel, QueryModel, splitScope } from
+  '../models';
 import { EditScopeModal } from './edit_scope_modal';
 import { ListInput } from './list_input';
 
@@ -13,9 +13,8 @@ interface Properties extends
   /** The scope displayed in the input. Defaults to an empty scope. */
   value?: Nexus.Scope;
 
-  /** The lookup model. Defaults to local countries/venues and service tickers.
-   */
-  model?: QueryModel<Nexus.Scope>;
+  /** The model used to parse scope entries and load suggestions. */
+  model: QueryModel<Nexus.Scope>;
 
   /** Retained for existing callers. Layout follows the viewport size. */
   displaySize?: DisplaySize;
@@ -30,7 +29,6 @@ export class ScopeInput extends React.Component<Properties> {
     super(props);
     this.value = props.value;
     this.entries = splitScope(props.value ?? new Nexus.Scope());
-    this.model = new ScopeQueryModel(new HttpTickerQueryModel());
   }
 
   public render(): JSX.Element {
@@ -39,9 +37,8 @@ export class ScopeInput extends React.Component<Properties> {
       this.value = value;
       this.entries = splitScope(value ?? new Nexus.Scope());
     }
-    return <ListInput {...rest} value={this.entries}
-      model={model ?? this.model} getLabel={getScopeLabel}
-      title='Edit Scope' listHeading='Added Scope'
+    return <ListInput {...rest} value={this.entries} model={model}
+      getLabel={getScopeLabel} title='Edit Scope' listHeading='Added Scope'
       placeholder={this.props.placeholder ??
         'Enter countries, venues, or tickers'}
       editListModal={EditScopeModal} onChange={this.onChange}/>;
@@ -53,5 +50,4 @@ export class ScopeInput extends React.Component<Properties> {
 
   private value: Nexus.Scope;
   private entries: Nexus.Scope[];
-  private model: QueryModel<Nexus.Scope>;
 }
