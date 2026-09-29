@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <boost/uuid/uuid.hpp>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
@@ -66,6 +67,9 @@ namespace Spire {
       PropertyHub(const PropertyHub&) = delete;
       PropertyHub& operator =(const PropertyHub&) = delete;
   };
+
+  /** The type of model over a list of PropertyHubs. */
+  using PropertyHubListModel = ListModel<std::shared_ptr<PropertyHub>>;
 
   /**
    * Casts a property to a model over a given type.
