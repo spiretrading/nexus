@@ -12,6 +12,8 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ListInputExample } from './list_input_example';
+import { ScheduledReportItemContextMenuExample } from
+  './scheduled_report_item_context_menu_example';
 import { ScopeInputExample } from './scope_input_example';
 import { TickerInputExample } from './ticker_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
@@ -1251,6 +1253,14 @@ const scheduledDate =
       }
     }));
 
+const scheduledReportItemContextMenu =
+  new ComponentSchema('ScheduledReportItemContextMenu',
+    [new PropertySchema('lastSubmitted', '', (props: any) =>
+        React.createElement('output', null, props.value)),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onSubmit', 'lastSubmitted')],
+    ScheduledReportItemContextMenuExample);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
@@ -1274,4 +1284,4 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
   new ComponentSection('Report Page', [reportActivityStatusTag,
-    reportTypeSelect, scheduledDate])];
+    reportTypeSelect, scheduledDate, scheduledReportItemContextMenu])];
