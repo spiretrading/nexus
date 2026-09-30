@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { TableHeaderCell } from './table_header_cell';
+import { SortableTableHeaderCell } from '../../../components';
 
 interface Properties {
 
@@ -23,7 +23,7 @@ interface Properties {
 
 interface State {
   sortColumn: ProfitAndLossTable.Column;
-  sortOrder: TableHeaderCell.SortOrder;
+  sortOrder: SortableTableHeaderCell.SortOrder;
 }
 
 /** Displays a table of tickers with volume, fees, and P/L. */
@@ -32,7 +32,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
     super(props);
     this.state = {
       sortColumn: ProfitAndLossTable.Column.TICKER,
-      sortOrder: TableHeaderCell.SortOrder.NONE
+      sortOrder: SortableTableHeaderCell.SortOrder.NONE
     };
   }
 
@@ -43,36 +43,36 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
         <table className={css(STYLES.table)}>
           <thead className={css(STYLES.thead)}>
             <tr>
-              <TableHeaderCell
-                  style={{textAlign: 'start'}}
+              <SortableTableHeaderCell
+                  textAlign='start'
                   sortOrder={this.sortOrderFor(
                     ProfitAndLossTable.Column.TICKER)}
                   onSort={this.onSort(ProfitAndLossTable.Column.TICKER)}>
                 Ticker
-              </TableHeaderCell>
-              <TableHeaderCell
+              </SortableTableHeaderCell>
+              <SortableTableHeaderCell
                   className={css(STYLES.collapsible)}
-                  style={{textAlign: 'end'}}
+                  textAlign='end'
                   sortOrder={this.sortOrderFor(
                     ProfitAndLossTable.Column.VOLUME)}
                   onSort={this.onSort(ProfitAndLossTable.Column.VOLUME)}>
                 Volume
-              </TableHeaderCell>
-              <TableHeaderCell
+              </SortableTableHeaderCell>
+              <SortableTableHeaderCell
                   className={css(STYLES.collapsible)}
-                  style={{textAlign: 'end'}}
+                  textAlign='end'
                   sortOrder={this.sortOrderFor(
                     ProfitAndLossTable.Column.FEES)}
                   onSort={this.onSort(ProfitAndLossTable.Column.FEES)}>
                 Fees
-              </TableHeaderCell>
-              <TableHeaderCell
-                  style={{textAlign: 'end'}}
+              </SortableTableHeaderCell>
+              <SortableTableHeaderCell
+                  textAlign='end'
                   sortOrder={this.sortOrderFor(
                     ProfitAndLossTable.Column.PNL)}
                   onSort={this.onSort(ProfitAndLossTable.Column.PNL)}>
                 P/L
-              </TableHeaderCell>
+              </SortableTableHeaderCell>
             </tr>
           </thead>
           <tbody>
@@ -129,12 +129,16 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
   }
 
   private sortedTickers(): ProfitAndLossTable.Ticker[] {
-    if(this.state.sortOrder === TableHeaderCell.SortOrder.NONE) {
+    if(this.state.sortOrder === SortableTableHeaderCell.SortOrder.NONE) {
       return this.props.tickers;
     }
     var sorted = [...this.props.tickers];
-    var direction =
-      this.state.sortOrder === TableHeaderCell.SortOrder.ASCENDING ? 1 : -1;
+    const direction = (() => {
+      if(this.state.sortOrder === SortableTableHeaderCell.SortOrder.ASCENDING) {
+        return 1;
+      }
+      return -1;
+    })();
     sorted.sort((a, b) => {
       switch(this.state.sortColumn) {
         case ProfitAndLossTable.Column.TICKER:
@@ -152,15 +156,16 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
   }
 
   private sortOrderFor(
-      column: ProfitAndLossTable.Column): TableHeaderCell.SortOrder {
+      column: ProfitAndLossTable.Column):
+      SortableTableHeaderCell.SortOrder {
     if(this.state.sortColumn === column) {
       return this.state.sortOrder;
     }
-    return TableHeaderCell.SortOrder.NONE;
+    return SortableTableHeaderCell.SortOrder.NONE;
   }
 
   private onSort = (column: ProfitAndLossTable.Column) =>
-      (order: TableHeaderCell.SortOrder) => {
+      (order: SortableTableHeaderCell.SortOrder) => {
     this.setState({sortColumn: column, sortOrder: order});
   }
 }
