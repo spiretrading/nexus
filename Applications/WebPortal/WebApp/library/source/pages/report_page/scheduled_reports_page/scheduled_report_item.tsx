@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { IconButton } from '../../../components';
+import { highlightText } from './highlight_text';
 import { ScheduledDate } from './scheduled_date';
 import { ScheduledReportItemContextMenu } from
   './scheduled_report_item_context_menu';
@@ -23,6 +24,9 @@ interface Properties extends
   /** The next run date, or the run date of a one-time report. */
   runDate: ScheduledDate.Date;
 
+  /** Literal text to highlight in the report's content, ignoring case. */
+  highlight?: string;
+
   /** Called when the user requests an immediate run. */
   onRun?: () => void;
 
@@ -43,7 +47,7 @@ export class ScheduledReportItem extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const {id, type, parameters, repeats, runDate, onRun, onDuplicate,
-      onDelete, className, ...attributes} = this.props;
+      onDelete, highlight, className, ...attributes} = this.props;
     const title = (() => {
       if(repeats) {
         return `Recurring ${type}`;
@@ -56,10 +60,10 @@ export class ScheduledReportItem extends React.Component<Properties> {
         <a href={`/reports/edit/${encodeURIComponent(id)}`}
           aria-labelledby={`${this.identifier}-title`}
           className={css(STYLES.link)}/>
-        <Header title={title} identifier={this.identifier}
+        <Header title={title} highlight={highlight} identifier={this.identifier}
           invoker={this.invoker} onSubmit={this.onCommand}/>
-        <Parameters parameters={parameters}/>
-        <ScheduledDate date={runDate} repeats={repeats}/>
+        <Parameters parameters={parameters} highlight={highlight}/>
+        <ScheduledDate date={runDate} repeats={repeats} highlight={highlight}/>
       </div>
     </div>;
   }
@@ -94,6 +98,7 @@ export namespace ScheduledReportItem {
 
 interface HeaderProperties {
   title: string;
+  highlight: string;
   identifier: string;
   invoker: React.RefObject<HTMLButtonElement>;
   onSubmit: (command: ScheduledReportItemContextMenu.Command) => void;
@@ -104,7 +109,7 @@ function Header(props: HeaderProperties): JSX.Element {
   const anchor = `--${menuId}`;
   return <header className={css(STYLES.header)}>
     <h2 id={`${props.identifier}-title`} className={css(STYLES.title)}>
-      {props.title}
+      {highlightText(props.title, props.highlight)}
     </h2>
     <span className={css(STYLES.menuContainer)}>
       <IconButton icon='resources/report_page/more.svg'
@@ -122,14 +127,19 @@ function Header(props: HeaderProperties): JSX.Element {
 
 interface ParametersProperties {
   parameters: readonly ScheduledReportItem.Parameter[];
+  highlight: string;
 }
 
 function Parameters(props: ParametersProperties): JSX.Element {
   return <dl className={css(STYLES.parameters)}>
     {props.parameters.map((parameter, index) =>
       <div key={index} className={css(STYLES.parameter)}>
-        <dt className={css(STYLES.label)}>{parameter.label}</dt>
-        <dd className={css(STYLES.value)}>{parameter.value}</dd>
+        <dt className={css(STYLES.label)}>
+          {highlightText(parameter.label, props.highlight)}
+        </dt>
+        <dd className={css(STYLES.value)}>
+          {highlightText(parameter.value, props.highlight)}
+        </dd>
       </div>)}
   </dl>;
 }

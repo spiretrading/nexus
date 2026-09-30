@@ -18,7 +18,7 @@ export function Button(props: Properties): JSX.Element {
   const theme = props.theme ?? Button.Theme.LIGHT;
   const variant = props.variant ?? Button.Variant.PRIMARY;
   return (
-    <button style={props.style}
+    <button type={props.type} style={props.style}
         disabled={props.disabled}
         className={[css(EXTRA_STYLE.button,
           variant === Button.Variant.SECONDARY && EXTRA_STYLE.buttonSecondary,
