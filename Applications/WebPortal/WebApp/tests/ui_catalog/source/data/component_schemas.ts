@@ -9,6 +9,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
   TickerInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
+import { RadioButtonExample } from './radio_button_example';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
 
@@ -68,6 +69,15 @@ const checkbox =
           onClick: props.onClick
         }));
     });
+
+const radioButton =
+  new ComponentSchema('RadioButton',
+    [new PropertySchema('label', 'Now', TextInput),
+      new PropertySchema('name', 'catalog-runtime', TextInput),
+      new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'checked')],
+    RadioButtonExample);
 
 enum MenuMode {
   COMMANDS,
@@ -1182,9 +1192,9 @@ export const componentSections = [
     decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
     filterChip, filterInput, hLine, iconLabelButton, input, integerField,
     labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
-    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
-    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton, segmentedControl, timeOfDayInput]),
+    pageLayout, pagination, radioButton, scopeInput, scopeItemInput, relativeDate,
+    roleIcon, rolePanel, tickersInput, tickerInput, segmentedSpinner, select,
+    skeleton, segmentButton, segmentedControl, timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
