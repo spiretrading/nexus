@@ -30,8 +30,10 @@ export function ButtonLink(props: Properties): JSX.Element {
 
 const STYLES = StyleSheet.create({
   link: {
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
     boxSizing: 'border-box',
+    height: '34px',
     backgroundColor: '#684BC7',
     color: '#FFFFFF',
     border: '1px solid transparent',
