@@ -1206,6 +1206,19 @@ const tableHeaderCell =
             }, 'Column'))));
     }, 132);
 
+const reportTypeSelect =
+  new ComponentSchema('ReportTypeSelect',
+    [new PropertySchema('reportTypes',
+        ['Profit and Loss', 'Entitlement Activity', 'Trading Volume'],
+        ArrayInput(new PropertySchema('reportType', 'New report', TextInput))),
+      new PropertySchema('value', 'Profit and Loss', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('aria-label', 'Report type', TextInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.ReportTypeSelect);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
@@ -1227,4 +1240,5 @@ export const componentSections = [
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
+    profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
+  new ComponentSection('Report Page', [reportTypeSelect])];

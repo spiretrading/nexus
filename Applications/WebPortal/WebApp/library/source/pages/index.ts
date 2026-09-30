@@ -10,4 +10,5 @@ export * from './login_page';
 export * from './notifications_page';
 export * from './page_not_found_page';
 export * from './page_wrapper';
+export * from './report_page';
 export * from './requests_page';
