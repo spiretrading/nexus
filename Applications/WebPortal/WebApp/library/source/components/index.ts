@@ -1,6 +1,7 @@
 export * from './account_group_list_input';
 export * from './burger_button';
 export * from './button';
+export * from './button_link';
 export * from './checkbox';
 export * from './combo_box';
 export * from './context_menu';

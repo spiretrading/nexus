@@ -41,6 +41,16 @@ const button =
     (props: any) => React.createElement(WebPortal.Button,
       {...props, style: {width: '100%', height: '100%', ...props.style}}));
 
+const buttonLink =
+  new ComponentSchema('ButtonLink',
+    [new PropertySchema('label', 'View report', TextInput),
+      new PropertySchema('href', '#report', TextInput),
+      new PropertySchema('target', '_self', TextInput),
+      new PropertySchema('inert', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.ButtonLink);
+
 const burgerButton =
   new ComponentSchema('BurgerButton',
     [new PropertySchema('width', 26, NumberSliderInput),
@@ -1195,7 +1205,8 @@ const tableHeaderCell =
     }, 132);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
+  new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
+    contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
     expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
     integerField, labeledCheckbox, link, listInput, modal, navigationHeader,
