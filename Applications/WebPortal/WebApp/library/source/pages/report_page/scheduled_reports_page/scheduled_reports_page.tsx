@@ -2,24 +2,24 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { Button, EmptyMessage, ErrorMessage, FilterInput, PageLayout,
   Pagination } from '../../../components';
-import { ScheduledDate } from './scheduled_date';
 import { ScheduledReportItem } from './scheduled_report_item';
+import { ScheduledReportsModel } from './scheduled_reports_model';
 import { ScheduledReportItemPlaceholder } from
   './scheduled_report_item_placeholder';
 
 interface Properties {
 
   /** The submitted filter criteria. */
-  filters: ScheduledReportsPage.Filters;
+  filters: ScheduledReportsModel.Filters;
 
   /** The requested zero-based page index. */
   pageIndex: number;
 
   /** The latest response for the submitted criteria and page. */
-  response: ScheduledReportsPage.Response;
+  response: ScheduledReportsModel.Response;
 
   /** Called to retrieve a page of matching scheduled reports. */
-  onSubmit?: (submission: ScheduledReportsPage.Submission) => void;
+  onSubmit?: (submission: ScheduledReportsModel.Submission) => void;
 
   /** Called to navigate to the Create Report Page. */
   onNewReport?: () => void;
@@ -37,7 +37,7 @@ interface Properties {
 interface State {
   query: string;
   highlight: string;
-  response: ScheduledReportsPage.Response;
+  response: ScheduledReportsModel.Response;
   displayStatus: DisplayStatus;
 }
 
@@ -52,10 +52,11 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
       displayStatus: getDisplayStatus(props.response)
     };
     this.timer = null;
+    this.layout = React.createRef();
   }
 
   public render(): JSX.Element {
-    return <PageLayout>
+    return <PageLayout ref={this.layout}>
       <Main query={this.state.query} onQueryChange={this.onQueryChange}
         onNewReport={this.props.onNewReport}
         displayStatus={this.state.displayStatus}
@@ -67,10 +68,15 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
   }
 
   public componentDidMount(): void {
-    this.updateResponse();
+    this.updateResponse(false);
   }
 
   public componentDidUpdate(previous: Properties): void {
+    const isNewPage = previous.pageIndex !== this.props.pageIndex &&
+      previous.filters.query === this.props.filters.query;
+    if(isNewPage) {
+      this.layout.current?.scrollToTop();
+    }
     if(previous.filters.query !== this.props.filters.query &&
         this.state.query.trim() !== this.props.filters.query) {
       this.setState({query: this.props.filters.query});
@@ -78,7 +84,7 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
     if(previous.response !== this.props.response ||
         previous.pageIndex !== this.props.pageIndex ||
         previous.filters.query !== this.props.filters.query) {
-      this.updateResponse();
+      this.updateResponse(isNewPage);
     }
   }
 
@@ -86,11 +92,16 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
     window.clearTimeout(this.timer);
   }
 
-  private updateResponse(): void {
+  private updateResponse(isNewPage: boolean): void {
     if(this.props.response.status ===
-        ScheduledReportsPage.ResponseStatus.IN_PROGRESS) {
-      if(this.timer === null &&
-          this.state.displayStatus !== DisplayStatus.IN_PROGRESS) {
+        ScheduledReportsModel.ResponseStatus.IN_PROGRESS) {
+      if(isNewPage) {
+        window.clearTimeout(this.timer);
+        this.timer = null;
+        this.setState({displayStatus: null});
+      }
+      if(this.timer === null && (isNewPage ||
+          this.state.displayStatus !== DisplayStatus.IN_PROGRESS)) {
         this.timer = window.setTimeout(this.onLoadingTimeout, 500);
       }
       return;
@@ -110,6 +121,12 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
   };
 
   private onNavigate = (pageIndex: number) => {
+    if(pageIndex !== this.props.pageIndex && this.props.onSubmit) {
+      this.layout.current?.scrollToTop();
+      window.clearTimeout(this.timer);
+      this.timer = null;
+      this.setState({displayStatus: null});
+    }
     this.props.onSubmit?.({filters: this.props.filters, pageIndex});
   };
 
@@ -125,77 +142,7 @@ export class ScheduledReportsPage extends React.Component<Properties, State> {
   };
 
   private timer: number;
-}
-
-export namespace ScheduledReportsPage {
-
-  /** The maximum number of reports returned in one page. */
-  export const PAGE_SIZE = 50;
-
-  /** The status of a scheduled reports request. */
-  export enum ResponseStatus {
-
-    /** Reports are being retrieved. */
-    IN_PROGRESS,
-
-    /** The response is available. */
-    READY,
-
-    /** Retrieving reports failed. */
-    ERROR
-  }
-
-  /** Criteria used to filter scheduled reports. */
-  export interface Filters {
-
-    /** The trimmed search query. */
-    query: string;
-  }
-
-  /** A request to retrieve one page of scheduled reports. */
-  export interface Submission {
-
-    /** The filter criteria. */
-    filters: Filters;
-
-    /** The zero-based page index. */
-    pageIndex: number;
-  }
-
-  /** A scheduled report and its formatted display values. */
-  export interface Schedule {
-
-    /** The report's unique identifier. */
-    id: string;
-
-    /** The report type. */
-    type: string;
-
-    /** The report's parameters, in display order. */
-    parameters: readonly ScheduledReportItem.Parameter[];
-
-    /** Whether the report runs repeatedly. */
-    repeats: boolean;
-
-    /** The upcoming run date, or the run date of a one-time report. */
-    runDate: ScheduledDate.Date;
-  }
-
-  /** The response for the current submitted criteria and page. */
-  export interface Response {
-
-    /** The request status. */
-    status: ResponseStatus;
-
-    /** Whether the user has no scheduled reports, irrespective of filters. */
-    isEmpty: boolean;
-
-    /** The total number of reports matching the filters across all pages. */
-    filteredCount: number;
-
-    /** Up to PAGE_SIZE reports for the requested page, in display order. */
-    schedules: readonly Schedule[];
-  }
+  private layout: React.RefObject<PageLayout>;
 }
 
 enum DisplayStatus {
@@ -206,11 +153,11 @@ enum DisplayStatus {
   ERROR
 }
 
-function getDisplayStatus(response: ScheduledReportsPage.Response):
+function getDisplayStatus(response: ScheduledReportsModel.Response):
     DisplayStatus {
-  if(response.status === ScheduledReportsPage.ResponseStatus.IN_PROGRESS) {
+  if(response.status === ScheduledReportsModel.ResponseStatus.IN_PROGRESS) {
     return null;
-  } else if(response.status === ScheduledReportsPage.ResponseStatus.ERROR) {
+  } else if(response.status === ScheduledReportsModel.ResponseStatus.ERROR) {
     return DisplayStatus.ERROR;
   } else if(response.isEmpty) {
     return DisplayStatus.EMPTY;
@@ -222,7 +169,7 @@ function getDisplayStatus(response: ScheduledReportsPage.Response):
 
 interface ContentProperties {
   displayStatus: DisplayStatus;
-  response: ScheduledReportsPage.Response;
+  response: ScheduledReportsModel.Response;
   pageIndex: number;
   highlight: string;
   onRetry: () => void;
@@ -318,7 +265,7 @@ function ScheduledReportList(props: ContentProperties): JSX.Element {
 }
 
 interface ScheduleProperties {
-  schedule: ScheduledReportsPage.Schedule;
+  schedule: ScheduledReportsModel.Schedule;
   highlight: string;
   onRun: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -349,13 +296,13 @@ class Schedule extends React.Component<ScheduleProperties> {
 
 function PaginationBlock(props: ContentProperties): JSX.Element {
   if(props.displayStatus !== DisplayStatus.READY ||
-      props.response.filteredCount <= ScheduledReportsPage.PAGE_SIZE) {
+      props.response.filteredCount <= ScheduledReportsModel.PAGE_SIZE) {
     return null;
   }
   return <div className={css(STYLES.pagination)}>
     <Pagination pageIndex={props.pageIndex}
       totalCount={props.response.filteredCount}
-      pageSize={ScheduledReportsPage.PAGE_SIZE} onNavigate={props.onNavigate}/>
+      pageSize={ScheduledReportsModel.PAGE_SIZE} onNavigate={props.onNavigate}/>
   </div>;
 }
 
