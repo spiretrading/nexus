@@ -42,8 +42,7 @@ const button =
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
-    (props: any) => React.createElement(WebPortal.Button,
-      {...props, style: {width: '100%', height: '100%', ...props.style}}));
+    WebPortal.Button);
 
 const buttonLink =
   new ComponentSchema('ButtonLink',
