@@ -161,7 +161,7 @@ const STYLES = StyleSheet.create({
     padding: '12px 20px',
     paddingInlineEnd: '9px',
     cursor: 'pointer',
-    ':hover': {backgroundColor: '#E6E6E6'},
+    ':not(:disabled):hover': {backgroundColor: '#E6E6E6'},
     ':focus-visible': {
       outline: '1px solid #684BC7',
       outlineOffset: '-1px'
