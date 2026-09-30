@@ -260,14 +260,17 @@ ReplayWindow::ReplayWindow(
   auto date_box = new DateBox(std::make_shared<PlaybackDateModel>(
     make_field_value_model(get_timeline(), &Timeline::m_start),
     std::move(min_date)));
-  date_box->setFixedWidth(scale_width(100));
+  date_box->setFixedWidth(scale_width(118));
   bottom_layout->addWidget(date_box);
   bottom_layout->addSpacing(scale_width(8));
   auto time_box = new DurationBox(std::make_shared<PlaybackTimeModel>(
     get_timeline(), m_playhead->m_time_client, m_playhead));
-  time_box->setFixedWidth(scale_width(70));
+  time_box->setFixedWidth(scale_width(80));
+  update_style(*time_box, [] (auto& style) {
+    style.get(Any()).set(DurationFormat("hh:mm:ss"));
+  });
   bottom_layout->addWidget(time_box);
-  bottom_layout->addSpacing(scale_width(28));
+  bottom_layout->addSpacing(scale_width(8));
   m_start_button = make_playback_icon_button(
     ":/Icons/start.svg", tr("Jump to Start (Home)"));
   m_start_button->connect_click_signal(
