@@ -1173,26 +1173,23 @@ const reportStatusIndicator =
     [],
     WebPortal.ReportStatusIndicator);
 
-const tableHeaderCell =
-  new ComponentSchema('TableHeaderCell',
-    [new PropertySchema('sortOrder',
-        WebPortal.TableHeaderCell.SortOrder.NONE,
-        EnumInput(WebPortal.TableHeaderCell.SortOrder)),
-      new PropertySchema('textAlign', 'start', TextInput)],
-    [],
-    (props: any) => {
-      const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
-      React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
-      return React.createElement('table', {
-          style: {borderCollapse: 'collapse', width: '100%'}},
-        React.createElement('thead', null,
-          React.createElement('tr', null,
-            React.createElement(WebPortal.TableHeaderCell, {
-              sortOrder: sortOrder,
-              style: {textAlign: props.textAlign},
-              onSort: setSortOrder
-            }, 'Column'))));
-    }, 132);
+const sortableTableHeaderCell =
+  new ComponentSchema('SortableTableHeaderCell',
+    [new PropertySchema('children', 'Column', TextInput),
+      new PropertySchema('sortOrder',
+        WebPortal.SortableTableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.SortableTableHeaderCell.SortOrder)),
+      new PropertySchema('textAlign', 'start', TextInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onSort', 'sortOrder')],
+    (props: any) => React.createElement('table', {
+        style: {borderCollapse: 'collapse', width: '100%',
+          fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem'}},
+      React.createElement('thead', null,
+        React.createElement('tr', null,
+          React.createElement(WebPortal.SortableTableHeaderCell, props)))),
+    180);
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
@@ -1200,7 +1197,8 @@ export const componentSections = [
     expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
     integerField, labeledCheckbox, link, listInput, modal, navigationHeader,
     navigationTab, pagination, segmentButton, segmentedControl,
-    segmentedSpinner, select, skeleton, timeOfDayInput]),
+    segmentedSpinner, select, skeleton, sortableTableHeaderCell,
+    timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
     relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
@@ -1215,4 +1213,4 @@ export const componentSections = [
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
+    profitAndLossTable, reportStatusIndicator])];

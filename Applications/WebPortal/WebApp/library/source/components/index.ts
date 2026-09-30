@@ -39,6 +39,7 @@ export * from './relative_date';
 export * from './segmented_spinner';
 export * from './select';
 export * from './skeleton';
+export * from './sortable_table_header_cell';
 export * from './segment_button';
 export * from './segmented_control';
 export * from './suggestions_window';
