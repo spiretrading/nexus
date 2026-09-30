@@ -32,6 +32,7 @@ const STYLES = StyleSheet.create({
     height: '20px',
     padding: '2px',
     border: '1px solid transparent',
+    borderRadius: '1px',
     backgroundColor: 'transparent',
     color: '#684BC7',
     cursor: 'pointer',
@@ -41,7 +42,7 @@ const STYLES = StyleSheet.create({
       color: '#4B23A0'
     },
     ':focus-visible': {borderColor: '#684BC7'},
-    ':disabled': {color: '#DBDBDB', cursor: 'not-allowed'}
+    ':disabled': {color: '#DBDBDB', cursor: 'not-allowed', opacity: 0.4}
   },
   icon: {
     display: 'block',

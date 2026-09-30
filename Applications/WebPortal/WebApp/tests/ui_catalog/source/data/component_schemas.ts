@@ -1283,6 +1283,12 @@ const scheduledReportItemContextMenu =
     [new SignalSchema('onSubmit', 'lastSubmitted')],
     ScheduledReportItemContextMenuExample);
 
+const scheduledReportItemPlaceholder =
+  new ComponentSchema('ScheduledReportItemPlaceholder',
+    [new PropertySchema('style', {}, CSSInput)],
+    [],
+    WebPortal.ScheduledReportItemPlaceholder, 320);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
@@ -1307,4 +1313,4 @@ export const componentSections = [
     profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
   new ComponentSection('Report Page', [reportActivityStatusTag,
     reportTypeSelect, scheduledDate, scheduledReportItem,
-    scheduledReportItemContextMenu])];
+    scheduledReportItemContextMenu, scheduledReportItemPlaceholder])];
