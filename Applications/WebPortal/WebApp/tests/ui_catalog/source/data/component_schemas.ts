@@ -6,12 +6,14 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, EnumInput, IntervalValueInput, NumberInput,
+  CSSInput, DateInput, DateRangeValueInput, EnumInput, IntervalValueInput,
+  NumberInput,
   NumberSliderInput, MoneyInput,
   ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
+import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { RadioButtonExample } from './radio_button_example';
 import { ScopeInputExample } from './scope_input_example';
@@ -411,6 +413,26 @@ const listInput =
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     ListInputExample, 300);
+
+const dateRangeInput =
+  new ComponentSchema('DateRangeInput',
+    [new PropertySchema('value', (() => {
+        const today = Beam.Date.today();
+        return new WebPortal.DateRange(
+          new Beam.Date(today.year, today.month, 1), today);
+      })(), DateRangeValueInput),
+      new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('orientation',
+        WebPortal.DateRangeInput.Orientation.VERTICAL,
+        EnumInput(WebPortal.DateRangeInput.Orientation)),
+      new PropertySchema('labelPosition', WebPortal.DateRangeInput.
+        LabelPosition.ABOVE, EnumInput(WebPortal.DateRangeInput.LabelPosition)),
+      new PropertySchema('boundsRequired', true, BooleanInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    DateRangeInputExample, 284);
 
 const decimalInput =
   new ComponentSchema('DecimalInput',
@@ -1235,7 +1257,8 @@ export const componentSections = [
     navigationHeader, navigationTab, pagination, radioButton, segmentButton,
     segmentedControl, segmentedSpinner, select, skeleton, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
+    currencySelect, dateRangeInput, emptyMessage, errorMessage, moneyInput,
+    pageLayout,
     relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,

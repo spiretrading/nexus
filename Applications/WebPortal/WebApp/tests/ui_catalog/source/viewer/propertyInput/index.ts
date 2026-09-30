@@ -12,6 +12,7 @@ export * from './country_input';
 export * from './currency_input';
 export * from './css_input';
 export * from './date_input';
+export * from './date_range_value_input';
 export * from './enum_input';
 export * from './interval_value_input';
 export * from './money_input';

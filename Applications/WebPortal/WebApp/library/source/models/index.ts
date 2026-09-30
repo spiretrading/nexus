@@ -1,3 +1,5 @@
+export * from './date_range';
+export * from './date_range_validation';
 export * from './filtered_query_model';
 export * from './http_ticker_query_model';
 export * from './interval';
