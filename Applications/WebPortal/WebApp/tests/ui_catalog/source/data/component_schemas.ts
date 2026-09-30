@@ -45,6 +45,16 @@ const button =
     (props: any) => React.createElement(WebPortal.Button,
       {...props, style: {width: '100%', height: '100%', ...props.style}}));
 
+const buttonLink =
+  new ComponentSchema('ButtonLink',
+    [new PropertySchema('label', 'View report', TextInput),
+      new PropertySchema('href', '#report', TextInput),
+      new PropertySchema('target', '_self', TextInput),
+      new PropertySchema('inert', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.ButtonLink);
+
 const burgerButton =
   new ComponentSchema('BurgerButton',
     [new PropertySchema('width', 26, NumberSliderInput),
@@ -1259,7 +1269,8 @@ const inputErrorMessage =
     WebPortal.InputErrorMessage);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
+  new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
+    contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
     expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
     input, integerField, intervalInput, labeledCheckbox, link, listInput, modal,
@@ -1270,15 +1281,15 @@ export const componentSections = [
     currencySelect, dateRangeInput, emptyMessage, errorMessage,
     inputErrorMessage, moneyInput, pageLayout, relativeDate, roleIcon,
     rolePanel, scopeInput, tickerInput]),
-  new ComponentSection('Requests Page', [accountLink, changeTable,
-    complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
-    entitlementsStatusTag, requestActivityItem, requestCategoryTag,
-    requestDetailPage, requestDirectoryPage, requestEffectiveDate,
-    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
-    requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator])];
+    profitAndLossTable, reportStatusIndicator]),
+  new ComponentSection('Requests Page', [accountLink, changeTable,
+    complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
+    entitlementsStatusTag, requestActivityItem, requestCategoryTag,
+    requestDetailPage, requestDirectoryPage, requestEffectiveDate,
+    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
+    requestStateIndicator, riskControlsChangeItem])];
