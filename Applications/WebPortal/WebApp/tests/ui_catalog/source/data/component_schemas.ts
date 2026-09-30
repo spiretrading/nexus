@@ -1228,6 +1228,29 @@ const reportTypeSelect =
     [new SignalSchema('onChange', 'value')],
     WebPortal.ReportTypeSelect);
 
+const scheduledDate =
+  new ComponentSchema('ScheduledDate',
+    [new PropertySchema('date', (() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(),
+          today.getDate() + 17);
+      })(), DateInput),
+      new PropertySchema('today', new Date(), DateInput),
+      new PropertySchema('repeats', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ScheduledDate, {
+      ...props,
+      date: {
+        value: `${String(props.date.getFullYear()).padStart(4, '0')}-` +
+          `${String(props.date.getMonth() + 1).padStart(2, '0')}-` +
+          String(props.date.getDate()).padStart(2, '0'),
+        label: props.date.toLocaleDateString('en-US', {
+          month: 'short', day: '2-digit', year: 'numeric'
+        })
+      }
+    }));
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
@@ -1251,4 +1274,4 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
   new ComponentSection('Report Page', [reportActivityStatusTag,
-    reportTypeSelect])];
+    reportTypeSelect, scheduledDate])];
