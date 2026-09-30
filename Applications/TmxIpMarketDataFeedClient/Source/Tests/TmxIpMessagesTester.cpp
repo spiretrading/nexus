@@ -325,6 +325,41 @@ TEST_SUITE("TmxIpMessages") {
     }
   }
 
+  TEST_CASE("settlement_terms") {
+    auto fields = std::string();
+    SUBCASE("order_cancel_report") {
+      fields = "55=FCCB;636=AQL;6=OrderCancelResp;5=Sell;247=AQL;"
+        "40=1942YMGVQ2H7;64=100;196=21.8400;70=80;16=Cancelled";
+    }
+    SUBCASE("order_book") {
+      fields = "6=OrderInfo;5=OrderBook;55=FCCB;40=1942YMGVQ2H7;"
+        "70=80;197=Sell;64=100;196=21.8400";
+    }
+    SUBCASE("stock_status") {
+      fields = "6=StockStatus;55=FCCB";
+    }
+    SUBCASE("trade_report") {
+      fields = "6=TradeReport;5=Trade;55=FCCB;41=21.8400;64=100";
+    }
+    fields += ";57=20260929170003215611000";
+    for(auto terms : {"Cash", "CT", "MS", "NN", "Future", "ND", "20261002"}) {
+      CAPTURE(std::string(terms));
+      auto source = encode_message(fields + ";53=" + terms);
+      auto message = StampMessage::parse(source);
+      visit(message, [&] (const TmxIpOrderCancelReport& value) {
+        REQUIRE(value.m_settlement_terms.value() == terms);
+      }, [&] (const TmxIpOrderBook& value) {
+        REQUIRE(value.m_orders.size() == 1);
+        REQUIRE(value.m_orders.front().m_settlement_terms.value() == terms);
+      }, [&] (const TmxIpStockStatus& value) {
+        REQUIRE(value.m_settlement_terms.value() == terms);
+      }, [&] (const TmxIpTradeReport& value) {
+        REQUIRE(value.m_settlement_terms.value() == terms);
+      });
+      REQUIRE_NOTHROW(validate(message));
+    }
+  }
+
   TEST_CASE("order_cancel_report") {
     auto source = encode_message("55=ABX;64=9999999999;196=12.34567;"
       "6=OrderCancelResp;5=Buy;16=Booked;57=20260920085959123456789;"

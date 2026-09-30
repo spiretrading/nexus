@@ -1024,7 +1024,7 @@ namespace TmxIpDetails {
       record.m_priority_timestamp =
         fields.read_optional(TmxIpFields::PRIORITY_TIMESTAMP, i, timestamp);
       record.m_settlement_terms =
-        fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, i, text<6>);
+        fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, i, text<8>);
       record.m_is_nonresident =
         fields.read_optional(TmxIpFields::NON_RESIDENT, i, flag);
       value.m_orders.push_back(record);
@@ -1094,7 +1094,7 @@ namespace TmxIpDetails {
       fields.read_optional(TmxIpFields::MINIMUM_FILL_VOLUME, volume);
     value.m_lots_of = fields.read_optional(TmxIpFields::LOTS_OF, volume);
     value.m_settlement_terms =
-      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<6>);
+      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<8>);
     value.m_priority_status =
       fields.read_optional(TmxIpFields::PRIORITY_STATUS, text<32>);
     value.m_previous_price =
@@ -1228,7 +1228,7 @@ namespace TmxIpDetails {
     value.m_accepts_undisplayed =
       fields.read_optional(TmxIpFields::ACCEPT_UNDISPLAYED, flag);
     value.m_settlement_terms =
-      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<6>);
+      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<8>);
     value.m_is_nonresident =
       fields.read_optional(TmxIpFields::NON_RESIDENT, flag);
     return value;

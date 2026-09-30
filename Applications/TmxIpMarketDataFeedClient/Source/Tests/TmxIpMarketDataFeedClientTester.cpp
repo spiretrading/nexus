@@ -1344,6 +1344,9 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     SUBCASE("settlement_terms") {
       terms = "|53=Cash";
     }
+    SUBCASE("settlement_date") {
+      terms = "|53=20261002";
+    }
     SUBCASE("other_book") {
       terms = "|636=AQD";
     }
