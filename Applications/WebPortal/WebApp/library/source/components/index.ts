@@ -24,6 +24,7 @@ export * from './hline';
 export * from './icon_button';
 export * from './icon_label_button';
 export * from './input';
+export * from './input_error_message';
 export * from './integer_input';
 export * from './interval_input';
 export * from './labeled_checkbox';
