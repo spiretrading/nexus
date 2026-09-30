@@ -5,10 +5,11 @@ import * as React from 'react';
 import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
-  ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
-  NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  TickerInput, StyleDeclarationValueInput,
+  ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput,
+  DateRangeValueInput, EnumInput, NumberInput, NumberSliderInput, OptionalInput,
+  MoneyInput, ReadonlyInput, TickerInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
+import { DateRangeInputExample } from './date_range_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
 
@@ -354,6 +355,26 @@ const modal =
           style: {width: '640px', height: '480px'}
         }));
     });
+
+const dateRangeInput =
+  new ComponentSchema('DateRangeInput',
+    [new PropertySchema('value', (() => {
+        const today = Beam.Date.today();
+        return new WebPortal.DateRange(
+          new Beam.Date(today.year, today.month, 1), today);
+      })(), DateRangeValueInput),
+      new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('orientation',
+        WebPortal.DateRangeInput.Orientation.VERTICAL,
+        EnumInput(WebPortal.DateRangeInput.Orientation)),
+      new PropertySchema('labelPosition', WebPortal.DateRangeInput.
+        LabelPosition.ABOVE, EnumInput(WebPortal.DateRangeInput.LabelPosition)),
+      new PropertySchema('boundsRequired', true, BooleanInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    DateRangeInputExample, 284);
 
 const decimalInput =
   new ComponentSchema('DecimalInput',
@@ -1178,13 +1199,14 @@ const tableHeaderCell =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
-    countrySelect, currencySelect, dateInput, disclosure, dateTimeInput,
-    decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
-    filterChip, filterInput, hLine, iconLabelButton, input, integerField,
-    labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
-    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
-    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton, segmentedControl, timeOfDayInput]),
+    countrySelect, currencySelect, dateInput, dateRangeInput, disclosure,
+    dateTimeInput, decimalInput, durationInput, emptyMessage, errorMessage,
+    expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
+    integerField, labeledCheckbox, link, modal, moneyInput, navigationHeader,
+    navigationTab, pageLayout, pagination, scopeInput, scopeItemInput,
+    relativeDate, roleIcon, rolePanel, tickersInput, tickerInput,
+    segmentedSpinner, select, skeleton, segmentButton, segmentedControl,
+    timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
