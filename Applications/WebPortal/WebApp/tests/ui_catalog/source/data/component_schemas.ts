@@ -6,7 +6,8 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
+  CSSInput, DateInput, EnumInput, IntervalValueInput, NumberInput,
+  NumberSliderInput, MoneyInput,
   ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
@@ -412,6 +413,16 @@ const decimalInput =
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.DecimalInput,
       {...props, style: {width: '100%', ...props.style}}));
+
+const intervalInput =
+  new ComponentSchema('IntervalInput',
+    [new PropertySchema('value', new WebPortal.Interval(1,
+        WebPortal.Interval.Unit.DAY), IntervalValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('required', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.IntervalInput, 284);
 
 const moneyInput =
   new ComponentSchema('MoneyInput',
@@ -1210,7 +1221,7 @@ export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
     expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
-    input, integerField, labeledCheckbox, link, listInput, modal,
+    input, integerField, intervalInput, labeledCheckbox, link, listInput, modal,
     navigationHeader, navigationTab, pagination, segmentButton,
     segmentedControl, segmentedSpinner, select, skeleton, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
