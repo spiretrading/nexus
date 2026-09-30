@@ -50,13 +50,8 @@ export class ScheduledDate extends React.Component<Properties, State> {
     })();
     return <span {...attributes}
         className={[css(STYLES.container), className].join(' ')}>
-      <svg width='12' height='12' viewBox='0 0 16 16' aria-hidden='true'
-          focusable='false' className={css(STYLES.calendar)}>
-        <path d={'M16 15C16 15.5523 15.5523 16 15 16H1C0.447715 16 ' +
-          '2.41598e-08 15.5523 0 15V8H16V15ZM5 2H11V0H13V2H15' +
-          'C15.5523 2 16 2.44772 16 3V6H0V3C1.93278e-07 2.44772 ' +
-          '0.447715 2 1 2H3V0H5V2Z'} fill='#7D7E90'/>
-      </svg>
+      <img src='resources/report_page/calendar.svg' alt='' width='12'
+        height='12' className={css(STYLES.calendar)}/>
       <span>{prefix}</span>{' '}
       <time dateTime={date.value}>{date.label}</time>
       {days > 0 && <> <span>{`(in ${remaining})`}</span></>}

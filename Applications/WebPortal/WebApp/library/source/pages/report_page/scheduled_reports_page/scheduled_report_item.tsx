@@ -102,18 +102,14 @@ interface HeaderProperties {
 function Header(props: HeaderProperties): JSX.Element {
   const menuId = `${props.identifier}-menu`;
   const anchor = `--${menuId}`;
-  const icon = 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">' +
-    '<circle cx="4" cy="10" r="2"/>' +
-    '<circle cx="10" cy="10" r="2"/>' +
-    '<circle cx="16" cy="10" r="2"/></svg>');
   return <header className={css(STYLES.header)}>
     <h2 id={`${props.identifier}-title`} className={css(STYLES.title)}>
       {props.title}
     </h2>
     <span className={css(STYLES.menuContainer)}>
-      <IconButton icon={icon} buttonRef={props.invoker}
-        aria-label='Open widget menu' {...{popovertarget: menuId}}
+      <IconButton icon='resources/report_page/more.svg'
+        buttonRef={props.invoker} aria-label='Open widget menu'
+        {...{popovertarget: menuId}}
         style={{width: '24px', height: '24px', anchorName: anchor} as
           React.CSSProperties}/>
       <ScheduledReportItemContextMenu id={menuId} invoker={props.invoker}
