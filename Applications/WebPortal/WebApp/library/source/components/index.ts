@@ -20,6 +20,7 @@ export * from './expand_button';
 export * from './filter_chip';
 export * from './filter_input';
 export * from './hline';
+export * from './icon_button';
 export * from './icon_label_button';
 export * from './input';
 export * from './integer_input';

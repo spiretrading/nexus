@@ -289,6 +289,18 @@ const hLine =
     [],
     WebPortal.HLine, 100);
 
+const iconButton =
+  new ComponentSchema('IconButton',
+    [new PropertySchema('icon', 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">' +
+        '<path d="M12 8L5.70703 13.5L4 11.6738L8.22396 8L4 4.32617' +
+        'L5.70703 2.5L12 8Z"/></svg>'), TextInput),
+      new PropertySchema('aria-label', 'Next', TextInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.IconButton);
+
 const iconLabelButton =
   new ComponentSchema('IconLabelButton',
     [new PropertySchema('icon', 'resources/arrow-next.svg', TextInput),
@@ -1197,10 +1209,10 @@ const tableHeaderCell =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
-    expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
-    integerField, labeledCheckbox, link, listInput, modal, navigationHeader,
-    navigationTab, pagination, segmentButton, segmentedControl,
-    segmentedSpinner, select, skeleton, timeOfDayInput]),
+    expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
+    input, integerField, labeledCheckbox, link, listInput, modal,
+    navigationHeader, navigationTab, pagination, segmentButton,
+    segmentedControl, segmentedSpinner, select, skeleton, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
     relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
