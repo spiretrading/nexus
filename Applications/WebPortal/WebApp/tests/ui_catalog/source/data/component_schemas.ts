@@ -13,6 +13,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ListInputExample } from './list_input_example';
+import { RadioButtonExample } from './radio_button_example';
 import { ScopeInputExample } from './scope_input_example';
 import { TickerInputExample } from './ticker_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
@@ -74,6 +75,15 @@ const checkbox =
           onClick: props.onClick
         }));
     });
+
+const radioButton =
+  new ComponentSchema('RadioButton',
+    [new PropertySchema('label', 'Now', TextInput),
+      new PropertySchema('name', 'catalog-runtime', TextInput),
+      new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'checked')],
+    RadioButtonExample);
 
 enum MenuMode {
   COMMANDS,
@@ -1222,7 +1232,7 @@ export const componentSections = [
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
     expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
     input, integerField, intervalInput, labeledCheckbox, link, listInput, modal,
-    navigationHeader, navigationTab, pagination, segmentButton,
+    navigationHeader, navigationTab, pagination, radioButton, segmentButton,
     segmentedControl, segmentedSpinner, select, skeleton, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,

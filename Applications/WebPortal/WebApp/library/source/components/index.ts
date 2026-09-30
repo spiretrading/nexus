@@ -34,6 +34,7 @@ export * from './navigation_header';
 export * from './navigation_tab';
 export * from './page_layout';
 export * from './pagination';
+export * from './radio_button';
 export * from './role_icon';
 export * from './role_panel';
 export * from './scope_input';
