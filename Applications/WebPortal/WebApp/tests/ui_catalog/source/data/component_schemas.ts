@@ -12,6 +12,8 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ListInputExample } from './list_input_example';
+import { ScheduledReportItemExample, ScheduledReportParameterInput } from
+  './scheduled_report_item_example';
 import { ScheduledReportItemContextMenuExample } from
   './scheduled_report_item_context_menu_example';
 import { ScopeInputExample } from './scope_input_example';
@@ -1253,6 +1255,26 @@ const scheduledDate =
       }
     }));
 
+const scheduledReportItem =
+  new ComponentSchema('ScheduledReportItem',
+    [new PropertySchema('id', '42', TextInput),
+      new PropertySchema('type', 'Profit and Loss', TextInput),
+      new PropertySchema('parameters', [
+        {label: 'Account / Group', value: 'Alpha Group'},
+        {label: 'Scope', value: 'Canada'},
+        {label: 'Date Range', value: 'Month to Date'}
+      ], ArrayInput(new PropertySchema('parameter',
+        {label: 'Parameter', value: 'Value'}, ScheduledReportParameterInput))),
+      new PropertySchema('repeats', false, BooleanInput),
+      new PropertySchema('runDate', (() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(),
+          today.getDate() + 17);
+      })(), DateInput)],
+    [new SignalSchema('onRun', ''), new SignalSchema('onDuplicate', ''),
+      new SignalSchema('onDelete', ''), new SignalSchema('onNavigate', '')],
+    ScheduledReportItemExample, 320);
+
 const scheduledReportItemContextMenu =
   new ComponentSchema('ScheduledReportItemContextMenu',
     [new PropertySchema('lastSubmitted', '', (props: any) =>
@@ -1284,4 +1306,5 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
   new ComponentSection('Report Page', [reportActivityStatusTag,
-    reportTypeSelect, scheduledDate, scheduledReportItemContextMenu])];
+    reportTypeSelect, scheduledDate, scheduledReportItem,
+    scheduledReportItemContextMenu])];
