@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { LocalTickerQueryModel } from '../../models';
 import { AccountModel } from './account_model';
 import { ComplianceModel, ComplianceService, LocalComplianceService } from
   './compliance_page';
@@ -27,7 +28,8 @@ export class LocalAccountModel extends AccountModel {
     this._profitAndLossModel = new NoneProfitAndLossModel();
     this._riskModel =
       new LocalRiskModel(this._account, Nexus.RiskParameters.INVALID);
-    this._complianceService = new LocalComplianceService(complianceModel);
+    this._complianceService = new LocalComplianceService(
+      complianceModel, new LocalTickerQueryModel([]));
   }
 
   /** Returns true of this model has been loaded. */

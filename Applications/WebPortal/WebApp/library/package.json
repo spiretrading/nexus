@@ -7,7 +7,9 @@
   "types": "library/index.d.ts",
   "scripts": {
     "compile": "node node_modules/typescript/bin/tsc -p .",
-    "build": "npm run compile"
+    "build": "npm run compile",
+    "pretest": "node node_modules/typescript/bin/tsc -p tsconfig.test.json",
+    "test": "node --preserve-symlinks --preserve-symlinks-main --import tsx --test-reporter dot --test-timeout 60000 --test \"tests/**/*_tester.ts\""
   },
   "allowScripts": {
     "esbuild": true
@@ -21,6 +23,7 @@
     "source-map-loader": "5.0.0",
     "style-loader": "3.3.1",
     "ts-loader": "9.2.6",
+    "tsx": "4.22.4",
     "typescript": "6.0.3",
     "webpack": "5.105.4",
     "webpack-cli": "5.1.4"

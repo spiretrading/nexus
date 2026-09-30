@@ -1,8 +1,9 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Checkbox, CurrencySelect, DateTimeInput, DecimalInput, DisplaySize,
-  Input, MoneyInput, ScopeInput, TickersInput,
-  TimeOfDayInput } from '../../..';
+  Input, MoneyInput, ScopeInput, TickerInput, TimeOfDayInput } from '../../..';
+import { QueryModel } from '../../../models';
+import { TickerParameterList } from './ticker_parameter_list';
 
 interface Properties {
 
@@ -14,6 +15,12 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The model used to look up tickers. */
+  tickerQueryModel: QueryModel<Nexus.Ticker>;
+
+  /** The model used to look up scope entries. */
+  scopeQueryModel: QueryModel<Nexus.Scope>;
 
   /** Indicates if the component is readonly. */
   readonly?: boolean;
@@ -30,6 +37,12 @@ export class ParameterEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const rowStyle = (() => {
+      if(this.props.parameter.value.type === Nexus.ComplianceValue.Type.LIST) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return {...ParameterEntry.STYLE.rowSmall, height: 'auto'};
+        }
+        return {...ParameterEntry.STYLE.rowLarge, height: 'auto'};
+      }
       if(this.props.parameter.value.type !== 
           Nexus.ComplianceValue.Type.DATE_TIME) {
         if(this.props.displaySize === DisplaySize.SMALL) {
@@ -95,14 +108,15 @@ export class ParameterEntry extends React.Component<Properties> {
             readOnly={this.props.readonly}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.TICKER:
-          return <TickersInput
-            displaySize={this.props.displaySize}
-            onChange={(values: Nexus.Ticker[]) =>
-              this.onChange(values[0])}
-            value={this.props.parameter.value.value ?
-              [this.props.parameter.value.value] : []}/>;
+          return <TickerInput
+            required
+            model={this.props.tickerQueryModel}
+            readOnly={this.props.readonly}
+            onChange={this.onChange}
+            value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.SCOPE:
           return <ScopeInput
+            model={this.props.scopeQueryModel}
             displaySize={this.props.displaySize}
             readOnly={this.props.readonly}
             onChange={this.onChange}
@@ -111,16 +125,16 @@ export class ParameterEntry extends React.Component<Properties> {
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===
                 Nexus.ComplianceValue.Type.TICKER) {
-              return <TickersInput
-                displaySize={this.props.displaySize}
+              return <TickerParameterList
+                model={this.props.tickerQueryModel}
                 onChange={this.onTickerListChange}
                 readOnly={this.props.readonly}
                 value={this.convertFromParameterList(
                   this.props.parameter.value.value)}/>;
             }
           } else {
-            return <TickersInput
-              displaySize={this.props.displaySize}
+            return <TickerParameterList
+              model={this.props.tickerQueryModel}
               onChange={this.onTickerListChange}
               readOnly={this.props.readonly}
               value={[]}/>;
@@ -153,9 +167,7 @@ export class ParameterEntry extends React.Component<Properties> {
     const tickers = [];
     for(const value of complianceValues) {
       const ticker = value.value as Nexus.Ticker;
-      if(!ticker.equals(Nexus.Ticker.NONE)) {
-        tickers.push(ticker);
-      }
+      tickers.push(ticker);
     }
     return tickers;
   }
