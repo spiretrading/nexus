@@ -1,6 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
+import { QueryModel } from '../../../models';
 import { RuleRow } from './rule_row';
 
 interface Properties {
@@ -10,6 +11,12 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The model used to look up tickers. */
+  tickerQueryModel: QueryModel<Nexus.Ticker>;
+
+  /** The model used to look up scope entries. */
+  scopeQueryModel: QueryModel<Nexus.Scope>;
 
   /** The list of compliance rules. */
   complianceList: Nexus.ComplianceRuleEntry[];
@@ -26,6 +33,8 @@ export class RulesList extends React.Component<Properties> {
   public render(): JSX.Element {
     const rules = this.props.complianceList.map(entry => {
       return <RuleRow
+        tickerQueryModel={this.props.tickerQueryModel}
+        scopeQueryModel={this.props.scopeQueryModel}
         key={entry.id}
         displaySize={this.props.displaySize}
         complianceRule={entry}
