@@ -2090,15 +2090,36 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
 
   TEST_CASE("cbbo_timestamp") {
     auto fixture = Fixture();
-    fixture.m_time.set(time_from_string("2026-09-21 16:00:00"));
-    fixture.publish("|6=Quote|5=Quote|55=ABX|196=25.50|196.1=25.51"
-      "|64=123|64.1=456", "|17=FFFFFFFF|54=0123abcd|50=1"
-      "|501=20260921115959000|514=20260921115959123");
-    REQUIRE(fixture.quote()->m_timestamp ==
-      time_from_string("2026-09-21 15:59:59.123"));
-    fixture.publish("|6=Quote|5=Quote|55=ABX|196=25.50|196.1=25.51"
-      "|64=123|64.1=456", "|17=FFFFFFFF|54=0123abcd|50=1"
-      "|501=20260918120000000");
+    auto now = time_from_string("2026-09-21 19:04:58");
+    auto expected = time_from_string("2026-09-21 19:04:57.364");
+    auto publication = std::string("|501=20260921150457364");
+    auto outbound = std::string("|514=20260921190457364");
+    auto previous_session = std::string("|514=20260921010000000");
+    SUBCASE("summer") {}
+    SUBCASE("winter") {
+      now = time_from_string("2026-12-21 16:00:00");
+      expected = time_from_string("2026-12-21 15:59:59.123");
+      publication = "|501=20261221105959123";
+      outbound = "|514=20261221155959123";
+      previous_session = "|514=20261221010000000";
+    }
+    fixture.m_time.set(now);
+    auto fields = std::string("|6=Quote|5=Quote|55=ABX|196=25.50"
+      "|196.1=25.51|64=123|64.1=456");
+    auto control = std::string("|17=FFFFFFFF|54=0123abcd|50=1");
+    fixture.publish(fields, control + publication + outbound);
+    REQUIRE(fixture.quote()->m_timestamp == expected);
+    fixture.publish(fields, control + "|501=20260918120000000" + outbound);
+    REQUIRE(fixture.quote()->m_timestamp == expected);
+    fixture.publish(fields, control + publication);
+    REQUIRE(fixture.quote()->m_timestamp == expected);
+    fixture.publish(fields, control);
+    REQUIRE(fixture.quote()->m_timestamp == now);
+    fixture.publish(fields, control + publication + "|514=20260918160000000");
+    fixture.require_empty();
+    fixture.publish(fields, control + publication + previous_session);
+    fixture.require_empty();
+    fixture.publish(fields, control + "|501=20260918120000000");
     fixture.require_empty();
   }
 

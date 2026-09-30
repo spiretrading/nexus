@@ -632,7 +632,7 @@ namespace Nexus {
     /** Consolidation inbound time in local milliseconds (control tag 515). */
     boost::optional<boost::posix_time::ptime> m_inbound_timestamp;
 
-    /** Consolidation outbound time in local milliseconds (control tag 514). */
+    /** Consolidation outbound time in UTC milliseconds (control tag 514). */
     boost::optional<boost::posix_time::ptime> m_outbound_timestamp;
 
     /** Required bid at index zero and ask at index one, including zeros. */

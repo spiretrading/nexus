@@ -1312,15 +1312,14 @@ namespace Nexus {
       return;
     }
     auto timestamp = now;
-    auto source_timestamp = message.m_outbound_timestamp;
-    if(!source_timestamp) {
-      source_timestamp = message.m_publication_timestamp;
+    if(message.m_outbound_timestamp) {
+      timestamp = *message.m_outbound_timestamp;
+    } else if(message.m_publication_timestamp) {
+      timestamp = venue_to_utc(venue, *message.m_publication_timestamp);
     }
-    if(source_timestamp) {
-      if(source_timestamp->date() != utc_to_venue(venue, now).date()) {
-        return;
-      }
-      timestamp = venue_to_utc(venue, *source_timestamp);
+    if(utc_to_venue(venue, timestamp).date() !=
+        utc_to_venue(venue, now).date()) {
+      return;
     }
     auto& bid = message.m_sides[0];
     auto& ask = message.m_sides[1];
