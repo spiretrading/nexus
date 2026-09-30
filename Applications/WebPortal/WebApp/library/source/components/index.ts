@@ -18,6 +18,7 @@ export * from './hline';
 export * from './icon_label_button';
 export * from './input';
 export * from './integer_input';
+export * from './interval_input';
 export * from './labeled_checkbox';
 export * from './link';
 export * from './modal';

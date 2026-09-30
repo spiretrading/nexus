@@ -6,11 +6,11 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
   ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
-  NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  TickerInput, StyleDeclarationValueInput,
-  TextInput } from '../viewer/propertyInput';
-import {ComponentSchema, ComponentSection, PropertySchema,
-  SignalSchema} from './schemas';
+  IntervalValueInput, NumberInput, NumberSliderInput, OptionalInput, MoneyInput,
+  ReadonlyInput, TickerInput, StyleDeclarationValueInput, TextInput } from
+    '../viewer/propertyInput';
+import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
+  './schemas';
 
 const accountLink =
   new ComponentSchema('AccountLink',
@@ -366,6 +366,16 @@ const decimalInput =
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.DecimalInput,
       {...props, style: {width: '100%', ...props.style}}));
+
+const intervalInput =
+  new ComponentSchema('IntervalInput',
+    [new PropertySchema('value', new WebPortal.Interval(1,
+        WebPortal.Interval.Unit.DAY), IntervalValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('required', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.IntervalInput, 284);
 
 const moneyInput =
   new ComponentSchema('MoneyInput',
@@ -1181,10 +1191,11 @@ export const componentSections = [
     countrySelect, currencySelect, dateInput, disclosure, dateTimeInput,
     decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
     filterChip, filterInput, hLine, iconLabelButton, input, integerField,
-    labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
-    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
-    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton, segmentedControl, timeOfDayInput]),
+    intervalInput, labeledCheckbox, link, modal, moneyInput, navigationHeader,
+    navigationTab, pageLayout, pagination, scopeInput, scopeItemInput,
+    relativeDate, roleIcon, rolePanel, tickersInput, tickerInput,
+    segmentedSpinner, select, skeleton, segmentButton, segmentedControl,
+    timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
