@@ -13,7 +13,7 @@ interface Properties extends
   /** The model used to parse tickers and load suggestions. */
   model: QueryModel<Nexus.Ticker>;
 
-  /** Called with one ticker, or Ticker.NONE when the field is cleared. */
+  /** Called when a ticker is selected or entered. */
   onChange?: (value: Nexus.Ticker) => void;
 }
 
@@ -21,14 +21,15 @@ interface Properties extends
 export class TickerInput extends React.Component<Properties> {
   public render(): JSX.Element {
     const {value, model, onChange, ...rest} = this.props;
-    let selected = value ?? null;
-    if(selected?.equals(Nexus.Ticker.NONE)) {
-      selected = null;
-    }
+    const selected = (() => {
+      if(value?.equals(Nexus.Ticker.NONE)) {
+        return null;
+      }
+      return value ?? null;
+    })();
     return <ComboBox {...rest} value={selected} model={model}
       getLabel={getLabel} isEqual={isEqual}
       placeholder={this.props.placeholder ?? 'Enter ticker'}
-      invalidMessage='Enter a qualified ticker, such as ABX.TSX.'
       onChange={this.onChange}/>;
   }
 

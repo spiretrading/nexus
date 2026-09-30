@@ -21,9 +21,6 @@ interface Properties<T> {
   /** Whether suggestions are being loaded. */
   loading: boolean;
 
-  /** An error to display in the window. */
-  error: string;
-
   /** Called when the pointer highlights a suggestion. */
   onHighlight: (index: number) => void;
 
@@ -77,12 +74,7 @@ export class SuggestionsWindow<T> extends React.Component<Properties<T>> {
               onClick={() => this.props.onSubmit(item)}>
             {this.props.getLabel(item)}
           </li>)}
-        {this.props.error &&
-          <li role='presentation' className={css(STYLES.message)}>
-            <span role='alert'>{this.props.error}</span>
-          </li>}
-        {!this.props.loading && !this.props.error &&
-            this.props.items.length === 0 &&
+        {!this.props.loading && this.props.items.length === 0 &&
           <li role='presentation' className={css(STYLES.message)}>
             No matches
           </li>}
