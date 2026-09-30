@@ -153,7 +153,7 @@ export class ComponentSection {
    */
   constructor(name: string, components: ComponentSchema[]) {
     this._name = name;
-    this._components = components.slice();
+    this._components = components.slice().sort(compareComponents);
   }
 
   /** Returns the section name. */
@@ -161,11 +161,30 @@ export class ComponentSection {
     return this._name;
   }
 
-  /** Returns the components in this section. */
+  /** Returns the components alphabetically by the words in their names. */
   public get components(): ComponentSchema[] {
     return this._components.slice();
   }
 
   private _name: string;
   private _components: ComponentSchema[];
+}
+
+function compareComponents(first: ComponentSchema, second: ComponentSchema):
+    number {
+  const firstWords = splitName(first.name);
+  const secondWords = splitName(second.name);
+  for(let i = 0; i < Math.min(firstWords.length, secondWords.length); ++i) {
+    const order = firstWords[i].localeCompare(secondWords[i], undefined,
+      {sensitivity: 'base'});
+    if(order !== 0) {
+      return order;
+    }
+  }
+  return firstWords.length - secondWords.length;
+}
+
+function splitName(name: string): string[] {
+  return name.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').
+    replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim().split(/\s+/);
 }
