@@ -6,3 +6,4 @@ export * from './query_model';
 export * from './scope';
 export * from './scope_query_model';
 export * from './ticker_query_model';
+export * from './validation_error';

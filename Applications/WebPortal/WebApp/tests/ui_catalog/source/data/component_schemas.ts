@@ -1194,6 +1194,18 @@ const tableHeaderCell =
             }, 'Column'))));
     }, 132);
 
+const inputErrorMessage =
+  new ComponentSchema('InputErrorMessage',
+    [new PropertySchema('error', WebPortal.ValidationError.NONE,
+        EnumInput(WebPortal.ValidationError)),
+      new PropertySchema('label', 'Name', TextInput),
+      new PropertySchema('value', 'email address', TextInput),
+      new PropertySchema('start', 'Start date', TextInput),
+      new PropertySchema('end', 'End date', TextInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [],
+    WebPortal.InputErrorMessage);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
     dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
@@ -1202,8 +1214,8 @@ export const componentSections = [
     navigationTab, pagination, segmentButton, segmentedControl,
     segmentedSpinner, select, skeleton, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
-    relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
+    currencySelect, emptyMessage, errorMessage, inputErrorMessage, moneyInput,
+    pageLayout, relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
