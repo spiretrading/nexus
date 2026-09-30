@@ -1206,6 +1206,15 @@ const tableHeaderCell =
             }, 'Column'))));
     }, 132);
 
+const reportActivityStatusTag =
+  new ComponentSchema('ReportActivityStatusTag',
+    [new PropertySchema('status',
+        WebPortal.ReportActivityStatusTag.Status.GENERATING,
+        EnumInput(WebPortal.ReportActivityStatusTag.Status)),
+      new PropertySchema('style', {}, CSSInput)],
+    [],
+    WebPortal.ReportActivityStatusTag);
+
 const reportTypeSelect =
   new ComponentSchema('ReportTypeSelect',
     [new PropertySchema('reportTypes',
@@ -1241,4 +1250,5 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
-  new ComponentSection('Report Page', [reportTypeSelect])];
+  new ComponentSection('Report Page', [reportActivityStatusTag,
+    reportTypeSelect])];
