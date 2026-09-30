@@ -9,6 +9,10 @@ class DelayedScheduledReportsModel extends LocalScheduledReportsModel {
     await new Promise(resolve => window.setTimeout(resolve, 750));
     return super.loadSchedules(submission);
   }
+
+  public async run(id: string): Promise<void> {
+    console.log('Run Now', id);
+  }
 }
 
 class App extends React.Component {

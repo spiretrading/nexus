@@ -135,14 +135,18 @@ describe('LocalScheduledReportsModel', () => {
     const model = new LocalScheduledReportsModel([original, makeSchedule('2')]);
     await model.load();
     const copy = await model.duplicate('1');
-    assert.equal(copy, '3');
-    assert.deepEqual(model.schedules[2], {...original, id: copy});
-    await model.run(copy);
-    await model.delete(copy);
-    assert.deepEqual(model.runs, [{...original, id: copy}]);
+    assert.deepEqual(copy, {...original, id: '3'});
+    assert.deepEqual(
+      model.schedules.map(schedule => schedule.id), ['1', '3', '2']);
+    copy.parameters[0].value = 'Changed';
+    copy.runDate.label = 'Changed';
+    assert.deepEqual(model.schedules[1], {...original, id: copy.id});
+    await model.run(copy.id);
+    await model.delete(copy.id);
+    assert.deepEqual(model.runs, [{...original, id: copy.id}]);
     model.runs[0].parameters[0].value = 'Changed';
-    assert.deepEqual(model.runs, [{...original, id: copy}]);
-    assert.equal(await model.duplicate('1'), '4');
+    assert.deepEqual(model.runs, [{...original, id: copy.id}]);
+    assert.equal((await model.duplicate('1')).id, '4');
     assert.equal(model.schedules.length, 3);
     await assert.rejects(model.run('missing'), /not found/);
     await assert.rejects(model.duplicate('missing'), /not found/);

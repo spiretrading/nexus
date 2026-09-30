@@ -16,11 +16,12 @@ export abstract class ScheduledReportsModel {
    */
   public abstract run(id: string): Promise<void>;
 
-  /** Copies a scheduled report and adds it to the schedules.
+  /** Copies a scheduled report and inserts it after the original.
    * @param id - The scheduled report's identifier.
-   * @return The new scheduled report's identifier.
+   * @return The created scheduled report, including its assigned identifier.
    */
-  public abstract duplicate(id: string): Promise<string>;
+  public abstract duplicate(id: string):
+      Promise<ScheduledReportsModel.Schedule>;
 
   /** Deletes a scheduled report.
    * @param id - The scheduled report's identifier.

@@ -22,7 +22,7 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
     return this.loaded;
   }
 
-  /** Returns copies of the scheduled reports, in insertion order. */
+  /** Returns copies of the scheduled reports, in display order. */
   public get schedules(): readonly ScheduledReportsModel.Schedule[] {
     this.ensureLoaded();
     return Array.from(this.entries.values(), copySchedule);
@@ -73,15 +73,18 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
     this.requests.push(copySchedule(this.find(id)));
   }
 
-  public async duplicate(id: string): Promise<string> {
+  public async duplicate(id: string): Promise<ScheduledReportsModel.Schedule> {
     this.ensureLoaded();
     const schedule = copySchedule(this.find(id));
     while(this.entries.has(String(this.nextId))) {
       ++this.nextId;
     }
     schedule.id = String(this.nextId++);
-    this.entries.set(schedule.id, schedule);
-    return schedule.id;
+    const entries = Array.from(this.entries);
+    const index = entries.findIndex(([key]) => key === id);
+    entries.splice(index + 1, 0, [schedule.id, schedule]);
+    this.entries = new Map(entries);
+    return copySchedule(schedule);
   }
 
   public async delete(id: string): Promise<void> {
