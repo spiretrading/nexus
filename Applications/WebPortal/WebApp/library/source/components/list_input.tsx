@@ -72,7 +72,6 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
         {this.state.isOpen &&
           <Modal title={title} listHeading={listHeading}
             model={model} selected={value} getLabel={getLabel} isEqual={isEqual}
-            selectionMode={EditListModal.SelectionMode.MULTIPLE}
             readOnly={readOnly} onSubmit={this.onSubmit}
             onClose={this.onClose}/>}
       </>);

@@ -10,14 +10,8 @@ interface Properties<T> {
   /** The title of the editor. */
   title: string;
 
-  /** The title in single selection mode. Falls back to title. */
-  titleSingle?: string;
-
   /** The heading above the selected items. */
   listHeading: string;
-
-  /** The heading in single selection mode. Falls back to listHeading. */
-  listHeadingSingle?: string;
 
   /** Resolves suggestions, typed entries, and CSV entries. */
   model: QueryModel<T>;
@@ -31,9 +25,6 @@ interface Properties<T> {
   /** Compares items for selection and deduplication.
    *  Defaults to Set equality. */
   isEqual?: (first: T, second: T) => boolean;
-
-  /** The number of items that can be selected. Defaults to MULTIPLE. */
-  selectionMode?: EditListModal.SelectionMode;
 
   /** Whether the selection can only be viewed. */
   readOnly?: boolean;
@@ -89,7 +80,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   public componentDidUpdate(previous: Properties<T>, state: State<T>): void {
     if(previous.selected !== this.props.selected ||
-        previous.selectionMode !== this.props.selectionMode ||
         previous.readOnly !== this.props.readOnly) {
       this.cancelImport();
       this.input.current?.reset();
@@ -116,19 +106,9 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       this.queryModel = new FilteredQueryModel(this.props.model, item =>
         !this.state.selected.some(selected => this.equals(item, selected)));
     }
-    const single = this.isSingle();
-    const heading = (() => {
-      if(single) {
-        return this.props.listHeadingSingle ?? this.props.listHeading;
-      }
-      return this.props.listHeading;
-    })();
     const title = (() => {
       if(this.props.readOnly) {
-        return heading;
-      }
-      if(single) {
-        return this.props.titleSingle ?? this.props.title;
+        return this.props.listHeading;
       }
       return this.props.title;
     })();
@@ -161,14 +141,14 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
                   onValidationError={this.onValidationError}
                   onResolvingChange={this.onResolvingChange}/>
               </div>}
-            <Section readOnly={this.props.readOnly} single={single}
-                heading={heading}>
+            <Section readOnly={this.props.readOnly}
+                heading={this.props.listHeading}>
               <ItemsList items={this.state.selected}
                 getLabel={this.props.getLabel} readOnly={this.props.readOnly}
                 selection={this.state.removal} onSelect={this.onSelect}/>
             </Section>
             {!this.props.readOnly &&
-              <Actions single={single} removal={this.state.removal}
+              <Actions removal={this.state.removal}
                 importing={this.state.importing} onRemove={this.onRemove}
                 onUpload={this.onUpload}/>}
             {!this.props.readOnly &&
@@ -185,10 +165,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       </dialog>);
   }
 
-  private isSingle(): boolean {
-    return this.props.selectionMode === EditListModal.SelectionMode.SINGLE;
-  }
-
   private equals(first: T, second: T): boolean {
     if(this.props.isEqual) {
       return this.props.isEqual(first, second);
@@ -201,9 +177,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     for(const item of items) {
       if(!result.some(entry => this.equals(entry, item))) {
         result.push(item);
-        if(this.isSingle()) {
-          break;
-        }
       }
     }
     return result;
@@ -255,10 +228,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     if(item === null) {
       return;
     }
-    let selected = this.normalize([...this.state.selected, item]);
-    if(this.isSingle()) {
-      selected = [item];
-    }
+    const selected = this.normalize([...this.state.selected, item]);
     this.setState({selected, removal: -1, error: '', adding: false});
     this.input.current.reset();
   };
@@ -346,15 +316,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   private identifier: string;
 }
 
-export namespace EditListModal {
-
-  /** The number of entries permitted in the selection. */
-  export enum SelectionMode {
-    SINGLE,
-    MULTIPLE
-  }
-}
-
 interface ContentProperties {
   readOnly: boolean;
   disabled: boolean;
@@ -389,12 +350,11 @@ function Form(props: {readOnly: boolean; children: React.ReactNode}):
   </div>;
 }
 
-function Section(props: {readOnly: boolean; single: boolean; heading: string;
+function Section(props: {readOnly: boolean; heading: string;
     children: React.ReactNode}): JSX.Element {
   return (
     <section aria-label={props.heading}
         className={css(STYLES.section,
-          props.single && STYLES.sectionSingle,
           props.readOnly && STYLES.sectionReadonly)}>
       {!props.readOnly &&
         <header className={css(STYLES.listHeader)}>
@@ -437,7 +397,6 @@ class ItemsList<T> extends React.Component<ItemsListProperties<T>> {
 }
 
 interface ActionsProperties {
-  single: boolean;
   removal: number;
   importing: boolean;
   onRemove: () => void;
@@ -455,14 +414,13 @@ class Actions extends React.Component<ActionsProperties> {
             width='16' height='16' alt=''/>
           <span className={css(STYLES.actionLabel)}>Remove</span>
         </button>
-        {!this.props.single &&
-          <button type='button' aria-label='Upload CSV'
-              className={css(STYLES.action)} disabled={this.props.importing}
-              onClick={this.props.onUpload}>
-            <img src='resources/components/edit_list_modal/upload.svg'
-              width='16' height='16' alt=''/>
-            <span className={css(STYLES.actionLabel)}>Upload</span>
-          </button>}
+        <button type='button' aria-label='Upload CSV'
+            className={css(STYLES.action)} disabled={this.props.importing}
+            onClick={this.props.onUpload}>
+          <img src='resources/components/edit_list_modal/upload.svg'
+            width='16' height='16' alt=''/>
+          <span className={css(STYLES.actionLabel)}>Upload</span>
+        </button>
       </div>);
   }
 }
@@ -526,7 +484,6 @@ const STYLES = StyleSheet.create({
     overflowY: 'auto',
     border: '1px solid #C8C8C8'
   },
-  sectionSingle: {height: '76px'},
   sectionReadonly: {height: '342px'},
   listHeader: {
     position: 'sticky',

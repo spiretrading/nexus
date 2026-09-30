@@ -11,9 +11,6 @@ interface Properties {
   /** The committed selection of accounts and groups. */
   selected: readonly Beam.DirectoryEntry[];
 
-  /** The number of entries permitted. Defaults to MULTIPLE. */
-  selectionMode?: EditListModal.SelectionMode;
-
   /** Whether the selection can only be viewed. */
   readOnly?: boolean;
 
@@ -29,12 +26,10 @@ export class EditAccountGroupModal extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <EditListModal title='Edit Accounts and Groups'
-        titleSingle='Edit Account or Group'
         listHeading='Added Accounts and Groups'
-        listHeadingSingle='Added Account / Group'
         placeholder='Enter account or group'
         selected={this.props.selected}
-        selectionMode={this.props.selectionMode} readOnly={this.props.readOnly}
+        readOnly={this.props.readOnly}
         model={this.props.model} getLabel={getLabel}
         isEqual={isEqual}
         onSubmit={this.props.onSubmit} onClose={this.props.onClose}/>);
