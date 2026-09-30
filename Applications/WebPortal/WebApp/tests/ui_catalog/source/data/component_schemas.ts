@@ -4,13 +4,18 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
-  BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
-  ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
-  NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  TickerInput, StyleDeclarationValueInput,
-  TextInput } from '../viewer/propertyInput';
-import {ComponentSchema, ComponentSection, PropertySchema,
-  SignalSchema} from './schemas';
+  BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
+  BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
+  CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
+  ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
+  '../viewer/propertyInput';
+import { AccountGroupListInputExample } from
+  './account_group_list_input_example';
+import { ListInputExample } from './list_input_example';
+import { ScopeInputExample } from './scope_input_example';
+import { TickerInputExample } from './ticker_input_example';
+import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
+  './schemas';
 
 const accountLink =
   new ComponentSchema('AccountLink',
@@ -355,6 +360,35 @@ const modal =
         }));
     });
 
+const accountGroupListInput =
+  new ComponentSchema('AccountGroupListInput',
+    [new PropertySchema('value',
+        [Beam.DirectoryEntry.makeAccount(1, 'Alice')],
+        ArrayInput(new PropertySchema('entry',
+          Beam.DirectoryEntry.makeAccount(1, 'Alice'),
+          BeamDirectoryEntryInput))),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    AccountGroupListInputExample, 300);
+
+const listInput =
+  new ComponentSchema('ListInput',
+    [new PropertySchema('title', 'Edit Items', TextInput),
+      new PropertySchema('listHeading', 'Added Items', TextInput),
+      new PropertySchema('items',
+        ['Alpha', 'Beta', 'Gamma', 'Delta', 'Item, with comma', 'Item "quoted"'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('value', ['Alpha'],
+        ArrayInput(new PropertySchema('item', '', TextInput))),
+      new PropertySchema('placeholder', 'Select items', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    ListInputExample, 300);
+
 const decimalInput =
   new ComponentSchema('DecimalInput',
     [new PropertySchema('value', 100, NumberInput),
@@ -555,22 +589,14 @@ const pagination =
 
 const scopeInput =
   new ComponentSchema('ScopeInput',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
+    [new PropertySchema('value',
+        new Nexus.Scope(Nexus.Ticker.parse('ABX.TSX')), ScopeValueInput),
       new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.ScopeInput);
-
-const scopeItemInput =
-  new ComponentSchema('ScopeItemInput',
-    [new PropertySchema('value', '', TextInput),
-      new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.ScopeItemInput,
-      {...props, style: {width: '100%', ...props.style}}));
+    ScopeInputExample, 300);
 
 const relativeDate =
   new ComponentSchema('RelativeDate',
@@ -603,24 +629,16 @@ const skeleton =
     [],
     WebPortal.Skeleton);
 
-const tickersInput =
-  new ComponentSchema('TickersInput',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value')],
-    WebPortal.TickersInput);
-
 const tickerInput =
   new ComponentSchema('TickerInput',
-    [new PropertySchema('value', '', TextInput),
+    [new PropertySchema('value', Nexus.Ticker.parse('ABX.TSX'),
+        TickerValueInput),
       new PropertySchema('readOnly', false, BooleanInput),
-      new PropertySchema('disabled', false, BooleanInput)],
-    [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.TickerInput,
-      {...props, style: {width: '100%', ...props.style}}));
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('lookupDelay', 300, NumberInput),
+      new PropertySchema('failLookup', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    TickerInputExample, 300);
 
 const segmentButton =
   new ComponentSchema('SegmentButton',
@@ -1178,13 +1196,14 @@ const tableHeaderCell =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
-    countrySelect, currencySelect, dateInput, disclosure, dateTimeInput,
-    decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
-    filterChip, filterInput, hLine, iconLabelButton, input, integerField,
-    labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
-    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
-    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton, segmentedControl, timeOfDayInput]),
+    dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
+    expandButton, filterChip, filterInput, hLine, iconLabelButton, input,
+    integerField, labeledCheckbox, link, listInput, modal, navigationHeader,
+    navigationTab, pagination, segmentButton, segmentedControl,
+    segmentedSpinner, select, skeleton, timeOfDayInput]),
+  new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
+    currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
+    relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,

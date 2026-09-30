@@ -2414,7 +2414,14 @@ UiProfile Spire::make_drop_down_list_profile() {
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_style_property("style_sheet", ""));
+  auto default_style = R"(
+    any {
+      text_align: left;
+      format: "hh:mm:ss.fff";
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet",
+    std::move(default_style)));
   properties.push_back(make_standard_property<QString>("current", ""));
   properties.push_back(
     make_standard_property<QString>("minimum", "10:10:10.000"));
@@ -5706,6 +5713,7 @@ UiProfile Spire::make_time_box_profile() {
   auto default_style = R"(
     any {
       text_align: left;
+      format: "hh:mm:ss.fff";
     }
   )";
   properties.push_back(make_style_property("style_sheet", default_style));

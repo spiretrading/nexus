@@ -1,9 +1,9 @@
 #ifndef SPIRE_DURATION_BOX_HPP
 #define SPIRE_DURATION_BOX_HPP
+#include <array>
 #include <memory>
 #include <QWidget>
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 
 namespace Spire {
@@ -11,8 +11,15 @@ namespace Spire {
 
 namespace Styles {
 
-  /** Selects the colon field. */
-  using Colon = StateSelector<void, struct DurationBoxColonTag>;
+  /** Selects every separator displayed between two fields. */
+  using DurationSeparator =
+    StateSelector<void, struct DurationBoxSeparatorTag>;
+
+  /**
+   * The format used to display a duration. It must be of the form
+   * <i>hh:mm:ss.fffffffff</i>.
+   */
+  using DurationFormat = BasicProperty<QString, struct DurationBoxFormatTag>;
 }
 
   /** A ScalarValueModel over a boost::posix_time::time_duration. */
@@ -67,10 +74,10 @@ namespace Styles {
       /** Returns the current value model. */
       const std::shared_ptr<OptionalDurationModel>& get_current() const;
 
-      //! Returns <code>true</code> iff this box is read-only.
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
-      //! Sets whether the box is read-only.
+      /** Sets whether the box is read-only. */
       void set_read_only(bool is_read_only);
 
       /** Connects a slot to the value submission signal. */
@@ -82,22 +89,33 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
+
+      /**
+       * Returns <code>true</code> iff a format may be used to display this
+       * box's value.
+       * @param format The format to test.
+       */
+      virtual bool is_valid_format(const QString& format) const;
+
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      static constexpr auto FIELD_COUNT = 4;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<OptionalDurationModel> m_current;
       boost::optional<boost::posix_time::time_duration> m_submission;
-      IntegerBox* m_hour_field;
-      IntegerBox* m_minute_field;
-      DecimalBox* m_second_field;
+      QString m_format;
+      std::array<IntegerBox*, FIELD_COUNT> m_fields;
+      std::array<QWidget*, FIELD_COUNT - 1> m_separators;
       Box* m_input_box;
       bool m_is_read_only;
       bool m_is_rejected;
+      bool m_is_null;
       bool m_has_update;
       boost::signals2::scoped_connection m_style_connection;
 
+      void set_format(const QString& format);
       void on_current(
         const boost::optional<boost::posix_time::time_duration>& current);
       void on_submit();
