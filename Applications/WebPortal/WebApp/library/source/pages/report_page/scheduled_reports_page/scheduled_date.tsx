@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { highlightText } from './highlight_text';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> {
@@ -12,6 +13,9 @@ interface Properties extends
 
   /** The reference date. Defaults to the current local calendar date. */
   today?: Date;
+
+  /** Literal text to highlight, ignoring case. */
+  highlight?: string;
 }
 
 interface State {
@@ -27,7 +31,8 @@ export class ScheduledDate extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const {date, repeats, today, className, ...attributes} = this.props;
+    const {date, repeats, today, highlight, className, ...attributes} =
+      this.props;
     const reference = today ?? this.state.today;
     const midnight = new Date(0);
     midnight.setUTCFullYear(reference.getFullYear(), reference.getMonth(),
@@ -52,9 +57,11 @@ export class ScheduledDate extends React.Component<Properties, State> {
         className={[css(STYLES.container), className].join(' ')}>
       <img src='resources/report_page/calendar.svg' alt='' width='12'
         height='12' className={css(STYLES.calendar)}/>
-      <span>{prefix}</span>{' '}
-      <time dateTime={date.value}>{date.label}</time>
-      {days > 0 && <> <span>{`(in ${remaining})`}</span></>}
+      <span>{highlightText(prefix, highlight)}</span>{' '}
+      <time dateTime={date.value}>{highlightText(date.label, highlight)}</time>
+      {days > 0 && <>
+        {' '}<span>{highlightText(`(in ${remaining})`, highlight)}</span>
+      </>}
     </span>;
   }
 
