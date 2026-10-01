@@ -1294,6 +1294,18 @@ const inputGroup =
     [new SignalSchema('onChange', ''), new SignalSchema('onValidate', '')],
     InputGroupExample, 284);
 
+const dateFilter =
+  new ComponentSchema('DateFilter',
+    [new PropertySchema('value', new WebPortal.DateRange(null, null),
+        DateRangeValueInput),
+      new PropertySchema('label', '', TextInput),
+      new PropertySchema('today', Beam.Date.today(), BeamDateInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    WebPortal.DateFilter, 284);
+
 const parametersDateRangeInput =
   new ComponentSchema('ParametersDateRangeInput',
     [new PropertySchema('value', (() => {
@@ -1451,7 +1463,7 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [parametersDateRangeInput,
+  new ComponentSection('Report Page', [dateFilter, parametersDateRangeInput,
     reportActivityStatusTag, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,

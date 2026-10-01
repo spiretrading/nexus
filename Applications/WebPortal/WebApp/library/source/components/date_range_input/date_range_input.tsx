@@ -535,6 +535,9 @@ class SelectGroup extends React.Component<SelectGroupProperties> {
     const selectStyle: React.CSSProperties = {width: '100%', minWidth: 0,
       boxSizing: 'border-box'};
     const labelStyle: React.CSSProperties = {paddingInlineStart: '10px'};
+    if(props.horizontal) {
+      style.flex = '0 0 auto';
+    }
     if(props.labelInline) {
       labelStyle.paddingInlineStart = 0;
     }
@@ -543,7 +546,6 @@ class SelectGroup extends React.Component<SelectGroupProperties> {
         style.display = 'flex';
         style.alignItems = 'center';
         style.gap = '8px';
-        style.flex = '0 0 auto';
         selectStyle.width = '150px';
       } else if(props.inline) {
         style.display = 'grid';
