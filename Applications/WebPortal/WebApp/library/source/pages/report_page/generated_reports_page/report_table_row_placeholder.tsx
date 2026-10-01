@@ -27,7 +27,7 @@ function Selected(): JSX.Element {
 
 function TypeCell(): JSX.Element {
   return <td className={css(STYLES.cell, STYLES.type)}>
-    <Skeleton style={{width: '140px', height: '16px'}}/>
+    <Skeleton style={{width: '50%', maxWidth: '140px', height: '16px'}}/>
   </td>;
 }
 
@@ -35,7 +35,7 @@ function Cell(): JSX.Element {
   return <td className={css(STYLES.cell)}>
     <div className={css(STYLES.content)}>
       <Skeleton className={css(STYLES.label)}
-        style={{width: '100px', height: '16px', flexShrink: 0}}/>
+        style={{width: '40%', height: '16px', flexShrink: 0}}/>
       <Skeleton className={css(STYLES.value)} style={{height: '16px'}}/>
     </div>
   </td>;
@@ -94,7 +94,7 @@ const STYLES = StyleSheet.create({
   },
   value: {
     flexShrink: 0,
-    '@container (width <= 424px)': {width: '112px'},
+    '@container (width <= 424px)': {width: '40%'},
     '@container (424px < width)': {width: '60%'}
   }
 });
