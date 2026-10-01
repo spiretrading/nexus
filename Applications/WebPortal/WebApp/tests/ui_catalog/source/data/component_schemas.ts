@@ -1289,6 +1289,19 @@ const inputGroup =
     [new SignalSchema('onChange', ''), new SignalSchema('onValidate', '')],
     InputGroupExample, 284);
 
+const parametersDateRangeInput =
+  new ComponentSchema('ParametersDateRangeInput',
+    [new PropertySchema('value', (() => {
+        const today = Beam.Date.today();
+        return new WebPortal.DateRange(
+          new Beam.Date(today.year, today.month, 1), today);
+      })(), DateRangeValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    WebPortal.ParametersDateRangeInput, 284);
+
 const reportActivityStatusTag =
   new ComponentSchema('ReportActivityStatusTag',
     [new PropertySchema('status',
@@ -1386,9 +1399,10 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [reportActivityStatusTag,
-    reportTypeSelect, scheduledDate, scheduledReportItem,
-    scheduledReportItemContextMenu, scheduledReportItemPlaceholder]),
+  new ComponentSection('Report Page', [parametersDateRangeInput,
+    reportActivityStatusTag, reportTypeSelect, scheduledDate,
+    scheduledReportItem, scheduledReportItemContextMenu,
+    scheduledReportItemPlaceholder]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
