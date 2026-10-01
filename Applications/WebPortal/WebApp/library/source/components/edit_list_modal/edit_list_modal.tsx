@@ -32,6 +32,15 @@ interface Properties<T> {
   /** The prompt displayed in the item search. */
   placeholder?: string;
 
+  /** The submission button's text. Defaults to "Submit". */
+  submitLabel?: string;
+
+  /** Replaces the default requirement that the selection has changed.
+   * @param selected - The current working selection.
+   * @return Whether submission is allowed once pending additions finish.
+   */
+  canSubmit?: (selected: readonly T[]) => boolean;
+
   /** Called with the edited selection when Submit is pressed. */
   onSubmit?: (selected: T[]) => void;
 
@@ -112,9 +121,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       }
       return this.props.title;
     })();
-    const changed = this.state.selected.length !==
-      this.state.submission.length || this.state.selected.some((item, i) =>
-        !this.equals(item, this.state.submission[i]));
     return (
       <dialog ref={this.dialog} className={css(STYLES.dialog)}
           aria-labelledby={`${this.identifier}-title`}
@@ -128,7 +134,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
         </header>
         <Content readOnly={this.props.readOnly}
             onClose={this.onClose} onSubmit={this.onSubmit}
-            disabled={!changed || this.state.importing || this.state.adding}>
+            submitLabel={this.props.submitLabel ?? 'Submit'}
+            disabled={!this.canSubmit()}>
           <Form readOnly={this.props.readOnly}>
             {!this.props.readOnly &&
               <div className={css(STYLES.search)}>
@@ -163,6 +170,18 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
           </Form>
         </Content>
       </dialog>);
+  }
+
+  private canSubmit(): boolean {
+    if(this.props.readOnly || this.state.importing || this.state.adding) {
+      return false;
+    }
+    if(this.props.canSubmit) {
+      return this.props.canSubmit(this.state.selected);
+    }
+    return this.state.selected.length !== this.state.submission.length ||
+      this.state.selected.some((item, i) =>
+        !this.equals(item, this.state.submission[i]));
   }
 
   private equals(first: T, second: T): boolean {
@@ -217,7 +236,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   };
 
   private onSubmit = () => {
-    if(this.state.adding || this.state.importing) {
+    if(!this.canSubmit()) {
       return;
     }
     this.setState({submission: this.state.selected.slice()});
@@ -319,6 +338,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 interface ContentProperties {
   readOnly: boolean;
   disabled: boolean;
+  submitLabel: string;
   onClose: () => void;
   onSubmit: () => void;
   children: React.ReactNode;
@@ -335,7 +355,8 @@ class Content extends React.Component<ContentProperties> {
               return <Button label='OK' style={{width: '100%'}}
                 onClick={this.props.onClose}/>;
             }
-            return <Button label='Submit' style={{width: '100%'}}
+            return <Button label={this.props.submitLabel}
+              style={{width: '100%'}}
               disabled={this.props.disabled} onClick={this.props.onSubmit}/>;
           })()}
         </div>
