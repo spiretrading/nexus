@@ -17,6 +17,8 @@ import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
 import { RadioButtonExample } from './radio_button_example';
+import { ReportTableRowPlaceholderExample } from
+  './report_table_row_placeholder_example';
 import { ScheduledReportItemExample, ScheduledReportParameterInput } from
   './scheduled_report_item_example';
 import { ScheduledReportItemContextMenuExample } from
@@ -1312,6 +1314,10 @@ const reportActivityStatusTag =
     [],
     WebPortal.ReportActivityStatusTag);
 
+const reportTableRowPlaceholder =
+  new ComponentSchema('ReportTableRowPlaceholder', [], [],
+    ReportTableRowPlaceholderExample, 696);
+
 const reportTypeSelect =
   new ComponentSchema('ReportTypeSelect',
     [new PropertySchema('reportTypes',
@@ -1411,8 +1417,8 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [parametersDateRangeInput,
-    reportActivityStatusTag, reportTypeSelect, scheduledDate,
-    scheduledReportItem, scheduledReportItemContextMenu,
+    reportActivityStatusTag, reportTableRowPlaceholder, reportTypeSelect,
+    scheduledDate, scheduledReportItem, scheduledReportItemContextMenu,
     scheduledReportItemPlaceholder, shareReportModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
