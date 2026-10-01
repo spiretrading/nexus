@@ -22,6 +22,7 @@ import { ScheduledReportItemExample, ScheduledReportParameterInput } from
 import { ScheduledReportItemContextMenuExample } from
   './scheduled_report_item_context_menu_example';
 import { ScopeInputExample } from './scope_input_example';
+import { ShareReportModalExample } from './share_report_modal_example';
 import { TickerInputExample } from './ticker_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
   './schemas';
@@ -1381,6 +1382,16 @@ const scheduledReportItemPlaceholder =
     [],
     WebPortal.ScheduledReportItemPlaceholder, 320);
 
+const shareReportModal =
+  new ComponentSchema('ShareReportModal',
+    [new PropertySchema('selected', [Beam.DirectoryEntry.makeAccount(1, 'Alice')],
+        ArrayInput(new PropertySchema('recipient',
+          Beam.DirectoryEntry.makeAccount(1, 'Alice'),
+          BeamDirectoryEntryInput))),
+      new PropertySchema('lookupDelay', 300, NumberInput)],
+    [new SignalSchema('onSubmit', 'selected'), new SignalSchema('onClose', '')],
+    ShareReportModalExample);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
     contextMenu, dateInput, dateTimeInput, decimalInput, disclosure,
@@ -1402,7 +1413,7 @@ export const componentSections = [
   new ComponentSection('Report Page', [parametersDateRangeInput,
     reportActivityStatusTag, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
-    scheduledReportItemPlaceholder]),
+    scheduledReportItemPlaceholder, shareReportModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
