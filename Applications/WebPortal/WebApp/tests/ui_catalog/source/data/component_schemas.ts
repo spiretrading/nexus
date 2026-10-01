@@ -17,6 +17,7 @@ import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
 import { RadioButtonExample } from './radio_button_example';
+import { ReportTableExample } from './report_table_example';
 import { ReportTableRowExample } from './report_table_row_example';
 import { ReportTableRowPlaceholderExample } from
   './report_table_row_placeholder_example';
@@ -1315,6 +1316,24 @@ const reportActivityStatusTag =
     [],
     WebPortal.ReportActivityStatusTag);
 
+const reportTable =
+  new ComponentSchema('ReportTable',
+    [new PropertySchema('reportCount', 3, NumberInput),
+      new PropertySchema('loading', false, BooleanInput),
+      new PropertySchema('selected', [],
+        ArrayInput(new PropertySchema('id', '1', TextInput))),
+      new PropertySchema('sortColumn', WebPortal.ReportTable.Column.TYPE,
+        EnumInput(WebPortal.ReportTable.Column)),
+      new PropertySchema('sortOrder',
+        WebPortal.SortableTableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.SortableTableHeaderCell.SortOrder))],
+    [new SignalSchema('onSelectionChange', 'selected'),
+      new SignalSchema('onSort', '', [
+        {parameterName: 'column', propertyName: 'sortColumn'},
+        {parameterName: 'order', propertyName: 'sortOrder'}]),
+      new SignalSchema('onNavigate', '')],
+    ReportTableExample, 696);
+
 const reportTableRow =
   new ComponentSchema('ReportTableRow',
     [new PropertySchema('id', '42', TextInput),
@@ -1433,10 +1452,10 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [parametersDateRangeInput,
-    reportActivityStatusTag, reportTableRow, reportTableRowPlaceholder,
-    reportTypeSelect, scheduledDate, scheduledReportItem,
-    scheduledReportItemContextMenu, scheduledReportItemPlaceholder,
-    shareReportModal]),
+    reportActivityStatusTag, reportTable, reportTableRow,
+    reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
+    scheduledReportItem, scheduledReportItemContextMenu,
+    scheduledReportItemPlaceholder, shareReportModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
