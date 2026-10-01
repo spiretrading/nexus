@@ -15,6 +15,7 @@ import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
+import { InputGroupExample } from './input_group_example';
 import { RadioButtonExample } from './radio_button_example';
 import { ScopeInputExample } from './scope_input_example';
 import { TickerInputExample } from './ticker_input_example';
@@ -1267,19 +1268,35 @@ const inputErrorMessage =
     [],
     WebPortal.InputErrorMessage);
 
+const inputGroup =
+  new ComponentSchema('InputGroup',
+    [new PropertySchema('inputType', InputGroupExample.InputType.INTEGER,
+        EnumInput(InputGroupExample.InputType)),
+      new PropertySchema('label', 'Quantity', TextInput),
+      new PropertySchema('inputId', '', TextInput),
+      new PropertySchema('error', WebPortal.ValidationError.NONE,
+        EnumInput(WebPortal.ValidationError)),
+      new PropertySchema(
+        'errorDisplay', InputGroupExample.ErrorDisplay.AUTOMATIC,
+        EnumInput(InputGroupExample.ErrorDisplay)),
+      new PropertySchema('customError', '', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', ''), new SignalSchema('onValidate', '')],
+    InputGroupExample, 284);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
-    contextMenu,
-    dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
-    expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
-    input, integerField, intervalInput, labeledCheckbox, link, listInput, modal,
-    navigationHeader, navigationTab, pagination, radioButton, segmentButton,
-    segmentedControl, segmentedSpinner, select, skeleton,
+    contextMenu, dateInput, dateTimeInput, decimalInput, disclosure,
+    durationInput, expandButton, filterChip, filterInput, hLine, iconButton,
+    iconLabelButton, input, integerField, intervalInput, labeledCheckbox, link,
+    listInput, modal, navigationHeader, navigationTab, pagination, radioButton,
+    segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
     sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, dateRangeInput, emptyMessage, errorMessage,
-    inputErrorMessage, moneyInput, pageLayout, relativeDate, roleIcon,
-    rolePanel, scopeInput, tickerInput]),
+    inputErrorMessage, inputGroup, moneyInput, pageLayout, relativeDate,
+    roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
