@@ -66,14 +66,15 @@ const STYLES = StyleSheet.create({
   headerSpace: {flex: '1 1 0', marginRight: '18px'},
   parameters: {
     display: 'grid',
-    columnGap: '8px',
     rowGap: '2px',
     marginBottom: '12px',
     '@container (width < 768px)': {
-      gridTemplateColumns: 'repeat(2, minmax(80px, 1fr))'
+      gridTemplateColumns: 'repeat(2, 80px)',
+      columnGap: '66px'
     },
     '@container (min-width: 768px)': {
-      gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))'
+      gridTemplateColumns: 'repeat(3, 80px)',
+      columnGap: '64px'
     }
   },
   parameter: {
