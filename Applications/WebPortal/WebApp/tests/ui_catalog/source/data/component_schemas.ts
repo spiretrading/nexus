@@ -6,12 +6,17 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, EnumInput, NumberInput, NumberSliderInput, MoneyInput,
+  CSSInput, DateInput, DateRangeValueInput, EnumInput, IntervalValueInput,
+  NumberInput,
+  NumberSliderInput, MoneyInput,
   ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
+import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
+import { InputGroupExample } from './input_group_example';
+import { RadioButtonExample } from './radio_button_example';
 import { ScheduledReportItemExample, ScheduledReportParameterInput } from
   './scheduled_report_item_example';
 import { ScheduledReportItemContextMenuExample } from
@@ -42,8 +47,17 @@ const button =
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
-    (props: any) => React.createElement(WebPortal.Button,
-      {...props, style: {width: '100%', height: '100%', ...props.style}}));
+    WebPortal.Button);
+
+const buttonLink =
+  new ComponentSchema('ButtonLink',
+    [new PropertySchema('label', 'View report', TextInput),
+      new PropertySchema('href', '#report', TextInput),
+      new PropertySchema('target', '_self', TextInput),
+      new PropertySchema('inert', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.ButtonLink);
 
 const burgerButton =
   new ComponentSchema('BurgerButton',
@@ -77,6 +91,15 @@ const checkbox =
           onClick: props.onClick
         }));
     });
+
+const radioButton =
+  new ComponentSchema('RadioButton',
+    [new PropertySchema('label', 'Now', TextInput),
+      new PropertySchema('name', 'catalog-runtime', TextInput),
+      new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'checked')],
+    RadioButtonExample);
 
 enum MenuMode {
   COMMANDS,
@@ -405,6 +428,26 @@ const listInput =
     [new SignalSchema('onChange', 'value')],
     ListInputExample, 300);
 
+const dateRangeInput =
+  new ComponentSchema('DateRangeInput',
+    [new PropertySchema('value', (() => {
+        const today = Beam.Date.today();
+        return new WebPortal.DateRange(
+          new Beam.Date(today.year, today.month, 1), today);
+      })(), DateRangeValueInput),
+      new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('orientation',
+        WebPortal.DateRangeInput.Orientation.VERTICAL,
+        EnumInput(WebPortal.DateRangeInput.Orientation)),
+      new PropertySchema('labelPosition', WebPortal.DateRangeInput.
+        LabelPosition.ABOVE, EnumInput(WebPortal.DateRangeInput.LabelPosition)),
+      new PropertySchema('boundsRequired', true, BooleanInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    DateRangeInputExample, 284);
+
 const decimalInput =
   new ComponentSchema('DecimalInput',
     [new PropertySchema('value', 100, NumberInput),
@@ -416,6 +459,16 @@ const decimalInput =
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.DecimalInput,
       {...props, style: {width: '100%', ...props.style}}));
+
+const intervalInput =
+  new ComponentSchema('IntervalInput',
+    [new PropertySchema('value', new WebPortal.Interval(1,
+        WebPortal.Interval.Unit.DAY), IntervalValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('required', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.IntervalInput, 284);
 
 const moneyInput =
   new ComponentSchema('MoneyInput',
@@ -1189,26 +1242,52 @@ const reportStatusIndicator =
     [],
     WebPortal.ReportStatusIndicator);
 
-const tableHeaderCell =
-  new ComponentSchema('TableHeaderCell',
-    [new PropertySchema('sortOrder',
-        WebPortal.TableHeaderCell.SortOrder.NONE,
-        EnumInput(WebPortal.TableHeaderCell.SortOrder)),
-      new PropertySchema('textAlign', 'start', TextInput)],
+const sortableTableHeaderCell =
+  new ComponentSchema('SortableTableHeaderCell',
+    [new PropertySchema('children', 'Column', TextInput),
+      new PropertySchema('sortOrder',
+        WebPortal.SortableTableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.SortableTableHeaderCell.SortOrder)),
+      new PropertySchema('textAlign', 'start', TextInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onSort', 'sortOrder')],
+    (props: any) => React.createElement('table', {
+        style: {borderCollapse: 'collapse', width: '100%',
+          fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem'}},
+      React.createElement('thead', null,
+        React.createElement('tr', null,
+          React.createElement(WebPortal.SortableTableHeaderCell, props)))),
+    180);
+
+const inputErrorMessage =
+  new ComponentSchema('InputErrorMessage',
+    [new PropertySchema('error', WebPortal.ValidationError.NONE,
+        EnumInput(WebPortal.ValidationError)),
+      new PropertySchema('label', 'Name', TextInput),
+      new PropertySchema('value', 'email address', TextInput),
+      new PropertySchema('start', 'Start date', TextInput),
+      new PropertySchema('end', 'End date', TextInput),
+      new PropertySchema('style', {}, CSSInput)],
     [],
-    (props: any) => {
-      const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
-      React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
-      return React.createElement('table', {
-          style: {borderCollapse: 'collapse', width: '100%'}},
-        React.createElement('thead', null,
-          React.createElement('tr', null,
-            React.createElement(WebPortal.TableHeaderCell, {
-              sortOrder: sortOrder,
-              style: {textAlign: props.textAlign},
-              onSort: setSortOrder
-            }, 'Column'))));
-    }, 132);
+    WebPortal.InputErrorMessage);
+
+const inputGroup =
+  new ComponentSchema('InputGroup',
+    [new PropertySchema('inputType', InputGroupExample.InputType.INTEGER,
+        EnumInput(InputGroupExample.InputType)),
+      new PropertySchema('label', 'Quantity', TextInput),
+      new PropertySchema('inputId', '', TextInput),
+      new PropertySchema('error', WebPortal.ValidationError.NONE,
+        EnumInput(WebPortal.ValidationError)),
+      new PropertySchema(
+        'errorDisplay', InputGroupExample.ErrorDisplay.AUTOMATIC,
+        EnumInput(InputGroupExample.ErrorDisplay)),
+      new PropertySchema('customError', '', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', ''), new SignalSchema('onValidate', '')],
+    InputGroupExample, 284);
 
 const reportActivityStatusTag =
   new ComponentSchema('ReportActivityStatusTag',
@@ -1290,27 +1369,29 @@ const scheduledReportItemPlaceholder =
     WebPortal.ScheduledReportItemPlaceholder, 320);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
-    dateInput, dateTimeInput, decimalInput, disclosure, durationInput,
-    expandButton, filterChip, filterInput, hLine, iconButton, iconLabelButton,
-    input, integerField, labeledCheckbox, link, listInput, modal,
-    navigationHeader, navigationTab, pagination, segmentButton,
-    segmentedControl, segmentedSpinner, select, skeleton, timeOfDayInput]),
+  new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
+    contextMenu, dateInput, dateTimeInput, decimalInput, disclosure,
+    durationInput, expandButton, filterChip, filterInput, hLine, iconButton,
+    iconLabelButton, input, integerField, intervalInput, labeledCheckbox, link,
+    listInput, modal, navigationHeader, navigationTab, pagination, radioButton,
+    segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
+    sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, emptyMessage, errorMessage, moneyInput, pageLayout,
-    relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
-  new ComponentSection('Requests Page', [accountLink, changeTable,
-    complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
-    entitlementsStatusTag, requestActivityItem, requestCategoryTag,
-    requestDetailPage, requestDirectoryPage, requestEffectiveDate,
-    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
-    requestStateIndicator, riskControlsChangeItem]),
+    currencySelect, dateRangeInput, emptyMessage, errorMessage,
+    inputErrorMessage, inputGroup, moneyInput, pageLayout, relativeDate,
+    roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator, tableHeaderCell]),
+    profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [reportActivityStatusTag,
     reportTypeSelect, scheduledDate, scheduledReportItem,
-    scheduledReportItemContextMenu, scheduledReportItemPlaceholder])];
+    scheduledReportItemContextMenu, scheduledReportItemPlaceholder]),
+  new ComponentSection('Requests Page', [accountLink, changeTable,
+    complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
+    entitlementsStatusTag, requestActivityItem, requestCategoryTag,
+    requestDetailPage, requestDirectoryPage, requestEffectiveDate,
+    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
+    requestStateIndicator, riskControlsChangeItem])];

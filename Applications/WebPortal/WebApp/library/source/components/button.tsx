@@ -21,8 +21,8 @@ export function Button(props: Properties): JSX.Element {
     <button type={props.type} style={props.style}
         disabled={props.disabled}
         className={[css(EXTRA_STYLE.button,
-          variant === Button.Variant.SECONDARY && EXTRA_STYLE.buttonSecondary,
           theme === Button.Theme.DARK && EXTRA_STYLE.buttonDark,
+          variant === Button.Variant.SECONDARY && EXTRA_STYLE.buttonSecondary,
           props.disabled && EXTRA_STYLE.buttonDisabled),
           props.className].join(' ')}
         onClick={props.onClick}>
@@ -82,15 +82,15 @@ const EXTRA_STYLE = StyleSheet.create({
   buttonDark: {
     backgroundColor: '#E2E0FF',
     color: '#4B23A0',
+    ':focus-visible': {
+      backgroundColor: '#B9B4EC',
+      borderColor: '#FFFFFF'
+    },
     ':hover': {
       backgroundColor: '#FFFFFF'
     },
     ':active': {
       backgroundColor: '#FFFFFF'
-    },
-    ':focus-visible': {
-      backgroundColor: '#B9B4EC',
-      borderColor: '#FFFFFF'
     }
   },
   buttonSecondary: {
@@ -112,12 +112,6 @@ const EXTRA_STYLE = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
-    cursor: 'not-allowed',
-    ':hover': {
-      backgroundColor: undefined
-    },
-    ':active': {
-      backgroundColor: undefined
-    }
+    cursor: 'not-allowed'
   }
 });

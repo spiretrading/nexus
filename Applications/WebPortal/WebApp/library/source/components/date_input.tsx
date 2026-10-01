@@ -38,6 +38,8 @@ function getDaysInMonth(year?: number, month?: number): number {
 /** A component that displays a date. */
 export function DateInput({id, className, value, readOnly, disabled, error,
     onChange, ...rest}: Properties): JSX.Element {
+  const isInvalid = error || rest['aria-invalid'] === true ||
+    rest['aria-invalid'] === 'true';
   const yearRef = React.useRef(value?.year);
   const monthRef = React.useRef(value?.month);
   const dayRef = React.useRef(value?.day);
@@ -78,11 +80,13 @@ export function DateInput({id, className, value, readOnly, disabled, error,
   const separatorStyle = hasValue ? undefined : {color: '#8C8C8C'};
   return (
     <div {...rest} className={[css(STYLES.container,
-        disabled && STYLES.containerDisabled, error && STYLES.containerError,
+        disabled && STYLES.containerDisabled, isInvalid && STYLES.containerError,
         readOnly && STYLES.containerReadonly),
         className].filter(Boolean).join(' ')}>
       <IntegerInput
         id={id}
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         aria-label='Year' placeholder='YYYY'
         min={MINIMUM_YEAR} max={MAXIMUM_YEAR}
         value={yearRef.current}
@@ -96,6 +100,8 @@ export function DateInput({id, className, value, readOnly, disabled, error,
       </span>
       <IntegerInput
         aria-label='Month' placeholder='MM'
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         min={1} max={12}
         value={monthRef.current}
         readOnly={readOnly}
@@ -108,6 +114,8 @@ export function DateInput({id, className, value, readOnly, disabled, error,
       </span>
       <IntegerInput
         aria-label='Day' placeholder='DD'
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         min={1} max={getDaysInMonth(yearRef.current, monthRef.current)}
         value={dayRef.current}
         readOnly={readOnly}
