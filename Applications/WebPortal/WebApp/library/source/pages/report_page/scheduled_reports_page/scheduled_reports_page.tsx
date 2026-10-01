@@ -313,8 +313,8 @@ const STYLES = StyleSheet.create({
     fontFamily: 'Roboto, system-ui, sans-serif',
     fontWeight: 400,
     color: '#333333',
-    '@media (width < 768px)': {padding: '18px 18px 122px'},
-    '@media (min-width: 768px)': {padding: '18px 18px 40px'}
+    '@media (width < 768px)': {padding: '18px 0 122px'},
+    '@media (min-width: 768px)': {padding: '18px 0 40px'}
   },
   toolbar: {
     boxSizing: 'border-box',
