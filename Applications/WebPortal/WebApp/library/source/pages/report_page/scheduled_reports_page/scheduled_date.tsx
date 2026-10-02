@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { highlightText } from './highlight_text';
+import { highlightText } from '../highlight_text';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> {
@@ -37,8 +37,9 @@ export class ScheduledDate extends React.Component<Properties, State> {
     const midnight = new Date(0);
     midnight.setUTCFullYear(reference.getFullYear(), reference.getMonth(),
       reference.getDate());
+    const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
     const days = (Date.parse(`${date.value}T00:00:00Z`) -
-      midnight.getTime()) / 86400000;
+      midnight.getTime()) / MILLISECONDS_PER_DAY;
     const prefix = (() => {
       if(days <= 0) {
         return 'Last Run';
@@ -48,8 +49,10 @@ export class ScheduledDate extends React.Component<Properties, State> {
       return 'Scheduled';
     })();
     const remaining = (() => {
-      if(days >= 14) {
-        return `${Math.floor(days / 7)}w`;
+      const DAYS_PER_WEEK = 7;
+      const WEEK_DISPLAY_THRESHOLD = 14;
+      if(days >= WEEK_DISPLAY_THRESHOLD) {
+        return `${Math.floor(days / DAYS_PER_WEEK)}w`;
       }
       return `${days}d`;
     })();

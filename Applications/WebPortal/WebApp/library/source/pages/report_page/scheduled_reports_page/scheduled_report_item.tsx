@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { IconButton } from '../../../components';
-import { highlightText } from './highlight_text';
+import { highlightText } from '../highlight_text';
 import { ScheduledDate } from './scheduled_date';
 import { ScheduledReportItemContextMenu } from
   './scheduled_report_item_context_menu';

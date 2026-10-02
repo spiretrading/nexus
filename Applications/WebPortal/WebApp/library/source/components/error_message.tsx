@@ -16,7 +16,7 @@ export function ErrorMessage(props: Properties): JSX.Element {
   return (
     <div className={css(STYLES.container)}>
       <div className={css(STYLES.content)}>
-        <div className={css(STYLES.filler)}/>
+        <div className={css(STYLES.filler, STYLES.topFiller)}/>
         <img src='resources/components/error.svg'
           className={css(STYLES.errorIcon)}/>
         <div className={css(STYLES.spacer)}/>
@@ -54,6 +54,9 @@ const STYLES = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 0
+  },
+  topFiller: {
+    '@container (min-width: 732px)': {display: 'none'}
   },
   errorIcon: {
     width: '44px',

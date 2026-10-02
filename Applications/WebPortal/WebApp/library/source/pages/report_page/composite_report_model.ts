@@ -1,16 +1,20 @@
+import { GeneratedReportsModel } from './generated_reports_page';
 import { ReportModel } from './report_model';
 import { ScheduledReportsModel } from './scheduled_reports_page';
 
-/** Composes reporting subpage models locally. */
-export class LocalReportModel extends ReportModel {
+/** Composes caller-supplied reporting subpage models. */
+export class CompositeReportModel extends ReportModel {
 
   /** Constructs a report model.
    * @param scheduledReportsModel - The model for scheduled reports.
+   * @param generatedReportsModel - The model for generated reports.
    */
-  constructor(scheduledReportsModel: ScheduledReportsModel) {
+  constructor(scheduledReportsModel: ScheduledReportsModel,
+      generatedReportsModel: GeneratedReportsModel) {
     super();
     this.loaded = false;
     this.scheduledReports = scheduledReportsModel;
+    this.generatedReports = generatedReportsModel;
   }
 
   /** Returns whether this model has been loaded. */
@@ -21,6 +25,11 @@ export class LocalReportModel extends ReportModel {
   public get scheduledReportsModel(): ScheduledReportsModel {
     this.ensureLoaded();
     return this.scheduledReports;
+  }
+
+  public get generatedReportsModel(): GeneratedReportsModel {
+    this.ensureLoaded();
+    return this.generatedReports;
   }
 
   public async load(): Promise<void> {
@@ -35,4 +44,5 @@ export class LocalReportModel extends ReportModel {
 
   private loaded: boolean;
   private scheduledReports: ScheduledReportsModel;
+  private generatedReports: GeneratedReportsModel;
 }
