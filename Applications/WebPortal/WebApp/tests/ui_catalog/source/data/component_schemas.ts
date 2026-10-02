@@ -21,6 +21,7 @@ import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
 import { RadioButtonExample } from './radio_button_example';
+import { ReportFormTemplateExample } from './report_form_template_example';
 import { ReportTableExample } from './report_table_example';
 import { ReportTableRowExample } from './report_table_row_example';
 import { ReportTableRowPlaceholderExample } from
@@ -1369,6 +1370,14 @@ const reportActivityStatusTag =
     [],
     WebPortal.ReportActivityStatusTag);
 
+const reportFormTemplate =
+  new ComponentSchema('ReportFormTemplate',
+    [new PropertySchema('title', 'Create Report', TextInput),
+      new PropertySchema('mode', WebPortal.ReportFormTemplate.Mode.CREATE,
+        EnumInput(WebPortal.ReportFormTemplate.Mode)),
+      new PropertySchema('showRuntime', true, BooleanInput)],
+    [new SignalSchema('onSubmit', '')], ReportFormTemplateExample, 560);
+
 const reportTable =
   new ComponentSchema('ReportTable',
     [new PropertySchema('reportCount', 3, NumberInput),
@@ -1506,7 +1515,7 @@ export const componentSections = [
     profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [activityTable, activityTableRow,
     activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
-    reportActivityStatusTag, reportTable, reportTableRow,
+    reportActivityStatusTag, reportFormTemplate, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
     scheduledReportItemPlaceholder, shareReportModal]),

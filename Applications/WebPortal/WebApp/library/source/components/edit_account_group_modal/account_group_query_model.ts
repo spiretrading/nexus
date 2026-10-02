@@ -10,6 +10,9 @@ export abstract class AccountGroupQueryModel extends
    */
   public async parse(query: string): Promise<Beam.DirectoryEntry> {
     const name = query.trim().toLocaleLowerCase();
+    if(name === '*') {
+      return Beam.DirectoryEntry.STAR_DIRECTORY;
+    }
     const entries = await this.submit(query);
     let result: Beam.DirectoryEntry = null;
     for(const entry of entries) {
