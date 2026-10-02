@@ -13,6 +13,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
+import { ActivityTableExample } from './activity_table_example';
 import { ActivityTableRowExample } from './activity_table_row_example';
 import { ActivityTableRowPlaceholderExample } from
   './activity_table_row_placeholder_example';
@@ -1322,6 +1323,23 @@ const parametersDateRangeInput =
       new SignalSchema('onValidationChange', 'validation')],
     WebPortal.ParametersDateRangeInput, 284);
 
+const activityTable =
+  new ComponentSchema('ActivityTable',
+    [new PropertySchema('activityCount', 3, NumberInput),
+      new PropertySchema('loading', false, BooleanInput),
+      new PropertySchema('selected', [],
+        ArrayInput(new PropertySchema('id', '1', TextInput))),
+      new PropertySchema('sortColumn', WebPortal.ActivityTable.Column.TYPE,
+        EnumInput(WebPortal.ActivityTable.Column)),
+      new PropertySchema('sortOrder',
+        WebPortal.SortableTableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.SortableTableHeaderCell.SortOrder))],
+    [new SignalSchema('onSelectionChange', 'selected'),
+      new SignalSchema('onSort', '', [
+        {parameterName: 'column', propertyName: 'sortColumn'},
+        {parameterName: 'order', propertyName: 'sortOrder'}])],
+    ActivityTableExample, 796);
+
 const activityTableRow =
   new ComponentSchema('ActivityTableRow',
     [new PropertySchema('id', '42', TextInput),
@@ -1486,9 +1504,8 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [activityTableRow,
-    activityTableRowPlaceholder,
-    dateFilter, parametersDateRangeInput,
+  new ComponentSection('Report Page', [activityTable, activityTableRow,
+    activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
     reportActivityStatusTag, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
