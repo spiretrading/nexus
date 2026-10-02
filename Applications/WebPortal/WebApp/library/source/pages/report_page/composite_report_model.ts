@@ -1,3 +1,4 @@
+import { CreateReportModel } from './create_report_page';
 import { GeneratedReportsModel } from './generated_reports_page';
 import { ReportActivityModel } from './report_activity_page';
 import { ReportModel } from './report_model';
@@ -10,15 +11,18 @@ export class CompositeReportModel extends ReportModel {
    * @param scheduledReportsModel - The model for scheduled reports.
    * @param generatedReportsModel - The model for generated reports.
    * @param reportActivityModel - The model for report jobs.
+   * @param createReportModel - The model for creating reports.
    */
   constructor(scheduledReportsModel: ScheduledReportsModel,
       generatedReportsModel: GeneratedReportsModel,
-      reportActivityModel: ReportActivityModel) {
+      reportActivityModel: ReportActivityModel,
+      createReportModel: CreateReportModel) {
     super();
     this.loaded = false;
     this.scheduledReports = scheduledReportsModel;
     this.generatedReports = generatedReportsModel;
     this.reportActivity = reportActivityModel;
+    this.createReport = createReportModel;
   }
 
   /** Returns whether this model has been loaded. */
@@ -41,6 +45,11 @@ export class CompositeReportModel extends ReportModel {
     return this.reportActivity;
   }
 
+  public get createReportModel(): CreateReportModel {
+    this.ensureLoaded();
+    return this.createReport;
+  }
+
   public async load(): Promise<void> {
     this.loaded = true;
   }
@@ -55,4 +64,5 @@ export class CompositeReportModel extends ReportModel {
   private scheduledReports: ScheduledReportsModel;
   private generatedReports: GeneratedReportsModel;
   private reportActivity: ReportActivityModel;
+  private createReport: CreateReportModel;
 }

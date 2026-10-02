@@ -1,6 +1,9 @@
 import * as assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { LocalAccountGroupQueryModel } from '../../source/components';
+import { LocalTickerQueryModel, ScopeQueryModel } from '../../source/models';
+import { LocalCreateReportModel } from
+  '../../source/pages/report_page/create_report_page';
 import { LocalGeneratedReportsModel } from
   '../../source/pages/report_page/generated_reports_page';
 import { LocalReportActivityModel } from
@@ -27,7 +30,7 @@ describe('LocalScheduledReportsModel', () => {
     const model = new LocalScheduledReportsModel([schedule]);
     const report = new CompositeReportModel(model,
       new LocalGeneratedReportsModel([], new LocalAccountGroupQueryModel([])),
-      new LocalReportActivityModel([]));
+      new LocalReportActivityModel([]), makeCreateModel());
     assert.equal(model.isLoaded, false);
     assert.equal(report.isLoaded, false);
     assert.throws(() => report.scheduledReportsModel, /Model not loaded/);
@@ -165,15 +168,24 @@ describe('LocalScheduledReportsModel', () => {
     const generated = new LocalGeneratedReportsModel([],
       new LocalAccountGroupQueryModel([]));
     const activity = new LocalReportActivityModel([]);
-    const report = new CompositeReportModel(schedules, generated, activity);
+    const create = makeCreateModel();
+    const report = new CompositeReportModel(schedules, generated, activity,
+      create);
+    assert.throws(() => report.createReportModel, /Model not loaded/);
     assert.throws(() => report.reportActivityModel, /Model not loaded/);
     await report.load();
     await schedules.load();
     assert.equal(report.scheduledReportsModel, schedules);
     assert.equal(report.generatedReportsModel, generated);
     assert.equal(report.reportActivityModel, activity);
+    assert.equal(report.createReportModel, create);
     assert.equal(activity.isLoaded, false);
     await report.scheduledReportsModel.delete('1');
     assert.deepEqual(schedules.schedules, []);
   });
 });
+
+function makeCreateModel(): LocalCreateReportModel {
+  return new LocalCreateReportModel([], new LocalAccountGroupQueryModel([]),
+    new ScopeQueryModel(new LocalTickerQueryModel([])));
+}
