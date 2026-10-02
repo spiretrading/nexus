@@ -13,6 +13,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
+import { ActivityTableRowExample } from './activity_table_row_example';
 import { ActivityTableRowPlaceholderExample } from
   './activity_table_row_placeholder_example';
 import { DateRangeInputExample } from './date_range_input_example';
@@ -1321,6 +1322,22 @@ const parametersDateRangeInput =
       new SignalSchema('onValidationChange', 'validation')],
     WebPortal.ParametersDateRangeInput, 284);
 
+const activityTableRow =
+  new ComponentSchema('ActivityTableRow',
+    [new PropertySchema('id', '42', TextInput),
+      new PropertySchema('type', 'Profit and Loss', TextInput),
+      new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
+        ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
+      new PropertySchema('status',
+        WebPortal.ReportActivityStatusTag.Status.GENERATING,
+        EnumInput(WebPortal.ReportActivityStatusTag.Status)),
+      new PropertySchema('dateModified', Beam.Date.today(), BeamDateInput),
+      new PropertySchema('selected', false, BooleanInput)],
+    [new SignalSchema('onSelect', '', [
+      {parameterName: 'id', propertyName: ''},
+      {parameterName: 'selected', propertyName: 'selected'}])],
+    ActivityTableRowExample, 796);
+
 const activityTableRowPlaceholder =
   new ComponentSchema('ActivityTableRowPlaceholder', [], [],
     ActivityTableRowPlaceholderExample, 796);
@@ -1469,7 +1486,8 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [activityTableRowPlaceholder,
+  new ComponentSection('Report Page', [activityTableRow,
+    activityTableRowPlaceholder,
     dateFilter, parametersDateRangeInput,
     reportActivityStatusTag, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
