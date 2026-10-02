@@ -163,7 +163,7 @@ const STYLES = StyleSheet.create({
     }
   },
   separator: {
-    width: '0.625rem',
+    width: '0.625em',
     textAlign: 'center',
     userSelect: 'none'
   }
@@ -176,7 +176,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1rem'
+    width: '1em'
   },
   minutesInput: {
     backgroundColor: 'transparent',
@@ -184,7 +184,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1.5rem'
+    width: '1.5em'
   },
   secondsInput: {
     backgroundColor: 'transparent',
@@ -192,6 +192,6 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1rem'
+    width: '1em'
   }
 };
