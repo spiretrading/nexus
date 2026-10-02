@@ -10,6 +10,8 @@ import { LocalGeneratedReportsModel } from
   '../../source/pages/report_page/generated_reports_page';
 import { LocalReportActivityModel } from
   '../../source/pages/report_page/report_activity_page';
+import { LocalReportDetailModel } from
+  '../../source/pages/report_page/report_detail_page';
 import { CompositeReportModel } from
   '../../source/pages/report_page/composite_report_model';
 import { LocalScheduledReportsModel, ScheduledReportsModel } from
@@ -32,7 +34,8 @@ describe('LocalScheduledReportsModel', () => {
     const model = new LocalScheduledReportsModel([schedule]);
     const report = new CompositeReportModel(model,
       new LocalGeneratedReportsModel([], new LocalAccountGroupQueryModel([])),
-      new LocalReportActivityModel([]), makeCreateModel(), makeEditModel());
+      new LocalReportActivityModel([]), makeCreateModel(), makeEditModel(),
+      new LocalReportDetailModel([]));
     assert.equal(model.isLoaded, false);
     assert.equal(report.isLoaded, false);
     assert.throws(() => report.scheduledReportsModel, /Model not loaded/);
@@ -172,11 +175,13 @@ describe('LocalScheduledReportsModel', () => {
     const activity = new LocalReportActivityModel([]);
     const create = makeCreateModel();
     const edit = makeEditModel();
+    const detail = new LocalReportDetailModel([]);
     const report = new CompositeReportModel(schedules, generated, activity,
-      create, edit);
+      create, edit, detail);
     assert.throws(() => report.editScheduledReportModel, /Model not loaded/);
     assert.throws(() => report.createReportModel, /Model not loaded/);
     assert.throws(() => report.reportActivityModel, /Model not loaded/);
+    assert.throws(() => report.reportDetailModel, /Model not loaded/);
     await report.load();
     await schedules.load();
     assert.equal(report.scheduledReportsModel, schedules);
@@ -185,6 +190,8 @@ describe('LocalScheduledReportsModel', () => {
     assert.equal(report.createReportModel, create);
     assert.equal(report.editScheduledReportModel, edit);
     assert.equal(edit.isLoaded, false);
+    assert.equal(report.reportDetailModel, detail);
+    assert.equal(detail.isLoaded, false);
     assert.equal(activity.isLoaded, false);
     await report.scheduledReportsModel.delete('1');
     assert.deepEqual(schedules.schedules, []);

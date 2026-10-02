@@ -2,6 +2,7 @@ import { CreateReportModel } from './create_report_page';
 import { EditScheduledReportModel } from './edit_scheduled_report_page';
 import { GeneratedReportsModel } from './generated_reports_page';
 import { ReportActivityModel } from './report_activity_page';
+import { ReportDetailModel } from './report_detail_page';
 import { ReportModel } from './report_model';
 import { ScheduledReportsModel } from './scheduled_reports_page';
 
@@ -14,12 +15,14 @@ export class CompositeReportModel extends ReportModel {
    * @param reportActivityModel - The model for report jobs.
    * @param createReportModel - The model for creating reports.
    * @param editScheduledReportModel - The model for editing schedules.
+   * @param reportDetailModel - The model for generated report details.
    */
   constructor(scheduledReportsModel: ScheduledReportsModel,
       generatedReportsModel: GeneratedReportsModel,
       reportActivityModel: ReportActivityModel,
       createReportModel: CreateReportModel,
-      editScheduledReportModel: EditScheduledReportModel) {
+      editScheduledReportModel: EditScheduledReportModel,
+      reportDetailModel: ReportDetailModel) {
     super();
     this.loaded = false;
     this.scheduledReports = scheduledReportsModel;
@@ -27,6 +30,7 @@ export class CompositeReportModel extends ReportModel {
     this.reportActivity = reportActivityModel;
     this.createReport = createReportModel;
     this.editScheduledReport = editScheduledReportModel;
+    this.reportDetail = reportDetailModel;
   }
 
   /** Returns whether this model has been loaded. */
@@ -59,6 +63,11 @@ export class CompositeReportModel extends ReportModel {
     return this.editScheduledReport;
   }
 
+  public get reportDetailModel(): ReportDetailModel {
+    this.ensureLoaded();
+    return this.reportDetail;
+  }
+
   public async load(): Promise<void> {
     this.loaded = true;
   }
@@ -75,4 +84,5 @@ export class CompositeReportModel extends ReportModel {
   private reportActivity: ReportActivityModel;
   private createReport: CreateReportModel;
   private editScheduledReport: EditScheduledReportModel;
+  private reportDetail: ReportDetailModel;
 }
