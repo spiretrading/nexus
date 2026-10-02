@@ -28,17 +28,21 @@ interface Properties extends
 /** Edits a positive integer count and a calendar unit. */
 export class IntervalInput extends React.Component<Properties> {
   public render(): JSX.Element {
-    const {value, readOnly, disabled, required, onChange, className, ...rest} =
-      this.props;
+    const {id, value, readOnly, disabled, required, onChange, className,
+      ...rest} = this.props;
     return (
       <div role='group' {...rest}
           className={[css(STYLES.container), className].join(' ')}>
-        <IntegerInput value={value.count} min={1} step={1}
+        <IntegerInput id={id} value={value.count} min={1} step={1}
+          aria-invalid={rest['aria-invalid']}
+          aria-describedby={rest['aria-describedby']}
           inputMode='numeric' aria-label='Interval count'
           readOnly={readOnly} disabled={disabled} required={required}
           style={{width: '64px', flex: '0 0 64px'}}
           onChange={this.onCountChange}/>
         <Select value={value.unit} aria-label='Interval unit'
+            aria-invalid={rest['aria-invalid']}
+            aria-describedby={rest['aria-describedby']}
             readOnly={readOnly} disabled={disabled}
             style={{flex: '1 1 0', minWidth: 0, boxSizing: 'border-box'}}
             onChange={this.onUnitChange}>

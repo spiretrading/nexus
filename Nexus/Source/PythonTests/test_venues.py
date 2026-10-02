@@ -90,20 +90,47 @@ class TestVenues(unittest.TestCase):
         for name in ('Test', 'XTSE'):
             self.assertEqual(nexus.parse_venue(name, database), entry.venue)
             self.assertEqual(nexus.parse_venue_entry(name, database), entry)
-        self.assertEqual(nexus.from_market_center('TST', database), entry)
+        self.assertEqual(
+            nexus.from_market_center('TST', entry.venue, database), entry)
         for name in ('TSX', 'XTSE'):
             self.assertEqual(nexus.parse_venue(name), nexus.venues.TSX)
             self.assertEqual(nexus.parse_venue_entry(name),
                 nexus.VENUES.select(nexus.venues.TSX))
-        self.assertEqual(nexus.from_market_center('TSE'),
+        self.assertEqual(nexus.from_market_center('TSE', nexus.venues.TSX),
             nexus.VENUES.select(nexus.venues.TSX))
         for arguments in ((), (database,)):
             self.assertEqual(
                 nexus.parse_venue('MISS', *arguments), nexus.Venue())
             self.assertEqual(nexus.parse_venue_entry('MISS', *arguments),
                 nexus.VenueDatabase.Entry())
-            self.assertEqual(nexus.from_market_center('MISS', *arguments),
+            self.assertEqual(nexus.from_market_center(
+                'MISS', nexus.venues.TSX, *arguments),
                 nexus.VenueDatabase.Entry())
+
+    def test_market_center_context(self):
+        original = nexus.VenueDatabase(nexus.VENUES)
+        self.addCleanup(nexus.set_venues, original)
+        database = nexus.VenueDatabase()
+        for code, center in (
+                ('AAAA', 'SHARED'), ('BBBB', 'SHARED'), ('CCCC', 'UNIQUE')):
+            entry = nexus.VenueDatabase.Entry()
+            entry.venue = nexus.Venue(code)
+            entry.market_center = center
+            database.add(entry)
+        nexus.set_venues(database)
+        for arguments in ((), (database,)):
+            for code in ('AAAA', 'BBBB'):
+                venue = nexus.Venue(code)
+                self.assertEqual(nexus.from_market_center(
+                    'SHARED', venue, *arguments).venue, venue)
+            self.assertEqual(nexus.from_market_center(
+                'UNIQUE', nexus.Venue('AAAA'), *arguments).venue,
+                nexus.Venue('CCCC'))
+            self.assertEqual(nexus.from_market_center(
+                'SHARED', nexus.Venue('CCCC'), *arguments),
+                nexus.VenueDatabase.Entry())
+            with self.assertRaises(TypeError):
+                nexus.from_market_center('SHARED', *arguments)
 
     def test_time_conversion(self):
         for venue, utc, local, start, end in (
@@ -142,7 +169,7 @@ class TestVenues(unittest.TestCase):
         database.add(entry)
         nexus.set_venues(database)
         self.assertEqual(nexus.parse_venue('Test'), nexus.venues.TSX)
-        self.assertEqual(nexus.from_market_center('TST'), entry)
+        self.assertEqual(nexus.from_market_center('TST', entry.venue), entry)
         self.assertEqual(str(nexus.venues.TSX), 'Test')
         self.assertEqual(list(nexus.VENUES.entries), [entry])
         database.remove(nexus.venues.TSX)
@@ -265,7 +292,7 @@ class TestVenues(unittest.TestCase):
                 venue = nexus.Venue(mic)
                 self.assertEqual(getattr(nexus.venues, name), venue)
                 self.assertEqual(nexus.parse_venue(name), venue)
-                entry = nexus.from_market_center(center)
+                entry = nexus.from_market_center(center, nexus.venues.TSX)
                 self.assertEqual(entry.venue, venue)
                 self.assertEqual(entry.display_name, name)
                 self.assertEqual(entry.time_zone, 'America/Toronto')
