@@ -3,8 +3,8 @@ import * as React from 'react';
 
 interface Properties extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 
-  /** The text to display. */
-  label: string;
+  /** The content to display. */
+  label: React.ReactNode;
 }
 
 /** A styled anchor link. */

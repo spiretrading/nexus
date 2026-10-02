@@ -2,6 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Checkbox, Link } from '../../../components';
+import { highlightText } from '../highlight_text';
+import { formatReportDate } from './report_date';
 
 interface Properties extends Omit<
     React.HTMLAttributes<HTMLTableRowElement>, 'id' | 'children' | 'onSelect'> {
@@ -24,6 +26,9 @@ interface Properties extends Omit<
   /** Whether the report is selected. */
   selected: boolean;
 
+  /** The literal query to highlight in displayed text. */
+  highlight?: string;
+
   /** Called when the checkbox changes.
    * @param id - The report's identifier.
    * @param selected - Whether the report should be selected.
@@ -37,13 +42,13 @@ interface Properties extends Omit<
 export class ReportTableRow extends React.Component<Properties> {
   public render(): JSX.Element {
     const {id, type, parameters, url, dateCreated, selected, onSelect,
-      className, ...attributes} = this.props;
+      highlight, className, ...attributes} = this.props;
     return <tr {...attributes} aria-selected={selected}
         className={[css(STYLES.row), className].join(' ')}>
       <Selected type={type} selected={selected} onSelect={this.onSelect}/>
-      <TypeCell type={type} url={url}/>
-      <ParametersCell parameters={parameters}/>
-      <DateCell date={dateCreated}/>
+      <TypeCell type={type} url={url} highlight={highlight}/>
+      <ParametersCell parameters={parameters} highlight={highlight}/>
+      <DateCell date={dateCreated} highlight={highlight}/>
     </tr>;
   }
 
@@ -62,26 +67,26 @@ function Selected(props: {type: string; selected: boolean;
   </td>;
 }
 
-function TypeCell(props: {type: string; url: string}): JSX.Element {
+function TypeCell(props: {type: string; url: string; highlight: string}):
+    JSX.Element {
   return <td className={css(STYLES.cell, STYLES.type)}>
-    <Link href={props.url} label={props.type}/>
+    <Link href={props.url} label={highlightText(props.type, props.highlight)}/>
   </td>;
 }
 
-function ParametersCell(props: {parameters: readonly string[]}): JSX.Element {
+function ParametersCell(props:
+    {parameters: readonly string[]; highlight: string}): JSX.Element {
   return <td className={css(STYLES.cell)}>
     <div className={css(STYLES.content)}>
       <span className={css(STYLES.label)}>Parameters</span>
       <span className={css(STYLES.value)}>
-        {props.parameters.join(' \u2022 ')}
+        {highlightText(props.parameters.join(' \u2022 '), props.highlight)}
       </span>
     </div>
   </td>;
 }
 
-function DateCell(props: {date: Beam.Date}): JSX.Element {
-  const date = new Date(0);
-  date.setFullYear(props.date.year, props.date.month - 1, props.date.day);
+function DateCell(props: {date: Beam.Date; highlight: string}): JSX.Element {
   const value = `${String(props.date.year).padStart(4, '0')}-` +
     `${String(props.date.month).padStart(2, '0')}-` +
     String(props.date.day).padStart(2, '0');
@@ -89,8 +94,7 @@ function DateCell(props: {date: Beam.Date}): JSX.Element {
     <div className={css(STYLES.content)}>
       <span className={css(STYLES.label)}>Date Created</span>
       <time dateTime={value} className={css(STYLES.value)}>
-        {date.toLocaleDateString('en-US', {
-          month: 'short', day: '2-digit', year: 'numeric'})}
+        {highlightText(formatReportDate(props.date), props.highlight)}
       </time>
     </div>
   </td>;

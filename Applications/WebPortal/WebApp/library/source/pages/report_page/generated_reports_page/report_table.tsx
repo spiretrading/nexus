@@ -17,6 +17,9 @@ interface Properties extends
   /** Whether to display loading placeholders. Defaults to false. */
   loading?: boolean;
 
+  /** The literal query to highlight in displayed report text. */
+  highlight?: string;
+
   /** The column currently sorted. Defaults to no column. */
   sortColumn?: ReportTable.Column;
 
@@ -36,13 +39,14 @@ interface Properties extends
 /** Displays generated reports with selection and sorting controls. */
 export class ReportTable extends React.Component<Properties> {
   public render(): JSX.Element {
-    const {reports, selected, loading, sortColumn, sortOrder,
+    const {reports, selected, loading, highlight, sortColumn, sortOrder,
       onSelectionChange, onSort, className, ...attributes} = this.props;
     return <div {...attributes}
         className={[css(STYLES.container), className].join(' ')}>
       <Table reports={reports} selected={selected} loading={loading}
-        sortColumn={sortColumn} sortOrder={sortOrder} onSort={onSort}
-        onSelect={this.onSelect} onSelectAll={this.onSelectAll}/>
+        highlight={highlight} sortColumn={sortColumn} sortOrder={sortOrder}
+        onSort={onSort} onSelect={this.onSelect}
+        onSelectAll={this.onSelectAll}/>
     </div>;
   }
 
@@ -119,7 +123,7 @@ export namespace ReportTable {
 }
 
 interface TableProperties extends Pick<Properties, 'reports' | 'selected' |
-    'loading' | 'sortColumn' | 'sortOrder' | 'onSort'> {
+    'loading' | 'highlight' | 'sortColumn' | 'sortOrder' | 'onSort'> {
   onSelect: (id: string, selected: boolean) => void;
   onSelectAll: (checked: boolean) => void;
 }
@@ -199,6 +203,7 @@ function Body(props: TableProperties): JSX.Element {
       }
       return props.reports.map(report =>
         <ReportTableRow key={report.id} {...report}
+          highlight={props.highlight}
           selected={props.selected.has(report.id)} onSelect={props.onSelect}/>);
     })()}
   </tbody>;

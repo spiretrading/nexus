@@ -1,5 +1,5 @@
+export * from './composite_report_model';
 export * from './generated_reports_page';
-export * from './local_report_model';
 export * from './parameters_date_range_input';
 export * from './parameters_date_range_options';
 export * from './report_activity_page';
