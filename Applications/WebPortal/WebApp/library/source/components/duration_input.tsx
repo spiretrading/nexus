@@ -176,7 +176,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1em'
+    width: '2ch'
   },
   minutesInput: {
     backgroundColor: 'transparent',
@@ -192,6 +192,6 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1em'
+    width: '2ch'
   }
 };

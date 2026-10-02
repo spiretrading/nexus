@@ -1,4 +1,5 @@
 import { CreateReportModel } from './create_report_page';
+import { EditScheduledReportModel } from './edit_scheduled_report_page';
 import { GeneratedReportsModel } from './generated_reports_page';
 import { ReportActivityModel } from './report_activity_page';
 import { ScheduledReportsModel } from './scheduled_reports_page';
@@ -17,6 +18,9 @@ export abstract class ReportModel {
 
   /** The model for the Create Report Page. */
   public abstract get createReportModel(): CreateReportModel;
+
+  /** The model for editing scheduled reports. */
+  public abstract get editScheduledReportModel(): EditScheduledReportModel;
 
   /** Loads this model. */
   public abstract load(): Promise<void>;

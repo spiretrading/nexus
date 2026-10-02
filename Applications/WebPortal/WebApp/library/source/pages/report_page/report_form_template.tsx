@@ -29,6 +29,9 @@ interface Properties {
   /** Whether the Run fieldset is displayed. Defaults to true. */
   showRuntime?: boolean;
 
+  /** Whether submission is disabled by the containing page. */
+  submitDisabled?: boolean;
+
   /** The model used to look up accounts and groups. */
   accountModel: AccountGroupQueryModel;
 
@@ -114,7 +117,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
             onIntervalInput={this.onIntervalInput}/>
         </Collapse>
         <SubmitSection mode={props.mode} scheduled={props.value.scheduled}
-          valid={this.isValid()}/>
+          valid={!props.submitDisabled && this.isValid()}/>
       </form>
     </div>;
   }
@@ -257,7 +260,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     event.preventDefault();
     (document.activeElement as HTMLElement)?.blur();
     queueMicrotask(() => {
-      if(this.mounted && this.isValid()) {
+      if(this.mounted && !this.props.submitDisabled && this.isValid()) {
         this.props.onSubmit?.(this.props.value);
       }
     });
@@ -577,7 +580,7 @@ const STYLES = StyleSheet.create({
   form: {backgroundColor: '#FFFFFF', color: '#333333',
     fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem',
     fontWeight: 400},
-  heading: {fontSize: '1.125rem', fontWeight: 500, margin: 0},
+  heading: {fontSize: '1.125rem', fontWeight: 500, margin: '0 0 30px'},
   fieldset: {boxSizing: 'border-box', minWidth: 0, margin: '0 0 30px',
     padding: '30px 0 0', border: 0, borderTop: '1px solid #E6E6E6'},
   typeFieldset: {borderTop: 'none', paddingTop: 0,

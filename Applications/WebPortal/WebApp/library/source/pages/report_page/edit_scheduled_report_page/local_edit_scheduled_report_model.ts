@@ -4,25 +4,27 @@ import { QueryModel } from '../../../models';
 import { ReportDefinition } from '../report_definition';
 import { ReportFormTemplate } from '../report_form_template';
 import { copyReportFormValue } from '../report_form_value';
-import { CreateReportModel } from './create_report_model';
+import { EditScheduledReportModel } from './edit_scheduled_report_model';
 
-/** Provides local report definitions and stores submitted configurations. */
-export class LocalCreateReportModel extends CreateReportModel {
+/** Stores editable scheduled report configurations in memory. */
+export class LocalEditScheduledReportModel extends EditScheduledReportModel {
 
   /** Constructs a local model.
    * @param reports - The permitted report definitions.
    * @param accountModel - The account and group lookup model.
    * @param scopeModel - The scope lookup model.
+   * @param schedules - The initial configurations keyed by schedule ID.
    */
   constructor(reports: readonly ReportDefinition[],
-      accountModel: AccountGroupQueryModel,
-      scopeModel: QueryModel<Nexus.Scope>) {
+      accountModel: AccountGroupQueryModel, scopeModel: QueryModel<Nexus.Scope>,
+      schedules: ReadonlyMap<string, ReportFormTemplate.Value>) {
     super();
     this.loaded = false;
     this.definitions = reports.slice();
     this.accounts = accountModel;
     this.scopes = scopeModel;
-    this.submissions = [];
+    this.entries = new Map(Array.from(schedules,
+      ([id, value]) => [id, copyReportFormValue(value, this.definitions)]));
   }
 
   /** Returns whether the model has been loaded. */
@@ -30,11 +32,16 @@ export class LocalCreateReportModel extends CreateReportModel {
     return this.loaded;
   }
 
-  /** Returns copies of the submitted configurations in submission order. */
-  public get requests(): readonly ReportFormTemplate.Value[] {
+  /** Adds or replaces a local schedule's configuration. */
+  public set(id: string, value: ReportFormTemplate.Value): void {
     this.ensureLoaded();
-    return this.submissions.map(
-      value => copyReportFormValue(value, this.definitions));
+    this.entries.set(id, copyReportFormValue(value, this.definitions));
+  }
+
+  /** Removes a local schedule's configuration. */
+  public delete(id: string): void {
+    this.ensureLoaded();
+    this.entries.delete(id);
   }
 
   public get reports(): readonly ReportDefinition[] {
@@ -56,10 +63,22 @@ export class LocalCreateReportModel extends CreateReportModel {
     this.loaded = true;
   }
 
-  public async submit(value: ReportFormTemplate.Value): Promise<string> {
+  public async loadReport(id: string): Promise<ReportFormTemplate.Value> {
     this.ensureLoaded();
-    this.submissions.push(copyReportFormValue(value, this.definitions));
-    return String(this.submissions.length);
+    const value = this.entries.get(id);
+    if(!value) {
+      throw new Error(`Scheduled report not found: ${id}`);
+    }
+    return copyReportFormValue(value, this.definitions);
+  }
+
+  public async submit(id: string, value: ReportFormTemplate.Value):
+      Promise<void> {
+    this.ensureLoaded();
+    if(!this.entries.has(id)) {
+      throw new Error(`Scheduled report not found: ${id}`);
+    }
+    this.set(id, value);
   }
 
   private ensureLoaded(): void {
@@ -72,5 +91,5 @@ export class LocalCreateReportModel extends CreateReportModel {
   private definitions: readonly ReportDefinition[];
   private accounts: AccountGroupQueryModel;
   private scopes: QueryModel<Nexus.Scope>;
-  private submissions: ReportFormTemplate.Value[];
+  private entries: Map<string, ReportFormTemplate.Value>;
 }

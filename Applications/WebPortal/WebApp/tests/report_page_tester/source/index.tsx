@@ -3,8 +3,9 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ActivityTable, CompositeReportModel, DateRange, GeneratedReportsModel,
-  getScopeLabel, LocalCreateReportModel, LocalTickerQueryModel,
-  LocalAccountGroupQueryModel, LocalGeneratedReportsModel,
+  getScopeLabel, Interval, LocalCreateReportModel, LocalTickerQueryModel,
+  LocalAccountGroupQueryModel, LocalEditScheduledReportModel,
+  LocalGeneratedReportsModel,
   LocalReportActivityModel, LocalScheduledReportsModel, ReportActivityModel,
   ReportActivityStatusTag, ReportController, ReportDefinition,
   ReportFormTemplate, ReportParameterValue, ReportTable, ScopeQueryModel,
@@ -15,6 +16,20 @@ class DelayedScheduledReportsModel extends LocalScheduledReportsModel {
       Promise<ScheduledReportsModel.Response> {
     await new Promise(resolve => window.setTimeout(resolve, 750));
     return super.loadSchedules(submission);
+  }
+
+  public async duplicate(id: string): Promise<ScheduledReportsModel.Schedule> {
+    await editModel.load();
+    const value = await editModel.loadReport(id);
+    const schedule = await super.duplicate(id);
+    editModel.set(schedule.id, value);
+    return schedule;
+  }
+
+  public async delete(id: string): Promise<void> {
+    await super.delete(id);
+    await editModel.load();
+    editModel.delete(id);
   }
 
   public async run(id: string): Promise<void> {
@@ -112,15 +127,10 @@ class DemoCreateReportModel extends LocalCreateReportModel {
     console.log('Create Report', value);
     if(value.scheduled) {
       await scheduledModel.load();
-      const date = value.scheduleDateTime.date;
-      return scheduledModel.add({type: report.name, parameters,
-        repeats: value.repeats, runDate: {value:
-          `${String(date.year).padStart(4, '0')}-` +
-          `${String(date.month).padStart(2, '0')}-` +
-          String(date.day).padStart(2, '0'),
-          label: new Date(date.year, date.month - 1, date.day).
-            toLocaleDateString('en-US', {
-              month: 'short', day: '2-digit', year: 'numeric'})}});
+      await editModel.load();
+      const id = scheduledModel.add(makeSchedule(value));
+      editModel.set(id, value);
+      return id;
     }
     await activityModel.load();
     return activityModel.add({type: report.name,
@@ -130,14 +140,39 @@ class DemoCreateReportModel extends LocalCreateReportModel {
   }
 }
 
+class DemoEditScheduledReportModel extends LocalEditScheduledReportModel {
+  public async loadReport(id: string): Promise<ReportFormTemplate.Value> {
+    const fail = settings.failQueries;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated schedule retrieval failure.');
+    }
+    return super.loadReport(id);
+  }
+
+  public async submit(id: string, value: ReportFormTemplate.Value):
+      Promise<void> {
+    const fail = settings.failEdits;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated schedule update failure.');
+    }
+    await scheduledModel.load();
+    scheduledModel.update({...makeSchedule(value), id});
+    await super.submit(id, value);
+    console.log('Edit Scheduled Report', id, value);
+  }
+}
+
 interface State {
   page: ReportController.Page;
+  scheduleId: string;
 }
 
 class App extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
-    this.state = {page: ReportController.Page.CREATE};
+    this.state = {page: ReportController.Page.SCHEDULED, scheduleId: null};
   }
 
   public render(): JSX.Element {
@@ -149,6 +184,10 @@ class App extends React.Component<{}, State> {
           <option value={ReportController.Page.SCHEDULED}>Scheduled</option>
           <option value={ReportController.Page.ACTIVITY}>Activity</option>
           <option value={ReportController.Page.CREATE}>Create</option>
+          {this.state.page === ReportController.Page.EDIT_SCHEDULED &&
+            <option value={ReportController.Page.EDIT_SCHEDULED}>
+              Edit Scheduled Report
+            </option>}
         </select></label>
         <label>Delay (ms) <input type='number' defaultValue={settings.delay}
           min={0} onChange={this.onDelayChange}/></label>
@@ -160,12 +199,14 @@ class App extends React.Component<{}, State> {
           Fail retries</label>
         <label><input type='checkbox' onChange={this.onFailCreation}/>
           Fail creation</label>
+        <label><input type='checkbox' onChange={this.onFailEdits}/>
+          Fail edits</label>
         <label><input type='checkbox' onChange={this.onEmpty}/>
           Empty results</label>
       </div>
       <ReportController model={model} page={this.state.page}
         onNewReport={this.onNewReport} onActionError={this.onActionError}
-        onNavigate={this.onNavigate}/>
+        onNavigate={this.onNavigate} scheduleId={this.state.scheduleId}/>
     </div>;
   }
 
@@ -193,6 +234,10 @@ class App extends React.Component<{}, State> {
     settings.failCreation = event.target.checked;
   };
 
+  private onFailEdits = (event: React.ChangeEvent<HTMLInputElement>) => {
+    settings.failEdits = event.target.checked;
+  };
+
   private onEmpty = (event: React.ChangeEvent<HTMLInputElement>) => {
     settings.empty = event.target.checked;
   };
@@ -213,33 +258,49 @@ class App extends React.Component<{}, State> {
     const link = (event.target as Element).closest('a[href^="/reports/"]');
     if(link) {
       event.preventDefault();
-      console.log('Open Report', link.getAttribute('href'));
+      const path = link.getAttribute('href');
+      if(path.startsWith('/reports/edit/')) {
+        this.setState({page: ReportController.Page.EDIT_SCHEDULED,
+          scheduleId: decodeURIComponent(path.slice('/reports/edit/'.length))});
+      } else {
+        console.log('Open Report', path);
+      }
     }
   };
 }
 
-function makeSchedules(count: number): ScheduledReportsModel.Schedule[] {
+function makeConfigurations(count: number):
+    Map<string, ReportFormTemplate.Value> {
   const date = new Date();
   date.setDate(date.getDate() + 17);
-  const runDate = {
-    value: `${date.getFullYear()}-` +
-      `${String(date.getMonth() + 1).padStart(2, '0')}-` +
-      String(date.getDate()).padStart(2, '0'),
-    label: date.toLocaleDateString('en-US', {
-      month: 'short', day: '2-digit', year: 'numeric'
-    })
-  };
-  return Array.from({length: count}, (_, index) => ({
-    id: String(index + 1),
-    type: ['Profit and Loss', 'Trading Volume'][index % 2],
-    parameters: [
-      {label: 'Account / Group', value: `Alpha Group ${index + 1}`},
-      {label: 'Scope', value: 'Canada'},
-      {label: 'Date Range', value: 'Month to Date'}
-    ],
-    repeats: index % 2 === 0,
-    runDate
+  return new Map(Array.from({length: count}, (_, index) => {
+    const value = ReportFormTemplate.makeValue(definitions[index % 2]);
+    value.parameters = {...value.parameters,
+      accounts: [Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')]};
+    value.scheduled = true;
+    value.scheduleDateTime = new Beam.DateTime(new Beam.Date(date.getFullYear(),
+      date.getMonth() + 1, date.getDate()), Beam.Duration.HOUR.multiply(9));
+    value.repeats = index % 2 === 0;
+    value.repeatInterval = new Interval(1, Interval.Unit.MONTH);
+    return [String(index + 1), value];
   }));
+}
+
+function makeSchedule(value: ReportFormTemplate.Value):
+    Omit<ScheduledReportsModel.Schedule, 'id'> {
+  const report = definitions.find(entry => entry.id === value.reportType);
+  const date = value.scheduleDateTime.date;
+  return {type: report.name,
+    parameters: report.parameters.map(parameter => ({label: parameter.label,
+      value: formatParameter(parameter.type,
+        value.parameters[parameter.name])})),
+    repeats: value.repeats, runDate: {
+      value: `${String(date.year).padStart(4, '0')}-` +
+        `${String(date.month).padStart(2, '0')}-` +
+        String(date.day).padStart(2, '0'),
+      label: new Date(date.year, date.month - 1, date.day).
+        toLocaleDateString('en-US', {
+          month: 'short', day: '2-digit', year: 'numeric'})}};
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
@@ -322,17 +383,22 @@ function makeDefinitions(): ReportDefinition[] {
 }
 
 const settings = {delay: 750, failQueries: false, failDeletions: false,
-  empty: false, failRetries: false, failCreation: false};
-const scheduledModel = new DelayedScheduledReportsModel(makeSchedules(105));
+  empty: false, failRetries: false, failCreation: false, failEdits: false};
+const definitions = makeDefinitions();
+const configurations = makeConfigurations(105);
+const scheduledModel = new DelayedScheduledReportsModel(
+  Array.from(configurations, ([id, value]) => ({...makeSchedule(value), id})));
 const activityModel = new DelayedReportActivityModel(makeActivities(105));
 const accounts = new LocalAccountGroupQueryModel([
   Beam.DirectoryEntry.makeAccount(1, 'Alice'),
   Beam.DirectoryEntry.makeAccount(2, 'Bob'),
   Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')]);
-const createModel = new DemoCreateReportModel(makeDefinitions(), accounts,
-  new ScopeQueryModel(new LocalTickerQueryModel([
-    Nexus.Ticker.parse('ABX.TSX'), Nexus.Ticker.parse('BMO.TSX')])));
+const scopes = new ScopeQueryModel(new LocalTickerQueryModel([
+  Nexus.Ticker.parse('ABX.TSX'), Nexus.Ticker.parse('BMO.TSX')]));
+const createModel = new DemoCreateReportModel(definitions, accounts, scopes);
+const editModel = new DemoEditScheduledReportModel(definitions, accounts,
+  scopes, configurations);
 const model = new CompositeReportModel(scheduledModel,
   new DelayedGeneratedReportsModel(makeReports(105), accounts),
-  activityModel, createModel);
+  activityModel, createModel, editModel);
 ReactDOM.render(<App/>, document.getElementById('main'));

@@ -48,6 +48,13 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
     return id;
   }
 
+  /** Updates a schedule's display values while preserving its list position. */
+  public update(schedule: ScheduledReportsModel.Schedule): void {
+    this.ensureLoaded();
+    this.find(schedule.id);
+    this.entries.set(schedule.id, copySchedule(schedule));
+  }
+
   public async load(): Promise<void> {
     this.loaded = true;
   }
