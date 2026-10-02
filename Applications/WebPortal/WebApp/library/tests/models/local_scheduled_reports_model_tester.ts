@@ -4,6 +4,8 @@ import { LocalAccountGroupQueryModel } from '../../source/components';
 import { LocalTickerQueryModel, ScopeQueryModel } from '../../source/models';
 import { LocalCreateReportModel } from
   '../../source/pages/report_page/create_report_page';
+import { LocalEditScheduledReportModel } from
+  '../../source/pages/report_page/edit_scheduled_report_page';
 import { LocalGeneratedReportsModel } from
   '../../source/pages/report_page/generated_reports_page';
 import { LocalReportActivityModel } from
@@ -30,7 +32,7 @@ describe('LocalScheduledReportsModel', () => {
     const model = new LocalScheduledReportsModel([schedule]);
     const report = new CompositeReportModel(model,
       new LocalGeneratedReportsModel([], new LocalAccountGroupQueryModel([])),
-      new LocalReportActivityModel([]), makeCreateModel());
+      new LocalReportActivityModel([]), makeCreateModel(), makeEditModel());
     assert.equal(model.isLoaded, false);
     assert.equal(report.isLoaded, false);
     assert.throws(() => report.scheduledReportsModel, /Model not loaded/);
@@ -169,8 +171,10 @@ describe('LocalScheduledReportsModel', () => {
       new LocalAccountGroupQueryModel([]));
     const activity = new LocalReportActivityModel([]);
     const create = makeCreateModel();
+    const edit = makeEditModel();
     const report = new CompositeReportModel(schedules, generated, activity,
-      create);
+      create, edit);
+    assert.throws(() => report.editScheduledReportModel, /Model not loaded/);
     assert.throws(() => report.createReportModel, /Model not loaded/);
     assert.throws(() => report.reportActivityModel, /Model not loaded/);
     await report.load();
@@ -179,6 +183,8 @@ describe('LocalScheduledReportsModel', () => {
     assert.equal(report.generatedReportsModel, generated);
     assert.equal(report.reportActivityModel, activity);
     assert.equal(report.createReportModel, create);
+    assert.equal(report.editScheduledReportModel, edit);
+    assert.equal(edit.isLoaded, false);
     assert.equal(activity.isLoaded, false);
     await report.scheduledReportsModel.delete('1');
     assert.deepEqual(schedules.schedules, []);
@@ -188,4 +194,10 @@ describe('LocalScheduledReportsModel', () => {
 function makeCreateModel(): LocalCreateReportModel {
   return new LocalCreateReportModel([], new LocalAccountGroupQueryModel([]),
     new ScopeQueryModel(new LocalTickerQueryModel([])));
+}
+
+function makeEditModel(): LocalEditScheduledReportModel {
+  return new LocalEditScheduledReportModel([],
+    new LocalAccountGroupQueryModel([]),
+    new ScopeQueryModel(new LocalTickerQueryModel([])), new Map());
 }

@@ -2,6 +2,8 @@ import * as React from 'react';
 import { PageLayout, SortableTableHeaderCell } from '../../components';
 import { DateRange } from '../../models/date_range';
 import { CreateReportController, CreateReportModel } from './create_report_page';
+import { EditScheduledReportController, EditScheduledReportModel } from
+  './edit_scheduled_report_page';
 import { GeneratedReportsController, GeneratedReportsModel,
   GeneratedReportsPage, ReportTable } from './generated_reports_page';
 import { ActivityTable, ReportActivityController, ReportActivityModel,
@@ -18,10 +20,13 @@ interface Properties {
   /** The subpage to display. Defaults to SCHEDULED. */
   page?: ReportController.Page;
 
+  /** The schedule identifier when displaying EDIT_SCHEDULED. */
+  scheduleId?: string;
+
   /** Called to navigate to the Create Report Page. */
   onNewReport?: () => void;
 
-  /** Called to navigate after a report has been created or scheduled. */
+  /** Called to navigate after creating, scheduling, or editing a report. */
   onNavigate?: (page: ReportController.Page) => void;
 
   /** Called when a report action fails. */
@@ -34,6 +39,7 @@ interface State {
   generatedReportsModel: GeneratedReportsModel;
   reportActivityModel: ReportActivityModel;
   createReportModel: CreateReportModel;
+  editScheduledReportModel: EditScheduledReportModel;
   status: ScheduledReportsModel.ResponseStatus;
 }
 
@@ -47,6 +53,7 @@ export class ReportController extends React.Component<Properties, State> {
       generatedReportsModel: null,
       reportActivityModel: null,
       createReportModel: null,
+      editScheduledReportModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS
     };
     this.mounted = false;
@@ -54,6 +61,15 @@ export class ReportController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    if(this.props.page === ReportController.Page.EDIT_SCHEDULED) {
+      if(this.state.model === this.props.model &&
+          this.state.editScheduledReportModel) {
+        return <EditScheduledReportController
+          model={this.state.editScheduledReportModel} id={this.props.scheduleId}
+          onSaved={this.onSaved} onError={this.props.onActionError}/>;
+      }
+      return <PageLayout/>;
+    }
     if(this.props.page === ReportController.Page.CREATE) {
       if(this.state.model === this.props.model && this.state.createReportModel) {
         return <CreateReportController model={this.state.createReportModel}
@@ -145,6 +161,7 @@ export class ReportController extends React.Component<Properties, State> {
       generatedReportsModel: null,
       reportActivityModel: null,
       createReportModel: null,
+      editScheduledReportModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS});
     try {
       await model.load();
@@ -153,12 +170,14 @@ export class ReportController extends React.Component<Properties, State> {
           generatedReportsModel: model.generatedReportsModel,
           reportActivityModel: model.reportActivityModel,
           createReportModel: model.createReportModel,
+          editScheduledReportModel: model.editScheduledReportModel,
           status: ScheduledReportsModel.ResponseStatus.READY});
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
         this.setState({status: ScheduledReportsModel.ResponseStatus.ERROR});
-        if(this.props.page === ReportController.Page.CREATE) {
+        if(this.props.page === ReportController.Page.CREATE ||
+            this.props.page === ReportController.Page.EDIT_SCHEDULED) {
           this.props.onActionError?.(error);
         }
       }
@@ -171,6 +190,10 @@ export class ReportController extends React.Component<Properties, State> {
     } else {
       this.props.onNavigate?.(ReportController.Page.ACTIVITY);
     }
+  };
+
+  private onSaved = () => {
+    this.props.onNavigate?.(ReportController.Page.SCHEDULED);
   };
 
   private onRetry = () => {
@@ -196,6 +219,9 @@ export namespace ReportController {
     ACTIVITY,
 
     /** Generate a report or create a schedule. */
-    CREATE
+    CREATE,
+
+    /** Edit a previously scheduled report. */
+    EDIT_SCHEDULED
   }
 }
