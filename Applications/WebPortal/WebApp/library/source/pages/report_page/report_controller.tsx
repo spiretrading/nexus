@@ -3,6 +3,8 @@ import { SortableTableHeaderCell } from '../../components';
 import { DateRange } from '../../models/date_range';
 import { GeneratedReportsController, GeneratedReportsModel,
   GeneratedReportsPage, ReportTable } from './generated_reports_page';
+import { ActivityTable, ReportActivityController, ReportActivityModel,
+  ReportActivityPage } from './report_activity_page';
 import { ReportModel } from './report_model';
 import { ScheduledReportsController, ScheduledReportsModel,
   ScheduledReportsPage } from './scheduled_reports_page';
@@ -26,6 +28,7 @@ interface State {
   model: ReportModel;
   scheduledReportsModel: ScheduledReportsModel;
   generatedReportsModel: GeneratedReportsModel;
+  reportActivityModel: ReportActivityModel;
   status: ScheduledReportsModel.ResponseStatus;
 }
 
@@ -37,6 +40,7 @@ export class ReportController extends React.Component<Properties, State> {
       model: props.model,
       scheduledReportsModel: null,
       generatedReportsModel: null,
+      reportActivityModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS
     };
     this.mounted = false;
@@ -44,6 +48,26 @@ export class ReportController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    if(this.props.page === ReportController.Page.ACTIVITY) {
+      if(this.state.model === this.props.model &&
+          this.state.reportActivityModel) {
+        return <ReportActivityController model={this.state.reportActivityModel}
+          onNewReport={this.props.onNewReport}
+          onActionError={this.props.onActionError}/>;
+      }
+      const status = (() => {
+        if(this.state.model === this.props.model && this.state.status ===
+            ScheduledReportsModel.ResponseStatus.ERROR) {
+          return ReportActivityModel.ResponseStatus.ERROR;
+        }
+        return ReportActivityModel.ResponseStatus.IN_PROGRESS;
+      })();
+      return <ReportActivityPage
+        sort={{column: ActivityTable.Column.DATE_MODIFIED,
+          order: SortableTableHeaderCell.SortOrder.NONE}} pageIndex={0}
+        response={{status, isEmpty: false, totalCount: 0, activities: []}}
+        onSubmit={this.onRetry} onNewReport={this.props.onNewReport}/>;
+    }
     if(this.props.page === ReportController.Page.GENERATED) {
       if(this.state.model === this.props.model &&
           this.state.generatedReportsModel) {
@@ -106,12 +130,14 @@ export class ReportController extends React.Component<Properties, State> {
     const generation = ++this.generation;
     this.setState({model, scheduledReportsModel: null,
       generatedReportsModel: null,
+      reportActivityModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS});
     try {
       await model.load();
       if(this.mounted && generation === this.generation) {
         this.setState({scheduledReportsModel: model.scheduledReportsModel,
           generatedReportsModel: model.generatedReportsModel,
+          reportActivityModel: model.reportActivityModel,
           status: ScheduledReportsModel.ResponseStatus.READY});
       }
     } catch {
@@ -138,6 +164,9 @@ export namespace ReportController {
     GENERATED,
 
     /** Reports scheduled for future generation. */
-    SCHEDULED
+    SCHEDULED,
+
+    /** Report jobs being generated or awaiting retry. */
+    ACTIVITY
   }
 }

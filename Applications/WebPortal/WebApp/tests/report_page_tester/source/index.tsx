@@ -1,9 +1,10 @@
 import * as Beam from 'beam';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { CompositeReportModel, GeneratedReportsModel,
+import { ActivityTable, CompositeReportModel, GeneratedReportsModel,
   LocalAccountGroupQueryModel, LocalGeneratedReportsModel,
-  LocalScheduledReportsModel, ReportController, ReportTable,
+  LocalReportActivityModel, LocalScheduledReportsModel, ReportActivityModel,
+  ReportActivityStatusTag, ReportController, ReportTable,
   ScheduledReportsModel } from 'web_portal';
 
 class DelayedScheduledReportsModel extends LocalScheduledReportsModel {
@@ -56,6 +57,42 @@ class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
   }
 }
 
+class DelayedReportActivityModel extends LocalReportActivityModel {
+  public async loadActivities(submission: ReportActivityModel.Submission):
+      Promise<ReportActivityModel.Response> {
+    const fail = settings.failQueries;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated query failure.');
+    }
+    if(settings.empty) {
+      return {status: ReportActivityModel.ResponseStatus.READY,
+        isEmpty: true, totalCount: 0, activities: []};
+    }
+    return super.loadActivities(submission);
+  }
+
+  public async cancel(ids: readonly string[]): Promise<void> {
+    const fail = settings.failDeletions;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated cancellation failure.');
+    }
+    await super.cancel(ids);
+    console.log('Cancel', ids);
+  }
+
+  public async retry(ids: readonly string[]): Promise<void> {
+    const fail = settings.failRetries;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated retry failure.');
+    }
+    await super.retry(ids);
+    console.log('Retry', ids);
+  }
+}
+
 interface State {
   page: ReportController.Page;
 }
@@ -63,7 +100,7 @@ interface State {
 class App extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
-    this.state = {page: ReportController.Page.GENERATED};
+    this.state = {page: ReportController.Page.ACTIVITY};
   }
 
   public render(): JSX.Element {
@@ -73,13 +110,16 @@ class App extends React.Component<{}, State> {
             onChange={this.onPageChange}>
           <option value={ReportController.Page.GENERATED}>Generated</option>
           <option value={ReportController.Page.SCHEDULED}>Scheduled</option>
+          <option value={ReportController.Page.ACTIVITY}>Activity</option>
         </select></label>
         <label>Delay (ms) <input type='number' defaultValue={settings.delay}
           min={0} onChange={this.onDelayChange}/></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
         <label><input type='checkbox' onChange={this.onFailDeletions}/>
-          Fail deletions</label>
+          Fail deletions / cancellations</label>
+        <label><input type='checkbox' onChange={this.onFailRetries}/>
+          Fail retries</label>
         <label><input type='checkbox' onChange={this.onEmpty}/>
           Empty results</label>
       </div>
@@ -102,6 +142,10 @@ class App extends React.Component<{}, State> {
 
   private onFailDeletions = (event: React.ChangeEvent<HTMLInputElement>) => {
     settings.failDeletions = event.target.checked;
+  };
+
+  private onFailRetries = (event: React.ChangeEvent<HTMLInputElement>) => {
+    settings.failRetries = event.target.checked;
   };
 
   private onEmpty = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,13 +218,26 @@ function makeReports(count: number): ReportTable.Report[] {
   });
 }
 
+function makeActivities(count: number): ActivityTable.Activity[] {
+  return makeReports(count).map((report, index) => ({id: report.id,
+    type: report.type, parameters: report.parameters,
+    dateModified: report.dateCreated,
+    status: (() => {
+      if(index % 2 === 0) {
+        return ReportActivityStatusTag.Status.GENERATING;
+      }
+      return ReportActivityStatusTag.Status.FAILED;
+    })()}));
+}
+
 const settings = {delay: 750, failQueries: false, failDeletions: false,
-  empty: false};
+  empty: false, failRetries: false};
 const model = new CompositeReportModel(
   new DelayedScheduledReportsModel(makeSchedules(105)),
   new DelayedGeneratedReportsModel(makeReports(105),
     new LocalAccountGroupQueryModel([
       Beam.DirectoryEntry.makeAccount(1, 'Alice'),
       Beam.DirectoryEntry.makeAccount(2, 'Bob'),
-      Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')])));
+      Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')])),
+  new DelayedReportActivityModel(makeActivities(105)));
 ReactDOM.render(<App/>, document.getElementById('main'));

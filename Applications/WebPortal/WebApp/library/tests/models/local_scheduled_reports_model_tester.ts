@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import { LocalAccountGroupQueryModel } from '../../source/components';
 import { LocalGeneratedReportsModel } from
   '../../source/pages/report_page/generated_reports_page';
+import { LocalReportActivityModel } from
+  '../../source/pages/report_page/report_activity_page';
 import { CompositeReportModel } from
   '../../source/pages/report_page/composite_report_model';
 import { LocalScheduledReportsModel, ScheduledReportsModel } from
@@ -24,7 +26,8 @@ describe('LocalScheduledReportsModel', () => {
     const schedule = makeSchedule('1');
     const model = new LocalScheduledReportsModel([schedule]);
     const report = new CompositeReportModel(model,
-      new LocalGeneratedReportsModel([], new LocalAccountGroupQueryModel([])));
+      new LocalGeneratedReportsModel([], new LocalAccountGroupQueryModel([])),
+      new LocalReportActivityModel([]));
     assert.equal(model.isLoaded, false);
     assert.equal(report.isLoaded, false);
     assert.throws(() => report.scheduledReportsModel, /Model not loaded/);
@@ -161,11 +164,15 @@ describe('LocalScheduledReportsModel', () => {
     const schedules = new LocalScheduledReportsModel([makeSchedule('1')]);
     const generated = new LocalGeneratedReportsModel([],
       new LocalAccountGroupQueryModel([]));
-    const report = new CompositeReportModel(schedules, generated);
+    const activity = new LocalReportActivityModel([]);
+    const report = new CompositeReportModel(schedules, generated, activity);
+    assert.throws(() => report.reportActivityModel, /Model not loaded/);
     await report.load();
     await schedules.load();
     assert.equal(report.scheduledReportsModel, schedules);
     assert.equal(report.generatedReportsModel, generated);
+    assert.equal(report.reportActivityModel, activity);
+    assert.equal(activity.isLoaded, false);
     await report.scheduledReportsModel.delete('1');
     assert.deepEqual(schedules.schedules, []);
   });
