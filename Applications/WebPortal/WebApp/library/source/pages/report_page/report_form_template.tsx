@@ -463,7 +463,8 @@ function SubmitSection(props: {mode: ReportFormTemplate.Mode;
     return 'Generate';
   })();
   return <section className={css(STYLES.submit)}>
-    <Button type='submit' label={label} disabled={!props.valid}/>
+    <Button type='submit' label={label} disabled={!props.valid}
+      style={{width: '100%'}}/>
   </section>;
 }
 

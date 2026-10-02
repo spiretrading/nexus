@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { SortableTableHeaderCell } from '../../components';
+import { PageLayout, SortableTableHeaderCell } from '../../components';
 import { DateRange } from '../../models/date_range';
+import { CreateReportController, CreateReportModel } from './create_report_page';
 import { GeneratedReportsController, GeneratedReportsModel,
   GeneratedReportsPage, ReportTable } from './generated_reports_page';
 import { ActivityTable, ReportActivityController, ReportActivityModel,
@@ -20,6 +21,9 @@ interface Properties {
   /** Called to navigate to the Create Report Page. */
   onNewReport?: () => void;
 
+  /** Called to navigate after a report has been created or scheduled. */
+  onNavigate?: (page: ReportController.Page) => void;
+
   /** Called when a report action fails. */
   onActionError?: (error: unknown) => void;
 }
@@ -29,6 +33,7 @@ interface State {
   scheduledReportsModel: ScheduledReportsModel;
   generatedReportsModel: GeneratedReportsModel;
   reportActivityModel: ReportActivityModel;
+  createReportModel: CreateReportModel;
   status: ScheduledReportsModel.ResponseStatus;
 }
 
@@ -41,6 +46,7 @@ export class ReportController extends React.Component<Properties, State> {
       scheduledReportsModel: null,
       generatedReportsModel: null,
       reportActivityModel: null,
+      createReportModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS
     };
     this.mounted = false;
@@ -48,6 +54,13 @@ export class ReportController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    if(this.props.page === ReportController.Page.CREATE) {
+      if(this.state.model === this.props.model && this.state.createReportModel) {
+        return <CreateReportController model={this.state.createReportModel}
+          onCreated={this.onCreated} onError={this.props.onActionError}/>;
+      }
+      return <PageLayout/>;
+    }
     if(this.props.page === ReportController.Page.ACTIVITY) {
       if(this.state.model === this.props.model &&
           this.state.reportActivityModel) {
@@ -131,6 +144,7 @@ export class ReportController extends React.Component<Properties, State> {
     this.setState({model, scheduledReportsModel: null,
       generatedReportsModel: null,
       reportActivityModel: null,
+      createReportModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS});
     try {
       await model.load();
@@ -138,14 +152,26 @@ export class ReportController extends React.Component<Properties, State> {
         this.setState({scheduledReportsModel: model.scheduledReportsModel,
           generatedReportsModel: model.generatedReportsModel,
           reportActivityModel: model.reportActivityModel,
+          createReportModel: model.createReportModel,
           status: ScheduledReportsModel.ResponseStatus.READY});
       }
-    } catch {
+    } catch(error) {
       if(this.mounted && generation === this.generation) {
         this.setState({status: ScheduledReportsModel.ResponseStatus.ERROR});
+        if(this.props.page === ReportController.Page.CREATE) {
+          this.props.onActionError?.(error);
+        }
       }
     }
   }
+
+  private onCreated = (scheduled: boolean) => {
+    if(scheduled) {
+      this.props.onNavigate?.(ReportController.Page.SCHEDULED);
+    } else {
+      this.props.onNavigate?.(ReportController.Page.ACTIVITY);
+    }
+  };
 
   private onRetry = () => {
     this.load();
@@ -167,6 +193,9 @@ export namespace ReportController {
     SCHEDULED,
 
     /** Report jobs being generated or awaiting retry. */
-    ACTIVITY
+    ACTIVITY,
+
+    /** Generate a report or create a schedule. */
+    CREATE
   }
 }

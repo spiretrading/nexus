@@ -27,6 +27,20 @@ export class LocalReportActivityModel extends ReportActivityModel {
     return Array.from(this.entries.values(), copy);
   }
 
+  /** Adds a report job at the front of the activity list.
+   * @return The identifier assigned to the job.
+   */
+  public add(activity: Omit<ActivityTable.Activity, 'id'>): string {
+    this.ensureLoaded();
+    let nextId = 1;
+    while(this.entries.has(String(nextId))) {
+      ++nextId;
+    }
+    const id = String(nextId);
+    this.entries = new Map([[id, copy({...activity, id})], ...this.entries]);
+    return id;
+  }
+
   public async load(): Promise<void> {
     this.loaded = true;
   }

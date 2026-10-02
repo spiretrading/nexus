@@ -1,10 +1,13 @@
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { ActivityTable, CompositeReportModel, GeneratedReportsModel,
+import { ActivityTable, CompositeReportModel, DateRange, GeneratedReportsModel,
+  getScopeLabel, LocalCreateReportModel, LocalTickerQueryModel,
   LocalAccountGroupQueryModel, LocalGeneratedReportsModel,
   LocalReportActivityModel, LocalScheduledReportsModel, ReportActivityModel,
-  ReportActivityStatusTag, ReportController, ReportTable,
+  ReportActivityStatusTag, ReportController, ReportDefinition,
+  ReportFormTemplate, ReportParameterValue, ReportTable, ScopeQueryModel,
   ScheduledReportsModel } from 'web_portal';
 
 class DelayedScheduledReportsModel extends LocalScheduledReportsModel {
@@ -93,6 +96,40 @@ class DelayedReportActivityModel extends LocalReportActivityModel {
   }
 }
 
+class DemoCreateReportModel extends LocalCreateReportModel {
+  public async submit(value: ReportFormTemplate.Value): Promise<string> {
+    const fail = settings.failCreation;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated report creation failure.');
+    }
+    await super.submit(value);
+    const report = this.reports.find(entry => entry.id === value.reportType);
+    const parameters = report.parameters.map(parameter => ({
+      label: parameter.label,
+      value: formatParameter(parameter.type, value.parameters[parameter.name])
+    }));
+    console.log('Create Report', value);
+    if(value.scheduled) {
+      await scheduledModel.load();
+      const date = value.scheduleDateTime.date;
+      return scheduledModel.add({type: report.name, parameters,
+        repeats: value.repeats, runDate: {value:
+          `${String(date.year).padStart(4, '0')}-` +
+          `${String(date.month).padStart(2, '0')}-` +
+          String(date.day).padStart(2, '0'),
+          label: new Date(date.year, date.month - 1, date.day).
+            toLocaleDateString('en-US', {
+              month: 'short', day: '2-digit', year: 'numeric'})}});
+    }
+    await activityModel.load();
+    return activityModel.add({type: report.name,
+      parameters: parameters.map(parameter => parameter.value),
+      status: ReportActivityStatusTag.Status.GENERATING,
+      dateModified: Beam.Date.today()});
+  }
+}
+
 interface State {
   page: ReportController.Page;
 }
@@ -100,7 +137,7 @@ interface State {
 class App extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
-    this.state = {page: ReportController.Page.ACTIVITY};
+    this.state = {page: ReportController.Page.CREATE};
   }
 
   public render(): JSX.Element {
@@ -111,6 +148,7 @@ class App extends React.Component<{}, State> {
           <option value={ReportController.Page.GENERATED}>Generated</option>
           <option value={ReportController.Page.SCHEDULED}>Scheduled</option>
           <option value={ReportController.Page.ACTIVITY}>Activity</option>
+          <option value={ReportController.Page.CREATE}>Create</option>
         </select></label>
         <label>Delay (ms) <input type='number' defaultValue={settings.delay}
           min={0} onChange={this.onDelayChange}/></label>
@@ -120,11 +158,14 @@ class App extends React.Component<{}, State> {
           Fail deletions / cancellations</label>
         <label><input type='checkbox' onChange={this.onFailRetries}/>
           Fail retries</label>
+        <label><input type='checkbox' onChange={this.onFailCreation}/>
+          Fail creation</label>
         <label><input type='checkbox' onChange={this.onEmpty}/>
           Empty results</label>
       </div>
       <ReportController model={model} page={this.state.page}
-        onNewReport={this.onNewReport} onActionError={this.onActionError}/>
+        onNewReport={this.onNewReport} onActionError={this.onActionError}
+        onNavigate={this.onNavigate}/>
     </div>;
   }
 
@@ -148,12 +189,20 @@ class App extends React.Component<{}, State> {
     settings.failRetries = event.target.checked;
   };
 
+  private onFailCreation = (event: React.ChangeEvent<HTMLInputElement>) => {
+    settings.failCreation = event.target.checked;
+  };
+
   private onEmpty = (event: React.ChangeEvent<HTMLInputElement>) => {
     settings.empty = event.target.checked;
   };
 
   private onNewReport = () => {
-    console.log('New Report');
+    this.setState({page: ReportController.Page.CREATE});
+  };
+
+  private onNavigate = (page: ReportController.Page) => {
+    this.setState({page});
   };
 
   private onActionError = (error: unknown) => {
@@ -230,14 +279,60 @@ function makeActivities(count: number): ActivityTable.Activity[] {
     })()}));
 }
 
+function formatParameter(type: string, value: ReportParameterValue): string {
+  if(value == null) {
+    return '';
+  }
+  switch(type) {
+    case 'DirectoryEntryList':
+      return (value as Beam.DirectoryEntry[]).
+        map(entry => entry.name).join(', ');
+    case 'DateRange': {
+      const range = value as DateRange;
+      return `${range.start?.toString() ?? ''} - ` +
+        `${range.end?.toString() ?? ''}`;
+    }
+    case 'Scope':
+      return getScopeLabel(value as Nexus.Scope);
+    case 'Currency':
+      return Nexus.buildCurrencyDatabase().
+        fromCurrency(value as Nexus.Currency).code;
+    default:
+      return value.toString();
+  }
+}
+
+function makeDefinitions(): ReportDefinition[] {
+  const today = Beam.Date.today();
+  return ['Profit and Loss', 'Trading Volume'].map((name, index) =>
+    ReportDefinition.fromJson({id: `report_${index}`, name, description: '',
+      parameters: [
+        {name: 'accounts', label: 'Account / Group',
+          type: 'DirectoryEntryList',
+          required: true,
+          default: [Beam.DirectoryEntry.STAR_DIRECTORY.toJson()]},
+        {name: 'scope', label: 'Scope', type: 'Scope', required: true,
+          default: '*'},
+        {name: 'period', label: 'Date Range', type: 'DateRange',
+          required: true,
+          default: {start: today.toJson(), end: today.toJson()}},
+        {name: 'currency', label: 'Currency', type: 'Currency', required: true,
+          default: 'USD'}],
+      output: {media_type: 'text/csv', extension: 'csv'}}));
+}
+
 const settings = {delay: 750, failQueries: false, failDeletions: false,
-  empty: false, failRetries: false};
-const model = new CompositeReportModel(
-  new DelayedScheduledReportsModel(makeSchedules(105)),
-  new DelayedGeneratedReportsModel(makeReports(105),
-    new LocalAccountGroupQueryModel([
-      Beam.DirectoryEntry.makeAccount(1, 'Alice'),
-      Beam.DirectoryEntry.makeAccount(2, 'Bob'),
-      Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')])),
-  new DelayedReportActivityModel(makeActivities(105)));
+  empty: false, failRetries: false, failCreation: false};
+const scheduledModel = new DelayedScheduledReportsModel(makeSchedules(105));
+const activityModel = new DelayedReportActivityModel(makeActivities(105));
+const accounts = new LocalAccountGroupQueryModel([
+  Beam.DirectoryEntry.makeAccount(1, 'Alice'),
+  Beam.DirectoryEntry.makeAccount(2, 'Bob'),
+  Beam.DirectoryEntry.makeDirectory(3, 'Alpha Group')]);
+const createModel = new DemoCreateReportModel(makeDefinitions(), accounts,
+  new ScopeQueryModel(new LocalTickerQueryModel([
+    Nexus.Ticker.parse('ABX.TSX'), Nexus.Ticker.parse('BMO.TSX')])));
+const model = new CompositeReportModel(scheduledModel,
+  new DelayedGeneratedReportsModel(makeReports(105), accounts),
+  activityModel, createModel);
 ReactDOM.render(<App/>, document.getElementById('main'));

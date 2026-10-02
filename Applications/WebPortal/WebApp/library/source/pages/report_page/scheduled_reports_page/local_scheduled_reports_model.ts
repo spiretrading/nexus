@@ -34,6 +34,20 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
     return this.requests.map(copySchedule);
   }
 
+  /** Adds a scheduled report at the front of the list.
+   * @return The identifier assigned to the schedule.
+   */
+  public add(schedule: Omit<ScheduledReportsModel.Schedule, 'id'>): string {
+    this.ensureLoaded();
+    while(this.entries.has(String(this.nextId))) {
+      ++this.nextId;
+    }
+    const id = String(this.nextId++);
+    this.entries = new Map([[id, copySchedule({...schedule, id})],
+      ...this.entries]);
+    return id;
+  }
+
   public async load(): Promise<void> {
     this.loaded = true;
   }

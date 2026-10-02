@@ -1,4 +1,5 @@
 export * from './composite_report_model';
+export * from './create_report_page';
 export * from './generated_reports_page';
 export * from './parameters_date_range_input';
 export * from './parameters_date_range_options';
