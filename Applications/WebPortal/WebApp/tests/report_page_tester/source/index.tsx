@@ -2,12 +2,14 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { HashRouter, Route, RouteComponentProps } from 'react-router-dom';
 import { ActivityTable, CompositeReportModel, DateRange, GeneratedReportsModel,
   getScopeLabel, Interval, LocalCreateReportModel, LocalTickerQueryModel,
   LocalAccountGroupQueryModel, LocalEditScheduledReportModel,
-  LocalGeneratedReportsModel,
+  LocalGeneratedReportsModel, LocalReportDetailModel,
   LocalReportActivityModel, LocalScheduledReportsModel, ReportActivityModel,
   ReportActivityStatusTag, ReportController, ReportDefinition,
+  ReportDetailModel,
   ReportFormTemplate, ReportParameterValue, ReportTable, ScopeQueryModel,
   ScheduledReportsModel } from 'web_portal';
 
@@ -60,6 +62,12 @@ class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
       throw new Error('Simulated deletion failure.');
     }
     await super.delete(ids);
+    await detailModel.load();
+    for(const id of ids) {
+      detailModel.delete(id);
+      URL.revokeObjectURL(downloads.get(id));
+      downloads.delete(id);
+    }
     console.log('Delete', ids);
   }
 
@@ -164,30 +172,40 @@ class DemoEditScheduledReportModel extends LocalEditScheduledReportModel {
   }
 }
 
-interface State {
-  page: ReportController.Page;
-  scheduleId: string;
+class DemoReportDetailModel extends LocalReportDetailModel {
+  public async loadReport(id: string): Promise<ReportDetailModel.Report> {
+    const fail = settings.failQueries;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated report retrieval failure.');
+    }
+    return super.loadReport(id);
+  }
 }
 
-class App extends React.Component<{}, State> {
-  constructor(props: {}) {
-    super(props);
-    this.state = {page: ReportController.Page.SCHEDULED, scheduleId: null};
-  }
+interface Location {
+  page: ReportController.Page;
+  scheduleId: string;
+  reportId: string;
+}
 
+class App extends React.Component<RouteComponentProps> {
   public render(): JSX.Element {
+    const location = parseLocation(this.props.location.pathname);
     return <div onClick={this.onClick} style={STYLE.wrapper}>
       <div style={STYLE.controls}>
-        <label>Test page <select value={this.state.page}
+        <label>Test page <select value={location.page}
             onChange={this.onPageChange}>
           <option value={ReportController.Page.GENERATED}>Generated</option>
           <option value={ReportController.Page.SCHEDULED}>Scheduled</option>
           <option value={ReportController.Page.ACTIVITY}>Activity</option>
           <option value={ReportController.Page.CREATE}>Create</option>
-          {this.state.page === ReportController.Page.EDIT_SCHEDULED &&
+          {location.page === ReportController.Page.EDIT_SCHEDULED &&
             <option value={ReportController.Page.EDIT_SCHEDULED}>
               Edit Scheduled Report
             </option>}
+          {location.page === ReportController.Page.DETAIL &&
+            <option value={ReportController.Page.DETAIL}>Report Detail</option>}
         </select></label>
         <label>Delay (ms) <input type='number' defaultValue={settings.delay}
           min={0} onChange={this.onDelayChange}/></label>
@@ -204,14 +222,22 @@ class App extends React.Component<{}, State> {
         <label><input type='checkbox' onChange={this.onEmpty}/>
           Empty results</label>
       </div>
-      <ReportController model={model} page={this.state.page}
+      <ReportController model={model} page={location.page}
         onNewReport={this.onNewReport} onActionError={this.onActionError}
-        onNavigate={this.onNavigate} scheduleId={this.state.scheduleId}/>
+        onNavigate={this.onNavigate} scheduleId={location.scheduleId}
+        reportId={location.reportId}
+        renderReportContent={renderReportContent}/>
     </div>;
   }
 
+  public componentWillUnmount(): void {
+    for(const url of downloads.values()) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   private onPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({page: Number(event.target.value)});
+    this.props.history.push(PAGE_PATHS[Number(event.target.value)]);
   };
 
   private onDelayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,11 +269,11 @@ class App extends React.Component<{}, State> {
   };
 
   private onNewReport = () => {
-    this.setState({page: ReportController.Page.CREATE});
+    this.props.history.push(PAGE_PATHS[ReportController.Page.CREATE]);
   };
 
   private onNavigate = (page: ReportController.Page) => {
-    this.setState({page});
+    this.props.history.push(PAGE_PATHS[page]);
   };
 
   private onActionError = (error: unknown) => {
@@ -258,15 +284,27 @@ class App extends React.Component<{}, State> {
     const link = (event.target as Element).closest('a[href^="/reports/"]');
     if(link) {
       event.preventDefault();
-      const path = link.getAttribute('href');
-      if(path.startsWith('/reports/edit/')) {
-        this.setState({page: ReportController.Page.EDIT_SCHEDULED,
-          scheduleId: decodeURIComponent(path.slice('/reports/edit/'.length))});
-      } else {
-        console.log('Open Report', path);
-      }
+      this.props.history.push(link.getAttribute('href'));
     }
   };
+}
+
+function parseLocation(path: string): Location {
+  const location: Location = {page: ReportController.Page.GENERATED,
+    scheduleId: null, reportId: null};
+  const page = Object.keys(PAGE_PATHS).find(key =>
+    PAGE_PATHS[Number(key)] === path);
+  if(page !== undefined) {
+    location.page = Number(page);
+  } else if(path.startsWith('/reports/edit/')) {
+    location.page = ReportController.Page.EDIT_SCHEDULED;
+    location.scheduleId =
+      decodeURIComponent(path.slice('/reports/edit/'.length));
+  } else if(path.startsWith('/reports/')) {
+    location.page = ReportController.Page.DETAIL;
+    location.reportId = decodeURIComponent(path.slice('/reports/'.length));
+  }
+  return location;
 }
 
 function makeConfigurations(count: number):
@@ -326,6 +364,41 @@ function makeReports(count: number): ReportTable.Report[] {
       dateCreated: new Beam.Date(date.getFullYear(), date.getMonth() + 1,
         date.getDate())};
   });
+}
+
+function makeDetails(reports: readonly ReportTable.Report[]):
+    ReportDetailModel.Report[] {
+  return reports.map((report, index) => {
+    const content = `Report,Account,Scope,Period\n` +
+      `${report.type},${report.parameters.join(',')}\n`;
+    const downloadable = (() => {
+      if(index % 3 === 2) {
+        return new Blob([new Uint8Array([1, 2, 3, 4])],
+          {type: 'application/octet-stream'});
+      }
+      return new Blob([content], {type: 'text/csv'});
+    })();
+    const filePath = URL.createObjectURL(downloadable);
+    downloads.set(report.id, filePath);
+    const parameters = ['Account / Group', 'Scope', 'Date Range'].
+      map((label, i) => ({label, value: report.parameters[i]}));
+    return {id: report.id, title: report.type, parameters, filePath,
+      content: (() => {
+        if(index % 3 !== 2) {
+          return content;
+        }
+        return null;
+      })()};
+  });
+}
+
+function renderReportContent(report: ReportDetailModel.Report):
+    React.ReactNode {
+  if(report.content == null) {
+    return null;
+  }
+  return <pre style={{margin: 0, whiteSpace: 'pre-wrap',
+    overflowWrap: 'anywhere'}}>{report.content}</pre>;
 }
 
 function makeActivities(count: number): ActivityTable.Activity[] {
@@ -398,7 +471,18 @@ const scopes = new ScopeQueryModel(new LocalTickerQueryModel([
 const createModel = new DemoCreateReportModel(definitions, accounts, scopes);
 const editModel = new DemoEditScheduledReportModel(definitions, accounts,
   scopes, configurations);
+const downloads = new Map<string, string>();
+const generatedReports = makeReports(105);
+const detailModel = new DemoReportDetailModel(makeDetails(generatedReports));
 const model = new CompositeReportModel(scheduledModel,
-  new DelayedGeneratedReportsModel(makeReports(105), accounts),
-  activityModel, createModel, editModel);
-ReactDOM.render(<App/>, document.getElementById('main'));
+  new DelayedGeneratedReportsModel(generatedReports, accounts),
+  activityModel, createModel, editModel, detailModel);
+const PAGE_PATHS: Record<number, string> = {
+  [ReportController.Page.GENERATED]: '/reports',
+  [ReportController.Page.SCHEDULED]: '/reports/scheduled',
+  [ReportController.Page.ACTIVITY]: '/reports/activity',
+  [ReportController.Page.CREATE]: '/reports/create'
+};
+ReactDOM.render(<HashRouter>
+  <Route component={App}/>
+</HashRouter>, document.getElementById('main'));

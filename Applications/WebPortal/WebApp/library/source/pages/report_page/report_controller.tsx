@@ -9,6 +9,8 @@ import { GeneratedReportsController, GeneratedReportsModel,
 import { ActivityTable, ReportActivityController, ReportActivityModel,
   ReportActivityPage } from './report_activity_page';
 import { ReportModel } from './report_model';
+import { ReportDetailController, ReportDetailModel } from
+  './report_detail_page';
 import { ScheduledReportsController, ScheduledReportsModel,
   ScheduledReportsPage } from './scheduled_reports_page';
 
@@ -22,6 +24,12 @@ interface Properties {
 
   /** The schedule identifier when displaying EDIT_SCHEDULED. */
   scheduleId?: string;
+
+  /** The generated report identifier when displaying DETAIL. */
+  reportId?: string;
+
+  /** Renders generated report content. Omit for download-only detail pages. */
+  renderReportContent?: (report: ReportDetailModel.Report) => React.ReactNode;
 
   /** Called to navigate to the Create Report Page. */
   onNewReport?: () => void;
@@ -40,6 +48,7 @@ interface State {
   reportActivityModel: ReportActivityModel;
   createReportModel: CreateReportModel;
   editScheduledReportModel: EditScheduledReportModel;
+  reportDetailModel: ReportDetailModel;
   status: ScheduledReportsModel.ResponseStatus;
 }
 
@@ -54,6 +63,7 @@ export class ReportController extends React.Component<Properties, State> {
       reportActivityModel: null,
       createReportModel: null,
       editScheduledReportModel: null,
+      reportDetailModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS
     };
     this.mounted = false;
@@ -61,6 +71,16 @@ export class ReportController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    if(this.props.page === ReportController.Page.DETAIL) {
+      if(this.state.model === this.props.model &&
+          this.state.reportDetailModel) {
+        return <ReportDetailController model={this.state.reportDetailModel}
+          id={this.props.reportId}
+          renderContent={this.props.renderReportContent}
+          onError={this.props.onActionError}/>;
+      }
+      return <PageLayout/>;
+    }
     if(this.props.page === ReportController.Page.EDIT_SCHEDULED) {
       if(this.state.model === this.props.model &&
           this.state.editScheduledReportModel) {
@@ -162,6 +182,7 @@ export class ReportController extends React.Component<Properties, State> {
       reportActivityModel: null,
       createReportModel: null,
       editScheduledReportModel: null,
+      reportDetailModel: null,
       status: ScheduledReportsModel.ResponseStatus.IN_PROGRESS});
     try {
       await model.load();
@@ -171,13 +192,15 @@ export class ReportController extends React.Component<Properties, State> {
           reportActivityModel: model.reportActivityModel,
           createReportModel: model.createReportModel,
           editScheduledReportModel: model.editScheduledReportModel,
+          reportDetailModel: model.reportDetailModel,
           status: ScheduledReportsModel.ResponseStatus.READY});
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
         this.setState({status: ScheduledReportsModel.ResponseStatus.ERROR});
         if(this.props.page === ReportController.Page.CREATE ||
-            this.props.page === ReportController.Page.EDIT_SCHEDULED) {
+            this.props.page === ReportController.Page.EDIT_SCHEDULED ||
+            this.props.page === ReportController.Page.DETAIL) {
           this.props.onActionError?.(error);
         }
       }
@@ -222,6 +245,9 @@ export namespace ReportController {
     CREATE,
 
     /** Edit a previously scheduled report. */
-    EDIT_SCHEDULED
+    EDIT_SCHEDULED,
+
+    /** View and download a generated report. */
+    DETAIL
   }
 }

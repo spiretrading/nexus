@@ -2,6 +2,7 @@ import { CreateReportModel } from './create_report_page';
 import { EditScheduledReportModel } from './edit_scheduled_report_page';
 import { GeneratedReportsModel } from './generated_reports_page';
 import { ReportActivityModel } from './report_activity_page';
+import { ReportDetailModel } from './report_detail_page';
 import { ScheduledReportsModel } from './scheduled_reports_page';
 
 /** Provides the models for the reporting subpages. */
@@ -21,6 +22,9 @@ export abstract class ReportModel {
 
   /** The model for editing scheduled reports. */
   public abstract get editScheduledReportModel(): EditScheduledReportModel;
+
+  /** The model for viewing generated report details. */
+  public abstract get reportDetailModel(): ReportDetailModel;
 
   /** Loads this model. */
   public abstract load(): Promise<void>;
