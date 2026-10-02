@@ -946,7 +946,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     for(auto source : std::array<std::string_view, 4>{
         "CHI", "CHT", "OMG", "LYX"}) {
       CAPTURE(source);
-      auto fixture = Fixture(from_market_center(source).m_venue);
+      auto fixture = Fixture(from_market_center(source, Venues::TSX).m_venue);
       fixture.m_time.set(time_from_string("2026-09-21 14:00:00"));
       fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=" +
         std::string(source) + "|57=20260921090000000|40=123"
@@ -1166,7 +1166,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       action = "AuctionTradeIndividual";
       display.clear();
     }
-    auto fixture = Fixture(from_market_center(source).m_venue);
+    auto fixture = Fixture(from_market_center(source, Venues::TSX).m_venue);
     fixture.m_time.set(time_from_string("2026-09-21 14:00:00"));
     fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=" +
       source + "|57=20260921090000000|40=123|70=79|196=25.50|64=600");

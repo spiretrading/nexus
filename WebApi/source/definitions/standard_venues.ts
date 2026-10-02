@@ -57,17 +57,17 @@ export function buildVenueDatabase(): VenueDatabase {
     'America/Toronto', Currencies.CAD, 'CIX MIDPOINT', 'INCC'));
   database.add(new VenueDatabase.Entry(new Venue('OTCM'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'OTC Markets - OTC Link ATS', 'OTCM'));
-  database.add(new VenueDatabase.Entry(new Venue('OTCQ'), Countries.US, 'OTCQ',
+  database.add(new VenueDatabase.Entry(new Venue('OTCQ'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'OTCQX', 'OTCQ'));
-  database.add(new VenueDatabase.Entry(new Venue('OTCB'), Countries.US, 'OTCB',
+  database.add(new VenueDatabase.Entry(new Venue('OTCB'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'OTCQB', 'OTCB'));
-  database.add(new VenueDatabase.Entry(new Venue('OTCD'), Countries.US, 'OTCD',
+  database.add(new VenueDatabase.Entry(new Venue('OTCD'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'OTCID', 'OTCD'));
-  database.add(new VenueDatabase.Entry(new Venue('PINL'), Countries.US, 'PINL',
+  database.add(new VenueDatabase.Entry(new Venue('PINL'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'Pink Limited', 'PINL'));
-  database.add(new VenueDatabase.Entry(new Venue('EXPM'), Countries.US, 'EXPM',
+  database.add(new VenueDatabase.Entry(new Venue('EXPM'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'Expert Market', 'EXPM'));
-  database.add(new VenueDatabase.Entry(new Venue('PSGM'), Countries.US, 'PSGM',
+  database.add(new VenueDatabase.Entry(new Venue('PSGM'), Countries.US, 'ATS',
     'America/New_York', Currencies.USD, 'OTC Grey Market', 'PSGM'));
   database.add(new VenueDatabase.Entry(new Venue('OTCN'), Countries.US, 'ECN',
     'America/New_York', Currencies.USD, 'OTC Link ECN', 'OTCN'));

@@ -59,6 +59,16 @@ function makeEntry(code: string, displayName: string): VenueDatabase.Entry {
 }
 
 describe('VenueDatabase', () => {
+  it('otc_market_centers', () => {
+    const DATABASE = buildVenueDatabase();
+    for(const CODE of ['OTCM', 'OTCQ', 'OTCB', 'OTCD', 'PINL', 'EXPM', 'PSGM']) {
+      assert.strictEqual(
+        DATABASE.fromVenue(new Venue(CODE)).marketCenter, 'ATS');
+    }
+    assert.strictEqual(DATABASE.fromVenue(Venues.OTCN).marketCenter, 'ECN');
+    assert.strictEqual(DATABASE.fromVenue(Venues.OTCI).marketCenter, 'NQB');
+  });
+
   it('canadian_market_centers', () => {
     const database = buildVenueDatabase();
     for(const [center, mic, name] of [

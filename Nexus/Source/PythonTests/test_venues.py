@@ -107,6 +107,24 @@ class TestVenues(unittest.TestCase):
                 'MISS', nexus.venues.TSX, *arguments),
                 nexus.VenueDatabase.Entry())
 
+    def test_otc_market_centers(self):
+        database = nexus.VenueDatabase(nexus.VENUES)
+        for arguments in ((), (database,)):
+            for venue in (nexus.venues.OTCM, nexus.venues.OTCB,
+                    nexus.venues.OTCQ, nexus.venues.EXPM):
+                with self.subTest(venue=venue.code, arguments=arguments):
+                    self.assertEqual(nexus.from_market_center(
+                        'ATS', venue, *arguments).venue, venue)
+            self.assertEqual(nexus.from_market_center(
+                'ECN', nexus.venues.OTCB, *arguments).venue, nexus.venues.OTCN)
+            self.assertEqual(nexus.from_market_center(
+                'NQB', nexus.venues.OTCB, *arguments).venue, nexus.venues.OTCI)
+            self.assertEqual(nexus.from_market_center(
+                'ATS', nexus.venues.TSX, *arguments),
+                nexus.VenueDatabase.Entry())
+            with self.assertRaises(TypeError):
+                nexus.from_market_center('ATS', *arguments)
+
     def test_market_center_context(self):
         original = nexus.VenueDatabase(nexus.VENUES)
         self.addCleanup(nexus.set_venues, original)

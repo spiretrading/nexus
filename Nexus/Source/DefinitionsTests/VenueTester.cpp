@@ -34,6 +34,20 @@ namespace {
 }
 
 TEST_SUITE("Venue") {
+  TEST_CASE("otc_market_centers") {
+    for(auto venue : {Venues::OTCM, Venues::OTCQ, Venues::OTCB, Venues::OTCD,
+        Venues::PINL, Venues::EXPM, Venues::PSGM}) {
+      CAPTURE(venue);
+      REQUIRE(VENUES.from(venue).m_market_center == "ATS");
+      REQUIRE(from_market_center("ATS", venue).m_venue == venue);
+    }
+    REQUIRE(VENUES.from(Venues::OTCN).m_market_center == "ECN");
+    REQUIRE(VENUES.from(Venues::OTCI).m_market_center == "NQB");
+    REQUIRE(from_market_center("ECN", Venues::OTCB).m_venue == Venues::OTCN);
+    REQUIRE(from_market_center("NQB", Venues::OTCB).m_venue == Venues::OTCI);
+    REQUIRE(from_market_center("ATS", Venues::TSX) == VenueDatabase::NONE);
+  }
+
   TEST_CASE("shared_market_center") {
     auto database = VenueDatabase();
     auto entry = VenueDatabase::Entry();

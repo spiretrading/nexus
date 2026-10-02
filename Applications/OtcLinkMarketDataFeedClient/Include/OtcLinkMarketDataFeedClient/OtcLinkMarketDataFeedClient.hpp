@@ -559,7 +559,11 @@ namespace Nexus {
     sale.m_timestamp = get_timestamp(message.m_timestamp);
     sale.m_price = Money(convert(message.m_price, OtcLinkTrade::PRICE_SCALE));
     sale.m_size = message.m_size;
-    sale.m_market_center = message.m_venue;
+    if(message.m_venue.find_first_not_of(' ') == std::string_view::npos) {
+      sale.m_market_center = "ATS";
+    } else {
+      sale.m_market_center = message.m_venue;
+    }
     if(message.has_status(OtcLinkTrade::Status::IRREGULAR)) {
       sale.m_condition.m_code = "I";
     } else {

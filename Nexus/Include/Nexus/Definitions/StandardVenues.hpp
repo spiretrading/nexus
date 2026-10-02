@@ -275,7 +275,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("OTCQ");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "OTCQ";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "OTCQX";
@@ -286,7 +286,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("OTCB");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "OTCB";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "OTCQB";
@@ -297,7 +297,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("OTCD");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "OTCD";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "OTCID";
@@ -308,7 +308,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("PINL");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "PINL";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "Pink Limited";
@@ -319,7 +319,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("EXPM");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "EXPM";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "Expert Market";
@@ -330,7 +330,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("PSGM");
         entry.m_country_code = Countries::US;
-        entry.m_market_center = "PSGM";
+        entry.m_market_center = "ATS";
         entry.m_time_zone = "America/New_York";
         entry.m_currency = Currencies::USD;
         entry.m_description = "OTC Grey Market";

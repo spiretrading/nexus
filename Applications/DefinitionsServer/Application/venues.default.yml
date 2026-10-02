@@ -174,42 +174,42 @@ venues:
     currency: USD
     description: OTCQX
     display_name: OTCQ
-    market_center: OTCQ
+    market_center: ATS
   - venue: OTCB
     country_code: US
     time_zone: America/New_York
     currency: USD
     description: OTCQB
     display_name: OTCB
-    market_center: OTCB
+    market_center: ATS
   - venue: OTCD
     country_code: US
     time_zone: America/New_York
     currency: USD
     description: OTCID
     display_name: OTCD
-    market_center: OTCD
+    market_center: ATS
   - venue: PINL
     country_code: US
     time_zone: America/New_York
     currency: USD
     description: Pink Limited
     display_name: PINL
-    market_center: PINL
+    market_center: ATS
   - venue: EXPM
     country_code: US
     time_zone: America/New_York
     currency: USD
     description: Expert Market
     display_name: EXPM
-    market_center: EXPM
+    market_center: ATS
   - venue: PSGM
     country_code: US
     time_zone: America/New_York
     currency: USD
     description: OTC Grey Market
     display_name: PSGM
-    market_center: PSGM
+    market_center: ATS
   - venue: OTCN
     country_code: US
     time_zone: America/New_York

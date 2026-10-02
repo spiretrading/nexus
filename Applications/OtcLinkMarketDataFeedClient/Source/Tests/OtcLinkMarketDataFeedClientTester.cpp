@@ -555,9 +555,17 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     fixture.send(trade);
     fixture.require_empty();
     fixture.security();
+    auto market_center = std::string("ATS");
     SUBCASE("regular") {}
     SUBCASE("irregular") {
       trade.m_status = 0x01;
+    }
+    SUBCASE("blank_venue") {
+      trade.m_venue = "   ";
+    }
+    SUBCASE("other_venue") {
+      trade.m_venue = "ECN";
+      market_center = "ECN";
     }
     fixture.send(trade);
     auto publication = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
@@ -566,7 +574,7 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     REQUIRE(sale->m_timestamp == time_from_string("2023-11-14 22:13:20.123"));
     REQUIRE(sale->m_price == Money(Quantity(1.25)));
     REQUIRE(sale->m_size == 123);
-    REQUIRE(sale->m_market_center == "ATS");
+    REQUIRE(sale->m_market_center == market_center);
     REQUIRE(sale->m_buyer_mpid.empty());
     REQUIRE(sale->m_seller_mpid.empty());
     if(trade.m_status == 0) {

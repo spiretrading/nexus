@@ -958,8 +958,13 @@ namespace Nexus {
         !message.m_header.m_exchange) {
       return;
     }
+    auto info = find_ticker(message.m_symbol);
+    if(!info || !m_open_state.is_open()) {
+      return;
+    }
     auto market_center = std::string(*message.m_header.m_exchange);
-    auto venue = from_market_center(market_center).m_venue;
+    auto venue =
+      from_market_center(market_center, info->m_ticker.get_venue()).m_venue;
     if(!venue) {
       return;
     }
@@ -975,10 +980,6 @@ namespace Nexus {
         return;
       }
       market_center = book;
-    }
-    auto info = find_ticker(message.m_symbol);
-    if(!info || !m_open_state.is_open()) {
-      return;
     }
     if(message.m_action == "AuctionTradeIndividual" &&
         !message.m_is_correction.value_or(false) &&
