@@ -13,6 +13,8 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
+import { ActivityTableRowPlaceholderExample } from
+  './activity_table_row_placeholder_example';
 import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
@@ -1319,6 +1321,10 @@ const parametersDateRangeInput =
       new SignalSchema('onValidationChange', 'validation')],
     WebPortal.ParametersDateRangeInput, 284);
 
+const activityTableRowPlaceholder =
+  new ComponentSchema('ActivityTableRowPlaceholder', [], [],
+    ActivityTableRowPlaceholderExample, 796);
+
 const reportActivityStatusTag =
   new ComponentSchema('ReportActivityStatusTag',
     [new PropertySchema('status',
@@ -1463,7 +1469,8 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [dateFilter, parametersDateRangeInput,
+  new ComponentSection('Report Page', [activityTableRowPlaceholder,
+    dateFilter, parametersDateRangeInput,
     reportActivityStatusTag, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
