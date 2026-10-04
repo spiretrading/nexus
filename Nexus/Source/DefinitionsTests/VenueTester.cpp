@@ -34,6 +34,42 @@ namespace {
 }
 
 TEST_SUITE("Venue") {
+  TEST_CASE("shared_market_center") {
+    auto database = VenueDatabase();
+    auto entry = VenueDatabase::Entry();
+    entry.m_venue = Venue("AAAA");
+    entry.m_market_center = "SHARED";
+    database.add(entry);
+    auto listing = VenueDatabase::Entry();
+    listing.m_venue = Venue("BBBB");
+    listing.m_market_center = "SHARED";
+    database.add(listing);
+    SUBCASE("listing_venue") {
+      REQUIRE(from_market_center("SHARED", listing.m_venue, database) ==
+        listing);
+      REQUIRE(from_market_center("SHARED", entry.m_venue, database) == entry);
+    }
+    SUBCASE("unique_match") {
+      database.remove(listing.m_venue);
+      REQUIRE(from_market_center("SHARED", listing.m_venue, database) == entry);
+    }
+    SUBCASE("ambiguous") {
+      REQUIRE(from_market_center("SHARED", Venues::TSX, database) ==
+        VenueDatabase::NONE);
+    }
+    SUBCASE("missing") {
+      REQUIRE(from_market_center("MISS", listing.m_venue, database) ==
+        VenueDatabase::NONE);
+    }
+    SUBCASE("different_market_center") {
+      listing.m_market_center = "OTHER";
+      database.remove(listing.m_venue);
+      database.add(listing);
+      REQUIRE(from_market_center("SHARED", listing.m_venue, database) == entry);
+      REQUIRE(from_market_center("OTHER", entry.m_venue, database) == listing);
+    }
+  }
+
   TEST_CASE("canadian_market_centers") {
     struct Market {
       const char* m_center;
@@ -47,7 +83,7 @@ TEST_SUITE("Venue") {
       {"ASV", "ASPV", "ASPV"}, {"INC", "INCC", "INCC"}});
     for(auto& market : markets) {
       CAPTURE(market.m_center);
-      auto& entry = from_market_center(market.m_center);
+      auto& entry = from_market_center(market.m_center, Venues::TSX);
       REQUIRE(entry.m_venue == Venue(market.m_mic));
       REQUIRE(entry.m_country_code == Countries::CA);
       REQUIRE(entry.m_currency == Currencies::CAD);

@@ -123,11 +123,14 @@ const STYLES = StyleSheet.create({
   },
   interactive: {
     borderColor: '#C8C8C8 !important',
-    ':enabled:hover': {
+    ':enabled:hover:not(.error):not([aria-invalid="true"])': {
       borderColor: '#684BC7 !important'
     },
-    ':enabled:focus': {
+    ':enabled:focus:not(.error):not([aria-invalid="true"])': {
       borderColor: '#684BC7 !important'
+    },
+    ':is(.error, [aria-invalid="true"])': {
+      borderColor: '#E63F44 !important'
     }
   }
 });
