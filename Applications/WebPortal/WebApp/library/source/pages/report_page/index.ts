@@ -10,6 +10,7 @@ export * from './report_definition';
 export * from './report_detail_page';
 export * from './report_form_template';
 export * from './report_model';
+export * from './report_page';
 export * from './report_output_definition';
 export * from './report_parameter_definition';
 export * from './report_parameter_value';

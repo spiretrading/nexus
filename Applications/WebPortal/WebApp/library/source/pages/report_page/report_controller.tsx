@@ -9,6 +9,7 @@ import { GeneratedReportsController, GeneratedReportsModel,
 import { ActivityTable, ReportActivityController, ReportActivityModel,
   ReportActivityPage } from './report_activity_page';
 import { ReportModel } from './report_model';
+import { ReportPage } from './report_page';
 import { ReportDetailController, ReportDetailModel } from
   './report_detail_page';
 import { ScheduledReportsController, ScheduledReportsModel,
@@ -19,7 +20,7 @@ interface Properties {
   /** The model providing the reporting subpage models. */
   model: ReportModel;
 
-  /** The subpage to display. Defaults to SCHEDULED. */
+  /** The subpage to display. Defaults to GENERATED. */
   page?: ReportController.Page;
 
   /** The schedule identifier when displaying EDIT_SCHEDULED. */
@@ -71,7 +72,31 @@ export class ReportController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    if(this.props.page === ReportController.Page.DETAIL) {
+    return <ReportPage current={getCurrentTab(this.props.page)}
+        onNavigate={this.onTabNavigate}>
+      {this.renderContent()}
+    </ReportPage>;
+  }
+
+  public componentDidMount(): void {
+    this.mounted = true;
+    this.load();
+  }
+
+  public componentDidUpdate(previous: Properties): void {
+    if(previous.model !== this.props.model) {
+      this.load();
+    }
+  }
+
+  public componentWillUnmount(): void {
+    this.mounted = false;
+    ++this.generation;
+  }
+
+  private renderContent(): JSX.Element {
+    const page = this.props.page ?? ReportController.Page.GENERATED;
+    if(page === ReportController.Page.DETAIL) {
       if(this.state.model === this.props.model &&
           this.state.reportDetailModel) {
         return <ReportDetailController model={this.state.reportDetailModel}
@@ -81,7 +106,7 @@ export class ReportController extends React.Component<Properties, State> {
       }
       return <PageLayout/>;
     }
-    if(this.props.page === ReportController.Page.EDIT_SCHEDULED) {
+    if(page === ReportController.Page.EDIT_SCHEDULED) {
       if(this.state.model === this.props.model &&
           this.state.editScheduledReportModel) {
         return <EditScheduledReportController
@@ -90,14 +115,14 @@ export class ReportController extends React.Component<Properties, State> {
       }
       return <PageLayout/>;
     }
-    if(this.props.page === ReportController.Page.CREATE) {
+    if(page === ReportController.Page.CREATE) {
       if(this.state.model === this.props.model && this.state.createReportModel) {
         return <CreateReportController model={this.state.createReportModel}
           onCreated={this.onCreated} onError={this.props.onActionError}/>;
       }
       return <PageLayout/>;
     }
-    if(this.props.page === ReportController.Page.ACTIVITY) {
+    if(page === ReportController.Page.ACTIVITY) {
       if(this.state.model === this.props.model &&
           this.state.reportActivityModel) {
         return <ReportActivityController model={this.state.reportActivityModel}
@@ -117,7 +142,7 @@ export class ReportController extends React.Component<Properties, State> {
         response={{status, isEmpty: false, totalCount: 0, activities: []}}
         onSubmit={this.onRetry} onNewReport={this.props.onNewReport}/>;
     }
-    if(this.props.page === ReportController.Page.GENERATED) {
+    if(page === ReportController.Page.GENERATED) {
       if(this.state.model === this.props.model &&
           this.state.generatedReportsModel) {
         return <GeneratedReportsController
@@ -158,22 +183,6 @@ export class ReportController extends React.Component<Properties, State> {
       onSubmit={this.onRetry} onNewReport={this.props.onNewReport}/>;
   }
 
-  public componentDidMount(): void {
-    this.mounted = true;
-    this.load();
-  }
-
-  public componentDidUpdate(previous: Properties): void {
-    if(previous.model !== this.props.model) {
-      this.load();
-    }
-  }
-
-  public componentWillUnmount(): void {
-    this.mounted = false;
-    ++this.generation;
-  }
-
   private async load(): Promise<void> {
     const model = this.props.model;
     const generation = ++this.generation;
@@ -206,6 +215,20 @@ export class ReportController extends React.Component<Properties, State> {
       }
     }
   }
+
+  private onTabNavigate = (tab: ReportPage.Tab) => {
+    const page = (() => {
+      switch(tab) {
+        case ReportPage.Tab.GENERATED:
+          return ReportController.Page.GENERATED;
+        case ReportPage.Tab.ACTIVITY:
+          return ReportController.Page.ACTIVITY;
+        case ReportPage.Tab.SCHEDULES:
+          return ReportController.Page.SCHEDULED;
+      }
+    })();
+    this.props.onNavigate?.(page);
+  };
 
   private onCreated = (scheduled: boolean) => {
     if(scheduled) {
@@ -249,5 +272,19 @@ export namespace ReportController {
 
     /** View and download a generated report. */
     DETAIL
+  }
+}
+
+function getCurrentTab(page: ReportController.Page): ReportPage.Tab {
+  switch(page) {
+    case ReportController.Page.ACTIVITY:
+      return ReportPage.Tab.ACTIVITY;
+    case ReportController.Page.SCHEDULED:
+    case ReportController.Page.EDIT_SCHEDULED:
+      return ReportPage.Tab.SCHEDULES;
+    case ReportController.Page.CREATE:
+      return null;
+    default:
+      return ReportPage.Tab.GENERATED;
   }
 }

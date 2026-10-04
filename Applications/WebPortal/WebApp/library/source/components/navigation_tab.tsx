@@ -61,6 +61,7 @@ export class NavigationTab extends React.Component<Properties, State> {
     };
     return (
       <a className={tabClassName} href={this.props.href}
+          aria-label={this.props.label}
           aria-current={this.props.isCurrent ? 'page' : 'false'}
           onClick={this.onClick}
           onFocus={this.onFocus}
