@@ -4,6 +4,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
+#include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
 
 using namespace Beam;
@@ -12,6 +13,33 @@ using namespace boost;
 using namespace Nexus;
 
 namespace {
+  int execute(const ReportJob&, std::stop_token) {
+    return 0;
+  }
+
+  struct DefinitionService {
+    int m_loads = 0;
+
+    std::vector<ReportDefinition> load_definitions(const DirectoryEntry&) {
+      ++m_loads;
+      return {};
+    }
+
+    std::string submit(const DirectoryEntry&, const ReportSubmission&) {
+      throw std::runtime_error("Unexpected report submission.");
+    }
+
+    void store(const ReportJob&) {
+      throw std::runtime_error("Unexpected job storage.");
+    }
+
+    int execute(const ReportJob&, std::stop_token) {
+      throw std::runtime_error("Unexpected job execution.");
+    }
+
+    void close() {}
+  };
+
   YAML::Node make_definition() {
     return YAML::Load(R"(
 id: profit_and_loss
@@ -91,8 +119,8 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(definition.m_id == "profit_and_loss");
     REQUIRE(definition.m_access == std::vector<std::string>({"Reporting"}));
     REQUIRE(definition.m_parameters.size() == 3);
-    REQUIRE(definition.m_parameters[0].m_required);
-    REQUIRE_FALSE(definition.m_parameters[1].m_required);
+    REQUIRE(definition.m_parameters[0].m_is_required);
+    REQUIRE_FALSE(definition.m_parameters[1].m_is_required);
     REQUIRE(!definition.m_parameters[1].m_default);
     REQUIRE(get<std::string>(*definition.m_parameters[2].m_default) == "USD");
     REQUIRE(definition.m_arguments.size() == 3);
@@ -212,15 +240,9 @@ TEST_SUITE("ReportDefinition") {
   TEST_CASE("unauthenticated_request") {
     auto environment = ServiceLocatorTestEnvironment();
     auto sessions = WebSessionStore<WebPortalSession>();
-    auto definitions = std::vector<ReportDefinition>(
-      {make_definition("global", {"*"})});
-    auto loads = 0;
-    auto servlet = ReportingWebServlet(
-      Ref(sessions), environment.get_root(), [&] {
-        ++loads;
-        return definitions;
-      });
-    REQUIRE(loads == 0);
+    auto reports = DefinitionService();
+    auto servlet = ReportingWebServlet(Ref(sessions), &reports);
+    REQUIRE(reports.m_loads == 0);
     auto request = HttpRequest(HttpMethod::POST,
       Uri("/api/reporting_service/load_report_definitions"));
     REQUIRE(load(servlet, request).get_status_code() ==
@@ -228,7 +250,7 @@ TEST_SUITE("ReportDefinition") {
     auto session = sessions.create();
     REQUIRE(load(servlet, make_request(*session)).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
-    REQUIRE(loads == 0);
+    REQUIRE(reports.m_loads == 0);
   }
 
   TEST_CASE("permitted_definitions") {
@@ -245,8 +267,8 @@ TEST_SUITE("ReportDefinition") {
         make_definition("group", {"Reporting"}),
         make_definition("other", {"bob"}),
         make_definition("renamed", {"carol"}), make_definition("none", {})});
-    auto servlet = ReportingWebServlet(
-      Ref(sessions), client, [&] { return definitions; });
+    auto reports = LocalReportService(definitions, client, execute);
+    auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(account);
     auto request = make_request(*session);
@@ -281,10 +303,10 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "global");
     REQUIRE(get<JsonObject>(values[1]).at("id") == "other");
-    auto empty = ReportingWebServlet(Ref(sessions), client, [&] {
-      return std::vector<ReportDefinition>(
-        {make_definition("hidden", {"alice"})});
-    });
+    auto empty = ReportingWebServlet(Ref(sessions), ReportService(
+      std::in_place_type<LocalReportService<decltype(&execute)>>,
+      std::vector<ReportDefinition>(
+        {make_definition("hidden", {"alice"})}), client, execute));
     REQUIRE(parse_response(load(empty, request)).empty());
   }
 
@@ -293,24 +315,21 @@ TEST_SUITE("ReportDefinition") {
     auto& client = environment.get_root();
     auto sessions = WebSessionStore<WebPortalSession>();
     auto definitions = std::vector<ReportDefinition>();
-    auto loads = 0;
-    auto servlet = ReportingWebServlet(Ref(sessions), client, [&] {
-      ++loads;
-      return definitions;
-    });
-    REQUIRE(loads == 0);
+    auto reports = LocalReportService(definitions, client, execute);
+    auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(client.get_account());
     auto request = make_request(*session);
     REQUIRE(parse_response(load(servlet, request)).empty());
-    REQUIRE(loads == 1);
     definitions.push_back(make_definition("first", {"*"}));
+    reports.set_definitions(definitions);
     auto values = parse_response(load(servlet, request));
     REQUIRE(values.size() == 1);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "first");
     definitions[0].m_name = "Updated report";
     definitions[0].m_parameters[2].m_default = JsonValue("CAD");
     definitions.push_back(make_definition("second", {"*"}));
+    reports.set_definitions(definitions);
     values = parse_response(load(servlet, request));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("name") == "Updated report");
@@ -320,7 +339,7 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<JsonObject>(values[1]).at("id") == "second");
     definitions[0].m_access = {"other_account"};
     definitions.pop_back();
+    reports.set_definitions(definitions);
     REQUIRE(parse_response(load(servlet, request)).empty());
-    REQUIRE(loads == 4);
   }
 }

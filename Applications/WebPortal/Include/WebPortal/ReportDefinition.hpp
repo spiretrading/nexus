@@ -28,7 +28,7 @@ namespace Nexus {
     std::string m_type;
 
     /** Whether the parameter requires a value. */
-    bool m_required = false;
+    bool m_is_required = false;
 
     /** The default value, or no value when no default is specified. */
     std::optional<Beam::JsonValue> m_default;
@@ -116,7 +116,7 @@ namespace Beam {
       shuttle.shuttle("name", value.m_name);
       shuttle.shuttle("label", value.m_label);
       shuttle.shuttle("type", value.m_type);
-      shuttle.shuttle("required", value.m_required);
+      shuttle.shuttle("required", value.m_is_required);
       shuttle.shuttle("default", value.m_default);
     }
   };

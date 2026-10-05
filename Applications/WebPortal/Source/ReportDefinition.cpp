@@ -37,9 +37,11 @@ namespace {
 
   JsonValue parse_json(
       const YAML::Node& node, std::vector<YAML::Node>& ancestors) {
-    if(std::any_of(ancestors.begin(), ancestors.end(), [&] (const auto& value) {
+    auto is_circular = std::ranges::any_of(ancestors,
+      [&] (const auto& value) {
         return node.is(value);
-      })) {
+      });
+    if(is_circular) {
       throw std::runtime_error("Circular report parameter default.");
     }
     if(node.IsNull()) {
@@ -118,7 +120,7 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
       throw std::runtime_error(
         "Unsupported report parameter type: " + parameter.m_type);
     }
-    parameter.m_required = extract<bool>(entry, "required", false);
+    parameter.m_is_required = extract<bool>(entry, "required", false);
     if(auto value = entry["default"]) {
       auto ancestors = std::vector<YAML::Node>();
       parameter.m_default = parse_json(value, ancestors);
@@ -160,10 +162,10 @@ std::vector<ReportDefinition> Nexus::filter_report_definitions(
     const DirectoryEntry& account, ServiceLocatorClient& client) {
   auto current_account = client.load_directory_entry(account.m_id);
   auto names = std::unordered_set<std::string>({current_account.m_name, "*"});
-  auto groups_required = std::any_of(definitions.begin(), definitions.end(),
+  auto groups_required = std::ranges::any_of(definitions,
     [&] (const auto& definition) {
       return !definition.m_access.empty() &&
-        std::none_of(definition.m_access.begin(), definition.m_access.end(),
+        std::ranges::none_of(definition.m_access,
           [&] (const auto& name) { return names.contains(name); });
     });
   if(groups_required) {
@@ -182,8 +184,9 @@ std::vector<ReportDefinition> Nexus::filter_report_definitions(
   }
   auto permitted = std::vector<ReportDefinition>();
   for(auto& definition : definitions) {
-    if(std::any_of(definition.m_access.begin(), definition.m_access.end(),
-        [&] (const auto& name) { return names.contains(name); })) {
+    auto is_permitted = std::ranges::any_of(definition.m_access,
+      [&] (const auto& name) { return names.contains(name); });
+    if(is_permitted) {
       permitted.push_back(definition);
     }
   }

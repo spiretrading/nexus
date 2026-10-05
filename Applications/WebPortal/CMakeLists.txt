@@ -8,28 +8,38 @@ link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
 include_directories(Include)
 include_directories(${PROJECT_BINARY_DIR})
-file(GLOB_RECURSE
-  header_files Include/WebPortal/*.hpp)
+file(GLOB_RECURSE header_files Include/WebPortal/*.hpp)
 list(APPEND header_files "${PROJECT_BINARY_DIR}/Version.hpp")
 file(GLOB_RECURSE source_files Source/*.cpp)
-add_executable(WebPortal ${header_files} ${source_files})
-beam_configure_target(WebPortal DEPENDENCIES
+list(REMOVE_ITEM source_files "${CMAKE_CURRENT_SOURCE_DIR}/Source/main.cpp")
+set(web_portal_dependencies
   BEAM BOOST CRYPTOPP OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
-target_link_libraries(WebPortal PUBLIC BeamRoutines)
-target_compile_definitions(WebPortal PRIVATE YAML_CPP_STATIC_DEFINE)
+add_library(WebPortalLibrary STATIC ${header_files} ${source_files})
+beam_configure_target(WebPortalLibrary DEPENDENCIES ${web_portal_dependencies})
+target_link_libraries(WebPortalLibrary PUBLIC BeamRoutines)
+target_compile_definitions(WebPortalLibrary PUBLIC YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-add_executable(WebPortalTests Tests/main.cpp Tests/ReportDefinitionTests.cpp
-  Source/ReportDefinition.cpp Source/ReportingWebServlet.cpp
-  Source/WebPortalSession.cpp)
+set_property(GLOBAL APPEND PROPERTY BEAM_BUILD_TARGETS WebPortalLibrary)
+add_executable(WebPortal Source/main.cpp)
+beam_configure_target(WebPortal DEPENDENCIES ${web_portal_dependencies})
+target_link_libraries(WebPortal PRIVATE WebPortalLibrary)
+file(GLOB_RECURSE test_files Tests/*.cpp)
+add_executable(WebPortalTests ${test_files})
 beam_configure_target(WebPortalTests DEPENDENCIES
-  BEAM BOOST CRYPTOPP DOCTEST OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
-target_link_libraries(WebPortalTests PUBLIC BeamRoutines)
-target_compile_definitions(WebPortalTests PRIVATE YAML_CPP_STATIC_DEFINE)
+  ${web_portal_dependencies} DOCTEST)
+target_link_libraries(WebPortalTests PRIVATE WebPortalLibrary)
 add_custom_command(TARGET WebPortalTests POST_BUILD COMMAND WebPortalTests)
 add_dependencies(WebPortal WebPortalTests)
 if(WIN32)
-  target_link_libraries(WebPortal PUBLIC Crypt32.lib)
-  target_link_libraries(WebPortalTests PUBLIC Crypt32.lib)
+  target_link_libraries(WebPortalLibrary PUBLIC Crypt32.lib ntdll.lib)
+endif()
+if(UNIX)
+  find_library(BOOST_PROCESS_LIBRARY NAMES boost_process
+    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH REQUIRED)
+  find_library(BOOST_FILESYSTEM_LIBRARY NAMES boost_filesystem
+    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH REQUIRED)
+  target_link_libraries(WebPortalLibrary PUBLIC
+    ${BOOST_PROCESS_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
 endif()
 beam_install_target(WebPortal "${PROJECT_BINARY_DIR}/Application")
 install(FILES Application/config.default.yml Application/setup.py

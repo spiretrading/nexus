@@ -1,58 +1,17 @@
 #include "WebPortal/WebPortalServlet.hpp"
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <stdexcept>
-#include <unordered_set>
 #include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Utilities/Expect.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
+#include "WebPortal/FileReportService.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-
-namespace {
-  std::vector<ReportDefinition> load_report_definitions() {
-    auto directory = std::filesystem::path("report_definitions");
-    if(!std::filesystem::exists(directory)) {
-      return {};
-    }
-    auto files = std::vector<std::filesystem::path>();
-    for(auto& entry : std::filesystem::directory_iterator(directory)) {
-      auto extension = entry.path().extension();
-      if(entry.is_regular_file() &&
-          (extension == ".yml" || extension == ".yaml")) {
-        files.push_back(entry.path());
-      }
-    }
-    std::sort(files.begin(), files.end());
-    auto definitions = std::vector<ReportDefinition>();
-    auto identifiers = std::unordered_set<std::string>();
-    for(auto& file : files) {
-      auto definition = try_or_nest([&] {
-        auto stream = std::ifstream(file);
-        if(!stream) {
-          throw std::runtime_error("Unable to open report definition.");
-        }
-        return load_report_definition(stream);
-      }, std::runtime_error(
-        "Failed to load report definition: " + file.string()));
-      if(!identifiers.insert(definition.m_id).second) {
-        throw std::runtime_error("Duplicate report identifier: " +
-          definition.m_id + " in " + file.string());
-      }
-      definitions.push_back(std::move(definition));
-    }
-    return definitions;
-  }
-}
 
 WebPortalServlet::WebPortalServlet(
   ServiceLocatorWebServlet::ClientsBuilder clients_builder,
@@ -65,8 +24,9 @@ WebPortalServlet::WebPortalServlet(
     m_administration_servlet(Ref(m_sessions)),
     m_market_data_servlet(Ref(m_sessions)),
     m_compliance_servlet(Ref(m_sessions)),
-    m_reporting_servlet(Ref(m_sessions), clients.get_service_locator_client(),
-      load_report_definitions),
+    m_reporting_servlet(Ref(m_sessions), ReportService(
+      std::in_place_type<FileReportService>, "report_definitions", "reports",
+      clients.get_service_locator_client(), clients.get_time_client())),
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {

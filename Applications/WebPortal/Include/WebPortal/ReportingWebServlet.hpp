@@ -22,7 +22,7 @@
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
-#include "WebPortal/ReportDefinition.hpp"
+#include "WebPortal/ReportService.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -117,17 +117,14 @@ namespace Nexus {
   class ReportingWebServlet {
     public:
 
-      /** Loads the current report definitions. */
-      using DefinitionsLoader = std::function<std::vector<ReportDefinition>()>;
-
-      /** Constructs a ReportingWebServlet with a report definition loader.
+      /**
+       * Constructs a ReportingWebServlet with a report service.
        * @param sessions - The available web sessions.
-       * @param client - The service locator client for membership lookups.
-       * @param loader - Loads the definitions for each authenticated request.
+       * @param reports - The service providing definitions and execution.
        */
       ReportingWebServlet(
         Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
-        Beam::ServiceLocatorClient client, DefinitionsLoader loader);
+        ReportService reports);
 
       ~ReportingWebServlet();
 
@@ -168,6 +165,7 @@ namespace Nexus {
       std::unordered_map<int, std::shared_ptr<GroupReports>> m_groups;
       Beam::OpenState m_open_state;
       Beam::RoutineHandlerGroup m_routines;
+      ReportService m_reports;
 
       ReportingWebServlet(const ReportingWebServlet&) = delete;
       ReportingWebServlet& operator=(const ReportingWebServlet&) = delete;
@@ -182,6 +180,7 @@ namespace Nexus {
         std::shared_ptr<WebPortalSession> session);
       Beam::HttpResponse on_load_report_definitions(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(
@@ -194,8 +193,6 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_cancel_group_profit_and_loss_report(
         const Beam::HttpRequest& request);
-      Beam::ServiceLocatorClient m_client;
-      DefinitionsLoader m_loader;
   };
 }
 

@@ -23,11 +23,9 @@ ReportingWebServlet::GroupReports::GroupReports()
     m_is_generating(false) {}
 
 ReportingWebServlet::ReportingWebServlet(
-  Ref<WebSessionStore<WebPortalSession>> sessions, ServiceLocatorClient client,
-  DefinitionsLoader loader)
+  Ref<WebSessionStore<WebPortalSession>> sessions, ReportService reports)
   : m_sessions(sessions.get()),
-    m_client(std::move(client)),
-    m_loader(std::move(loader)) {}
+    m_reports(std::move(reports)) {}
 
 ReportingWebServlet::~ReportingWebServlet() {
   close();
@@ -38,6 +36,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/reporting_service/load_report_definitions"), std::bind_front(
       &ReportingWebServlet::on_load_report_definitions, this));
+  slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/reporting_service/submit_report"),
+      std::bind_front(&ReportingWebServlet::on_submit_report, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/reporting_service/start_profit_and_loss_report"), std::bind_front(
       &ReportingWebServlet::on_start_profit_and_loss_report, this));
@@ -75,6 +76,7 @@ void ReportingWebServlet::close() {
       group->m_pending_requests.close();
     }
   }
+  m_reports.close();
   m_open_state.close();
 }
 
@@ -281,13 +283,73 @@ HttpResponse ReportingWebServlet::on_load_report_definitions(
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto definitions =
-    filter_report_definitions(m_loader(), session->get_account(), m_client);
+  auto definitions = m_reports.load_definitions(session->get_account());
   auto values = std::vector<Response>();
   for(auto& definition : definitions) {
     values.emplace_back(definition);
   }
   session->shuttle_response(values, out(response));
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
+  struct Parameters {
+    std::string m_report_type;
+    JsonValue m_parameters;
+    std::optional<JsonValue> m_recipients;
+    std::optional<JsonValue> m_scheduled;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("report_type", m_report_type);
+      shuttle.shuttle("parameters", m_parameters);
+      shuttle.shuttle("recipients", m_recipients);
+      shuttle.shuttle("scheduled", m_scheduled);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto submission = ReportSubmission();
+  try {
+    auto parameters = session->shuttle_parameters<Parameters>(request);
+    submission.m_report_type = std::move(parameters.m_report_type);
+    submission.m_parameters = get<JsonObject>(parameters.m_parameters);
+    if(parameters.m_recipients) {
+      for(auto& recipient :
+          get<std::vector<JsonValue>>(*parameters.m_recipients)) {
+        submission.m_recipients.push_back(parse_report_entry(recipient));
+      }
+    }
+    if(parameters.m_scheduled) {
+      if(get<bool>(*parameters.m_scheduled)) {
+        response.set_status_code(HttpStatusCode::NOT_IMPLEMENTED);
+        auto error = JsonObject();
+        error.set("error", "Report scheduling is not implemented.");
+        session->shuttle_response(JsonValue(error), out(response));
+        return response;
+      }
+    }
+  } catch(const std::exception& e) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    auto error = JsonObject();
+    error.set("error", e.what());
+    session->shuttle_response(JsonValue(error), out(response));
+    return response;
+  }
+  try {
+    auto id = m_reports.submit(session->get_account(), submission);
+    session->shuttle_response(id, out(response));
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument& e) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    auto error = JsonObject();
+    error.set("error", e.what());
+    session->shuttle_response(JsonValue(error), out(response));
+  }
   return response;
 }
 
