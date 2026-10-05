@@ -177,7 +177,7 @@ const STYLES = StyleSheet.create({
     }
   },
   status: {
-    '@container (424px < width)': {padding: '12px 10px'}
+    '@container (424px < width)': {padding: '9px 10px'}
   },
   statusContent: {alignItems: 'center'},
   content: {
