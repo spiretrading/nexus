@@ -16,7 +16,6 @@ export function ErrorMessage(props: Properties): JSX.Element {
   return (
     <div className={css(STYLES.container)}>
       <div className={css(STYLES.content)}>
-        <div className={css(STYLES.filler, STYLES.topFiller)}/>
         <img src='resources/components/error.svg'
           className={css(STYLES.errorIcon)}/>
         <div className={css(STYLES.spacer)}/>
@@ -26,7 +25,6 @@ export function ErrorMessage(props: Properties): JSX.Element {
           <Button label='Retry' onClick={props.onRetry}
             style={{width: '246px'}}/>
         </div>
-        <div className={css(STYLES.filler)}/>
       </div>
       <div className={css(STYLES.actions)}>
         <Button label='Retry' onClick={props.onRetry}
@@ -48,15 +46,8 @@ const STYLES = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     flexGrow: 1
-  },
-  filler: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0
-  },
-  topFiller: {
-    '@container (min-width: 732px)': {display: 'none'}
   },
   errorIcon: {
     width: '44px',

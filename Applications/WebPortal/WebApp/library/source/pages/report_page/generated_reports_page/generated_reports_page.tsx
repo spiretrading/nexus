@@ -425,7 +425,7 @@ const STYLES = StyleSheet.create({
   reports: {position: 'relative'},
   reportTable: {'@media (min-width: 768px)': {maxWidth: '696px'}},
   actionSheet: {
-    position: 'absolute',
+    position: 'fixed',
     bottom: 0,
     left: 0,
     width: '100%',
