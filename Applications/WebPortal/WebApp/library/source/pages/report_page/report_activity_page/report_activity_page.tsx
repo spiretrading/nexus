@@ -334,7 +334,7 @@ const STYLES = StyleSheet.create({
   jobs: {position: 'relative'},
   activityTable: {'@media (min-width: 768px)': {maxWidth: '796px'}},
   actionSheet: {
-    position: 'absolute',
+    position: 'fixed',
     bottom: 0,
     left: 0,
     width: '100%',
