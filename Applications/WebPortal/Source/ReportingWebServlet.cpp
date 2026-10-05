@@ -23,8 +23,11 @@ ReportingWebServlet::GroupReports::GroupReports()
     m_is_generating(false) {}
 
 ReportingWebServlet::ReportingWebServlet(
-  Ref<WebSessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.get()) {}
+  Ref<WebSessionStore<WebPortalSession>> sessions, ServiceLocatorClient client,
+  DefinitionsLoader loader)
+  : m_sessions(sessions.get()),
+    m_client(std::move(client)),
+    m_loader(std::move(loader)) {}
 
 ReportingWebServlet::~ReportingWebServlet() {
   close();
@@ -32,6 +35,9 @@ ReportingWebServlet::~ReportingWebServlet() {
 
 auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   auto slots = std::vector<HttpRequestSlot>();
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/reporting_service/load_report_definitions"), std::bind_front(
+      &ReportingWebServlet::on_load_report_definitions, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/reporting_service/start_profit_and_loss_report"), std::bind_front(
       &ReportingWebServlet::on_start_profit_and_loss_report, this));
@@ -254,6 +260,35 @@ void ReportingWebServlet::generate_group_reports(
         std::pair(request.m_id, std::move(group_report)));
     }
   }
+}
+
+HttpResponse ReportingWebServlet::on_load_report_definitions(
+    const HttpRequest& request) {
+  struct Response {
+    const ReportDefinition& m_definition;
+
+    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_definition.m_id);
+      shuttle.shuttle("name", m_definition.m_name);
+      shuttle.shuttle("description", m_definition.m_description);
+      shuttle.shuttle("parameters", m_definition.m_parameters);
+      shuttle.shuttle("output", m_definition.m_output);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto definitions =
+    filter_report_definitions(m_loader(), session->get_account(), m_client);
+  auto values = std::vector<Response>();
+  for(auto& definition : definitions) {
+    values.emplace_back(definition);
+  }
+  session->shuttle_response(values, out(response));
+  return response;
 }
 
 HttpResponse ReportingWebServlet::on_start_profit_and_loss_report(

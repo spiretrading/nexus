@@ -1,6 +1,7 @@
 #ifndef NEXUS_REPORTING_WEB_SERVLET_HPP
 #define NEXUS_REPORTING_WEB_SERVLET_HPP
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -21,6 +22,7 @@
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
+#include "WebPortal/ReportDefinition.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -115,12 +117,17 @@ namespace Nexus {
   class ReportingWebServlet {
     public:
 
-      /**
-       * Constructs a ReportingWebServlet.
-       * @param sessions The available web sessions.
+      /** Loads the current report definitions. */
+      using DefinitionsLoader = std::function<std::vector<ReportDefinition>()>;
+
+      /** Constructs a ReportingWebServlet with a report definition loader.
+       * @param sessions - The available web sessions.
+       * @param client - The service locator client for membership lookups.
+       * @param loader - Loads the definitions for each authenticated request.
        */
-      explicit ReportingWebServlet(
-        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
+      ReportingWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
+        Beam::ServiceLocatorClient client, DefinitionsLoader loader);
 
       ~ReportingWebServlet();
 
@@ -173,6 +180,8 @@ namespace Nexus {
         std::shared_ptr<WebPortalSession> session);
       void generate_group_reports(std::shared_ptr<GroupReports> group,
         std::shared_ptr<WebPortalSession> session);
+      Beam::HttpResponse on_load_report_definitions(
+        const Beam::HttpRequest& request);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(
@@ -185,6 +194,8 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_cancel_group_profit_and_loss_report(
         const Beam::HttpRequest& request);
+      Beam::ServiceLocatorClient m_client;
+      DefinitionsLoader m_loader;
   };
 }
 

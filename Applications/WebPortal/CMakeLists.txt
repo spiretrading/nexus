@@ -18,13 +18,25 @@ beam_configure_target(WebPortal DEPENDENCIES
 target_link_libraries(WebPortal PUBLIC BeamRoutines)
 target_compile_definitions(WebPortal PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+add_executable(WebPortalTests Tests/main.cpp Tests/ReportDefinitionTests.cpp
+  Source/ReportDefinition.cpp Source/ReportingWebServlet.cpp
+  Source/WebPortalSession.cpp)
+beam_configure_target(WebPortalTests DEPENDENCIES
+  BEAM BOOST CRYPTOPP DOCTEST OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
+target_link_libraries(WebPortalTests PUBLIC BeamRoutines)
+target_compile_definitions(WebPortalTests PRIVATE YAML_CPP_STATIC_DEFINE)
+add_custom_command(TARGET WebPortalTests POST_BUILD COMMAND WebPortalTests)
+add_dependencies(WebPortal WebPortalTests)
 if(WIN32)
   target_link_libraries(WebPortal PUBLIC Crypt32.lib)
+  target_link_libraries(WebPortalTests PUBLIC Crypt32.lib)
 endif()
 beam_install_target(WebPortal "${PROJECT_BINARY_DIR}/Application")
 install(FILES Application/config.default.yml Application/setup.py
   ../Python/setup_utils.py
   DESTINATION "${PROJECT_BINARY_DIR}/Application")
+install(DIRECTORY
+  DESTINATION "${PROJECT_BINARY_DIR}/Application/report_definitions")
 if(UNIX)
   install(PROGRAMS Application/check.sh Application/start.sh Application/stop.sh
     DESTINATION "${PROJECT_BINARY_DIR}/Application")
