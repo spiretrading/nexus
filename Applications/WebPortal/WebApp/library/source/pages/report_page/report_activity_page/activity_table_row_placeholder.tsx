@@ -46,7 +46,7 @@ function StatusCell(): JSX.Element {
   return <td className={css(STYLES.cell, STYLES.status)}>
     <div className={css(STYLES.content)}>
       <Skeleton className={css(STYLES.label)}
-        style={{width: '100px', height: '16px', flexShrink: 0}}/>
+        style={{width: '40%', height: '16px', flexShrink: 0}}/>
       <Skeleton style={{width: '80px', height: '22px', flexShrink: 0}}/>
     </div>
   </td>;
@@ -97,7 +97,7 @@ const STYLES = StyleSheet.create({
     '@container (424px < width)': {backgroundColor: 'transparent'}
   },
   status: {
-    '@container (424px < width)': {padding: '12px 10px'}
+    '@container (424px < width)': {padding: '9px 10px'}
   },
   content: {
     display: 'flex',
