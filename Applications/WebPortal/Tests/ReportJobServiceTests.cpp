@@ -20,8 +20,8 @@ namespace {
     Executor m_executor;
 
     Backend(Store store, Executor executor)
-        : m_store(std::move(store)),
-          m_executor(std::move(executor)) {}
+      : m_store(std::move(store)),
+        m_executor(std::move(executor)) {}
 
     void store(const ReportJob& job) {
       m_store(job);
@@ -57,10 +57,8 @@ TEST_SUITE("ReportJobService") {
       release.acquire();
       return 0;
     });
-    auto time_client = FixedTimeClient(
-      time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(
-      Ref(backend), &time_client);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
     auto routine = RoutineHandler(spawn([&] {
       try {
         auto id = service.submit(make_job());
@@ -88,10 +86,8 @@ TEST_SUITE("ReportJobService") {
       release.acquire();
       return 0;
     });
-    auto time_client = FixedTimeClient(
-      time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(
-      Ref(backend), &time_client);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(!id.empty());
@@ -99,6 +95,7 @@ TEST_SUITE("ReportJobService") {
     REQUIRE(queued.m_id == id);
     REQUIRE(queued.m_status == ReportJob::Status::QUEUED);
     REQUIRE(queued.m_created == time_from_string("2026-10-05 12:00:00"));
+    REQUIRE(queued.m_modified == queued.m_created);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
     job.m_parameters["count"] = 9;
     time_client.set(time_from_string("2026-10-05 12:05:00"));
@@ -108,6 +105,7 @@ TEST_SUITE("ReportJobService") {
     REQUIRE(completed.m_parameters.at("count") == 0);
     REQUIRE(completed.m_created == queued.m_created);
     REQUIRE(completed.m_completed == time_from_string("2026-10-05 12:05:00"));
+    REQUIRE(completed.m_modified == completed.m_completed);
     REQUIRE(completed.m_exit_code == 0);
     service.close();
     REQUIRE_THROWS_AS(service.submit(job), std::runtime_error);
@@ -125,10 +123,8 @@ TEST_SUITE("ReportJobService") {
       }
       throw std::runtime_error("Unable to launch process.");
     });
-    auto time_client = FixedTimeClient(
-      time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(
-      Ref(backend), &time_client);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
     auto first = service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -155,10 +151,8 @@ TEST_SUITE("ReportJobService") {
       ++calls;
       return 0;
     });
-    auto time_client = FixedTimeClient(
-      time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(
-      Ref(backend), &time_client);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
     REQUIRE_THROWS_AS(service.submit(make_job()), std::runtime_error);
     service.close();
     REQUIRE(calls == 0);
@@ -174,10 +168,8 @@ TEST_SUITE("ReportJobService") {
       release.acquire();
       return 0;
     });
-    auto time_client = FixedTimeClient(
-      time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(
-      Ref(backend), &time_client);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
     service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -194,6 +186,7 @@ TEST_SUITE("ReportJobService") {
     job.m_recipients = {DirectoryEntry::make_directory(2, "Reporting")};
     job.m_created = time_from_string("2026-10-05 12:00:00");
     job.m_completed = time_from_string("2026-10-05 12:00:01");
+    job.m_modified = job.m_completed;
     job.m_status = ReportJob::Status::FAILED;
     job.m_exit_code = 7;
     job.m_error = "Process failed.";
@@ -205,6 +198,7 @@ TEST_SUITE("ReportJobService") {
       REQUIRE(received.m_arguments == job.m_arguments);
       REQUIRE(received.m_created == job.m_created);
       REQUIRE(received.m_completed == job.m_completed);
+      REQUIRE(received.m_modified == job.m_modified);
       REQUIRE(received.m_status == job.m_status);
       REQUIRE(received.m_exit_code == job.m_exit_code);
       REQUIRE(received.m_error == job.m_error);

@@ -9,11 +9,12 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 static_assert(IsReportService<FileReportService>);
-static_assert(IsReportService<LocalReportService<
-  int (*)(const ReportJob&, std::stop_token)>>);
+static_assert(IsReportService<
+  LocalReportService<int (*)(const ReportJob&, std::stop_token)>>);
 static_assert(IsReportService<ReportService>);
 
 namespace {
@@ -30,15 +31,14 @@ namespace {
 
   static_assert(AcceptsExecutor<LvalueExecutor>);
   static_assert(!AcceptsExecutor<RvalueExecutor>);
-  static_assert(AcceptsExecutor<
-    short (*)(const ReportJob&, std::stop_token)>);
-  static_assert(!AcceptsExecutor<
-    void (*)(const ReportJob&, std::stop_token)>);
+  static_assert(AcceptsExecutor<short (*)(const ReportJob&, std::stop_token)>);
+  static_assert(!AcceptsExecutor<void (*)(const ReportJob&, std::stop_token)>);
   static_assert(!AcceptsExecutor<int (*)(ReportJob&, std::stop_token)>);
-  static_assert(!AcceptsExecutor<
-    int (*)(const ReportJob&, std::stop_token&&)>);
+  static_assert(!AcceptsExecutor<int (*)(const ReportJob&, std::stop_token&&)>);
 
   struct RvalueReportService {
+    ReportActivities load_activities(
+      const DirectoryEntry&, const ReportActivityQuery&);
     std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
     std::string submit(DirectoryEntry&&, ReportSubmission&&);
     void store(const ReportJob& job);
@@ -95,8 +95,8 @@ TEST_SUITE("ReportService") {
     REQUIRE(executions[0].m_arguments == job.m_arguments);
     auto source = std::stop_source();
     source.request_stop();
-    REQUIRE_THROWS_AS(service.execute(job, source.get_token()),
-      std::runtime_error);
+    REQUIRE_THROWS_AS(
+      service.execute(job, source.get_token()), std::runtime_error);
     REQUIRE(executions.size() == 1);
   }
 
@@ -106,8 +106,7 @@ TEST_SUITE("ReportService") {
     auto definition = make_definition();
     auto executions = Queue<ReportJob>();
     auto release = std::binary_semaphore(0);
-    auto time_client = FixedTimeClient(
-      boost::posix_time::time_from_string("2026-10-05 12:00:00"));
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto local = LocalReportService({definition}, client,
       [&] (const auto& job, auto stop) {
         executions.push(job);
@@ -116,13 +115,13 @@ TEST_SUITE("ReportService") {
         return 0;
       }, &time_client);
     auto service = ReportService(&local);
-    get<JsonObject>(*definition.m_parameters[1].m_default).set(
-      "start", "2000-01-01");
+    get<JsonObject>(
+      *definition.m_parameters[1].m_default).set("start", "2000-01-01");
     auto loaded = service.load_definitions(client.get_account());
     REQUIRE(get<JsonObject>(*loaded[0].m_parameters[1].m_default).at("start") ==
       "2026-10-01");
-    get<JsonObject>(*loaded[0].m_parameters[1].m_default).set(
-      "start", "2001-01-01");
+    get<JsonObject>(
+      *loaded[0].m_parameters[1].m_default).set("start", "2001-01-01");
     auto submission = ReportSubmission();
     submission.m_report_type = "example";
     submission.m_parameters["count"] = 5;
@@ -136,8 +135,8 @@ TEST_SUITE("ReportService") {
     REQUIRE(executed.m_account == client.get_account());
     REQUIRE(executed.m_recipients.size() == 1);
     REQUIRE(executed.m_recipients[0].m_name == client.get_account().m_name);
-    REQUIRE(executed.m_arguments ==
-      std::vector<std::string>({"5", "20261001"}));
+    REQUIRE(
+      executed.m_arguments == std::vector<std::string>({"5", "20261001"}));
     submission.m_parameters["count"] = 9;
     auto jobs = local.load_jobs();
     REQUIRE(jobs.size() == 1);
@@ -147,10 +146,10 @@ TEST_SUITE("ReportService") {
     REQUIRE(local.load_jobs()[0].m_parameters.at("count") == 5);
     service.close();
     REQUIRE(local.load_jobs()[0].m_status == ReportJob::Status::FAILED);
-    REQUIRE_THROWS_AS(service.load_definitions(client.get_account()),
-      EndOfFileException);
-    REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
-      EndOfFileException);
+    REQUIRE_THROWS_AS(
+      service.load_definitions(client.get_account()), EndOfFileException);
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), EndOfFileException);
   }
 
   TEST_CASE("submission_permissions_and_validation") {
@@ -159,17 +158,17 @@ TEST_SUITE("ReportService") {
     auto definition = make_definition();
     auto executor = [] (const auto&, auto) { return 0; };
     auto local = std::make_shared<LocalReportService<decltype(executor)>>(
-      std::vector<ReportDefinition>({definition}), client, executor);
+      std::vector({definition}), client, executor);
     auto service = ReportService(local);
     auto submission = ReportSubmission();
     submission.m_report_type = "example";
     submission.m_parameters["count"] = 0.5;
-    REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
-      std::invalid_argument);
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), std::invalid_argument);
     submission.m_parameters["count"] = 0;
     submission.m_recipients = {DirectoryEntry::STAR_DIRECTORY};
-    REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
-      std::invalid_argument);
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), std::invalid_argument);
     submission.m_recipients.clear();
     REQUIRE(service.load_definitions(client.get_account()).size() == 1);
     definition.m_access.clear();
@@ -185,15 +184,14 @@ TEST_SUITE("ReportService") {
     auto& client = environment.get_root();
     auto results = std::make_unique<Queue<int>>();
     auto observer = results.get();
-    auto executor = [results = std::move(results)] (
-        const ReportJob&, std::stop_token) {
-      results->push(7);
-      return 7;
-    };
-    auto service = ReportService(
-      std::in_place_type<LocalReportService<decltype(executor)>>,
-      std::vector<ReportDefinition>({make_definition()}), client,
-      std::move(executor));
+    auto executor =
+      [results = std::move(results)] (const ReportJob&, std::stop_token) {
+        results->push(7);
+        return 7;
+      };
+    auto service =
+      ReportService(std::in_place_type<LocalReportService<decltype(executor)>>,
+        std::vector({make_definition()}), client, std::move(executor));
     auto submission = ReportSubmission();
     submission.m_report_type = "example";
     REQUIRE(!service.submit(client.get_account(), submission).empty());

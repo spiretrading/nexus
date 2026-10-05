@@ -20,6 +20,11 @@ namespace {
   struct DefinitionService {
     int m_loads = 0;
 
+    ReportActivities load_activities(
+        const DirectoryEntry&, const ReportActivityQuery&) {
+      throw std::runtime_error("Unexpected activity query.");
+    }
+
     std::vector<ReportDefinition> load_definitions(const DirectoryEntry&) {
       ++m_loads;
       return {};
@@ -71,8 +76,8 @@ output:
 )");
   }
 
-  ReportDefinition make_definition(std::string id,
-      std::vector<std::string> access) {
+  ReportDefinition make_definition(
+      std::string id, std::vector<std::string> access) {
     auto definition = parse_report_definition(make_definition());
     definition.m_id = id;
     definition.m_access = access;
@@ -89,7 +94,7 @@ output:
 
   HttpResponse load(ReportingWebServlet& servlet, const HttpRequest& request) {
     auto slots = servlet.get_slots();
-    auto slot = std::find_if(slots.begin(), slots.end(),
+    auto slot = std::ranges::find_if(slots,
       [&] (const auto& slot) { return slot.m_predicate(request); });
     REQUIRE(slot != slots.end());
     return slot->m_slot(request);
@@ -133,8 +138,8 @@ TEST_SUITE("ReportDefinition") {
     auto& object = get<JsonObject>(encoded);
     REQUIRE(get<std::vector<JsonValue>>(object.at("access"))[0] == "Reporting");
     REQUIRE(object.at("command") == "/opt/spire/reports/profit_and_loss");
-    REQUIRE(get<JsonObject>(object.at("output")).at("media_type") ==
-      "text/csv");
+    REQUIRE(
+      get<JsonObject>(object.at("output")).at("media_type") == "text/csv");
     auto& parameters = get<std::vector<JsonValue>>(object.at("parameters"));
     REQUIRE(!get<JsonObject>(parameters[0]).get("default"));
     REQUIRE(get<JsonObject>(parameters[2]).at("default") == "USD");
@@ -175,22 +180,20 @@ TEST_SUITE("ReportDefinition") {
     auto definition = parse_report_definition(node);
     auto decoded = parse<JsonValue>(to_json(definition));
     auto& decoded_object = get<JsonObject>(decoded);
-    REQUIRE(decoded_object.at("description") ==
-      "Line one\n\"Line two\"\\file");
+    REQUIRE(decoded_object.at("description") == "Line one\n\"Line two\"\\file");
     auto& parameters =
       get<std::vector<JsonValue>>(decoded_object.at("parameters"));
     REQUIRE(get<double>(get<JsonObject>(parameters[0]).at("default")) == 0);
-    REQUIRE(get<double>(get<JsonObject>(parameters[1]).at("default")) ==
-      0.000000125);
+    REQUIRE(
+      get<double>(get<JsonObject>(parameters[1]).at("default")) == 0.000000125);
     REQUIRE(get<JsonObject>(parameters[2]).at("default") == "001");
     auto& date = get<JsonObject>(parameters[3]);
     REQUIRE(static_cast<bool>(date.get("default")));
     REQUIRE(get<JsonNull>(&date.at("default")));
-    auto& range = get<JsonObject>(
-      get<JsonObject>(parameters[4]).at("default"));
+    auto& range = get<JsonObject>(get<JsonObject>(parameters[4]).at("default"));
     REQUIRE(range.at("start") == "2026-10-01");
-    auto& entries = get<std::vector<JsonValue>>(
-      get<JsonObject>(parameters[5]).at("default"));
+    auto& entries =
+      get<std::vector<JsonValue>>(get<JsonObject>(parameters[5]).at("default"));
     REQUIRE(get<JsonObject>(entries[0]).at("id") == 42);
     REQUIRE(get<JsonObject>(entries[0]).at("name") == "001");
     test_round_trip_shuttle(definition, [&] (const auto& received) {
@@ -243,8 +246,8 @@ TEST_SUITE("ReportDefinition") {
     auto reports = DefinitionService();
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     REQUIRE(reports.m_loads == 0);
-    auto request = HttpRequest(HttpMethod::POST,
-      Uri("/api/reporting_service/load_report_definitions"));
+    auto request = HttpRequest(
+      HttpMethod::POST, Uri("/api/reporting_service/load_report_definitions"));
     REQUIRE(load(servlet, request).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     auto session = sessions.create();
@@ -262,7 +265,7 @@ TEST_SUITE("ReportDefinition") {
     auto account = client.make_account("alice", "", subgroup);
     auto other = client.make_account("bob", "", directory);
     auto sessions = WebSessionStore<WebPortalSession>();
-    auto definitions = std::vector<ReportDefinition>(
+    auto definitions = std::vector(
       {make_definition("global", {"*"}), make_definition("account", {"alice"}),
         make_definition("group", {"Reporting"}),
         make_definition("other", {"bob"}),
@@ -305,8 +308,7 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<JsonObject>(values[1]).at("id") == "other");
     auto empty = ReportingWebServlet(Ref(sessions), ReportService(
       std::in_place_type<LocalReportService<decltype(&execute)>>,
-      std::vector<ReportDefinition>(
-        {make_definition("hidden", {"alice"})}), client, execute));
+      std::vector({make_definition("hidden", {"alice"})}), client, execute));
     REQUIRE(parse_response(load(empty, request)).empty());
   }
 
@@ -333,8 +335,8 @@ TEST_SUITE("ReportDefinition") {
     values = parse_response(load(servlet, request));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("name") == "Updated report");
-    auto& parameters = get<std::vector<JsonValue>>(
-      get<JsonObject>(values[0]).at("parameters"));
+    auto& parameters =
+      get<std::vector<JsonValue>>(get<JsonObject>(values[0]).at("parameters"));
     REQUIRE(get<JsonObject>(parameters[2]).at("default") == "CAD");
     REQUIRE(get<JsonObject>(values[1]).at("id") == "second");
     definitions[0].m_access = {"other_account"};

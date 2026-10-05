@@ -1,6 +1,7 @@
 #ifndef NEXUS_FILE_REPORT_SERVICE_HPP
 #define NEXUS_FILE_REPORT_SERVICE_HPP
 #include <filesystem>
+#include <mutex>
 #include <stop_token>
 #include <Beam/IO/OpenState.hpp>
 #include "WebPortal/ReportJobService.hpp"
@@ -25,6 +26,8 @@ namespace Nexus {
 
       ~FileReportService();
 
+      ReportActivities load_activities(
+        const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
@@ -38,6 +41,7 @@ namespace Nexus {
       std::filesystem::path m_jobs_directory;
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
+      mutable std::mutex m_mutex;
       Beam::OpenState m_open_state;
       std::unique_ptr<Details::ReportJobService<
         FileReportService, Beam::TimeClient>> m_jobs;
@@ -45,6 +49,7 @@ namespace Nexus {
       FileReportService(const FileReportService&) = delete;
       FileReportService& operator =(const FileReportService&) = delete;
       std::vector<ReportDefinition> load_definitions();
+      std::vector<ReportJob> load_jobs();
       void recover();
   };
 }

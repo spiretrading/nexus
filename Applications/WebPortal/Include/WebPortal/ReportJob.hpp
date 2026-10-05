@@ -49,6 +49,9 @@ namespace Nexus {
     /** The UTC completion time, or not-a-date-time while pending. */
     boost::posix_time::ptime m_completed;
 
+    /** The latest state change time, absent in older stored jobs. */
+    std::optional<boost::posix_time::ptime> m_modified;
+
     /** The execution state. */
     Status m_status = Status::QUEUED;
 
@@ -93,6 +96,7 @@ namespace Beam {
       shuttle.shuttle("arguments", value.m_arguments);
       shuttle.shuttle("created", value.m_created);
       shuttle.shuttle("completed", value.m_completed);
+      shuttle.shuttle("modified", value.m_modified);
       shuttle.shuttle("status", value.m_status);
       shuttle.shuttle("exit_code", value.m_exit_code);
       shuttle.shuttle("error", value.m_error);

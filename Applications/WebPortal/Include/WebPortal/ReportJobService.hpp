@@ -107,6 +107,7 @@ namespace Nexus::Details {
     auto job = Beam::receive<ReportJob>(receiver);
     job.m_id = boost::uuids::to_string(boost::uuids::random_generator()());
     job.m_created = m_time_client->get_time();
+    job.m_modified = job.m_created;
     job.m_completed = boost::posix_time::not_a_date_time;
     job.m_status = ReportJob::Status::QUEUED;
     job.m_exit_code.reset();
@@ -153,6 +154,7 @@ namespace Nexus::Details {
           throw std::runtime_error("Server stopped before report execution.");
         }
         job.m_status = ReportJob::Status::RUNNING;
+        job.m_modified = m_time_client->get_time();
         Beam::park([&] {
           m_backend->store(job);
         });
@@ -172,6 +174,7 @@ namespace Nexus::Details {
         job.m_error = exception.what();
       }
       job.m_completed = m_time_client->get_time();
+      job.m_modified = job.m_completed;
       try {
         Beam::park([&] {
           m_backend->store(job);

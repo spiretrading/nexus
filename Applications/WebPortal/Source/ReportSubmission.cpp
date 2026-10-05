@@ -67,14 +67,6 @@ namespace {
     return parse<JsonValue>(to_json(value));
   }
 
-  template<typename T>
-  T decode_value(const JsonValue& value) {
-    auto buffer = from<SharedBuffer>(to_string(value));
-    auto receiver = JsonReceiver<SharedBuffer>();
-    receiver.set(Ref(buffer));
-    return receive<T>(receiver);
-  }
-
   JsonValue read_date(const JsonValue& value) {
     if(get<JsonNull>(&value)) {
       return JsonNull();
@@ -220,7 +212,7 @@ namespace {
           throw std::invalid_argument("Invalid ticker.");
         }
       }
-      auto scope = decode_value<Scope>(value);
+      auto scope = from_json<Scope>(value);
       if(scope.is_empty()) {
         return JsonNull();
       }

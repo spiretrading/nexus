@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_SERVICE_HPP
 #include <stop_token>
 #include <Beam/IO/Connection.hpp>
+#include "WebPortal/ReportActivity.hpp"
 #include "WebPortal/ReportSubmission.hpp"
 
 namespace Nexus {
@@ -11,6 +12,9 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.load_activities(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const ReportActivityQuery&>()) } ->
+        std::same_as<ReportActivities>;
     { service.load_definitions(
         std::declval<const Beam::DirectoryEntry&>()) } ->
         std::same_as<std::vector<ReportDefinition>>;
@@ -47,6 +51,10 @@ namespace Nexus {
       ReportService(const ReportService&) = default;
       ReportService(ReportService&&) = default;
 
+      /** Loads one page of pending and failed jobs submitted by an account. */
+      ReportActivities load_activities(const Beam::DirectoryEntry& account,
+        const ReportActivityQuery& query);
+
       /** Loads the definitions currently available to an account. */
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
@@ -68,6 +76,9 @@ namespace Nexus {
       struct VirtualReportService {
         virtual ~VirtualReportService() = default;
 
+        virtual ReportActivities load_activities(
+          const Beam::DirectoryEntry& account,
+          const ReportActivityQuery& query) = 0;
         virtual std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
@@ -84,6 +95,8 @@ namespace Nexus {
         template<typename... Args>
         WrappedReportService(Args&&... args);
 
+        ReportActivities load_activities(const Beam::DirectoryEntry& account,
+          const ReportActivityQuery& query) override;
         std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
@@ -106,6 +119,11 @@ namespace Nexus {
     : m_service(Beam::make_virtual_ptr<
         WrappedReportService<std::remove_cvref_t<T>>>(
           std::forward<T>(service))) {}
+
+  inline ReportActivities ReportService::load_activities(
+      const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
+    return m_service->load_activities(account, query);
+  }
 
   inline std::vector<ReportDefinition> ReportService::load_definitions(
       const Beam::DirectoryEntry& account) {
@@ -134,6 +152,12 @@ namespace Nexus {
   template<typename... Args>
   ReportService::WrappedReportService<S>::WrappedReportService(Args&&... args)
     : m_service(std::forward<Args>(args)...) {}
+
+  template<typename S>
+  ReportActivities ReportService::WrappedReportService<S>::load_activities(
+      const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
+    return m_service->load_activities(account, query);
+  }
 
   template<typename S>
   std::vector<ReportDefinition> ReportService::WrappedReportService<S>::

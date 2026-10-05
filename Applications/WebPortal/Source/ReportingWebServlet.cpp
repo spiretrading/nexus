@@ -1,4 +1,6 @@
 #include "WebPortal/ReportingWebServlet.hpp"
+#include <cmath>
+#include <limits>
 #include <Beam/Queues/QueueReader.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
@@ -39,6 +41,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/submit_report"),
       std::bind_front(&ReportingWebServlet::on_submit_report, this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/reporting_service/load_report_activities"), std::bind_front(
+      &ReportingWebServlet::on_load_report_activities, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/reporting_service/start_profit_and_loss_report"), std::bind_front(
       &ReportingWebServlet::on_start_profit_and_loss_report, this));
@@ -349,6 +354,76 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
     auto error = JsonObject();
     error.set("error", e.what());
     session->shuttle_response(JsonValue(error), out(response));
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_load_report_activities(
+    const HttpRequest& request) {
+  struct Sort {
+    double m_column;
+    double m_order;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("column", m_column);
+      shuttle.shuttle("order", m_order);
+    }
+  };
+  struct Parameters {
+    Sort m_sort;
+    double m_page_index;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("sort", m_sort);
+      shuttle.shuttle("page_index", m_page_index);
+    }
+  };
+  struct Response {
+    const ReportActivities& m_page;
+
+    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      constexpr auto READY = 1;
+      auto is_empty = m_page.m_total_count == 0;
+      shuttle.shuttle("status", READY);
+      shuttle.shuttle("is_empty", is_empty);
+      auto total_count = static_cast<double>(m_page.m_total_count);
+      shuttle.shuttle("total_count", total_count);
+      shuttle.shuttle("activities", m_page.m_activities);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto query = ReportActivityQuery();
+  try {
+    auto parameters = session->shuttle_parameters<Parameters>(request);
+    auto read_index = [] (double value, double maximum) {
+      if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
+          value > maximum) {
+        throw std::invalid_argument("Invalid report activity query.");
+      }
+      return static_cast<std::uint32_t>(value);
+    };
+    query.m_column = ReportActivityQuery::Column(read_index(
+      parameters.m_sort.m_column,
+      static_cast<int>(ReportActivityQuery::Column::DATE_MODIFIED)));
+    query.m_order = ReportActivityQuery::Order(read_index(
+      parameters.m_sort.m_order,
+      static_cast<int>(ReportActivityQuery::Order::DESCENDING)));
+    query.m_page_index = read_index(parameters.m_page_index,
+      std::numeric_limits<std::uint32_t>::max());
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto page = m_reports.load_activities(session->get_account(), query);
+    session->shuttle_response(Response(page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }
   return response;
 }

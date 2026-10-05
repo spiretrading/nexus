@@ -135,6 +135,12 @@ FileReportService::~FileReportService() {
   close();
 }
 
+ReportActivities FileReportService::load_activities(
+    const DirectoryEntry& account, const ReportActivityQuery& query) {
+  m_open_state.ensure_open();
+  return query_report_activities(load_jobs(), account, query);
+}
+
 std::vector<ReportDefinition> FileReportService::load_definitions(
     const DirectoryEntry& account) {
   m_open_state.ensure_open();
@@ -150,6 +156,8 @@ std::string FileReportService::submit(const DirectoryEntry& account,
 
 void FileReportService::store(const ReportJob& job) {
   auto path = job_directory(job, m_jobs_directory);
+  auto text = to_json(job);
+  auto lock = std::lock_guard(m_mutex);
   if(job.m_status == ReportJob::Status::QUEUED) {
     std::filesystem::create_directories(m_jobs_directory);
     if(!std::filesystem::create_directory(path)) {
@@ -160,7 +168,7 @@ void FileReportService::store(const ReportJob& job) {
   auto stream = std::ofstream();
   stream.exceptions(std::ios::failbit | std::ios::badbit);
   stream.open(temporary, std::ios::binary | std::ios::trunc);
-  stream << to_json(job);
+  stream << text;
   stream.close();
 #ifdef _WIN32
   if(job.m_status != ReportJob::Status::QUEUED) {
@@ -265,23 +273,29 @@ std::vector<ReportDefinition> FileReportService::load_definitions() {
   return definitions;
 }
 
-void FileReportService::recover() {
+std::vector<ReportJob> FileReportService::load_jobs() {
+  auto jobs = std::vector<ReportJob>();
   if(!std::filesystem::exists(m_jobs_directory)) {
-    return;
+    return jobs;
   }
   for(auto& entry : std::filesystem::directory_iterator(m_jobs_directory)) {
-    if(!entry.is_directory() ||
-        !std::filesystem::exists(entry.path() / "metadata.json")) {
+    if(!entry.is_directory()) {
       continue;
     }
-    auto stream =
-      std::ifstream(entry.path() / "metadata.json", std::ios::binary);
-    stream.exceptions(std::ios::badbit);
-    if(!stream) {
-      throw std::runtime_error("Unable to read report job metadata.");
+    auto text = std::string();
+    {
+      auto lock = std::lock_guard(m_mutex);
+      if(!std::filesystem::exists(entry.path() / "metadata.json")) {
+        continue;
+      }
+      auto stream =
+        std::ifstream(entry.path() / "metadata.json", std::ios::binary);
+      stream.exceptions(std::ios::badbit);
+      if(!stream) {
+        throw std::runtime_error("Unable to read report job metadata.");
+      }
+      text.assign(std::istreambuf_iterator<char>(stream), {});
     }
-    auto text = std::string(std::istreambuf_iterator<char>(stream), {});
-    stream.close();
     auto buffer = from<SharedBuffer>(text);
     auto receiver = JsonReceiver<SharedBuffer>();
     receiver.set(Ref(buffer));
@@ -289,11 +303,19 @@ void FileReportService::recover() {
     if(job_directory(job, m_jobs_directory) != entry.path()) {
       throw std::runtime_error("Report job directory does not match its id.");
     }
+    jobs.push_back(std::move(job));
+  }
+  return jobs;
+}
+
+void FileReportService::recover() {
+  for(auto& job : load_jobs()) {
     if(job.m_status == ReportJob::Status::QUEUED ||
         job.m_status == ReportJob::Status::RUNNING) {
       job.m_status = ReportJob::Status::FAILED;
       job.m_error = "Server stopped before report completion.";
       job.m_completed = m_time_client.get_time();
+      job.m_modified = job.m_completed;
       store(job);
     }
   }
