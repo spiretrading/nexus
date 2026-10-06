@@ -42,6 +42,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      std::string submit(const Beam::DirectoryEntry& account,
+        const ReportScheduleSubmission& submission);
       void update_schedule(const Beam::DirectoryEntry& account,
         const std::string& id, const ReportScheduleSubmission& submission);
       void share(const Beam::DirectoryEntry& account,

@@ -1,5 +1,6 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
@@ -211,6 +212,8 @@ TEST_SUITE("ReportSubmission") {
     auto body = JsonObject();
     body.set("report_type", "example");
     body["parameters"] = make_parameters(client.get_account());
+    body["recipients"] = std::vector<JsonValue>();
+    body["scheduled"] = false;
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     REQUIRE(reports.load_jobs().empty());
@@ -239,7 +242,7 @@ TEST_SUITE("ReportSubmission") {
       HttpStatusCode::BAD_REQUEST);
     body["scheduled"] = true;
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
-      HttpStatusCode::NOT_IMPLEMENTED);
+      HttpStatusCode::BAD_REQUEST);
     body["scheduled"] = false;
     body["parameters"] = JsonObject();
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
@@ -266,4 +269,143 @@ TEST_SUITE("ReportSubmission") {
       HttpStatusCode::NOT_FOUND);
     REQUIRE(reports.load_jobs().size() == 2);
   }
+
+  TEST_CASE("scheduled_submission") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto recipient =
+      client.make_account("Recipient", "", DirectoryEntry::make_directory(0));
+    auto definition = make_definition();
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto executions = std::atomic_int(0);
+    auto local = LocalReportService({definition}, client,
+      [&] (const auto&, auto) { ++executions; return 0; }, &time);
+    auto service = ReportService(&local);
+    auto submission = ReportScheduleSubmission(
+      ReportSubmission("example", make_parameters(client.get_account()),
+        {recipient, recipient}), time_from_string("2026-10-06 09:00:00"),
+      {}, "America/Toronto");
+    auto id = service.submit(client.get_account(), submission);
+    auto schedule = service.load_schedule(client.get_account(), id);
+    REQUIRE(!id.empty());
+    REQUIRE(schedule.m_account == client.get_account());
+    REQUIRE(schedule.m_created == time.get_time());
+    REQUIRE(schedule.m_parameters.at("currency") == 840);
+    REQUIRE(schedule.m_parameters.at("count") == 0);
+    REQUIRE(schedule.m_recipients == std::vector({recipient}));
+    REQUIRE(schedule.m_start_time == submission.m_start_time);
+    REQUIRE(schedule.m_run_time == submission.m_start_time);
+    REQUIRE(schedule.m_time_zone == "America/Toronto");
+    REQUIRE(!schedule.m_repeat_interval);
+    REQUIRE(service.query(
+      client.get_account(), ScheduledReportQuery()).m_filtered_count == 1);
+    submission.m_start_time = time_from_string("2026-01-31 09:00:00");
+    submission.m_repeat_interval =
+      ReportSchedule::Interval(1, ReportSchedule::Interval::Unit::MONTH);
+    definition.m_command = "updated_program";
+    local.set_definitions({definition});
+    auto recurring = service.submit(client.get_account(), submission);
+    REQUIRE(recurring != id);
+    schedule = service.load_schedule(client.get_account(), recurring);
+    REQUIRE(schedule.m_start_time == submission.m_start_time);
+    REQUIRE(schedule.m_run_time == time_from_string("2026-10-31 09:00:00"));
+    REQUIRE(schedule.m_definition.m_command == "updated_program");
+    REQUIRE(schedule.m_repeat_interval->m_count == 1);
+    REQUIRE(schedule.m_repeat_interval->m_unit ==
+      ReportSchedule::Interval::Unit::MONTH);
+    submission.m_repeat_interval.reset();
+    for(auto& start : {"2026-10-05 09:00:00", "2026-10-06 08:00:00"}) {
+      submission.m_start_time = time_from_string(start);
+      REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
+        std::invalid_argument);
+    }
+    submission.m_start_time = time_from_string("2026-10-07 09:00:00");
+    submission.m_repeat_interval =
+      ReportSchedule::Interval(0, ReportSchedule::Interval::Unit::DAY);
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), std::invalid_argument);
+    submission.m_repeat_interval.reset();
+    submission.m_report.m_recipients = {DirectoryEntry::STAR_DIRECTORY};
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), std::invalid_argument);
+    submission.m_report.m_recipients.clear();
+    submission.m_report.m_parameters["count"] = 1.5;
+    REQUIRE_THROWS_AS(
+      service.submit(client.get_account(), submission), std::invalid_argument);
+    submission.m_report.m_parameters["count"] = 1;
+    definition.m_access.clear();
+    local.set_definitions({definition});
+    REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
+      ReportNotFoundException);
+    REQUIRE(local.load_schedules().size() == 2);
+    REQUIRE(local.load_jobs().empty());
+    REQUIRE(executions.load() == 0);
+    local.close();
+    REQUIRE_THROWS_AS(service.submit(client.get_account(), submission),
+      EndOfFileException);
+  }
+
+  TEST_CASE("scheduled_submission_endpoint") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto reports = LocalReportService({make_definition()}, client,
+      [] (const auto&, auto) { return 0; }, &time);
+    auto sessions = WebSessionStore<WebPortalSession>();
+    auto session = sessions.create();
+    auto servlet = ReportingWebServlet(Ref(sessions), &reports);
+    auto body = get<JsonObject>(parse<JsonValue>(R"({
+      "report_type":"example", "parameters":{}, "recipients":[],
+      "scheduled":true, "schedule_date_time":"20261007T090000",
+      "repeats":false, "repeat_interval":null,
+      "time_zone":"America/Toronto"})"));
+    body["parameters"] = make_parameters(client.get_account());
+    REQUIRE(submit(servlet, *session, body).get_status_code() ==
+      HttpStatusCode::UNAUTHORIZED);
+    session->set_account(client.get_account());
+    auto response = submit(servlet, *session, body);
+    REQUIRE(response.get_status_code() == HttpStatusCode::OK);
+    auto id = get<std::string>(parse<JsonValue>(response.get_body()));
+    auto schedule = reports.load_schedule(client.get_account(), id);
+    REQUIRE(!schedule.m_repeat_interval);
+    REQUIRE(schedule.m_start_time == time_from_string("2026-10-07 09:00:00"));
+    REQUIRE(schedule.m_time_zone == "America/Toronto");
+    auto valid = to_string(body);
+    auto inputs = std::vector({
+      std::pair("time_zone", JsonValue("Not/AZone")),
+      std::pair("time_zone", JsonValue("")),
+      std::pair("time_zone", JsonValue(JsonNull())),
+      std::pair("schedule_date_time", JsonValue("20261005T090000")),
+      std::pair("schedule_date_time", JsonValue("20270314T023000")),
+      std::pair("schedule_date_time", JsonValue(JsonNull())),
+      std::pair("repeats", JsonValue(true)),
+      std::pair(
+        "repeat_interval", parse<JsonValue>(R"({"count":1,"unit":0})"))});
+    for(auto& [name, value] : inputs) {
+      body = get<JsonObject>(parse<JsonValue>(valid));
+      body[name] = value;
+      REQUIRE(submit(servlet, *session, body).get_status_code() ==
+        HttpStatusCode::BAD_REQUEST);
+    }
+    REQUIRE(reports.load_schedules().size() == 1);
+    body = get<JsonObject>(parse<JsonValue>(valid));
+    body["repeats"] = true;
+    body.set("schedule_date_time", "20260131T090000");
+    body["repeat_interval"] = parse<JsonValue>(R"({"count":1,"unit":2})");
+    response = submit(servlet, *session, body);
+    REQUIRE(response.get_status_code() == HttpStatusCode::OK);
+    auto recurring = get<std::string>(parse<JsonValue>(response.get_body()));
+    REQUIRE(recurring != id);
+    schedule = reports.load_schedule(client.get_account(), recurring);
+    REQUIRE(schedule.m_run_time == time_from_string("2026-10-31 09:00:00"));
+    REQUIRE(reports.load_jobs().empty());
+    reports.set_definitions({});
+    REQUIRE(submit(servlet, *session, body).get_status_code() ==
+      HttpStatusCode::NOT_FOUND);
+    REQUIRE(reports.load_schedules().size() == 2);
+    reports.close();
+    REQUIRE(submit(servlet, *session, body).get_status_code() ==
+      HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+
 }

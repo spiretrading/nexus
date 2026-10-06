@@ -50,6 +50,13 @@ namespace Nexus {
   /** Parses a positive calendar interval from a report input. */
   ReportSchedule::Interval parse_report_interval(const Beam::JsonValue& value);
 
+  /** Validates a new schedule and computes its first future run. */
+  ReportSchedule prepare_report_schedule(
+    const std::vector<ReportDefinition>& definitions,
+    const Beam::DirectoryEntry& account,
+    const ReportScheduleSubmission& submission,
+    Beam::ServiceLocatorClient& client, boost::posix_time::ptime now);
+
   /** Validates edited settings and computes the schedule's next run. */
   ReportSchedule prepare_report_schedule(
     const ReportSchedule& schedule, const ReportScheduleSubmission& submission,

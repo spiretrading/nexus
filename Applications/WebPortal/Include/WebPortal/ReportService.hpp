@@ -58,6 +58,9 @@ namespace Nexus {
         std::same_as<std::vector<ReportDefinition>>;
     { service.submit(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const ReportSubmission&>()) } -> std::same_as<std::string>;
+    { service.submit(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const ReportScheduleSubmission&>()) } ->
+          std::same_as<std::string>;
     { service.store(std::declval<const ReportJob&>()) } -> std::same_as<void>;
     { service.execute(std::declval<const ReportJob&>(), std::stop_token()) } ->
         std::same_as<int>;
@@ -131,6 +134,10 @@ namespace Nexus {
       /** Validates and queues a submission, returning its job identifier. */
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+
+      /** Validates and saves a schedule, returning its identifier. */
+      std::string submit(const Beam::DirectoryEntry& account,
+        const ReportScheduleSubmission& submission);
 
       /**
        * Updates a schedule after checking ownership and permissions.
@@ -222,6 +229,8 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) = 0;
+        virtual std::string submit(const Beam::DirectoryEntry& account,
+          const ReportScheduleSubmission& submission) = 0;
         virtual void update_schedule(
           const Beam::DirectoryEntry& account, const std::string& id,
           const ReportScheduleSubmission& submission) = 0;
@@ -265,6 +274,8 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) override;
+        std::string submit(const Beam::DirectoryEntry& account,
+          const ReportScheduleSubmission& submission) override;
         void update_schedule(
           const Beam::DirectoryEntry& account, const std::string& id,
           const ReportScheduleSubmission& submission) override;
@@ -336,6 +347,11 @@ namespace Nexus {
 
   inline std::string ReportService::submit(const Beam::DirectoryEntry& account,
       const ReportSubmission& submission) {
+    return m_service->submit(account, submission);
+  }
+
+  inline std::string ReportService::submit(const Beam::DirectoryEntry& account,
+      const ReportScheduleSubmission& submission) {
     return m_service->submit(account, submission);
   }
 
@@ -442,6 +458,13 @@ namespace Nexus {
   template<typename S>
   std::string ReportService::WrappedReportService<S>::submit(
       const Beam::DirectoryEntry& account, const ReportSubmission& submission) {
+    return m_service->submit(account, submission);
+  }
+
+  template<typename S>
+  std::string ReportService::WrappedReportService<S>::submit(
+      const Beam::DirectoryEntry& account,
+      const ReportScheduleSubmission& submission) {
     return m_service->submit(account, submission);
   }
 

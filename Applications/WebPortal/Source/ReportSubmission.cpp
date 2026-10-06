@@ -11,6 +11,8 @@
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/StandardCurrencies.hpp"
@@ -305,6 +307,26 @@ ReportSchedule::Interval Nexus::parse_report_interval(const JsonValue& value) {
     static_cast<int>(ReportSchedule::Interval::Unit::YEAR));
   return ReportSchedule::Interval(static_cast<std::uint32_t>(count),
     ReportSchedule::Interval::Unit(static_cast<int>(unit)));
+}
+
+ReportSchedule Nexus::prepare_report_schedule(
+    const std::vector<ReportDefinition>& definitions,
+    const DirectoryEntry& account, const ReportScheduleSubmission& submission,
+    ServiceLocatorClient& client, ptime now) {
+  auto job =
+    prepare_report_job(definitions, account, submission.m_report, client);
+  auto utc =
+    convert_report_time(submission.m_start_time, submission.m_time_zone, "UTC");
+  if(!submission.m_repeat_interval && utc <= now) {
+    throw std::invalid_argument("A one-time start must be in the future.");
+  }
+  auto result = ReportSchedule(uuids::to_string(uuids::random_generator()()),
+    std::move(job.m_account), std::move(job.m_definition),
+    std::move(job.m_parameters), std::move(job.m_recipients), now,
+    submission.m_start_time, submission.m_start_time,
+    submission.m_repeat_interval, submission.m_time_zone);
+  result.m_run_time = next_report_run(result, now);
+  return result;
 }
 
 ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,

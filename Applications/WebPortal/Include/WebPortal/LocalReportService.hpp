@@ -84,6 +84,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      std::string submit(const Beam::DirectoryEntry& account,
+        const ReportScheduleSubmission& submission);
       void update_schedule(const Beam::DirectoryEntry& account,
         const std::string& id, const ReportScheduleSubmission& submission);
       void share(const Beam::DirectoryEntry& account,
@@ -259,6 +261,16 @@ namespace Nexus {
     m_open_state.ensure_open();
     return m_service->submit(prepare_report_job(
       load_definitions(), account, submission, m_client));
+  }
+
+  template<IsReportExecutor E>
+  std::string LocalReportService<E>::submit(const Beam::DirectoryEntry& account,
+      const ReportScheduleSubmission& submission) {
+    m_open_state.ensure_open();
+    auto schedule = prepare_report_schedule(load_definitions(), account,
+      submission, m_client, m_time_client.get_time());
+    store(schedule);
+    return schedule.m_id;
   }
 
   template<IsReportExecutor E>

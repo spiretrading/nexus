@@ -62,6 +62,10 @@ namespace {
       throw std::runtime_error("Unexpected report submission.");
     }
 
+    std::string submit(const DirectoryEntry&, const ReportScheduleSubmission&) {
+      throw std::runtime_error("Unexpected report submission.");
+    }
+
     void share(const DirectoryEntry&, const std::vector<std::string>&,
         const std::vector<DirectoryEntry>&) {
       throw std::runtime_error("Unexpected report sharing.");

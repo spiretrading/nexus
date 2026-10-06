@@ -48,6 +48,7 @@ namespace {
     ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&);
     std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
     std::string submit(DirectoryEntry&&, ReportSubmission&&);
+    std::string submit(DirectoryEntry&&, ReportScheduleSubmission&&);
     void share(const DirectoryEntry&, const std::vector<std::string>&,
       const std::vector<DirectoryEntry>&);
     void remove(const DirectoryEntry&, const std::vector<std::string>&);
