@@ -59,6 +59,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto executions = 0;
     auto local = LocalReportService({schedule.m_definition}, client,
       [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto service = ReportService(&local);
@@ -115,6 +116,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto submission = make_submission(schedule);
@@ -163,6 +165,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto sessions = WebSessionStore<WebPortalSession>();

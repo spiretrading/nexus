@@ -43,6 +43,7 @@ TEST_SUITE("ReportDownload") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
@@ -100,6 +101,7 @@ TEST_SUITE("ReportDownload") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(bob);
     job.m_recipients = {group};
@@ -147,6 +149,7 @@ TEST_SUITE("ReportDownload") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
@@ -170,6 +173,7 @@ TEST_SUITE("ReportDownload") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     job.m_id = "report /?";

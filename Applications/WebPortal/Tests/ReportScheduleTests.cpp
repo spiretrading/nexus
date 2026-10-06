@@ -56,6 +56,7 @@ TEST_SUITE("ReportSchedule") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto schedule = make_schedule(client.get_account());
@@ -97,6 +98,7 @@ TEST_SUITE("ReportSchedule") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto schedule = make_schedule(client.get_account());
     schedule.m_recipients = {client.get_account()};

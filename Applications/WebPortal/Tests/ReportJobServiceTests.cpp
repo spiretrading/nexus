@@ -5,6 +5,7 @@
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/ReportJobService.hpp"
 
@@ -77,7 +78,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto routine = RoutineHandler(spawn([&] {
       try {
         auto id = service.submit(make_job());
@@ -106,7 +108,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(!id.empty());
@@ -143,7 +146,8 @@ TEST_SUITE("ReportJobService") {
       throw std::runtime_error("Unable to launch process.");
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto first = service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -171,10 +175,162 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     REQUIRE_THROWS_AS(service.submit(make_job()), std::runtime_error);
     service.close();
     REQUIRE(calls == 0);
+  }
+
+  TEST_CASE("completion_store_retry") {
+    auto exit_code = 0;
+    SUBCASE("completed") {}
+    SUBCASE("failed") {
+      exit_code = 7;
+    }
+    auto attempts = Queue<ReportJob>();
+    auto is_failing = std::atomic_bool(true);
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED ||
+          job.m_status == ReportJob::Status::FAILED) {
+        attempts.push(job);
+        if(is_failing.load()) {
+          throw std::runtime_error("Unable to store result.");
+        }
+      }
+    }, [&] (const auto&, auto) {
+      ++executions;
+      return exit_code;
+    });
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = TriggerTimer();
+    auto service = ReportJobService(Ref(backend), &time, 1, &timer);
+    auto id = service.submit(make_job());
+    auto first = attempts.pop();
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    time.set(time_from_string("2026-10-06 12:05:00"));
+    timer.trigger();
+    auto second = attempts.pop();
+    REQUIRE(second.m_completed == first.m_completed);
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    is_failing = false;
+    timer.trigger();
+    auto third = attempts.pop();
+    service.close();
+    auto saved = backend.load_job(id);
+    REQUIRE(saved->m_status == first.m_status);
+    REQUIRE(saved->m_completed == first.m_completed);
+    REQUIRE(saved->m_modified == first.m_modified);
+    REQUIRE(saved->m_exit_code == exit_code);
+    REQUIRE(saved->m_error == first.m_error);
+    REQUIRE(third.m_id == id);
+    REQUIRE(executions == 1);
+  }
+
+  TEST_CASE("completion_store_shutdown") {
+    auto is_permanent = false;
+    SUBCASE("recovers") {}
+    SUBCASE("unavailable") {
+      is_permanent = true;
+    }
+    auto attempts = Queue<ReportJob>();
+    auto count = 0;
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        ++count;
+        attempts.push(job);
+        if(count == 1 || is_permanent) {
+          throw std::runtime_error("Unable to store result.");
+        }
+      }
+    }, [&] (const auto&, auto) {
+      ++executions;
+      return 0;
+    });
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto id = service.submit(make_job());
+    attempts.pop();
+    service.close();
+    REQUIRE(count == 2);
+    REQUIRE(executions == 1);
+    if(is_permanent) {
+      REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    } else {
+      REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::COMPLETED);
+    }
+  }
+
+  TEST_CASE("pending_result_actions") {
+    auto attempts = Queue<ReportJob>();
+    auto count = 0;
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        ++count;
+        attempts.push(job);
+        if(count == 1) {
+          throw std::runtime_error("Unable to store result.");
+        }
+      }
+    }, [] (const auto&, auto) { return 0; });
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto job = make_job();
+    auto id = service.submit(job);
+    attempts.pop();
+    SUBCASE("cancel") {
+      service.cancel(job.m_account, {id});
+      service.close();
+      REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::COMPLETED);
+    }
+    SUBCASE("share") {
+      auto recipient = DirectoryEntry::make_account(2);
+      service.share(job.m_account, {id}, {recipient});
+      service.close();
+      REQUIRE(backend.load_job(id)->m_recipients == std::vector({recipient}));
+      REQUIRE(count == 2);
+    }
+    SUBCASE("remove") {
+      service.remove(job.m_account, {id});
+      service.close();
+      REQUIRE(!backend.load_job(id));
+      REQUIRE(count == 1);
+    }
+  }
+
+  TEST_CASE("retry_pending_failed_result") {
+    auto attempts = Queue<ReportJob>();
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::FAILED) {
+        attempts.push(job);
+        throw std::runtime_error("Unable to store result.");
+      } else if(job.m_status == ReportJob::Status::COMPLETED) {
+        attempts.push(job);
+      }
+    }, [&] (const auto&, auto) {
+      auto count = ++executions;
+      if(count == 1) {
+        return 7;
+      }
+      return 0;
+    });
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto job = make_job();
+    auto id = service.submit(job);
+    REQUIRE(attempts.pop().m_status == ReportJob::Status::FAILED);
+    service.retry(job.m_account, {id}, [] (const auto&) {});
+    REQUIRE(attempts.pop().m_status == ReportJob::Status::COMPLETED);
+    service.close();
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::COMPLETED);
+    REQUIRE(backend.load_job(id)->m_exit_code == 0);
+    REQUIRE(executions == 2);
   }
 
   TEST_CASE("shutdown") {
@@ -188,7 +344,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -212,7 +369,8 @@ TEST_SUITE("ReportJobService") {
         return 0;
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -249,7 +407,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -278,7 +437,8 @@ TEST_SUITE("ReportJobService") {
     completed.m_status = ReportJob::Status::COMPLETED;
     backend.store(completed);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     for(auto& id : {"other", "missing"}) {
       REQUIRE_THROWS_AS(
         service.cancel(job.m_account, {"failed", id}), ReportNotFoundException);
@@ -319,7 +479,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(started.pop() == id);
@@ -356,7 +517,8 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -404,7 +566,8 @@ TEST_SUITE("ReportJobService") {
     });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:02:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto blocker = service.submit(make_job());
     REQUIRE(started.pop().m_id == blocker);
     service.retry(job.m_account, {job.m_id, job.m_id}, [] (const auto&) {});
@@ -457,7 +620,8 @@ TEST_SUITE("ReportJobService") {
     });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     REQUIRE_THROWS_AS(
       service.retry(job.m_account, {job.m_id}, [] (const auto&) {}),
       std::runtime_error);
@@ -484,7 +648,8 @@ TEST_SUITE("ReportJobService") {
       });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
     REQUIRE(started.pop() == job.m_id);
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
@@ -521,7 +686,8 @@ TEST_SUITE("ReportJobService") {
         return 0;
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, 2);
+    auto service = ReportJobService(Ref(backend), &time_client, 2,
+      Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job();
     job.m_arguments = {"0"};
     service.submit(job);
@@ -564,7 +730,8 @@ TEST_SUITE("ReportJobService") {
         return 0;
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = ReportJobService(Ref(backend), &time_client, CONCURRENCY);
+    auto service = ReportJobService(Ref(backend), &time_client, CONCURRENCY,
+      Timer(std::in_place_type<TriggerTimer>));
     for(auto i = 0; i != CONCURRENCY; ++i) {
       auto job = make_job();
       job.m_account = DirectoryEntry::make_account(i + 1);
@@ -590,9 +757,11 @@ TEST_SUITE("ReportJobService") {
         return 0;
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    REQUIRE_THROWS_AS((ReportJobService(Ref(backend), &time_client, 0)),
+    REQUIRE_THROWS_AS((ReportJobService(Ref(backend), &time_client, 0,
+      Timer(std::in_place_type<TriggerTimer>))),
       std::invalid_argument);
-    auto service = ReportJobService(Ref(backend), &time_client, 1);
+    auto service = ReportJobService(Ref(backend), &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto alice = make_job();
     auto first = service.submit(alice);
     REQUIRE(started.pop() == first);

@@ -33,6 +33,7 @@ TEST_SUITE("ReportCancellation") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

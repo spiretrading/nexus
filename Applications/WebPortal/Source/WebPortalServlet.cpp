@@ -28,7 +28,8 @@ WebPortalServlet::WebPortalServlet(
     m_reporting_servlet(Ref(m_sessions), ReportService(
       std::in_place_type<FileReportService>, "report_definitions", "reports",
       clients.get_service_locator_client(), clients.get_time_client(),
-      report_concurrency, Timer(std::in_place_type<LiveTimer>, seconds(1)))),
+      report_concurrency, Timer(std::in_place_type<LiveTimer>, seconds(1)),
+      Timer(std::in_place_type<LiveTimer>, seconds(1)))),
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {

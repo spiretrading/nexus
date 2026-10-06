@@ -50,6 +50,7 @@ TEST_SUITE("ReportScheduleDeletion") {
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto schedule = make_schedule(client.get_account());
@@ -127,6 +128,7 @@ TEST_SUITE("ReportScheduleDeletion") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto parameters = JsonObject();

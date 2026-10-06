@@ -210,6 +210,7 @@ TEST_SUITE("ReportSubmission") {
     auto reports = LocalReportService({definition}, client,
       [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
@@ -284,6 +285,7 @@ TEST_SUITE("ReportSubmission") {
     auto executions = std::atomic_int(0);
     auto local = LocalReportService({definition}, client,
       [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto submission = ReportScheduleSubmission(
@@ -356,6 +358,7 @@ TEST_SUITE("ReportSubmission") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto reports = LocalReportService({make_definition()}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

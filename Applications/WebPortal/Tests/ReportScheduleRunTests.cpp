@@ -45,6 +45,7 @@ TEST_SUITE("ReportScheduleRun") {
     auto started = Queue<ReportJob>();
     auto local = LocalReportService({definition}, client,
       [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 2,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto service = ReportService(&local);

@@ -93,6 +93,7 @@ TEST_SUITE("ReportService") {
         return 7;
       },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto job =
@@ -132,6 +133,7 @@ TEST_SUITE("ReportService") {
         release.acquire();
         return 0;
       }, &time_client, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     get<JsonObject>(
@@ -179,6 +181,7 @@ TEST_SUITE("ReportService") {
     auto local = std::make_shared<LocalReportService<decltype(executor)>>(
       std::vector({definition}), client, executor,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(local);
     auto submission = ReportSubmission();
@@ -214,6 +217,7 @@ TEST_SUITE("ReportService") {
       ReportService(std::in_place_type<LocalReportService<decltype(executor)>>,
         std::vector({make_definition()}), client, std::move(executor),
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto submission = ReportSubmission();
     submission.m_report_type = "example";

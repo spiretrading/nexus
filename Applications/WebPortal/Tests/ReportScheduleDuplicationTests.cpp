@@ -53,6 +53,7 @@ TEST_SUITE("ReportScheduleDuplication") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService(
       {definition}, client, [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(source);
     auto service = ReportService(&local);
@@ -95,6 +96,7 @@ TEST_SUITE("ReportScheduleDuplication") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({source.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     for(auto& start : {"2026-10-05 09:00:00", "2026-10-06 08:00:00"}) {
       source.m_start_time = time_from_string(start);
@@ -152,6 +154,7 @@ TEST_SUITE("ReportScheduleDuplication") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({source.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(source);
     auto sessions = WebSessionStore<WebPortalSession>();

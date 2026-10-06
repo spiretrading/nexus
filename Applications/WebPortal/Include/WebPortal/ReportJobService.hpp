@@ -11,11 +11,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scope/scope_exit.hpp>
@@ -60,10 +62,12 @@ namespace Nexus {
        * @param backend The backend providing storage and execution.
        * @param time_client Initializes the time client.
        * @param max_concurrency The positive global execution limit.
+       * @param timer The timer used to retry saving completed jobs.
        */
       template<Beam::Initializes<T> TF>
       ReportJobService(Beam::Ref<Backend> backend, TF&& time_client,
-        std::size_t max_concurrency) requires IsReportJobBackend<Backend>;
+        std::size_t max_concurrency, Beam::Timer timer) requires
+          IsReportJobBackend<Backend>;
 
       ~ReportJobService();
 
@@ -107,23 +111,30 @@ namespace Nexus {
       };
       Backend* m_backend;
       Beam::local_ptr_t<TimeClient> m_time_client;
+      Beam::Timer m_timer;
+      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_ticks;
       mutable Beam::Mutex m_mutex;
       bool m_is_closed;
       std::unordered_map<std::string, std::shared_ptr<Job>> m_pending;
+      std::unordered_map<std::string, ReportJob> m_results;
       std::unordered_map<unsigned int, std::deque<std::shared_ptr<Job>>> m_jobs;
       std::deque<unsigned int> m_accounts;
       Beam::ConditionVariable m_is_available;
       Beam::RoutineHandlerGroup m_routines;
+      Beam::RoutineHandler m_retry_routine;
 
       std::vector<ReportJob> load_jobs(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
+      bool store_result(ReportJob& job);
+      void flush_results();
       void enqueue(const std::shared_ptr<Job>& entry);
       void finish(const std::shared_ptr<Job>& entry);
       void run();
+      void run_retries();
   };
 
   template<typename B, typename T>
-  ReportJobService(Beam::Ref<B>, T&&, std::size_t) ->
+  ReportJobService(Beam::Ref<B>, T&&, std::size_t, Beam::Timer) ->
     ReportJobService<B, std::remove_cvref_t<T>>;
 
   template<typename B, typename T> requires
@@ -131,14 +142,19 @@ namespace Nexus {
   template<Beam::Initializes<T> TF>
   ReportJobService<B, T>::ReportJobService(
       Beam::Ref<Backend> backend, TF&& time_client,
-      std::size_t max_concurrency) requires IsReportJobBackend<Backend>
+      std::size_t max_concurrency, Beam::Timer timer) requires
+      IsReportJobBackend<Backend>
       : m_backend(backend.get()),
         m_time_client(std::forward<TF>(time_client)),
+        m_timer(std::move(timer)),
+        m_ticks(std::make_shared<Beam::Queue<Beam::Timer::Result>>()),
         m_is_closed(false) {
     if(max_concurrency == 0) {
       throw std::invalid_argument("Report concurrency must be positive.");
     }
     try {
+      m_timer.get_publisher().monitor(m_ticks);
+      m_retry_routine = Beam::spawn([&] { run_retries(); });
       for(auto i = std::size_t(0); i != max_concurrency; ++i) {
         m_routines.spawn([&] {
           run();
@@ -243,6 +259,7 @@ namespace Nexus {
       Beam::park([&] {
         m_backend->store(entry->m_job);
       });
+      m_results.erase(entry->m_job.m_id);
       enqueue(entry);
     }
   }
@@ -274,6 +291,7 @@ namespace Nexus {
         Beam::park([&] {
           m_backend->store(job);
         });
+        m_results.erase(job.m_id);
       }
     }
   }
@@ -305,6 +323,7 @@ namespace Nexus {
       Beam::park([&] {
         m_backend->store(job);
       });
+      m_results.erase(job.m_id);
       auto entry = m_pending.find(job.m_id);
       if(entry != m_pending.end()) {
         entry->second->m_job = std::move(job);
@@ -332,6 +351,7 @@ namespace Nexus {
       Beam::park([&] {
         m_backend->remove(job.m_id);
       });
+      m_results.erase(job.m_id);
     }
   }
 
@@ -345,6 +365,8 @@ namespace Nexus {
         return;
       }
       m_is_closed = true;
+      m_timer.cancel();
+      m_ticks->close();
       for(auto& [id, entry] : m_pending) {
         stops.push_back(entry->m_stop);
       }
@@ -354,6 +376,9 @@ namespace Nexus {
       stop.request_stop();
     }
     m_routines.wait();
+    m_retry_routine.wait();
+    auto lock = std::lock_guard(m_mutex);
+    flush_results();
   }
 
   template<typename B, typename T> requires
@@ -367,9 +392,15 @@ namespace Nexus {
       if(!seen.insert(id).second) {
         continue;
       }
-      auto job = Beam::park([&] {
-        return m_backend->load_job(id);
-      });
+      auto job = [&] () -> std::optional<ReportJob> {
+        auto i = m_results.find(id);
+        if(i != m_results.end()) {
+          return i->second;
+        }
+        return Beam::park([&] {
+          return m_backend->load_job(id);
+        });
+      }();
       if(!job || job->m_account != account ||
           account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
         throw ReportNotFoundException();
@@ -377,6 +408,38 @@ namespace Nexus {
       jobs.push_back(std::move(*job));
     }
     return jobs;
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool ReportJobService<B, T>::store_result(ReportJob& job) {
+    try {
+      if(job.m_completed.is_special()) {
+        job.m_completed = m_time_client->get_time();
+        job.m_modified = job.m_completed;
+      }
+      Beam::park([&] {
+        m_backend->store(job);
+      });
+      return true;
+    } catch(const std::exception&) {
+      std::cerr << "Failed to store report job " << job.m_id <<
+        " with status " << job.m_status << ".\n" <<
+        BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+      return false;
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::flush_results() {
+    for(auto i = m_results.begin(); i != m_results.end();) {
+      if(store_result(i->second)) {
+        i = m_results.erase(i);
+      } else {
+        ++i;
+      }
+    }
   }
 
   template<typename B, typename T> requires
@@ -480,16 +543,34 @@ namespace Nexus {
       if(entry->m_job.m_status == ReportJob::Status::CANCELLED) {
         continue;
       }
+      if(!store_result(job)) {
+        auto is_first = m_results.empty();
+        m_results.emplace(job.m_id, std::move(job));
+        if(is_first && !m_is_closed) {
+          m_timer.start();
+        }
+      }
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::run_retries() {
+    while(true) {
       try {
-        job.m_completed = m_time_client->get_time();
-        job.m_modified = job.m_completed;
-        Beam::park([&] {
-          m_backend->store(job);
-        });
-      } catch(const std::exception&) {
-        std::cerr << "Failed to store report job " << job.m_id <<
-          " with status " << job.m_status << ".\n" <<
-          BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+        if(m_ticks->pop() == Beam::Timer::Result::CANCELED) {
+          return;
+        }
+      } catch(const Beam::PipeBrokenException&) {
+        return;
+      }
+      auto lock = std::lock_guard(m_mutex);
+      if(m_is_closed) {
+        return;
+      }
+      flush_results();
+      if(!m_results.empty()) {
+        m_timer.start();
       }
     }
   }

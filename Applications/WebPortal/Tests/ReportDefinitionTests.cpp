@@ -335,6 +335,7 @@ TEST_SUITE("ReportDefinition") {
         make_definition("renamed", {"carol"}), make_definition("none", {})});
     auto reports = LocalReportService(definitions, client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
@@ -375,6 +376,7 @@ TEST_SUITE("ReportDefinition") {
       std::in_place_type<LocalReportService<decltype(&execute)>>,
       std::vector({make_definition("hidden", {"alice"})}), client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>)));
     REQUIRE(parse_response(load(empty, request)).empty());
   }
@@ -386,6 +388,7 @@ TEST_SUITE("ReportDefinition") {
     auto definitions = std::vector<ReportDefinition>();
     auto reports = LocalReportService(definitions, client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();

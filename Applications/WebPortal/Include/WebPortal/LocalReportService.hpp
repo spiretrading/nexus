@@ -40,11 +40,12 @@ namespace Nexus {
        * @param time_client The client supplying job timestamps.
        * @param max_concurrency The positive global execution limit.
        * @param timer The timer controlling automatic schedule checks.
+       * @param retry_timer The timer used to retry saving completed jobs.
        */
       LocalReportService(std::vector<ReportDefinition> definitions,
         Beam::ServiceLocatorClient client, Executor executor,
         Beam::TimeClient time_client, std::size_t max_concurrency,
-        Beam::Timer timer);
+        Beam::Timer timer, Beam::Timer retry_timer);
 
       ~LocalReportService();
 
@@ -119,7 +120,7 @@ namespace Nexus {
       std::vector<ReportDefinition> definitions,
       Beam::ServiceLocatorClient client, Executor executor,
       Beam::TimeClient time_client, std::size_t max_concurrency,
-      Beam::Timer timer)
+      Beam::Timer timer, Beam::Timer retry_timer)
       : m_executor(std::move(executor)),
         m_client(std::move(client)),
         m_time_client(std::move(time_client)),
@@ -127,7 +128,8 @@ namespace Nexus {
     try {
       m_service = std::make_unique<
         ReportJobService<LocalReportService, Beam::TimeClient>>(
-          Beam::Ref(*this), m_time_client, max_concurrency);
+          Beam::Ref(*this), m_time_client, max_concurrency,
+          std::move(retry_timer));
       m_scheduler.emplace(Beam::Ref(*this), Beam::Ref(*m_service), m_client,
         m_time_client, std::move(timer));
     } catch(const std::exception&) {

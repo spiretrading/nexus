@@ -57,6 +57,7 @@ TEST_SUITE("ReportRetry") {
         return 0;
       },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(job);
     auto other = job;
@@ -121,6 +122,7 @@ TEST_SUITE("ReportRetry") {
     auto local = LocalReportService(
       {job.m_definition}, client, [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(job);
     auto restricted = job;
@@ -167,6 +169,7 @@ TEST_SUITE("ReportRetry") {
     auto local = LocalReportService(
       {job.m_definition}, client, [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>));
     local.store(job);
     REQUIRE_NOTHROW(validate_report_retries({job}, {job.m_definition}, client));

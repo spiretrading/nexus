@@ -54,14 +54,17 @@ namespace {
       std::unordered_map<std::string, ReportJob> m_jobs;
       mutable std::mutex m_mutex;
       Queue<ReportJob> m_states;
+      Queue<ReportJob> m_failed_results;
       Executor m_executor;
       bool m_is_commit_failing;
       bool m_is_ready_failing;
+      bool m_is_result_failing;
 
       explicit Backend(Executor executor)
         : m_executor(std::move(executor)),
           m_is_commit_failing(false),
-          m_is_ready_failing(false) {}
+          m_is_ready_failing(false),
+          m_is_result_failing(false) {}
 
       std::vector<ReportDefinition> load_definitions(const DirectoryEntry&) {
         return m_definitions;
@@ -112,6 +115,13 @@ namespace {
 
       void store(const ReportJob& job) {
         auto lock = std::lock_guard(m_mutex);
+        if(m_is_result_failing &&
+            (job.m_status == ReportJob::Status::COMPLETED ||
+              job.m_status == ReportJob::Status::FAILED)) {
+          m_is_result_failing = false;
+          m_failed_results.push(job);
+          throw std::runtime_error("Unable to store result.");
+        }
         m_jobs[job.m_id] = job;
         m_states.push(job);
       }
@@ -213,7 +223,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(source);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     auto count = std::max(1u, boost::thread::hardware_concurrency()) - 1;
@@ -264,7 +275,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(source);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 2);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 2,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto first = started.pop();
@@ -304,7 +316,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(source);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto job = started.pop();
@@ -362,7 +375,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(valid);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
@@ -398,7 +412,8 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     {
       auto timer = ScheduleTimer();
-      auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+      auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+        Timer(std::in_place_type<TriggerTimer>));
       auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
         TimeClient(&time), &timer);
       REQUIRE(backend.load_jobs().size() == 1);
@@ -413,7 +428,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.m_is_commit_failing = false;
     {
       auto timer = ScheduleTimer();
-      auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+      auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+        Timer(std::in_place_type<TriggerTimer>));
       auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
         TimeClient(&time), &timer);
       REQUIRE(started.pop().m_id == id);
@@ -450,7 +466,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.m_is_ready_failing = true;
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     REQUIRE(started.pop().m_id == older.m_id);
@@ -476,7 +493,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(source);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
@@ -500,6 +518,42 @@ TEST_SUITE("ReportScheduleService") {
     worker.close();
   }
 
+  TEST_CASE("one_time_completion_store_retry") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_repeat_interval.reset();
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto&, auto) {
+      ++executions;
+      return 0;
+    });
+    backend.m_definitions = {source.m_definition};
+    backend.m_is_result_failing = true;
+    backend.store(source);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto retry_timer = TriggerTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      &retry_timer);
+    auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
+      TimeClient(&time), &timer);
+    auto result = backend.m_failed_results.pop();
+    timer.trigger();
+    REQUIRE(backend.load_schedules().size() == 1);
+    retry_timer.trigger();
+    REQUIRE(wait_for_terminal(backend).m_status ==
+      ReportJob::Status::COMPLETED);
+    timer.trigger();
+    REQUIRE(backend.load_schedules().empty());
+    REQUIRE(backend.load_jobs().size() == 1);
+    REQUIRE(backend.load_job(result.m_id)->m_status ==
+      ReportJob::Status::COMPLETED);
+    REQUIRE(executions == 1);
+    scheduler.close();
+    worker.close();
+  }
+
   TEST_CASE("recover_committed_one_time_job") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -518,7 +572,8 @@ TEST_SUITE("ReportScheduleService") {
     backend.store(job);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
-    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     REQUIRE(started.pop().m_id == job.m_id);

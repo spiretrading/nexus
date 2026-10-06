@@ -147,14 +147,16 @@ namespace {
 FileReportService::FileReportService(
     std::filesystem::path definitions_directory,
     std::filesystem::path jobs_directory, ServiceLocatorClient client,
-    TimeClient time_client, std::size_t max_concurrency, Timer timer)
+    TimeClient time_client, std::size_t max_concurrency, Timer timer,
+    Timer retry_timer)
     : m_definitions_directory(std::filesystem::absolute(definitions_directory)),
       m_jobs_directory(std::filesystem::absolute(jobs_directory)),
       m_client(std::move(client)),
       m_time_client(std::move(time_client)) {
   try {
     recover();
-    m_jobs.emplace(Ref(*this), m_time_client, max_concurrency);
+    m_jobs.emplace(
+      Ref(*this), m_time_client, max_concurrency, std::move(retry_timer));
     m_schedules.emplace(
       Ref(*this), Ref(*m_jobs), m_client, m_time_client, std::move(timer));
   } catch(const std::exception&) {
