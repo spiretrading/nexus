@@ -16,7 +16,7 @@ using namespace Nexus;
 WebPortalServlet::WebPortalServlet(
   ServiceLocatorWebServlet::ClientsBuilder clients_builder,
   ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
-  Clients clients)
+  Clients clients, std::size_t report_concurrency)
   : m_file_store("web_app"),
     m_service_locator_servlet(Ref(m_sessions), std::move(clients_builder),
       std::move(session_clients_builder)),
@@ -26,7 +26,8 @@ WebPortalServlet::WebPortalServlet(
     m_compliance_servlet(Ref(m_sessions)),
     m_reporting_servlet(Ref(m_sessions), ReportService(
       std::in_place_type<FileReportService>, "report_definitions", "reports",
-      clients.get_service_locator_client(), clients.get_time_client())),
+      clients.get_service_locator_client(), clients.get_time_client(),
+      report_concurrency)),
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {

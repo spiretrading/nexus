@@ -2,6 +2,7 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/FileReportService.hpp"
 #include "WebPortal/LocalReportService.hpp"
@@ -89,7 +90,8 @@ TEST_SUITE("ReportService") {
         }
         executions.push_back(job);
         return 7;
-      });
+      },
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(&local);
     auto job =
       ReportJob("job-id", {}, {}, make_definition(), {}, {"5", "20261001"});
@@ -127,7 +129,7 @@ TEST_SUITE("ReportService") {
         auto cancel = std::stop_callback(stop, [&] { release.release(); });
         release.acquire();
         return 0;
-      }, &time_client);
+      }, &time_client, 1);
     auto service = ReportService(&local);
     get<JsonObject>(
       *definition.m_parameters[1].m_default).set("start", "2000-01-01");
@@ -172,7 +174,8 @@ TEST_SUITE("ReportService") {
     auto definition = make_definition();
     auto executor = [] (const auto&, auto) { return 0; };
     auto local = std::make_shared<LocalReportService<decltype(executor)>>(
-      std::vector({definition}), client, executor);
+      std::vector({definition}), client, executor,
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(local);
     auto submission = ReportSubmission();
     submission.m_report_type = "example";
@@ -205,7 +208,8 @@ TEST_SUITE("ReportService") {
       };
     auto service =
       ReportService(std::in_place_type<LocalReportService<decltype(executor)>>,
-        std::vector({make_definition()}), client, std::move(executor));
+        std::vector({make_definition()}), client, std::move(executor),
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto submission = ReportSubmission();
     submission.m_report_type = "example";
     REQUIRE(!service.submit(client.get_account(), submission).empty());

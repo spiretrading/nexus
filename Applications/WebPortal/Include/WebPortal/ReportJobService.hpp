@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_JOB_SERVICE_HPP
 #include <algorithm>
 #include <concepts>
+#include <deque>
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -10,9 +11,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <Beam/Queues/Queue.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Serialization/ShuttleClone.hpp>
+#include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -38,7 +39,8 @@ namespace Nexus {
   };
 
   /**
-   * Stores submitted reports and executes them in the background.
+   * Queues reports by account and limits concurrent execution.
+   * Executes at most one report per account.
    * @tparam B The backend providing job storage and execution.
    * @tparam T The time client or pointer supplying job timestamps.
    */
@@ -58,10 +60,11 @@ namespace Nexus {
        * @tparam TF The time client initializer type.
        * @param backend The backend providing storage and execution.
        * @param time_client Initializes the time client.
+       * @param max_concurrency The positive global execution limit.
        */
       template<Beam::Initializes<T> TF>
-      ReportJobService(Beam::Ref<Backend> backend, TF&& time_client) requires
-        IsReportJobBackend<Backend>;
+      ReportJobService(Beam::Ref<Backend> backend, TF&& time_client,
+        std::size_t max_concurrency) requires IsReportJobBackend<Backend>;
 
       ~ReportJobService();
 
@@ -105,30 +108,44 @@ namespace Nexus {
       mutable Beam::Mutex m_mutex;
       bool m_is_closed;
       std::unordered_map<std::string, std::shared_ptr<Job>> m_pending;
-      Beam::Queue<std::shared_ptr<Job>> m_jobs;
-      Beam::RoutineHandler m_routine;
+      std::unordered_map<unsigned int, std::deque<std::shared_ptr<Job>>> m_jobs;
+      std::deque<unsigned int> m_accounts;
+      Beam::ConditionVariable m_is_available;
+      Beam::RoutineHandlerGroup m_routines;
 
       std::vector<ReportJob> load_jobs(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
+      void enqueue(const std::shared_ptr<Job>& entry);
+      void finish(const std::shared_ptr<Job>& entry);
       void run();
   };
 
   template<typename B, typename T>
-  ReportJobService(Beam::Ref<B>, T&&) ->
+  ReportJobService(Beam::Ref<B>, T&&, std::size_t) ->
     ReportJobService<B, std::remove_cvref_t<T>>;
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
   template<Beam::Initializes<T> TF>
   ReportJobService<B, T>::ReportJobService(
-      Beam::Ref<Backend> backend, TF&& time_client) requires
-      IsReportJobBackend<Backend>
+      Beam::Ref<Backend> backend, TF&& time_client,
+      std::size_t max_concurrency) requires IsReportJobBackend<Backend>
       : m_backend(backend.get()),
         m_time_client(std::forward<TF>(time_client)),
         m_is_closed(false) {
-    m_routine = Beam::spawn([&] {
-      run();
-    });
+    if(max_concurrency == 0) {
+      throw std::invalid_argument("Report concurrency must be positive.");
+    }
+    try {
+      for(auto i = std::size_t(0); i != max_concurrency; ++i) {
+        m_routines.spawn([&] {
+          run();
+        });
+      }
+    } catch(const std::exception&) {
+      close();
+      throw;
+    }
   }
 
   template<typename B, typename T> requires
@@ -158,8 +175,7 @@ namespace Nexus {
     Beam::park([&] {
       m_backend->store(job);
     });
-    m_pending.emplace(id, entry);
-    m_jobs.push(entry);
+    enqueue(entry);
     return id;
   }
 
@@ -281,8 +297,7 @@ namespace Nexus {
       Beam::park([&] {
         m_backend->store(entry->m_job);
       });
-      m_pending.emplace(entry->m_job.m_id, entry);
-      m_jobs.push(entry);
+      enqueue(entry);
     }
   }
 
@@ -299,12 +314,12 @@ namespace Nexus {
       for(auto& [id, entry] : m_pending) {
         stops.push_back(entry->m_stop);
       }
-      m_jobs.close();
+      m_is_available.notify_all();
     }
     for(auto& stop : stops) {
       stop.request_stop();
     }
-    m_routine.wait();
+    m_routines.wait();
   }
 
   template<typename B, typename T> requires
@@ -332,13 +347,52 @@ namespace Nexus {
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::enqueue(const std::shared_ptr<Job>& entry) {
+    m_pending.emplace(entry->m_job.m_id, entry);
+    auto account = entry->m_job.m_account.m_id;
+    auto [queue, is_new] = m_jobs.try_emplace(account);
+    queue->second.push_back(entry);
+    if(is_new) {
+      m_accounts.push_back(account);
+      m_is_available.notify_one();
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::finish(const std::shared_ptr<Job>& entry) {
+    m_pending.erase(entry->m_job.m_id);
+    auto account = entry->m_job.m_account.m_id;
+    auto queue = m_jobs.find(account);
+    if(queue->second.empty()) {
+      m_jobs.erase(queue);
+    } else {
+      m_accounts.push_back(account);
+      m_is_available.notify_one();
+    }
+    if(m_is_closed && m_pending.empty()) {
+      m_is_available.notify_all();
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
   void ReportJobService<B, T>::run() {
     while(true) {
       auto entry = std::shared_ptr<Job>();
-      try {
-        entry = m_jobs.pop();
-      } catch(const Beam::PipeBrokenException&) {
-        return;
+      {
+        auto lock = std::unique_lock(m_mutex);
+        while(m_accounts.empty()) {
+          if(m_is_closed && m_pending.empty()) {
+            return;
+          }
+          m_is_available.wait(lock);
+        }
+        auto account = m_accounts.front();
+        m_accounts.pop_front();
+        auto& queue = m_jobs.at(account);
+        entry = queue.front();
+        queue.pop_front();
       }
       auto job = ReportJob();
       auto stop = entry->m_stop.get_token();
@@ -346,7 +400,7 @@ namespace Nexus {
         {
           auto lock = std::lock_guard(m_mutex);
           if(entry->m_job.m_status == ReportJob::Status::CANCELLED) {
-            m_pending.erase(entry->m_job.m_id);
+            finish(entry);
             continue;
           }
           job = entry->m_job;
@@ -388,8 +442,8 @@ namespace Nexus {
         job.m_error = exception.what();
       }
       auto lock = std::lock_guard(m_mutex);
+      auto complete = boost::scope::scope_exit([&] { finish(entry); });
       if(entry->m_job.m_status == ReportJob::Status::CANCELLED) {
-        m_pending.erase(job.m_id);
         continue;
       }
       try {
@@ -403,7 +457,6 @@ namespace Nexus {
           " with status " << job.m_status << ".\n" <<
           BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       }
-      m_pending.erase(job.m_id);
     }
   }
 }

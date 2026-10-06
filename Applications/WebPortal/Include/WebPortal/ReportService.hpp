@@ -330,6 +330,21 @@ namespace Nexus {
     return service.load_schedule(account, duplicate);
   }
 
+  /**
+   * Queues an immediate job using an owned schedule's report settings.
+   * @param service The service that loads and submits the report.
+   * @param account The account requesting execution.
+   * @param id The schedule identifier.
+   * @return The submitted job identifier.
+   */
+  std::string run_schedule(IsReportService auto& service,
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    auto schedule = service.load_schedule(account, id);
+    auto submission = ReportSubmission(schedule.m_definition.m_id,
+      std::move(schedule.m_parameters), std::move(schedule.m_recipients));
+    return service.submit(account, submission);
+  }
+
   template<IsReportService T, typename... Args>
   ReportService::ReportService(std::in_place_type_t<T>, Args&&... args)
     : m_service(Beam::make_virtual_ptr<WrappedReportService<T>>(

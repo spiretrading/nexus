@@ -3,6 +3,7 @@
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -51,7 +52,8 @@ TEST_SUITE("ScheduledReport") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(&local);
     auto account = client.get_account();
     REQUIRE(service.query(account, ScheduledReportQuery()).m_is_empty);
@@ -131,7 +133,8 @@ TEST_SUITE("ScheduledReport") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto schedule = make_schedule("schedule", client.get_account());
     schedule.m_recipients = {client.get_account()};
     schedule.m_repeat_interval =
@@ -162,7 +165,8 @@ TEST_SUITE("ScheduledReport") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     local.store(make_schedule("schedule", client.get_account()));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

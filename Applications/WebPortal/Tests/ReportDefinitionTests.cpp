@@ -2,6 +2,7 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
@@ -331,7 +332,8 @@ TEST_SUITE("ReportDefinition") {
         make_definition("group", {"Reporting"}),
         make_definition("other", {"bob"}),
         make_definition("renamed", {"carol"}), make_definition("none", {})});
-    auto reports = LocalReportService(definitions, client, execute);
+    auto reports = LocalReportService(definitions, client, execute,
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(account);
@@ -369,7 +371,8 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<JsonObject>(values[1]).at("id") == "other");
     auto empty = ReportingWebServlet(Ref(sessions), ReportService(
       std::in_place_type<LocalReportService<decltype(&execute)>>,
-      std::vector({make_definition("hidden", {"alice"})}), client, execute));
+      std::vector({make_definition("hidden", {"alice"})}), client, execute,
+      TimeClient(std::in_place_type<LocalTimeClient>), 1));
     REQUIRE(parse_response(load(empty, request)).empty());
   }
 
@@ -378,7 +381,8 @@ TEST_SUITE("ReportDefinition") {
     auto& client = environment.get_root();
     auto sessions = WebSessionStore<WebPortalSession>();
     auto definitions = std::vector<ReportDefinition>();
-    auto reports = LocalReportService(definitions, client, execute);
+    auto reports = LocalReportService(definitions, client, execute,
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(client.get_account());

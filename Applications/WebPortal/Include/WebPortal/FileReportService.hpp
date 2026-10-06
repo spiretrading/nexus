@@ -19,10 +19,12 @@ namespace Nexus {
        * @param jobs_directory - The directory for job metadata and output.
        * @param client - The client for permission and membership lookups.
        * @param time_client - The client supplying job timestamps.
+       * @param max_concurrency - The positive global execution limit.
        */
       FileReportService(std::filesystem::path definitions_directory,
         std::filesystem::path jobs_directory,
-        Beam::ServiceLocatorClient client, Beam::TimeClient time_client);
+        Beam::ServiceLocatorClient client, Beam::TimeClient time_client,
+        std::size_t max_concurrency);
 
       ~FileReportService();
 

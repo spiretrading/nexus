@@ -1,5 +1,6 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -52,7 +53,8 @@ TEST_SUITE("ReportSchedule") {
     auto direct =
       client.make_account("Direct", "", DirectoryEntry::make_directory(0));
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(&local);
     auto schedule = make_schedule(client.get_account());
     schedule.m_recipients = {group, direct};
@@ -91,7 +93,8 @@ TEST_SUITE("ReportSchedule") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto schedule = make_schedule(client.get_account());
     schedule.m_recipients = {client.get_account()};
     local.store(schedule);

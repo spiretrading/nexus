@@ -2,6 +2,7 @@
 #include <semaphore>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -53,7 +54,8 @@ TEST_SUITE("ReportRetry") {
         executions.push(value);
         release.acquire();
         return 0;
-      });
+      },
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     local.store(job);
     auto other = job;
     other.m_id = "other";
@@ -115,7 +117,8 @@ TEST_SUITE("ReportRetry") {
     auto& client = environment.get_root();
     auto job = make_job(client.get_account());
     auto local = LocalReportService(
-      {job.m_definition}, client, [] (const auto&, auto) { return 0; });
+      {job.m_definition}, client, [] (const auto&, auto) { return 0; },
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     local.store(job);
     auto restricted = job;
     restricted.m_id = "restricted";
@@ -159,7 +162,8 @@ TEST_SUITE("ReportRetry") {
       job.m_recipients = {bob};
     }
     auto local = LocalReportService(
-      {job.m_definition}, client, [] (const auto&, auto) { return 0; });
+      {job.m_definition}, client, [] (const auto&, auto) { return 0; },
+      TimeClient(std::in_place_type<LocalTimeClient>), 1);
     local.store(job);
     REQUIRE_NOTHROW(validate_report_retries({job}, {job.m_definition}, client));
     client.store(alice, bob, Permissions());

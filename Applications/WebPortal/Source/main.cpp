@@ -21,6 +21,7 @@ namespace {
   struct Configuration {
     IpAddress m_interface;
     std::vector<IpAddress> m_addresses;
+    std::size_t m_report_concurrency;
 
     static Configuration parse(const YAML::Node& config);
   };
@@ -33,6 +34,12 @@ namespace {
       addresses.push_back(config.m_interface);
       config.m_addresses =
         extract<std::vector<IpAddress>>(node, "addresses", addresses);
+      constexpr auto DEFAULT_REPORT_CONCURRENCY = std::size_t(4);
+      config.m_report_concurrency = extract<std::size_t>(
+        node, "report_concurrency", DEFAULT_REPORT_CONCURRENCY);
+      if(config.m_report_concurrency == 0) {
+        throw std::runtime_error("Report concurrency must be positive.");
+      }
       return config;
     }, std::runtime_error("Failed to parse configuration."));
   }
@@ -72,8 +79,8 @@ int main(int argc, const char** argv) {
           service_locator_client_config.m_address);
       };
     auto server = WebPortalServletContainer(init(std::move(clients_builder),
-      std::move(session_clients_builder), Clients(&clients)),
-      init(service_config.m_interface));
+      std::move(session_clients_builder), Clients(&clients),
+      service_config.m_report_concurrency), init(service_config.m_interface));
     wait_for_kill_event();
     clients.close();
   } catch(...) {

@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Serialization/ShuttleClone.hpp>
-#include <Beam/TimeService/LocalTimeClient.hpp>
 #include "WebPortal/ReportAccess.hpp"
 #include "WebPortal/ReportJobService.hpp"
 #include "WebPortal/ReportService.hpp"
@@ -35,24 +34,16 @@ namespace Nexus {
       using Executor = E;
 
       /**
-       * Constructs a local report service using the local clock.
-       * @param definitions - The initial report definitions.
-       * @param client - The client for permission and membership lookups.
-       * @param executor - Executes prepared jobs and observes shutdown.
-       */
-      LocalReportService(std::vector<ReportDefinition> definitions,
-        Beam::ServiceLocatorClient client, Executor executor);
-
-      /**
-       * Constructs a local report service.
-       * @param definitions - The initial report definitions.
-       * @param client - The client for permission and membership lookups.
-       * @param executor - Executes prepared jobs and observes shutdown.
-       * @param time_client - The client supplying job timestamps.
+       * Constructs a local report service with an execution limit.
+       * @param definitions The initial report definitions.
+       * @param client The client for permission and membership lookups.
+       * @param executor Executes jobs, possibly concurrently across accounts.
+       * @param time_client The client supplying job timestamps.
+       * @param max_concurrency The positive global execution limit.
        */
       LocalReportService(std::vector<ReportDefinition> definitions,
         Beam::ServiceLocatorClient client, Executor executor,
-        Beam::TimeClient time_client);
+        Beam::TimeClient time_client, std::size_t max_concurrency);
 
       ~LocalReportService();
 
@@ -128,16 +119,8 @@ namespace Nexus {
   template<IsReportExecutor E>
   LocalReportService<E>::LocalReportService(
       std::vector<ReportDefinition> definitions,
-      Beam::ServiceLocatorClient client, Executor executor)
-    : LocalReportService(std::move(definitions), std::move(client),
-        std::move(executor), Beam::TimeClient(
-          std::in_place_type<Beam::LocalTimeClient>)) {}
-
-  template<IsReportExecutor E>
-  LocalReportService<E>::LocalReportService(
-      std::vector<ReportDefinition> definitions,
       Beam::ServiceLocatorClient client, Executor executor,
-      Beam::TimeClient time_client)
+      Beam::TimeClient time_client, std::size_t max_concurrency)
       : m_executor(std::move(executor)),
         m_client(std::move(client)),
         m_time_client(std::move(time_client)),
@@ -145,7 +128,7 @@ namespace Nexus {
     try {
       m_service = std::make_unique<
         ReportJobService<LocalReportService, Beam::TimeClient>>(
-          Beam::Ref(*this), m_time_client);
+          Beam::Ref(*this), m_time_client, max_concurrency);
     } catch(const std::exception&) {
       m_open_state.close();
       throw;

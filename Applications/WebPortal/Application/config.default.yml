@@ -1,5 +1,6 @@
 ---
 server:
+  report_concurrency: 4
   interface: "$local_interface:8080"
   addresses: ["$global_interface:8080", "$local_interface:8080"]
 

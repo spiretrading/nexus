@@ -1,5 +1,6 @@
 #include <barrier>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -41,7 +42,8 @@ TEST_SUITE("ReportDeletion") {
       client.make_directory("Group", DirectoryEntry::make_directory(0));
     auto recipient = client.make_account("Recipient", "", group);
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto job = make_job(client.get_account());
     job.m_recipients = {group};
     local.store(job);
@@ -98,7 +100,8 @@ TEST_SUITE("ReportDeletion") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(&local);
     auto job = make_job(client.get_account());
     local.store(job);
@@ -135,7 +138,8 @@ TEST_SUITE("ReportDeletion") {
     auto recipient = client.make_account(
       "Recipient", "", DirectoryEntry::make_directory(0));
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto job = make_job(client.get_account());
     local.store(job);
     auto ready = std::barrier(3);

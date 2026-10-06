@@ -57,7 +57,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto executions = 0;
     auto local = LocalReportService({schedule.m_definition}, client,
-      [&] (const auto&, auto) { ++executions; return 0; }, &time);
+      [&] (const auto&, auto) { ++executions; return 0; }, &time, 1);
     local.store(schedule);
     auto service = ReportService(&local);
     auto submission = make_submission(schedule);
@@ -112,7 +112,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto schedule = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time);
+      [] (const auto&, auto) { return 0; }, &time, 1);
     local.store(schedule);
     auto submission = make_submission(schedule);
     submission.m_start_time = time_from_string("2026-01-31 10:00:00");
@@ -159,7 +159,7 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto schedule = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time);
+      [] (const auto&, auto) { return 0; }, &time, 1);
     local.store(schedule);
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

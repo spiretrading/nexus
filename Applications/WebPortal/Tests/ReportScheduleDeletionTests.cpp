@@ -1,6 +1,7 @@
 #include <barrier>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -46,7 +47,8 @@ TEST_SUITE("ReportScheduleDeletion") {
       client.make_directory("Group", DirectoryEntry::make_directory(0));
     auto recipient = client.make_account("Recipient", "", group);
     auto local =
-      LocalReportService({}, client, [] (const auto&, auto) { return 0; });
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1);
     auto service = ReportService(&local);
     auto schedule = make_schedule(client.get_account());
     schedule.m_recipients = {group, recipient};
@@ -122,7 +124,7 @@ TEST_SUITE("ReportScheduleDeletion") {
     auto schedule = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time);
+      [] (const auto&, auto) { return 0; }, &time, 1);
     local.store(schedule);
     auto parameters = JsonObject();
     parameters["count"] = 2;
