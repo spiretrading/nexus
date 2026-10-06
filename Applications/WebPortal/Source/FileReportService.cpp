@@ -135,6 +135,12 @@ FileReportService::~FileReportService() {
   close();
 }
 
+GeneratedReports FileReportService::load_reports(
+    const DirectoryEntry& account, const GeneratedReportQuery& query) {
+  m_open_state.ensure_open();
+  return query_generated_reports(load_jobs(), account, query, m_client);
+}
+
 ReportActivities FileReportService::load_activities(
     const DirectoryEntry& account, const ReportActivityQuery& query) {
   m_open_state.ensure_open();

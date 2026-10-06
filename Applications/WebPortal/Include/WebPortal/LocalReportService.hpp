@@ -60,6 +60,8 @@ namespace Nexus {
       /** Returns job snapshots in submission order. */
       std::vector<ReportJob> load_jobs() const;
 
+      GeneratedReports load_reports(
+        const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
       ReportActivities load_activities(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
       std::vector<ReportDefinition> load_definitions(
@@ -136,6 +138,13 @@ namespace Nexus {
   std::vector<ReportJob> LocalReportService<E>::load_jobs() const {
     auto lock = std::lock_guard(m_mutex);
     return Beam::shuttle_clone(m_jobs);
+  }
+
+  template<IsReportExecutor E>
+  GeneratedReports LocalReportService<E>::load_reports(
+      const Beam::DirectoryEntry& account, const GeneratedReportQuery& query) {
+    m_open_state.ensure_open();
+    return query_generated_reports(load_jobs(), account, query, m_client);
   }
 
   template<IsReportExecutor E>

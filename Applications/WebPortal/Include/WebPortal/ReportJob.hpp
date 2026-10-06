@@ -65,6 +65,9 @@ namespace Nexus {
     std::string m_error;
   };
 
+  /** Formats configured parameter values in definition order for display. */
+  std::vector<std::string> format_report_parameters(const ReportJob& job);
+
   inline std::ostream& operator <<(
       std::ostream& out, ReportJob::Status status) {
     if(status == ReportJob::Status::QUEUED) {
