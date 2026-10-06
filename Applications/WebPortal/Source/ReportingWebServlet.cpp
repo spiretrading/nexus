@@ -57,6 +57,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/reporting_service/update_scheduled_report"),
     std::bind_front(&ReportingWebServlet::on_update_scheduled_report, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/reporting_service/duplicate_scheduled_report"),
+    std::bind_front(&ReportingWebServlet::on_duplicate_scheduled_report, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
     std::bind_front(&ReportingWebServlet::on_load_report, this));
@@ -768,6 +771,45 @@ HttpResponse ReportingWebServlet::on_update_scheduled_report(
   try {
     m_reports.update_schedule(
       session->get_account(), parameters.m_id, submission);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_duplicate_scheduled_report(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    if(parameters.m_id.empty()) {
+      throw std::invalid_argument("Missing schedule identifier.");
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto schedule =
+      duplicate_schedule(m_reports, session->get_account(), parameters.m_id);
+    session->shuttle_response(make_scheduled_report(schedule), out(response));
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

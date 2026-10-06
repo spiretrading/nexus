@@ -50,6 +50,9 @@ namespace Nexus {
     std::vector<ScheduledReport> m_schedules;
   };
 
+  /** Builds the public display values of a saved schedule. */
+  ScheduledReport make_scheduled_report(const ReportSchedule& schedule);
+
   /** Queries schedules owned by an account, newest first. */
   ScheduledReports query_scheduled_reports(
     const std::vector<ReportSchedule>& schedules,

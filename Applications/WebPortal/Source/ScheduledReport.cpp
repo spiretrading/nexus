@@ -21,6 +21,12 @@ namespace {
   }
 }
 
+ScheduledReport Nexus::make_scheduled_report(const ReportSchedule& schedule) {
+  return ScheduledReport(schedule.m_id, schedule.m_definition.m_name,
+    format_report_parameters(schedule.m_definition, schedule.m_parameters),
+    schedule.m_repeat_interval.has_value(), schedule.m_run_time.date());
+}
+
 ScheduledReports Nexus::query_scheduled_reports(
     const std::vector<ReportSchedule>& schedules, const DirectoryEntry& account,
     const ScheduledReportQuery& query) {
@@ -64,10 +70,7 @@ ScheduledReports Nexus::query_scheduled_reports(
     std::size_t(query.m_page_index) * ScheduledReportQuery::PAGE_SIZE;
   auto end = std::min(start + ScheduledReportQuery::PAGE_SIZE, matches.size());
   for(auto i = start; i != end; ++i) {
-    auto& schedule = *matches[i];
-    result.m_schedules.emplace_back(schedule.m_id, schedule.m_definition.m_name,
-      format_report_parameters(schedule.m_definition, schedule.m_parameters),
-      schedule.m_repeat_interval.has_value(), schedule.m_run_time.date());
+    result.m_schedules.push_back(make_scheduled_report(*matches[i]));
   }
   return result;
 }

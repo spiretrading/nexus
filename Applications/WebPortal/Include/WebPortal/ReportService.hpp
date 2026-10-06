@@ -298,6 +298,24 @@ namespace Nexus {
       Beam::VirtualPtr<VirtualReportService> m_service;
   };
 
+  /**
+   * Duplicates an owned schedule using the rules for submitting a new schedule.
+   * @param service The service that loads and submits the schedule.
+   * @param account The account requesting the duplicate.
+   * @param id The source schedule identifier.
+   * @return The newly saved schedule.
+   */
+  ReportSchedule duplicate_schedule(IsReportService auto& service,
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    auto source = service.load_schedule(account, id);
+    auto submission = ReportScheduleSubmission(
+      ReportSubmission(source.m_definition.m_id, std::move(source.m_parameters),
+        std::move(source.m_recipients)), source.m_start_time,
+      source.m_repeat_interval, source.m_time_zone);
+    auto duplicate = service.submit(account, submission);
+    return service.load_schedule(account, duplicate);
+  }
+
   template<IsReportService T, typename... Args>
   ReportService::ReportService(std::in_place_type_t<T>, Args&&... args)
     : m_service(Beam::make_virtual_ptr<WrappedReportService<T>>(
@@ -535,6 +553,8 @@ namespace Nexus {
   void ReportService::WrappedReportService<S>::close() {
     m_service->close();
   }
+
+
 }
 
 #endif
