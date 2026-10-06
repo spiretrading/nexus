@@ -3,6 +3,7 @@ export * from './date_filter_options';
 export * from './generated_reports_controller';
 export * from './generated_reports_model';
 export * from './generated_reports_page';
+export * from './http_generated_reports_model';
 export * from './local_generated_reports_model';
 export * from './report_table';
 export * from './report_table_row';

@@ -10,6 +10,8 @@ import { ReportParameterDefinition } from './report_parameter_definition';
 import { ReportParameterInput } from './report_parameter_input';
 import { parseReportParameterValue, ReportParameterValue,
   validateReportParameter } from './report_parameter_value';
+import { isReportRecipient, ReportRecipientQueryModel } from
+  './report_recipient_query_model';
 import { ReportTypeSelect } from './report_type_select';
 
 interface Properties {
@@ -79,12 +81,16 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     this.identifier = `report-form-${ReportFormTemplate.nextIdentifier++}`;
     this.timer = null;
     this.mounted = false;
+    this.recipientModel = new ReportRecipientQueryModel(props.accountModel);
   }
 
   public render(): JSX.Element {
     const report = this.props.reports.find(entry =>
       entry.id === this.props.value.reportType);
     const props = this.props;
+    if(this.recipientModel.source !== props.accountModel) {
+      this.recipientModel = new ReportRecipientQueryModel(props.accountModel);
+    }
     return <div className={css(STYLES.container)}>
       <form noValidate className={css(STYLES.form)} onSubmit={this.onSubmit}>
         <h1 className={css(STYLES.heading)}>{props.title}</h1>
@@ -96,7 +102,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
           scopeModel={props.scopeModel} onChange={this.onParameterChange}
           onValidation={this.onParameterValidation}/>
         <ShareFieldset value={props.value.recipients}
-          accountModel={props.accountModel} scopeModel={props.scopeModel}
+          accountModel={this.recipientModel} scopeModel={props.scopeModel}
           onChange={this.onRecipientsChange}
           onValidation={this.onSharingValidation}/>
         <Collapse open={props.showRuntime !== false}>
@@ -161,7 +167,8 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
         validateReportParameter(parameter, value.parameters[parameter.name]) !==
           ValidationError.NONE || this.state.errors.get(parameter.name)) ||
         validateReportParameter(SHARING_PARAMETER, value.recipients) !==
-          ValidationError.NONE || this.state.sharingError) {
+          ValidationError.NONE || !value.recipients.every(isReportRecipient) ||
+        this.state.sharingError) {
       return false;
     }
     if(value.scheduled && (this.getDateTimeError() !== ValidationError.NONE ||
@@ -276,6 +283,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
   private identifier: string;
   private timer: number;
   private mounted: boolean;
+  private recipientModel: ReportRecipientQueryModel;
 }
 
 export namespace ReportFormTemplate {

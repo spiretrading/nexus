@@ -97,7 +97,8 @@ export class ReportActivityPage extends React.Component<Properties, State> {
       selected: (() => {
         if(response.status === ReportActivityModel.ResponseStatus.READY &&
             !response.isEmpty) {
-          return state.selected;
+          const visible = new Set(response.activities.map(entry => entry.id));
+          return new Set([...state.selected].filter(id => visible.has(id)));
         }
         return new Set<string>();
       })(), displayStatus: getDisplayStatus(response)}));

@@ -36,6 +36,7 @@ export class ReportActivityController extends
     this.mutations = Promise.resolve();
     this.cancellationOrder = [];
     this.pendingActions = 0;
+    this.timer = null;
   }
 
   public render(): JSX.Element {
@@ -53,6 +54,7 @@ export class ReportActivityController extends
 
   public componentDidUpdate(previous: Properties): void {
     if(previous.model !== this.props.model) {
+      this.clearRefresh();
       ++this.generation;
       this.loadingModel = null;
       this.mutations = Promise.resolve();
@@ -66,6 +68,7 @@ export class ReportActivityController extends
   }
 
   public componentWillUnmount(): void {
+    this.clearRefresh();
     this.mounted = false;
     ++this.generation;
     ++this.request;
@@ -87,6 +90,7 @@ export class ReportActivityController extends
 
   private async submit(submission: ReportActivityModel.Submission,
       background: boolean): Promise<void> {
+    this.clearRefresh();
     const request = ++this.request;
     const model = this.props.model;
     if(!background) {
@@ -107,6 +111,7 @@ export class ReportActivityController extends
           response.status === ReportActivityModel.ResponseStatus.ERROR) {
         this.props.onActionError?.(
           new Error('Report activity request failed.'));
+        this.scheduleRefresh();
         return;
       }
       const lastPage = Math.max(0, Math.ceil(
@@ -117,10 +122,14 @@ export class ReportActivityController extends
         return;
       }
       this.setState({response});
+      if(response.status !== ReportActivityModel.ResponseStatus.ERROR) {
+        this.scheduleRefresh();
+      }
     } catch(error) {
       if(this.isCurrent(request, model)) {
         if(background) {
           this.props.onActionError?.(error);
+          this.scheduleRefresh();
         } else {
           this.setState({response: {
             status: ReportActivityModel.ResponseStatus.ERROR,
@@ -135,6 +144,21 @@ export class ReportActivityController extends
       model === this.props.model;
   }
 
+  private clearRefresh(): void {
+    if(this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
+  }
+
+  private scheduleRefresh(): void {
+    this.clearRefresh();
+    if(this.mounted && this.pendingActions === 0) {
+      const REFRESH_INTERVAL = 5000;
+      this.timer = window.setTimeout(this.onRefresh, REFRESH_INTERVAL);
+    }
+  }
+
   private onSubmit = (submission: ReportActivityModel.Submission) => {
     this.submit(submission, false);
   };
@@ -146,6 +170,7 @@ export class ReportActivityController extends
     if(removed.length === 0) {
       return;
     }
+    this.clearRefresh();
     if(this.pendingActions === 0) {
       this.cancellationOrder = original.activities.map(report => report.id);
     }
@@ -207,6 +232,7 @@ export class ReportActivityController extends
   };
 
   private onRetry = (ids: readonly string[]) => {
+    this.clearRefresh();
     const model = this.props.model;
     const generation = this.generation;
     const loading = this.loadModel();
@@ -238,6 +264,11 @@ export class ReportActivityController extends
     });
   };
 
+  private onRefresh = () => {
+    this.timer = null;
+    this.submit(this.state.submission, true);
+  };
+
   private mounted: boolean;
   private request: number;
   private generation: number;
@@ -245,6 +276,7 @@ export class ReportActivityController extends
   private mutations: Promise<void>;
   private cancellationOrder: string[];
   private pendingActions: number;
+  private timer: number;
 }
 
 function makeSubmission(): ReportActivityModel.Submission {

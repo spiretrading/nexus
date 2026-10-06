@@ -1,3 +1,4 @@
+export * from './http_scheduled_reports_model';
 export * from './local_scheduled_reports_model';
 export * from './scheduled_date';
 export * from './scheduled_report_item';
