@@ -198,15 +198,20 @@ namespace Nexus {
 
   template<typename B>
   void ReportScheduleService<B>::poll(bool is_recovery) {
-    for(auto& snapshot : m_backend.load_schedules()) {
+    auto schedules = Beam::park([&] {
+      return m_backend.load_schedules();
+    });
+    for(auto& snapshot : schedules) {
       auto lock = std::lock_guard(m_mutex);
       if(!m_open_state.is_open()) {
         return;
       }
       try {
-        auto schedule =
-          m_backend.load_schedule(snapshot.m_account, snapshot.m_id);
-        dispatch(std::move(schedule), m_time_client.get_time(), is_recovery);
+        Beam::park([&] {
+          auto schedule =
+            m_backend.load_schedule(snapshot.m_account, snapshot.m_id);
+          dispatch(std::move(schedule), m_time_client.get_time(), is_recovery);
+        });
       } catch(const ReportNotFoundException&) {
       } catch(const std::exception&) {
         std::cerr << "Failed to dispatch report schedule " << snapshot.m_id <<
@@ -318,9 +323,7 @@ namespace Nexus {
         return;
       }
       try {
-        Beam::park([&] {
-          poll();
-        });
+        poll();
       } catch(const std::exception&) {
         std::cerr << "Failed to check report schedules.\n" <<
           BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;

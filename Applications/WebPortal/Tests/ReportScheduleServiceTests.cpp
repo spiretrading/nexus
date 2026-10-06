@@ -1,3 +1,4 @@
+#include <latch>
 #include <semaphore>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
@@ -198,6 +199,53 @@ TEST_SUITE("ReportScheduleService") {
     owned.store(job);
     REQUIRE(owned.load_jobs().size() == 1);
     REQUIRE(backend.load_jobs().empty());
+  }
+
+  TEST_CASE("dispatch_with_one_available_pool_thread") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_start_time = time_from_string("2026-10-07 09:00:00");
+    source.m_run_time = source.m_start_time;
+    source.m_repeat_interval.reset();
+    auto backend = Backend([] (const auto&, auto) { return 0; });
+    backend.m_definitions = {source.m_definition};
+    backend.store(source);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1);
+    auto scheduler = ReportScheduleService(
+      Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
+    auto count = std::max(1u, boost::thread::hardware_concurrency()) - 1;
+    auto started = std::latch(count);
+    auto release = std::counting_semaphore<>(0);
+    auto blockers = RoutineHandlerGroup();
+    for(auto i = 0u; i != count; ++i) {
+      blockers.spawn([&] {
+        park([&] {
+          started.count_down();
+          release.acquire();
+        });
+      });
+    }
+    started.wait();
+    time.set(source.m_start_time);
+    auto completed = std::binary_semaphore(0);
+    auto dispatch = RoutineHandler(spawn([&] {
+      timer.trigger();
+      completed.release();
+    }));
+    auto unblock = boost::scope::scope_exit([&] {
+      release.release(count);
+    });
+    constexpr auto TIMEOUT = std::chrono::seconds(10);
+    REQUIRE(completed.try_acquire_for(TIMEOUT));
+    REQUIRE(
+      wait_for_terminal(backend).m_status == ReportJob::Status::COMPLETED);
+    timer.trigger();
+    REQUIRE(backend.load_schedules().empty());
+    scheduler.close();
+    worker.close();
   }
 
   TEST_CASE("startup_catch_up_and_overlapping_occurrences") {
