@@ -96,6 +96,10 @@ export class NavigationTab extends React.Component<Properties, State> {
   }
 
   private onClick = (event: React.MouseEvent) => {
+    if(event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey ||
+        event.altKey) {
+      return;
+    }
     event.preventDefault();
     this.props.onClick?.();
   }

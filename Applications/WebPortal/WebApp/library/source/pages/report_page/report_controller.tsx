@@ -23,6 +23,9 @@ interface Properties {
   /** The subpage to display. Defaults to GENERATED. */
   page?: ReportController.Page;
 
+  /** The prefix for reporting tab URLs. Defaults to an empty string. */
+  basePath?: string;
+
   /** The schedule identifier when displaying EDIT_SCHEDULED. */
   scheduleId?: string;
 
@@ -73,7 +76,7 @@ export class ReportController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return <ReportPage current={getCurrentTab(this.props.page)}
-        onNavigate={this.onTabNavigate}>
+        basePath={this.props.basePath} onNavigate={this.onTabNavigate}>
       {this.renderContent()}
     </ReportPage>;
   }

@@ -7,6 +7,9 @@ interface Properties {
   /** The selected tab. Defaults to GENERATED. Null leaves all unselected. */
   current?: ReportPage.Tab;
 
+  /** The prefix for tab URLs. Defaults to an empty string. */
+  basePath?: string;
+
   /** The reporting subpage to display. */
   children?: React.ReactNode;
 
@@ -23,7 +26,8 @@ export function ReportPage(props: Properties): JSX.Element {
     return props.current;
   })();
   return <div className={css(STYLES.page)}>
-    <Header current={current} onNavigate={props.onNavigate}/>
+    <Header current={current} basePath={props.basePath ?? ''}
+      onNavigate={props.onNavigate}/>
     <div className={css(STYLES.content)}>{props.children}</div>
   </div>;
 }
@@ -46,6 +50,7 @@ export namespace ReportPage {
 
 interface NavigationProperties {
   current: ReportPage.Tab;
+  basePath: string;
   onNavigate: (tab: ReportPage.Tab) => void;
 }
 
@@ -104,7 +109,7 @@ class ResponsiveTab extends React.Component<TabProperties,
       return NavigationTab.Variant.ICON;
     })();
     return <NavigationTab label={definition.label} icon={definition.icon}
-      href={definition.href} variant={variant}
+      href={this.props.basePath + definition.href} variant={variant}
       isCurrent={this.props.current === definition.tab}
       onClick={this.onClick}/>;
   }

@@ -7,6 +7,7 @@ import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController, CreateAccountController,
   getNotificationUrl, GroupController, NotificationsController,
   RequestsController } from '..';
+import { ReportRouter } from '../report_page/report_router';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -88,6 +89,7 @@ export class DashboardController extends React.Component<Properties, State> {
                 roles={this.props.model.roles}
                 model={this.props.model.requestsModel}/>}/>
           <Router.Route path='/group' render={this.renderGroupPage}/>
+          <Router.Route path='/reports' render={this.renderReportPage}/>
           <Router.Route render={this.renderPageNotFound}/>
         </Router.Switch>
       </DashboardPage>);
@@ -154,6 +156,11 @@ export class DashboardController extends React.Component<Properties, State> {
       currencyDatabase={this.props.model.currencyDatabase}
       model={model} displaySize={this.props.displaySize}/>;
   }
+
+  private renderReportPage = (props: Router.RouteComponentProps) => {
+    return <ReportRouter {...props} model={this.props.model.reportModel}
+      displaySize={this.props.displaySize}/>;
+  };
   
   private renderPageNotFound = () => {
     return <PageNotFoundPage displaySize={this.props.displaySize}/>;

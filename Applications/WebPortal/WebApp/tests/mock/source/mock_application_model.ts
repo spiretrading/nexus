@@ -25,7 +25,7 @@ export class MockApplicationModel extends WebPortal.ApplicationModel {
       new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       new WebPortal.LocalRequestsModel(
-        this._loginModel.account, [], new Map()));
+        this._loginModel.account, [], new Map()), makeReportModel());
     this._dashboardModel.load();
     return this.dashboardModel;
   }
@@ -43,10 +43,24 @@ export class MockApplicationModel extends WebPortal.ApplicationModel {
       new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       new WebPortal.LocalRequestsModel(
-        Beam.DirectoryEntry.INVALID, [], new Map()));
+        Beam.DirectoryEntry.INVALID, [], new Map()), makeReportModel());
     this._dashboardModel.load();
   }
 
   private _loginModel: WebPortal.LoginModel;
   private _dashboardModel: WebPortal.DashboardModel;
+}
+
+function makeReportModel(): WebPortal.ReportModel {
+  const accounts = new WebPortal.LocalAccountGroupQueryModel([]);
+  const scopes = new WebPortal.ScopeQueryModel(
+    new WebPortal.LocalTickerQueryModel([]));
+  return new WebPortal.CompositeReportModel(
+    new WebPortal.LocalScheduledReportsModel([]),
+    new WebPortal.LocalGeneratedReportsModel([], accounts),
+    new WebPortal.LocalReportActivityModel([]),
+    new WebPortal.LocalCreateReportModel([], accounts, scopes),
+    new WebPortal.LocalEditScheduledReportModel(
+      [], accounts, scopes, new Map()),
+    new WebPortal.LocalReportDetailModel([]));
 }

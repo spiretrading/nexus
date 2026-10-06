@@ -6,6 +6,8 @@ import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
 import { HttpNotificationsModel } from
   '../notifications_page/http_notifications_model';
 import { NotificationsModel } from '../notifications_page/notifications_model';
+import { HttpReportModel } from '../report_page/http_report_model';
+import { ReportModel } from '../report_page/report_model';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -21,12 +23,14 @@ export class HttpDashboardModel extends DashboardModel {
     this.serviceClients = serviceClients;
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, HttpAccountModel>();
     this.groupModels = new Beam.Map<Beam.DirectoryEntry, HttpGroupModel>();
+    this.reports = new HttpReportModel(serviceClients);
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
       new Nexus.VenueDatabase(), new LocalAccountDirectoryModel(
       new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()),
-      new LocalRequestsModel(Beam.DirectoryEntry.INVALID, [], new Map()));
+      new LocalRequestsModel(Beam.DirectoryEntry.INVALID, [], new Map()),
+      this.reports);
   }
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
@@ -65,6 +69,10 @@ export class HttpDashboardModel extends DashboardModel {
     return this._notificationsModel;
   }
 
+  public get reportModel(): ReportModel {
+    return this.model.reportModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
     let model = this.accountModels.get(account);
     if(model === undefined) {
@@ -101,7 +109,7 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.definitionsClient.currencyDatabase,
       this.serviceClients.definitionsClient.venueDatabase,
       new HttpAccountDirectoryModel(account, this.serviceClients),
-      this._requestsModel);
+      this._requestsModel, this.reports);
     await this.model.load();
     await this._notificationsModel.load();
   }
@@ -116,4 +124,5 @@ export class HttpDashboardModel extends DashboardModel {
   private model: LocalDashboardModel;
   private _requestsModel: RequestsModel;
   private _notificationsModel: NotificationsModel;
+  private reports: HttpReportModel;
 }
