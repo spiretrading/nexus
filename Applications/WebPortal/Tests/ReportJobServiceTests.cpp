@@ -18,13 +18,26 @@ namespace {
     using Executor = E;
     Store m_store;
     Executor m_executor;
+    mutable std::mutex m_mutex;
+    std::unordered_map<std::string, ReportJob> m_jobs;
 
     Backend(Store store, Executor executor)
       : m_store(std::move(store)),
         m_executor(std::move(executor)) {}
 
+    std::optional<ReportJob> load_job(const std::string& id) {
+      auto lock = std::lock_guard(m_mutex);
+      auto job = m_jobs.find(id);
+      if(job == m_jobs.end()) {
+        return std::nullopt;
+      }
+      return shuttle_clone(job->second);
+    }
+
     void store(const ReportJob& job) {
+      auto lock = std::lock_guard(m_mutex);
       m_store(job);
+      m_jobs[job.m_id] = shuttle_clone(job);
     }
 
     int execute(const ReportJob& job, std::stop_token stop) {
@@ -178,6 +191,176 @@ TEST_SUITE("ReportJobService") {
     service.close();
     REQUIRE(states.pop().m_status == ReportJob::Status::FAILED);
     REQUIRE(states.pop().m_status == ReportJob::Status::FAILED);
+  }
+
+  TEST_CASE("cancel_running_and_queued") {
+    auto started = Queue<std::string>();
+    auto release = std::binary_semaphore(0);
+    auto calls = std::atomic_int(0);
+    auto backend = Backend([] (const auto&) {},
+      [&] (const auto& job, auto stop) {
+        ++calls;
+        auto cancel = std::stop_callback(stop, [&] { release.release(); });
+        started.push(job.m_id);
+        release.acquire();
+        return 0;
+      });
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto job = make_job();
+    auto first = service.submit(job);
+    REQUIRE(started.pop() == first);
+    ThreadPool::get().wait_until_idle();
+    auto second = service.submit(job);
+    time_client.set(time_from_string("2026-10-05 12:01:00"));
+    service.cancel(job.m_account, {second, first, second});
+    service.close();
+    REQUIRE(calls == 1);
+    for(auto& id : {first, second}) {
+      auto cancelled = backend.load_job(id);
+      REQUIRE(cancelled->m_status == ReportJob::Status::CANCELLED);
+      REQUIRE(cancelled->m_completed == time_client.get_time());
+      REQUIRE(cancelled->m_modified == cancelled->m_completed);
+    }
+  }
+
+  TEST_CASE("cancel_preserves_unrelated_jobs") {
+    auto started = Queue<std::string>();
+    auto completed = Queue<std::string>();
+    auto release = std::binary_semaphore(0);
+    auto calls = 0;
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        completed.push(job.m_id);
+      }
+    }, [&] (const auto& job, auto stop) {
+      ++calls;
+      if(calls == 1) {
+        auto cancel = std::stop_callback(stop, [&] { release.release(); });
+        started.push(job.m_id);
+        release.acquire();
+      }
+      return 0;
+    });
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto job = make_job();
+    auto first = service.submit(job);
+    REQUIRE(started.pop() == first);
+    auto second = service.submit(job);
+    service.cancel(job.m_account, {first});
+    REQUIRE(completed.pop() == second);
+    service.close();
+    REQUIRE(backend.load_job(first)->m_status == ReportJob::Status::CANCELLED);
+    REQUIRE(backend.load_job(second)->m_status == ReportJob::Status::COMPLETED);
+  }
+
+  TEST_CASE("cancel_ownership_and_terminal_states") {
+    auto backend =
+      Backend([] (const auto&) {}, [] (const auto&, auto) { return 0; });
+    auto job = make_job();
+    job.m_id = "failed";
+    job.m_status = ReportJob::Status::FAILED;
+    backend.store(job);
+    auto other = job;
+    other.m_id = "other";
+    other.m_account = DirectoryEntry::make_account(2, "bob");
+    other.m_recipients = {job.m_account};
+    backend.store(other);
+    auto completed = job;
+    completed.m_id = "completed";
+    completed.m_status = ReportJob::Status::COMPLETED;
+    backend.store(completed);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    for(auto& id : {"other", "missing"}) {
+      REQUIRE_THROWS_AS(
+        service.cancel(job.m_account, {"failed", id}), ReportNotFoundException);
+      REQUIRE(
+        backend.load_job("failed")->m_status == ReportJob::Status::FAILED);
+    }
+    service.cancel(job.m_account, {});
+    service.cancel(job.m_account, {"failed", "completed"});
+    auto cancelled = backend.load_job("failed");
+    REQUIRE(cancelled->m_status == ReportJob::Status::CANCELLED);
+    REQUIRE(cancelled->m_modified == time_client.get_time());
+    REQUIRE(backend.load_job("other")->m_status == ReportJob::Status::FAILED);
+    REQUIRE(
+      backend.load_job("completed")->m_status == ReportJob::Status::COMPLETED);
+    time_client.set(time_from_string("2026-10-05 12:01:00"));
+    service.cancel(job.m_account, {"failed"});
+    REQUIRE(backend.load_job("failed")->m_modified == cancelled->m_modified);
+    service.close();
+    REQUIRE_THROWS_AS(service.cancel(job.m_account, {}), std::runtime_error);
+  }
+
+  TEST_CASE("cancel_store_failure") {
+    auto started = Queue<std::string>();
+    auto release = std::binary_semaphore(0);
+    auto is_failing = std::atomic_bool(true);
+    auto is_stopped = std::atomic_bool(false);
+    auto backend = Backend([&] (const auto& job) {
+      if(is_failing && job.m_status == ReportJob::Status::CANCELLED) {
+        throw std::runtime_error("Unable to store cancellation.");
+      }
+    }, [&] (const auto& job, auto stop) {
+      auto cancel = std::stop_callback(stop, [&] {
+        is_stopped = true;
+        release.release();
+      });
+      started.push(job.m_id);
+      release.acquire();
+      return 0;
+    });
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto job = make_job();
+    auto id = service.submit(job);
+    REQUIRE(started.pop() == id);
+    REQUIRE_THROWS_AS(service.cancel(job.m_account, {id}), std::runtime_error);
+    REQUIRE(!is_stopped);
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    is_failing = false;
+    service.cancel(job.m_account, {id});
+    service.close();
+    REQUIRE(is_stopped);
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::CANCELLED);
+  }
+
+  TEST_CASE("cancel_partial_store_failure") {
+    auto started = Queue<std::string>();
+    auto completed = Queue<std::string>();
+    auto release = std::binary_semaphore(0);
+    auto second = std::string();
+    auto calls = 0;
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::CANCELLED && job.m_id == second) {
+        throw std::runtime_error("Unable to store cancellation.");
+      }
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        completed.push(job.m_id);
+      }
+    }, [&] (const auto& job, auto stop) {
+      ++calls;
+      if(calls == 1) {
+        auto cancel = std::stop_callback(stop, [&] { release.release(); });
+        started.push(job.m_id);
+        release.acquire();
+      }
+      return 0;
+    });
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto job = make_job();
+    auto first = service.submit(job);
+    REQUIRE(started.pop() == first);
+    second = service.submit(job);
+    REQUIRE_THROWS_AS(
+      service.cancel(job.m_account, {first, second}), std::runtime_error);
+    REQUIRE(completed.pop() == second);
+    service.close();
+    REQUIRE(backend.load_job(first)->m_status == ReportJob::Status::CANCELLED);
+    REQUIRE(backend.load_job(second)->m_status == ReportJob::Status::COMPLETED);
   }
 
   TEST_CASE("job_serialization") {

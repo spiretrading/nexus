@@ -32,6 +32,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+      std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
@@ -50,6 +53,7 @@ namespace Nexus {
       FileReportService& operator =(const FileReportService&) = delete;
       std::vector<ReportDefinition> load_definitions();
       std::vector<ReportJob> load_jobs();
+      std::optional<ReportJob> read_job(const std::filesystem::path& path);
       void recover();
   };
 }

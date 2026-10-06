@@ -22,7 +22,10 @@ namespace Nexus {
       COMPLETED,
 
       /** Could not complete successfully. */
-      FAILED
+      FAILED,
+
+      /** Cancelled by the submitting account. */
+      CANCELLED
     };
 
     /** The unique job identifier. */
@@ -72,6 +75,8 @@ namespace Nexus {
       return out << "COMPLETED";
     } else if(status == ReportJob::Status::FAILED) {
       return out << "FAILED";
+    } else if(status == ReportJob::Status::CANCELLED) {
+      return out << "CANCELLED";
     } else {
       return out << "UNKNOWN(" << static_cast<int>(status) << ')';
     }

@@ -34,6 +34,14 @@ namespace {
       throw std::runtime_error("Unexpected report submission.");
     }
 
+    void cancel(const DirectoryEntry&, const std::vector<std::string>&) {
+      throw std::runtime_error("Unexpected report cancellation.");
+    }
+
+    std::optional<ReportJob> load_job(const std::string&) {
+      throw std::runtime_error("Unexpected job lookup.");
+    }
+
     void store(const ReportJob&) {
       throw std::runtime_error("Unexpected job storage.");
     }

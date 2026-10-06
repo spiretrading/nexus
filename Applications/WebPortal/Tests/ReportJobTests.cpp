@@ -9,7 +9,9 @@ TEST_SUITE("ReportJob") {
     auto output = std::ostringstream();
     output << ReportJob::Status::QUEUED << ' ' << ReportJob::Status::RUNNING <<
       ' ' << ReportJob::Status::COMPLETED << ' ' << ReportJob::Status::FAILED <<
-      ' ' << static_cast<ReportJob::Status>(99);
-    REQUIRE(output.str() == "QUEUED RUNNING COMPLETED FAILED UNKNOWN(99)");
+      ' ' << ReportJob::Status::CANCELLED << ' ' <<
+      static_cast<ReportJob::Status>(99);
+    REQUIRE(
+      output.str() == "QUEUED RUNNING COMPLETED FAILED CANCELLED UNKNOWN(99)");
   }
 }

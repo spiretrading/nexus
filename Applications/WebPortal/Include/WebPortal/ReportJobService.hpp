@@ -4,25 +4,30 @@
 #include <iostream>
 #include <mutex>
 #include <stop_token>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Serialization/JsonReceiver.hpp>
-#include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Serialization/ShuttleClone.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "WebPortal/ReportJob.hpp"
+#include "WebPortal/ReportSubmission.hpp"
 
 namespace Nexus::Details {
 
   /** Provides report job storage and execution. */
   template<typename T>
   concept IsReportJobBackend = requires(T& backend) {
+    { backend.load_job(std::declval<const std::string&>()) } ->
+        std::same_as<std::optional<ReportJob>>;
     { backend.store(std::declval<const ReportJob&>()) } -> std::same_as<void>;
     { backend.execute(std::declval<const ReportJob&>(),
         std::declval<std::stop_token&>()) } -> std::convertible_to<int>;
@@ -59,19 +64,27 @@ namespace Nexus::Details {
       /** Stores a prepared job and returns its identifier without waiting. */
       std::string submit(const ReportJob& submission);
 
+      /** Cancels an account's jobs and removes them from activity. */
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+
       /** Stops execution and marks unfinished jobs as failed. */
       void close();
 
     private:
+      struct Job {
+        ReportJob m_job;
+        std::stop_source m_stop;
+      };
       Backend* m_backend;
       Beam::local_ptr_t<TimeClient> m_time_client;
       mutable Beam::Mutex m_mutex;
       bool m_is_closed;
-      std::stop_source m_stop_source;
-      Beam::Queue<ReportJob> m_jobs;
+      std::unordered_map<std::string, std::shared_ptr<Job>> m_pending;
+      Beam::Queue<std::shared_ptr<Job>> m_jobs;
       Beam::RoutineHandler m_routine;
 
-      void run(std::stop_token stop);
+      void run();
   };
 
   template<typename B, typename T>
@@ -88,7 +101,7 @@ namespace Nexus::Details {
         m_time_client(std::forward<TF>(time_client)),
         m_is_closed(false) {
     m_routine = Beam::spawn([&] {
-      run(m_stop_source.get_token());
+      run();
     });
   }
 
@@ -101,10 +114,9 @@ namespace Nexus::Details {
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
   std::string ReportJobService<B, T>::submit(const ReportJob& submission) {
-    auto buffer = Beam::from<Beam::SharedBuffer>(Beam::to_json(submission));
-    auto receiver = Beam::JsonReceiver<Beam::SharedBuffer>();
-    receiver.set(Beam::Ref(buffer));
-    auto job = Beam::receive<ReportJob>(receiver);
+    auto entry = std::make_shared<Job>();
+    entry->m_job = Beam::shuttle_clone(submission);
+    auto& job = entry->m_job;
     job.m_id = boost::uuids::to_string(boost::uuids::random_generator()());
     job.m_created = m_time_client->get_time();
     job.m_modified = job.m_created;
@@ -120,49 +132,128 @@ namespace Nexus::Details {
     Beam::park([&] {
       m_backend->store(job);
     });
-    m_jobs.push(std::move(job));
+    m_pending.emplace(id, entry);
+    m_jobs.push(entry);
     return id;
   }
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::cancel(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    auto stops = std::vector<std::stop_source>();
+    stops.reserve(ids.size());
+    auto cancel = boost::scope::scope_exit([&] {
+      for(auto& stop : stops) {
+        stop.request_stop();
+      }
+    });
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto jobs = std::vector<ReportJob>();
+    auto seen = std::unordered_set<std::string>();
+    for(auto& id : ids) {
+      if(!seen.insert(id).second) {
+        continue;
+      }
+      auto job = Beam::park([&] {
+        return m_backend->load_job(id);
+      });
+      if(!job || job->m_account != account ||
+          account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
+        throw ReportNotFoundException();
+      }
+      jobs.push_back(std::move(*job));
+    }
+    for(auto& job : jobs) {
+      if(job.m_status == ReportJob::Status::COMPLETED ||
+          job.m_status == ReportJob::Status::CANCELLED) {
+        continue;
+      }
+      job.m_status = ReportJob::Status::CANCELLED;
+      job.m_completed = m_time_client->get_time();
+      job.m_modified = job.m_completed;
+      Beam::park([&] {
+        m_backend->store(job);
+      });
+      auto entry = m_pending.find(job.m_id);
+      if(entry != m_pending.end()) {
+        entry->second->m_job = std::move(job);
+        stops.push_back(entry->second->m_stop);
+      }
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
   void ReportJobService<B, T>::close() {
+    auto stops = std::vector<std::stop_source>();
     {
       auto lock = std::lock_guard(m_mutex);
       if(m_is_closed) {
         return;
       }
       m_is_closed = true;
-      m_stop_source.request_stop();
+      for(auto& [id, entry] : m_pending) {
+        stops.push_back(entry->m_stop);
+      }
       m_jobs.close();
+    }
+    for(auto& stop : stops) {
+      stop.request_stop();
     }
     m_routine.wait();
   }
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
-  void ReportJobService<B, T>::run(std::stop_token stop) {
+  void ReportJobService<B, T>::run() {
     while(true) {
-      auto job = ReportJob();
+      auto entry = std::shared_ptr<Job>();
       try {
-        job = m_jobs.pop();
+        entry = m_jobs.pop();
       } catch(const Beam::PipeBrokenException&) {
         return;
       }
+      auto job = ReportJob();
+      auto stop = entry->m_stop.get_token();
       try {
-        if(stop.stop_requested()) {
-          throw std::runtime_error("Server stopped before report execution.");
+        {
+          auto lock = std::lock_guard(m_mutex);
+          if(entry->m_job.m_status == ReportJob::Status::CANCELLED) {
+            m_pending.erase(entry->m_job.m_id);
+            continue;
+          }
+          job = entry->m_job;
+          if(m_is_closed) {
+            throw std::runtime_error("Server stopped before report execution.");
+          }
+          job.m_status = ReportJob::Status::RUNNING;
+          job.m_modified = m_time_client->get_time();
+          Beam::park([&] {
+            m_backend->store(job);
+          });
+          entry->m_job = job;
         }
-        job.m_status = ReportJob::Status::RUNNING;
-        job.m_modified = m_time_client->get_time();
-        Beam::park([&] {
-          m_backend->store(job);
-        });
-        job.m_exit_code = Beam::park([&] {
-          return m_backend->execute(job, stop);
-        });
         if(stop.stop_requested()) {
-          throw std::runtime_error("Report execution stopped during shutdown.");
+          throw std::runtime_error("Report execution stopped.");
+        }
+        {
+          auto result = Beam::Async<int>();
+          auto execution = std::jthread([&] {
+            auto evaluation = result.get_eval();
+            try {
+              evaluation.set(m_backend->execute(job, stop));
+            } catch(const std::exception&) {
+              evaluation.set_exception(std::current_exception());
+            }
+          });
+          job.m_exit_code = result.get();
+        }
+        if(stop.stop_requested()) {
+          throw std::runtime_error("Report execution stopped.");
         }
         if(*job.m_exit_code != 0) {
           throw std::runtime_error("Report command exited with code " +
@@ -173,9 +264,14 @@ namespace Nexus::Details {
         job.m_status = ReportJob::Status::FAILED;
         job.m_error = exception.what();
       }
-      job.m_completed = m_time_client->get_time();
-      job.m_modified = job.m_completed;
+      auto lock = std::lock_guard(m_mutex);
+      if(entry->m_job.m_status == ReportJob::Status::CANCELLED) {
+        m_pending.erase(job.m_id);
+        continue;
+      }
       try {
+        job.m_completed = m_time_client->get_time();
+        job.m_modified = job.m_completed;
         Beam::park([&] {
           m_backend->store(job);
         });
@@ -184,6 +280,7 @@ namespace Nexus::Details {
           " with status " << job.m_status << ".\n" <<
           BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       }
+      m_pending.erase(job.m_id);
     }
   }
 }

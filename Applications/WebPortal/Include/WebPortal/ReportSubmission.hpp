@@ -18,7 +18,7 @@ namespace Nexus {
     std::vector<Beam::DirectoryEntry> m_recipients;
   };
 
-  /** Indicates that a report definition is unavailable to an account. */
+  /** Indicates that a report definition or job is unavailable to an account. */
   class ReportNotFoundException : public std::runtime_error {
     public:
       ReportNotFoundException();

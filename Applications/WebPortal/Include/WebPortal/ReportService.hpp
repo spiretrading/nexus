@@ -12,6 +12,11 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.cancel(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::vector<std::string>&>()) } ->
+        std::same_as<void>;
+    { service.load_job(std::declval<const std::string&>()) } ->
+        std::same_as<std::optional<ReportJob>>;
     { service.load_activities(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const ReportActivityQuery&>()) } ->
         std::same_as<ReportActivities>;
@@ -63,6 +68,20 @@ namespace Nexus {
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
 
+      /**
+       * Cancels jobs submitted by an account, removing them from activity.
+       * Completed and already cancelled jobs are unchanged.
+       * @param account The submitting account.
+       * @param ids The job identifiers to cancel.
+       * @throws ReportNotFoundException If any job is absent or owned by
+       *         another account. No jobs are changed when this check fails.
+       */
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+
+      /** Loads stored job metadata, or nullopt if the job is absent. */
+      std::optional<ReportJob> load_job(const std::string& id);
+
       /** Stores a job's current state. */
       void store(const ReportJob& job);
 
@@ -83,6 +102,9 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) = 0;
+        virtual void cancel(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) = 0;
+        virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
         virtual void store(const ReportJob& job) = 0;
         virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
         virtual void close() = 0;
@@ -101,6 +123,9 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) override;
+        void cancel(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) override;
+        std::optional<ReportJob> load_job(const std::string& id) override;
         void store(const ReportJob& job) override;
         int execute(const ReportJob& job, std::stop_token stop) override;
         void close() override;
@@ -133,6 +158,16 @@ namespace Nexus {
   inline std::string ReportService::submit(const Beam::DirectoryEntry& account,
       const ReportSubmission& submission) {
     return m_service->submit(account, submission);
+  }
+
+  inline void ReportService::cancel(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->cancel(account, ids);
+  }
+
+  inline std::optional<ReportJob> ReportService::load_job(
+      const std::string& id) {
+    return m_service->load_job(id);
   }
 
   inline void ReportService::store(const ReportJob& job) {
@@ -169,6 +204,19 @@ namespace Nexus {
   std::string ReportService::WrappedReportService<S>::submit(
       const Beam::DirectoryEntry& account, const ReportSubmission& submission) {
     return m_service->submit(account, submission);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::cancel(
+      const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->cancel(account, ids);
+  }
+
+  template<typename S>
+  std::optional<ReportJob> ReportService::WrappedReportService<S>::load_job(
+      const std::string& id) {
+    return m_service->load_job(id);
   }
 
   template<typename S>

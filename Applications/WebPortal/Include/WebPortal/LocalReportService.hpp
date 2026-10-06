@@ -66,6 +66,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+      std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
@@ -153,6 +156,24 @@ namespace Nexus {
     m_open_state.ensure_open();
     return m_service->submit(prepare_report_job(
       load_definitions(), account, submission, m_client));
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::cancel(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_open_state.ensure_open();
+    m_service->cancel(account, ids);
+  }
+
+  template<IsReportExecutor E>
+  std::optional<ReportJob> LocalReportService<E>::load_job(
+      const std::string& id) {
+    auto lock = std::lock_guard(m_mutex);
+    auto job = std::ranges::find(m_jobs, id, &ReportJob::m_id);
+    if(job == m_jobs.end()) {
+      return std::nullopt;
+    }
+    return Beam::shuttle_clone(*job);
   }
 
   template<IsReportExecutor E>
