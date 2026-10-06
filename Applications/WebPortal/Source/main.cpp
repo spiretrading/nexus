@@ -82,6 +82,7 @@ int main(int argc, const char** argv) {
       std::move(session_clients_builder), Clients(&clients),
       service_config.m_report_concurrency), init(service_config.m_interface));
     wait_for_kill_event();
+    server.close();
     clients.close();
   } catch(...) {
     if(received_kill_event()) {
