@@ -20,6 +20,8 @@ namespace Nexus {
         std::declval<const std::string&>(),
         std::declval<const ReportScheduleSubmission&>()) } ->
           std::same_as<void>;
+    { service.remove_schedule(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::string&>()) } -> std::same_as<void>;
     { service.load_schedule(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::string&>()) } -> std::same_as<ReportSchedule>;
     { service.query(std::declval<const Beam::DirectoryEntry&>(),
@@ -150,6 +152,14 @@ namespace Nexus {
         const std::string& id, const ReportScheduleSubmission& submission);
 
       /**
+       * Removes a schedule owned by an account, preserving existing reports.
+       * @throws ReportNotFoundException If the schedule is missing or owned
+       *         by another account.
+       */
+      void remove_schedule(
+        const Beam::DirectoryEntry& account, const std::string& id);
+
+      /**
        * Adds recipients to completed reports owned by an account.
        * Existing recipients retain access. Global recipients are not allowed.
        * All reports and recipients are validated before any changes are stored.
@@ -234,6 +244,8 @@ namespace Nexus {
         virtual void update_schedule(
           const Beam::DirectoryEntry& account, const std::string& id,
           const ReportScheduleSubmission& submission) = 0;
+        virtual void remove_schedule(
+          const Beam::DirectoryEntry& account, const std::string& id) = 0;
         virtual void share(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids,
           const std::vector<Beam::DirectoryEntry>& recipients) = 0;
@@ -279,6 +291,8 @@ namespace Nexus {
         void update_schedule(
           const Beam::DirectoryEntry& account, const std::string& id,
           const ReportScheduleSubmission& submission) override;
+        void remove_schedule(
+          const Beam::DirectoryEntry& account, const std::string& id) override;
         void share(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids,
           const std::vector<Beam::DirectoryEntry>& recipients) override;
@@ -377,6 +391,11 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& id,
       const ReportScheduleSubmission& submission) {
     m_service->update_schedule(account, id, submission);
+  }
+
+  inline void ReportService::remove_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_service->remove_schedule(account, id);
   }
 
   inline void ReportService::share(
@@ -491,6 +510,12 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& id,
       const ReportScheduleSubmission& submission) {
     m_service->update_schedule(account, id, submission);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::remove_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_service->remove_schedule(account, id);
   }
 
   template<typename S>

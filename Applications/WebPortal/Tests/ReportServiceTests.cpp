@@ -49,6 +49,7 @@ namespace {
     std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
     std::string submit(DirectoryEntry&&, ReportSubmission&&);
     std::string submit(DirectoryEntry&&, ReportScheduleSubmission&&);
+    void remove_schedule(const DirectoryEntry&, const std::string&);
     void share(const DirectoryEntry&, const std::vector<std::string>&,
       const std::vector<DirectoryEntry>&);
     void remove(const DirectoryEntry&, const std::vector<std::string>&);

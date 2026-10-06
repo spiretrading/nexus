@@ -88,6 +88,8 @@ namespace Nexus {
         const ReportScheduleSubmission& submission);
       void update_schedule(const Beam::DirectoryEntry& account,
         const std::string& id, const ReportScheduleSubmission& submission);
+      void remove_schedule(
+        const Beam::DirectoryEntry& account, const std::string& id);
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
@@ -283,6 +285,20 @@ namespace Nexus {
     auto updated = prepare_report_schedule(schedule, submission,
       load_definitions(), m_client, m_time_client.get_time());
     store(updated);
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::remove_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_open_state.ensure_open();
+    auto mutation = std::lock_guard(m_schedule_mutex);
+    auto lock = std::lock_guard(m_mutex);
+    auto schedule = std::ranges::find(m_schedules, id, &ReportSchedule::m_id);
+    if(schedule == m_schedules.end() || schedule->m_account != account ||
+        account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
+      throw ReportNotFoundException();
+    }
+    m_schedules.erase(schedule);
   }
 
   template<IsReportExecutor E>

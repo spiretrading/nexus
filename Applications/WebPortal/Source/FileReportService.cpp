@@ -275,6 +275,25 @@ void FileReportService::update_schedule(const DirectoryEntry& account,
   store(updated);
 }
 
+void FileReportService::remove_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto mutation = std::lock_guard(m_schedule_mutex);
+  load_schedule(account, id);
+  auto path = report_directory(id, m_jobs_directory / "schedules");
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory) / "schedules";
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
+}
+
 void FileReportService::share(const DirectoryEntry& account,
     const std::vector<std::string>& ids,
     const std::vector<DirectoryEntry>& recipients) {

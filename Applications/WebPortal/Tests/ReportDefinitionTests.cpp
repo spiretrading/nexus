@@ -66,6 +66,10 @@ namespace {
       throw std::runtime_error("Unexpected report submission.");
     }
 
+    void remove_schedule(const DirectoryEntry&, const std::string&) {
+      throw std::runtime_error("Unexpected schedule deletion.");
+    }
+
     void share(const DirectoryEntry&, const std::vector<std::string>&,
         const std::vector<DirectoryEntry>&) {
       throw std::runtime_error("Unexpected report sharing.");
