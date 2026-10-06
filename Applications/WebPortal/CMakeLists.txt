@@ -40,6 +40,21 @@ if(UNIX)
     PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH REQUIRED)
   target_link_libraries(WebPortalLibrary PUBLIC
     ${BOOST_PROCESS_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
+  add_executable(ReportProcessFixture EXCLUDE_FROM_ALL
+    FunctionalTests/ReportProcessFixture.cpp)
+  beam_configure_target(ReportProcessFixture DEPENDENCIES
+    ${web_portal_dependencies})
+  target_link_libraries(ReportProcessFixture PRIVATE WebPortalLibrary)
+  add_executable(ReportProcessTests EXCLUDE_FROM_ALL
+    FunctionalTests/ReportProcessTests.cpp Tests/main.cpp)
+  beam_configure_target(ReportProcessTests DEPENDENCIES
+    ${web_portal_dependencies} DOCTEST)
+  target_link_libraries(ReportProcessTests PRIVATE WebPortalLibrary)
+  target_compile_definitions(ReportProcessTests PRIVATE
+    REPORT_PROCESS_FIXTURE="$<TARGET_FILE:ReportProcessFixture>")
+  add_dependencies(ReportProcessTests ReportProcessFixture)
+  add_custom_command(TARGET ReportProcessTests POST_BUILD
+    COMMAND ReportProcessTests)
 endif()
 beam_install_target(WebPortal "${PROJECT_BINARY_DIR}/Application")
 install(FILES Application/config.default.yml Application/setup.py

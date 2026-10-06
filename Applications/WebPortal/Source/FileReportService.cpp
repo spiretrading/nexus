@@ -14,13 +14,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/process/process.hpp>
 #include <boost/process/stdio.hpp>
-#ifdef _WIN32
-  #include <boost/process/windows/show_window.hpp>
-#else
-  #include <cerrno>
-  #include <csignal>
-  #include <unistd.h>
-#endif
+#include "ReportProcessGroup.hpp"
 #include "WebPortal/ReportAccess.hpp"
 
 using namespace Beam;
@@ -31,78 +25,6 @@ using namespace boost::process;
 using namespace Nexus;
 
 namespace {
-  class ProcessGroup {
-    public:
-#ifdef _WIN32
-      ProcessGroup()
-          : m_handle(CreateJobObjectW(nullptr, nullptr)) {
-        if(!m_handle) {
-          throw std::system_error(GetLastError(), std::system_category());
-        }
-        auto limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
-        limits.BasicLimitInformation.LimitFlags =
-          JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-        if(!SetInformationJobObject(m_handle,
-            JobObjectExtendedLimitInformation, &limits, sizeof(limits))) {
-          auto error = GetLastError();
-          CloseHandle(m_handle);
-          throw std::system_error(error, std::system_category());
-        }
-      }
-
-      ~ProcessGroup() {
-        CloseHandle(m_handle);
-      }
-
-      void attach(auto& child) {
-        if(!AssignProcessToJobObject(m_handle, child.native_handle())) {
-          throw std::system_error(GetLastError(), std::system_category());
-        }
-        child.resume();
-      }
-
-      void terminate() {
-        TerminateJobObject(m_handle, 1);
-      }
-#else
-      ProcessGroup() noexcept
-        : m_id(-1) {}
-
-      ~ProcessGroup() {
-        terminate();
-      }
-
-      void attach(auto& child) {
-        m_id = child.id();
-      }
-
-      void terminate() {
-        if(m_id > 0) {
-          kill(-m_id, SIGKILL);
-        }
-      }
-
-      system::error_code on_exec_setup(
-          boost::process::posix::default_launcher& launcher,
-          const filesystem::path& executable, const char* const* arguments) {
-        if(setsid() == -1) {
-          return system::error_code(errno, system::generic_category());
-        }
-        return {};
-      }
-#endif
-
-    private:
-#ifdef _WIN32
-      HANDLE m_handle;
-#else
-      pid_t m_id;
-#endif
-
-      ProcessGroup(const ProcessGroup&) = delete;
-      ProcessGroup& operator =(const ProcessGroup&) = delete;
-  };
-
   std::filesystem::path report_directory(
       const std::string& id, const std::filesystem::path& directory) {
     static const auto PATTERN = std::regex(
@@ -353,7 +275,9 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
     , group
 #endif
   );
+#ifdef _WIN32
   group.attach(child);
+#endif
   auto result = -1;
   auto error = system::error_code();
   child.async_wait([&] (auto code, auto exit_code) {
