@@ -51,6 +51,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/reporting_service/query_scheduled_reports"),
     std::bind_front(&ReportingWebServlet::on_query_scheduled_reports, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/reporting_service/load_scheduled_report"),
+    std::bind_front(&ReportingWebServlet::on_load_scheduled_report, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
     std::bind_front(&ReportingWebServlet::on_load_report, this));
@@ -612,6 +615,64 @@ HttpResponse ReportingWebServlet::on_query_scheduled_reports(
   try {
     auto page = m_reports.query(session->get_account(), query);
     session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_load_scheduled_report(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  struct Response {
+    const ReportSchedule* m_schedule;
+
+    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("report_type", m_schedule->m_definition.m_id);
+      auto parameters = JsonValue(m_schedule->m_parameters);
+      shuttle.shuttle("parameters", parameters);
+      shuttle.shuttle("recipients", m_schedule->m_recipients);
+      shuttle.shuttle("scheduled", true);
+      shuttle.shuttle("schedule_date_time", m_schedule->m_start_time);
+      shuttle.shuttle("repeats", m_schedule->m_repeat_interval.has_value());
+      if(m_schedule->m_repeat_interval) {
+        shuttle.shuttle("repeat_interval", *m_schedule->m_repeat_interval);
+      } else {
+        shuttle.shuttle("repeat_interval", JsonValue(JsonNull()));
+      }
+    }
+  };
+  auto response = HttpResponse();
+  response.set_header({"Cache-Control", "private, no-store"});
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    if(parameters.m_id.empty()) {
+      throw std::invalid_argument("Missing schedule identifier.");
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto schedule =
+      m_reports.load_schedule(session->get_account(), parameters.m_id);
+    session->shuttle_response(Response(&schedule), out(response));
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }

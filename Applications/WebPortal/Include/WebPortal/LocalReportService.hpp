@@ -78,6 +78,8 @@ namespace Nexus {
         const ReportActivityQuery& query);
       ScheduledReports query(
         const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
+      ReportSchedule load_schedule(
+        const Beam::DirectoryEntry& account, const std::string& id);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
@@ -226,6 +228,19 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
     m_open_state.ensure_open();
     return query_scheduled_reports(load_schedules(), account, query);
+  }
+
+  template<IsReportExecutor E>
+  ReportSchedule LocalReportService<E>::load_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_open_state.ensure_open();
+    auto lock = std::lock_guard(m_mutex);
+    auto schedule = std::ranges::find(m_schedules, id, &ReportSchedule::m_id);
+    if(schedule == m_schedules.end() || schedule->m_account != account ||
+        account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
+      throw ReportNotFoundException();
+    }
+    return Beam::shuttle_clone(*schedule);
   }
 
   template<IsReportExecutor E>

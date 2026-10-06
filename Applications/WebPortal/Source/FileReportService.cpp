@@ -231,6 +231,18 @@ ScheduledReports FileReportService::query(
   return query_scheduled_reports(load_schedules(), account, query);
 }
 
+ReportSchedule FileReportService::load_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto schedule =
+    read_schedule(report_directory(id, m_jobs_directory / "schedules"));
+  if(!schedule || schedule->m_account != account ||
+      account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    throw ReportNotFoundException();
+  }
+  return std::move(*schedule);
+}
+
 std::vector<ReportDefinition> FileReportService::load_definitions(
     const DirectoryEntry& account) {
   m_open_state.ensure_open();

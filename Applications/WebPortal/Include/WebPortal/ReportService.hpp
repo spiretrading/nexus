@@ -16,6 +16,8 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.load_schedule(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::string&>()) } -> std::same_as<ReportSchedule>;
     { service.query(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const ScheduledReportQuery&>()) } ->
           std::same_as<ScheduledReports>;
@@ -110,6 +112,14 @@ namespace Nexus {
       ScheduledReports query(
         const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
 
+      /**
+       * Loads a saved schedule for its owner.
+       * @throws ReportNotFoundException If the schedule is missing or owned
+       *         by another account.
+       */
+      ReportSchedule load_schedule(
+        const Beam::DirectoryEntry& account, const std::string& id);
+
       /** Loads the definitions currently available to an account. */
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
@@ -192,6 +202,8 @@ namespace Nexus {
           const ReportActivityQuery& query) = 0;
         virtual ScheduledReports query(const Beam::DirectoryEntry& account,
           const ScheduledReportQuery& query) = 0;
+        virtual ReportSchedule load_schedule(
+          const Beam::DirectoryEntry& account, const std::string& id) = 0;
         virtual std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
@@ -230,6 +242,8 @@ namespace Nexus {
           const ReportActivityQuery& query) override;
         ScheduledReports query(const Beam::DirectoryEntry& account,
           const ScheduledReportQuery& query) override;
+        ReportSchedule load_schedule(
+          const Beam::DirectoryEntry& account, const std::string& id) override;
         std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
@@ -288,6 +302,11 @@ namespace Nexus {
   inline ScheduledReports ReportService::query(
       const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
     return m_service->query(account, query);
+  }
+
+  inline ReportSchedule ReportService::load_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    return m_service->load_schedule(account, id);
   }
 
   inline std::vector<ReportDefinition> ReportService::load_definitions(
@@ -380,6 +399,12 @@ namespace Nexus {
   ScheduledReports ReportService::WrappedReportService<S>::query(
       const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
     return m_service->query(account, query);
+  }
+
+  template<typename S>
+  ReportSchedule ReportService::WrappedReportService<S>::load_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    return m_service->load_schedule(account, id);
   }
 
   template<typename S>

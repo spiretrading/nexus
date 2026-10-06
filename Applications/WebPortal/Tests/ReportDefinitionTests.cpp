@@ -20,6 +20,10 @@ namespace {
   struct DefinitionService {
     int m_loads = 0;
 
+    ReportSchedule load_schedule(const DirectoryEntry&, const std::string&) {
+      throw std::runtime_error("Unexpected schedule lookup.");
+    }
+
     ScheduledReports query(const DirectoryEntry&, const ScheduledReportQuery&) {
       throw std::runtime_error("Unexpected schedule query.");
     }

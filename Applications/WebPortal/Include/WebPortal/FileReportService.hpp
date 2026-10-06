@@ -36,6 +36,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
       ScheduledReports query(
         const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
+      ReportSchedule load_schedule(
+        const Beam::DirectoryEntry& account, const std::string& id);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,

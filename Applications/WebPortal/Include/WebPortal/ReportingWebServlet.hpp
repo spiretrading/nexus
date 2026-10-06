@@ -187,6 +187,8 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_query_scheduled_reports(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_scheduled_report(
+        const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_download_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_share_reports(const Beam::HttpRequest& request);
