@@ -57,6 +57,7 @@ namespace Nexus {
       JobService* m_jobs;
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
+      boost::posix_time::ptime m_recovery_time;
       Beam::Timer m_timer;
       std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_ticks;
       mutable Beam::Mutex m_mutex;
@@ -83,6 +84,7 @@ namespace Nexus {
         m_jobs(jobs.get()),
         m_client(std::move(client)),
         m_time_client(std::move(time_client)),
+        m_recovery_time(m_time_client.get_time()),
         m_timer(std::move(timer)),
         m_ticks(std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
     try {
@@ -273,10 +275,7 @@ namespace Nexus {
         m_backend.store(*job);
       }
       if(schedule.m_repeat_interval) {
-        auto after = due;
-        if(is_recovery) {
-          after = std::max(now, due);
-        }
+        auto after = std::max(m_recovery_time, due);
         schedule.m_run_time = next_report_run(schedule, after);
       } else {
         schedule.m_job_id = id;

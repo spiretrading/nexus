@@ -56,12 +56,14 @@ namespace {
       Queue<ReportJob> m_states;
       Queue<ReportJob> m_failed_results;
       Executor m_executor;
+      bool m_is_pending_failing;
       bool m_is_commit_failing;
       bool m_is_ready_failing;
       bool m_is_result_failing;
 
       explicit Backend(Executor executor)
         : m_executor(std::move(executor)),
+          m_is_pending_failing(false),
           m_is_commit_failing(false),
           m_is_ready_failing(false),
           m_is_result_failing(false) {}
@@ -128,6 +130,9 @@ namespace {
 
       void store(const ReportSchedule& schedule) {
         auto lock = std::lock_guard(m_mutex);
+        if(m_is_pending_failing && schedule.m_pending_job_id) {
+          throw std::runtime_error("Injected pending marker failure.");
+        }
         if(m_is_commit_failing && !schedule.m_pending_job_id) {
           throw std::runtime_error("Injected schedule commit failure.");
         }
@@ -446,6 +451,85 @@ TEST_SUITE("ReportScheduleService") {
       REQUIRE(saved.m_run_time == time_from_string("2026-10-07 09:00:00"));
     }
   }
+  TEST_CASE("retry_startup_catch_up") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto&, auto) {
+      ++executions;
+      return 0;
+    });
+    backend.m_definitions = {source.m_definition};
+    backend.store(source);
+    SUBCASE("pending_marker") {
+      backend.m_is_pending_failing = true;
+    }
+    SUBCASE("schedule_commit") {
+      backend.m_is_commit_failing = true;
+    }
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(
+      Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
+    REQUIRE(executions == 0);
+    backend.m_is_pending_failing = false;
+    backend.m_is_commit_failing = false;
+    timer.trigger();
+    timer.trigger();
+    REQUIRE(backend.load_jobs().size() == 1);
+    REQUIRE(wait_for_terminal(backend).m_status ==
+      ReportJob::Status::COMPLETED);
+    REQUIRE(backend.load_schedule(source.m_account, source.m_id).m_run_time ==
+      time_from_string("2026-10-07 09:00:00"));
+    time.set(time_from_string("2026-10-09 12:00:00"));
+    timer.trigger();
+    REQUIRE(backend.load_jobs().size() == 4);
+    for(auto i = 0; i != 3; ++i) {
+      REQUIRE(
+        wait_for_terminal(backend).m_status == ReportJob::Status::COMPLETED);
+    }
+    REQUIRE(executions == 4);
+    scheduler.close();
+    worker.close();
+  }
+
+  TEST_CASE("delayed_startup_catch_up") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([&] (const auto&, auto) {
+      ++executions;
+      return 0;
+    });
+    backend.m_definitions = {source.m_definition};
+    backend.store(source);
+    backend.m_is_commit_failing = true;
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(
+      Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
+    time.set(time_from_string("2026-10-09 12:00:00"));
+    backend.m_is_commit_failing = false;
+    timer.trigger();
+    timer.trigger();
+    REQUIRE(backend.load_jobs().size() == 4);
+    for(auto i = 0; i != 4; ++i) {
+      REQUIRE(
+        wait_for_terminal(backend).m_status == ReportJob::Status::COMPLETED);
+    }
+    REQUIRE(executions == 4);
+    REQUIRE(backend.load_schedule(source.m_account, source.m_id).m_run_time ==
+      time_from_string("2026-10-10 09:00:00"));
+    scheduler.close();
+    worker.close();
+  }
+
   TEST_CASE("retry_queue_handoff_and_recover_submission_order") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
