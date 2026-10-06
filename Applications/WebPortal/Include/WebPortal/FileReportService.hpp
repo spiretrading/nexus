@@ -26,11 +26,13 @@ namespace Nexus {
 
       ~FileReportService();
 
-      GeneratedReports load_reports(
+      GeneratedReports query(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
+      ReportDetail load_report(
+        const Beam::DirectoryEntry& account, const std::string& id);
       ReportFile load_file(
         const Beam::DirectoryEntry& account, const std::string& id);
-      ReportActivities load_activities(
+      ReportActivities query(
         const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);

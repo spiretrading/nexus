@@ -65,6 +65,10 @@ namespace Nexus {
     std::string m_error;
   };
 
+  /** Formats a normalized parameter value for display. */
+  std::string format_report_parameter(
+    const ReportParameterDefinition& parameter, const Beam::JsonValue& value);
+
   /** Formats configured parameter values in definition order for display. */
   std::vector<std::string> format_report_parameters(const ReportJob& job);
 

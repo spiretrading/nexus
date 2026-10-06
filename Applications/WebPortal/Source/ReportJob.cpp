@@ -77,12 +77,17 @@ namespace {
   }
 }
 
+std::string Nexus::format_report_parameter(
+    const ReportParameterDefinition& parameter, const JsonValue& value) {
+  return format(parameter.m_type, value);
+}
+
 std::vector<std::string> Nexus::format_report_parameters(const ReportJob& job) {
   auto result = std::vector<std::string>();
   for(auto& parameter : job.m_definition.m_parameters) {
     auto value = job.m_parameters.get(parameter.m_name);
     if(value && !get<JsonNull>(&*value)) {
-      result.push_back(format(parameter.m_type, *value));
+      result.push_back(format_report_parameter(parameter, *value));
     }
   }
   return result;

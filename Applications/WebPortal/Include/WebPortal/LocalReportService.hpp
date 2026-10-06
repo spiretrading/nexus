@@ -65,11 +65,13 @@ namespace Nexus {
       /** Stores a job's generated output for subsequent downloads. */
       void set_output(const std::string& id, const Beam::SharedBuffer& output);
 
-      GeneratedReports load_reports(
+      GeneratedReports query(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
+      ReportDetail load_report(
+        const Beam::DirectoryEntry& account, const std::string& id);
       ReportFile load_file(
         const Beam::DirectoryEntry& account, const std::string& id);
-      ReportActivities load_activities(const Beam::DirectoryEntry& account,
+      ReportActivities query(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
@@ -157,10 +159,22 @@ namespace Nexus {
   }
 
   template<IsReportExecutor E>
-  GeneratedReports LocalReportService<E>::load_reports(
+  GeneratedReports LocalReportService<E>::query(
       const Beam::DirectoryEntry& account, const GeneratedReportQuery& query) {
     m_open_state.ensure_open();
     return query_generated_reports(load_jobs(), account, query, m_client);
+  }
+
+  template<IsReportExecutor E>
+  ReportDetail LocalReportService<E>::load_report(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_open_state.ensure_open();
+    auto job = load_job(id);
+    auto access = ReportAccess(account, m_client);
+    if(!job || !access.is_accessible(*job)) {
+      throw ReportNotFoundException();
+    }
+    return make_report_detail(*job);
   }
 
   template<IsReportExecutor E>
@@ -182,7 +196,7 @@ namespace Nexus {
   }
 
   template<IsReportExecutor E>
-  ReportActivities LocalReportService<E>::load_activities(
+  ReportActivities LocalReportService<E>::query(
       const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
     m_open_state.ensure_open();
     return query_report_activities(load_jobs(), account, query);

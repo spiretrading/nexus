@@ -147,10 +147,21 @@ FileReportService::~FileReportService() {
   close();
 }
 
-GeneratedReports FileReportService::load_reports(
+GeneratedReports FileReportService::query(
     const DirectoryEntry& account, const GeneratedReportQuery& query) {
   m_open_state.ensure_open();
   return query_generated_reports(load_jobs(), account, query, m_client);
+}
+
+ReportDetail FileReportService::load_report(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto job = load_job(id);
+  auto access = ReportAccess(account, m_client);
+  if(!job || !access.is_accessible(*job)) {
+    throw ReportNotFoundException();
+  }
+  return make_report_detail(*job);
 }
 
 ReportFile FileReportService::load_file(
@@ -190,7 +201,7 @@ ReportFile FileReportService::load_file(
     job->m_definition.m_output.m_media_type, std::move(content));
 }
 
-ReportActivities FileReportService::load_activities(
+ReportActivities FileReportService::query(
     const DirectoryEntry& account, const ReportActivityQuery& query) {
   m_open_state.ensure_open();
   return query_report_activities(load_jobs(), account, query);

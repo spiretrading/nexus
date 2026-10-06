@@ -20,17 +20,19 @@ namespace {
   struct DefinitionService {
     int m_loads = 0;
 
-    GeneratedReports load_reports(
-        const DirectoryEntry&, const GeneratedReportQuery&) {
+    GeneratedReports query(const DirectoryEntry&, const GeneratedReportQuery&) {
       throw std::runtime_error("Unexpected generated report query.");
+    }
+
+    ReportDetail load_report(const DirectoryEntry&, const std::string&) {
+      throw std::runtime_error("Unexpected report detail query.");
     }
 
     ReportFile load_file(const DirectoryEntry&, const std::string&) {
       throw std::runtime_error("Unexpected file query.");
     }
 
-    ReportActivities load_activities(
-        const DirectoryEntry&, const ReportActivityQuery&) {
+    ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&) {
       throw std::runtime_error("Unexpected activity query.");
     }
 

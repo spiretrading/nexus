@@ -72,24 +72,24 @@ TEST_SUITE("GeneratedReport") {
       local.store(pending);
     }
     auto service = ReportService(&local);
-    auto page = service.load_reports(alice, GeneratedReportQuery());
+    auto page = service.query(alice, GeneratedReportQuery());
     REQUIRE(!page.m_is_empty);
     REQUIRE(page.m_filtered_count == 3);
     REQUIRE(page.m_reports.size() == 3);
     REQUIRE(page.m_reports[0].m_id == "direct");
     REQUIRE(page.m_reports[1].m_id == "group");
     REQUIRE(page.m_reports[2].m_id == "owned");
-    REQUIRE(service.load_reports(
-      client.get_account(), GeneratedReportQuery()).m_is_empty);
+    REQUIRE(
+      service.query(client.get_account(), GeneratedReportQuery()).m_is_empty);
     client.associate(alice, root);
     client.detach(alice, subgroup);
-    page = service.load_reports(alice, GeneratedReportQuery());
+    page = service.query(alice, GeneratedReportQuery());
     REQUIRE(page.m_filtered_count == 2);
     REQUIRE(page.m_reports[0].m_id == "direct");
     REQUIRE(page.m_reports[1].m_id == "owned");
     service.close();
     REQUIRE_THROWS_AS(
-      service.load_reports(alice, GeneratedReportQuery()), std::runtime_error);
+      service.query(alice, GeneratedReportQuery()), std::runtime_error);
   }
 
   TEST_CASE("filters") {

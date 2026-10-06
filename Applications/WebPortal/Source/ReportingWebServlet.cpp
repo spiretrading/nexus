@@ -49,6 +49,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     HttpMethod::POST, "/api/reporting_service/load_generated_reports"),
     std::bind_front(&ReportingWebServlet::on_load_generated_reports, this));
   slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
+    std::bind_front(&ReportingWebServlet::on_load_report, this));
+  slots.emplace_back(
     matches_path(HttpMethod::GET, "/api/reporting_service/download_report"),
     std::bind_front(&ReportingWebServlet::on_download_report, this));
   slots.emplace_back(
@@ -433,7 +436,7 @@ HttpResponse ReportingWebServlet::on_load_report_activities(
     return response;
   }
   try {
-    auto page = m_reports.load_activities(session->get_account(), query);
+    auto page = m_reports.query(session->get_account(), query);
     session->shuttle_response(Response(page), out(response));
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
@@ -539,8 +542,47 @@ HttpResponse ReportingWebServlet::on_load_generated_reports(
     return response;
   }
   try {
-    auto page = m_reports.load_reports(session->get_account(), query);
+    auto page = m_reports.query(session->get_account(), query);
     session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_load_report(const HttpRequest& request) {
+  struct Parameters {
+    std::string m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  response.set_header({"Cache-Control", "private, no-store"});
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    if(parameters.m_id.empty()) {
+      throw std::invalid_argument("Missing report identifier.");
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto report =
+      m_reports.load_report(session->get_account(), parameters.m_id);
+    session->shuttle_response(report, out(response));
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }
