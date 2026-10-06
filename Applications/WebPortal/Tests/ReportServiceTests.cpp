@@ -42,6 +42,7 @@ namespace {
     std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
     std::string submit(DirectoryEntry&&, ReportSubmission&&);
     void cancel(const DirectoryEntry&, const std::vector<std::string>&);
+    void retry(const DirectoryEntry&, const std::vector<std::string>&);
     std::optional<ReportJob> load_job(const std::string&);
     void store(const ReportJob& job);
     int execute(const ReportJob& job, std::stop_token stop);

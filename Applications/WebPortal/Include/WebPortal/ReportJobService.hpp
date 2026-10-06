@@ -1,6 +1,8 @@
 #ifndef NEXUS_REPORT_JOB_SERVICE_HPP
 #define NEXUS_REPORT_JOB_SERVICE_HPP
+#include <algorithm>
 #include <concepts>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <stop_token>
@@ -68,6 +70,17 @@ namespace Nexus::Details {
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
 
+      /**
+       * Requeues an account's failed jobs using their saved definitions.
+       * @tparam V The validator for the failed job snapshots.
+       * @param account The submitting account.
+       * @param ids The job identifiers to retry.
+       * @param validate Checks access to all failed jobs before any changes.
+       */
+      template<std::invocable<const std::vector<ReportJob>&> V>
+      void retry(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids, V validate);
+
       /** Stops execution and marks unfinished jobs as failed. */
       void close();
 
@@ -84,6 +97,8 @@ namespace Nexus::Details {
       Beam::Queue<std::shared_ptr<Job>> m_jobs;
       Beam::RoutineHandler m_routine;
 
+      std::vector<ReportJob> load_jobs(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
       void run();
   };
 
@@ -152,21 +167,7 @@ namespace Nexus::Details {
     if(m_is_closed) {
       throw std::runtime_error("Report job service is closed.");
     }
-    auto jobs = std::vector<ReportJob>();
-    auto seen = std::unordered_set<std::string>();
-    for(auto& id : ids) {
-      if(!seen.insert(id).second) {
-        continue;
-      }
-      auto job = Beam::park([&] {
-        return m_backend->load_job(id);
-      });
-      if(!job || job->m_account != account ||
-          account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
-        throw ReportNotFoundException();
-      }
-      jobs.push_back(std::move(*job));
-    }
+    auto jobs = load_jobs(account, ids);
     for(auto& job : jobs) {
       if(job.m_status == ReportJob::Status::COMPLETED ||
           job.m_status == ReportJob::Status::CANCELLED) {
@@ -183,6 +184,41 @@ namespace Nexus::Details {
         entry->second->m_job = std::move(job);
         stops.push_back(entry->second->m_stop);
       }
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<std::invocable<const std::vector<ReportJob>&> V>
+  void ReportJobService<B, T>::retry(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids, V validate) {
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto jobs = load_jobs(account, ids);
+    std::erase_if(jobs, [] (const auto& job) {
+      return job.m_status != ReportJob::Status::FAILED;
+    });
+    if(jobs.empty()) {
+      return;
+    }
+    Beam::park([&] {
+      std::invoke(validate, std::as_const(jobs));
+    });
+    for(auto& job : jobs) {
+      auto entry = std::make_shared<Job>();
+      job.m_status = ReportJob::Status::QUEUED;
+      job.m_modified = m_time_client->get_time();
+      job.m_completed = boost::posix_time::not_a_date_time;
+      job.m_exit_code.reset();
+      job.m_error.clear();
+      entry->m_job = std::move(job);
+      Beam::park([&] {
+        m_backend->store(entry->m_job);
+      });
+      m_pending.emplace(entry->m_job.m_id, entry);
+      m_jobs.push(entry);
     }
   }
 
@@ -205,6 +241,29 @@ namespace Nexus::Details {
       stop.request_stop();
     }
     m_routine.wait();
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  std::vector<ReportJob> ReportJobService<B, T>::load_jobs(
+      const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    auto jobs = std::vector<ReportJob>();
+    auto seen = std::unordered_set<std::string>();
+    for(auto& id : ids) {
+      if(!seen.insert(id).second) {
+        continue;
+      }
+      auto job = Beam::park([&] {
+        return m_backend->load_job(id);
+      });
+      if(!job || job->m_account != account ||
+          account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
+        throw ReportNotFoundException();
+      }
+      jobs.push_back(std::move(*job));
+    }
+    return jobs;
   }
 
   template<typename B, typename T> requires

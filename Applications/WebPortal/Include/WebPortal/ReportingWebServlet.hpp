@@ -185,6 +185,7 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_cancel_report_jobs(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_retry_report_jobs(const Beam::HttpRequest& request);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(

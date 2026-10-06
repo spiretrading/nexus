@@ -68,6 +68,8 @@ namespace Nexus {
         const ReportSubmission& submission);
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
+      void retry(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       int execute(const ReportJob& job, std::stop_token stop);
@@ -163,6 +165,15 @@ namespace Nexus {
       const std::vector<std::string>& ids) {
     m_open_state.ensure_open();
     m_service->cancel(account, ids);
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::retry(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_open_state.ensure_open();
+    m_service->retry(account, ids, [&] (const auto& jobs) {
+      validate_report_retries(jobs, load_definitions(account), m_client);
+    });
   }
 
   template<IsReportExecutor E>

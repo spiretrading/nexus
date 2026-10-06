@@ -47,6 +47,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/cancel_report_jobs"),
     std::bind_front(&ReportingWebServlet::on_cancel_report_jobs, this));
+  slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/reporting_service/retry_report_jobs"),
+    std::bind_front(&ReportingWebServlet::on_retry_report_jobs, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/reporting_service/start_profit_and_loss_report"), std::bind_front(
       &ReportingWebServlet::on_start_profit_and_loss_report, this));
@@ -455,6 +458,40 @@ HttpResponse ReportingWebServlet::on_cancel_report_jobs(
   }
   try {
     m_reports.cancel(session->get_account(), parameters.m_ids);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_retry_report_jobs(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.retry(session->get_account(), parameters.m_ids);
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

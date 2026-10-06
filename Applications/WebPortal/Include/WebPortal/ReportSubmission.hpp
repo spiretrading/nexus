@@ -32,6 +32,16 @@ namespace Nexus {
     const Beam::DirectoryEntry& account, const ReportSubmission& submission,
     Beam::ServiceLocatorClient& client);
 
+  /**
+   * Checks current access to saved jobs and their referenced accounts/groups.
+   * @param jobs The failed jobs to validate.
+   * @param definitions The currently accessible report definitions.
+   * @param client The client for directory and permission lookups.
+   */
+  void validate_report_retries(const std::vector<ReportJob>& jobs,
+    const std::vector<ReportDefinition>& definitions,
+    Beam::ServiceLocatorClient& client);
+
   /** Applies defaults and validates report parameters for an account. */
   Beam::JsonObject prepare_report_parameters(const ReportDefinition& definition,
     const Beam::JsonObject& parameters, const Beam::DirectoryEntry& account,

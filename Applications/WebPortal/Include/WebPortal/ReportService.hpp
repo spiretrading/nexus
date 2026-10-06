@@ -15,6 +15,9 @@ namespace Nexus {
     { service.cancel(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::vector<std::string>&>()) } ->
         std::same_as<void>;
+    { service.retry(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::vector<std::string>&>()) } ->
+        std::same_as<void>;
     { service.load_job(std::declval<const std::string&>()) } ->
         std::same_as<std::optional<ReportJob>>;
     { service.load_activities(std::declval<const Beam::DirectoryEntry&>(),
@@ -79,6 +82,16 @@ namespace Nexus {
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
 
+      /**
+       * Requeues failed jobs submitted by an account under their existing ids.
+       * @param account The submitting account.
+       * @param ids The job identifiers to retry.
+       * @throws ReportNotFoundException If any job is absent, owned by another
+       *         account, or a failed job's report type is no longer accessible.
+       */
+      void retry(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+
       /** Loads stored job metadata, or nullopt if the job is absent. */
       std::optional<ReportJob> load_job(const std::string& id);
 
@@ -104,6 +117,8 @@ namespace Nexus {
           const ReportSubmission& submission) = 0;
         virtual void cancel(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) = 0;
+        virtual void retry(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) = 0;
         virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
         virtual void store(const ReportJob& job) = 0;
         virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
@@ -124,6 +139,8 @@ namespace Nexus {
         std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) override;
         void cancel(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) override;
+        void retry(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) override;
         std::optional<ReportJob> load_job(const std::string& id) override;
         void store(const ReportJob& job) override;
@@ -163,6 +180,11 @@ namespace Nexus {
   inline void ReportService::cancel(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_service->cancel(account, ids);
+  }
+
+  inline void ReportService::retry(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->retry(account, ids);
   }
 
   inline std::optional<ReportJob> ReportService::load_job(
@@ -211,6 +233,13 @@ namespace Nexus {
       const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_service->cancel(account, ids);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::retry(
+      const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->retry(account, ids);
   }
 
   template<typename S>

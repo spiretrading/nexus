@@ -34,6 +34,8 @@ namespace Nexus {
         const ReportSubmission& submission);
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
+      void retry(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       int execute(const ReportJob& job, std::stop_token stop);

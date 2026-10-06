@@ -38,6 +38,10 @@ namespace {
       throw std::runtime_error("Unexpected report cancellation.");
     }
 
+    void retry(const DirectoryEntry&, const std::vector<std::string>&) {
+      throw std::runtime_error("Unexpected report retry.");
+    }
+
     std::optional<ReportJob> load_job(const std::string&) {
       throw std::runtime_error("Unexpected job lookup.");
     }

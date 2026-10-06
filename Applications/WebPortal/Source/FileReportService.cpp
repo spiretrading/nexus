@@ -160,6 +160,14 @@ void FileReportService::cancel(
   m_jobs->cancel(account, ids);
 }
 
+void FileReportService::retry(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->retry(account, ids, [&] (const auto& jobs) {
+    validate_report_retries(jobs, load_definitions(account), m_client);
+  });
+}
+
 std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
   auto job = ReportJob();
   job.m_id = id;
@@ -171,10 +179,7 @@ void FileReportService::store(const ReportJob& job) {
   auto text = to_json(job);
   auto lock = std::lock_guard(m_mutex);
   if(job.m_status == ReportJob::Status::QUEUED) {
-    std::filesystem::create_directories(m_jobs_directory);
-    if(!std::filesystem::create_directory(path)) {
-      throw std::runtime_error("Report job already exists.");
-    }
+    std::filesystem::create_directories(path);
   }
   auto temporary = path / "metadata.json.tmp";
   auto stream = std::ofstream();
@@ -183,7 +188,7 @@ void FileReportService::store(const ReportJob& job) {
   stream << text;
   stream.close();
 #ifdef _WIN32
-  if(job.m_status != ReportJob::Status::QUEUED) {
+  if(std::filesystem::exists(path / "metadata.json")) {
     if(!ReplaceFileW((path / "metadata.json").c_str(), temporary.c_str(),
         nullptr, 0, nullptr, nullptr)) {
       throw std::system_error(GetLastError(), std::system_category());
@@ -204,6 +209,14 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
   if(stop.stop_requested()) {
     throw std::runtime_error("Report execution stopped.");
   }
+  auto output = path / ("output." + extension);
+  auto diagnostics = path / "diagnostics.txt";
+  for(auto& file : {output, diagnostics}) {
+    auto stream = std::ofstream();
+    stream.exceptions(std::ios::failbit | std::ios::badbit);
+    stream.open(file, std::ios::binary | std::ios::trunc);
+    stream.close();
+  }
   auto context = io_context();
   auto group = ProcessGroup();
   auto launcher = default_process_launcher();
@@ -212,8 +225,8 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
 #endif
   auto child = launcher(context.get_executor(), job.m_definition.m_command,
     job.m_arguments, process_stdio(
-      nullptr, filesystem::path((path / ("output." + extension)).native()),
-      filesystem::path((path / "diagnostics.txt").native()))
+      nullptr, filesystem::path(output.native()),
+      filesystem::path(diagnostics.native()))
 #ifdef _WIN32
     , boost::process::windows::show_window_hide
 #else

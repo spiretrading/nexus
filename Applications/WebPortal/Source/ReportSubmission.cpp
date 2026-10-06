@@ -321,6 +321,35 @@ ReportJob Nexus::prepare_report_job(
   return job;
 }
 
+void Nexus::validate_report_retries(const std::vector<ReportJob>& jobs,
+    const std::vector<ReportDefinition>& definitions,
+    ServiceLocatorClient& client) {
+  for(auto& job : jobs) {
+    auto definition = std::ranges::find(
+      definitions, job.m_definition.m_id, &ReportDefinition::m_id);
+    if(definition == definitions.end()) {
+      throw ReportNotFoundException();
+    }
+    for(auto& parameter : job.m_definition.m_parameters) {
+      auto value = job.m_parameters.get(parameter.m_name);
+      if(!value || get<JsonNull>(&*value)) {
+        continue;
+      }
+      if(parameter.m_type == "DirectoryEntry") {
+        resolve_report_entry(*value, job.m_account, client, true);
+      } else if(parameter.m_type == "DirectoryEntryList") {
+        for(auto& entry : get<std::vector<JsonValue>>(*value)) {
+          resolve_report_entry(entry, job.m_account, client, true);
+        }
+      }
+    }
+    for(auto& recipient : job.m_recipients) {
+      resolve_report_entry(
+        encode_value(recipient), job.m_account, client, false);
+    }
+  }
+}
+
 JsonObject Nexus::prepare_report_parameters(const ReportDefinition& definition,
     const JsonObject& parameters, const DirectoryEntry& account,
     ServiceLocatorClient& client) {

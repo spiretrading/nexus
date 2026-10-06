@@ -363,6 +363,132 @@ TEST_SUITE("ReportJobService") {
     REQUIRE(backend.load_job(second)->m_status == ReportJob::Status::COMPLETED);
   }
 
+  TEST_CASE("retry_failed_job") {
+    auto job = make_job();
+    job.m_id = "retry";
+    job.m_status = ReportJob::Status::FAILED;
+    job.m_created = time_from_string("2026-10-05 12:00:00");
+    job.m_completed = time_from_string("2026-10-05 12:01:00");
+    job.m_modified = job.m_completed;
+    job.m_exit_code = 7;
+    job.m_error = "Previous failure.";
+    job.m_recipients = {DirectoryEntry::make_account(2, "Bob")};
+    auto started = Queue<ReportJob>();
+    auto finished = Queue<ReportJob>();
+    auto release = std::binary_semaphore(0);
+    auto calls = 0;
+    auto backend = Backend([&] (const auto& value) {
+      if(value.m_id == job.m_id &&
+          (value.m_status == ReportJob::Status::FAILED ||
+            value.m_status == ReportJob::Status::COMPLETED)) {
+        finished.push(value);
+      }
+    }, [&] (const auto& value, auto stop) {
+      ++calls;
+      started.push(value);
+      if(calls == 1) {
+        auto cancel = std::stop_callback(stop, [&] {
+          release.release();
+        });
+        release.acquire();
+      } else if(calls == 2) {
+        return 9;
+      }
+      return 0;
+    });
+    backend.m_jobs.emplace(job.m_id, job);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:02:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto blocker = service.submit(make_job());
+    REQUIRE(started.pop().m_id == blocker);
+    service.retry(job.m_account, {job.m_id, job.m_id}, [] (const auto&) {});
+    auto queued = backend.load_job(job.m_id);
+    REQUIRE(queued->m_status == ReportJob::Status::QUEUED);
+    REQUIRE(queued->m_created == job.m_created);
+    REQUIRE(queued->m_modified == time_client.get_time());
+    REQUIRE(queued->m_completed.is_not_a_date_time());
+    REQUIRE(!queued->m_exit_code);
+    REQUIRE(queued->m_error.empty());
+    REQUIRE(queued->m_parameters == job.m_parameters);
+    REQUIRE(queued->m_recipients == job.m_recipients);
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    service.cancel(job.m_account, {blocker});
+    auto execution = started.pop();
+    REQUIRE(execution.m_id == job.m_id);
+    REQUIRE(execution.m_definition.m_command == job.m_definition.m_command);
+    REQUIRE(execution.m_arguments == job.m_arguments);
+    auto failed = finished.pop();
+    REQUIRE(failed.m_status == ReportJob::Status::FAILED);
+    REQUIRE(failed.m_exit_code == 9);
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    REQUIRE(started.pop().m_id == job.m_id);
+    REQUIRE(finished.pop().m_status == ReportJob::Status::COMPLETED);
+    service.close();
+    REQUIRE(calls == 3);
+    REQUIRE(
+      backend.load_job(job.m_id)->m_status == ReportJob::Status::COMPLETED);
+    REQUIRE_THROWS_AS(service.retry(job.m_account, {}, [] (const auto&) {}),
+      std::runtime_error);
+  }
+
+  TEST_CASE("retry_store_failure") {
+    auto job = make_job();
+    job.m_id = "retry";
+    job.m_status = ReportJob::Status::FAILED;
+    auto is_failing = std::atomic_bool(true);
+    auto calls = 0;
+    auto finished = Queue<ReportJob>();
+    auto backend = Backend([&] (const auto& value) {
+      if(is_failing && value.m_status == ReportJob::Status::QUEUED) {
+        throw std::runtime_error("Unable to store retry.");
+      }
+      if(value.m_status == ReportJob::Status::COMPLETED) {
+        finished.push(value);
+      }
+    }, [&] (const auto&, auto) {
+      ++calls;
+      return 0;
+    });
+    backend.m_jobs.emplace(job.m_id, job);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    REQUIRE_THROWS_AS(
+      service.retry(job.m_account, {job.m_id}, [] (const auto&) {}),
+      std::runtime_error);
+    REQUIRE(backend.load_job(job.m_id)->m_status == ReportJob::Status::FAILED);
+    is_failing = false;
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    REQUIRE(finished.pop().m_id == job.m_id);
+    service.close();
+    REQUIRE(calls == 1);
+  }
+
+  TEST_CASE("retry_cancellation") {
+    auto job = make_job();
+    job.m_id = "retry";
+    job.m_status = ReportJob::Status::FAILED;
+    auto started = Queue<std::string>();
+    auto release = std::binary_semaphore(0);
+    auto backend = Backend([] (const auto&) {},
+      [&] (const auto& value, auto stop) {
+        auto cancel = std::stop_callback(stop, [&] { release.release(); });
+        started.push(value.m_id);
+        release.acquire();
+        return 0;
+      });
+    backend.m_jobs.emplace(job.m_id, job);
+    auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
+    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    REQUIRE(started.pop() == job.m_id);
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    service.cancel(job.m_account, {job.m_id});
+    service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
+    service.close();
+    REQUIRE(
+      backend.load_job(job.m_id)->m_status == ReportJob::Status::CANCELLED);
+  }
+
   TEST_CASE("job_serialization") {
     auto job = make_job();
     job.m_id = "job-id";
