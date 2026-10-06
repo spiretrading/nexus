@@ -31,6 +31,10 @@ namespace Nexus {
     Beam::Uri m_file_path;
   };
 
+  /** Formats configured parameter labels and values in definition order. */
+  std::vector<ReportDetail::Parameter> format_report_parameters(
+    const ReportDefinition& definition, const Beam::JsonObject& parameters);
+
   /** Makes public report details from a saved job. */
   ReportDetail make_report_detail(const ReportJob& job);
 }

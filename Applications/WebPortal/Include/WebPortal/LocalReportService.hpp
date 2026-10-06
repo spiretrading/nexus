@@ -59,6 +59,9 @@ namespace Nexus {
       /** Returns job snapshots in submission order. */
       std::vector<ReportJob> load_jobs() const;
 
+      /** Returns snapshots of the stored schedules. */
+      std::vector<ReportSchedule> load_schedules() const;
+
       /** Replaces the definitions available to subsequent requests. */
       void set_definitions(const std::vector<ReportDefinition>& definitions);
 
@@ -73,6 +76,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const std::string& id);
       ReportActivities query(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
+      ScheduledReports query(
+        const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
@@ -88,6 +93,7 @@ namespace Nexus {
         const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
+      void store(const ReportSchedule& schedule);
       void remove(const std::string& id);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
@@ -99,6 +105,7 @@ namespace Nexus {
       mutable std::mutex m_mutex;
       std::vector<ReportDefinition> m_definitions;
       std::vector<ReportJob> m_jobs;
+      std::vector<ReportSchedule> m_schedules;
       std::unordered_map<std::string, Beam::SharedBuffer> m_outputs;
       Beam::OpenState m_open_state;
       std::unique_ptr<ReportJobService<
@@ -145,6 +152,12 @@ namespace Nexus {
   std::vector<ReportJob> LocalReportService<E>::load_jobs() const {
     auto lock = std::lock_guard(m_mutex);
     return Beam::shuttle_clone(m_jobs);
+  }
+
+  template<IsReportExecutor E>
+  std::vector<ReportSchedule> LocalReportService<E>::load_schedules() const {
+    auto lock = std::lock_guard(m_mutex);
+    return Beam::shuttle_clone(m_schedules);
   }
 
   template<IsReportExecutor E>
@@ -206,6 +219,13 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
     m_open_state.ensure_open();
     return query_report_activities(load_jobs(), account, query);
+  }
+
+  template<IsReportExecutor E>
+  ScheduledReports LocalReportService<E>::query(
+      const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
+    m_open_state.ensure_open();
+    return query_scheduled_reports(load_schedules(), account, query);
   }
 
   template<IsReportExecutor E>
@@ -274,6 +294,20 @@ namespace Nexus {
       m_jobs.push_back(job);
     } else {
       *existing = job;
+    }
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::store(const ReportSchedule& schedule) {
+    m_open_state.ensure_open();
+    auto snapshot = Beam::shuttle_clone(schedule);
+    auto lock = std::lock_guard(m_mutex);
+    auto existing =
+      std::ranges::find(m_schedules, schedule.m_id, &ReportSchedule::m_id);
+    if(existing == m_schedules.end()) {
+      m_schedules.push_back(std::move(snapshot));
+    } else {
+      *existing = std::move(snapshot);
     }
   }
 

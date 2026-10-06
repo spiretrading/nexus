@@ -20,6 +20,14 @@ namespace {
   struct DefinitionService {
     int m_loads = 0;
 
+    ScheduledReports query(const DirectoryEntry&, const ScheduledReportQuery&) {
+      throw std::runtime_error("Unexpected schedule query.");
+    }
+
+    void store(const ReportSchedule&) {
+      throw std::runtime_error("Unexpected schedule storage.");
+    }
+
     GeneratedReports query(const DirectoryEntry&, const GeneratedReportQuery&) {
       throw std::runtime_error("Unexpected generated report query.");
     }

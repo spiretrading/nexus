@@ -7,6 +7,7 @@
 #include "WebPortal/ReportDetail.hpp"
 #include "WebPortal/ReportFile.hpp"
 #include "WebPortal/ReportSubmission.hpp"
+#include "WebPortal/ScheduledReport.hpp"
 
 namespace Nexus {
 
@@ -15,6 +16,11 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.query(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const ScheduledReportQuery&>()) } ->
+          std::same_as<ScheduledReports>;
+    { service.store(std::declval<const ReportSchedule&>()) } ->
+        std::same_as<void>;
     { service.remove(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::vector<std::string>&>()) } ->
           std::same_as<void>;
@@ -100,6 +106,10 @@ namespace Nexus {
       ReportActivities query(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
 
+      /** Loads one page of schedules owned by an account, newest first. */
+      ScheduledReports query(
+        const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
+
       /** Loads the definitions currently available to an account. */
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
@@ -156,6 +166,9 @@ namespace Nexus {
       /** Stores a job's current state. */
       void store(const ReportJob& job);
 
+      /** Stores a schedule's configuration and next run time. */
+      void store(const ReportSchedule& schedule);
+
       /** Removes stored job metadata and output. */
       void remove(const std::string& id);
 
@@ -177,6 +190,8 @@ namespace Nexus {
           const Beam::DirectoryEntry& account, const std::string& id) = 0;
         virtual ReportActivities query(const Beam::DirectoryEntry& account,
           const ReportActivityQuery& query) = 0;
+        virtual ScheduledReports query(const Beam::DirectoryEntry& account,
+          const ScheduledReportQuery& query) = 0;
         virtual std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
@@ -192,6 +207,7 @@ namespace Nexus {
           const std::vector<std::string>& ids) = 0;
         virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
         virtual void store(const ReportJob& job) = 0;
+        virtual void store(const ReportSchedule& schedule) = 0;
         virtual void remove(const std::string& id) = 0;
         virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
         virtual void close() = 0;
@@ -212,6 +228,8 @@ namespace Nexus {
           const std::string& id) override;
         ReportActivities query(const Beam::DirectoryEntry& account,
           const ReportActivityQuery& query) override;
+        ScheduledReports query(const Beam::DirectoryEntry& account,
+          const ScheduledReportQuery& query) override;
         std::vector<ReportDefinition> load_definitions(
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
@@ -227,6 +245,7 @@ namespace Nexus {
           const std::vector<std::string>& ids) override;
         std::optional<ReportJob> load_job(const std::string& id) override;
         void store(const ReportJob& job) override;
+        void store(const ReportSchedule& schedule) override;
         void remove(const std::string& id) override;
         int execute(const ReportJob& job, std::stop_token stop) override;
         void close() override;
@@ -263,6 +282,11 @@ namespace Nexus {
 
   inline ReportActivities ReportService::query(
       const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
+    return m_service->query(account, query);
+  }
+
+  inline ScheduledReports ReportService::query(
+      const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
     return m_service->query(account, query);
   }
 
@@ -306,6 +330,10 @@ namespace Nexus {
     m_service->store(job);
   }
 
+  inline void ReportService::store(const ReportSchedule& schedule) {
+    m_service->store(schedule);
+  }
+
   inline void ReportService::remove(const std::string& id) {
     m_service->remove(id);
   }
@@ -345,6 +373,12 @@ namespace Nexus {
   template<typename S>
   ReportActivities ReportService::WrappedReportService<S>::query(
       const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
+    return m_service->query(account, query);
+  }
+
+  template<typename S>
+  ScheduledReports ReportService::WrappedReportService<S>::query(
+      const Beam::DirectoryEntry& account, const ScheduledReportQuery& query) {
     return m_service->query(account, query);
   }
 
@@ -397,6 +431,12 @@ namespace Nexus {
   template<typename S>
   void ReportService::WrappedReportService<S>::store(const ReportJob& job) {
     m_service->store(job);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::store(
+      const ReportSchedule& schedule) {
+    m_service->store(schedule);
   }
 
   template<typename S>

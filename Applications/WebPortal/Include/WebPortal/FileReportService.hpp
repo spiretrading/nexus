@@ -34,6 +34,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const std::string& id);
       ReportActivities query(
         const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
+      ScheduledReports query(
+        const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
@@ -49,6 +51,7 @@ namespace Nexus {
         const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
+      void store(const ReportSchedule& schedule);
       void remove(const std::string& id);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
@@ -67,7 +70,10 @@ namespace Nexus {
       FileReportService& operator =(const FileReportService&) = delete;
       std::vector<ReportDefinition> load_definitions();
       std::vector<ReportJob> load_jobs();
+      std::vector<ReportSchedule> load_schedules();
       std::optional<ReportJob> read_job(const std::filesystem::path& path);
+      std::optional<ReportSchedule> read_schedule(
+        const std::filesystem::path& path);
       void recover();
   };
 }

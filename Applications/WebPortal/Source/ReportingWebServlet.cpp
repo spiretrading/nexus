@@ -48,6 +48,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/reporting_service/query_generated_reports"),
     std::bind_front(&ReportingWebServlet::on_query_generated_reports, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/reporting_service/query_scheduled_reports"),
+    std::bind_front(&ReportingWebServlet::on_query_scheduled_reports, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
     std::bind_front(&ReportingWebServlet::on_load_report, this));
@@ -543,6 +546,65 @@ HttpResponse ReportingWebServlet::on_query_generated_reports(
           *query.m_start_date > *query.m_end_date)) {
       throw std::invalid_argument("Invalid generated report dates.");
     }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto page = m_reports.query(session->get_account(), query);
+    session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_query_scheduled_reports(
+    const HttpRequest& request) {
+  struct Filters {
+    std::string m_query;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("query", m_query);
+    }
+  };
+  struct Parameters {
+    Filters m_filters;
+    double m_page_index;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("filters", m_filters);
+      shuttle.shuttle("page_index", m_page_index);
+    }
+  };
+  struct Response {
+    const ScheduledReports* m_page;
+
+    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      constexpr auto READY = 1;
+      shuttle.shuttle("status", READY);
+      shuttle.shuttle("is_empty", m_page->m_is_empty);
+      auto count = static_cast<double>(m_page->m_filtered_count);
+      shuttle.shuttle("filtered_count", count);
+      shuttle.shuttle("schedules", m_page->m_schedules);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto query = ScheduledReportQuery();
+  try {
+    auto parameters = session->shuttle_parameters<Parameters>(request);
+    auto index = parameters.m_page_index;
+    if(!std::isfinite(index) || std::trunc(index) != index || index < 0 ||
+        index > std::numeric_limits<std::uint32_t>::max()) {
+      throw std::invalid_argument("Invalid scheduled report page index.");
+    }
+    query.m_page_index = static_cast<std::uint32_t>(index);
+    query.m_query = std::move(parameters.m_filters.m_query);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::BAD_REQUEST);
     return response;
