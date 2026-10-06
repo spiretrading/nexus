@@ -14,8 +14,8 @@ bool ReportAccess::is_accessible(const ReportJob& job) {
       job.m_status != ReportJob::Status::COMPLETED) {
     return false;
   }
-  if(job.m_account == m_account || std::ranges::find(
-      job.m_recipients, m_account) != job.m_recipients.end()) {
+  if(job.m_account == m_account ||
+      std::ranges::contains(job.m_recipients, m_account)) {
     return true;
   }
   auto has_groups = std::ranges::any_of(job.m_recipients,

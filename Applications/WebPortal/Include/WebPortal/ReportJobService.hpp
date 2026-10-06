@@ -23,7 +23,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "WebPortal/ReportSubmission.hpp"
 
-namespace Nexus::Details {
+namespace Nexus {
 
   /** Provides report job storage and execution. */
   template<typename T>
@@ -65,6 +65,11 @@ namespace Nexus::Details {
 
       /** Stores a prepared job and returns its identifier without waiting. */
       std::string submit(const ReportJob& submission);
+
+      /** Adds resolved recipients to completed reports owned by an account. */
+      void share(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids,
+        const std::vector<Beam::DirectoryEntry>& recipients);
 
       /** Cancels an account's jobs and removes them from activity. */
       void cancel(const Beam::DirectoryEntry& account,
@@ -150,6 +155,37 @@ namespace Nexus::Details {
     m_pending.emplace(id, entry);
     m_jobs.push(entry);
     return id;
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::share(
+      const Beam::DirectoryEntry& account, const std::vector<std::string>& ids,
+      const std::vector<Beam::DirectoryEntry>& recipients) {
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto jobs = load_jobs(account, ids);
+    auto is_unfinished = std::ranges::any_of(jobs, [] (const auto& job) {
+      return job.m_status != ReportJob::Status::COMPLETED;
+    });
+    if(is_unfinished) {
+      throw ReportNotFoundException();
+    }
+    for(auto& job : jobs) {
+      auto count = job.m_recipients.size();
+      for(auto& recipient : recipients) {
+        if(!std::ranges::contains(job.m_recipients, recipient)) {
+          job.m_recipients.push_back(recipient);
+        }
+      }
+      if(job.m_recipients.size() != count) {
+        Beam::park([&] {
+          m_backend->store(job);
+        });
+      }
+    }
   }
 
   template<typename B, typename T> requires

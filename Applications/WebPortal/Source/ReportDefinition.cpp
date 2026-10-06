@@ -116,7 +116,7 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
     auto types = std::vector<std::string_view>({"DirectoryEntry",
       "DirectoryEntryList", "Scope", "DateRange", "Date", "DateTime", "Time",
       "Decimal", "Integer", "Money", "Currency"});
-    if(std::find(types.begin(), types.end(), parameter.m_type) == types.end()) {
+    if(!std::ranges::contains(types, parameter.m_type)) {
       throw std::runtime_error(
         "Unsupported report parameter type: " + parameter.m_type);
     }

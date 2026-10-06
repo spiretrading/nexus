@@ -310,24 +310,32 @@ ReportJob Nexus::prepare_report_job(
   job.m_parameters = prepare_report_parameters(
     *definition, submission.m_parameters, job.m_account, client);
   job.m_arguments = make_report_arguments(*definition, job.m_parameters);
+  job.m_recipients =
+    prepare_report_recipients(submission.m_recipients, job.m_account, client);
+  return job;
+}
+
+std::vector<DirectoryEntry> Nexus::prepare_report_recipients(
+    const std::vector<DirectoryEntry>& recipients,
+    const DirectoryEntry& account, ServiceLocatorClient& client) {
+  auto result = std::vector<DirectoryEntry>();
   auto identifiers = std::unordered_set<unsigned int>();
-  for(auto& recipient : submission.m_recipients) {
-    auto entry = resolve_report_entry(
-      encode_value(recipient), job.m_account, client, false);
+  for(auto& recipient : recipients) {
+    auto entry =
+      resolve_report_entry(encode_value(recipient), account, client, false);
     if(identifiers.insert(entry.m_id).second) {
-      job.m_recipients.push_back(std::move(entry));
+      result.push_back(std::move(entry));
     }
   }
-  return job;
+  return result;
 }
 
 void Nexus::validate_report_retries(const std::vector<ReportJob>& jobs,
     const std::vector<ReportDefinition>& definitions,
     ServiceLocatorClient& client) {
   for(auto& job : jobs) {
-    auto definition = std::ranges::find(
-      definitions, job.m_definition.m_id, &ReportDefinition::m_id);
-    if(definition == definitions.end()) {
+    if(!std::ranges::contains(
+        definitions, job.m_definition.m_id, &ReportDefinition::m_id)) {
       throw ReportNotFoundException();
     }
     for(auto& parameter : job.m_definition.m_parameters) {

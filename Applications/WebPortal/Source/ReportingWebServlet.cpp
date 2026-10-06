@@ -55,6 +55,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     matches_path(HttpMethod::GET, "/api/reporting_service/download_report"),
     std::bind_front(&ReportingWebServlet::on_download_report, this));
   slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/reporting_service/share_reports"),
+    std::bind_front(&ReportingWebServlet::on_share_reports, this));
+  slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/cancel_report_jobs"),
     std::bind_front(&ReportingWebServlet::on_cancel_report_jobs, this));
   slots.emplace_back(
@@ -620,6 +623,45 @@ HttpResponse ReportingWebServlet::on_download_report(
         uri_encode(std::string(name.begin(), name.end()))});
     response.set_header({"X-Content-Type-Options", "nosniff"});
     response.set_body(file.m_content);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_share_reports(const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+    std::vector<JsonValue> m_recipients;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+      shuttle.shuttle("recipients", m_recipients);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  auto recipients = std::vector<DirectoryEntry>();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    for(auto& value : parameters.m_recipients) {
+      recipients.push_back(parse_report_entry(value));
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.share(session->get_account(), parameters.m_ids, recipients);
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

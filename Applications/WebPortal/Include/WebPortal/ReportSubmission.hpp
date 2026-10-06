@@ -32,6 +32,11 @@ namespace Nexus {
     const Beam::DirectoryEntry& account, const ReportSubmission& submission,
     Beam::ServiceLocatorClient& client);
 
+  /** Resolves distinct, readable accounts/groups for report sharing. */
+  std::vector<Beam::DirectoryEntry> prepare_report_recipients(
+    const std::vector<Beam::DirectoryEntry>& recipients,
+    const Beam::DirectoryEntry& account, Beam::ServiceLocatorClient& client);
+
   /**
    * Checks current access to saved jobs and their referenced accounts/groups.
    * @param jobs The failed jobs to validate.

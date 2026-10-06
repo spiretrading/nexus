@@ -77,6 +77,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      void share(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids,
+        const std::vector<Beam::DirectoryEntry>& recipients);
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
       void retry(const Beam::DirectoryEntry& account,
@@ -95,7 +98,7 @@ namespace Nexus {
       std::vector<ReportJob> m_jobs;
       std::unordered_map<std::string, Beam::SharedBuffer> m_outputs;
       Beam::OpenState m_open_state;
-      std::unique_ptr<Details::ReportJobService<
+      std::unique_ptr<ReportJobService<
         LocalReportService, Beam::TimeClient>> m_service;
 
       LocalReportService(const LocalReportService&) = delete;
@@ -122,7 +125,7 @@ namespace Nexus {
         m_definitions(Beam::shuttle_clone(definitions)) {
     try {
       m_service = std::make_unique<
-        Details::ReportJobService<LocalReportService, Beam::TimeClient>>(
+        ReportJobService<LocalReportService, Beam::TimeClient>>(
           Beam::Ref(*this), m_time_client);
     } catch(const std::exception&) {
       m_open_state.close();
@@ -215,6 +218,15 @@ namespace Nexus {
     m_open_state.ensure_open();
     return m_service->submit(prepare_report_job(
       load_definitions(), account, submission, m_client));
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::share(
+      const Beam::DirectoryEntry& account, const std::vector<std::string>& ids,
+      const std::vector<Beam::DirectoryEntry>& recipients) {
+    m_open_state.ensure_open();
+    m_service->share(
+      account, ids, prepare_report_recipients(recipients, account, m_client));
   }
 
   template<IsReportExecutor E>

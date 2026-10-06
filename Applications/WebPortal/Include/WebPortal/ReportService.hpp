@@ -15,6 +15,10 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.share(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::vector<std::string>&>(),
+        std::declval<const std::vector<Beam::DirectoryEntry>&>()) } ->
+          std::same_as<void>;
     { service.load_report(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::string&>()) } -> std::same_as<ReportDetail>;
     { service.load_file(std::declval<const Beam::DirectoryEntry&>(),
@@ -100,6 +104,18 @@ namespace Nexus {
         const ReportSubmission& submission);
 
       /**
+       * Adds recipients to completed reports owned by an account.
+       * Existing recipients retain access. Global recipients are not allowed.
+       * All reports and recipients are validated before any changes are stored.
+       * @throws ReportNotFoundException If any report is missing, unfinished,
+       *         or owned by another account.
+       * @throws std::invalid_argument If a recipient is invalid or unreadable.
+       */
+      void share(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids,
+        const std::vector<Beam::DirectoryEntry>& recipients);
+
+      /**
        * Cancels jobs submitted by an account, removing them from activity.
        * Completed and already cancelled jobs are unchanged.
        * @param account The submitting account.
@@ -148,6 +164,9 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) = 0;
         virtual std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) = 0;
+        virtual void share(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids,
+          const std::vector<Beam::DirectoryEntry>& recipients) = 0;
         virtual void cancel(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) = 0;
         virtual void retry(const Beam::DirectoryEntry& account,
@@ -177,6 +196,9 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) override;
         std::string submit(const Beam::DirectoryEntry& account,
           const ReportSubmission& submission) override;
+        void share(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids,
+          const std::vector<Beam::DirectoryEntry>& recipients) override;
         void cancel(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) override;
         void retry(const Beam::DirectoryEntry& account,
@@ -229,6 +251,12 @@ namespace Nexus {
   inline std::string ReportService::submit(const Beam::DirectoryEntry& account,
       const ReportSubmission& submission) {
     return m_service->submit(account, submission);
+  }
+
+  inline void ReportService::share(
+      const Beam::DirectoryEntry& account, const std::vector<std::string>& ids,
+      const std::vector<Beam::DirectoryEntry>& recipients) {
+    m_service->share(account, ids, recipients);
   }
 
   inline void ReportService::cancel(const Beam::DirectoryEntry& account,
@@ -298,6 +326,13 @@ namespace Nexus {
   std::string ReportService::WrappedReportService<S>::submit(
       const Beam::DirectoryEntry& account, const ReportSubmission& submission) {
     return m_service->submit(account, submission);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::share(
+      const Beam::DirectoryEntry& account, const std::vector<std::string>& ids,
+      const std::vector<Beam::DirectoryEntry>& recipients) {
+    m_service->share(account, ids, recipients);
   }
 
   template<typename S>

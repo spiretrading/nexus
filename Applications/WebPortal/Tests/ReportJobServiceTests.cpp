@@ -71,7 +71,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto routine = RoutineHandler(spawn([&] {
       try {
         auto id = service.submit(make_job());
@@ -100,7 +100,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(!id.empty());
@@ -137,7 +137,7 @@ TEST_SUITE("ReportJobService") {
       throw std::runtime_error("Unable to launch process.");
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto first = service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -165,7 +165,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     REQUIRE_THROWS_AS(service.submit(make_job()), std::runtime_error);
     service.close();
     REQUIRE(calls == 0);
@@ -182,7 +182,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -206,7 +206,7 @@ TEST_SUITE("ReportJobService") {
         return 0;
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -243,7 +243,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -272,7 +272,7 @@ TEST_SUITE("ReportJobService") {
     completed.m_status = ReportJob::Status::COMPLETED;
     backend.store(completed);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     for(auto& id : {"other", "missing"}) {
       REQUIRE_THROWS_AS(
         service.cancel(job.m_account, {"failed", id}), ReportNotFoundException);
@@ -313,7 +313,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(started.pop() == id);
@@ -350,7 +350,7 @@ TEST_SUITE("ReportJobService") {
       return 0;
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -398,7 +398,7 @@ TEST_SUITE("ReportJobService") {
     });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:02:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     auto blocker = service.submit(make_job());
     REQUIRE(started.pop().m_id == blocker);
     service.retry(job.m_account, {job.m_id, job.m_id}, [] (const auto&) {});
@@ -451,7 +451,7 @@ TEST_SUITE("ReportJobService") {
     });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     REQUIRE_THROWS_AS(
       service.retry(job.m_account, {job.m_id}, [] (const auto&) {}),
       std::runtime_error);
@@ -478,7 +478,7 @@ TEST_SUITE("ReportJobService") {
       });
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
-    auto service = Nexus::Details::ReportJobService(Ref(backend), &time_client);
+    auto service = ReportJobService(Ref(backend), &time_client);
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
     REQUIRE(started.pop() == job.m_id);
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});

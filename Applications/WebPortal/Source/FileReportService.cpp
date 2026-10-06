@@ -134,9 +134,7 @@ FileReportService::FileReportService(
       m_time_client(std::move(time_client)) {
   try {
     recover();
-    m_jobs = std::make_unique<
-      Nexus::Details::ReportJobService<FileReportService, TimeClient>>(
-        Ref(*this), m_time_client);
+    m_jobs.emplace(Ref(*this), m_time_client);
   } catch(const std::exception&) {
     m_open_state.close();
     throw;
@@ -218,6 +216,14 @@ std::string FileReportService::submit(const DirectoryEntry& account,
   m_open_state.ensure_open();
   return m_jobs->submit(
     prepare_report_job(load_definitions(), account, submission, m_client));
+}
+
+void FileReportService::share(const DirectoryEntry& account,
+    const std::vector<std::string>& ids,
+    const std::vector<DirectoryEntry>& recipients) {
+  m_open_state.ensure_open();
+  m_jobs->share(
+    account, ids, prepare_report_recipients(recipients, account, m_client));
 }
 
 void FileReportService::cancel(
