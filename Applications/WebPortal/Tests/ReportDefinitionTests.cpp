@@ -20,6 +20,11 @@ namespace {
   struct DefinitionService {
     int m_loads = 0;
 
+    void update_schedule(const DirectoryEntry&, const std::string&,
+        const ReportScheduleSubmission&) {
+      throw std::runtime_error("Unexpected schedule update.");
+    }
+
     ReportSchedule load_schedule(const DirectoryEntry&, const std::string&) {
       throw std::runtime_error("Unexpected schedule lookup.");
     }

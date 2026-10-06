@@ -68,7 +68,8 @@ TEST_SUITE("ReportSchedule") {
         service.load_schedule(account, schedule.m_id), ReportNotFoundException);
       auto session = sessions.create();
       session->set_account(account);
-      auto response = load(servlet, *session, R"({"id":"schedule"})");
+      auto response =
+        load(servlet, *session,R"({"id":"schedule","time_zone":"UTC"})");
       REQUIRE(response.get_status_code() == HttpStatusCode::NOT_FOUND);
     }
     auto snapshot = service.load_schedule(schedule.m_account, schedule.m_id);
@@ -97,17 +98,20 @@ TEST_SUITE("ReportSchedule") {
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &local);
-    auto body = std::string(R"({"id":"schedule"})");
+    auto body = std::string(R"({"id":"schedule","time_zone":"UTC"})");
     REQUIRE(load(servlet, *session, body).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     session->set_account(client.get_account());
     for(auto& invalid : {"", "{", "{}", "[]", R"({"id":null})",
-        R"({"id":1})", R"({"id":""})"}) {
+        R"({"id":1})", R"({"id":"","time_zone":"UTC"})",
+        R"({"id":"schedule"})", R"({"id":"schedule","time_zone":null})",
+        R"({"id":"schedule","time_zone":""})"}) {
       REQUIRE(load(servlet, *session, invalid).get_status_code() ==
         HttpStatusCode::BAD_REQUEST);
     }
-    REQUIRE(load(servlet, *session, R"({"id":"missing"})").get_status_code() ==
-      HttpStatusCode::NOT_FOUND);
+    REQUIRE(load(servlet, *session,
+      R"({"id":"missing","time_zone":"UTC"})").get_status_code() ==
+        HttpStatusCode::NOT_FOUND);
     auto response = load(servlet, *session, body);
     REQUIRE(response.get_status_code() == HttpStatusCode::OK);
     REQUIRE(response.get_header("Content-Type").has_value());
@@ -135,6 +139,14 @@ TEST_SUITE("ReportSchedule") {
         "access", "created", "run_time"}) {
       REQUIRE(!result.get(field));
     }
+    response = load(
+      servlet, *session, R"({"id":"schedule","time_zone":"America/Toronto"})");
+    REQUIRE(response.get_status_code() == HttpStatusCode::OK);
+    result = get<JsonObject>(parse<JsonValue>(response.get_body()));
+    REQUIRE(result.at("schedule_date_time") == "20261007T083000");
+    REQUIRE(load(servlet, *session,
+      R"({"id":"schedule","time_zone":"Not/AZone"})").get_status_code() ==
+      HttpStatusCode::BAD_REQUEST);
     schedule.m_repeat_interval.reset();
     local.store(schedule);
     response = load(servlet, *session, body);

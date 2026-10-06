@@ -147,20 +147,7 @@ namespace {
     } else if(type == "Time") {
       return to_simple_string(read_time(read_string(value)));
     } else if(type == "DateTime") {
-      auto text = read_string(value);
-      static const auto PATTERN = std::regex(
-        "([0-9]{8}T[0-9]{6}|[0-9]{4}-[0-9]{2}-[0-9]{2}T"
-        "[0-9]{2}:[0-9]{2}:[0-9]{2})(\\.[0-9]{1,6})?");
-      if(!std::regex_match(text, PATTERN)) {
-        throw std::invalid_argument("Invalid date and time.");
-      }
-      std::erase(text, '-');
-      std::erase(text, ':');
-      auto day = read_date(text.substr(0, 8));
-      auto time = read_time(text.substr(9, 2) + ":" + text.substr(11, 2) + ":" +
-        text.substr(13));
-      return to_iso_string(
-        ptime(from_undelimited_string(get<std::string>(day)), time));
+      return to_iso_string(parse_report_datetime(value));
     } else if(type == "DateRange") {
       auto& object = read_object(value);
       auto range = JsonObject();
@@ -292,6 +279,73 @@ DirectoryEntry Nexus::parse_report_entry(const JsonValue& value) {
   auto id = static_cast<unsigned int>(read_integer(read_member(object, "id"), 0,
     std::numeric_limits<unsigned int>::max()));
   return DirectoryEntry(DirectoryEntry::Type(type), id, "");
+}
+
+ptime Nexus::parse_report_datetime(const JsonValue& value) {
+  auto text = read_string(value);
+  static const auto PATTERN = std::regex(
+    "([0-9]{8}T[0-9]{6}|[0-9]{4}-[0-9]{2}-[0-9]{2}T"
+    "[0-9]{2}:[0-9]{2}:[0-9]{2})(\\.[0-9]{1,6})?");
+  if(!std::regex_match(text, PATTERN)) {
+    throw std::invalid_argument("Invalid date and time.");
+  }
+  std::erase(text, '-');
+  std::erase(text, ':');
+  auto day = read_date(text.substr(0, 8));
+  auto time = read_time(text.substr(9, 2) + ":" + text.substr(11, 2) + ":" +
+    text.substr(13));
+  return ptime(from_undelimited_string(get<std::string>(day)), time);
+}
+
+ReportSchedule::Interval Nexus::parse_report_interval(const JsonValue& value) {
+  auto& object = read_object(value);
+  auto count = read_integer(
+    read_member(object, "count"), 1, std::numeric_limits<std::uint32_t>::max());
+  auto unit = read_integer(read_member(object, "unit"), 0,
+    static_cast<int>(ReportSchedule::Interval::Unit::YEAR));
+  return ReportSchedule::Interval(static_cast<std::uint32_t>(count),
+    ReportSchedule::Interval::Unit(static_cast<int>(unit)));
+}
+
+ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,
+    const ReportScheduleSubmission& submission,
+    const std::vector<ReportDefinition>& definitions,
+    ServiceLocatorClient& client, ptime now) {
+  auto& interval = submission.m_repeat_interval;
+  if(interval && (interval->m_count == 0 ||
+      interval->m_unit < ReportSchedule::Interval::Unit::DAY ||
+      interval->m_unit > ReportSchedule::Interval::Unit::YEAR)) {
+    throw std::invalid_argument("Invalid repeat interval.");
+  }
+  auto start = convert_report_time(
+    schedule.m_start_time, schedule.m_time_zone, submission.m_time_zone);
+  auto is_same_interval = [&] {
+    if(!interval || !schedule.m_repeat_interval) {
+      return interval.has_value() == schedule.m_repeat_interval.has_value();
+    }
+    return interval->m_count == schedule.m_repeat_interval->m_count &&
+      interval->m_unit == schedule.m_repeat_interval->m_unit;
+  }();
+  auto job = prepare_report_job(
+    definitions, schedule.m_account, submission.m_report, client);
+  if(start == submission.m_start_time && is_same_interval) {
+    return ReportSchedule(schedule.m_id, schedule.m_account,
+      std::move(job.m_definition), std::move(job.m_parameters),
+      std::move(job.m_recipients), schedule.m_created, schedule.m_start_time,
+      schedule.m_run_time, schedule.m_repeat_interval, schedule.m_time_zone);
+  }
+  auto utc =
+    convert_report_time(submission.m_start_time, submission.m_time_zone, "UTC");
+  if(!interval && utc <= now) {
+    throw std::invalid_argument(
+      "A changed one-time start must be in the future.");
+  }
+  auto result = ReportSchedule(schedule.m_id, schedule.m_account,
+    std::move(job.m_definition), std::move(job.m_parameters),
+    std::move(job.m_recipients), schedule.m_created, submission.m_start_time,
+    submission.m_start_time, interval, submission.m_time_zone);
+  result.m_run_time = next_report_run(result, now);
+  return result;
 }
 
 ReportJob Nexus::prepare_report_job(

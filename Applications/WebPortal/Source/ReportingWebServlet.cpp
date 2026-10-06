@@ -54,6 +54,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/reporting_service/load_scheduled_report"),
     std::bind_front(&ReportingWebServlet::on_load_scheduled_report, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/reporting_service/update_scheduled_report"),
+    std::bind_front(&ReportingWebServlet::on_update_scheduled_report, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
     std::bind_front(&ReportingWebServlet::on_load_report, this));
@@ -625,13 +628,16 @@ HttpResponse ReportingWebServlet::on_load_scheduled_report(
     const HttpRequest& request) {
   struct Parameters {
     std::string m_id;
+    std::string m_time_zone;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("id", m_id);
+      shuttle.shuttle("time_zone", m_time_zone);
     }
   };
   struct Response {
     const ReportSchedule* m_schedule;
+    ptime m_start_time;
 
     void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("report_type", m_schedule->m_definition.m_id);
@@ -639,7 +645,7 @@ HttpResponse ReportingWebServlet::on_load_scheduled_report(
       shuttle.shuttle("parameters", parameters);
       shuttle.shuttle("recipients", m_schedule->m_recipients);
       shuttle.shuttle("scheduled", true);
-      shuttle.shuttle("schedule_date_time", m_schedule->m_start_time);
+      shuttle.shuttle("schedule_date_time", m_start_time);
       shuttle.shuttle("repeats", m_schedule->m_repeat_interval.has_value());
       if(m_schedule->m_repeat_interval) {
         shuttle.shuttle("repeat_interval", *m_schedule->m_repeat_interval);
@@ -668,7 +674,81 @@ HttpResponse ReportingWebServlet::on_load_scheduled_report(
   try {
     auto schedule =
       m_reports.load_schedule(session->get_account(), parameters.m_id);
-    session->shuttle_response(Response(&schedule), out(response));
+    auto start = convert_report_time(
+      schedule.m_start_time, schedule.m_time_zone, parameters.m_time_zone);
+    session->shuttle_response(Response(&schedule, start), out(response));
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_update_scheduled_report(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_id;
+    std::string m_report_type;
+    JsonValue m_parameters;
+    std::vector<JsonValue> m_recipients;
+    bool m_is_scheduled;
+    JsonValue m_start_time;
+    bool m_is_repeating;
+    std::optional<JsonValue> m_interval;
+    std::string m_time_zone;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+      shuttle.shuttle("report_type", m_report_type);
+      shuttle.shuttle("parameters", m_parameters);
+      shuttle.shuttle("recipients", m_recipients);
+      shuttle.shuttle("scheduled", m_is_scheduled);
+      shuttle.shuttle("schedule_date_time", m_start_time);
+      shuttle.shuttle("repeats", m_is_repeating);
+      shuttle.shuttle("repeat_interval", m_interval);
+      shuttle.shuttle("time_zone", m_time_zone);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  auto submission = ReportScheduleSubmission();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    if(parameters.m_id.empty() || !parameters.m_is_scheduled) {
+      throw std::invalid_argument("Invalid scheduled report update.");
+    }
+    submission.m_report.m_report_type = std::move(parameters.m_report_type);
+    submission.m_report.m_parameters = get<JsonObject>(parameters.m_parameters);
+    for(auto& value : parameters.m_recipients) {
+      submission.m_report.m_recipients.push_back(parse_report_entry(value));
+    }
+    submission.m_start_time = parse_report_datetime(parameters.m_start_time);
+    submission.m_time_zone = std::move(parameters.m_time_zone);
+    if(parameters.m_is_repeating) {
+      if(!parameters.m_interval) {
+        throw std::invalid_argument("Missing repeat interval.");
+      }
+      submission.m_repeat_interval =
+        parse_report_interval(*parameters.m_interval);
+    } else if(parameters.m_interval &&
+        !get<JsonNull>(&*parameters.m_interval)) {
+      throw std::invalid_argument("Unexpected repeat interval.");
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.update_schedule(
+      session->get_account(), parameters.m_id, submission);
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

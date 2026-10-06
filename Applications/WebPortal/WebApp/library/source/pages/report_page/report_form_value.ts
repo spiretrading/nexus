@@ -8,6 +8,7 @@ import { parseReportParameterValue, reportParameterValueToJson,
 /** Encodes typed form values for the reporting service. */
 export function reportFormValueToJson(value: ReportFormTemplate.Value): any {
   return {report_type: value.reportType,
+    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     parameters: Object.fromEntries(Object.entries(value.parameters).
       map(([name, parameter]) =>
         [name, reportParameterValueToJson(parameter)])),

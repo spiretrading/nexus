@@ -42,6 +42,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      void update_schedule(const Beam::DirectoryEntry& account,
+        const std::string& id, const ReportScheduleSubmission& submission);
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
@@ -64,6 +66,7 @@ namespace Nexus {
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
       mutable std::mutex m_mutex;
+      mutable Beam::Mutex m_schedule_mutex;
       Beam::OpenState m_open_state;
       std::optional<ReportJobService<FileReportService, Beam::TimeClient>>
         m_jobs;

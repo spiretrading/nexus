@@ -41,7 +41,8 @@ export class HttpEditScheduledReportModel extends EditScheduledReportModel {
   public async loadReport(id: string): Promise<ReportFormTemplate.Value> {
     const definitions = this.reports;
     const response = await Beam.post(
-      '/api/reporting_service/load_scheduled_report', {id});
+      '/api/reporting_service/load_scheduled_report',
+      {id, time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone});
     return parseReportFormValue(response, definitions);
   }
 

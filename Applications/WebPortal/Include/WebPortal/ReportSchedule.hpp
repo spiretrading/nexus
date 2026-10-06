@@ -60,7 +60,18 @@ namespace Nexus {
 
     /** The repeat interval, absent for a one-time schedule. */
     std::optional<Interval> m_repeat_interval;
+
+    /** The IANA timezone for calendar times. */
+    std::string m_time_zone = "UTC";
   };
+
+  /** Converts a calendar date/time between IANA timezones. */
+  boost::posix_time::ptime convert_report_time(boost::posix_time::ptime value,
+    const std::string& source, const std::string& destination);
+
+  /** Finds the next recurring run after now, or a one-time schedule's start. */
+  boost::posix_time::ptime next_report_run(
+    const ReportSchedule& schedule, boost::posix_time::ptime now);
 }
 
 namespace Beam {
@@ -88,6 +99,7 @@ namespace Beam {
       shuttle.shuttle("start_time", value.m_start_time);
       shuttle.shuttle("run_time", value.m_run_time);
       shuttle.shuttle("repeat_interval", value.m_repeat_interval);
+      shuttle.shuttle("time_zone", value.m_time_zone);
     }
   };
 }

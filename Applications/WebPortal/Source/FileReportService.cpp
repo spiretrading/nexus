@@ -256,6 +256,16 @@ std::string FileReportService::submit(const DirectoryEntry& account,
     prepare_report_job(load_definitions(), account, submission, m_client));
 }
 
+void FileReportService::update_schedule(const DirectoryEntry& account,
+    const std::string& id, const ReportScheduleSubmission& submission) {
+  m_open_state.ensure_open();
+  auto lock = std::lock_guard(m_schedule_mutex);
+  auto schedule = load_schedule(account, id);
+  auto updated = prepare_report_schedule(schedule, submission,
+    load_definitions(), m_client, m_time_client.get_time());
+  store(updated);
+}
+
 void FileReportService::share(const DirectoryEntry& account,
     const std::vector<std::string>& ids,
     const std::vector<DirectoryEntry>& recipients) {

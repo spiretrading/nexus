@@ -9,6 +9,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
@@ -56,6 +57,28 @@ output: {media_type: text/csv, extension: csv}
 }
 
 TEST_SUITE("ReportSubmission") {
+  TEST_CASE("schedule_inputs") {
+    auto expected = time_from_string("2026-10-07 12:30:45.123456");
+    REQUIRE(parse_report_datetime("20261007T123045.123456") == expected);
+    REQUIRE(parse_report_datetime("2026-10-07T12:30:45.123456") == expected);
+    for(auto& invalid : {"", "+infinity", "not-a-date-time",
+        "20261007T240000", "20261007T126000", "20261007T123060",
+        "20261007T123000Z", "20261007T123000junk"}) {
+      REQUIRE_THROWS_AS(parse_report_datetime(invalid), std::invalid_argument);
+    }
+    auto interval =
+      parse_report_interval(parse<JsonValue>(R"({"count":2,"unit":2})"));
+    REQUIRE(interval.m_count == 2);
+    REQUIRE(interval.m_unit == ReportSchedule::Interval::Unit::MONTH);
+    for(auto& invalid : {R"({"count":0,"unit":0})",
+        R"({"count":1.5,"unit":0})", R"({"count":1,"unit":4})",
+        R"({"count":1,"unit":0.5})", R"({"count":4294967296,"unit":0})",
+        R"({"count":null,"unit":0})", "{}"}) {
+      REQUIRE_THROWS_AS(parse_report_interval(parse<JsonValue>(invalid)),
+        std::invalid_argument);
+    }
+  }
+
   TEST_CASE("defaults_and_arguments") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();

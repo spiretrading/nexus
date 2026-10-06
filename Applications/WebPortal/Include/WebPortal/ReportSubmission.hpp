@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_SUBMISSION_HPP
 #include <stdexcept>
 #include "WebPortal/ReportJob.hpp"
+#include "WebPortal/ReportSchedule.hpp"
 
 namespace Nexus {
 
@@ -18,6 +19,22 @@ namespace Nexus {
     std::vector<Beam::DirectoryEntry> m_recipients;
   };
 
+  /** The editable settings of a scheduled report. */
+  struct ReportScheduleSubmission {
+
+    /** The report type, parameters, and recipients. */
+    ReportSubmission m_report;
+
+    /** The configured first run's calendar date and time. */
+    boost::posix_time::ptime m_start_time;
+
+    /** The repeat interval, absent for a one-time schedule. */
+    std::optional<ReportSchedule::Interval> m_repeat_interval;
+
+    /** The submitting browser's IANA timezone. */
+    std::string m_time_zone;
+  };
+
   /** Indicates that a report definition or job is unavailable to an account. */
   class ReportNotFoundException : public std::runtime_error {
     public:
@@ -26,6 +43,18 @@ namespace Nexus {
 
   /** Parses an account/group entry without performing a directory lookup. */
   Beam::DirectoryEntry parse_report_entry(const Beam::JsonValue& value);
+
+  /** Parses a finite calendar date and time from a report input. */
+  boost::posix_time::ptime parse_report_datetime(const Beam::JsonValue& value);
+
+  /** Parses a positive calendar interval from a report input. */
+  ReportSchedule::Interval parse_report_interval(const Beam::JsonValue& value);
+
+  /** Validates edited settings and computes the schedule's next run. */
+  ReportSchedule prepare_report_schedule(
+    const ReportSchedule& schedule, const ReportScheduleSubmission& submission,
+    const std::vector<ReportDefinition>& definitions,
+    Beam::ServiceLocatorClient& client, boost::posix_time::ptime now);
 
   /** Resolves a submission into an authorized, prepared report job. */
   ReportJob prepare_report_job(const std::vector<ReportDefinition>& definitions,

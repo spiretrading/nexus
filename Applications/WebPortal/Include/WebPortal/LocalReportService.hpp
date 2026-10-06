@@ -84,6 +84,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportSubmission& submission);
+      void update_schedule(const Beam::DirectoryEntry& account,
+        const std::string& id, const ReportScheduleSubmission& submission);
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
@@ -105,6 +107,7 @@ namespace Nexus {
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
       mutable std::mutex m_mutex;
+      mutable Beam::Mutex m_schedule_mutex;
       std::vector<ReportDefinition> m_definitions;
       std::vector<ReportJob> m_jobs;
       std::vector<ReportSchedule> m_schedules;
@@ -256,6 +259,18 @@ namespace Nexus {
     m_open_state.ensure_open();
     return m_service->submit(prepare_report_job(
       load_definitions(), account, submission, m_client));
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::update_schedule(
+      const Beam::DirectoryEntry& account, const std::string& id,
+      const ReportScheduleSubmission& submission) {
+    m_open_state.ensure_open();
+    auto lock = std::lock_guard(m_schedule_mutex);
+    auto schedule = load_schedule(account, id);
+    auto updated = prepare_report_schedule(schedule, submission,
+      load_definitions(), m_client, m_time_client.get_time());
+    store(updated);
   }
 
   template<IsReportExecutor E>

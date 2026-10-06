@@ -130,7 +130,8 @@ describe('HTTP report models', () => {
     assert.equal(await model.submit(makeValue()), 'job-id');
     const call = Request.calls.at(-1);
     assert.equal(call.url, '/api/reporting_service/submit_report');
-    assert.deepEqual(call.body, {report_type: 'example', parameters: {
+    assert.deepEqual(call.body, {report_type: 'example',
+      time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone, parameters: {
       account: Beam.DirectoryEntry.STAR_DIRECTORY.toJson(),
       accounts: [Beam.DirectoryEntry.makeAccount(1, 'Alice').toJson()],
       range: {start: '20261001', end: null}, currency: 840,
@@ -233,6 +234,8 @@ describe('HTTP report models', () => {
         return {status: 200, body: {status: 1, is_empty: false,
           filtered_count: 1, schedules: [schedule]}};
       } else if(call.url.endsWith('load_scheduled_report')) {
+        assert.equal(call.body.time_zone,
+          Intl.DateTimeFormat().resolvedOptions().timeZone);
         return {status: 200, body: saved};
       } else if(call.url.endsWith('duplicate_scheduled_report')) {
         return {status: 200, body: {...schedule, id: 'copy'}};
@@ -256,7 +259,9 @@ describe('HTTP report models', () => {
       equals(Beam.DirectoryEntry.STAR_DIRECTORY));
     await edit.submit('schedule', value);
     assert.deepEqual(Request.calls.at(-1).body,
-      {id: 'schedule', ...saved, parameters: {
+      {id: 'schedule', ...saved,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        parameters: {
         account: Beam.DirectoryEntry.STAR_DIRECTORY.toJson(), accounts: null,
         range: null, currency: null, money: null, scope: null,
         count: 0, optional: null}});
