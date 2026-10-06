@@ -4,7 +4,7 @@ import { LocalScheduledReportsModel, ScheduledReportsController,
   ScheduledReportsModel } from 'web_portal';
 
 class DemoScheduledReportsModel extends LocalScheduledReportsModel {
-  public async loadSchedules(submission: ScheduledReportsModel.Submission):
+  public async query(submission: ScheduledReportsModel.Submission):
       Promise<ScheduledReportsModel.Response> {
     const fail = settings.failQueries;
     await new Promise(resolve => window.setTimeout(resolve, settings.delay));
@@ -15,7 +15,7 @@ class DemoScheduledReportsModel extends LocalScheduledReportsModel {
       return {status: ScheduledReportsModel.ResponseStatus.READY,
         isEmpty: true, filteredCount: 0, schedules: []};
     }
-    return super.loadSchedules(submission);
+    return super.query(submission);
   }
 
   public async duplicate(id: string): Promise<ScheduledReportsModel.Schedule> {

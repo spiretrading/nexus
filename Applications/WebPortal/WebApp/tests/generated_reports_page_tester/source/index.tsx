@@ -6,7 +6,7 @@ import { GeneratedReportsController, GeneratedReportsModel,
   ReportTable } from 'web_portal';
 
 class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
-  public async loadReports(submission: GeneratedReportsModel.Submission):
+  public async query(submission: GeneratedReportsModel.Submission):
       Promise<GeneratedReportsModel.Response> {
     const delay = settings.delay;
     const fail = settings.failQueries;
@@ -18,7 +18,7 @@ class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
       return {status: GeneratedReportsModel.ResponseStatus.READY,
         isEmpty: true, filteredCount: 0, reports: []};
     }
-    return super.loadReports(submission);
+    return super.query(submission);
   }
 
   public async delete(ids: readonly string[]): Promise<void> {

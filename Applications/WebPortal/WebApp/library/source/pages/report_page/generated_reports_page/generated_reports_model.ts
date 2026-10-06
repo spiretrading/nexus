@@ -4,7 +4,7 @@ import { AccountGroupQueryModel, SortableTableHeaderCell } from
 import { DateRange } from '../../../models/date_range';
 import { ReportTable } from './report_table';
 
-/** Loads generated reports and performs actions on selected reports. */
+/** Queries generated reports and performs actions on selected reports. */
 export abstract class GeneratedReportsModel {
 
   /** The model used to look up share recipients after loading. */
@@ -14,7 +14,7 @@ export abstract class GeneratedReportsModel {
   public abstract load(): Promise<void>;
 
   /** Retrieves one page and the total count for the supplied criteria. */
-  public abstract loadReports(submission: GeneratedReportsModel.Submission):
+  public abstract query(submission: GeneratedReportsModel.Submission):
       Promise<GeneratedReportsModel.Response>;
 
   /** Deletes the reports with the supplied identifiers. */

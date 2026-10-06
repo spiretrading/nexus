@@ -28,7 +28,7 @@ describe('LocalGeneratedReportsModel', () => {
     assert.throws(() => model.recipientModel);
     assert.throws(() => model.shares);
     assert.throws(() => model.downloads);
-    await assert.rejects(model.loadReports(submission()));
+    await assert.rejects(model.query(submission()));
     await assert.rejects(model.delete(['1']));
     await assert.rejects(model.share(['1'], []));
     await assert.rejects(model.download(['1']));
@@ -41,34 +41,34 @@ describe('LocalGeneratedReportsModel', () => {
       new LocalAccountGroupQueryModel([]));
     await model.load();
     const request = submission();
-    let response = await model.loadReports(request);
+    let response = await model.query(request);
     assert.equal(response.filteredCount, 105);
     assert.equal(response.reports.length, 50);
     request.pageIndex = 2;
-    response = await model.loadReports(request);
+    response = await model.query(request);
     assert.deepEqual(response.reports.map(report => report.id),
       ['101', '102', '103', '104', '105']);
     request.pageIndex = 0;
     request.filters.query = 'GROUP 105';
-    response = await model.loadReports(request);
+    response = await model.query(request);
     assert.equal(response.filteredCount, 1);
     assert.equal(response.reports[0].id, '105');
     request.filters.query = '';
     request.filters.dateRange = new DateRange(
       new Beam.Date(2024, 2, 29), new Beam.Date(2024, 2, 29));
-    response = await model.loadReports(request);
+    response = await model.query(request);
     assert.deepEqual(response.reports.map(report => report.id),
       ['29', '58', '87']);
     request.filters.dateRange = new DateRange(null, new Beam.Date(2024, 2, 1));
-    assert.equal((await model.loadReports(request)).filteredCount, 4);
+    assert.equal((await model.query(request)).filteredCount, 4);
     request.filters.dateRange = new DateRange(new Beam.Date(2024, 2, 29), null);
-    assert.equal((await model.loadReports(request)).filteredCount, 3);
+    assert.equal((await model.query(request)).filteredCount, 3);
     request.filters.query = 'no match';
-    response = await model.loadReports(request);
+    response = await model.query(request);
     assert.equal(response.filteredCount, 0);
     assert.equal(response.isEmpty, false);
     await model.delete(makeReports(105).map(report => report.id));
-    assert.equal((await model.loadReports(request)).isEmpty, true);
+    assert.equal((await model.query(request)).isEmpty, true);
   });
 
   it('sorts_and_preserves_snapshots', async () => {
@@ -84,15 +84,15 @@ describe('LocalGeneratedReportsModel', () => {
     const request = submission();
     request.sort = {column: ReportTable.Column.TYPE,
       order: SortableTableHeaderCell.SortOrder.ASCENDING};
-    assert.equal((await model.loadReports(request)).reports[0].id, '2');
+    assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
-    assert.equal((await model.loadReports(request)).reports[0].id, '1');
+    assert.equal((await model.query(request)).reports[0].id, '1');
     request.sort.column = ReportTable.Column.PARAMETERS;
-    assert.equal((await model.loadReports(request)).reports[0].id, '2');
+    assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.column = ReportTable.Column.DATE_CREATED;
-    assert.equal((await model.loadReports(request)).reports[0].id, '2');
+    assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.NONE;
-    assert.equal((await model.loadReports(request)).reports[0].id, '1');
+    assert.equal((await model.query(request)).reports[0].id, '1');
     const snapshot = model.reports;
     (snapshot[0].parameters as string[])[0] = 'changed';
     assert.equal(model.reports[0].parameters[0], 'A');

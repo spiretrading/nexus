@@ -160,14 +160,14 @@ describe('HTTP report models', () => {
     const model = new HttpReportActivityModel();
     await model.load();
     Request.handler = call => {
-      if(call.url.endsWith('load_report_activities')) {
+      if(call.url.endsWith('query_report_activities')) {
         return {status: 200, body: {status: 1, is_empty: false, total_count: 51,
           activities: [{id: 'job', type: 'Example', parameters: ['USD'],
             status: 0, date_modified: '20261005'}]}};
       }
       return {status: 200};
     };
-    const response = await model.loadActivities({
+    const response = await model.query({
       sort: {column: ActivityTable.Column.DATE_MODIFIED,
         order: SortableTableHeaderCell.SortOrder.DESCENDING}, pageIndex: 1});
     assert.deepEqual(Request.calls[0].body,
@@ -188,7 +188,7 @@ describe('HTTP report models', () => {
     const model = new HttpGeneratedReportsModel(lookups()[0]);
     await model.load();
     Request.handler = call => {
-      if(call.url.endsWith('load_generated_reports')) {
+      if(call.url.endsWith('query_generated_reports')) {
         return {status: 200, body: {status: 1, is_empty: false,
           filtered_count: 1, reports: [{id: 'job', type: 'Example',
             parameters: ['USD'], url: '/reports/job',
@@ -196,7 +196,7 @@ describe('HTTP report models', () => {
       }
       return {status: 200};
     };
-    const response = await model.loadReports({filters: {query: ' USD ',
+    const response = await model.query({filters: {query: ' USD ',
       dateRange: new DateRange(null, new Beam.Date(2026, 10, 5))},
       sort: {column: ReportTable.Column.TYPE,
         order: SortableTableHeaderCell.SortOrder.ASCENDING}, pageIndex: 0});
@@ -229,7 +229,7 @@ describe('HTTP report models', () => {
     Request.handler = call => {
       if(call.url.endsWith('load_report_definitions')) {
         return {status: 200, body: [DEFINITION]};
-      } else if(call.url.endsWith('load_scheduled_reports')) {
+      } else if(call.url.endsWith('query_scheduled_reports')) {
         return {status: 200, body: {status: 1, is_empty: false,
           filtered_count: 1, schedules: [schedule]}};
       } else if(call.url.endsWith('load_scheduled_report')) {
@@ -241,8 +241,7 @@ describe('HTTP report models', () => {
     };
     await listing.load();
     await edit.load();
-    const page = await listing.loadSchedules({filters: {query: ' * '},
-      pageIndex: 2});
+    const page = await listing.query({filters: {query: ' * '}, pageIndex: 2});
     assert.deepEqual(Request.calls.at(-1).body,
       {filters: {query: '*'}, page_index: 2});
     assert.equal(page.schedules[0].runDate.value, '2026-11-01');

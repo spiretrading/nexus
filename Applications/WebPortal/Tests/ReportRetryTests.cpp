@@ -13,19 +13,12 @@ using namespace Nexus;
 
 namespace {
   ReportJob make_job(const DirectoryEntry& account) {
-    auto job = ReportJob();
-    job.m_id = "mine";
-    job.m_account = account;
-    job.m_definition.m_id = "example";
-    job.m_definition.m_access = {"*"};
-    job.m_definition.m_command = "saved_program";
-    job.m_arguments = {"saved_argument"};
-    job.m_created = time_from_string("2026-10-05 12:00:00");
-    job.m_completed = time_from_string("2026-10-05 12:01:00");
-    job.m_status = ReportJob::Status::FAILED;
-    job.m_error = "Failed.";
-    job.m_exit_code = 7;
-    return job;
+    auto definition =
+      ReportDefinition("example", {}, {}, {"*"}, {}, "saved_program");
+    return ReportJob("mine", account, {}, definition, {}, {"saved_argument"},
+      time_from_string("2026-10-05 12:00:00"),
+      time_from_string("2026-10-05 12:01:00"), {}, ReportJob::Status::FAILED, 7,
+      "Failed.");
   }
 
   HttpResponse retry(ReportingWebServlet& servlet,

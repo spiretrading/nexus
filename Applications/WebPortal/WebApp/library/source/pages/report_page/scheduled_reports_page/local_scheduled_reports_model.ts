@@ -59,7 +59,7 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
     this.loaded = true;
   }
 
-  public async loadSchedules(submission: ScheduledReportsModel.Submission):
+  public async query(submission: ScheduledReportsModel.Submission):
       Promise<ScheduledReportsModel.Response> {
     this.ensureLoaded();
     if(!Number.isSafeInteger(submission.pageIndex) ||

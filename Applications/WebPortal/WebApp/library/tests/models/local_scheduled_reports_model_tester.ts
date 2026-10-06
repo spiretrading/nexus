@@ -41,9 +41,8 @@ describe('LocalScheduledReportsModel', () => {
     assert.throws(() => report.scheduledReportsModel, /Model not loaded/);
     assert.throws(() => model.schedules, /Model not loaded/);
     assert.throws(() => model.runs, /Model not loaded/);
-    await assert.rejects(model.loadSchedules({
-      filters: {query: ''}, pageIndex: 0
-    }), /Model not loaded/);
+    await assert.rejects(
+      model.query({filters: {query: ''}, pageIndex: 0}), /Model not loaded/);
     await assert.rejects(model.run('1'), /Model not loaded/);
     await assert.rejects(model.duplicate('1'), /Model not loaded/);
     await assert.rejects(model.delete('1'), /Model not loaded/);
@@ -65,17 +64,15 @@ describe('LocalScheduledReportsModel', () => {
   it('empty_and_no_matches', async () => {
     const empty = new LocalScheduledReportsModel([]);
     await empty.load();
-    assert.deepEqual(await empty.loadSchedules({
-      filters: {query: ''}, pageIndex: 0
-    }), {
-      status: ScheduledReportsModel.ResponseStatus.READY,
-      isEmpty: true, filteredCount: 0, schedules: []
-    });
+    assert.deepEqual(await empty.query({filters: {query: ''}, pageIndex: 0}),
+      {
+        status: ScheduledReportsModel.ResponseStatus.READY,
+        isEmpty: true, filteredCount: 0, schedules: []
+      });
     const model = new LocalScheduledReportsModel([makeSchedule('1')]);
     await model.load();
-    const response = await model.loadSchedules({
-      filters: {query: 'missing'}, pageIndex: 0
-    });
+    const response =
+      await model.query({filters: {query: 'missing'}, pageIndex: 0});
     assert.equal(response.isEmpty, false);
     assert.equal(response.filteredCount, 0);
     assert.deepEqual(response.schedules, []);
@@ -87,22 +84,18 @@ describe('LocalScheduledReportsModel', () => {
     await model.load();
     for(const [pageIndex, start, count] of [[0, 0, 50], [1, 50, 50],
         [2, 100, 5], [3, 150, 0]]) {
-      const response = await model.loadSchedules({
-        filters: {query: ''}, pageIndex
-      });
+      const response = await model.query({filters: {query: ''}, pageIndex});
       assert.equal(response.filteredCount, 105);
       assert.deepEqual(response.schedules, records.slice(start, start + count));
     }
     records[0].type = 'Other';
-    const filtered = await model.loadSchedules({
-      filters: {query: 'profit'}, pageIndex: 2
-    });
+    const filtered =
+      await model.query({filters: {query: 'profit'}, pageIndex: 2});
     assert.equal(filtered.filteredCount, 105);
     assert.equal(filtered.schedules.length, 5);
     for(const pageIndex of [-1, 1.5, NaN, Infinity]) {
-      await assert.rejects(model.loadSchedules({
-        filters: {query: ''}, pageIndex
-      }), /Invalid page index/);
+      await assert.rejects(
+        model.query({filters: {query: ''}, pageIndex}), /Invalid page index/);
     }
   });
 
@@ -115,14 +108,11 @@ describe('LocalScheduledReportsModel', () => {
     const model = new LocalScheduledReportsModel([first, second]);
     await model.load();
     for(const query of ['pRoFiT', 'recurring', 'cOuNt / gRo', '[DESK]', 'canada']) {
-      const response = await model.loadSchedules({
-        filters: {query}, pageIndex: 0
-      });
+      const response = await model.query({filters: {query}, pageIndex: 0});
       assert.deepEqual(response.schedules.map(schedule => schedule.id), ['1']);
     }
-    const response = await model.loadSchedules({
-      filters: {query: 'Oct 17'}, pageIndex: 0
-    });
+    const response =
+      await model.query({filters: {query: 'Oct 17'}, pageIndex: 0});
     assert.equal(response.filteredCount, 2);
   });
 
@@ -135,9 +125,7 @@ describe('LocalScheduledReportsModel', () => {
     original.parameters[0].value = 'Changed';
     original.runDate.label = 'Changed';
     records.length = 0;
-    const response = await model.loadSchedules({
-      filters: {query: ''}, pageIndex: 0
-    });
+    const response = await model.query({filters: {query: ''}, pageIndex: 0});
     assert.deepEqual(response.schedules, [expected]);
     response.schedules[0].parameters[0].label = 'Changed';
     response.schedules[0].runDate.value = '2027-01-01';
@@ -204,7 +192,7 @@ function makeCreateModel(): LocalCreateReportModel {
 }
 
 function makeEditModel(): LocalEditScheduledReportModel {
-  return new LocalEditScheduledReportModel([],
-    new LocalAccountGroupQueryModel([]),
+  return new LocalEditScheduledReportModel(
+    [], new LocalAccountGroupQueryModel([]),
     new ScopeQueryModel(new LocalTickerQueryModel([])), new Map());
 }

@@ -13,11 +13,11 @@ export class HttpScheduledReportsModel extends ScheduledReportsModel {
     this.loaded = true;
   }
 
-  public async loadSchedules(submission: ScheduledReportsModel.Submission):
+  public async query(submission: ScheduledReportsModel.Submission):
       Promise<ScheduledReportsModel.Response> {
     this.ensureLoaded();
     const response = await Beam.post(
-      '/api/reporting_service/load_scheduled_reports',
+      '/api/reporting_service/query_scheduled_reports',
       {filters: {query: submission.filters.query.trim()},
         page_index: submission.pageIndex});
     return {status: response.status, isEmpty: response.is_empty,

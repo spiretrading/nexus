@@ -29,7 +29,7 @@ namespace {
   HttpResponse load(ReportingWebServlet& servlet,
       const WebPortalSession& session, const JsonValue& body) {
     auto request = HttpRequest(
-      HttpMethod::POST, Uri("/api/reporting_service/load_generated_reports"),
+      HttpMethod::POST, Uri("/api/reporting_service/query_generated_reports"),
       from<SharedBuffer>(to_string(body)));
     request.add(Cookie("sessionid", session.get_id()));
     for(auto& slot : servlet.get_slots()) {

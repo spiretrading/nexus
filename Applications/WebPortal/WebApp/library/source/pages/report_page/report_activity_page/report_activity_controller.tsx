@@ -103,7 +103,7 @@ export class ReportActivityController extends
       if(!this.isCurrent(request, model)) {
         return;
       }
-      const response = await model.loadActivities(submission);
+      const response = await model.query(submission);
       if(!this.isCurrent(request, model)) {
         return;
       }

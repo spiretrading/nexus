@@ -15,21 +15,16 @@ using namespace Nexus;
 
 namespace {
   ReportJob make_job(std::string id, const DirectoryEntry& account) {
-    auto job = ReportJob();
-    job.m_id = std::move(id);
-    job.m_account = account;
-    job.m_definition.m_id = "example";
-    job.m_definition.m_name = "Example";
-    job.m_definition.m_command = "private_command";
-    job.m_arguments = {"private_argument"};
-    job.m_created = time_from_string("2026-10-05 12:00:00");
-    return job;
+    auto definition =
+      ReportDefinition("example", "Example", {}, {}, {}, "private_command");
+    return ReportJob(id, account, {}, definition, {}, {"private_argument"},
+      time_from_string("2026-10-05 12:00:00"));
   }
 
   HttpResponse load(ReportingWebServlet& servlet,
       const WebPortalSession& session, const JsonValue& body) {
     auto request = HttpRequest(HttpMethod::POST,
-      Uri("/api/reporting_service/load_report_activities"),
+      Uri("/api/reporting_service/query_report_activities"),
       from<SharedBuffer>(to_string(body)));
     request.add(Cookie("sessionid", session.get_id()));
     for(auto& slot : servlet.get_slots()) {

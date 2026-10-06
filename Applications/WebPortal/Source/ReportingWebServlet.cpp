@@ -43,11 +43,11 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     matches_path(HttpMethod::POST, "/api/reporting_service/submit_report"),
       std::bind_front(&ReportingWebServlet::on_submit_report, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
-    "/api/reporting_service/load_report_activities"), std::bind_front(
-      &ReportingWebServlet::on_load_report_activities, this));
+    "/api/reporting_service/query_report_activities"),
+    std::bind_front(&ReportingWebServlet::on_query_report_activities, this));
   slots.emplace_back(matches_path(
-    HttpMethod::POST, "/api/reporting_service/load_generated_reports"),
-    std::bind_front(&ReportingWebServlet::on_load_generated_reports, this));
+    HttpMethod::POST, "/api/reporting_service/query_generated_reports"),
+    std::bind_front(&ReportingWebServlet::on_query_generated_reports, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/load_report"),
     std::bind_front(&ReportingWebServlet::on_load_report, this));
@@ -57,6 +57,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/share_reports"),
     std::bind_front(&ReportingWebServlet::on_share_reports, this));
+  slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/reporting_service/delete_reports"),
+    std::bind_front(&ReportingWebServlet::on_delete_reports, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/cancel_report_jobs"),
     std::bind_front(&ReportingWebServlet::on_cancel_report_jobs, this));
@@ -377,7 +380,7 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
   return response;
 }
 
-HttpResponse ReportingWebServlet::on_load_report_activities(
+HttpResponse ReportingWebServlet::on_query_report_activities(
     const HttpRequest& request) {
   struct Sort {
     double m_column;
@@ -447,7 +450,7 @@ HttpResponse ReportingWebServlet::on_load_report_activities(
   return response;
 }
 
-HttpResponse ReportingWebServlet::on_load_generated_reports(
+HttpResponse ReportingWebServlet::on_query_generated_reports(
     const HttpRequest& request) {
   struct Filters {
     std::string m_query;
@@ -662,6 +665,40 @@ HttpResponse ReportingWebServlet::on_share_reports(const HttpRequest& request) {
   }
   try {
     m_reports.share(session->get_account(), parameters.m_ids, recipients);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_delete_reports(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.remove(session->get_account(), parameters.m_ids);
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

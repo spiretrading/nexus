@@ -21,7 +21,7 @@ describe('LocalReportActivityModel', () => {
   it('requires_load', async () => {
     const model = new LocalReportActivityModel(makeActivities(1));
     assert.throws(() => model.activities);
-    await assert.rejects(model.loadActivities(submission()));
+    await assert.rejects(model.query(submission()));
     await assert.rejects(model.cancel(['1']));
     await assert.rejects(model.retry(['1']));
     await model.load();
@@ -32,15 +32,15 @@ describe('LocalReportActivityModel', () => {
     const model = new LocalReportActivityModel(makeActivities(105));
     await model.load();
     const request = submission();
-    let response = await model.loadActivities(request);
+    let response = await model.query(request);
     assert.equal(response.activities.length, 50);
     assert.equal(response.totalCount, 105);
     request.pageIndex = 2;
-    response = await model.loadActivities(request);
+    response = await model.query(request);
     assert.deepEqual(response.activities.map(entry => entry.id),
       ['101', '102', '103', '104', '105']);
     await model.retry(['101']);
-    response = await model.loadActivities(request);
+    response = await model.query(request);
     assert.equal(response.activities[0].status,
       ReportActivityStatusTag.Status.GENERATING);
     assert.equal(response.activities[0].dateModified.compare(Beam.Date.today()),
@@ -48,10 +48,10 @@ describe('LocalReportActivityModel', () => {
     assert.equal(response.activities[1].status,
       ReportActivityStatusTag.Status.FAILED);
     await model.cancel(['101', '102', '103', '104', '105']);
-    assert.equal((await model.loadActivities(request)).totalCount, 100);
-    assert.equal((await model.loadActivities(request)).isEmpty, false);
+    assert.equal((await model.query(request)).totalCount, 100);
+    assert.equal((await model.query(request)).isEmpty, false);
     await model.cancel(model.activities.map(entry => entry.id));
-    response = await model.loadActivities(submission());
+    response = await model.query(submission());
     assert.equal(response.isEmpty, true);
     assert.equal(response.totalCount, 0);
     assert.deepEqual(response.activities, []);
@@ -72,27 +72,27 @@ describe('LocalReportActivityModel', () => {
         ActivityTable.Column.STATUS]) {
       request.sort = {column,
         order: SortableTableHeaderCell.SortOrder.ASCENDING};
-      assert.equal((await model.loadActivities(request)).activities[0].id, '2');
+      assert.equal((await model.query(request)).activities[0].id, '2');
       request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
-      assert.equal((await model.loadActivities(request)).activities[0].id, '1');
+      assert.equal((await model.query(request)).activities[0].id, '1');
     }
     for(const column of [ActivityTable.Column.PARAMETERS,
         ActivityTable.Column.DATE_MODIFIED]) {
       request.sort = {column,
         order: SortableTableHeaderCell.SortOrder.ASCENDING};
-      assert.equal((await model.loadActivities(request)).activities[0].id, '1');
+      assert.equal((await model.query(request)).activities[0].id, '1');
       request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
-      assert.equal((await model.loadActivities(request)).activities[0].id, '2');
+      assert.equal((await model.query(request)).activities[0].id, '2');
     }
     const snapshot = model.activities;
     (snapshot[0].parameters as string[])[0] = 'mutated';
-    const response = await model.loadActivities(submission());
+    const response = await model.query(submission());
     (response.activities[0].parameters as string[])[0] = 'mutated';
     assert.equal(model.activities[0].parameters[0], 'A');
     await model.retry(['2']);
     assert.equal(model.activities[1].dateModified.compare(
       new Beam.Date(2024, 3, 1)), 0);
-    assert.deepEqual((await model.loadActivities(submission())).activities.
+    assert.deepEqual((await model.query(submission())).activities.
       map(entry => entry.id), ['1', '2']);
   });
 });

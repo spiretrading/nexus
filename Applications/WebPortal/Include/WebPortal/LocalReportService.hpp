@@ -80,12 +80,15 @@ namespace Nexus {
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
       void retry(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
+      void remove(const std::string& id);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
 
@@ -230,6 +233,13 @@ namespace Nexus {
   }
 
   template<IsReportExecutor E>
+  void LocalReportService<E>::remove(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_open_state.ensure_open();
+    m_service->remove(account, ids);
+  }
+
+  template<IsReportExecutor E>
   void LocalReportService<E>::cancel(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_open_state.ensure_open();
@@ -265,6 +275,15 @@ namespace Nexus {
     } else {
       *existing = job;
     }
+  }
+
+  template<IsReportExecutor E>
+  void LocalReportService<E>::remove(const std::string& id) {
+    auto lock = std::lock_guard(m_mutex);
+    std::erase_if(m_jobs, [&] (const auto& job) {
+      return job.m_id == id;
+    });
+    m_outputs.erase(id);
   }
 
   template<IsReportExecutor E>

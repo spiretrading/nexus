@@ -40,19 +40,23 @@ namespace {
       m_jobs[job.m_id] = shuttle_clone(job);
     }
 
+    void remove(const std::string& id) {
+      auto lock = std::lock_guard(m_mutex);
+      m_jobs.erase(id);
+    }
+
     int execute(const ReportJob& job, std::stop_token stop) {
       return m_executor(job, stop);
     }
   };
 
   ReportJob make_job() {
-    auto job = ReportJob();
-    job.m_account = DirectoryEntry::make_account(1, "alice");
-    job.m_definition.m_id = "example";
-    job.m_definition.m_command = "report_program";
-    job.m_parameters["count"] = 0;
-    job.m_arguments = {"--count", "0"};
-    return job;
+    auto definition =
+      ReportDefinition("example", {}, {}, {}, {}, "report_program");
+    auto parameters = JsonObject();
+    parameters["count"] = 0;
+    return ReportJob({}, DirectoryEntry::make_account(1, "alice"), {},
+      definition, parameters, {"--count", "0"});
   }
 }
 

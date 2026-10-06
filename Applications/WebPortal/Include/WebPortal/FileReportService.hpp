@@ -41,12 +41,15 @@ namespace Nexus {
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
       void cancel(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
       void retry(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
+      void remove(const std::string& id);
       int execute(const ReportJob& job, std::stop_token stop);
       void close();
 

@@ -13,18 +13,12 @@ using namespace Nexus;
 
 namespace {
   ReportJob make_job(const DirectoryEntry& account) {
-    auto job = ReportJob();
-    job.m_id = "report";
-    job.m_account = account;
-    job.m_definition.m_id = "example";
-    job.m_definition.m_name = "Example";
-    job.m_definition.m_output = ReportOutputDefinition("text/csv", "csv");
-    job.m_created = time_from_string("2026-10-01 12:00:00");
-    job.m_completed = time_from_string("2026-10-06 12:00:00");
-    job.m_modified = job.m_completed;
-    job.m_status = ReportJob::Status::COMPLETED;
-    job.m_exit_code = 0;
-    return job;
+    auto definition = ReportDefinition("example", "Example", {}, {}, {}, {}, {},
+      ReportOutputDefinition("text/csv", "csv"));
+    auto completed = time_from_string("2026-10-06 12:00:00");
+    return ReportJob("report", account, {}, definition, {}, {},
+      time_from_string("2026-10-01 12:00:00"), completed, completed,
+      ReportJob::Status::COMPLETED, 0);
   }
 
   HttpResponse share(ReportingWebServlet& servlet,

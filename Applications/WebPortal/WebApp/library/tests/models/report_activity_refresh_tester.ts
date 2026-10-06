@@ -35,7 +35,7 @@ class Model extends ReportActivityModel {
 
   public async load(): Promise<void> {}
 
-  public async loadActivities(): Promise<ReportActivityModel.Response> {
+  public async query(): Promise<ReportActivityModel.Response> {
     ++this.calls;
     return this.response();
   }

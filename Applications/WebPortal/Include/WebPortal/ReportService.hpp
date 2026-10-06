@@ -15,6 +15,11 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.remove(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::vector<std::string>&>()) } ->
+          std::same_as<void>;
+    { service.remove(std::declval<const std::string&>()) } ->
+        std::same_as<void>;
     { service.share(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::vector<std::string>&>(),
         std::declval<const std::vector<Beam::DirectoryEntry>&>()) } ->
@@ -116,6 +121,15 @@ namespace Nexus {
         const std::vector<Beam::DirectoryEntry>& recipients);
 
       /**
+       * Deletes completed reports owned by an account and their output files.
+       * All reports are checked for ownership and completion before deletion.
+       * @throws ReportNotFoundException If a report is missing, unfinished,
+       *         or owned by another account.
+       */
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+
+      /**
        * Cancels jobs submitted by an account, removing them from activity.
        * Completed and already cancelled jobs are unchanged.
        * @param account The submitting account.
@@ -142,6 +156,9 @@ namespace Nexus {
       /** Stores a job's current state. */
       void store(const ReportJob& job);
 
+      /** Removes stored job metadata and output. */
+      void remove(const std::string& id);
+
       /** Executes a stored job and returns its exit code. */
       int execute(const ReportJob& job, std::stop_token stop);
 
@@ -167,12 +184,15 @@ namespace Nexus {
         virtual void share(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids,
           const std::vector<Beam::DirectoryEntry>& recipients) = 0;
+        virtual void remove(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) = 0;
         virtual void cancel(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) = 0;
         virtual void retry(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) = 0;
         virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
         virtual void store(const ReportJob& job) = 0;
+        virtual void remove(const std::string& id) = 0;
         virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
         virtual void close() = 0;
       };
@@ -199,12 +219,15 @@ namespace Nexus {
         void share(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids,
           const std::vector<Beam::DirectoryEntry>& recipients) override;
+        void remove(const Beam::DirectoryEntry& account,
+          const std::vector<std::string>& ids) override;
         void cancel(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) override;
         void retry(const Beam::DirectoryEntry& account,
           const std::vector<std::string>& ids) override;
         std::optional<ReportJob> load_job(const std::string& id) override;
         void store(const ReportJob& job) override;
+        void remove(const std::string& id) override;
         int execute(const ReportJob& job, std::stop_token stop) override;
         void close() override;
       };
@@ -259,6 +282,11 @@ namespace Nexus {
     m_service->share(account, ids, recipients);
   }
 
+  inline void ReportService::remove(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->remove(account, ids);
+  }
+
   inline void ReportService::cancel(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_service->cancel(account, ids);
@@ -276,6 +304,10 @@ namespace Nexus {
 
   inline void ReportService::store(const ReportJob& job) {
     m_service->store(job);
+  }
+
+  inline void ReportService::remove(const std::string& id) {
+    m_service->remove(id);
   }
 
   inline int ReportService::execute(
@@ -336,6 +368,13 @@ namespace Nexus {
   }
 
   template<typename S>
+  void ReportService::WrappedReportService<S>::remove(
+      const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    m_service->remove(account, ids);
+  }
+
+  template<typename S>
   void ReportService::WrappedReportService<S>::cancel(
       const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
@@ -358,6 +397,11 @@ namespace Nexus {
   template<typename S>
   void ReportService::WrappedReportService<S>::store(const ReportJob& job) {
     m_service->store(job);
+  }
+
+  template<typename S>
+  void ReportService::WrappedReportService<S>::remove(const std::string& id) {
+    m_service->remove(id);
   }
 
   template<typename S>

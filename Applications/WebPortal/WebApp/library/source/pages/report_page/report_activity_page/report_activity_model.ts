@@ -8,8 +8,8 @@ export abstract class ReportActivityModel {
   public abstract load(): Promise<void>;
 
   /** Retrieves one page of activity and the total count. */
-  public abstract loadActivities(submission: ReportActivityModel.Submission):
-      Promise<ReportActivityModel.Response>;
+  public abstract query(submission: ReportActivityModel.Submission):
+    Promise<ReportActivityModel.Response>;
 
   /** Cancels the identified report jobs. */
   public abstract cancel(ids: readonly string[]): Promise<void>;

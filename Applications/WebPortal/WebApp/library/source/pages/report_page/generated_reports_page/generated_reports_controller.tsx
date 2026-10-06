@@ -104,7 +104,7 @@ export class GeneratedReportsController extends
         return;
       }
       this.setState({recipientModel: model.recipientModel});
-      const response = await model.loadReports(submission);
+      const response = await model.query(submission);
       if(!this.isCurrent(request, model)) {
         return;
       }

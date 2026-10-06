@@ -181,13 +181,14 @@ namespace Nexus {
       Beam::HttpResponse on_load_report_definitions(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
-      Beam::HttpResponse on_load_report_activities(
+      Beam::HttpResponse on_query_report_activities(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_load_generated_reports(
+      Beam::HttpResponse on_query_generated_reports(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_download_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_share_reports(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_reports(const Beam::HttpRequest& request);
       Beam::HttpResponse on_cancel_report_jobs(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_retry_report_jobs(const Beam::HttpRequest& request);

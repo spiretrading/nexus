@@ -1,15 +1,15 @@
-/** Interface for loading and acting on scheduled reports. */
+/** Interface for querying and acting on scheduled reports. */
 export abstract class ScheduledReportsModel {
 
   /** Loads this model. */
   public abstract load(): Promise<void>;
 
-  /** Loads one page of reports matching the supplied criteria.
+  /** Queries one page of reports matching the supplied criteria.
    * @param submission - The query and zero-based page index.
    * @return The page and the total number of matching reports.
    */
-  public abstract loadSchedules(submission: ScheduledReportsModel.Submission):
-      Promise<ScheduledReportsModel.Response>;
+  public abstract query(submission: ScheduledReportsModel.Submission):
+    Promise<ScheduledReportsModel.Response>;
 
   /** Requests immediate generation of a scheduled report.
    * @param id - The scheduled report's identifier.
@@ -21,7 +21,7 @@ export abstract class ScheduledReportsModel {
    * @return The created scheduled report, including its assigned identifier.
    */
   public abstract duplicate(id: string):
-      Promise<ScheduledReportsModel.Schedule>;
+    Promise<ScheduledReportsModel.Schedule>;
 
   /** Deletes a scheduled report.
    * @param id - The scheduled report's identifier.

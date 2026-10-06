@@ -101,7 +101,7 @@ export class ScheduledReportsController extends
       if(!this.isCurrent(request, model)) {
         return;
       }
-      const response = await model.loadSchedules(submission);
+      const response = await model.query(submission);
       if(!this.isCurrent(request, model)) {
         return;
       }

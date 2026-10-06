@@ -24,11 +24,11 @@ export class HttpGeneratedReportsModel extends GeneratedReportsModel {
     this.loaded = true;
   }
 
-  public async loadReports(submission: GeneratedReportsModel.Submission):
+  public async query(submission: GeneratedReportsModel.Submission):
       Promise<GeneratedReportsModel.Response> {
     this.ensureLoaded();
     const response = await Beam.post(
-      '/api/reporting_service/load_generated_reports', {
+      '/api/reporting_service/query_generated_reports', {
         filters: {query: submission.filters.query.trim(),
           start_date: submission.filters.dateRange.start?.toJson() ?? null,
           end_date: submission.filters.dateRange.end?.toJson() ?? null},

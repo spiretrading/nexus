@@ -45,7 +45,7 @@ export class LocalReportActivityModel extends ReportActivityModel {
     this.loaded = true;
   }
 
-  public async loadActivities(submission: ReportActivityModel.Submission):
+  public async query(submission: ReportActivityModel.Submission):
       Promise<ReportActivityModel.Response> {
     this.ensureLoaded();
     const entries = Array.from(this.entries.values());

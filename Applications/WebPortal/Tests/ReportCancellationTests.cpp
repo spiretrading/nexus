@@ -33,11 +33,9 @@ TEST_SUITE("ReportCancellation") {
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &local);
-    auto job = ReportJob();
-    job.m_id = "mine";
-    job.m_account = client.get_account();
-    job.m_created = time_from_string("2026-10-05 12:00:00");
-    job.m_status = ReportJob::Status::FAILED;
+    auto job = ReportJob("mine", client.get_account(), {}, {}, {}, {},
+      time_from_string("2026-10-05 12:00:00"), {}, {},
+      ReportJob::Status::FAILED);
     local.store(job);
     auto other = job;
     other.m_id = "other";

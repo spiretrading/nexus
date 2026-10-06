@@ -45,6 +45,8 @@ namespace {
     std::string submit(DirectoryEntry&&, ReportSubmission&&);
     void share(const DirectoryEntry&, const std::vector<std::string>&,
       const std::vector<DirectoryEntry>&);
+    void remove(const DirectoryEntry&, const std::vector<std::string>&);
+    void remove(const std::string&);
     void cancel(const DirectoryEntry&, const std::vector<std::string>&);
     void retry(const DirectoryEntry&, const std::vector<std::string>&);
     std::optional<ReportJob> load_job(const std::string&);
@@ -82,10 +84,8 @@ TEST_SUITE("ReportService") {
         return 7;
       });
     auto service = ReportService(&local);
-    auto job = ReportJob();
-    job.m_id = "job-id";
-    job.m_definition = make_definition();
-    job.m_arguments = {"5", "20261001"};
+    auto job =
+      ReportJob("job-id", {}, {}, make_definition(), {}, {"5", "20261001"});
     service.store(job);
     auto stored = local.load_jobs();
     REQUIRE(stored.size() == 1);

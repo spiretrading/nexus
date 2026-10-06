@@ -226,6 +226,12 @@ void FileReportService::share(const DirectoryEntry& account,
     account, ids, prepare_report_recipients(recipients, account, m_client));
 }
 
+void FileReportService::remove(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->remove(account, ids);
+}
+
 void FileReportService::cancel(
     const DirectoryEntry& account, const std::vector<std::string>& ids) {
   m_open_state.ensure_open();
@@ -241,8 +247,7 @@ void FileReportService::retry(
 }
 
 std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
-  auto job = ReportJob();
-  job.m_id = id;
+  auto job = ReportJob(id);
   return read_job(job_directory(job, m_jobs_directory));
 }
 
@@ -269,6 +274,22 @@ void FileReportService::store(const ReportJob& job) {
   }
 #endif
   std::filesystem::rename(temporary, path / "metadata.json");
+}
+
+void FileReportService::remove(const std::string& id) {
+  auto job = ReportJob(id);
+  auto path = job_directory(job, m_jobs_directory);
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory);
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
 }
 
 int FileReportService::execute(const ReportJob& job, std::stop_token stop) {

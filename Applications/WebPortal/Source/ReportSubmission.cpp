@@ -304,15 +304,14 @@ ReportJob Nexus::prepare_report_job(
   if(definition == permitted.end()) {
     throw ReportNotFoundException();
   }
-  auto job = ReportJob();
-  job.m_account = client.load_directory_entry(account.m_id);
-  job.m_definition = *definition;
-  job.m_parameters = prepare_report_parameters(
-    *definition, submission.m_parameters, job.m_account, client);
-  job.m_arguments = make_report_arguments(*definition, job.m_parameters);
-  job.m_recipients =
-    prepare_report_recipients(submission.m_recipients, job.m_account, client);
-  return job;
+  auto owner = client.load_directory_entry(account.m_id);
+  auto parameters = prepare_report_parameters(
+    *definition, submission.m_parameters, owner, client);
+  auto arguments = make_report_arguments(*definition, parameters);
+  auto recipients =
+    prepare_report_recipients(submission.m_recipients, owner, client);
+  return ReportJob({}, std::move(owner), std::move(recipients), *definition,
+    std::move(parameters), std::move(arguments));
 }
 
 std::vector<DirectoryEntry> Nexus::prepare_report_recipients(

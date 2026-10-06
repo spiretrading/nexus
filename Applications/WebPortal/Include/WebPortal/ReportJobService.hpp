@@ -31,6 +31,8 @@ namespace Nexus {
     { backend.load_job(std::declval<const std::string&>()) } ->
         std::same_as<std::optional<ReportJob>>;
     { backend.store(std::declval<const ReportJob&>()) } -> std::same_as<void>;
+    { backend.remove(std::declval<const std::string&>()) } ->
+        std::same_as<void>;
     { backend.execute(std::declval<const ReportJob&>(),
         std::declval<std::stop_token&>()) } -> std::convertible_to<int>;
   };
@@ -70,6 +72,10 @@ namespace Nexus {
       void share(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids,
         const std::vector<Beam::DirectoryEntry>& recipients);
+
+      /** Deletes completed reports owned by an account. */
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
 
       /** Cancels an account's jobs and removes them from activity. */
       void cancel(const Beam::DirectoryEntry& account,
@@ -185,6 +191,28 @@ namespace Nexus {
           m_backend->store(job);
         });
       }
+    }
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::remove(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto jobs = load_jobs(account, ids);
+    auto is_unfinished = std::ranges::any_of(jobs, [] (const auto& job) {
+      return job.m_status != ReportJob::Status::COMPLETED;
+    });
+    if(is_unfinished) {
+      throw ReportNotFoundException();
+    }
+    for(auto& job : jobs) {
+      Beam::park([&] {
+        m_backend->remove(job.m_id);
+      });
     }
   }
 

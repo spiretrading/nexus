@@ -12,11 +12,11 @@ export class HttpReportActivityModel extends ReportActivityModel {
     this.loaded = true;
   }
 
-  public async loadActivities(submission: ReportActivityModel.Submission):
+  public async query(submission: ReportActivityModel.Submission):
       Promise<ReportActivityModel.Response> {
     this.ensureLoaded();
     const response = await Beam.post(
-      '/api/reporting_service/load_report_activities',
+      '/api/reporting_service/query_report_activities',
       {sort: {...submission.sort}, page_index: submission.pageIndex});
     return {status: response.status, isEmpty: response.is_empty,
       totalCount: response.total_count,

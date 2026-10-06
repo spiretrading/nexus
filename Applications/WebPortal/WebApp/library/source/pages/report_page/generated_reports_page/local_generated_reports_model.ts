@@ -55,7 +55,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
     this.loaded = true;
   }
 
-  public async loadReports(submission: GeneratedReportsModel.Submission):
+  public async query(submission: GeneratedReportsModel.Submission):
       Promise<GeneratedReportsModel.Response> {
     this.ensureLoaded();
     const {query, dateRange} = submission.filters;

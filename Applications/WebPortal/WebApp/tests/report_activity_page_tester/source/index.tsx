@@ -5,7 +5,7 @@ import { ActivityTable, LocalReportActivityModel, ReportActivityController,
   ReportActivityModel, ReportActivityStatusTag } from 'web_portal';
 
 class DelayedReportActivityModel extends LocalReportActivityModel {
-  public async loadActivities(submission: ReportActivityModel.Submission):
+  public async query(submission: ReportActivityModel.Submission):
       Promise<ReportActivityModel.Response> {
     const fail = settings.failQueries;
     await new Promise(resolve => window.setTimeout(resolve, settings.delay));
@@ -16,7 +16,7 @@ class DelayedReportActivityModel extends LocalReportActivityModel {
       return {status: ReportActivityModel.ResponseStatus.READY,
         isEmpty: true, totalCount: 0, activities: []};
     }
-    return super.loadActivities(submission);
+    return super.query(submission);
   }
 
   public async cancel(ids: readonly string[]): Promise<void> {

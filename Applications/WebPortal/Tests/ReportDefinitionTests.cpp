@@ -50,6 +50,14 @@ namespace {
       throw std::runtime_error("Unexpected report sharing.");
     }
 
+    void remove(const DirectoryEntry&, const std::vector<std::string>&) {
+      throw std::runtime_error("Unexpected report deletion.");
+    }
+
+    void remove(const std::string&) {
+      throw std::runtime_error("Unexpected job removal.");
+    }
+
     void cancel(const DirectoryEntry&, const std::vector<std::string>&) {
       throw std::runtime_error("Unexpected report cancellation.");
     }
