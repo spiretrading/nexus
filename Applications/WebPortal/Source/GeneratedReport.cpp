@@ -3,8 +3,8 @@
 #include <locale>
 #include <sstream>
 #include <tuple>
-#include <unordered_set>
 #include <boost/algorithm/string.hpp>
+#include "WebPortal/ReportAccess.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -13,22 +13,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  std::unordered_set<DirectoryEntry> load_groups(
-      const DirectoryEntry& account, ServiceLocatorClient& client) {
-    auto entries = std::unordered_set{account};
-    auto pending = std::vector{account};
-    while(!pending.empty()) {
-      auto entry = pending.back();
-      pending.pop_back();
-      for(auto& parent : client.load_parents(entry)) {
-        if(entries.insert(parent).second) {
-          pending.push_back(parent);
-        }
-      }
-    }
-    return entries;
-  }
-
   std::string format_date(date value) {
     static const auto LOCALE =
       std::locale(std::locale::classic(), new date_facet("%b %d, %Y"));
@@ -53,32 +37,12 @@ GeneratedReports Nexus::query_generated_reports(
         *query.m_start_date > *query.m_end_date)) {
     throw std::invalid_argument("Invalid generated report query.");
   }
-  auto groups = std::optional<std::unordered_set<DirectoryEntry>>();
-  auto is_visible = [&] (const ReportJob& job) {
-    if(job.m_account == account || std::ranges::find(
-        job.m_recipients, account) != job.m_recipients.end()) {
-      return true;
-    }
-    auto has_groups = std::ranges::any_of(job.m_recipients,
-      [] (const auto& entry) {
-        return entry.m_type == DirectoryEntry::Type::DIRECTORY &&
-          entry != DirectoryEntry::STAR_DIRECTORY;
-      });
-    if(!has_groups) {
-      return false;
-    }
-    if(!groups) {
-      groups = load_groups(account, client);
-    }
-    return std::ranges::any_of(job.m_recipients, [&] (const auto& entry) {
-      return groups->contains(entry);
-    });
-  };
+  auto access = ReportAccess(account, client);
   auto text = trim_copy(query.m_query);
   auto result = GeneratedReports();
   auto entries = std::vector<std::pair<GeneratedReport, ptime>>();
   for(auto& job : jobs) {
-    if(job.m_status != ReportJob::Status::COMPLETED || !is_visible(job)) {
+    if(!access.is_accessible(job)) {
       continue;
     }
     result.m_is_empty = false;

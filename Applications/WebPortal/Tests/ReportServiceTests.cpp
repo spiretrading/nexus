@@ -37,6 +37,7 @@ namespace {
   static_assert(!AcceptsExecutor<int (*)(const ReportJob&, std::stop_token&&)>);
 
   struct RvalueReportService {
+    ReportFile load_file(const DirectoryEntry&, const std::string&);
     GeneratedReports load_reports(
       const DirectoryEntry&, const GeneratedReportQuery&);
     ReportActivities load_activities(

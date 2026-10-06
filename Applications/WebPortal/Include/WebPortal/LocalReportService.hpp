@@ -6,9 +6,11 @@
 #include <mutex>
 #include <stop_token>
 #include <type_traits>
+#include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Serialization/ShuttleClone.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include "WebPortal/ReportAccess.hpp"
 #include "WebPortal/ReportJobService.hpp"
 #include "WebPortal/ReportService.hpp"
 
@@ -54,14 +56,19 @@ namespace Nexus {
 
       ~LocalReportService();
 
-      /** Replaces the definitions available to subsequent requests. */
-      void set_definitions(const std::vector<ReportDefinition>& definitions);
-
       /** Returns job snapshots in submission order. */
       std::vector<ReportJob> load_jobs() const;
 
+      /** Replaces the definitions available to subsequent requests. */
+      void set_definitions(const std::vector<ReportDefinition>& definitions);
+
+      /** Stores a job's generated output for subsequent downloads. */
+      void set_output(const std::string& id, const Beam::SharedBuffer& output);
+
       GeneratedReports load_reports(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
+      ReportFile load_file(
+        const Beam::DirectoryEntry& account, const std::string& id);
       ReportActivities load_activities(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
       std::vector<ReportDefinition> load_definitions(
@@ -84,6 +91,7 @@ namespace Nexus {
       mutable std::mutex m_mutex;
       std::vector<ReportDefinition> m_definitions;
       std::vector<ReportJob> m_jobs;
+      std::unordered_map<std::string, Beam::SharedBuffer> m_outputs;
       Beam::OpenState m_open_state;
       std::unique_ptr<Details::ReportJobService<
         LocalReportService, Beam::TimeClient>> m_service;
@@ -126,6 +134,12 @@ namespace Nexus {
   }
 
   template<IsReportExecutor E>
+  std::vector<ReportJob> LocalReportService<E>::load_jobs() const {
+    auto lock = std::lock_guard(m_mutex);
+    return Beam::shuttle_clone(m_jobs);
+  }
+
+  template<IsReportExecutor E>
   void LocalReportService<E>::set_definitions(
       const std::vector<ReportDefinition>& definitions) {
     m_open_state.ensure_open();
@@ -135,9 +149,11 @@ namespace Nexus {
   }
 
   template<IsReportExecutor E>
-  std::vector<ReportJob> LocalReportService<E>::load_jobs() const {
+  void LocalReportService<E>::set_output(
+      const std::string& id, const Beam::SharedBuffer& output) {
+    m_open_state.ensure_open();
     auto lock = std::lock_guard(m_mutex);
-    return Beam::shuttle_clone(m_jobs);
+    m_outputs[id] = output;
   }
 
   template<IsReportExecutor E>
@@ -145,6 +161,24 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const GeneratedReportQuery& query) {
     m_open_state.ensure_open();
     return query_generated_reports(load_jobs(), account, query, m_client);
+  }
+
+  template<IsReportExecutor E>
+  ReportFile LocalReportService<E>::load_file(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    m_open_state.ensure_open();
+    auto job = load_job(id);
+    auto access = ReportAccess(account, m_client);
+    if(!job || !access.is_accessible(*job)) {
+      throw ReportNotFoundException();
+    }
+    auto lock = std::lock_guard(m_mutex);
+    auto output = m_outputs.find(id);
+    if(output == m_outputs.end()) {
+      throw ReportNotFoundException();
+    }
+    return ReportFile(make_report_filename(*job),
+      job->m_definition.m_output.m_media_type, output->second);
   }
 
   template<IsReportExecutor E>

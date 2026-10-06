@@ -25,6 +25,10 @@ namespace {
       throw std::runtime_error("Unexpected generated report query.");
     }
 
+    ReportFile load_file(const DirectoryEntry&, const std::string&) {
+      throw std::runtime_error("Unexpected file query.");
+    }
+
     ReportActivities load_activities(
         const DirectoryEntry&, const ReportActivityQuery&) {
       throw std::runtime_error("Unexpected activity query.");

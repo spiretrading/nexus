@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <regex>
 #include <system_error>
 #include <unordered_set>
@@ -20,6 +21,7 @@
   #include <csignal>
   #include <unistd.h>
 #endif
+#include "WebPortal/ReportAccess.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -110,6 +112,16 @@ namespace {
     }
     return directory / job.m_id;
   }
+
+  std::filesystem::path output_path(
+      const ReportJob& job, const std::filesystem::path& directory) {
+    static const auto PATTERN = std::regex("[A-Za-z0-9][A-Za-z0-9._-]*");
+    auto& extension = job.m_definition.m_output.m_extension;
+    if(!std::regex_match(extension, PATTERN)) {
+      throw std::runtime_error("Invalid report output extension.");
+    }
+    return job_directory(job, directory) / ("output." + extension);
+  }
 }
 
 FileReportService::FileReportService(
@@ -139,6 +151,43 @@ GeneratedReports FileReportService::load_reports(
     const DirectoryEntry& account, const GeneratedReportQuery& query) {
   m_open_state.ensure_open();
   return query_generated_reports(load_jobs(), account, query, m_client);
+}
+
+ReportFile FileReportService::load_file(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto job = load_job(id);
+  auto access = ReportAccess(account, m_client);
+  if(!job || !access.is_accessible(*job)) {
+    throw ReportNotFoundException();
+  }
+  auto output = output_path(*job, m_jobs_directory);
+  auto expected =
+    std::filesystem::canonical(m_jobs_directory) / id / output.filename();
+  auto error = std::error_code();
+  auto path = std::filesystem::canonical(output, error);
+  if(error || path != expected || !std::filesystem::is_regular_file(path)) {
+    throw ReportNotFoundException();
+  }
+  auto stream = std::ifstream(path, std::ios::binary | std::ios::ate);
+  if(!stream) {
+    throw std::runtime_error("Unable to open report output.");
+  }
+  auto size = static_cast<std::streamoff>(stream.tellg());
+  if(size < 0 || static_cast<std::uintmax_t>(size) >
+      std::numeric_limits<std::size_t>::max() || size >
+      std::numeric_limits<std::streamsize>::max()) {
+    throw std::runtime_error("Invalid report output size.");
+  }
+  auto content = SharedBuffer();
+  content.grow(static_cast<std::size_t>(size));
+  stream.exceptions(std::ios::failbit | std::ios::badbit);
+  stream.seekg(0);
+  if(size != 0) {
+    stream.read(content.get_mutable_data(), static_cast<std::streamsize>(size));
+  }
+  return ReportFile(make_report_filename(*job),
+    job->m_definition.m_output.m_media_type, std::move(content));
 }
 
 ReportActivities FileReportService::load_activities(
@@ -206,17 +255,11 @@ void FileReportService::store(const ReportJob& job) {
 }
 
 int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
-  auto path = job_directory(job, m_jobs_directory);
-  auto& extension = job.m_definition.m_output.m_extension;
-  static const auto PATTERN = std::regex("[A-Za-z0-9][A-Za-z0-9._-]*");
-  if(!std::regex_match(extension, PATTERN)) {
-    throw std::runtime_error("Invalid report output extension.");
-  }
+  auto output = output_path(job, m_jobs_directory);
   if(stop.stop_requested()) {
     throw std::runtime_error("Report execution stopped.");
   }
-  auto output = path / ("output." + extension);
-  auto diagnostics = path / "diagnostics.txt";
+  auto diagnostics = output.parent_path() / "diagnostics.txt";
   for(auto& file : {output, diagnostics}) {
     auto stream = std::ofstream();
     stream.exceptions(std::ios::failbit | std::ios::badbit);

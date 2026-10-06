@@ -4,6 +4,7 @@
 #include <Beam/IO/Connection.hpp>
 #include "WebPortal/GeneratedReport.hpp"
 #include "WebPortal/ReportActivity.hpp"
+#include "WebPortal/ReportFile.hpp"
 #include "WebPortal/ReportSubmission.hpp"
 
 namespace Nexus {
@@ -13,6 +14,8 @@ namespace Nexus {
    */
   template<typename T>
   concept IsReportService = Beam::IsConnection<T> && requires(T& service) {
+    { service.load_file(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::string&>()) } -> std::same_as<ReportFile>;
     { service.load_reports(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const GeneratedReportQuery&>()) } ->
         std::same_as<GeneratedReports>;
@@ -67,6 +70,15 @@ namespace Nexus {
       GeneratedReports load_reports(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
 
+      /**
+       * Loads a completed report's file for its owner or a sharing recipient.
+       * @param account The account requesting the file.
+       * @param id The report's job identifier.
+       * @throws ReportNotFoundException If the report is unavailable.
+       */
+      ReportFile load_file(
+        const Beam::DirectoryEntry& account, const std::string& id);
+
       /** Loads one page of pending and failed jobs submitted by an account. */
       ReportActivities load_activities(const Beam::DirectoryEntry& account,
         const ReportActivityQuery& query);
@@ -119,6 +131,8 @@ namespace Nexus {
         virtual GeneratedReports load_reports(
           const Beam::DirectoryEntry& account,
           const GeneratedReportQuery& query) = 0;
+        virtual ReportFile load_file(
+          const Beam::DirectoryEntry& account, const std::string& id) = 0;
         virtual ReportActivities load_activities(
           const Beam::DirectoryEntry& account,
           const ReportActivityQuery& query) = 0;
@@ -145,6 +159,8 @@ namespace Nexus {
 
         GeneratedReports load_reports(const Beam::DirectoryEntry& account,
           const GeneratedReportQuery& query) override;
+        ReportFile load_file(const Beam::DirectoryEntry& account,
+          const std::string& id) override;
         ReportActivities load_activities(const Beam::DirectoryEntry& account,
           const ReportActivityQuery& query) override;
         std::vector<ReportDefinition> load_definitions(
@@ -178,6 +194,11 @@ namespace Nexus {
   inline GeneratedReports ReportService::load_reports(
       const Beam::DirectoryEntry& account, const GeneratedReportQuery& query) {
     return m_service->load_reports(account, query);
+  }
+
+  inline ReportFile ReportService::load_file(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    return m_service->load_file(account, id);
   }
 
   inline ReportActivities ReportService::load_activities(
@@ -232,6 +253,12 @@ namespace Nexus {
   GeneratedReports ReportService::WrappedReportService<S>::load_reports(
       const Beam::DirectoryEntry& account, const GeneratedReportQuery& query) {
     return m_service->load_reports(account, query);
+  }
+
+  template<typename S>
+  ReportFile ReportService::WrappedReportService<S>::load_file(
+      const Beam::DirectoryEntry& account, const std::string& id) {
+    return m_service->load_file(account, id);
   }
 
   template<typename S>

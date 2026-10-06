@@ -49,6 +49,9 @@ auto ReportingWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     HttpMethod::POST, "/api/reporting_service/load_generated_reports"),
     std::bind_front(&ReportingWebServlet::on_load_generated_reports, this));
   slots.emplace_back(
+    matches_path(HttpMethod::GET, "/api/reporting_service/download_report"),
+    std::bind_front(&ReportingWebServlet::on_download_report, this));
+  slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/reporting_service/cancel_report_jobs"),
     std::bind_front(&ReportingWebServlet::on_cancel_report_jobs, this));
   slots.emplace_back(
@@ -538,6 +541,47 @@ HttpResponse ReportingWebServlet::on_load_generated_reports(
   try {
     auto page = m_reports.load_reports(session->get_account(), query);
     session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_download_report(
+    const HttpRequest& request) {
+  auto response = HttpResponse();
+  response.set_header({"Cache-Control", "private, no-store"});
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = parse_query(request.get_uri());
+  if(parameters.count("id") != 1 || parameters.find("id")->second.empty()) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto file = m_reports.load_file(
+      session->get_account(), parameters.find("id")->second);
+    auto is_valid_type = !file.m_media_type.empty() &&
+      std::ranges::all_of(file.m_media_type, [] (auto character) {
+        return character >= ' ' && character <= '~';
+      });
+    if(!is_valid_type) {
+      throw std::runtime_error("Invalid report media type.");
+    }
+    response.set_header({"Content-Type", file.m_media_type});
+    auto name = file.m_name.u8string();
+    response.set_header({"Content-Disposition",
+      "attachment; filename*=UTF-8''" +
+        uri_encode(std::string(name.begin(), name.end()))});
+    response.set_header({"X-Content-Type-Options", "nosniff"});
+    response.set_body(file.m_content);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }
