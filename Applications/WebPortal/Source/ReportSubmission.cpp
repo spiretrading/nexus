@@ -354,7 +354,8 @@ ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,
     return ReportSchedule(schedule.m_id, schedule.m_account,
       std::move(job.m_definition), std::move(job.m_parameters),
       std::move(job.m_recipients), schedule.m_created, schedule.m_start_time,
-      schedule.m_run_time, schedule.m_repeat_interval, schedule.m_time_zone);
+      schedule.m_run_time, schedule.m_repeat_interval, schedule.m_time_zone,
+      schedule.m_pending_job_id, schedule.m_job_id);
   }
   auto utc =
     convert_report_time(submission.m_start_time, submission.m_time_zone, "UTC");
@@ -431,6 +432,25 @@ void Nexus::validate_report_retries(const std::vector<ReportJob>& jobs,
         encode_value(recipient), job.m_account, client, false);
     }
   }
+}
+
+void Nexus::prepare_report_retries(std::vector<ReportJob>& jobs,
+    const std::vector<ReportDefinition>& definitions,
+    ServiceLocatorClient& client) {
+  for(auto& job : jobs) {
+    if(!job.m_is_prepared) {
+      auto submission = ReportSubmission(
+        job.m_definition.m_id, job.m_parameters, job.m_recipients);
+      auto prepared =
+        prepare_report_job(definitions, job.m_account, submission, client);
+      job.m_definition = std::move(prepared.m_definition);
+      job.m_parameters = std::move(prepared.m_parameters);
+      job.m_recipients = std::move(prepared.m_recipients);
+      job.m_arguments = std::move(prepared.m_arguments);
+      job.m_is_prepared = true;
+    }
+  }
+  validate_report_retries(jobs, definitions, client);
 }
 
 JsonObject Nexus::prepare_report_parameters(const ReportDefinition& definition,

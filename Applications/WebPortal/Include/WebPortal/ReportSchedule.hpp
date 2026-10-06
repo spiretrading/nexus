@@ -63,6 +63,12 @@ namespace Nexus {
 
     /** The IANA timezone for calendar times. */
     std::string m_time_zone = "UTC";
+
+    /** The occurrence whose job and next run are being committed. */
+    std::optional<std::string> m_pending_job_id;
+
+    /** The final occurrence's job, while waiting for it to finish. */
+    std::optional<std::string> m_job_id;
   };
 
   /** Converts a calendar date/time between IANA timezones. */
@@ -100,6 +106,8 @@ namespace Beam {
       shuttle.shuttle("run_time", value.m_run_time);
       shuttle.shuttle("repeat_interval", value.m_repeat_interval);
       shuttle.shuttle("time_zone", value.m_time_zone);
+      shuttle.shuttle("pending_job_id", value.m_pending_job_id);
+      shuttle.shuttle("job_id", value.m_job_id);
     }
   };
 }

@@ -1,6 +1,7 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -27,7 +28,7 @@ namespace {
 
   ReportScheduleSubmission make_submission(const ReportSchedule& schedule) {
     return ReportScheduleSubmission(ReportSubmission(schedule.m_definition.m_id,
-      shuttle_clone(schedule.m_parameters), schedule.m_recipients),
+      schedule.m_parameters, schedule.m_recipients),
       schedule.m_start_time, schedule.m_repeat_interval, schedule.m_time_zone);
   }
 
@@ -57,7 +58,8 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto executions = 0;
     auto local = LocalReportService({schedule.m_definition}, client,
-      [&] (const auto&, auto) { ++executions; return 0; }, &time, 1);
+      [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto service = ReportService(&local);
     auto submission = make_submission(schedule);
@@ -112,7 +114,8 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto schedule = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time, 1);
+      [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto submission = make_submission(schedule);
     submission.m_start_time = time_from_string("2026-01-31 10:00:00");
@@ -159,7 +162,8 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto schedule = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({schedule.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time, 1);
+      [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

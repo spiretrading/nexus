@@ -3,6 +3,7 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
@@ -333,7 +334,8 @@ TEST_SUITE("ReportDefinition") {
         make_definition("other", {"bob"}),
         make_definition("renamed", {"carol"}), make_definition("none", {})});
     auto reports = LocalReportService(definitions, client, execute,
-      TimeClient(std::in_place_type<LocalTimeClient>), 1);
+      TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(account);
@@ -372,7 +374,8 @@ TEST_SUITE("ReportDefinition") {
     auto empty = ReportingWebServlet(Ref(sessions), ReportService(
       std::in_place_type<LocalReportService<decltype(&execute)>>,
       std::vector({make_definition("hidden", {"alice"})}), client, execute,
-      TimeClient(std::in_place_type<LocalTimeClient>), 1));
+      TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>)));
     REQUIRE(parse_response(load(empty, request)).empty());
   }
 
@@ -382,7 +385,8 @@ TEST_SUITE("ReportDefinition") {
     auto sessions = WebSessionStore<WebPortalSession>();
     auto definitions = std::vector<ReportDefinition>();
     auto reports = LocalReportService(definitions, client, execute,
-      TimeClient(std::in_place_type<LocalTimeClient>), 1);
+      TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(client.get_account());

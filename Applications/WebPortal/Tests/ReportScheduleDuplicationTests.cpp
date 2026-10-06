@@ -1,6 +1,7 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -51,7 +52,8 @@ TEST_SUITE("ReportScheduleDuplication") {
     definition.m_command = "updated_program";
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService(
-      {definition}, client, [] (const auto&, auto) { return 0; }, &time, 1);
+      {definition}, client, [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(source);
     auto service = ReportService(&local);
     auto copy = duplicate_schedule(service, source.m_account, source.m_id);
@@ -92,7 +94,8 @@ TEST_SUITE("ReportScheduleDuplication") {
     auto source = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({source.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time, 1);
+      [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     for(auto& start : {"2026-10-05 09:00:00", "2026-10-06 08:00:00"}) {
       source.m_start_time = time_from_string(start);
       source.m_run_time = source.m_start_time;
@@ -148,7 +151,8 @@ TEST_SUITE("ReportScheduleDuplication") {
     auto source = make_schedule(client.get_account());
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto local = LocalReportService({source.m_definition}, client,
-      [] (const auto&, auto) { return 0; }, &time, 1);
+      [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(source);
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

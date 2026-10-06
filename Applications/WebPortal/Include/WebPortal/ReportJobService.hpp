@@ -12,7 +12,6 @@
 #include <unordered_set>
 #include <utility>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
-#include <Beam/Serialization/ShuttleClone.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
@@ -71,18 +70,8 @@ namespace Nexus {
       /** Stores a prepared job and returns its identifier without waiting. */
       std::string submit(const ReportJob& submission);
 
-      /** Adds resolved recipients to completed reports owned by an account. */
-      void share(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids,
-        const std::vector<Beam::DirectoryEntry>& recipients);
-
-      /** Deletes completed reports owned by an account. */
-      void remove(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids);
-
-      /** Cancels an account's jobs and removes them from activity. */
-      void cancel(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids);
+      /** Activates a committed staged or queued job unless already pending. */
+      void resume(const std::string& id);
 
       /**
        * Requeues an account's failed jobs using their saved definitions.
@@ -91,9 +80,22 @@ namespace Nexus {
        * @param ids The job identifiers to retry.
        * @param validate Checks access to all failed jobs before any changes.
        */
-      template<std::invocable<const std::vector<ReportJob>&> V>
+      template<std::invocable<std::vector<ReportJob>&> V>
       void retry(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids, V validate);
+
+      /** Adds resolved recipients to completed reports owned by an account. */
+      void share(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids,
+        const std::vector<Beam::DirectoryEntry>& recipients);
+
+      /** Cancels an account's jobs and removes them from activity. */
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+
+      /** Deletes completed reports owned by an account. */
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
 
       /** Stops execution and marks unfinished jobs as failed. */
       void close();
@@ -158,7 +160,7 @@ namespace Nexus {
     Beam::IsTimeClient<Beam::dereference_t<T>>
   std::string ReportJobService<B, T>::submit(const ReportJob& submission) {
     auto entry = std::make_shared<Job>();
-    entry->m_job = Beam::shuttle_clone(submission);
+    entry->m_job = submission;
     auto& job = entry->m_job;
     job.m_id = boost::uuids::to_string(boost::uuids::random_generator()());
     job.m_created = m_time_client->get_time();
@@ -177,6 +179,72 @@ namespace Nexus {
     });
     enqueue(entry);
     return id;
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  void ReportJobService<B, T>::resume(const std::string& id) {
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    if(m_pending.contains(id)) {
+      return;
+    }
+    auto job = Beam::park([&] { return m_backend->load_job(id); });
+    if(!job) {
+      return;
+    }
+    if(job->m_status == ReportJob::Status::STAGED) {
+      if(job->m_is_prepared) {
+        job->m_status = ReportJob::Status::QUEUED;
+      } else {
+        job->m_status = ReportJob::Status::FAILED;
+      }
+      Beam::park([&] {
+        m_backend->store(*job);
+      });
+    }
+    if(job->m_status != ReportJob::Status::QUEUED) {
+      return;
+    }
+    auto entry = std::make_shared<Job>();
+    entry->m_job = std::move(*job);
+    enqueue(entry);
+  }
+
+  template<typename B, typename T> requires
+    Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<std::invocable<std::vector<ReportJob>&> V>
+  void ReportJobService<B, T>::retry(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids, V validate) {
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto jobs = load_jobs(account, ids);
+    std::erase_if(jobs, [] (const auto& job) {
+      return job.m_status != ReportJob::Status::FAILED;
+    });
+    if(jobs.empty()) {
+      return;
+    }
+    Beam::park([&] {
+      std::invoke(validate, jobs);
+    });
+    for(auto& job : jobs) {
+      auto entry = std::make_shared<Job>();
+      job.m_status = ReportJob::Status::QUEUED;
+      job.m_modified = m_time_client->get_time();
+      job.m_completed = boost::posix_time::not_a_date_time;
+      job.m_exit_code.reset();
+      job.m_error.clear();
+      entry->m_job = std::move(job);
+      Beam::park([&] {
+        m_backend->store(entry->m_job);
+      });
+      enqueue(entry);
+    }
   }
 
   template<typename B, typename T> requires
@@ -207,28 +275,6 @@ namespace Nexus {
           m_backend->store(job);
         });
       }
-    }
-  }
-
-  template<typename B, typename T> requires
-    Beam::IsTimeClient<Beam::dereference_t<T>>
-  void ReportJobService<B, T>::remove(const Beam::DirectoryEntry& account,
-      const std::vector<std::string>& ids) {
-    auto lock = std::lock_guard(m_mutex);
-    if(m_is_closed) {
-      throw std::runtime_error("Report job service is closed.");
-    }
-    auto jobs = load_jobs(account, ids);
-    auto is_unfinished = std::ranges::any_of(jobs, [] (const auto& job) {
-      return job.m_status != ReportJob::Status::COMPLETED;
-    });
-    if(is_unfinished) {
-      throw ReportNotFoundException();
-    }
-    for(auto& job : jobs) {
-      Beam::park([&] {
-        m_backend->remove(job.m_id);
-      });
     }
   }
 
@@ -269,35 +315,23 @@ namespace Nexus {
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
-  template<std::invocable<const std::vector<ReportJob>&> V>
-  void ReportJobService<B, T>::retry(const Beam::DirectoryEntry& account,
-      const std::vector<std::string>& ids, V validate) {
+  void ReportJobService<B, T>::remove(const Beam::DirectoryEntry& account,
+      const std::vector<std::string>& ids) {
     auto lock = std::lock_guard(m_mutex);
     if(m_is_closed) {
       throw std::runtime_error("Report job service is closed.");
     }
     auto jobs = load_jobs(account, ids);
-    std::erase_if(jobs, [] (const auto& job) {
-      return job.m_status != ReportJob::Status::FAILED;
+    auto is_unfinished = std::ranges::any_of(jobs, [] (const auto& job) {
+      return job.m_status != ReportJob::Status::COMPLETED;
     });
-    if(jobs.empty()) {
-      return;
+    if(is_unfinished) {
+      throw ReportNotFoundException();
     }
-    Beam::park([&] {
-      std::invoke(validate, std::as_const(jobs));
-    });
     for(auto& job : jobs) {
-      auto entry = std::make_shared<Job>();
-      job.m_status = ReportJob::Status::QUEUED;
-      job.m_modified = m_time_client->get_time();
-      job.m_completed = boost::posix_time::not_a_date_time;
-      job.m_exit_code.reset();
-      job.m_error.clear();
-      entry->m_job = std::move(job);
       Beam::park([&] {
-        m_backend->store(entry->m_job);
+        m_backend->remove(job.m_id);
       });
-      enqueue(entry);
     }
   }
 

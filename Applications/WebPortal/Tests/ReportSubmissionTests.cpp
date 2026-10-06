@@ -2,6 +2,7 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
@@ -208,7 +209,8 @@ TEST_SUITE("ReportSubmission") {
     auto definition = make_definition();
     auto reports = LocalReportService({definition}, client,
       [] (const auto&, auto) { return 0; },
-      TimeClient(std::in_place_type<LocalTimeClient>), 1);
+      TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     auto body = JsonObject();
@@ -281,7 +283,8 @@ TEST_SUITE("ReportSubmission") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto executions = std::atomic_int(0);
     auto local = LocalReportService({definition}, client,
-      [&] (const auto&, auto) { ++executions; return 0; }, &time, 1);
+      [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto submission = ReportScheduleSubmission(
       ReportSubmission("example", make_parameters(client.get_account()),
@@ -352,7 +355,8 @@ TEST_SUITE("ReportSubmission") {
     auto& client = environment.get_root();
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto reports = LocalReportService({make_definition()}, client,
-      [] (const auto&, auto) { return 0; }, &time, 1);
+      [] (const auto&, auto) { return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);

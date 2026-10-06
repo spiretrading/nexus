@@ -4,7 +4,7 @@
 #include <mutex>
 #include <stop_token>
 #include <Beam/IO/OpenState.hpp>
-#include "WebPortal/ReportJobService.hpp"
+#include "WebPortal/ReportScheduleService.hpp"
 #include "WebPortal/ReportService.hpp"
 
 namespace Nexus {
@@ -19,15 +19,21 @@ namespace Nexus {
        * @param jobs_directory - The directory for job metadata and output.
        * @param client - The client for permission and membership lookups.
        * @param time_client - The client supplying job timestamps.
+       * @param timer The timer controlling automatic schedule checks.
        * @param max_concurrency - The positive global execution limit.
        */
       FileReportService(std::filesystem::path definitions_directory,
         std::filesystem::path jobs_directory,
         Beam::ServiceLocatorClient client, Beam::TimeClient time_client,
-        std::size_t max_concurrency);
+        std::size_t max_concurrency, Beam::Timer timer);
 
       ~FileReportService();
 
+      std::vector<ReportJob> load_jobs();
+      std::vector<ReportSchedule> load_schedules();
+      void remove_schedule(const std::string& id);
+      std::vector<ReportDefinition> load_definitions(
+        const Beam::DirectoryEntry& account);
       GeneratedReports query(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
       ReportDetail load_report(
@@ -36,34 +42,32 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const std::string& id);
       ReportActivities query(
         const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
+      std::optional<ReportJob> load_job(const std::string& id);
+      void store(const ReportJob& job);
+      std::string submit(const Beam::DirectoryEntry& account,
+        const ReportSubmission& submission);
+      void share(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids,
+        const std::vector<Beam::DirectoryEntry>& recipients);
+      void cancel(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+      void retry(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+      int execute(const ReportJob& job, std::stop_token stop);
+      void remove(const Beam::DirectoryEntry& account,
+        const std::vector<std::string>& ids);
+      void remove(const std::string& id);
       ScheduledReports query(
         const Beam::DirectoryEntry& account, const ScheduledReportQuery& query);
       ReportSchedule load_schedule(
         const Beam::DirectoryEntry& account, const std::string& id);
-      std::vector<ReportDefinition> load_definitions(
-        const Beam::DirectoryEntry& account);
-      std::string submit(const Beam::DirectoryEntry& account,
-        const ReportSubmission& submission);
+      void store(const ReportSchedule& schedule);
       std::string submit(const Beam::DirectoryEntry& account,
         const ReportScheduleSubmission& submission);
       void update_schedule(const Beam::DirectoryEntry& account,
         const std::string& id, const ReportScheduleSubmission& submission);
       void remove_schedule(
         const Beam::DirectoryEntry& account, const std::string& id);
-      void share(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids,
-        const std::vector<Beam::DirectoryEntry>& recipients);
-      void remove(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids);
-      void cancel(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids);
-      void retry(const Beam::DirectoryEntry& account,
-        const std::vector<std::string>& ids);
-      std::optional<ReportJob> load_job(const std::string& id);
-      void store(const ReportJob& job);
-      void store(const ReportSchedule& schedule);
-      void remove(const std::string& id);
-      int execute(const ReportJob& job, std::stop_token stop);
       void close();
 
     private:
@@ -72,20 +76,18 @@ namespace Nexus {
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
       mutable std::mutex m_mutex;
-      mutable Beam::Mutex m_schedule_mutex;
       Beam::OpenState m_open_state;
       std::optional<ReportJobService<FileReportService, Beam::TimeClient>>
         m_jobs;
+      std::optional<ReportScheduleService<FileReportService>> m_schedules;
 
       FileReportService(const FileReportService&) = delete;
       FileReportService& operator =(const FileReportService&) = delete;
       std::vector<ReportDefinition> load_definitions();
-      std::vector<ReportJob> load_jobs();
-      std::vector<ReportSchedule> load_schedules();
       std::optional<ReportJob> read_job(const std::filesystem::path& path);
+      void recover();
       std::optional<ReportSchedule> read_schedule(
         const std::filesystem::path& path);
-      void recover();
   };
 }
 

@@ -1,5 +1,6 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -31,7 +32,8 @@ TEST_SUITE("ReportCancellation") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &local);

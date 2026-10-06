@@ -1,5 +1,6 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -43,7 +44,8 @@ TEST_SUITE("ReportScheduleRun") {
     definition.m_command = "updated";
     auto started = Queue<ReportJob>();
     auto local = LocalReportService({definition}, client,
-      [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 2);
+      [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 2,
+      Timer(std::in_place_type<TriggerTimer>));
     local.store(schedule);
     auto service = ReportService(&local);
     auto id = run_schedule(service, schedule.m_account, schedule.m_id);

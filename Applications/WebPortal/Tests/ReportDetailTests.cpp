@@ -3,6 +3,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -55,7 +56,8 @@ TEST_SUITE("ReportDetail") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
     auto definition = job.m_definition;
@@ -116,7 +118,8 @@ TEST_SUITE("ReportDetail") {
     auto bob = client.make_account("Bob", "", root);
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto job = make_job(bob);
     job.m_recipients = {group};

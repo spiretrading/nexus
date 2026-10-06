@@ -6,7 +6,7 @@ const path = require('node:path');
 const source = fs.realpathSync(__dirname);
 const root = fs.realpathSync(process.cwd());
 const stateFile = path.join(root, '.build_state.json');
-const beamCommit = '7d779cfad4bfde89e027553b42b0425e6929fd36';
+const beamCommit = 'dfce89acba7d06bf1effb1d21b6a15683a5b7414';
 const configuration = [
   'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.test.json'
 ];

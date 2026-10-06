@@ -83,6 +83,11 @@ namespace Nexus {
     const std::vector<ReportDefinition>& definitions,
     Beam::ServiceLocatorClient& client);
 
+  /** Prepares validation failures and checks access before retrying jobs. */
+  void prepare_report_retries(std::vector<ReportJob>& jobs,
+    const std::vector<ReportDefinition>& definitions,
+    Beam::ServiceLocatorClient& client);
+
   /** Applies defaults and validates report parameters for an account. */
   Beam::JsonObject prepare_report_parameters(const ReportDefinition& definition,
     const Beam::JsonObject& parameters, const Beam::DirectoryEntry& account,

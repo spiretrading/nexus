@@ -147,7 +147,7 @@ namespace {
 FileReportService::FileReportService(
     std::filesystem::path definitions_directory,
     std::filesystem::path jobs_directory, ServiceLocatorClient client,
-    TimeClient time_client, std::size_t max_concurrency)
+    TimeClient time_client, std::size_t max_concurrency, Timer timer)
     : m_definitions_directory(std::filesystem::absolute(definitions_directory)),
       m_jobs_directory(std::filesystem::absolute(jobs_directory)),
       m_client(std::move(client)),
@@ -155,6 +155,8 @@ FileReportService::FileReportService(
   try {
     recover();
     m_jobs.emplace(Ref(*this), m_time_client, max_concurrency);
+    m_schedules.emplace(
+      Ref(*this), Ref(*m_jobs), m_client, m_time_client, std::move(timer));
   } catch(const std::exception&) {
     m_open_state.close();
     throw;
@@ -163,6 +165,61 @@ FileReportService::FileReportService(
 
 FileReportService::~FileReportService() {
   close();
+}
+
+std::vector<ReportJob> FileReportService::load_jobs() {
+  auto jobs = std::vector<ReportJob>();
+  if(!std::filesystem::exists(m_jobs_directory)) {
+    return jobs;
+  }
+  for(auto& entry : std::filesystem::directory_iterator(m_jobs_directory)) {
+    if(!entry.is_directory()) {
+      continue;
+    }
+    if(auto job = read_job(entry.path())) {
+      jobs.push_back(std::move(*job));
+    }
+  }
+  return jobs;
+}
+
+std::vector<ReportSchedule> FileReportService::load_schedules() {
+  auto directory = m_jobs_directory / "schedules";
+  auto schedules = std::vector<ReportSchedule>();
+  if(!std::filesystem::exists(directory)) {
+    return schedules;
+  }
+  for(auto& entry : std::filesystem::directory_iterator(directory)) {
+    if(!entry.is_directory()) {
+      continue;
+    }
+    if(auto schedule = read_schedule(entry.path())) {
+      schedules.push_back(std::move(*schedule));
+    }
+  }
+  return schedules;
+}
+
+void FileReportService::remove_schedule(const std::string& id) {
+  m_open_state.ensure_open();
+  auto path = report_directory(id, m_jobs_directory / "schedules");
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory) / "schedules";
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
+}
+
+std::vector<ReportDefinition> FileReportService::load_definitions(
+    const DirectoryEntry& account) {
+  m_open_state.ensure_open();
+  return filter_report_definitions(load_definitions(), account, m_client);
 }
 
 GeneratedReports FileReportService::query(
@@ -225,28 +282,16 @@ ReportActivities FileReportService::query(
   return query_report_activities(load_jobs(), account, query);
 }
 
-ScheduledReports FileReportService::query(
-    const DirectoryEntry& account, const ScheduledReportQuery& query) {
-  m_open_state.ensure_open();
-  return query_scheduled_reports(load_schedules(), account, query);
+std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
+  return read_job(report_directory(id, m_jobs_directory));
 }
 
-ReportSchedule FileReportService::load_schedule(
-    const DirectoryEntry& account, const std::string& id) {
-  m_open_state.ensure_open();
-  auto schedule =
-    read_schedule(report_directory(id, m_jobs_directory / "schedules"));
-  if(!schedule || schedule->m_account != account ||
-      account.m_type != DirectoryEntry::Type::ACCOUNT) {
-    throw ReportNotFoundException();
-  }
-  return std::move(*schedule);
-}
-
-std::vector<ReportDefinition> FileReportService::load_definitions(
-    const DirectoryEntry& account) {
-  m_open_state.ensure_open();
-  return filter_report_definitions(load_definitions(), account, m_client);
+void FileReportService::store(const ReportJob& job) {
+  auto path = report_directory(job.m_id, m_jobs_directory);
+  auto text = to_json(job);
+  auto lock = std::lock_guard(m_mutex);
+  std::filesystem::create_directories(path);
+  write_metadata(path, text);
 }
 
 std::string FileReportService::submit(const DirectoryEntry& account,
@@ -256,56 +301,12 @@ std::string FileReportService::submit(const DirectoryEntry& account,
     prepare_report_job(load_definitions(), account, submission, m_client));
 }
 
-std::string FileReportService::submit(
-    const DirectoryEntry& account, const ReportScheduleSubmission& submission) {
-  m_open_state.ensure_open();
-  auto schedule = prepare_report_schedule(load_definitions(), account,
-    submission, m_client, m_time_client.get_time());
-  store(schedule);
-  return schedule.m_id;
-}
-
-void FileReportService::update_schedule(const DirectoryEntry& account,
-    const std::string& id, const ReportScheduleSubmission& submission) {
-  m_open_state.ensure_open();
-  auto lock = std::lock_guard(m_schedule_mutex);
-  auto schedule = load_schedule(account, id);
-  auto updated = prepare_report_schedule(schedule, submission,
-    load_definitions(), m_client, m_time_client.get_time());
-  store(updated);
-}
-
-void FileReportService::remove_schedule(
-    const DirectoryEntry& account, const std::string& id) {
-  m_open_state.ensure_open();
-  auto mutation = std::lock_guard(m_schedule_mutex);
-  load_schedule(account, id);
-  auto path = report_directory(id, m_jobs_directory / "schedules");
-  auto lock = std::lock_guard(m_mutex);
-  auto root = std::filesystem::canonical(m_jobs_directory) / "schedules";
-  auto status = std::filesystem::symlink_status(path);
-  if(!std::filesystem::is_directory(status)) {
-    throw ReportNotFoundException();
-  }
-  auto resolved = std::filesystem::canonical(path);
-  if(resolved != root / id) {
-    throw ReportNotFoundException();
-  }
-  std::filesystem::remove_all(resolved);
-}
-
 void FileReportService::share(const DirectoryEntry& account,
     const std::vector<std::string>& ids,
     const std::vector<DirectoryEntry>& recipients) {
   m_open_state.ensure_open();
   m_jobs->share(
     account, ids, prepare_report_recipients(recipients, account, m_client));
-}
-
-void FileReportService::remove(
-    const DirectoryEntry& account, const std::vector<std::string>& ids) {
-  m_open_state.ensure_open();
-  m_jobs->remove(account, ids);
 }
 
 void FileReportService::cancel(
@@ -317,47 +318,9 @@ void FileReportService::cancel(
 void FileReportService::retry(
     const DirectoryEntry& account, const std::vector<std::string>& ids) {
   m_open_state.ensure_open();
-  m_jobs->retry(account, ids, [&] (const auto& jobs) {
-    validate_report_retries(jobs, load_definitions(account), m_client);
+  m_jobs->retry(account, ids, [&] (auto& jobs) {
+    prepare_report_retries(jobs, load_definitions(account), m_client);
   });
-}
-
-std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
-  return read_job(report_directory(id, m_jobs_directory));
-}
-
-void FileReportService::store(const ReportJob& job) {
-  auto path = report_directory(job.m_id, m_jobs_directory);
-  auto text = to_json(job);
-  auto lock = std::lock_guard(m_mutex);
-  if(job.m_status == ReportJob::Status::QUEUED) {
-    std::filesystem::create_directories(path);
-  }
-  write_metadata(path, text);
-}
-
-void FileReportService::store(const ReportSchedule& schedule) {
-  m_open_state.ensure_open();
-  auto path = report_directory(schedule.m_id, m_jobs_directory / "schedules");
-  auto text = to_json(schedule);
-  auto lock = std::lock_guard(m_mutex);
-  std::filesystem::create_directories(path);
-  write_metadata(path, text);
-}
-
-void FileReportService::remove(const std::string& id) {
-  auto path = report_directory(id, m_jobs_directory);
-  auto lock = std::lock_guard(m_mutex);
-  auto root = std::filesystem::canonical(m_jobs_directory);
-  auto status = std::filesystem::symlink_status(path);
-  if(!std::filesystem::is_directory(status)) {
-    throw ReportNotFoundException();
-  }
-  auto resolved = std::filesystem::canonical(path);
-  if(resolved != root / id) {
-    throw ReportNotFoundException();
-  }
-  std::filesystem::remove_all(resolved);
 }
 
 int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
@@ -410,10 +373,77 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
   return result;
 }
 
+void FileReportService::remove(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->remove(account, ids);
+}
+
+void FileReportService::remove(const std::string& id) {
+  auto path = report_directory(id, m_jobs_directory);
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory);
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
+}
+
+ScheduledReports FileReportService::query(
+    const DirectoryEntry& account, const ScheduledReportQuery& query) {
+  m_open_state.ensure_open();
+  return query_scheduled_reports(load_schedules(), account, query);
+}
+
+ReportSchedule FileReportService::load_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto schedule =
+    read_schedule(report_directory(id, m_jobs_directory / "schedules"));
+  if(!schedule || schedule->m_account != account ||
+      account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    throw ReportNotFoundException();
+  }
+  return std::move(*schedule);
+}
+
+void FileReportService::store(const ReportSchedule& schedule) {
+  m_open_state.ensure_open();
+  auto path = report_directory(schedule.m_id, m_jobs_directory / "schedules");
+  auto text = to_json(schedule);
+  auto lock = std::lock_guard(m_mutex);
+  std::filesystem::create_directories(path);
+  write_metadata(path, text);
+}
+
+std::string FileReportService::submit(
+    const DirectoryEntry& account, const ReportScheduleSubmission& submission) {
+  m_open_state.ensure_open();
+  return m_schedules->submit(account, submission);
+}
+
+void FileReportService::update_schedule(const DirectoryEntry& account,
+    const std::string& id, const ReportScheduleSubmission& submission) {
+  m_open_state.ensure_open();
+  m_schedules->update(account, id, submission);
+}
+
+void FileReportService::remove_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  m_schedules->remove(account, id);
+}
+
 void FileReportService::close() {
   if(m_open_state.set_closing()) {
     return;
   }
+  m_schedules->close();
   m_jobs->close();
   m_open_state.close();
 }
@@ -452,39 +482,6 @@ std::vector<ReportDefinition> FileReportService::load_definitions() {
   return definitions;
 }
 
-std::vector<ReportJob> FileReportService::load_jobs() {
-  auto jobs = std::vector<ReportJob>();
-  if(!std::filesystem::exists(m_jobs_directory)) {
-    return jobs;
-  }
-  for(auto& entry : std::filesystem::directory_iterator(m_jobs_directory)) {
-    if(!entry.is_directory()) {
-      continue;
-    }
-    if(auto job = read_job(entry.path())) {
-      jobs.push_back(std::move(*job));
-    }
-  }
-  return jobs;
-}
-
-std::vector<ReportSchedule> FileReportService::load_schedules() {
-  auto directory = m_jobs_directory / "schedules";
-  auto schedules = std::vector<ReportSchedule>();
-  if(!std::filesystem::exists(directory)) {
-    return schedules;
-  }
-  for(auto& entry : std::filesystem::directory_iterator(directory)) {
-    if(!entry.is_directory()) {
-      continue;
-    }
-    if(auto schedule = read_schedule(entry.path())) {
-      schedules.push_back(std::move(*schedule));
-    }
-  }
-  return schedules;
-}
-
 std::optional<ReportJob> FileReportService::read_job(
     const std::filesystem::path& path) {
   auto text = std::string();
@@ -505,6 +502,18 @@ std::optional<ReportJob> FileReportService::read_job(
     throw std::runtime_error("Report job directory does not match its id.");
   }
   return job;
+}
+
+void FileReportService::recover() {
+  for(auto& job : load_jobs()) {
+    if(job.m_status == ReportJob::Status::RUNNING) {
+      job.m_status = ReportJob::Status::FAILED;
+      job.m_error = "Server stopped before report completion.";
+      job.m_completed = m_time_client.get_time();
+      job.m_modified = job.m_completed;
+      store(job);
+    }
+  }
 }
 
 std::optional<ReportSchedule> FileReportService::read_schedule(
@@ -528,17 +537,4 @@ std::optional<ReportSchedule> FileReportService::read_schedule(
       "Report schedule directory does not match its id.");
   }
   return schedule;
-}
-
-void FileReportService::recover() {
-  for(auto& job : load_jobs()) {
-    if(job.m_status == ReportJob::Status::QUEUED ||
-        job.m_status == ReportJob::Status::RUNNING) {
-      job.m_status = ReportJob::Status::FAILED;
-      job.m_error = "Server stopped before report completion.";
-      job.m_completed = m_time_client.get_time();
-      job.m_modified = job.m_completed;
-      store(job);
-    }
-  }
 }

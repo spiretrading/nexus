@@ -1,5 +1,6 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -41,7 +42,8 @@ TEST_SUITE("ReportDownload") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
     auto bytes = "A\0B\r\n"s;
@@ -97,7 +99,8 @@ TEST_SUITE("ReportDownload") {
     auto bob = client.make_account("Bob", "", root);
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(bob);
     job.m_recipients = {group};
     local.store(job);
@@ -143,7 +146,8 @@ TEST_SUITE("ReportDownload") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
     auto content = from<SharedBuffer>("original");
@@ -165,7 +169,8 @@ TEST_SUITE("ReportDownload") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     job.m_id = "report /?";
     job.m_definition.m_id = "type\"\r\n";

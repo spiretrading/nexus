@@ -33,13 +33,13 @@ namespace {
       if(job == m_jobs.end()) {
         return std::nullopt;
       }
-      return shuttle_clone(job->second);
+      return job->second;
     }
 
     void store(const ReportJob& job) {
       auto lock = std::lock_guard(m_mutex);
       m_store(job);
-      m_jobs[job.m_id] = shuttle_clone(job);
+      m_jobs[job.m_id] = job;
     }
 
     void remove(const std::string& id) {

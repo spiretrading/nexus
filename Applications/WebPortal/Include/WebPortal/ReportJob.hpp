@@ -25,7 +25,10 @@ namespace Nexus {
       FAILED,
 
       /** Cancelled by the submitting account. */
-      CANCELLED
+      CANCELLED,
+
+      /** Waiting for the schedule occurrence to be committed. */
+      STAGED
     };
 
     /** The unique job identifier. */
@@ -63,6 +66,9 @@ namespace Nexus {
 
     /** The failure diagnostic, when available. */
     std::string m_error;
+
+    /** Whether the parameters and command arguments have been prepared. */
+    bool m_is_prepared = true;
   };
 
   /** Formats a normalized parameter value for display. */
@@ -84,6 +90,8 @@ namespace Nexus {
       return out << "FAILED";
     } else if(status == ReportJob::Status::CANCELLED) {
       return out << "CANCELLED";
+    } else if(status == ReportJob::Status::STAGED) {
+      return out << "STAGED";
     } else {
       return out << "UNKNOWN(" << static_cast<int>(status) << ')';
     }
@@ -112,6 +120,7 @@ namespace Beam {
       shuttle.shuttle("status", value.m_status);
       shuttle.shuttle("exit_code", value.m_exit_code);
       shuttle.shuttle("error", value.m_error);
+      shuttle.shuttle("is_prepared", value.m_is_prepared);
     }
   };
 }

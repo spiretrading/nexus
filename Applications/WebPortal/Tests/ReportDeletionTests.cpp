@@ -1,6 +1,7 @@
 #include <barrier>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportingWebServlet.hpp"
@@ -43,7 +44,8 @@ TEST_SUITE("ReportDeletion") {
     auto recipient = client.make_account("Recipient", "", group);
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     job.m_recipients = {group};
     local.store(job);
@@ -101,7 +103,8 @@ TEST_SUITE("ReportDeletion") {
     auto& client = environment.get_root();
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(&local);
     auto job = make_job(client.get_account());
     local.store(job);
@@ -139,7 +142,8 @@ TEST_SUITE("ReportDeletion") {
       "Recipient", "", DirectoryEntry::make_directory(0));
     auto local =
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
-        TimeClient(std::in_place_type<LocalTimeClient>), 1);
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>));
     auto job = make_job(client.get_account());
     local.store(job);
     auto ready = std::barrier(3);
