@@ -21,14 +21,14 @@ namespace {
     if(value.get_start() == Beam::Sequence::PRESENT) {
       startingPoint = "Present";
     } else {
-      startingPoint = to_simple_string(to_local_time(boost::get<ptime>(
+      startingPoint = to_simple_string(to_local_time(std::get<ptime>(
         value.get_start())));
     }
     string endingPoint;
     if(value.get_end() == Beam::Sequence::PRESENT) {
       endingPoint = "Present";
     } else {
-      endingPoint = to_simple_string(to_local_time(boost::get<ptime>(
+      endingPoint = to_simple_string(to_local_time(std::get<ptime>(
         value.get_end())));
     }
     return startingPoint + " -> " + endingPoint;

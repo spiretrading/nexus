@@ -108,7 +108,7 @@ void ScopeInputDialog::ActivateRow(int row, QKeyEvent* event) {
     }
     return QString();
   }();
-  auto initialValue = [&] () -> variant<std::string, QVariant> {
+  auto initialValue = [&] () -> std::variant<std::string, QVariant> {
     if(text.isEmpty()) {
       return scope;
     }

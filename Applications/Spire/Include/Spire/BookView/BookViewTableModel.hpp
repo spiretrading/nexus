@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
 #define SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
 #include <string>
-#include <boost/variant/variant.hpp>
+#include <variant>
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
@@ -17,7 +17,7 @@ namespace Spire {
    * namely a book quote representing market data, an order submitted by a user,
    * or an order being previewed for submission.
    */
-  using BookEntry = boost::variant<
+  using BookEntry = std::variant<
     Nexus::BookQuote, BookViewModel::UserOrder, Nexus::OrderFields>;
 
   /** The type of ValueModel used for a BookEntry. */

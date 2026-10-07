@@ -55,7 +55,7 @@ namespace Nexus {
     auto scope = Scope::GLOBAL;
     for(auto& parameter : parameters) {
       if(parameter.m_name == "scope") {
-        scope = boost::get<Scope>(parameter.m_value);
+        scope = std::get<Scope>(parameter.m_value);
       }
     }
     return std::make_unique<ScopeFilterComplianceRule>(

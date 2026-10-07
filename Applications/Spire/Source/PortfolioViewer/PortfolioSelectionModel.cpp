@@ -1,6 +1,6 @@
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
+#include <Beam/Utilities/OverloadSet.hpp>
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -192,7 +192,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       boost::optional<SelectionVariant> selection = Find(index);
       if(selection.is_initialized()) {
-        return apply_variant_lambda_visitor(*selection,
+        return Beam::visit(*selection,
           [&] (const DirectoryEntry& group) -> QVariant {
             if(m_selectedGroups.find(group) != m_selectedGroups.end()) {
               return Qt::Checked;
@@ -236,14 +236,14 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        return apply_variant_lambda_visitor(*selection,
-          [] (const DirectoryEntry& group) {
+        return Beam::visit(*selection,
+          [] (const DirectoryEntry& group) -> QVariant {
             return QString::fromStdString(group.m_name);
           },
           [] (const CurrencyDatabase::Entry& currency) {
             return QVariant::fromValue(currency.m_id);
           },
-          [] (const VenueDatabase::Entry& venue) {
+          [] (const VenueDatabase::Entry& venue) -> QVariant {
             return QString::fromStdString(venue.m_display_name);
           },
           [] (Side side) {
@@ -308,7 +308,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        apply_variant_lambda_visitor(*selection,
+        Beam::visit(*selection,
           [&] (const DirectoryEntry& group) {
             if(state == Qt::Checked) {
               m_selectedGroups.insert(group);

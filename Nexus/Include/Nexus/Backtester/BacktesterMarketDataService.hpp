@@ -5,12 +5,12 @@
 #include <tuple>
 #include <type_traits>
 #include <unordered_set>
+#include <variant>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/QueryTypes.hpp"
@@ -109,7 +109,7 @@ namespace Details {
         m_time_and_sale_slot;
       std::function<void (const Ticker&, const BookQuote&)> m_book_quote_slot;
       std::unordered_set<
-        std::tuple<boost::variant<Ticker, Venue>, MarketDataType>> m_queries;
+        std::tuple<std::variant<Ticker, Venue>, MarketDataType>> m_queries;
       Details::BacktesterMarketDataServiceHandle m_self;
 
       BacktesterMarketDataService(const BacktesterMarketDataService&) = delete;

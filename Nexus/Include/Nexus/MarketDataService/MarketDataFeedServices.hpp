@@ -5,13 +5,12 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
 
 namespace Nexus {
-  using MarketDataFeedMessage = boost::variant<TickerBboQuote, TickerBookQuote,
+  using MarketDataFeedMessage = std::variant<TickerBboQuote, TickerBookQuote,
     TickerTimeAndSale, IndexedTickerStatus, VenueOrderImbalance>;
 
   /** Standard name for the market data feed service. */

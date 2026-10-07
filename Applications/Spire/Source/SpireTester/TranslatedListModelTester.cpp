@@ -138,7 +138,8 @@ TEST_SUITE("TranslatedListModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<ListModel<int>::AddOperation>(&operation);
+        auto add_operation =
+          std::get_if<ListModel<int>::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == translation.get_size() - 1);
       }));
@@ -169,7 +170,8 @@ TEST_SUITE("TranslatedListModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<ListModel<int>::AddOperation>(&operation);
+        auto add_operation =
+          std::get_if<ListModel<int>::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == 3);
       }));
@@ -295,7 +297,8 @@ TEST_SUITE("TranslatedListModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto update_operation = get<ListModel<int>::UpdateOperation>(&operation);
+        auto update_operation =
+          std::get_if<ListModel<int>::UpdateOperation>(&operation);
         REQUIRE(update_operation != nullptr);
         REQUIRE(update_operation->m_index == updated_index);
       }));

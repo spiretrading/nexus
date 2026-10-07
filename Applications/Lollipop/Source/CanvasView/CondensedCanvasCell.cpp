@@ -1,5 +1,5 @@
 #include "Spire/CanvasView/CondensedCanvasCell.hpp"
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
+#include <Beam/Utilities/OverloadSet.hpp>
 #include <QApplication>
 #include <QEvent>
 #include <QFocusEvent>
@@ -101,7 +101,7 @@ bool CondensedCanvasCell::eventFilter(QObject* object, QEvent* event) {
         CanvasNodeEditor editor;
         auto editVariant = editor.GetEditor(Ref(*m_node), Ref(*m_parent),
           Ref(*m_userProfile), event);
-        apply_variant_lambda_visitor(editVariant,
+        Beam::visit(editVariant,
           [&] (QWidget* widget) {
             m_editor = widget;
             m_editor->setSizePolicy(m_valueWidget->sizePolicy());

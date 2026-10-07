@@ -11,7 +11,7 @@ using namespace Spire;
 namespace {
   const BookViewModel::UserOrder& extract_user_order(
       const SortedTableModel& table, const TableIndex& index) {
-    return get<BookViewModel::UserOrder>(table.get<BookEntry>(
+    return std::get<BookViewModel::UserOrder>(table.get<BookEntry>(
       index.m_row, static_cast<int>(BookViewColumn::MPID)));
   }
 
