@@ -2,7 +2,6 @@
 #include <Beam/Utilities/AssertionException.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/variant.hpp>
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -28,7 +27,7 @@ std::string CanvasNodeModel::GetIdentityKey() {
 optional<CanvasNodeModel::Identity>
     CanvasNodeModel::FindIdentity(const CanvasNode& node) {
   if(auto identity = node.FindMetaData(GetIdentityKey())) {
-    auto value = get<const std::string>(&*identity);
+    auto value = std::get_if<std::string>(&*identity);
     if(!value) {
       return none;
     }
@@ -62,7 +61,7 @@ optional<const CanvasNode&>
   if(!referentKey) {
     return none;
   }
-  auto referentValue = get<const std::string>(&*referentKey);
+  auto referentValue = std::get_if<std::string>(&*referentKey);
   if(!referentValue) {
     return none;
   }

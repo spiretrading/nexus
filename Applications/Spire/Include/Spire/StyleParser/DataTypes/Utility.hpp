@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLE_PARSER_UTILITY_HPP
 #define SPIRE_STYLE_PARSER_UTILITY_HPP
 #include <boost/optional.hpp>
-#include <boost/variant/get.hpp>
 #include "Spire/StyleParser/DataTypes/TokenParser.hpp"
 
 namespace Spire {
@@ -15,8 +14,8 @@ namespace Spire {
   boost::optional<T> get_token(const TokenParser& token_parser) {
     if(token_parser.get_size() > 0) {
       auto& value = token_parser.peek().get_value();
-      if(value.type() == typeid(T)) {
-        return boost::get<T>(value);
+      if(auto token = std::get_if<T>(&value)) {
+        return *token;
       }
     }
     return boost::none;
@@ -51,20 +50,18 @@ namespace Spire {
       auto& value = token.get_value();
       auto previous_token_length = [&] {
         auto& previous_value = previous_token.get_value();
-        if(previous_value.type() == typeid(Identifier)) {
-          auto& identifier = boost::get<Identifier>(previous_value);
-          return static_cast<int>(identifier.length());
-        } else if(previous_value.type() == typeid(Literal)) {
-          auto& literal = boost::get<Literal>(previous_value);
-          return static_cast<int>(literal.get_value().length());
+        if(auto identifier = std::get_if<Identifier>(&previous_value)) {
+          return static_cast<int>(identifier->length());
+        } else if(auto literal = std::get_if<Literal>(&previous_value)) {
+          return static_cast<int>(literal->get_value().length());
         }
         return 1;
       }();
-      if(value.type() == typeid(T) &&
+      if(std::holds_alternative<T>(value) &&
           token.get_line_number() == previous_token.get_line_number() &&
           token.get_column_number() ==
             previous_token.get_column_number() + previous_token_length) {
-        return boost::get<T>(value);
+        return std::get<T>(value);
       }
     }
     return boost::none;

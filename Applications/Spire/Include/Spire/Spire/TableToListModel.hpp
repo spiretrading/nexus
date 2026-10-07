@@ -134,19 +134,19 @@ namespace Spire {
   template<typename T>
   typename ListModel<T>::Operation to_list_operation(
       const TableModel::Operation& operation) {
-    if(auto start = boost::get<TableModel::StartTransaction>(&operation)) {
+    if(auto start = std::get_if<TableModel::StartTransaction>(&operation)) {
       return to_list_operation<T>(*start);
-    } else if(auto end = boost::get<TableModel::EndTransaction>(&operation)) {
+    } else if(auto end = std::get_if<TableModel::EndTransaction>(&operation)) {
       return to_list_operation<T>(*end);
-    } else if(auto add = boost::get<TableModel::AddOperation>(&operation)) {
+    } else if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
       return to_list_operation<T>(*add);
-    } else if(auto move = boost::get<TableModel::MoveOperation>(&operation)) {
+    } else if(auto move = std::get_if<TableModel::MoveOperation>(&operation)) {
       return to_list_operation<T>(*move);
     } else if(auto pre_remove =
-        boost::get<TableModel::PreRemoveOperation>(&operation)) {
+        std::get_if<TableModel::PreRemoveOperation>(&operation)) {
       return to_list_operation<T>(*pre_remove);
     } else if(auto remove =
-        boost::get<TableModel::RemoveOperation>(&operation)) {
+        std::get_if<TableModel::RemoveOperation>(&operation)) {
       return to_list_operation<T>(*remove);
     }
     return typename ListModel<T>::Operation();
