@@ -17,8 +17,8 @@ namespace {
     auto tag_value = Tag::Type(value);
     auto tag = Tag(key, tag_value);
     REQUIRE(tag.get_key() == key);
-    REQUIRE(get<T>(tag.get_value()) == value);
-    REQUIRE(tag.get_value().which() == type_id);
+    REQUIRE(std::get<T>(tag.get_value()) == value);
+    REQUIRE(static_cast<int>(tag.get_value().index()) == type_id);
     REQUIRE(
       to_string(tag) == "(" + to_string(key) + " " + to_string(value) + ")");
     test_round_trip_shuttle(tag);

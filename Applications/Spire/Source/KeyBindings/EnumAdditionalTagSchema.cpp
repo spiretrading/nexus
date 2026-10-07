@@ -23,7 +23,7 @@ bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
   if(tag.m_value == none) {
     return true;
   }
-  auto value = get<std::string>(&*tag.m_value);
+  auto value = std::get_if<std::string>(&*tag.m_value);
   if(!value) {
     return false;
   }
@@ -50,7 +50,7 @@ AnyInputBox* EnumAdditionalTagSchema::make_input_box(
       if(!current) {
         return QString();
       }
-      return QString::fromStdString(get<std::string>(*current));
+      return QString::fromStdString(std::get<std::string>(*current));
     },
     [] (const auto& current) {
       return Nexus::Tag::Type(current.toStdString());
@@ -70,7 +70,7 @@ std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(
   if(!value) {
     return std::make_unique<NoneNode>(TextType::GetInstance());
   }
-  auto text = get<std::string>(&*value);
+  auto text = std::get_if<std::string>(&*value);
   if(!text) {
     return std::make_unique<NoneNode>(TextType::GetInstance());
   }

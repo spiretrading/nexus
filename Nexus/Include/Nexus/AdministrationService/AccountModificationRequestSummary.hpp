@@ -5,7 +5,6 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
@@ -13,8 +12,7 @@
 namespace Nexus {
 
   /** The modification requested by an AccountModificationRequest. */
-  using Modification =
-    boost::variant<EntitlementModification, RiskModification>;
+  using Modification = std::variant<EntitlementModification, RiskModification>;
 
   /** Stores the details needed to display an AccountModificationRequest. */
   struct AccountModificationRequestSummary {

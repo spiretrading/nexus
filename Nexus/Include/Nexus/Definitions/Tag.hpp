@@ -7,7 +7,6 @@
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
@@ -18,8 +17,8 @@ namespace Nexus {
     public:
 
       /** Specifies the types of values that can be stored by a Tag. */
-      using Type = boost::variant<int, double, Quantity, Money, char,
-        std::string, boost::gregorian::date, boost::posix_time::time_duration,
+      using Type = std::variant<int, double, Quantity, Money, char, std::string,
+        boost::gregorian::date, boost::posix_time::time_duration,
         boost::posix_time::ptime>;
 
       /** The index of the int type. */
@@ -74,7 +73,9 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
-    return out << '(' << value.get_key() << ' ' << value.get_value() << ')';
+    out << '(' << value.get_key() << ' ';
+    std::visit([&] (const auto& value) { out << value; }, value.get_value());
+    return out << ')';
   }
 
   inline Tag::Tag(int key, Type value) noexcept

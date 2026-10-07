@@ -21,7 +21,7 @@ namespace Details {
     template<typename Message>
     void operator ()(const Tag& tag, Beam::Out<Message> message) const {
       if(tag.get_key() == FIX::FIELD::PegDifference) {
-        auto value = boost::get<Money>(tag.get_value());
+        auto value = std::get<Money>(tag.get_value());
         auto peg_difference = FIX::PegDifference(static_cast<double>(value));
         message->set(peg_difference);
       }
@@ -75,12 +75,12 @@ namespace Details {
       Beam::Out<NewMessageType> message) {
     for(auto& tag : additional_tags) {
       if(tag.get_key() == FIX::FIELD::MaxFloor) {
-        auto qty = boost::get<Quantity>(tag.get_value());
+        auto qty = std::get<Quantity>(tag.get_value());
         if(qty >= 0) {
           message->set(FIX::MaxFloor(static_cast<FIX::QTY>(qty)));
         }
       } else if(tag.get_key() == FIX::FIELD::ExecInst) {
-        auto value = boost::get<std::string>(tag.get_value());
+        auto value = std::get<std::string>(tag.get_value());
         message->set(FIX::ExecInst(value));
       } else {
         Details::AddAdditionalFix42Tag<
