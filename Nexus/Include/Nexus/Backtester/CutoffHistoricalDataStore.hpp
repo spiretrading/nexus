@@ -217,7 +217,7 @@ namespace Nexus {
       std::unordered_map<typename Query::Index, Beam::Sequence>& cutoffs,
       F loader) {
     if(auto start_timestamp =
-        boost::get<boost::posix_time::ptime>(&query.get_range().get_start())) {
+        std::get_if<boost::posix_time::ptime>(&query.get_range().get_start())) {
       if(*start_timestamp >= m_cutoff) {
         return {};
       }
@@ -257,19 +257,19 @@ namespace Nexus {
       return cutoff->second;
     }();
     if(auto start_sequence =
-        boost::get<Beam::Sequence>(&query.get_range().get_start())) {
+        std::get_if<Beam::Sequence>(&query.get_range().get_start())) {
       if(*start_sequence > cutoff_sequence) {
         return {};
       }
     }
     auto cutoff_query = query;
     if(auto end_timestamp =
-        boost::get<boost::posix_time::ptime>(&query.get_range().get_end())) {
+        std::get_if<boost::posix_time::ptime>(&query.get_range().get_end())) {
       cutoff_query.set_range(
         query.get_range().get_start(), std::min(*end_timestamp, m_cutoff));
     } else {
       cutoff_query.set_range(query.get_range().get_start(),
-        std::min(boost::get<Beam::Sequence>(query.get_range().get_end()),
+        std::min(std::get<Beam::Sequence>(query.get_range().get_end()),
           cutoff_sequence));
     }
     return loader(cutoff_query);
