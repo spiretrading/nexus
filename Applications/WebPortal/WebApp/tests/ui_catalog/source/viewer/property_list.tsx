@@ -111,7 +111,6 @@ export class PropertiesList extends React.Component<Properties> {
     header: {
       fontSize: '20px',
       fontWeight: 700,
-      fontFamily: 'Roboto',
       padding: '0 20px 30px 20px'
     } as React.CSSProperties,
     propertyContainer: {
@@ -126,7 +125,6 @@ export class PropertiesList extends React.Component<Properties> {
     label: {
       fontSize: '15px',
       fontWeight: 600,
-      fontFamily: 'Roboto',
       color: '#000000',
       paddingBottom: '11px'
     } as React.CSSProperties,
@@ -135,7 +133,6 @@ export class PropertiesList extends React.Component<Properties> {
       alignItems: 'center',
       gap: '6px',
       fontSize: '14px',
-      fontFamily: 'Roboto',
       color: '#000000',
       cursor: 'pointer'
     } as React.CSSProperties

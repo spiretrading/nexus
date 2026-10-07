@@ -81,7 +81,6 @@ export function OptionalInput<T>(PropertyInput: typeof React.Component) {
         justifyContent: 'space-between',
         fontSize: '14px',
         fontWeight: 400,
-        fontFamily: 'Roboto',
         color: '#000000',
         paddingBottom: '5px'
       } as React.CSSProperties,

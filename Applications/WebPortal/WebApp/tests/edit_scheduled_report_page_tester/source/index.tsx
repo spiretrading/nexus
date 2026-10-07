@@ -129,7 +129,7 @@ function makeDefinitions(): ReportDefinition[] {
 
 const STYLE: Record<string, React.CSSProperties> = {
   wrapper: {display: 'flex', flexDirection: 'column', width: '100%',
-    height: '100%', fontFamily: 'Roboto, system-ui, sans-serif'},
+    height: '100%'},
   controls: {display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '8px',
     backgroundColor: '#EEEEEE', font: '12px sans-serif'}
 };

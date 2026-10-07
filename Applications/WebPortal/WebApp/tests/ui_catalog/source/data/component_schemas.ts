@@ -1264,7 +1264,7 @@ const sortableTableHeaderCell =
     [new SignalSchema('onSort', 'sortOrder')],
     (props: any) => React.createElement('table', {
         style: {borderCollapse: 'collapse', width: '100%',
-          fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem'}},
+          fontSize: '0.875rem'}},
       React.createElement('thead', null,
         React.createElement('tr', null,
           React.createElement(WebPortal.SortableTableHeaderCell, props)))),

@@ -15,8 +15,7 @@ class App extends React.Component<RouteComponentProps> {
           return ReportPage.Tab.GENERATED;
       }
     })();
-    return <div style={{display: 'flex', height: '100%',
-        fontFamily: 'Roboto, system-ui, sans-serif'}}>
+    return <div style={{display: 'flex', height: '100%'}}>
       <ReportPage current={current} onNavigate={this.onNavigate}/>
     </div>;
   }
