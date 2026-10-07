@@ -635,6 +635,66 @@ TEST_SUITE("ReportScheduleService") {
     worker.close();
   }
 
+  TEST_CASE("recover_only_ready_jobs_in_order") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_pending_job_id = "pending";
+    auto started = Queue<std::string>();
+    auto backend = Backend([&] (const auto& job, auto) {
+      started.push(job.m_id);
+      return 0;
+    });
+    backend.store(source);
+    backend.m_is_commit_failing = true;
+    auto job = ReportJob("pending", source.m_account, {}, source.m_definition,
+      source.m_parameters, {"1"}, time_from_string("2026-09-30 12:00:00"),
+      {}, {}, ReportJob::Status::STAGED);
+    backend.store(job);
+    auto history = std::vector<ReportJob>();
+    for(auto status : {ReportJob::Status::COMPLETED, ReportJob::Status::FAILED,
+        ReportJob::Status::CANCELLED, ReportJob::Status::RUNNING}) {
+      job.m_id = "history-" + std::to_string(static_cast<int>(status));
+      job.m_status = status;
+      history.push_back(job);
+      backend.store(job);
+    }
+    job.m_id = "later";
+    job.m_status = ReportJob::Status::QUEUED;
+    job.m_modified = time_from_string("2026-10-03 12:00:00");
+    backend.store(job);
+    job.m_id = "b";
+    job.m_created = time_from_string("2026-10-02 12:00:00");
+    job.m_modified.reset();
+    job.m_status = ReportJob::Status::STAGED;
+    backend.store(job);
+    job.m_id = "a";
+    job.m_status = ReportJob::Status::QUEUED;
+    backend.store(job);
+    while(backend.m_states.try_pop()) {}
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(
+      Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
+    for(auto& id : {"a", "b", "later"}) {
+      REQUIRE(started.pop() == id);
+      auto completed = wait_for_terminal(backend);
+      REQUIRE(completed.m_id == id);
+      REQUIRE(completed.m_status == ReportJob::Status::COMPLETED);
+    }
+    scheduler.close();
+    worker.close();
+    REQUIRE(!started.try_pop());
+    REQUIRE(backend.load_job("pending")->m_status == ReportJob::Status::STAGED);
+    REQUIRE(backend.load_schedule(source.m_account, source.m_id).
+      m_pending_job_id == source.m_pending_job_id);
+    for(auto& entry : history) {
+      REQUIRE(backend.load_job(entry.m_id)->m_status == entry.m_status);
+    }
+  }
+
   TEST_CASE("retry_queue_handoff_and_recover_submission_order") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();

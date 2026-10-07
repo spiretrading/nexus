@@ -96,6 +96,11 @@ namespace Nexus {
         }
       }
       auto jobs = m_backend.load_jobs();
+      std::erase_if(jobs, [&] (const auto& job) {
+        return pending.contains(job.m_id) ||
+          (job.m_status != ReportJob::Status::QUEUED &&
+            job.m_status != ReportJob::Status::STAGED);
+      });
       std::ranges::sort(jobs, [] (const auto& left, const auto& right) {
         auto first = left.m_modified.value_or(left.m_created);
         auto second = right.m_modified.value_or(right.m_created);
@@ -103,11 +108,7 @@ namespace Nexus {
       });
       m_ready.clear();
       for(auto& job : jobs) {
-        if(!pending.contains(job.m_id) &&
-            (job.m_status == ReportJob::Status::QUEUED ||
-              job.m_status == ReportJob::Status::STAGED)) {
-          m_ready.push_back(job.m_id);
-        }
+        m_ready.push_back(job.m_id);
       }
       flush();
       m_timer.get_publisher().monitor(m_ticks);
