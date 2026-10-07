@@ -24,6 +24,9 @@ export function parseReportParameterValue(type: string, value: any):
     case 'Date':
       return parseDate(value);
     case 'DateTime':
+      if(/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+        return Beam.DateTime.fromJson(value.replace(/[-:]/g, ''));
+      }
       return Beam.DateTime.fromJson(value);
     case 'Time':
       return Beam.Duration.fromJson(value);

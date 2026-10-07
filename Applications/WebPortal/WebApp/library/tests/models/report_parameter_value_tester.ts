@@ -67,6 +67,32 @@ describe('ReportParameterValue', () => {
       [Beam.DirectoryEntry.INVALID]), ValidationError.FORMAT);
   });
 
+  it('initializes_datetime_defaults', () => {
+    const cases: [string, string, number][] = [
+      ['2026-10-07T12:30:45', '20261007T123045', 45045000],
+      ['20261007T123045', '20261007T123045', 45045000],
+      ['2026-10-07T12:30:45.125', '20261007T123045.125', 45045125],
+      ['20261007T123045.125', '20261007T123045.125', 45045125]];
+    for(const [input, expected, ticks] of cases) {
+      const report = ReportDefinition.fromJson({id: 'test', name: 'Test',
+        parameters: [{name: 'timestamp', label: 'Timestamp', type: 'DateTime',
+          required: true, default: input}],
+        output: {media_type: 'text/csv', extension: 'csv'}});
+      const form = ReportFormTemplate.makeValue(report);
+      const value = form.parameters.timestamp as Beam.DateTime;
+      assert.ok(value.date.equals(new Beam.Date(2026, 10, 7)));
+      assert.equal(value.timeOfDay.ticks, ticks);
+      assert.equal(validateReportParameter(report.parameters[0], value),
+        ValidationError.NONE);
+      assert.equal(reportParameterValueToJson(value), expected);
+    }
+    for(const value of [Beam.DateTime.POS_INFIN, Beam.DateTime.NEG_INFIN,
+        Beam.DateTime.NOT_A_DATE_TIME]) {
+      assert.equal(parseReportParameterValue('DateTime', value.toJson()),
+        value);
+    }
+  });
+
   it('initializes_report_defaults', () => {
     const report = ReportDefinition.fromJson({id: 'test', name: 'Test',
       parameters: [{name: 'count', label: 'Count', type: 'Integer', default: 0},
