@@ -14,6 +14,9 @@ file(GLOB_RECURSE source_files Source/*.cpp)
 list(REMOVE_ITEM source_files "${CMAKE_CURRENT_SOURCE_DIR}/Source/main.cpp")
 set(web_portal_dependencies
   BEAM BOOST CRYPTOPP OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
+if(UNIX)
+  list(APPEND web_portal_dependencies BOOST_PROCESS BOOST_FILESYSTEM)
+endif()
 add_library(WebPortalLibrary STATIC ${header_files} ${source_files})
 beam_configure_target(WebPortalLibrary DEPENDENCIES ${web_portal_dependencies})
 target_link_libraries(WebPortalLibrary PUBLIC BeamRoutines)
@@ -35,12 +38,6 @@ if(WIN32)
   target_link_libraries(WebPortalLibrary PUBLIC Crypt32.lib ntdll.lib)
 endif()
 if(UNIX)
-  find_library(BOOST_PROCESS_STATIC_LIBRARY NAMES libboost_process.a
-    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH NO_CACHE REQUIRED)
-  find_library(BOOST_FILESYSTEM_STATIC_LIBRARY NAMES libboost_filesystem.a
-    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH NO_CACHE REQUIRED)
-  target_link_libraries(WebPortalLibrary PUBLIC
-    ${BOOST_PROCESS_STATIC_LIBRARY} ${BOOST_FILESYSTEM_STATIC_LIBRARY})
   add_executable(ReportProcessFixture EXCLUDE_FROM_ALL
     Tests/FunctionalTests/ReportProcessFixture.cpp)
   beam_configure_target(ReportProcessFixture DEPENDENCIES
