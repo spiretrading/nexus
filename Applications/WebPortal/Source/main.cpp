@@ -21,6 +21,7 @@ namespace {
   struct Configuration {
     IpAddress m_interface;
     std::vector<IpAddress> m_addresses;
+    std::filesystem::path m_web_app_directory;
     std::size_t m_report_concurrency;
 
     static Configuration parse(const YAML::Node& config);
@@ -34,6 +35,13 @@ namespace {
       addresses.push_back(config.m_interface);
       config.m_addresses =
         extract<std::vector<IpAddress>>(node, "addresses", addresses);
+      config.m_web_app_directory = std::filesystem::absolute(
+        extract<std::string>(node, "web_app_directory", "web_app"));
+      if(!std::filesystem::is_regular_file(
+          config.m_web_app_directory / "index.html")) {
+        throw std::runtime_error("Web app directory must contain index.html: " +
+          config.m_web_app_directory.string());
+      }
       constexpr auto DEFAULT_REPORT_CONCURRENCY = std::size_t(4);
       config.m_report_concurrency = extract<std::size_t>(
         node, "report_concurrency", DEFAULT_REPORT_CONCURRENCY);
@@ -53,14 +61,14 @@ int main(int argc, const char** argv) {
       return ServiceLocatorClientConfig::parse(
         get_node(config, "service_locator"));
     }, std::runtime_error("Error parsing section 'service_locator'."));
+    auto service_config = try_or_nest([&] {
+      return Configuration::parse(get_node(config, "server"));
+    }, std::runtime_error("Error parsing section 'server'."));
     auto clients = connect<ServiceClients>(
       service_locator_client_config.m_username,
       service_locator_client_config.m_password,
       service_locator_client_config.m_address);
     load_definitions(clients.get_definitions_client());
-    auto service_config = try_or_nest([&] {
-      return Configuration::parse(get_node(config, "server"));
-    }, std::runtime_error("Error parsing section 'server'."));
     try_or_nest([&] {
       auto url = extract<std::string>(
         config, "url", "http://" + to_string(service_config.m_interface));
@@ -78,9 +86,10 @@ int main(int argc, const char** argv) {
         return Clients(std::in_place_type<ServiceClients>, session_id, key,
           service_locator_client_config.m_address);
       };
-    auto server = WebPortalServletContainer(init(std::move(clients_builder),
-      std::move(session_clients_builder), Clients(&clients),
-      service_config.m_report_concurrency), init(service_config.m_interface));
+    auto server = WebPortalServletContainer(
+      init(service_config.m_web_app_directory, std::move(clients_builder),
+        std::move(session_clients_builder), Clients(&clients),
+        service_config.m_report_concurrency), init(service_config.m_interface));
     wait_for_kill_event();
     server.close();
     clients.close();

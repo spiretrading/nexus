@@ -14,11 +14,11 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-WebPortalServlet::WebPortalServlet(
+WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
   ServiceLocatorWebServlet::ClientsBuilder clients_builder,
   ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
   Clients clients, std::size_t report_concurrency)
-  : m_file_store("web_app"),
+  : m_file_store(std::move(web_app_directory)),
     m_service_locator_servlet(Ref(m_sessions), std::move(clients_builder),
       std::move(session_clients_builder)),
     m_definitions_servlet(Ref(m_sessions)),

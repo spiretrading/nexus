@@ -32,11 +32,14 @@ namespace Nexus {
 
       /**
        * Constructs a WebPortalServlet.
+       * @param web_app_directory The directory containing the built web app.
        * @param clients_builder The function used to build session Clients.
+       * @param session_clients_builder Builds Clients using a session token.
        * @param clients The clients used to access Spire services.
        * @param report_concurrency The positive global report execution limit.
        */
-      WebPortalServlet(ServiceLocatorWebServlet::ClientsBuilder clients_builder,
+      WebPortalServlet(std::filesystem::path web_app_directory,
+        ServiceLocatorWebServlet::ClientsBuilder clients_builder,
         ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
         Clients clients, std::size_t report_concurrency);
 
