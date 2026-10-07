@@ -110,6 +110,165 @@ TEST_SUITE("ReportJobService") {
     service.close();
   }
 
+  TEST_CASE("retry_validation_does_not_block_other_accounts") {
+    auto completed = Queue<std::string>();
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        completed.push(job.m_id);
+      }
+    }, [] (const auto&, auto) { return 0; });
+    auto job = make_job();
+    job.m_id = "failed";
+    job.m_status = ReportJob::Status::FAILED;
+    backend.store(job);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto entered = std::binary_semaphore(0);
+    auto release = std::binary_semaphore(0);
+    auto retry_error = std::exception_ptr();
+    auto retry = RoutineHandler(spawn([&] {
+      try {
+        service.retry(job.m_account, {job.m_id}, [&] (auto& jobs) {
+          entered.release();
+          release.acquire();
+          jobs[0].m_arguments.push_back("validated");
+        });
+      } catch(const std::exception&) {
+        retry_error = std::current_exception();
+      }
+    }));
+    entered.acquire();
+    auto finished = std::binary_semaphore(0);
+    auto action_error = std::exception_ptr();
+    auto id = std::string();
+    {
+      auto action = RoutineHandler(spawn([&] {
+        try {
+          auto other = make_job();
+          other.m_account = DirectoryEntry::make_account(2, "bob");
+          id = service.submit(other);
+          completed.pop();
+        } catch(const std::exception&) {
+          action_error = std::current_exception();
+        }
+        finished.release();
+      }));
+      auto unblock = boost::scope::scope_exit([&] { release.release(); });
+      REQUIRE(finished.try_acquire_for(std::chrono::seconds(10)));
+    }
+    retry.wait();
+    REQUIRE(!action_error);
+    REQUIRE(!retry_error);
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::COMPLETED);
+    REQUIRE(completed.pop() == job.m_id);
+    REQUIRE(backend.load_job(job.m_id)->m_arguments.back() == "validated");
+    service.close();
+  }
+
+  TEST_CASE("retry_validation_rechecks_cancellation_and_shutdown") {
+    auto is_closing = false;
+    SUBCASE("cancel") {}
+    SUBCASE("close") {
+      is_closing = true;
+    }
+    auto executions = std::atomic_int(0);
+    auto backend = Backend([] (const auto&) {}, [&] (const auto&, auto) {
+      ++executions;
+      return 0;
+    });
+    auto job = make_job();
+    job.m_id = "failed";
+    job.m_status = ReportJob::Status::FAILED;
+    backend.store(job);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto entered = std::binary_semaphore(0);
+    auto release = std::binary_semaphore(0);
+    auto retry_error = std::exception_ptr();
+    auto retry = RoutineHandler(spawn([&] {
+      try {
+        service.retry(job.m_account, {job.m_id}, [&] (const auto&) {
+          entered.release();
+          release.acquire();
+        });
+      } catch(const std::exception&) {
+        retry_error = std::current_exception();
+      }
+    }));
+    entered.acquire();
+    auto finished = std::binary_semaphore(0);
+    auto action_error = std::exception_ptr();
+    {
+      auto action = RoutineHandler(spawn([&] {
+        try {
+          if(is_closing) {
+            service.close();
+          } else {
+            service.cancel(job.m_account, {job.m_id});
+          }
+        } catch(const std::exception&) {
+          action_error = std::current_exception();
+        }
+        finished.release();
+      }));
+      auto unblock = boost::scope::scope_exit([&] { release.release(); });
+      REQUIRE(finished.try_acquire_for(std::chrono::seconds(10)));
+    }
+    retry.wait();
+    REQUIRE(!action_error);
+    if(is_closing) {
+      REQUIRE(retry_error);
+      REQUIRE_THROWS_AS(
+        std::rethrow_exception(retry_error), std::runtime_error);
+      REQUIRE(
+        backend.load_job(job.m_id)->m_status == ReportJob::Status::FAILED);
+    } else {
+      REQUIRE(!retry_error);
+      REQUIRE(
+        backend.load_job(job.m_id)->m_status == ReportJob::Status::CANCELLED);
+    }
+    service.close();
+    REQUIRE(executions == 0);
+  }
+
+  TEST_CASE("retry_validates_batch_before_committing") {
+    auto completed = Queue<std::string>();
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        completed.push(job.m_id);
+      }
+    }, [] (const auto&, auto) { return 0; });
+    auto first = make_job();
+    first.m_id = "first";
+    first.m_status = ReportJob::Status::FAILED;
+    auto second = first;
+    second.m_id = "second";
+    backend.store(first);
+    backend.store(second);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    REQUIRE_THROWS_AS(service.retry(first.m_account,
+      {first.m_id, second.m_id}, [] (auto& jobs) {
+        jobs[0].m_arguments.push_back("uncommitted");
+        throw std::runtime_error("Validation failed.");
+      }), std::runtime_error);
+    REQUIRE(
+      backend.load_job(first.m_id)->m_status == ReportJob::Status::FAILED);
+    REQUIRE(backend.load_job(first.m_id)->m_arguments == first.m_arguments);
+    REQUIRE(
+      backend.load_job(second.m_id)->m_status == ReportJob::Status::FAILED);
+    service.retry(
+      first.m_account, {first.m_id, second.m_id}, LvalueValidator());
+    REQUIRE(completed.pop() == first.m_id);
+    REQUIRE(completed.pop() == second.m_id);
+    service.close();
+    REQUIRE(backend.load_job(first.m_id)->m_arguments.back() == "validated");
+    REQUIRE(backend.load_job(second.m_id)->m_arguments.back() == "validated");
+  }
+
   TEST_CASE("routine_submission_and_shutdown") {
     auto states = Queue<ReportJob>();
     auto executions = Queue<ReportJob>();

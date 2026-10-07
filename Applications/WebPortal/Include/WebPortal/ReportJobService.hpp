@@ -113,6 +113,7 @@ namespace Nexus {
       Beam::local_ptr_t<TimeClient> m_time_client;
       Beam::Timer m_timer;
       std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_ticks;
+      mutable Beam::Mutex m_retry_mutex;
       mutable Beam::Mutex m_mutex;
       bool m_is_closed;
       std::unordered_map<std::string, std::shared_ptr<Job>> m_pending;
@@ -234,11 +235,14 @@ namespace Nexus {
   template<typename V> requires std::invocable<V&, std::vector<ReportJob>&>
   void ReportJobService<B, T>::retry(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids, V validate) {
-    auto lock = std::lock_guard(m_mutex);
-    if(m_is_closed) {
-      throw std::runtime_error("Report job service is closed.");
-    }
-    auto jobs = load_jobs(account, ids);
+    auto retry_lock = std::lock_guard(m_retry_mutex);
+    auto jobs = [&] {
+      auto lock = std::lock_guard(m_mutex);
+      if(m_is_closed) {
+        throw std::runtime_error("Report job service is closed.");
+      }
+      return load_jobs(account, ids);
+    }();
     std::erase_if(jobs, [] (const auto& job) {
       return job.m_status != ReportJob::Status::FAILED;
     });
@@ -248,7 +252,22 @@ namespace Nexus {
     Beam::park([&] {
       std::invoke(validate, jobs);
     });
+    auto retry_ids = std::vector<std::string>();
+    retry_ids.reserve(jobs.size());
     for(auto& job : jobs) {
+      retry_ids.push_back(job.m_id);
+    }
+    auto lock = std::lock_guard(m_mutex);
+    if(m_is_closed) {
+      throw std::runtime_error("Report job service is closed.");
+    }
+    auto current = load_jobs(account, retry_ids);
+    for(auto i = std::size_t(0); i != jobs.size(); ++i) {
+      auto& job = jobs[i];
+      if(current[i].m_status != ReportJob::Status::FAILED ||
+          m_pending.contains(job.m_id)) {
+        continue;
+      }
       auto entry = std::make_shared<Job>();
       job.m_status = ReportJob::Status::QUEUED;
       job.m_modified = m_time_client->get_time();
