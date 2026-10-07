@@ -34,7 +34,7 @@ namespace {
 
     template<typename T>
     QVariant operator ()(const ValueListInputDialog::Value& value) const {
-      return QVariant::fromValue(get<T>(value));
+      return QVariant::fromValue(std::get<T>(value));
     }
   };
 
