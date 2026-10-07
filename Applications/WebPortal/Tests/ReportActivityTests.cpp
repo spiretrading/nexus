@@ -123,6 +123,99 @@ TEST_SUITE("ReportActivity") {
       jobs, account, query).m_activities.front().m_id == "a");
   }
 
+  TEST_CASE("sorted_pages_preserve_parameters_and_ties") {
+    auto account = DirectoryEntry::make_account(1, "Alice");
+    auto jobs = std::vector<ReportJob>();
+    auto start = time_from_string("2026-10-01 12:00:00");
+    constexpr auto COUNT = 103;
+    for(auto i = 0; i != COUNT; ++i) {
+      auto job = make_job(std::to_string(i), account);
+      auto group = i % 3;
+      job.m_created = start + seconds(i / 6);
+      job.m_definition.m_name = std::string(1, 'A' + group);
+      job.m_definition.m_parameters = {{"count", "Count", "Integer", true}};
+      job.m_parameters["count"] = group;
+      if(group == 0) {
+        job.m_status = ReportJob::Status::QUEUED;
+        job.m_modified = not_a_date_time;
+      } else if(group == 1) {
+        job.m_status = ReportJob::Status::RUNNING;
+        job.m_completed = start + hours(24);
+      } else {
+        job.m_status = ReportJob::Status::FAILED;
+        job.m_modified = start + hours(48);
+        job.m_completed = start + hours(72);
+      }
+      jobs.push_back(job);
+    }
+    auto by_created = std::vector<const ReportJob*>();
+    for(auto& job : jobs) {
+      by_created.push_back(&job);
+    }
+    std::ranges::sort(by_created, [] (const auto* left, const auto* right) {
+      if(left->m_created != right->m_created) {
+        return left->m_created > right->m_created;
+      }
+      return left->m_id < right->m_id;
+    });
+    for(auto column : {ReportActivityQuery::Column::TYPE,
+        ReportActivityQuery::Column::PARAMETERS,
+        ReportActivityQuery::Column::STATUS,
+        ReportActivityQuery::Column::DATE_MODIFIED}) {
+      for(auto order : {ReportActivityQuery::Order::NONE,
+          ReportActivityQuery::Order::ASCENDING,
+          ReportActivityQuery::Order::DESCENDING}) {
+        auto expected = std::vector<std::string>();
+        if(order == ReportActivityQuery::Order::NONE) {
+          for(auto* job : by_created) {
+            expected.push_back(job->m_id);
+          }
+        } else {
+          auto groups = std::vector<int>();
+          if(column == ReportActivityQuery::Column::STATUS) {
+            groups = {0, 1};
+          } else {
+            groups = {0, 1, 2};
+          }
+          if(order == ReportActivityQuery::Order::DESCENDING) {
+            std::ranges::reverse(groups);
+          }
+          for(auto group : groups) {
+            for(auto* job : by_created) {
+              auto rank = std::stoi(job->m_id) % 3;
+              if(column == ReportActivityQuery::Column::STATUS) {
+                rank = static_cast<int>(rank == 2);
+              }
+              if(rank == group) {
+                expected.push_back(job->m_id);
+              }
+            }
+          }
+        }
+        for(auto index = std::uint32_t(0); index != 4; ++index) {
+          auto query = ReportActivityQuery(column, order, index);
+          auto page = query_report_activities(jobs, account, query);
+          REQUIRE(page.m_total_count == COUNT);
+          auto offset = std::min(
+            std::size_t(index) * ReportActivityQuery::PAGE_SIZE,
+            expected.size());
+          auto size = std::min(
+            ReportActivityQuery::PAGE_SIZE, expected.size() - offset);
+          REQUIRE(page.m_activities.size() == size);
+          for(auto i = std::size_t(0); i != size; ++i) {
+            auto& activity = page.m_activities[i];
+            REQUIRE(activity.m_id == expected[offset + i]);
+            auto group = std::stoi(activity.m_id) % 3;
+            REQUIRE(activity.m_parameters ==
+              std::vector<std::string>({std::to_string(group)}));
+            REQUIRE(activity.m_date_modified ==
+              (start + hours(24 * group)).date());
+          }
+        }
+      }
+    }
+  }
+
   TEST_CASE("parameter_display") {
     auto account = DirectoryEntry::make_account(1, "Alice");
     auto job = make_job("job", account);

@@ -7,6 +7,25 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 
+namespace {
+  ReportActivity::Status get_status(const ReportJob& job) {
+    if(job.m_status == ReportJob::Status::FAILED) {
+      return ReportActivity::Status::FAILED;
+    }
+    return ReportActivity::Status::GENERATING;
+  }
+
+  date get_date_modified(const ReportJob& job) {
+    if(job.m_modified && !job.m_modified->is_special()) {
+      return job.m_modified->date();
+    }
+    if(!job.m_completed.is_special()) {
+      return job.m_completed.date();
+    }
+    return job.m_created.date();
+  }
+}
+
 ReportActivities Nexus::query_report_activities(
     const std::vector<ReportJob>& jobs, const DirectoryEntry& account,
     const ReportActivityQuery& query) {
@@ -16,7 +35,12 @@ ReportActivities Nexus::query_report_activities(
       query.m_order > ReportActivityQuery::Order::DESCENDING) {
     throw std::invalid_argument("Invalid report activity ordering.");
   }
-  auto entries = std::vector<std::pair<ReportActivity, ptime>>();
+  struct Entry {
+    const ReportJob* m_job;
+    date m_date_modified;
+    std::vector<std::string> m_parameters;
+  };
+  auto entries = std::vector<Entry>();
   for(auto& job : jobs) {
     if(job.m_account != account ||
         job.m_account.m_type != DirectoryEntry::Type::ACCOUNT ||
@@ -25,38 +49,35 @@ ReportActivities Nexus::query_report_activities(
           job.m_status != ReportJob::Status::FAILED)) {
       continue;
     }
-    auto activity = ReportActivity();
-    activity.m_id = job.m_id;
-    activity.m_type = job.m_definition.m_name;
-    activity.m_parameters = format_report_parameters(job);
-    if(job.m_status == ReportJob::Status::FAILED) {
-      activity.m_status = ReportActivity::Status::FAILED;
+    entries.emplace_back(&job, get_date_modified(job));
+  }
+  auto result = ReportActivities();
+  result.m_total_count = entries.size();
+  if(entries.empty() || query.m_page_index >
+      (entries.size() - 1) / ReportActivityQuery::PAGE_SIZE) {
+    return result;
+  }
+  auto is_parameter_sort = query.m_order != ReportActivityQuery::Order::NONE &&
+    query.m_column == ReportActivityQuery::Column::PARAMETERS;
+  if(is_parameter_sort) {
+    for(auto& entry : entries) {
+      entry.m_parameters = format_report_parameters(*entry.m_job);
     }
-    activity.m_date_modified = [&] {
-      if(job.m_modified && !job.m_modified->is_special()) {
-        return job.m_modified->date();
-      }
-      if(!job.m_completed.is_special()) {
-        return job.m_completed.date();
-      }
-      return job.m_created.date();
-    }();
-    entries.emplace_back(std::move(activity), job.m_created);
   }
   std::ranges::sort(entries, [&] (const auto& left, const auto& right) {
-    auto& first = left.first;
-    auto& second = right.first;
+    auto& first = *left.m_job;
+    auto& second = *right.m_job;
     auto comparison = std::strong_ordering::equal;
     if(query.m_order != ReportActivityQuery::Order::NONE) {
       if(query.m_column == ReportActivityQuery::Column::TYPE) {
-        comparison = first.m_type <=> second.m_type;
+        comparison = first.m_definition.m_name <=> second.m_definition.m_name;
       } else if(query.m_column == ReportActivityQuery::Column::PARAMETERS) {
-        comparison = first.m_parameters <=> second.m_parameters;
+        comparison = left.m_parameters <=> right.m_parameters;
       } else if(query.m_column == ReportActivityQuery::Column::STATUS) {
-        comparison = first.m_status <=> second.m_status;
-      } else if(first.m_date_modified < second.m_date_modified) {
+        comparison = get_status(first) <=> get_status(second);
+      } else if(left.m_date_modified < right.m_date_modified) {
         comparison = std::strong_ordering::less;
-      } else if(first.m_date_modified > second.m_date_modified) {
+      } else if(left.m_date_modified > right.m_date_modified) {
         comparison = std::strong_ordering::greater;
       }
       if(comparison != 0) {
@@ -66,21 +87,22 @@ ReportActivities Nexus::query_report_activities(
         return comparison > 0;
       }
     }
-    if(left.second != right.second) {
-      return left.second > right.second;
+    if(first.m_created != second.m_created) {
+      return first.m_created > second.m_created;
     }
     return first.m_id < second.m_id;
   });
-  auto result = ReportActivities();
-  result.m_total_count = entries.size();
-  if(entries.empty() || query.m_page_index >
-      (entries.size() - 1) / ReportActivityQuery::PAGE_SIZE) {
-    return result;
-  }
   auto start = std::size_t(query.m_page_index) * ReportActivityQuery::PAGE_SIZE;
   auto end = std::min(start + ReportActivityQuery::PAGE_SIZE, entries.size());
+  result.m_activities.reserve(end - start);
   for(auto i = start; i != end; ++i) {
-    result.m_activities.push_back(std::move(entries[i].first));
+    auto& job = *entries[i].m_job;
+    auto parameters = std::move(entries[i].m_parameters);
+    if(!is_parameter_sort) {
+      parameters = format_report_parameters(job);
+    }
+    result.m_activities.emplace_back(job.m_id, job.m_definition.m_name,
+      std::move(parameters), get_status(job), entries[i].m_date_modified);
   }
   return result;
 }
