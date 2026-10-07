@@ -17,6 +17,16 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 
+namespace {
+  std::uint32_t read_index(double value, double maximum) {
+    if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
+        value > maximum) {
+      throw std::invalid_argument("Invalid report query index.");
+    }
+    return static_cast<std::uint32_t>(value);
+  }
+}
+
 ReportingWebServlet::AccountReports::AccountReports()
   : m_next_id(0),
     m_is_generating(false) {}
@@ -379,13 +389,6 @@ HttpResponse ReportingWebServlet::on_query_report_activities(
   auto query = ReportActivityQuery();
   try {
     auto parameters = session->shuttle_parameters<Parameters>(request);
-    auto read_index = [] (double value, double maximum) {
-      if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
-          value > maximum) {
-        throw std::invalid_argument("Invalid report activity query.");
-      }
-      return static_cast<std::uint32_t>(value);
-    };
     query.m_column = ReportActivityQuery::Column(read_index(
       parameters.m_sort.m_column,
       static_cast<int>(ReportActivityQuery::Column::DATE_MODIFIED)));
@@ -609,13 +612,6 @@ HttpResponse ReportingWebServlet::on_query_generated_reports(
   auto query = GeneratedReportQuery();
   try {
     auto parameters = session->shuttle_parameters<Parameters>(request);
-    auto read_index = [] (double value, double maximum) {
-      if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
-          value > maximum) {
-        throw std::invalid_argument("Invalid generated report query.");
-      }
-      return static_cast<std::uint32_t>(value);
-    };
     query.m_column =
       GeneratedReportQuery::Column(read_index(parameters.m_sort.m_column,
         static_cast<int>(GeneratedReportQuery::Column::DATE_CREATED)));
@@ -853,12 +849,8 @@ HttpResponse ReportingWebServlet::on_query_scheduled_reports(
   auto query = ScheduledReportQuery();
   try {
     auto parameters = session->shuttle_parameters<Parameters>(request);
-    auto index = parameters.m_page_index;
-    if(!std::isfinite(index) || std::trunc(index) != index || index < 0 ||
-        index > std::numeric_limits<std::uint32_t>::max()) {
-      throw std::invalid_argument("Invalid scheduled report page index.");
-    }
-    query.m_page_index = static_cast<std::uint32_t>(index);
+    query.m_page_index = read_index(
+      parameters.m_page_index, std::numeric_limits<std::uint32_t>::max());
     query.m_query = std::move(parameters.m_filters.m_query);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::BAD_REQUEST);
