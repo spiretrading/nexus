@@ -24,6 +24,10 @@ TEST_SUITE("Money") {
   }
 
   TEST_CASE("large_value_output") {
+    REQUIRE(to_string(from_json<Money>("1e25")) ==
+      "10000000000000000000.00");
+    REQUIRE(to_string(from_json<Money>("-1E+25")) ==
+      "-10000000000000000000.00");
     REQUIRE(to_string(from_json<Money>("10000000000000000000000000")) ==
       "10000000000000000000.00");
     REQUIRE(to_string(from_json<Money>("-10000000000000000000000000")) ==
