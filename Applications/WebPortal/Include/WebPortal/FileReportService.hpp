@@ -85,6 +85,10 @@ namespace Nexus {
 
       FileReportService(const FileReportService&) = delete;
       FileReportService& operator =(const FileReportService&) = delete;
+      std::optional<std::string> read_metadata(
+        const std::filesystem::path& directory);
+      void remove_directory(
+        const std::string& id, const std::filesystem::path& subdirectory);
       std::vector<ReportDefinition> load_definitions();
       std::optional<ReportJob> read_job(const std::filesystem::path& path);
       void recover();

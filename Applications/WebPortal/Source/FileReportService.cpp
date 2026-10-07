@@ -126,18 +126,7 @@ std::vector<ReportSchedule> FileReportService::load_schedules() {
 
 void FileReportService::remove_schedule(const std::string& id) {
   m_open_state.ensure_open();
-  auto path = report_directory(id, m_jobs_directory / "schedules");
-  auto lock = std::lock_guard(m_mutex);
-  auto root = std::filesystem::canonical(m_jobs_directory) / "schedules";
-  auto status = std::filesystem::symlink_status(path);
-  if(!std::filesystem::is_directory(status)) {
-    throw ReportNotFoundException();
-  }
-  auto resolved = std::filesystem::canonical(path);
-  if(resolved != root / id) {
-    throw ReportNotFoundException();
-  }
-  std::filesystem::remove_all(resolved);
+  remove_directory(id, "schedules");
 }
 
 std::vector<ReportDefinition> FileReportService::load_definitions(
@@ -306,18 +295,7 @@ void FileReportService::remove(
 }
 
 void FileReportService::remove(const std::string& id) {
-  auto path = report_directory(id, m_jobs_directory);
-  auto lock = std::lock_guard(m_mutex);
-  auto root = std::filesystem::canonical(m_jobs_directory);
-  auto status = std::filesystem::symlink_status(path);
-  if(!std::filesystem::is_directory(status)) {
-    throw ReportNotFoundException();
-  }
-  auto resolved = std::filesystem::canonical(path);
-  if(resolved != root / id) {
-    throw ReportNotFoundException();
-  }
-  std::filesystem::remove_all(resolved);
+  remove_directory(id, std::filesystem::path());
 }
 
 ScheduledReports FileReportService::query(
@@ -374,6 +352,37 @@ void FileReportService::close() {
   m_open_state.close();
 }
 
+std::optional<std::string> FileReportService::read_metadata(
+    const std::filesystem::path& directory) {
+  auto lock = std::lock_guard(m_mutex);
+  auto path = directory / "metadata.json";
+  if(!std::filesystem::exists(path)) {
+    return std::nullopt;
+  }
+  auto stream = std::ifstream(path, std::ios::binary);
+  stream.exceptions(std::ios::badbit);
+  if(!stream) {
+    throw std::runtime_error("Unable to read report metadata.");
+  }
+  return std::string(std::istreambuf_iterator<char>(stream), {});
+}
+
+void FileReportService::remove_directory(
+    const std::string& id, const std::filesystem::path& subdirectory) {
+  auto path = report_directory(id, m_jobs_directory / subdirectory);
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory) / subdirectory;
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
+}
+
 std::vector<ReportDefinition> FileReportService::load_definitions() {
   if(!std::filesystem::exists(m_definitions_directory)) {
     return {};
@@ -410,20 +419,11 @@ std::vector<ReportDefinition> FileReportService::load_definitions() {
 
 std::optional<ReportJob> FileReportService::read_job(
     const std::filesystem::path& path) {
-  auto text = std::string();
-  {
-    auto lock = std::lock_guard(m_mutex);
-    if(!std::filesystem::exists(path / "metadata.json")) {
-      return std::nullopt;
-    }
-    auto stream = std::ifstream(path / "metadata.json", std::ios::binary);
-    stream.exceptions(std::ios::badbit);
-    if(!stream) {
-      throw std::runtime_error("Unable to read report job metadata.");
-    }
-    text.assign(std::istreambuf_iterator<char>(stream), {});
+  auto text = read_metadata(path);
+  if(!text) {
+    return std::nullopt;
   }
-  auto job = from_json<ReportJob>(text);
+  auto job = from_json<ReportJob>(*text);
   if(report_directory(job.m_id, m_jobs_directory) != path) {
     throw std::runtime_error("Report job directory does not match its id.");
   }
@@ -444,20 +444,11 @@ void FileReportService::recover() {
 
 std::optional<ReportSchedule> FileReportService::read_schedule(
     const std::filesystem::path& path) {
-  auto text = std::string();
-  {
-    auto lock = std::lock_guard(m_mutex);
-    if(!std::filesystem::exists(path / "metadata.json")) {
-      return std::nullopt;
-    }
-    auto stream = std::ifstream(path / "metadata.json", std::ios::binary);
-    stream.exceptions(std::ios::badbit);
-    if(!stream) {
-      throw std::runtime_error("Unable to read report schedule metadata.");
-    }
-    text.assign(std::istreambuf_iterator<char>(stream), {});
+  auto text = read_metadata(path);
+  if(!text) {
+    return std::nullopt;
   }
-  auto schedule = from_json<ReportSchedule>(text);
+  auto schedule = from_json<ReportSchedule>(*text);
   if(report_directory(schedule.m_id, m_jobs_directory / "schedules") != path) {
     throw std::runtime_error(
       "Report schedule directory does not match its id.");
