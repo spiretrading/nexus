@@ -30,84 +30,114 @@ interface Properties extends
   onChange?: (value?: Beam.Duration) => void;
 }
 
+interface State {
+  value: Beam.Duration;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 /** A component that displays a duration. */
-export function DurationInput({id, className, value, maxHourValue, minHourValue,
-    readOnly, disabled, error, onChange, ...rest}: Properties): JSX.Element {
-  const isInvalid = error || rest['aria-invalid'] === true ||
-    rest['aria-invalid'] === 'true';
-  const hours = React.useRef(value?.split().hours);
-  const minutes = React.useRef(value?.split().minutes);
-  const seconds = React.useRef(value?.split().seconds);
-  const split = value?.split();
-  hours.current = split?.hours;
-  minutes.current = split?.minutes;
-  seconds.current = split?.seconds;
-  const onchange = (h?: number, m?: number, s?: number) => {
-    if(h != null && m != null && s != null) {
-      onChange?.(Beam.Duration.HOUR.multiply(h).add(
-        Beam.Duration.MINUTE.multiply(m)).add(
-        Beam.Duration.SECOND.multiply(s)));
-    } else if(h == null && m == null && s == null) {
-      onChange?.(undefined);
+export class DurationInput extends React.Component<Properties, State> {
+  public static getDerivedStateFromProps(props: Properties, state: State):
+      Partial<State> {
+    if(props.value === state.value || props.value?.equals(state.value)) {
+      return null;
+    }
+    const split = props.value?.split();
+    return {value: props.value, hours: split?.hours, minutes: split?.minutes,
+      seconds: split?.seconds};
+  }
+
+  constructor(props: Properties) {
+    super(props);
+    const split = props.value?.split();
+    this.state = {value: props.value, hours: split?.hours,
+      minutes: split?.minutes, seconds: split?.seconds};
+  }
+
+  public render(): JSX.Element {
+    const {id, className, value, maxHourValue, minHourValue, readOnly, disabled,
+      error, onChange, ...rest} = this.props;
+    const isInvalid = error || rest['aria-invalid'] === true ||
+      rest['aria-invalid'] === 'true';
+    const separatorStyle = (() => {
+      if(value) {
+        return undefined;
+      }
+      return {color: '#8C8C8C'};
+    })();
+    return (
+      <div {...rest} className={[css(STYLES.container,
+          disabled && STYLES.containerDisabled,
+          isInvalid && STYLES.containerError,
+          readOnly && STYLES.containerReadonly),
+          className].filter(Boolean).join(' ')}>
+        <IntegerInput
+          id={id}
+          aria-invalid={rest['aria-invalid']}
+          aria-describedby={rest['aria-describedby']}
+          aria-label='Hours' placeholder='hh'
+          min={minHourValue ?? 0} max={maxHourValue ?? 99}
+          value={this.state.hours}
+          readOnly={readOnly}
+          disabled={disabled}
+          onChange={this.onHoursChange}
+          style={STYLE.hoursInput}
+          leadingZeros={2}/>
+        <span className={css(STYLES.separator)} style={separatorStyle}>
+          :
+        </span>
+        <IntegerInput
+          aria-label='Minutes' placeholder='mm'
+          aria-invalid={rest['aria-invalid']}
+          aria-describedby={rest['aria-describedby']}
+          min={0} max={59}
+          value={this.state.minutes}
+          readOnly={readOnly}
+          disabled={disabled}
+          onChange={this.onMinutesChange}
+          style={STYLE.minutesInput}
+          leadingZeros={2}/>
+        <span className={css(STYLES.separator)} style={separatorStyle}>
+          :
+        </span>
+        <IntegerInput
+          aria-label='Seconds' placeholder='ss'
+          aria-invalid={rest['aria-invalid']}
+          aria-describedby={rest['aria-describedby']}
+          min={0} max={59}
+          value={this.state.seconds}
+          readOnly={readOnly}
+          disabled={disabled}
+          onChange={this.onSecondsChange}
+          style={STYLE.secondsInput}
+          leadingZeros={2}/>
+      </div>);
+  }
+
+  private publish = () => {
+    const {hours, minutes, seconds} = this.state;
+    if(hours != null && minutes != null && seconds != null) {
+      this.props.onChange?.(Beam.Duration.HOUR.multiply(hours).add(
+        Beam.Duration.MINUTE.multiply(minutes)).add(
+        Beam.Duration.SECOND.multiply(seconds)));
+    } else if(hours == null && minutes == null && seconds == null) {
+      this.props.onChange?.(undefined);
     }
   };
-  const onHoursChange = (value?: number) => {
-    onchange(value, minutes.current, seconds.current);
+
+  private onHoursChange = (hours: number) => {
+    this.setState({hours}, this.publish);
   };
-  const onMinutesChange = (value?: number) => {
-    onchange(hours.current, value, seconds.current);
+
+  private onMinutesChange = (minutes: number) => {
+    this.setState({minutes}, this.publish);
   };
-  const onSecondsChange = (value?: number) => {
-    onchange(hours.current, minutes.current, value);
+
+  private onSecondsChange = (seconds: number) => {
+    this.setState({seconds}, this.publish);
   };
-  const separatorStyle = value ? undefined : {color: '#8C8C8C'};
-  return (
-    <div {...rest} className={[css(STYLES.container,
-        disabled && STYLES.containerDisabled,
-        isInvalid && STYLES.containerError,
-        readOnly && STYLES.containerReadonly),
-        className].filter(Boolean).join(' ')}>
-      <IntegerInput
-        id={id}
-        aria-invalid={rest['aria-invalid']}
-        aria-describedby={rest['aria-describedby']}
-        aria-label='Hours' placeholder='hh'
-        min={minHourValue ?? 0} max={maxHourValue ?? 99}
-        value={split?.hours}
-        readOnly={readOnly}
-        disabled={disabled}
-        onChange={onHoursChange}
-        style={STYLE.hoursInput}
-        leadingZeros={2}/>
-      <span className={css(STYLES.separator)} style={separatorStyle}>
-        :
-      </span>
-      <IntegerInput
-        aria-label='Minutes' placeholder='mm'
-        aria-invalid={rest['aria-invalid']}
-        aria-describedby={rest['aria-describedby']}
-        min={0} max={59}
-        value={split?.minutes}
-        readOnly={readOnly}
-        disabled={disabled}
-        onChange={onMinutesChange}
-        style={STYLE.minutesInput}
-        leadingZeros={2}/>
-      <span className={css(STYLES.separator)} style={separatorStyle}>
-        :
-      </span>
-      <IntegerInput
-        aria-label='Seconds' placeholder='ss'
-        aria-invalid={rest['aria-invalid']}
-        aria-describedby={rest['aria-describedby']}
-        min={0} max={59}
-        value={split?.seconds}
-        readOnly={readOnly}
-        disabled={disabled}
-        onChange={onSecondsChange}
-        style={STYLE.secondsInput}
-        leadingZeros={2}/>
-    </div>);
 }
 
 const STYLES = StyleSheet.create({
