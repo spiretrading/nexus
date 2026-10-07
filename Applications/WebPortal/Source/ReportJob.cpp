@@ -43,11 +43,11 @@ namespace {
       auto start = range.get("start");
       auto end = range.get("end");
       auto result = std::string();
-      if(start && !get<JsonNull>(&*start)) {
+      if(start && !std::get_if<JsonNull>(&*start)) {
         result = format("Date", *start);
       }
       result += " - ";
-      if(end && !get<JsonNull>(&*end)) {
+      if(end && !std::get_if<JsonNull>(&*end)) {
         result += format("Date", *end);
       }
       return result;
@@ -70,7 +70,7 @@ namespace {
       }
       std::ranges::sort(names);
       return join(names);
-    } else if(auto text = get<std::string>(&value)) {
+    } else if(auto text = std::get_if<std::string>(&value)) {
       return *text;
     }
     return to_string(value);
@@ -86,7 +86,7 @@ std::vector<std::string> Nexus::format_report_parameters(const ReportJob& job) {
   auto result = std::vector<std::string>();
   for(auto& parameter : job.m_definition.m_parameters) {
     auto value = job.m_parameters.get(parameter.m_name);
-    if(value && !get<JsonNull>(&*value)) {
+    if(value && !std::get_if<JsonNull>(&*value)) {
       result.push_back(format_report_parameter(parameter, *value));
     }
   }

@@ -161,7 +161,7 @@ TEST_SUITE("ReportSchedule") {
     REQUIRE(response.get_status_code() == HttpStatusCode::OK);
     result = get<JsonObject>(parse<JsonValue>(response.get_body()));
     REQUIRE(!get<bool>(result.at("repeats")));
-    REQUIRE(get<JsonNull>(&result.at("repeat_interval")));
+    REQUIRE(std::get_if<JsonNull>(&result.at("repeat_interval")));
     local.close();
     REQUIRE(load(servlet, *session, body).get_status_code() ==
       HttpStatusCode::INTERNAL_SERVER_ERROR);

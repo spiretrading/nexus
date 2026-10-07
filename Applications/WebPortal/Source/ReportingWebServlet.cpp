@@ -380,7 +380,7 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
       auto interval = [&] () -> std::optional<ReportSchedule::Interval> {
         if(parameters.m_is_repeating) {
           return parse_report_interval(parameters.m_interval);
-        } else if(!get<JsonNull>(&parameters.m_interval)) {
+        } else if(!std::get_if<JsonNull>(&parameters.m_interval)) {
           throw std::invalid_argument("Unexpected repeat interval.");
         }
         return std::nullopt;
@@ -767,7 +767,7 @@ HttpResponse ReportingWebServlet::on_update_scheduled_report(
       submission.m_repeat_interval =
         parse_report_interval(*parameters.m_interval);
     } else if(parameters.m_interval &&
-        !get<JsonNull>(&*parameters.m_interval)) {
+        !std::get_if<JsonNull>(&*parameters.m_interval)) {
       throw std::invalid_argument("Unexpected repeat interval.");
     }
   } catch(const std::exception&) {

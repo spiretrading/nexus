@@ -252,7 +252,7 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<JsonObject>(parameters[2]).at("default") == 1000000);
     auto& date = get<JsonObject>(parameters[3]);
     REQUIRE(static_cast<bool>(date.get("default")));
-    REQUIRE(get<JsonNull>(&date.at("default")));
+    REQUIRE(std::get_if<JsonNull>(&date.at("default")));
     auto& range = get<JsonObject>(get<JsonObject>(parameters[4]).at("default"));
     REQUIRE(range.at("start") == "2026-10-01");
     auto& entries =
@@ -306,7 +306,7 @@ TEST_SUITE("ReportDefinition") {
       node["parameters"][0]["type"] = "Money";
       node["parameters"][0]["default"] = YAML::Load(value);
       auto definition = parse_report_definition(node);
-      REQUIRE(get<JsonNull>(&*definition.m_parameters[0].m_default));
+      REQUIRE(std::get_if<JsonNull>(&*definition.m_parameters[0].m_default));
     }
     for(auto& value : {"true", "[]", "{}", "\"\"", ".inf", ".nan",
         "18446744073709551616", "0.9223372036854775808"}) {

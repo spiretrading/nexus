@@ -32,14 +32,14 @@ namespace {
   }
 
   const JsonObject& read_object(const JsonValue& value) {
-    if(auto object = get<JsonObject>(&value)) {
+    if(auto object = std::get_if<JsonObject>(&value)) {
       return *object;
     }
     throw std::invalid_argument("Expected an object.");
   }
 
   const std::string& read_string(const JsonValue& value) {
-    if(auto text = get<std::string>(&value)) {
+    if(auto text = std::get_if<std::string>(&value)) {
       if(text->find('\0') == std::string::npos) {
         return *text;
       }
@@ -48,7 +48,7 @@ namespace {
   }
 
   double read_number(const JsonValue& value) {
-    if(auto number = get<double>(&value)) {
+    if(auto number = std::get_if<double>(&value)) {
       if(std::isfinite(*number)) {
         return *number;
       }
@@ -69,7 +69,7 @@ namespace {
   }
 
   JsonValue read_date(const JsonValue& value) {
-    if(get<JsonNull>(&value)) {
+    if(std::get_if<JsonNull>(&value)) {
       return JsonNull();
     }
     auto text = read_string(value);
@@ -126,7 +126,7 @@ namespace {
       return read_number(value);
     } else if(type == "Currency") {
       auto currency = [&] {
-        if(auto text = get<std::string>(&value)) {
+        if(auto text = std::get_if<std::string>(&value)) {
           return parse_currency(*text);
         }
         return CurrencyId(static_cast<std::uint16_t>(read_integer(
@@ -155,8 +155,8 @@ namespace {
       if(end) {
         range["end"] = read_date(*end);
       }
-      auto first = get<std::string>(&range.at("start"));
-      auto last = get<std::string>(&range.at("end"));
+      auto first = std::get_if<std::string>(&range.at("start"));
+      auto last = std::get_if<std::string>(&range.at("end"));
       if(!first && !last) {
         return JsonNull();
       } else if(parameter.m_is_required && (!first || !last)) {
@@ -171,7 +171,7 @@ namespace {
       }
       auto& object = read_object(value);
       read_string(object.at("name"));
-      get<bool>(object.at("is_global"));
+      static_cast<void>(get<bool>(object.at("is_global")));
       for(auto& country : get<std::vector<JsonValue>>(object.at("countries"))) {
         read_integer(country, 1, 999);
       }
@@ -212,7 +212,7 @@ namespace {
       throw std::runtime_error("Unknown report argument parameter: " + name);
     }
     auto value = parameters.get(name);
-    if(!value || get<JsonNull>(&*value)) {
+    if(!value || std::get_if<JsonNull>(&*value)) {
       return nullptr;
     }
     if(parameter->m_type == "Currency" && path == name + ".code") {
@@ -223,7 +223,7 @@ namespace {
       separator = path.find('.', begin);
       auto& object = read_object(*value);
       value = object.get(path.substr(begin, separator - begin));
-      if(!value || get<JsonNull>(&*value)) {
+      if(!value || std::get_if<JsonNull>(&*value)) {
         return nullptr;
       }
     }
@@ -244,7 +244,7 @@ namespace {
         if(!value) {
           throw std::invalid_argument("Missing report argument: " + path);
         }
-        if(auto text = get<std::string>(value)) {
+        if(auto text = std::get_if<std::string>(value)) {
           result += *text;
         } else {
           result += to_string(*value);
@@ -413,7 +413,7 @@ void Nexus::validate_report_retries(const std::vector<ReportJob>& jobs,
     }
     for(auto& parameter : job.m_definition.m_parameters) {
       auto value = job.m_parameters.get(parameter.m_name);
-      if(!value || get<JsonNull>(&*value)) {
+      if(!value || std::get_if<JsonNull>(&*value)) {
         continue;
       }
       if(parameter.m_type == "DirectoryEntry") {
@@ -456,12 +456,12 @@ JsonObject Nexus::prepare_report_parameters(const ReportDefinition& definition,
   auto result = JsonObject();
   for(auto& parameter : definition.m_parameters) {
     auto value = parameters.get(parameter.m_name);
-    if(!value || get<JsonNull>(&*value)) {
+    if(!value || std::get_if<JsonNull>(&*value)) {
       if(parameter.m_default) {
         value = *parameter.m_default;
       }
     }
-    if(value && !get<JsonNull>(&*value)) {
+    if(value && !std::get_if<JsonNull>(&*value)) {
       try {
         result[parameter.m_name] =
           normalize(parameter, *value, account, client);
@@ -472,7 +472,7 @@ JsonObject Nexus::prepare_report_parameters(const ReportDefinition& definition,
     }
     auto normalized = result.get(parameter.m_name);
     if(parameter.m_is_required &&
-        (!normalized || get<JsonNull>(&*normalized))) {
+        (!normalized || std::get_if<JsonNull>(&*normalized))) {
       throw std::invalid_argument(
         "Required report parameter: " + parameter.m_name);
     }

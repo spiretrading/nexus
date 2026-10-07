@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <limits>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
@@ -191,6 +192,80 @@ TEST_SUITE("GeneratedReport") {
     query.m_order = GeneratedReportQuery::Order::NONE;
     REQUIRE(query_generated_reports(
       jobs, account, query, client).m_reports.front().m_id == "a");
+  }
+
+  TEST_CASE("sorted_pages_with_ties") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto account = client.get_account();
+    auto jobs = std::vector<ReportJob>();
+    auto start = time_from_string("2026-10-01 12:00:00");
+    constexpr auto COUNT = 157;
+    for(auto i = 0; i != COUNT; ++i) {
+      auto job = make_job(std::to_string(i), account);
+      auto group = i % 3;
+      job.m_definition.m_name = std::string(1, 'A' + group);
+      job.m_definition.m_parameters = {{"count", "Count", "Integer", true}};
+      job.m_parameters["count"] = group;
+      job.m_completed = start + hours(24 * group);
+      job.m_completed += seconds(i / 6);
+      jobs.push_back(job);
+    }
+    auto by_completed = std::vector<const ReportJob*>();
+    for(auto& job : jobs) {
+      by_completed.push_back(&job);
+    }
+    std::ranges::sort(by_completed, [] (const auto* left, const auto* right) {
+      if(left->m_completed != right->m_completed) {
+        return left->m_completed > right->m_completed;
+      }
+      return left->m_id < right->m_id;
+    });
+    for(auto column : {GeneratedReportQuery::Column::TYPE,
+        GeneratedReportQuery::Column::PARAMETERS,
+        GeneratedReportQuery::Column::DATE_CREATED}) {
+      for(auto order : {GeneratedReportQuery::Order::NONE,
+          GeneratedReportQuery::Order::ASCENDING,
+          GeneratedReportQuery::Order::DESCENDING}) {
+        auto expected = by_completed;
+        if(order != GeneratedReportQuery::Order::NONE) {
+          expected.clear();
+          auto groups = std::vector({0, 1, 2});
+          if(order == GeneratedReportQuery::Order::DESCENDING) {
+            std::ranges::reverse(groups);
+          }
+          for(auto group : groups) {
+            for(auto* job : by_completed) {
+              if(std::stoi(job->m_id) % 3 == group) {
+                expected.push_back(job);
+              }
+            }
+          }
+        }
+        for(auto index = std::uint32_t(0); index != 5; ++index) {
+          auto query = GeneratedReportQuery();
+          query.m_column = column;
+          query.m_order = order;
+          query.m_page_index = index;
+          auto page = query_generated_reports(jobs, account, query, client);
+          REQUIRE(!page.m_is_empty);
+          REQUIRE(page.m_filtered_count == COUNT);
+          auto offset =
+            std::min(std::size_t(index) * GeneratedReportQuery::PAGE_SIZE,
+              expected.size());
+          auto size =
+            std::min(GeneratedReportQuery::PAGE_SIZE, expected.size() - offset);
+          REQUIRE(page.m_reports.size() == size);
+          for(auto i = std::size_t(0); i != size; ++i) {
+            auto& job = *expected[offset + i];
+            auto report = GeneratedReport(job.m_id, job.m_definition.m_name,
+              format_report_parameters(job), Uri("/reports/" + job.m_id),
+              job.m_completed.date());
+            REQUIRE(to_json(page.m_reports[i]) == to_json(report));
+          }
+        }
+      }
+    }
   }
 
   TEST_CASE("endpoint") {

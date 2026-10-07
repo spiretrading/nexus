@@ -69,7 +69,16 @@ GeneratedReports Nexus::query_generated_reports(
       entries.emplace_back(std::move(report), generated);
     }
   }
-  std::ranges::sort(entries, [&] (const auto& left, const auto& right) {
+  result.m_filtered_count = entries.size();
+  if(entries.empty() || query.m_page_index >
+      (entries.size() - 1) / GeneratedReportQuery::PAGE_SIZE) {
+    return result;
+  }
+  auto start =
+    std::size_t(query.m_page_index) * GeneratedReportQuery::PAGE_SIZE;
+  auto end = std::min(start + GeneratedReportQuery::PAGE_SIZE, entries.size());
+  std::ranges::partial_sort(entries, entries.begin() + end,
+      [&] (const auto& left, const auto& right) {
     auto& first = left.first;
     auto& second = right.first;
     if(query.m_order == GeneratedReportQuery::Order::NONE) {
@@ -91,14 +100,7 @@ GeneratedReports Nexus::query_generated_reports(
     }
     return compare(first.m_date_created, second.m_date_created);
   });
-  result.m_filtered_count = entries.size();
-  if(entries.empty() || query.m_page_index >
-      (entries.size() - 1) / GeneratedReportQuery::PAGE_SIZE) {
-    return result;
-  }
-  auto start =
-    std::size_t(query.m_page_index) * GeneratedReportQuery::PAGE_SIZE;
-  auto end = std::min(start + GeneratedReportQuery::PAGE_SIZE, entries.size());
+  result.m_reports.reserve(end - start);
   for(auto i = start; i != end; ++i) {
     result.m_reports.push_back(std::move(entries[i].first));
   }

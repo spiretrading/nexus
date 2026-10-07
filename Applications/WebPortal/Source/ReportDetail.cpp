@@ -9,7 +9,7 @@ std::vector<ReportDetail::Parameter> Nexus::format_report_parameters(
   auto result = std::vector<ReportDetail::Parameter>();
   for(auto& parameter : definition.m_parameters) {
     auto value = parameters.get(parameter.m_name);
-    if(value && !get<JsonNull>(&*value)) {
+    if(value && !std::get_if<JsonNull>(&*value)) {
       result.emplace_back(
         parameter.m_label, format_report_parameter(parameter, *value));
     }
