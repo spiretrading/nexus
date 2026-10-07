@@ -331,7 +331,7 @@ const STYLES = StyleSheet.create({
     marginLeft: 'auto',
     '@media (min-width: 768px)': {width: '140px'}
   },
-  buttons: {display: 'flex', gap: '8px', maxWidth: '424px'},
+  buttons: {display: 'flex', gap: '8px', maxWidth: '424px', margin: '0 auto'},
   jobs: {position: 'relative'},
   activityTable: {'@media (min-width: 768px)': {maxWidth: '796px'}},
   actionSheet: {
