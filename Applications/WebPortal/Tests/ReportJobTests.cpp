@@ -25,21 +25,21 @@ TEST_SUITE("ReportJob") {
       time_from_string("2026-10-01 12:01:00"),
       time_from_string("2026-10-01 12:02:00"), ReportJob::Status::FAILED,
       7, "Report failed.", false);
-    auto expected = to_json(job);
+    auto expected = parse<JsonValue>(to_json(job));
     test_round_trip_shuttle(job, [&] (const auto& received) {
-      REQUIRE(to_json(received) == expected);
+      REQUIRE(parse<JsonValue>(to_json(received)) == expected);
     });
     auto buffer = SharedBuffer();
     auto sender = JsonSender<SharedBuffer>();
     sender.set(Ref(buffer));
     sender.shuttle(job);
-    REQUIRE(to_json(job) == expected);
+    REQUIRE(parse<JsonValue>(to_json(job)) == expected);
     auto received = ReportJob();
     received.m_parameters["stale"] = true;
     auto receiver = JsonReceiver<SharedBuffer>();
     receiver.set(Ref(buffer));
     receiver.shuttle(received);
-    REQUIRE(to_json(received) == expected);
+    REQUIRE(parse<JsonValue>(to_json(received)) == expected);
     REQUIRE(!received.m_parameters.get("stale"));
   }
 
