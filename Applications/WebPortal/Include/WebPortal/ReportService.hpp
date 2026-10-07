@@ -41,8 +41,8 @@ namespace Nexus {
     { service.retry(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::vector<std::string>&>()) } ->
           std::same_as<void>;
-    { service.execute(std::declval<const ReportJob&>(), std::stop_token()) } ->
-        std::same_as<int>;
+    { service.execute(std::declval<const ReportJob&>(),
+        std::declval<std::stop_token&>()) } -> std::same_as<int>;
     { service.remove(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::vector<std::string>&>()) } ->
           std::same_as<void>;

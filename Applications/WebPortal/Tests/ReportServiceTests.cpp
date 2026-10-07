@@ -66,6 +66,49 @@ namespace {
 
   static_assert(!IsReportService<RvalueReportService>);
 
+  using LocalService =
+    LocalReportService<int (*)(const ReportJob&, std::stop_token)>;
+
+  class LvalueTokenService : public LocalService {
+    public:
+      using LocalService::LocalService;
+
+      int execute(const ReportJob& job, std::stop_token& stop) {
+        return LocalService::execute(job, stop);
+      }
+  };
+
+  class RvalueTokenService : public LocalService {
+    public:
+      int execute(const ReportJob&, std::stop_token&&);
+  };
+
+  static_assert(IsReportService<LvalueTokenService>);
+  static_assert(!IsReportService<RvalueTokenService>);
+  static_assert(std::constructible_from<ReportService, LvalueTokenService*>);
+  static_assert(!std::constructible_from<ReportService,
+    const LvalueTokenService*>);
+  static_assert(std::constructible_from<ReportService,
+    const std::shared_ptr<LvalueTokenService>&>);
+  static_assert(!std::constructible_from<ReportService,
+    std::shared_ptr<const LvalueTokenService>>);
+  static_assert(std::constructible_from<ReportService,
+    std::unique_ptr<LvalueTokenService>>);
+  static_assert(!std::constructible_from<ReportService,
+    std::unique_ptr<const LvalueTokenService>>);
+  static_assert(std::constructible_from<ReportScheduleBackend,
+    LvalueTokenService*>);
+  static_assert(!std::constructible_from<ReportScheduleBackend,
+    const LvalueTokenService*>);
+  static_assert(std::constructible_from<ReportScheduleBackend,
+    const std::shared_ptr<LvalueTokenService>&>);
+  static_assert(!std::constructible_from<ReportScheduleBackend,
+    std::shared_ptr<const LvalueTokenService>>);
+  static_assert(std::constructible_from<ReportScheduleBackend,
+    std::unique_ptr<LvalueTokenService>>);
+  static_assert(!std::constructible_from<ReportScheduleBackend,
+    std::unique_ptr<const LvalueTokenService>>);
+
   ReportDefinition make_definition() {
     auto definition = ReportDefinition();
     definition.m_id = "example";
@@ -81,6 +124,33 @@ namespace {
 }
 
 TEST_SUITE("ReportService") {
+  TEST_CASE("lvalue_token_forwarding") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto execute = +[] (const ReportJob&, std::stop_token stop) {
+      if(stop.stop_requested()) {
+        return 7;
+      }
+      return 0;
+    };
+    const auto local = std::make_shared<LvalueTokenService>(
+      std::vector<ReportDefinition>(), environment.get_root(), execute,
+      TimeClient(&time), 1, Timer(std::in_place_type<TriggerTimer>),
+      Timer(std::in_place_type<TriggerTimer>));
+    auto service = ReportService(local);
+    auto backend = ReportScheduleBackend(local);
+    auto borrowed = ReportService(local.get());
+    auto job = make_definition();
+    auto report = ReportJob("job", {}, {}, job);
+    REQUIRE(service.execute(report, std::stop_token()) == 0);
+    auto stop = std::stop_source();
+    stop.request_stop();
+    REQUIRE(service.execute(report, stop.get_token()) == 7);
+    REQUIRE(backend.execute(report, stop.get_token()) == 7);
+    REQUIRE(borrowed.execute(report, stop.get_token()) == 7);
+    service.close();
+  }
+
   TEST_CASE("store_and_execute") {
     auto environment = ServiceLocatorTestEnvironment();
     auto executions = std::vector<ReportJob>();

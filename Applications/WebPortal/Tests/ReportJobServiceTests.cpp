@@ -53,6 +53,26 @@ namespace {
     }
   };
 
+  class LvalueValidator {
+    public:
+      void operator ()(std::vector<ReportJob>& jobs) & {
+        for(auto& job : jobs) {
+          job.m_arguments.push_back("validated");
+        }
+      }
+  };
+
+  class RvalueValidator {
+    public:
+      void operator ()(std::vector<ReportJob>&) &&;
+  };
+
+  template<typename S, typename V>
+  concept AcceptsValidator = requires(S& service) {
+    service.retry(DirectoryEntry(), std::vector<std::string>(),
+      std::declval<V>());
+  };
+
   ReportJob make_job() {
     auto definition =
       ReportDefinition("example", {}, {}, {}, {}, "report_program");
@@ -64,6 +84,32 @@ namespace {
 }
 
 TEST_SUITE("ReportJobService") {
+  TEST_CASE("lvalue_retry_validator") {
+    auto states = Queue<ReportJob>();
+    auto executed = Queue<ReportJob>();
+    auto backend = Backend([&] (const auto& job) {
+      states.push(job);
+    }, [&] (const auto& job, auto) {
+      executed.push(job);
+      return 0;
+    });
+    auto job = make_job();
+    job.m_id = "failed";
+    job.m_status = ReportJob::Status::FAILED;
+    backend.m_jobs.emplace(job.m_id, job);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    static_assert(AcceptsValidator<decltype(service), LvalueValidator>);
+    static_assert(!AcceptsValidator<decltype(service), RvalueValidator>);
+    service.retry(job.m_account, {job.m_id}, LvalueValidator());
+    REQUIRE(executed.pop().m_arguments.back() == "validated");
+    REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
+    REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
+    REQUIRE(states.pop().m_status == ReportJob::Status::COMPLETED);
+    service.close();
+  }
+
   TEST_CASE("routine_submission_and_shutdown") {
     auto states = Queue<ReportJob>();
     auto executions = Queue<ReportJob>();

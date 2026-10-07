@@ -84,7 +84,7 @@ namespace Nexus {
        * @param ids The job identifiers to retry.
        * @param validate Checks access to all failed jobs before any changes.
        */
-      template<std::invocable<std::vector<ReportJob>&> V>
+      template<typename V> requires std::invocable<V&, std::vector<ReportJob>&>
       void retry(const Beam::DirectoryEntry& account,
         const std::vector<std::string>& ids, V validate);
 
@@ -231,7 +231,7 @@ namespace Nexus {
 
   template<typename B, typename T> requires
     Beam::IsTimeClient<Beam::dereference_t<T>>
-  template<std::invocable<std::vector<ReportJob>&> V>
+  template<typename V> requires std::invocable<V&, std::vector<ReportJob>&>
   void ReportJobService<B, T>::retry(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids, V validate) {
     auto lock = std::lock_guard(m_mutex);
