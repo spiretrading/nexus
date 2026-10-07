@@ -168,16 +168,26 @@ TEST_SUITE("ReportService") {
     auto service = ReportService(&local);
     auto job =
       ReportJob("job-id", {}, {}, make_definition(), {}, {"5", "20261001"});
+    job.m_parameters["range"] =
+      parse<JsonValue>(R"({"start":"2026-10-01"})");
     service.store(job);
+    get<JsonObject>(job.m_parameters["range"])["start"] =
+      std::string("2026-10-02");
     auto stored = local.load_jobs();
     REQUIRE(stored.size() == 1);
     REQUIRE(stored[0].m_id == job.m_id);
     REQUIRE(stored[0].m_status == ReportJob::Status::QUEUED);
+    REQUIRE(get<JsonObject>(stored[0].m_parameters.at("range")).at("start") ==
+      "2026-10-01");
     job.m_status = ReportJob::Status::RUNNING;
     service.store(job);
+    get<JsonObject>(job.m_parameters["range"])["start"] =
+      std::string("2026-10-03");
     stored = local.load_jobs();
     REQUIRE(stored.size() == 1);
     REQUIRE(stored[0].m_status == ReportJob::Status::RUNNING);
+    REQUIRE(get<JsonObject>(stored[0].m_parameters.at("range")).at("start") ==
+      "2026-10-02");
     REQUIRE(service.execute(job, std::stop_token()) == 7);
     REQUIRE(executions.size() == 1);
     REQUIRE(executions[0].m_id == job.m_id);

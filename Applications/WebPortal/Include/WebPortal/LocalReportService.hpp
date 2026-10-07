@@ -253,12 +253,13 @@ namespace Nexus {
 
   template<IsReportExecutor E>
   void LocalReportService<E>::store(const ReportJob& job) {
+    auto snapshot = job;
     auto lock = std::lock_guard(m_mutex);
     auto existing = std::ranges::find(m_jobs, job.m_id, &ReportJob::m_id);
     if(existing == m_jobs.end()) {
-      m_jobs.push_back(job);
+      m_jobs.push_back(std::move(snapshot));
     } else {
-      *existing = job;
+      *existing = std::move(snapshot);
     }
   }
 
