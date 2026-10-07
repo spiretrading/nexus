@@ -84,6 +84,70 @@ namespace {
 }
 
 TEST_SUITE("ReportJobService") {
+  TEST_CASE("batch_job_loading") {
+    auto stores = 0;
+    auto backend = Backend([&] (const auto&) {
+      ++stores;
+    }, [] (const auto&, auto) { return 0; });
+    auto job = make_job();
+    job.m_status = ReportJob::Status::COMPLETED;
+    for(auto& id : {"first", "second", "third"}) {
+      job.m_id = id;
+      backend.m_jobs.emplace(job.m_id, job);
+    }
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto& pool = ThreadPool::get();
+    pool.wait_until_idle();
+    auto count = pool.get_queued_count();
+    service.cancel(job.m_account, {"first", "second", "first", "third"});
+    REQUIRE(pool.get_queued_count() - count == 1);
+    count = pool.get_queued_count();
+    service.cancel(job.m_account, {});
+    REQUIRE(pool.get_queued_count() == count);
+    auto other = job;
+    other.m_id = "other";
+    other.m_account = DirectoryEntry::make_account(2, "bob");
+    backend.m_jobs.emplace(other.m_id, other);
+    REQUIRE_THROWS_AS(service.share(job.m_account,
+      {"first", "other"}, {other.m_account}), ReportNotFoundException);
+    REQUIRE_THROWS_AS(service.share(job.m_account,
+      {"first", "missing"}, {other.m_account}), ReportNotFoundException);
+    REQUIRE(stores == 0);
+    REQUIRE(backend.load_job("first")->m_recipients.empty());
+    service.close();
+  }
+
+  TEST_CASE("cached_batch_job_loading") {
+    auto completed = Queue<std::string>();
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        completed.push(job.m_id);
+        throw std::runtime_error("Unable to store result.");
+      }
+    }, [] (const auto&, auto) { return 0; });
+    auto job = make_job();
+    job.m_id = "stored";
+    job.m_status = ReportJob::Status::COMPLETED;
+    backend.m_jobs.emplace(job.m_id, job);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto id = service.submit(make_job());
+    REQUIRE(completed.pop() == id);
+    auto& pool = ThreadPool::get();
+    pool.wait_until_idle();
+    auto count = pool.get_queued_count();
+    service.share(job.m_account, {id, id}, {});
+    REQUIRE(pool.get_queued_count() == count);
+    count = pool.get_queued_count();
+    service.share(job.m_account, {id, "stored", id}, {});
+    REQUIRE(pool.get_queued_count() - count == 1);
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    service.close();
+  }
+
   TEST_CASE("lvalue_retry_validator") {
     auto states = Queue<ReportJob>();
     auto executed = Queue<ReportJob>();

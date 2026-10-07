@@ -405,21 +405,31 @@ namespace Nexus {
   std::vector<ReportJob> ReportJobService<B, T>::load_jobs(
       const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
-    auto jobs = std::vector<ReportJob>();
+    auto loaded = std::vector<std::optional<ReportJob>>();
+    auto pending = std::vector<std::pair<std::size_t, const std::string*>>();
     auto seen = std::unordered_set<std::string>();
     for(auto& id : ids) {
       if(!seen.insert(id).second) {
         continue;
       }
-      auto job = [&] () -> std::optional<ReportJob> {
-        auto i = m_results.find(id);
-        if(i != m_results.end()) {
-          return i->second;
+      auto i = m_results.find(id);
+      if(i != m_results.end()) {
+        loaded.emplace_back(i->second);
+      } else {
+        pending.emplace_back(loaded.size(), &id);
+        loaded.emplace_back();
+      }
+    }
+    if(!pending.empty()) {
+      Beam::park([&] {
+        for(auto& [index, id] : pending) {
+          loaded[index] = m_backend->load_job(*id);
         }
-        return Beam::park([&] {
-          return m_backend->load_job(id);
-        });
-      }();
+      });
+    }
+    auto jobs = std::vector<ReportJob>();
+    jobs.reserve(loaded.size());
+    for(auto& job : loaded) {
       if(!job || job->m_account != account ||
           account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
         throw ReportNotFoundException();
