@@ -69,27 +69,27 @@ const EXTRA_STYLE = StyleSheet.create({
     boxSizing: 'border-box',
     cursor: 'pointer',
     outline: 'none',
-    ':active': {
+    ':enabled:active': {
       backgroundColor: '#4B23A0'
     },
-    ':focus-visible': {
+    ':enabled:focus-visible': {
       backgroundColor: '#4B23A0'
     },
-    ':hover': {
+    ':enabled:hover': {
       backgroundColor: '#4B23A0'
     }
   },
   buttonDark: {
     backgroundColor: '#E2E0FF',
     color: '#4B23A0',
-    ':focus-visible': {
+    ':enabled:focus-visible': {
       backgroundColor: '#B9B4EC',
       borderColor: '#FFFFFF'
     },
-    ':hover': {
+    ':enabled:hover': {
       backgroundColor: '#FFFFFF'
     },
-    ':active': {
+    ':enabled:active': {
       backgroundColor: '#FFFFFF'
     }
   },
@@ -97,15 +97,15 @@ const EXTRA_STYLE = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     borderColor: '#E3E3E3',
     color: '#5D5E6D',
-    ':hover': {
+    ':enabled:hover': {
       backgroundColor: '#E8E8E8',
       borderColor: '#C8C8C8'
     },
-    ':focus-visible': {
+    ':enabled:focus-visible': {
       backgroundColor: '#E8E8E8',
       borderColor: '#C8C8C8'
     },
-    ':active': {
+    ':enabled:active': {
       backgroundColor: '#E8E8E8',
       borderColor: '#C8C8C8'
     }
