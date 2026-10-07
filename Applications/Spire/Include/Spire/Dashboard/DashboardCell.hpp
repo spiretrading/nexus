@@ -1,10 +1,10 @@
 #ifndef SPIRE_DASHBOARDCELL_HPP
 #define SPIRE_DASHBOARDCELL_HPP
 #include <string>
+#include <variant>
 #include <boost/circular_buffer.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
@@ -18,8 +18,8 @@ namespace Spire {
     public:
 
       //! The type used to represent a dashboard value.
-      using Value = boost::variant<Nexus::Quantity, double, Nexus::Money,
-        std::string, Nexus::Ticker>;
+      using Value = std::variant<
+        Nexus::Quantity, double, Nexus::Money, std::string, Nexus::Ticker>;
 
       //! Signals an update to this cell's value.
       /*!

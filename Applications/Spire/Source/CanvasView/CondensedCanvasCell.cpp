@@ -101,7 +101,7 @@ bool CondensedCanvasCell::eventFilter(QObject* object, QEvent* event) {
         CanvasNodeEditor editor;
         auto editVariant = editor.GetEditor(Ref(*m_node), Ref(*m_parent),
           Ref(*m_userProfile), event);
-        apply_variant_lambda_visitor(editVariant,
+        std::visit(make_variant_lambda_visitor(
           [&] (QWidget* widget) {
             m_editor = widget;
             m_editor->setSizePolicy(m_valueWidget->sizePolicy());
@@ -116,7 +116,7 @@ bool CondensedCanvasCell::eventFilter(QObject* object, QEvent* event) {
             m_valueWidget->setText(QString::fromStdString(m_node->GetText()));
             command->redo();
             delete command;
-          });
+          }), editVariant);
       }
       return true;
     }

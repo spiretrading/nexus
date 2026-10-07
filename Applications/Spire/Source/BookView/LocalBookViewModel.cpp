@@ -50,7 +50,7 @@ namespace {
   template<typename T>
   optional<T> find_tag_value(const OrderFields& fields, int key) {
     if(auto tag = find_field(fields, key)) {
-      if(auto value = get<T>(&tag->get_value())) {
+      if(auto value = std::get_if<T>(&tag->get_value())) {
         return *value;
       }
     }

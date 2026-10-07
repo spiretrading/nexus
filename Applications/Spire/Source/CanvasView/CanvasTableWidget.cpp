@@ -166,7 +166,7 @@ void CanvasTableWidget::Edit(const CanvasNode& node, QEvent* event) {
     [&] (QUndoCommand* command) {
       m_commandSignal(command);
     });
-  apply_visitor(visitor, editAction);
+  std::visit(visitor, editAction);
 }
 
 connection CanvasTableWidget::ConnectBeginEditSignal(

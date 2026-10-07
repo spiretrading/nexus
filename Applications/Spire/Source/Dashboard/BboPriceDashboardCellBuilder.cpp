@@ -14,7 +14,7 @@ BboPriceDashboardCellBuilder::BboPriceDashboardCellBuilder(Side side)
 
 std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& ticker = boost::get<Ticker>(index);
+  auto& ticker = std::get<Ticker>(index);
   auto& marketDataClient =
     userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();

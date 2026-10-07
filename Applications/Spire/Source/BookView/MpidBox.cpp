@@ -28,12 +28,13 @@ namespace {
   }
 
   QString make_id(const BookEntry& entry) {
-    if(auto quote = get<BookQuote>(&entry)) {
+    if(auto quote = std::get_if<BookQuote>(&entry)) {
       return QString::fromStdString(quote->m_mpid);
-    } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
+    } else if(auto order = std::get_if<BookViewModel::UserOrder>(&entry)) {
       return QString::fromStdString('@' + order->m_destination);
     }
-    return QString::fromStdString('@' + get<OrderFields>(entry).m_destination);
+    return QString::fromStdString(
+      '@' + std::get<OrderFields>(entry).m_destination);
   }
 }
 
@@ -116,7 +117,7 @@ void MpidBox::update_row_state(int type_index) {
 }
 
 void MpidBox::update_venue_state(const BookEntry& entry) {
-  if(auto quote = get<BookQuote>(&entry)) {
+  if(auto quote = std::get_if<BookQuote>(&entry)) {
     if(quote->m_venue != m_current_venue) {
       if(m_current_venue) {
         unmatch(*this, VenueRow(m_current_venue));
@@ -133,7 +134,7 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
 }
 
 void MpidBox::update_status(const BookEntry& entry) {
-  auto order = get<BookViewModel::UserOrder>(&entry);
+  auto order = std::get_if<BookViewModel::UserOrder>(&entry);
   auto transition = [&] () -> std::uint64_t {
     if(!order) {
       return 0;
@@ -175,7 +176,7 @@ void MpidBox::update_status(const BookEntry& entry) {
 }
 
 void MpidBox::on_current(const BookEntry& entry) {
-  update_row_state(entry.which());
+  update_row_state(static_cast<int>(entry.index()));
   update_venue_state(entry);
   update_status(entry);
 }

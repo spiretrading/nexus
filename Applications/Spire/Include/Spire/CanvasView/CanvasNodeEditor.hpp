@@ -1,7 +1,7 @@
 #ifndef SPIRE_CANVASNODEEDITOR_HPP
 #define SPIRE_CANVASNODEEDITOR_HPP
+#include <variant>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/variant/variant.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -20,7 +20,7 @@ namespace Spire {
     public:
 
       //! A variant type for editing a CanvasNode.
-      typedef boost::variant<QWidget*, QUndoCommand*> EditVariant;
+      typedef std::variant<QWidget*, QUndoCommand*> EditVariant;
 
       //! Constructs a CanvasNodeEditor.
       CanvasNodeEditor() = default;
