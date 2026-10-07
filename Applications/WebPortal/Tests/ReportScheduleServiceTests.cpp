@@ -360,6 +360,99 @@ TEST_SUITE("ReportScheduleService") {
     worker.close();
   }
 
+  TEST_CASE("exhausted_recurrence") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_start_time = time_from_string("2026-10-07 09:00:00");
+    source.m_repeat_interval =
+      ReportSchedule::Interval(10000, ReportSchedule::Interval::Unit::YEAR);
+    auto started = Queue<ReportJob>();
+    auto gate = std::binary_semaphore(0);
+    auto backend = Backend([&] (const auto& job, auto stop) {
+      auto cancel = std::stop_callback(stop, [&] {
+        gate.release();
+      });
+      started.push(job);
+      gate.acquire();
+      return 0;
+    });
+    backend.m_definitions = {source.m_definition};
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(
+      Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
+    auto submission = ReportScheduleSubmission(ReportSubmission(
+      source.m_definition.m_id, source.m_parameters, {}), source.m_start_time,
+      source.m_repeat_interval, source.m_time_zone);
+    auto id = scheduler.submit(source.m_account, submission);
+    auto is_pending = false;
+    auto is_rescheduled = false;
+    auto is_removed = false;
+    SUBCASE("completion") {}
+    SUBCASE("edit") {
+      is_rescheduled = true;
+    }
+    SUBCASE("delete") {
+      is_removed = true;
+    }
+    SUBCASE("pending_completion") {
+      is_pending = true;
+    }
+    SUBCASE("pending_edit") {
+      is_pending = true;
+      is_rescheduled = true;
+    }
+    SUBCASE("pending_delete") {
+      is_pending = true;
+      is_removed = true;
+    }
+    backend.m_is_commit_failing = is_pending;
+    time.set(source.m_start_time);
+    timer.trigger();
+    if(is_pending) {
+      REQUIRE(backend.load_schedule(source.m_account, id).m_pending_job_id);
+      REQUIRE(backend.load_jobs().size() == 1);
+      REQUIRE(backend.load_jobs()[0].m_status == ReportJob::Status::STAGED);
+      backend.m_is_commit_failing = false;
+    }
+    if(is_rescheduled) {
+      submission.m_repeat_interval->m_count = 1;
+      submission.m_repeat_interval->m_unit =
+        ReportSchedule::Interval::Unit::DAY;
+      scheduler.update(source.m_account, id, submission);
+    } else if(is_removed) {
+      scheduler.remove(source.m_account, id);
+      REQUIRE(backend.load_schedules().empty());
+    } else {
+      timer.trigger();
+      auto saved = backend.load_schedule(source.m_account, id);
+      REQUIRE(!saved.m_pending_job_id);
+      REQUIRE(saved.m_job_id);
+    }
+    timer.trigger();
+    REQUIRE(backend.load_jobs().size() == 1);
+    auto job = started.pop();
+    REQUIRE(job.m_id == backend.load_jobs()[0].m_id);
+    gate.release();
+    REQUIRE(
+      wait_for_terminal(backend).m_status == ReportJob::Status::COMPLETED);
+    timer.trigger();
+    if(is_rescheduled) {
+      auto saved = backend.load_schedule(source.m_account, id);
+      REQUIRE(!saved.m_job_id);
+      REQUIRE(!saved.m_pending_job_id);
+      REQUIRE(saved.m_run_time == time_from_string("2026-10-08 09:00:00"));
+    } else {
+      REQUIRE(backend.load_schedules().empty());
+    }
+    REQUIRE(backend.load_jobs().size() == 1);
+    scheduler.close();
+    worker.close();
+  }
+
   TEST_CASE("validation_failure_and_timer_dispatch") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -406,6 +499,11 @@ TEST_SUITE("ReportScheduleService") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto source = make_schedule(client.get_account());
+    SUBCASE("recurring") {}
+    SUBCASE("exhausted") {
+      source.m_repeat_interval = ReportSchedule::Interval(
+        10000, ReportSchedule::Interval::Unit::YEAR);
+    }
     auto started = Queue<ReportJob>();
     auto backend = Backend([&] (const auto& job, auto) {
       started.push(job);
@@ -437,6 +535,8 @@ TEST_SUITE("ReportScheduleService") {
         Timer(std::in_place_type<TriggerTimer>));
       auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
         TimeClient(&time), &timer);
+      REQUIRE(
+        !backend.load_schedule(source.m_account, source.m_id).m_pending_job_id);
       REQUIRE(started.pop().m_id == id);
       REQUIRE(wait_for_terminal(backend).m_status ==
       ReportJob::Status::COMPLETED);
@@ -446,9 +546,14 @@ TEST_SUITE("ReportScheduleService") {
       worker.close();
       REQUIRE(!started.try_pop());
       REQUIRE(backend.load_jobs().size() == 1);
-      auto saved = backend.load_schedule(source.m_account, source.m_id);
-      REQUIRE(!saved.m_pending_job_id);
-      REQUIRE(saved.m_run_time == time_from_string("2026-10-07 09:00:00"));
+      if(source.m_repeat_interval->m_unit ==
+          ReportSchedule::Interval::Unit::YEAR) {
+        REQUIRE(backend.load_schedules().empty());
+      } else {
+        auto saved = backend.load_schedule(source.m_account, source.m_id);
+        REQUIRE(!saved.m_pending_job_id);
+        REQUIRE(saved.m_run_time == time_from_string("2026-10-07 09:00:00"));
+      }
     }
   }
   TEST_CASE("retry_startup_catch_up") {

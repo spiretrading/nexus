@@ -1,6 +1,7 @@
 #ifndef NEXUS_REPORT_SCHEDULE_HPP
 #define NEXUS_REPORT_SCHEDULE_HPP
 #include <cstdint>
+#include <stdexcept>
 #include "WebPortal/ReportJob.hpp"
 
 namespace Nexus {
@@ -71,11 +72,21 @@ namespace Nexus {
     std::optional<std::string> m_job_id;
   };
 
+  /** Indicates that a recurrence has no remaining supported dates. */
+  class ReportScheduleExhaustedException : public std::invalid_argument {
+    public:
+      ReportScheduleExhaustedException();
+  };
+
   /** Converts a calendar date/time between IANA timezones. */
   boost::posix_time::ptime convert_report_time(boost::posix_time::ptime value,
     const std::string& source, const std::string& destination);
 
-  /** Finds the next recurring run after now, or a one-time schedule's start. */
+  /**
+   * Finds the next recurring run after now, or a one-time schedule's start.
+   * @throws ReportScheduleExhaustedException If no supported occurrence
+   *         remains.
+   */
   boost::posix_time::ptime next_report_run(
     const ReportSchedule& schedule, boost::posix_time::ptime now);
 }

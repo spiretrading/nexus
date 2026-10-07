@@ -276,7 +276,11 @@ namespace Nexus {
       }
       if(schedule.m_repeat_interval) {
         auto after = std::max(m_recovery_time, due);
-        schedule.m_run_time = next_report_run(schedule, after);
+        try {
+          schedule.m_run_time = next_report_run(schedule, after);
+        } catch(const ReportScheduleExhaustedException&) {
+          schedule.m_job_id = id;
+        }
       } else {
         schedule.m_job_id = id;
       }

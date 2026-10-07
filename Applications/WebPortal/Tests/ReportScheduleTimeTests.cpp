@@ -1,3 +1,4 @@
+#include <limits>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <doctest/doctest.h>
@@ -94,6 +95,19 @@ TEST_SUITE("ReportScheduleTime") {
     schedule.m_time_zone = "UTC";
     schedule.m_start_time = time_from_string("9999-12-31 12:00:00");
     REQUIRE_THROWS_AS(next_report_run(schedule,
-      time_from_string("9999-12-31 13:00:00")), std::invalid_argument);
+      time_from_string("9999-12-31 13:00:00")),
+      ReportScheduleExhaustedException);
+    schedule.m_start_time = time_from_string("2026-10-07 10:00:00");
+    for(auto unit : {ReportSchedule::Interval::Unit::DAY,
+        ReportSchedule::Interval::Unit::WEEK,
+        ReportSchedule::Interval::Unit::MONTH,
+        ReportSchedule::Interval::Unit::YEAR}) {
+      schedule.m_repeat_interval = ReportSchedule::Interval(
+        std::numeric_limits<std::uint32_t>::max(), unit);
+      REQUIRE(next_report_run(schedule,
+        time_from_string("2026-10-06 00:00:00")) == schedule.m_start_time);
+      REQUIRE_THROWS_AS(next_report_run(schedule, schedule.m_start_time),
+        ReportScheduleExhaustedException);
+    }
   }
 }

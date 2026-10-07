@@ -61,7 +61,7 @@ namespace {
       }
       auto available = (date(boost::date_time::max_date_time) - day).days();
       if(amount > static_cast<std::uint64_t>(available)) {
-        throw std::invalid_argument("Schedule exceeds the supported dates.");
+        throw ReportScheduleExhaustedException();
       }
       return ptime(day + days(static_cast<long>(amount)), start.time_of_day());
     }
@@ -73,7 +73,7 @@ namespace {
     auto maximum = std::uint64_t(date(boost::date_time::max_date_time).year()) *
       MONTHS_PER_YEAR + MONTHS_PER_YEAR - 1;
     if(amount > maximum - month) {
-      throw std::invalid_argument("Schedule exceeds the supported dates.");
+      throw ReportScheduleExhaustedException();
     }
     month += amount;
     auto year = static_cast<unsigned short>(month / MONTHS_PER_YEAR);
@@ -144,3 +144,6 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
     ++steps;
   }
 }
+
+ReportScheduleExhaustedException::ReportScheduleExhaustedException()
+  : std::invalid_argument("Schedule exceeds the supported dates.") {}
