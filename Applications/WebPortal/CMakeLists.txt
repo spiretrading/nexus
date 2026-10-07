@@ -35,12 +35,12 @@ if(WIN32)
   target_link_libraries(WebPortalLibrary PUBLIC Crypt32.lib ntdll.lib)
 endif()
 if(UNIX)
-  find_library(BOOST_PROCESS_LIBRARY NAMES boost_process
-    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH REQUIRED)
-  find_library(BOOST_FILESYSTEM_LIBRARY NAMES boost_filesystem
-    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH REQUIRED)
+  find_library(BOOST_PROCESS_STATIC_LIBRARY NAMES libboost_process.a
+    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH NO_CACHE REQUIRED)
+  find_library(BOOST_FILESYSTEM_STATIC_LIBRARY NAMES libboost_filesystem.a
+    PATHS "${BOOST_OPTIMIZED_PATH}" NO_DEFAULT_PATH NO_CACHE REQUIRED)
   target_link_libraries(WebPortalLibrary PUBLIC
-    ${BOOST_PROCESS_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
+    ${BOOST_PROCESS_STATIC_LIBRARY} ${BOOST_FILESYSTEM_STATIC_LIBRARY})
   add_executable(ReportProcessFixture EXCLUDE_FROM_ALL
     Tests/FunctionalTests/ReportProcessFixture.cpp)
   beam_configure_target(ReportProcessFixture DEPENDENCIES
