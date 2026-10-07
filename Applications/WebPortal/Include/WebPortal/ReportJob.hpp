@@ -108,10 +108,13 @@ namespace Beam {
       shuttle.shuttle("account", value.m_account);
       shuttle.shuttle("recipients", value.m_recipients);
       shuttle.shuttle("definition", value.m_definition);
-      auto parameters = JsonValue(value.m_parameters);
-      shuttle.shuttle("parameters", parameters);
       if constexpr(IsReceiver<S>) {
-        value.m_parameters = get<JsonObject>(parameters);
+        auto parameters = JsonValue();
+        shuttle.shuttle("parameters", parameters);
+        value.m_parameters = std::move(get<JsonObject>(parameters));
+      } else {
+        auto parameters = JsonValue(value.m_parameters);
+        shuttle.shuttle("parameters", parameters);
       }
       shuttle.shuttle("arguments", value.m_arguments);
       shuttle.shuttle("created", value.m_created);
