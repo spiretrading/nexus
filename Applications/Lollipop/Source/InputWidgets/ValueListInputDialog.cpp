@@ -136,7 +136,7 @@ void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
       }
       return QString();
     }();
-    auto initialValue = [&] () -> variant<std::string, Ticker> {
+    auto initialValue = [&] () -> std::variant<std::string, Ticker> {
       if(text.isEmpty()) {
         return ticker;
       }

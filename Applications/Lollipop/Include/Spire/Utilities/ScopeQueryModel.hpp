@@ -2,9 +2,9 @@
 #define SPIRE_SCOPE_QUERY_MODEL_HPP
 #include <string>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/variant/variant.hpp>
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
@@ -55,7 +55,7 @@ namespace Spire {
         int section, Qt::Orientation orientation, int role) const override;
 
     private:
-      using Item = boost::variant<
+      using Item = std::variant<
         Nexus::CountryCode, Nexus::Venue, Nexus::TickerInfo, Nexus::Scope>;
       UserProfile* m_userProfile;
       std::vector<Item> m_items;

@@ -61,25 +61,25 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
   auto column = static_cast<Column>(index.column());
   if(role == Qt::DisplayRole) {
     if(column == Column::SCOPE) {
-      if(auto country = get<CountryCode>(&item)) {
+      if(auto country = std::get_if<CountryCode>(&item)) {
         return QString::fromStdString(
           COUNTRIES.from(*country).m_three_letter_code.get_data());
-      } else if(auto venue = get<Venue>(&item)) {
+      } else if(auto venue = std::get_if<Venue>(&item)) {
         return QString::fromStdString(VENUES.from(*venue).m_display_name);
-      } else if(auto info = get<TickerInfo>(&item)) {
+      } else if(auto info = std::get_if<TickerInfo>(&item)) {
         return displayText(info->m_ticker);
-      } else if(auto scope = get<Scope>(&item)) {
+      } else if(auto scope = std::get_if<Scope>(&item)) {
         return displayText(*scope);
       }
       return QVariant();
     } else if(column == Column::NAME) {
-      if(auto country = get<CountryCode>(&item)) {
+      if(auto country = std::get_if<CountryCode>(&item)) {
         return QString::fromStdString(COUNTRIES.from(*country).m_name);
-      } else if(auto venue = get<Venue>(&item)) {
+      } else if(auto venue = std::get_if<Venue>(&item)) {
         return QString::fromStdString(VENUES.from(*venue).m_display_name);
-      } else if(auto info = get<TickerInfo>(&item)) {
+      } else if(auto info = std::get_if<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_name);
-      } else if(auto scope = get<Scope>(&item)) {
+      } else if(auto scope = std::get_if<Scope>(&item)) {
         if(scope->is_global()) {
           return tr("Global");
         }
@@ -87,13 +87,13 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       }
       return QVariant();
     } else if(column == Column::DESCRIPTION) {
-      if(auto country = get<CountryCode>(&item)) {
+      if(auto country = std::get_if<CountryCode>(&item)) {
         return QString();
-      } else if(auto venue = get<Venue>(&item)) {
+      } else if(auto venue = std::get_if<Venue>(&item)) {
         return QString::fromStdString(VENUES.from(*venue).m_description);
-      } else if(auto info = get<TickerInfo>(&item)) {
+      } else if(auto info = std::get_if<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_sector);
-      } else if(auto scope = get<Scope>(&item)) {
+      } else if(auto scope = std::get_if<Scope>(&item)) {
         if(scope->is_global()) {
           return tr("Applies to everything.");
         }
@@ -124,17 +124,17 @@ void ScopeQueryModel::Add(std::vector<Item> items) {
   while(i != items.end()) {
     auto searchIterator =
       std::find_if(m_items.begin(), m_items.end(), [&] (const auto& item) {
-        if(item.which() != i->which()) {
+        if(item.index() != i->index()) {
           return false;
         }
-        if(auto country = get<CountryCode>(&item)) {
-          return *country == get<CountryCode>(*i);
-        } else if(auto venue = get<Venue>(&item)) {
-          return *venue == get<Venue>(*i);
-        } else if(auto info = get<TickerInfo>(&item)) {
-          return info->m_ticker == get<TickerInfo>(*i).m_ticker;
-        } else if(auto scope = get<Scope>(&item)) {
-          return *scope == get<Scope>(*i);
+        if(auto country = std::get_if<CountryCode>(&item)) {
+          return *country == std::get<CountryCode>(*i);
+        } else if(auto venue = std::get_if<Venue>(&item)) {
+          return *venue == std::get<Venue>(*i);
+        } else if(auto info = std::get_if<TickerInfo>(&item)) {
+          return info->m_ticker == std::get<TickerInfo>(*i).m_ticker;
+        } else if(auto scope = std::get_if<Scope>(&item)) {
+          return *scope == std::get<Scope>(*i);
         }
         return false;
       });
