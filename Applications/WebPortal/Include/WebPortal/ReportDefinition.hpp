@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_DEFINITION_HPP
 #include <istream>
 #include <optional>
+#include <span>
 #include <string>
 #include <variant>
 #include <vector>
@@ -103,7 +104,7 @@ namespace Nexus {
    * @return The permitted definitions in their original order.
    */
   std::vector<ReportDefinition> filter_report_definitions(
-    const std::vector<ReportDefinition>& definitions,
+    std::span<const ReportDefinition> definitions,
     const Beam::DirectoryEntry& account, Beam::ServiceLocatorClient& client);
 }
 

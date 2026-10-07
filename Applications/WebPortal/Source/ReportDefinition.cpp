@@ -168,7 +168,7 @@ ReportDefinition Nexus::load_report_definition(std::istream& source) {
 }
 
 std::vector<ReportDefinition> Nexus::filter_report_definitions(
-    const std::vector<ReportDefinition>& definitions,
+    std::span<const ReportDefinition> definitions,
     const DirectoryEntry& account, ServiceLocatorClient& client) {
   auto current_account = client.load_directory_entry(account.m_id);
   auto names = std::unordered_set<std::string>({current_account.m_name, "*"});

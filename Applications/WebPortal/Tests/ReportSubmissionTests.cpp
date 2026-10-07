@@ -16,6 +16,20 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  class CountingServiceLocatorClient : public ServiceLocatorClient {
+    public:
+      int m_parent_loads;
+
+      explicit CountingServiceLocatorClient(ServiceLocatorClient client)
+        : ServiceLocatorClient(std::move(client)),
+          m_parent_loads(0) {}
+
+      std::vector<DirectoryEntry> load_parents(const DirectoryEntry& entry) {
+        ++m_parent_loads;
+        return ServiceLocatorClient::load_parents(entry);
+      }
+  };
+
   ReportDefinition make_definition() {
     return parse_report_definition(YAML::Load(R"(
 id: example
@@ -80,6 +94,45 @@ TEST_SUITE("ReportSubmission") {
       REQUIRE_THROWS_AS(parse_report_interval(parse<JsonValue>(invalid)),
         std::invalid_argument);
     }
+  }
+
+  TEST_CASE("submission_authorizes_only_requested_definition") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& root = environment.get_root();
+    auto directory = DirectoryEntry::make_directory(0);
+    auto group = root.make_directory("Reporting", directory);
+    auto nested = root.make_directory("Nested", group);
+    auto account = root.make_account("alice", "", nested);
+    auto counting = CountingServiceLocatorClient(root);
+    auto client = ServiceLocatorClient(&counting);
+    auto definition = ReportDefinition("selected", "Selected", {}, {"*"},
+      {}, "program");
+    auto unrelated = ReportDefinition("other", "Other", {}, {"Unrelated"},
+      {}, "other_program");
+    auto submission = ReportSubmission("selected", {}, {});
+    auto forged = account;
+    forged.m_name = "Unrelated";
+    for(auto& access : {"*", "alice"}) {
+      definition.m_access = {access};
+      auto job = prepare_report_job(
+        {unrelated, definition}, forged, submission, client);
+      REQUIRE(job.m_definition.m_id == definition.m_id);
+      REQUIRE(job.m_account.m_name == account.m_name);
+      REQUIRE(counting.m_parent_loads == 0);
+    }
+    REQUIRE_THROWS_AS(prepare_report_job({unrelated, definition}, account,
+      ReportSubmission("missing", {}, {}), client), ReportNotFoundException);
+    REQUIRE(counting.m_parent_loads == 0);
+    definition.m_access = {"Reporting"};
+    REQUIRE(prepare_report_job({unrelated, definition}, account,
+      submission, client).m_definition.m_id == definition.m_id);
+    REQUIRE(counting.m_parent_loads > 0);
+    root.associate(account, directory);
+    root.detach(account, nested);
+    REQUIRE_THROWS_AS(prepare_report_job({unrelated, definition}, account,
+      submission, client), ReportNotFoundException);
+    REQUIRE_THROWS_AS(prepare_report_job({unrelated, definition}, forged,
+      ReportSubmission("other", {}, {}), client), ReportNotFoundException);
   }
 
   TEST_CASE("defaults_and_arguments") {

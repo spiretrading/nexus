@@ -367,20 +367,25 @@ ReportJob Nexus::prepare_report_job(
     const std::vector<ReportDefinition>& definitions,
     const DirectoryEntry& account, const ReportSubmission& submission,
     ServiceLocatorClient& client) {
-  auto permitted = filter_report_definitions(definitions, account, client);
-  auto definition = std::ranges::find(
-    permitted, submission.m_report_type, &ReportDefinition::m_id);
-  if(definition == permitted.end()) {
+  auto i = std::ranges::find(
+    definitions, submission.m_report_type, &ReportDefinition::m_id);
+  if(i == definitions.end()) {
     throw ReportNotFoundException();
   }
+  auto permitted =
+    filter_report_definitions(std::span(&*i, 1), account, client);
+  if(permitted.empty()) {
+    throw ReportNotFoundException();
+  }
+  auto& definition = permitted.front();
   auto owner = client.load_directory_entry(account.m_id);
   auto parameters = prepare_report_parameters(
-    *definition, submission.m_parameters, owner, client);
-  auto arguments = make_report_arguments(*definition, parameters);
+    definition, submission.m_parameters, owner, client);
+  auto arguments = make_report_arguments(definition, parameters);
   auto recipients =
     prepare_report_recipients(submission.m_recipients, owner, client);
-  return ReportJob({}, std::move(owner), std::move(recipients), *definition,
-    std::move(parameters), std::move(arguments));
+  return ReportJob({}, std::move(owner), std::move(recipients),
+    std::move(definition), std::move(parameters), std::move(arguments));
 }
 
 std::vector<DirectoryEntry> Nexus::prepare_report_recipients(
