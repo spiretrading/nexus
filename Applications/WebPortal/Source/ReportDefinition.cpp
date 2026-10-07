@@ -1,5 +1,6 @@
 #include "WebPortal/ReportDefinition.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <stdexcept>
@@ -114,10 +115,10 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
     }
     parameter.m_label = parse_name(entry, "label");
     parameter.m_type = parse_name(entry, "type");
-    auto types = std::vector<std::string_view>({"DirectoryEntry",
-      "DirectoryEntryList", "Scope", "DateRange", "Date", "DateTime", "Time",
-      "Decimal", "Integer", "Money", "Currency"});
-    if(!std::ranges::contains(types, parameter.m_type)) {
+    static constexpr auto TYPES = std::to_array<std::string_view>({
+      "DirectoryEntry", "DirectoryEntryList", "Scope", "DateRange", "Date",
+      "DateTime", "Time", "Decimal", "Integer", "Money", "Currency"});
+    if(!std::ranges::contains(TYPES, parameter.m_type)) {
       throw std::runtime_error(
         "Unsupported report parameter type: " + parameter.m_type);
     }
