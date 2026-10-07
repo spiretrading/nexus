@@ -885,7 +885,7 @@ namespace Spire {
   boost::signals2::connection ListModel<T>::connect_operation_signal(
       const AnyListModel::OperationSignal::slot_type& slot) const {
     return connect_operation_signal([=] (const Operation& operation) {
-      slot(static_cast<const AnyListModel::Operation&>(operation));
+      std::visit(slot, operation);
     });
   }
 
