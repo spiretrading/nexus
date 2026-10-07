@@ -8,6 +8,13 @@
 #include "WebPortal/ReportScheduleBackend.hpp"
 
 namespace Nexus {
+namespace Details {
+  inline bool is_terminal(ReportJob::Status status) {
+    return status != ReportJob::Status::QUEUED &&
+      status != ReportJob::Status::RUNNING &&
+      status != ReportJob::Status::STAGED;
+  }
+}
 
   /**
    * Dispatches scheduled report occurrences and coordinates schedule changes.
@@ -228,9 +235,7 @@ namespace Nexus {
       boost::posix_time::ptime now, bool is_recovery) {
     if(schedule.m_job_id) {
       auto job = m_backend.load_job(*schedule.m_job_id);
-      if(!job || (job->m_status != ReportJob::Status::QUEUED &&
-          job->m_status != ReportJob::Status::RUNNING &&
-          job->m_status != ReportJob::Status::STAGED)) {
+      if(!job || Details::is_terminal(job->m_status)) {
         m_backend.remove_schedule(schedule.m_id);
       }
       return;
@@ -289,9 +294,7 @@ namespace Nexus {
       m_backend.store(schedule);
       m_ready.push_back(job->m_id);
       if(schedule.m_job_id) {
-        if(job->m_status != ReportJob::Status::QUEUED &&
-            job->m_status != ReportJob::Status::RUNNING &&
-            job->m_status != ReportJob::Status::STAGED) {
+        if(Details::is_terminal(job->m_status)) {
           m_backend.remove_schedule(schedule.m_id);
         }
         return;

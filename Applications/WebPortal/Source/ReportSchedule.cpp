@@ -8,6 +8,11 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  const auto EPOCH = ptime(date(1970, 1, 1));
+  constexpr auto DAYS_PER_WEEK = weeks(1).days();
+  constexpr auto MONTHS_PER_YEAR =
+    std::chrono::months(std::chrono::years(1)).count();
+
   const std::chrono::time_zone& find_zone(const std::string& name) {
     if(name.empty()) {
       throw std::invalid_argument("Missing schedule timezone.");
@@ -24,12 +29,10 @@ namespace {
     if(value.is_special()) {
       throw std::invalid_argument("Invalid schedule date and time.");
     }
-    static const auto EPOCH = ptime(date(1970, 1, 1));
     return std::chrono::microseconds((value - EPOCH).total_microseconds());
   }
 
   ptime from_epoch(std::chrono::microseconds value) {
-    static const auto EPOCH = ptime(date(1970, 1, 1));
     return EPOCH + microseconds(value.count());
   }
 
@@ -56,7 +59,6 @@ namespace {
     if(interval.m_unit == ReportSchedule::Interval::Unit::DAY ||
         interval.m_unit == ReportSchedule::Interval::Unit::WEEK) {
       if(interval.m_unit == ReportSchedule::Interval::Unit::WEEK) {
-        constexpr auto DAYS_PER_WEEK = 7;
         amount *= DAYS_PER_WEEK;
       }
       auto available = (date(boost::date_time::max_date_time) - day).days();
@@ -65,7 +67,6 @@ namespace {
       }
       return ptime(day + days(static_cast<long>(amount)), start.time_of_day());
     }
-    constexpr auto MONTHS_PER_YEAR = 12;
     if(interval.m_unit == ReportSchedule::Interval::Unit::YEAR) {
       amount *= MONTHS_PER_YEAR;
     }
@@ -121,14 +122,12 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
       interval.m_unit == ReportSchedule::Interval::Unit::WEEK) {
     elapsed = (local.date() - schedule.m_start_time.date()).days();
     if(interval.m_unit == ReportSchedule::Interval::Unit::WEEK) {
-      constexpr auto DAYS_PER_WEEK = 7;
       elapsed /= DAYS_PER_WEEK;
     }
   } else {
     elapsed =
       int(local.date().year()) - int(schedule.m_start_time.date().year());
     if(interval.m_unit == ReportSchedule::Interval::Unit::MONTH) {
-      constexpr auto MONTHS_PER_YEAR = 12;
       elapsed = elapsed * MONTHS_PER_YEAR + int(local.date().month()) -
         int(schedule.m_start_time.date().month());
     }
