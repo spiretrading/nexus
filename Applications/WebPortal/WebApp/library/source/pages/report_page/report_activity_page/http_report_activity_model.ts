@@ -23,7 +23,7 @@ export class HttpReportActivityModel extends ReportActivityModel {
       activities: (response.activities ?? []).map((entry: any) =>
         ({id: entry.id, type: entry.type, parameters: [...entry.parameters],
           status: entry.status,
-          dateModified: Beam.Date.fromJson(entry.date_modified)}))};
+          dateModified: Beam.DateTime.fromJson(entry.date_modified)}))};
   }
 
   public async cancel(ids: readonly string[]): Promise<void> {

@@ -61,10 +61,11 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
     const {query, dateRange} = submission.filters;
     const matches = Array.from(this.entries.values()).filter(report => {
       return (!dateRange.start ||
-          report.dateCreated.compare(dateRange.start) >= 0) &&
-        (!dateRange.end || report.dateCreated.compare(dateRange.end) <= 0) &&
+          report.dateCreated.date.compare(dateRange.start) >= 0) &&
+        (!dateRange.end ||
+          report.dateCreated.date.compare(dateRange.end) <= 0) &&
         [report.type, ...report.parameters,
-          formatReportDate(report.dateCreated)].
+          formatReportDate(report.dateCreated.date)].
           some(text => text.toLowerCase().includes(query.toLowerCase()));
     });
     if(submission.sort.order !== SortableTableHeaderCell.SortOrder.NONE) {
@@ -140,6 +141,6 @@ export namespace LocalGeneratedReportsModel {
 
 function copy(report: ReportTable.Report): ReportTable.Report {
   return {...report, parameters: [...report.parameters],
-    dateCreated: new Beam.Date(report.dateCreated.year,
-      report.dateCreated.month, report.dateCreated.day)};
+    dateCreated: new Beam.DateTime(
+      report.dateCreated.date, report.dateCreated.timeOfDay)};
 }

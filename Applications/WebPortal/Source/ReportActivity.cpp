@@ -15,14 +15,14 @@ namespace {
     return ReportActivity::Status::GENERATING;
   }
 
-  date get_date_modified(const ReportJob& job) {
+  ptime get_modified(const ReportJob& job) {
     if(job.m_modified && !job.m_modified->is_special()) {
-      return job.m_modified->date();
+      return *job.m_modified;
     }
     if(!job.m_completed.is_special()) {
-      return job.m_completed.date();
+      return job.m_completed;
     }
-    return job.m_created.date();
+    return job.m_created;
   }
 }
 
@@ -37,7 +37,7 @@ ReportActivities Nexus::query_report_activities(
   }
   struct Entry {
     const ReportJob* m_job;
-    date m_date_modified;
+    ptime m_modified;
     std::vector<std::string> m_parameters;
   };
   auto entries = std::vector<Entry>();
@@ -49,7 +49,7 @@ ReportActivities Nexus::query_report_activities(
           job.m_status != ReportJob::Status::FAILED)) {
       continue;
     }
-    entries.emplace_back(&job, get_date_modified(job));
+    entries.emplace_back(&job, get_modified(job));
   }
   auto result = ReportActivities();
   result.m_total_count = entries.size();
@@ -75,9 +75,9 @@ ReportActivities Nexus::query_report_activities(
         comparison = left.m_parameters <=> right.m_parameters;
       } else if(query.m_column == ReportActivityQuery::Column::STATUS) {
         comparison = get_status(first) <=> get_status(second);
-      } else if(left.m_date_modified < right.m_date_modified) {
+      } else if(left.m_modified < right.m_modified) {
         comparison = std::strong_ordering::less;
-      } else if(left.m_date_modified > right.m_date_modified) {
+      } else if(left.m_modified > right.m_modified) {
         comparison = std::strong_ordering::greater;
       }
       if(comparison != 0) {
@@ -102,7 +102,7 @@ ReportActivities Nexus::query_report_activities(
       parameters = format_report_parameters(job);
     }
     result.m_activities.emplace_back(job.m_id, job.m_definition.m_name,
-      std::move(parameters), get_status(job), entries[i].m_date_modified);
+      std::move(parameters), get_status(job), entries[i].m_modified);
   }
   return result;
 }

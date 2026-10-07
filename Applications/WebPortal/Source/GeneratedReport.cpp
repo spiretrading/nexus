@@ -57,7 +57,7 @@ GeneratedReports Nexus::query_generated_reports(
     }
     auto report = GeneratedReport(
       job.m_id, job.m_definition.m_name, format_report_parameters(job),
-      Uri("/reports/" + uri_encode(job.m_id)), day);
+      Uri("/reports/" + uri_encode(job.m_id)), generated);
     auto matches = text.empty() || icontains(report.m_type, text) ||
       icontains(format_report_date(day), text) ||
       std::ranges::any_of(report.m_parameters, [&] (const auto& parameter) {
@@ -96,7 +96,7 @@ GeneratedReports Nexus::query_generated_reports(
     } else if(query.m_column == GeneratedReportQuery::Column::PARAMETERS) {
       return compare(first.m_parameters, second.m_parameters);
     }
-    return compare(first.m_date_created, second.m_date_created);
+    return compare(left.second, right.second);
   });
   result.m_reports.reserve(end - start);
   for(auto i = start; i != end; ++i) {

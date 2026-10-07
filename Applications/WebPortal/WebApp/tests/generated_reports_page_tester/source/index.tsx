@@ -119,8 +119,8 @@ function makeReports(count: number): ReportTable.Report[] {
       type: ['Profit and Loss', 'Trading Volume'][index % 2],
       parameters: [`Alpha Group ${index + 1}`, 'Canada', 'Month to Date'],
       url: `/reports/${index + 1}`,
-      dateCreated: new Beam.Date(date.getFullYear(), date.getMonth() + 1,
-        date.getDate())};
+      dateCreated: new Beam.DateTime(new Beam.Date(
+        date.getFullYear(), date.getMonth() + 1, date.getDate()))};
   });
 }
 

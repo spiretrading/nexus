@@ -118,8 +118,8 @@ export namespace ActivityTable {
     /** The report's activity status. */
     readonly status: ReportActivityStatusTag.Status;
 
-    /** The calendar date on which the activity was last updated. */
-    readonly dateModified: Beam.Date;
+    /** The UTC timestamp when the activity was last updated. */
+    readonly dateModified: Beam.DateTime;
   }
 }
 

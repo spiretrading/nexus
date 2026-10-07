@@ -42,7 +42,7 @@ export class ReportTableExample extends React.Component<Properties> {
         type: types[index % types.length],
         parameters: ['Canada', groups[index % groups.length], 'Month to Date'],
         url: `/reports/${index + 1}`,
-        dateCreated: new Beam.Date(2026, 9, 30 - index % 30)
+        dateCreated: new Beam.DateTime(new Beam.Date(2026, 9, 30 - index % 30))
       };
     });
     if(this.props.sortOrder !== SortableTableHeaderCell.SortOrder.NONE) {

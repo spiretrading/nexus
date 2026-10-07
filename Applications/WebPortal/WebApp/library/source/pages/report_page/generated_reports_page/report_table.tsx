@@ -117,8 +117,8 @@ export namespace ReportTable {
     /** The link to the page represented by the report. */
     readonly url: string;
 
-    /** The calendar date on which the report was generated. */
-    readonly dateCreated: Beam.Date;
+    /** The UTC timestamp when the report was generated. */
+    readonly dateCreated: Beam.DateTime;
   }
 }
 

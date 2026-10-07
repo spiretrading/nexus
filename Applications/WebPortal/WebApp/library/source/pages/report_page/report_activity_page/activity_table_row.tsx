@@ -20,8 +20,8 @@ interface Properties extends Omit<
   /** The report's activity status. */
   status: ReportActivityStatusTag.Status;
 
-  /** The calendar date on which the activity was last updated. */
-  dateModified: Beam.Date;
+  /** The UTC timestamp when the activity was last updated. */
+  dateModified: Beam.DateTime;
 
   /** Whether the report is selected. */
   selected: boolean;
@@ -46,7 +46,7 @@ export class ActivityTableRow extends React.Component<Properties> {
       <TypeCell type={type}/>
       <ParametersCell parameters={parameters}/>
       <StatusCell status={status}/>
-      <DateCell date={dateModified}/>
+      <DateCell date={dateModified.date}/>
     </tr>;
   }
 

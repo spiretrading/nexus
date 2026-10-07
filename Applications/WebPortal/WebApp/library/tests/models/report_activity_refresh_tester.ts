@@ -50,7 +50,7 @@ function ready(ids: readonly string[]): ReportActivityModel.Response {
     isEmpty: ids.length === 0, totalCount: ids.length,
     activities: ids.map(id => ({id, type: 'Example', parameters: [] as string[],
       status: ReportActivityStatusTag.Status.GENERATING,
-      dateModified: new Beam.Date(2026, 10, 5)}))};
+      dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 5))}))};
 }
 
 function synchronousState(component: any): void {

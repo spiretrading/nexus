@@ -73,7 +73,7 @@ describe('LocalCreateReportModel', () => {
   it('inserts_created_entries', async () => {
     const activity = {type: 'Report', parameters: ['*'],
       status: ReportActivityStatusTag.Status.GENERATING,
-      dateModified: new Beam.Date(2026, 10, 2)};
+      dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 2))};
     const activities = new LocalReportActivityModel([{...activity, id: '1'}]);
     assert.throws(() => activities.add(activity));
     await activities.load();

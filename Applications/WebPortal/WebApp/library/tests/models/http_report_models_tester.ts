@@ -164,7 +164,7 @@ describe('HTTP report models', () => {
       if(call.url.endsWith('query_report_activities')) {
         return {status: 200, body: {status: 1, is_empty: false, total_count: 51,
           activities: [{id: 'job', type: 'Example', parameters: ['USD'],
-            status: 0, date_modified: '20261005'}]}};
+            status: 0, date_modified: '20261005T123456.125'}]}};
       }
       return {status: 200};
     };
@@ -175,7 +175,8 @@ describe('HTTP report models', () => {
       {sort: {column: 3, order: 2}, page_index: 1});
     assert.equal(response.status, ReportActivityModel.ResponseStatus.READY);
     assert.equal(response.totalCount, 51);
-    assert.equal(response.activities[0].dateModified.toJson(), '20261005');
+    assert.equal(
+      response.activities[0].dateModified.toJson(), '20261005T123456.125');
     assert.equal(response.activities[0].status,
       ReportActivityStatusTag.Status.GENERATING);
     await model.cancel(['job']);
@@ -193,7 +194,7 @@ describe('HTTP report models', () => {
         return {status: 200, body: {status: 1, is_empty: false,
           filtered_count: 1, reports: [{id: 'job', type: 'Example',
             parameters: ['USD'], url: '/reports/job',
-            date_created: '20261005'}]}};
+            date_created: '20261005T235959.125'}]}};
       }
       return {status: 200};
     };
@@ -206,7 +207,8 @@ describe('HTTP report models', () => {
       sort: {column: 0, order: 1}, page_index: 0});
     assert.equal(response.status, GeneratedReportsModel.ResponseStatus.READY);
     assert.equal(response.filteredCount, 1);
-    assert.equal(response.reports[0].dateCreated.toJson(), '20261005');
+    assert.equal(
+      response.reports[0].dateCreated.toJson(), '20261005T235959.125');
     const recipient = Beam.DirectoryEntry.makeAccount(2, 'Bob');
     await model.share(['job'], [recipient]);
     await model.delete(['job']);

@@ -46,7 +46,7 @@ export class ActivityTableExample extends React.Component<Properties> {
           }
           return ReportActivityStatusTag.Status.FAILED;
         })(),
-        dateModified: new Beam.Date(2026, 9, 30 - index % 30)
+        dateModified: new Beam.DateTime(new Beam.Date(2026, 9, 30 - index % 30))
       };
     });
     if(this.props.sortOrder !== SortableTableHeaderCell.SortOrder.NONE) {

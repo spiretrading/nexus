@@ -30,8 +30,8 @@ namespace Nexus {
     /** The displayed execution state. */
     Status m_status = Status::GENERATING;
 
-    /** The UTC date of the latest job update. */
-    boost::gregorian::date m_date_modified;
+    /** The UTC timestamp of the latest job update. */
+    boost::posix_time::ptime m_date_modified;
   };
 
   /** Selects one page of report activity. */
@@ -52,7 +52,7 @@ namespace Nexus {
       /** The displayed execution state. */
       STATUS,
 
-      /** The UTC date of the latest job update. */
+      /** The timestamp of the latest job update. */
       DATE_MODIFIED
     };
 

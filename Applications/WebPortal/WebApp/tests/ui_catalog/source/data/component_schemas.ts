@@ -1350,7 +1350,8 @@ const activityTableRow =
       new PropertySchema('status',
         WebPortal.ReportActivityStatusTag.Status.GENERATING,
         EnumInput(WebPortal.ReportActivityStatusTag.Status)),
-      new PropertySchema('dateModified', Beam.Date.today(), BeamDateInput),
+      new PropertySchema(
+        'dateModified', Beam.DateTime.now(), BeamDateTimeInput),
       new PropertySchema('selected', false, BooleanInput)],
     [new SignalSchema('onSelect', '', [
       {parameterName: 'id', propertyName: ''},
@@ -1404,7 +1405,7 @@ const reportTableRow =
       new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
         ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
       new PropertySchema('url', '/reports/42', TextInput),
-      new PropertySchema('dateCreated', Beam.Date.today(), BeamDateInput),
+      new PropertySchema('dateCreated', Beam.DateTime.now(), BeamDateTimeInput),
       new PropertySchema('selected', false, BooleanInput)],
     [new SignalSchema('onSelect', '', [
         {parameterName: 'id', propertyName: ''},

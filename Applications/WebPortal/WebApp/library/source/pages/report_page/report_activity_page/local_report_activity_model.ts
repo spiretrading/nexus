@@ -92,7 +92,8 @@ export class LocalReportActivityModel extends ReportActivityModel {
       if(entry?.status === ReportActivityStatusTag.Status.FAILED) {
         this.entries.set(id, {...entry,
           status: ReportActivityStatusTag.Status.GENERATING,
-          dateModified: Beam.Date.today()});
+          dateModified: Beam.DateTime.fromJson(
+            new Date().toISOString().replace(/[-:Z]/g, ''))});
       }
     }
   }
@@ -109,6 +110,6 @@ export class LocalReportActivityModel extends ReportActivityModel {
 
 function copy(entry: ActivityTable.Activity): ActivityTable.Activity {
   return {...entry, parameters: [...entry.parameters],
-    dateModified: new Beam.Date(entry.dateModified.year,
-      entry.dateModified.month, entry.dateModified.day)};
+    dateModified: new Beam.DateTime(entry.dateModified.date,
+      entry.dateModified.timeOfDay)};
 }

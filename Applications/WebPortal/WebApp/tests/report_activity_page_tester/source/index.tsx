@@ -113,8 +113,8 @@ function makeActivities(count: number): ActivityTable.Activity[] {
     return {id: String(index + 1),
       type: ['Profit and Loss', 'Trading Volume'][index % 2],
       parameters: [`Alpha Group ${index + 1}`, 'Canada', 'Month to Date'],
-      dateModified: new Beam.Date(date.getFullYear(), date.getMonth() + 1,
-        date.getDate()),
+      dateModified: new Beam.DateTime(new Beam.Date(
+        date.getFullYear(), date.getMonth() + 1, date.getDate())),
       status: (() => {
         if(index % 2 === 0) {
           return ReportActivityStatusTag.Status.GENERATING;

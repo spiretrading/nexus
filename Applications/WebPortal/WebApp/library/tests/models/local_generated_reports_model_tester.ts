@@ -10,8 +10,8 @@ import { GeneratedReportsModel, LocalGeneratedReportsModel, ReportTable } from
 function makeReports(count: number): ReportTable.Report[] {
   return Array.from({length: count}, (_, index) => ({id: String(index + 1),
     type: 'Profit and Loss', parameters: [`Group ${index + 1}`, 'Canada'],
-    url: `/reports/${index + 1}`, dateCreated: new Beam.Date(2024, 2,
-      index % 29 + 1)}));
+    url: `/reports/${index + 1}`,
+    dateCreated: new Beam.DateTime(new Beam.Date(2024, 2, index % 29 + 1))}));
 }
 
 function submission(): GeneratedReportsModel.Submission {
@@ -71,12 +71,36 @@ describe('LocalGeneratedReportsModel', () => {
     assert.equal((await model.query(request)).isEmpty, true);
   });
 
+  it('sorts_timestamps_and_filters_whole_days', async () => {
+    const reports = makeReports(3).map((report, index) => ({...report,
+      dateCreated: Beam.DateTime.fromJson([
+        '20261005T235959.125', '20261005T000001.125',
+        '20261006T000000'][index])}));
+    const model = new LocalGeneratedReportsModel(reports,
+      new LocalAccountGroupQueryModel([]));
+    await model.load();
+    const request = submission();
+    request.filters.dateRange = new DateRange(
+      new Beam.Date(2026, 10, 5), new Beam.Date(2026, 10, 5));
+    request.sort.order = SortableTableHeaderCell.SortOrder.ASCENDING;
+    let response = await model.query(request);
+    assert.deepEqual(response.reports.map(report => report.id), ['2', '1']);
+    assert.equal(response.reports[1].dateCreated.toJson(),
+      '20261005T235959.125');
+    assert.equal(model.reports[0].dateCreated.toJson(), '20261005T235959.125');
+    request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
+    response = await model.query(request);
+    assert.deepEqual(response.reports.map(report => report.id), ['1', '2']);
+    request.filters.query = 'Oct 05, 2026';
+    assert.equal((await model.query(request)).filteredCount, 2);
+  });
+
   it('sorts_and_preserves_snapshots', async () => {
     const reports = [
       {...makeReports(1)[0], id: '1', type: 'Zulu', parameters: ['A'],
-        dateCreated: new Beam.Date(2024, 2, 29)},
+        dateCreated: new Beam.DateTime(new Beam.Date(2024, 2, 29))},
       {...makeReports(1)[0], id: '2', type: 'Alpha', parameters: ['Z'],
-        dateCreated: new Beam.Date(2024, 3, 1)}];
+        dateCreated: new Beam.DateTime(new Beam.Date(2024, 3, 1))}];
     const model = new LocalGeneratedReportsModel(reports,
       new LocalAccountGroupQueryModel([]));
     reports[0].parameters[0] = 'mutated';

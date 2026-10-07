@@ -21,8 +21,8 @@ namespace Nexus {
     /** The link to the report detail page. */
     Beam::Uri m_url;
 
-    /** The UTC date when the report finished generating. */
-    boost::gregorian::date m_date_created;
+    /** The UTC timestamp when the report finished generating. */
+    boost::posix_time::ptime m_date_created;
   };
 
   /** Selects one page of completed reports. */
@@ -40,7 +40,7 @@ namespace Nexus {
       /** The displayed parameter values. */
       PARAMETERS,
 
-      /** The UTC date when the report finished generating. */
+      /** The timestamp when the report finished generating. */
       DATE_CREATED
     };
 

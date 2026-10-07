@@ -38,7 +38,7 @@ export class HttpGeneratedReportsModel extends GeneratedReportsModel {
       reports: (response.reports ?? []).map((report: any) =>
         ({id: report.id, type: report.type, parameters: [...report.parameters],
           url: report.url,
-          dateCreated: Beam.Date.fromJson(report.date_created)}))};
+          dateCreated: Beam.DateTime.fromJson(report.date_created)}))};
   }
 
   public async delete(ids: readonly string[]): Promise<void> {

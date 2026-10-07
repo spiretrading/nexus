@@ -101,7 +101,7 @@ TEST_SUITE("GeneratedReport") {
       query.m_query = text;
       auto page = query_generated_reports(jobs, account, query, client);
       REQUIRE(page.m_filtered_count == 1);
-      REQUIRE(page.m_reports.front().m_date_created == job.m_completed.date());
+      REQUIRE(page.m_reports.front().m_date_created == job.m_completed);
     }
     query.m_query = "unmatched";
     auto page = query_generated_reports(jobs, account, query, client);
@@ -186,6 +186,36 @@ TEST_SUITE("GeneratedReport") {
       jobs, account, query, client).m_reports.front().m_id == "a");
   }
 
+  TEST_CASE("date_order_uses_timestamp") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto account = client.get_account();
+    auto early = make_job("early", account);
+    early.m_completed = time_from_string("2026-10-05 13:00:00.000001");
+    auto late = make_job("late", account);
+    late.m_completed = time_from_string("2026-10-05 13:00:00.000002");
+    auto fallback = make_job("fallback", account);
+    fallback.m_created = time_from_string("2026-10-05 14:00:00");
+    fallback.m_completed = not_a_date_time;
+    auto jobs = std::vector{late, fallback, early};
+    auto query = GeneratedReportQuery();
+    query.m_column = GeneratedReportQuery::Column::DATE_CREATED;
+    query.m_order = GeneratedReportQuery::Order::ASCENDING;
+    auto page = query_generated_reports(jobs, account, query, client);
+    REQUIRE(page.m_reports.size() == 3);
+    REQUIRE(page.m_reports[0].m_id == "early");
+    REQUIRE(page.m_reports[1].m_id == "late");
+    REQUIRE(page.m_reports[2].m_id == "fallback");
+    query.m_order = GeneratedReportQuery::Order::DESCENDING;
+    page = query_generated_reports(jobs, account, query, client);
+    REQUIRE(page.m_reports[0].m_id == "fallback");
+    REQUIRE(page.m_reports[1].m_id == "late");
+    REQUIRE(page.m_reports[2].m_id == "early");
+    for(auto& report : page.m_reports) {
+      REQUIRE(report.m_date_created.date() == early.m_completed.date());
+    }
+  }
+
   TEST_CASE("sorted_pages_with_ties") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -220,7 +250,11 @@ TEST_SUITE("GeneratedReport") {
           GeneratedReportQuery::Order::ASCENDING,
           GeneratedReportQuery::Order::DESCENDING}) {
         auto expected = by_completed;
-        if(order != GeneratedReportQuery::Order::NONE) {
+        if(column == GeneratedReportQuery::Column::DATE_CREATED &&
+            order == GeneratedReportQuery::Order::ASCENDING) {
+          std::ranges::stable_sort(
+            expected, std::less(), &ReportJob::m_completed);
+        } else if(order != GeneratedReportQuery::Order::NONE) {
           expected.clear();
           auto groups = std::vector({0, 1, 2});
           if(order == GeneratedReportQuery::Order::DESCENDING) {
@@ -252,7 +286,7 @@ TEST_SUITE("GeneratedReport") {
             auto& job = *expected[offset + i];
             auto report = GeneratedReport(job.m_id, job.m_definition.m_name,
               format_report_parameters(job), Uri("/reports/" + job.m_id),
-              job.m_completed.date());
+              job.m_completed);
             REQUIRE(to_json(page.m_reports[i]) == to_json(report));
           }
         }
@@ -278,6 +312,7 @@ TEST_SUITE("GeneratedReport") {
       HttpStatusCode::UNAUTHORIZED);
     session->set_account(client.get_account());
     auto job = make_job("report /?", client.get_account());
+    job.m_completed = time_from_string("2026-10-05 13:00:00.123456");
     local.store(job);
     local.store(
       make_job("private", DirectoryEntry::make_account(123, "Other")));
@@ -293,7 +328,7 @@ TEST_SUITE("GeneratedReport") {
     REQUIRE(report.at("id") == job.m_id);
     REQUIRE(report.at("type") == "Example");
     REQUIRE(report.at("url") == "/reports/report%20%2F%3F");
-    REQUIRE(report.at("date_created") == "20261005");
+    REQUIRE(report.at("date_created") == "20261005T130000.123456");
     REQUIRE(!report.get("definition"));
     REQUIRE(!report.get("arguments"));
     REQUIRE(!report.get("account"));

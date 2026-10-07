@@ -56,10 +56,10 @@ TEST_SUITE("ReportActivity") {
     REQUIRE(
       page.m_activities[0].m_status == ReportActivity::Status::GENERATING);
     REQUIRE(page.m_activities[1].m_id == "running");
-    REQUIRE(page.m_activities[1].m_date_modified == running.m_modified->date());
+    REQUIRE(page.m_activities[1].m_date_modified == *running.m_modified);
     REQUIRE(page.m_activities[2].m_id == "failed");
     REQUIRE(page.m_activities[2].m_status == ReportActivity::Status::FAILED);
-    REQUIRE(page.m_activities[2].m_date_modified == failed.m_completed.date());
+    REQUIRE(page.m_activities[2].m_date_modified == failed.m_completed);
     REQUIRE(query_report_activities(jobs, bob, query).m_total_count == 1);
     REQUIRE(query_report_activities(jobs,
       DirectoryEntry::make_account(3, "Other"), query).m_activities.empty());
@@ -114,6 +114,37 @@ TEST_SUITE("ReportActivity") {
     query.m_order = ReportActivityQuery::Order::NONE;
     REQUIRE(query_report_activities(
       jobs, account, query).m_activities.front().m_id == "a");
+  }
+
+  TEST_CASE("date_order_uses_timestamp") {
+    auto account = DirectoryEntry::make_account(1, "Alice");
+    auto queued = make_job("queued", account);
+    queued.m_created = time_from_string("2026-10-05 13:00:00");
+    queued.m_modified = not_a_date_time;
+    auto failed = make_job("failed", account);
+    failed.m_status = ReportJob::Status::FAILED;
+    failed.m_completed = time_from_string("2026-10-05 14:00:00.000001");
+    auto running = make_job("running", account);
+    running.m_status = ReportJob::Status::RUNNING;
+    running.m_modified = time_from_string("2026-10-05 14:00:00.000002");
+    running.m_completed = time_from_string("2026-10-05 15:00:00");
+    auto jobs = std::vector{running, queued, failed};
+    auto query = ReportActivityQuery();
+    query.m_column = ReportActivityQuery::Column::DATE_MODIFIED;
+    query.m_order = ReportActivityQuery::Order::ASCENDING;
+    auto page = query_report_activities(jobs, account, query);
+    REQUIRE(page.m_activities.size() == 3);
+    REQUIRE(page.m_activities[0].m_id == "queued");
+    REQUIRE(page.m_activities[1].m_id == "failed");
+    REQUIRE(page.m_activities[2].m_id == "running");
+    query.m_order = ReportActivityQuery::Order::DESCENDING;
+    page = query_report_activities(jobs, account, query);
+    REQUIRE(page.m_activities[0].m_id == "running");
+    REQUIRE(page.m_activities[1].m_id == "failed");
+    REQUIRE(page.m_activities[2].m_id == "queued");
+    for(auto& activity : page.m_activities) {
+      REQUIRE(activity.m_date_modified.date() == queued.m_created.date());
+    }
   }
 
   TEST_CASE("sorted_pages_preserve_parameters_and_ties") {
@@ -174,7 +205,13 @@ TEST_SUITE("ReportActivity") {
             std::ranges::reverse(groups);
           }
           for(auto group : groups) {
-            for(auto* job : by_created) {
+            auto ordered = by_created;
+            if(column == ReportActivityQuery::Column::DATE_MODIFIED &&
+                order == ReportActivityQuery::Order::ASCENDING && group == 0) {
+              std::ranges::stable_sort(
+                ordered, std::less(), &ReportJob::m_created);
+            }
+            for(auto* job : ordered) {
               auto rank = std::stoi(job->m_id) % 3;
               if(column == ReportActivityQuery::Column::STATUS) {
                 rank = static_cast<int>(rank == 2);
@@ -201,8 +238,11 @@ TEST_SUITE("ReportActivity") {
             auto group = std::stoi(activity.m_id) % 3;
             REQUIRE(activity.m_parameters ==
               std::vector<std::string>({std::to_string(group)}));
-            REQUIRE(activity.m_date_modified ==
-              (start + hours(24 * group)).date());
+            auto modified = start + hours(24 * group);
+            if(group == 0) {
+              modified += seconds(std::stoi(activity.m_id) / 6);
+            }
+            REQUIRE(activity.m_date_modified == modified);
           }
         }
       }
@@ -247,7 +287,7 @@ TEST_SUITE("ReportActivity") {
       REQUIRE(value.m_type == "Example");
       REQUIRE(value.m_parameters == page.m_activities.front().m_parameters);
       REQUIRE(value.m_status == ReportActivity::Status::GENERATING);
-      REQUIRE(value.m_date_modified == job.m_created.date());
+      REQUIRE(value.m_date_modified == job.m_created);
     });
   }
 
@@ -268,6 +308,7 @@ TEST_SUITE("ReportActivity") {
       HttpStatusCode::UNAUTHORIZED);
     session->set_account(client.get_account());
     auto job = make_job("mine", client.get_account());
+    job.m_modified = time_from_string("2026-10-05 12:00:00.123456");
     local.store(job);
     auto other = make_job("other", DirectoryEntry::make_account(123, "Other"));
     other.m_recipients = {client.get_account()};
@@ -282,7 +323,7 @@ TEST_SUITE("ReportActivity") {
     REQUIRE(activities.size() == 1);
     auto activity = get<JsonObject>(activities.front());
     REQUIRE(activity.at("id") == "mine");
-    REQUIRE(activity.at("date_modified") == "20261005");
+    REQUIRE(activity.at("date_modified") == "20261005T120000.123456");
     REQUIRE(!activity.get("definition"));
     REQUIRE(!activity.get("arguments"));
     REQUIRE(!activity.get("error"));

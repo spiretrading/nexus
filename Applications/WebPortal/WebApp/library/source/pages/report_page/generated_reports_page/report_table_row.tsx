@@ -20,8 +20,8 @@ interface Properties extends Omit<
   /** The link to the generated report. */
   url: string;
 
-  /** The calendar date on which the report was generated. */
-  dateCreated: Beam.Date;
+  /** The UTC timestamp when the report was generated. */
+  dateCreated: Beam.DateTime;
 
   /** Whether the report is selected. */
   selected: boolean;
@@ -48,7 +48,7 @@ export class ReportTableRow extends React.Component<Properties> {
       <Selected type={type} selected={selected} onSelect={this.onSelect}/>
       <TypeCell type={type} url={url} highlight={highlight}/>
       <ParametersCell parameters={parameters} highlight={highlight}/>
-      <DateCell date={dateCreated} highlight={highlight}/>
+      <DateCell date={dateCreated.date} highlight={highlight}/>
     </tr>;
   }
 
