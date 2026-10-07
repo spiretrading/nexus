@@ -32,9 +32,9 @@ const std::shared_ptr<MaxFloorSchema>& MaxFloorSchema::get_instance() {
 
 bool MaxFloorSchema::test(const AdditionalTag& tag) const {
   return tag.m_key == get_key() && (
-    tag.m_value == none || tag.m_value->which() == Nexus::Tag::INT_INDEX ||
-      tag.m_value->which() == Nexus::Tag::QUANTITY_INDEX ||
-      tag.m_value->which() == Nexus::Tag::DOUBLE_INDEX);
+    tag.m_value == none || tag.m_value->index() == Nexus::Tag::INT_INDEX ||
+      tag.m_value->index() == Nexus::Tag::QUANTITY_INDEX ||
+      tag.m_value->index() == Nexus::Tag::DOUBLE_INDEX);
 }
 
 AnyInputBox* MaxFloorSchema::make_input_box(
@@ -46,7 +46,7 @@ AnyInputBox* MaxFloorSchema::make_input_box(
         if(!value) {
           return none;
         }
-        return get<Quantity>(*value);
+        return std::get<Quantity>(*value);
       },
       [] (const auto& value) -> optional<Nexus::Tag::Type> {
         if(!value) {
@@ -75,12 +75,12 @@ std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
   auto max_floor_node = [&] {
     if(value) {
-      if(value->which() == Nexus::Tag::INT_INDEX) {
-        return MaxFloorNode(get<int>(*value));
-      } else if(value->which() == Nexus::Tag::QUANTITY_INDEX) {
-        return MaxFloorNode(get<Quantity>(*value));
-      } else if(value->which() == Nexus::Tag::DOUBLE_INDEX) {
-        return MaxFloorNode(get<double>(*value));
+      if(value->index() == Nexus::Tag::INT_INDEX) {
+        return MaxFloorNode(std::get<int>(*value));
+      } else if(value->index() == Nexus::Tag::QUANTITY_INDEX) {
+        return MaxFloorNode(std::get<Quantity>(*value));
+      } else if(value->index() == Nexus::Tag::DOUBLE_INDEX) {
+        return MaxFloorNode(std::get<double>(*value));
       }
       throw CanvasTypeCompatibilityException();
     }

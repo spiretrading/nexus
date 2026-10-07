@@ -56,7 +56,7 @@ void PercentageDashboardCellRenderer::Draw(QPaintDevice& device,
     text = QObject::tr("N/A");
     m_pen.setColor(QColor{255, 255, 255});
   } else {
-    auto percentage = boost::get<double>(values.back());
+    auto percentage = std::get<double>(values.back());
     text = QString::number(100 * percentage, 'f', 2) + "%";
     if(percentage > 0) {
       m_pen.setColor(QColor{0, 255, 0});

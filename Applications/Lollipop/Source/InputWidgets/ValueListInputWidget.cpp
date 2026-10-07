@@ -66,7 +66,7 @@ void ValueListInputWidget::SetValues(
   QString text;
   for(auto i = size_t{0}; i != m_values.size(); ++i) {
     text += m_itemDelegate->displayText(
-      apply_visitor(QVariantConverter(), m_values[i]), QLocale{});
+      std::visit(QVariantConverter(), m_values[i]), QLocale{});
     if(i != m_values.size() - 1) {
       text += ", ";
     }

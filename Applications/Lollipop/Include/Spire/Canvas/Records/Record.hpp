@@ -1,13 +1,13 @@
 #ifndef SPIRE_RECORD_HPP
 #define SPIRE_RECORD_HPP
 #include <tuple>
+#include <variant>
 #include <vector>
 #include <Beam/Queries/Range.hpp>
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/boost_tuple.hpp>
 #include <boost/fusion/include/for_each.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
@@ -24,7 +24,7 @@ namespace Spire {
     public:
 
       /** Defines the types allowed for a member of a Record. */
-      using Field = boost::variant<Record, bool, Nexus::Quantity, double,
+      using Field = std::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
         Nexus::Side, Nexus::Ticker, Nexus::TimeInForce, Nexus::Venue,

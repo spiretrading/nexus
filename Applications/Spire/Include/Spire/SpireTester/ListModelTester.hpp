@@ -21,16 +21,15 @@ namespace Spire {
       if(operations.size() != 1) {
         REQUIRE(operations.size() == 3);
         REQUIRE(
-          boost::get<typename ListModel<T>::StartTransaction>(&operations[0]) !=
-            nullptr);
+          std::get_if<typename ListModel<T>::StartTransaction>(&operations[0]));
         offset = 1;
       }
     } else {
-      if(get<typename ListModel<T>::StartTransaction>(&operations[0]) ==
-          nullptr) {
+      if(!std::get_if<typename ListModel<T>::StartTransaction>(
+          &operations[0])) {
         REQUIRE(operations.size() == 2);
-        REQUIRE(get<typename ListModel<T>::PreRemoveOperation>(
-          &operations[0]) != nullptr);
+        REQUIRE(std::get_if<typename ListModel<T>::PreRemoveOperation>(
+          &operations[0]));
       } else {
         REQUIRE(operations.size() == expected.size() + 2);
         offset = 1;
@@ -40,34 +39,33 @@ namespace Spire {
       visit(expected[i],
         [&] (const ListModel<T>::AddOperation& expected) {
           auto operation =
-            boost::get<ListModel<T>::AddOperation>(&operations[i + offset]);
+            std::get_if<ListModel<T>::AddOperation>(&operations[i + offset]);
           REQUIRE(operation != nullptr);
           REQUIRE(operation->m_index == expected.m_index);
         },
         [&] (const ListModel<T>::RemoveOperation& expected) {
           auto operation =
-            boost::get<ListModel<T>::RemoveOperation>(&operations[i + offset]);
+            std::get_if<ListModel<T>::RemoveOperation>(&operations[i + offset]);
           REQUIRE(operation != nullptr);
           REQUIRE(operation->m_index == expected.m_index);
         },
         [&] (const ListModel<T>::MoveOperation& expected) {
           auto operation =
-            boost::get<ListModel<T>::MoveOperation>(&operations[i + offset]);
+            std::get_if<ListModel<T>::MoveOperation>(&operations[i + offset]);
           REQUIRE(operation != nullptr);
           REQUIRE(operation->m_source == expected.m_source);
           REQUIRE(operation->m_destination == expected.m_destination);
         },
         [&] (const ListModel<T>::UpdateOperation& expected) {
           auto operation =
-            boost::get<ListModel<T>::UpdateOperation>(&operations[i + offset]);
+            std::get_if<ListModel<T>::UpdateOperation>(&operations[i + offset]);
           REQUIRE(operation != nullptr);
           REQUIRE(operation->m_index == expected.m_index);
         });
     }
     if(offset != 0) {
       REQUIRE(
-        boost::get<typename ListModel<T>::EndTransaction>(&operations.back()) !=
-          nullptr);
+        std::get_if<typename ListModel<T>::EndTransaction>(&operations.back()));
     }
   }
 }

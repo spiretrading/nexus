@@ -210,48 +210,44 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_primary(
   auto token = token_parser.peek();
   auto& value = token.get_value();
   token_parser.pop();
-  if(value.type() == typeid(Bracket)) {
-    auto& bracket = boost::get<Bracket>(value);
-    if(bracket == Bracket::OPEN_ROUND) {
+  if(auto bracket = std::get_if<Bracket>(&value)) {
+    if(*bracket == Bracket::OPEN_ROUND) {
       auto expression = parse_expression(token_parser);
       if(!check_token(token_parser, Bracket::CLOSE_ROUND)) {
         throw std::runtime_error("Expected ')'.");
       }
       token_parser.pop();
       return expression;
-    } else if(bracket == Bracket::OPEN_SQUARE) {
+    } else if(*bracket == Bracket::OPEN_SQUARE) {
       return parse_property(token_parser);
     }
-  } else if(value.type() == typeid(Punctuation)) {
-    auto& punctuation = boost::get<Punctuation>(value);
-    if(punctuation == Punctuation::COLON) {
+  } else if(auto punctuation = std::get_if<Punctuation>(&value)) {
+    if(*punctuation == Punctuation::COLON) {
       return parse_colon_sign(token_parser, token);
     }
-  } else if(value.type() == typeid(Keyword)) {
-    auto& keyword = boost::get<Keyword>(value);
-    if(keyword == Keyword::ANY) {
+  } else if(auto keyword = std::get_if<Keyword>(&value)) {
+    if(*keyword == Keyword::ANY) {
       return std::make_shared<AnySelectorParser>();
-    } else if(keyword == Keyword::EXCLAMATION || keyword == Keyword::TILDE) {
+    } else if(*keyword == Keyword::EXCLAMATION || *keyword == Keyword::TILDE) {
       auto& next_token = token_parser.peek();
       if(next_token.get_line_number() == token.get_line_number() &&
           next_token.get_column_number() == token.get_column_number() + 1) {
         auto parser = parse_primary(token_parser);
-        if(keyword == Keyword::EXCLAMATION) {
+        if(*keyword == Keyword::EXCLAMATION) {
           return std::make_shared<NotSelectorParser>(parser);
         }
         return std::make_shared<FlipSelectorParser>(parser);
       }
       throw std::runtime_error("Invalid the selector.");
     }
-  } else if(value.type() == typeid(Identifier)) {
-    auto& identifier = boost::get<Identifier>(value);
+  } else if(auto identifier = std::get_if<Identifier>(&value)) {
     if(check_token(token_parser, Bracket::OPEN_SQUARE)) {
       token_parser.pop();
       return std::make_shared<AndSelectorParser>(
-        std::make_shared<TypeSelectorParser>(identifier),
+        std::make_shared<TypeSelectorParser>(*identifier),
         parse_property(token_parser));
     }
-    return std::make_shared<TypeSelectorParser>(identifier);
+    return std::make_shared<TypeSelectorParser>(*identifier);
   }
   throw std::runtime_error("Unknown token.");
 }

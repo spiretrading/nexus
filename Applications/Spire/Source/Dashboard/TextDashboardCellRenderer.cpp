@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
-#include <boost/variant/apply_visitor.hpp>
 #include <QPainter>
 #include "Nexus/Definitions/Ticker.hpp"
 
@@ -85,7 +84,7 @@ void TextDashboardCellRenderer::UpdateText() {
     m_text = QObject::tr("N/A");
   } else {
     m_text = m_delegate->displayText(
-      apply_visitor(VariantVisitor(), values.back()), QLocale());
+      std::visit(VariantVisitor(), values.back()), QLocale());
   }
   m_isTextStale = false;
 }

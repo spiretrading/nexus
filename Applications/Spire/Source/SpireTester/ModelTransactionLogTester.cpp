@@ -13,9 +13,9 @@ namespace {
       std::vector<std::string>& operations) {
     return log.connect_operation_signal(
       [&] (const Model::Operation& operation) {
-        if(operation.type() == typeid(Model::StartTransaction)) {
+        if(std::holds_alternative<Model::StartTransaction>(operation)) {
           operations.push_back("start");
-        } else if(operation.type() == typeid(Model::EndTransaction)) {
+        } else if(std::holds_alternative<Model::EndTransaction>(operation)) {
           operations.push_back("end");
         } else {
           operations.push_back("operation");

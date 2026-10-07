@@ -53,7 +53,7 @@ void IsTopMpidModel::update_current() {
 }
 
 void IsTopMpidModel::on_entry(const BookEntry& entry) {
-  if(auto quote = boost::get<BookQuote>(&entry)) {
+  if(auto quote = std::get_if<BookQuote>(&entry)) {
     set_venue(quote->m_venue);
   } else {
     set_venue(Venue());

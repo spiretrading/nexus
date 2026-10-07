@@ -260,4 +260,40 @@ TEST_SUITE("ArrayListModel") {
         ListModel<int>::AddOperation(1)
       });
   }
+
+  TEST_CASE("any_operation_signal") {
+    auto test = [] (auto& model, auto& signals) {
+      auto operations = std::vector<AnyListModel::Operation>();
+      auto connection = signals.connect_operation_signal(
+        [&] (const AnyListModel::Operation& operation) {
+          operations.push_back(operation);
+        });
+      model.push(3);
+      model.set(0, 5);
+      REQUIRE(operations.size() == 2);
+      REQUIRE(std::get<AnyListModel::AddOperation>(operations[0]).m_index == 0);
+      auto& update = std::get<AnyListModel::UpdateOperation>(operations[1]);
+      REQUIRE(update.m_index == 0);
+      REQUIRE(std::any_cast<int>(update.m_previous) == 3);
+      REQUIRE(std::any_cast<int>(update.m_value) == 5);
+    };
+    SUBCASE("typed_list") {
+      auto model = ArrayListModel<int>();
+      SUBCASE("base_interface") {
+        test(model, static_cast<AnyListModel&>(model));
+      }
+      SUBCASE("typed_interface") {
+        test(model, static_cast<ListModel<int>&>(model));
+      }
+    }
+    SUBCASE("any_list") {
+      auto model = ArrayListModel<std::any>();
+      SUBCASE("base_interface") {
+        test(model, static_cast<AnyListModel&>(model));
+      }
+      SUBCASE("typed_interface") {
+        test(model, static_cast<ListModel<std::any>&>(model));
+      }
+    }
+  }
 }

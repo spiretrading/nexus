@@ -22,7 +22,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct ToCanvasNodeVisitor : static_visitor<std::unique_ptr<CanvasNode>> {
+  struct ToCanvasNodeVisitor {
     std::unique_ptr<CanvasNode> operator ()(int value) const {
       return std::make_unique<IntegerNode>(value);
     }
@@ -161,7 +161,7 @@ BasicAdditionalTagSchema::BasicAdditionalTagSchema(
   Nexus::Tag::Type default_value)
   : AdditionalTagSchema(std::move(order_field_model), key),
     m_type(static_cast<std::shared_ptr<CanvasType>>(
-      apply_visitor(ToCanvasNodeVisitor(), default_value)->GetType())),
+      std::visit(ToCanvasNodeVisitor(), default_value)->GetType())),
     m_default_value(std::move(default_value)) {}
 
 bool BasicAdditionalTagSchema::test(const AdditionalTag& tag) const {
@@ -171,7 +171,7 @@ bool BasicAdditionalTagSchema::test(const AdditionalTag& tag) const {
   if(tag.m_value == none) {
     return true;
   }
-  auto result = apply_visitor(ToCanvasNodeVisitor(), *tag.m_value);
+  auto result = std::visit(ToCanvasNodeVisitor(), *tag.m_value);
   return result->GetType().GetCompatibility(*m_type) ==
     CanvasType::Compatibility::EQUAL;
 }
@@ -187,7 +187,7 @@ AnyInputBox* BasicAdditionalTagSchema::make_input_box(
 std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
   if(value) {
-    auto result = apply_visitor(ToCanvasNodeVisitor(), *value);
+    auto result = std::visit(ToCanvasNodeVisitor(), *value);
     if(result->GetType().GetCompatibility(*m_type) !=
         CanvasType::Compatibility::EQUAL) {
       throw CanvasTypeCompatibilityException();

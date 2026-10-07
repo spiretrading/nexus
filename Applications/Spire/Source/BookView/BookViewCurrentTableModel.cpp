@@ -23,7 +23,7 @@ QValidator::State BookViewCurrentTableModel::test(const Type& value) const {
     return QValidator::State::Invalid;
   }
   auto& entry = m_table->get<BookEntry>(value->m_row, 0);
-  if(boost::get<BookViewModel::UserOrder>(&entry)) {
+  if(std::get_if<BookViewModel::UserOrder>(&entry)) {
     return m_current.test(value);
   }
   return QValidator::State::Invalid;
