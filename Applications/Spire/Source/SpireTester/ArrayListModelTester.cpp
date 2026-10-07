@@ -262,10 +262,9 @@ TEST_SUITE("ArrayListModel") {
   }
 
   TEST_CASE("any_operation_signal") {
-    auto test = [] (auto& model) {
+    auto test = [] (auto& model, auto& signals) {
       auto operations = std::vector<AnyListModel::Operation>();
-      auto& any_model = static_cast<AnyListModel&>(model);
-      auto connection = any_model.connect_operation_signal(
+      auto connection = signals.connect_operation_signal(
         [&] (const AnyListModel::Operation& operation) {
           operations.push_back(operation);
         });
@@ -280,11 +279,21 @@ TEST_SUITE("ArrayListModel") {
     };
     SUBCASE("typed_list") {
       auto model = ArrayListModel<int>();
-      test(model);
+      SUBCASE("base_interface") {
+        test(model, static_cast<AnyListModel&>(model));
+      }
+      SUBCASE("typed_interface") {
+        test(model, static_cast<ListModel<int>&>(model));
+      }
     }
     SUBCASE("any_list") {
       auto model = ArrayListModel<std::any>();
-      test(model);
+      SUBCASE("base_interface") {
+        test(model, static_cast<AnyListModel&>(model));
+      }
+      SUBCASE("typed_interface") {
+        test(model, static_cast<ListModel<std::any>&>(model));
+      }
     }
   }
 }
