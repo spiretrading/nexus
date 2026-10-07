@@ -872,7 +872,8 @@ namespace Spire {
       return connect_operation_signal(
         static_cast<typename OperationSignal::slot_type>(slot));
     } else {
-      return AnyListModel::connect_operation_signal(slot);
+      return connect_operation_signal(
+        static_cast<AnyListModel::OperationSignal::slot_type>(slot));
     }
   }
 
@@ -896,7 +897,8 @@ namespace Spire {
       return connect_operation_signal(
         static_cast<typename OperationSignal::slot_type>(slot));
     } else {
-      return AnyListModel::connect_operation_signal(slot);
+      return connect_operation_signal(
+        static_cast<AnyListModel::OperationSignal::slot_type>(slot));
     }
   }
 }
