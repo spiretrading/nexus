@@ -20,6 +20,7 @@ interface Properties {
 interface State {
   model: CreateReportModel;
   loaded: boolean;
+  errorMessage: string;
   value: ReportFormTemplate.Value;
 }
 
@@ -27,7 +28,8 @@ interface State {
 export class CreateReportController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.state = {model: props.model, loaded: false, value: null};
+    this.state = {model: props.model, loaded: false, value: null,
+      errorMessage: ''};
     this.mounted = false;
     this.generation = 0;
     this.submitting = false;
@@ -41,7 +43,7 @@ export class CreateReportController extends React.Component<Properties, State> {
       reports={this.props.model.reports} value={this.state.value}
       accountModel={this.props.model.accountModel}
       scopeModel={this.props.model.scopeModel} onChange={this.onChange}
-      onSubmit={this.onSubmit}/>;
+      errorMessage={this.state.errorMessage} onSubmit={this.onSubmit}/>;
   }
 
   public componentDidMount(): void {
@@ -64,7 +66,7 @@ export class CreateReportController extends React.Component<Properties, State> {
     const model = this.props.model;
     const generation = ++this.generation;
     this.submitting = false;
-    this.setState({model, loaded: false, value: null});
+    this.setState({model, loaded: false, value: null, errorMessage: ''});
     try {
       await model.load();
       if(!this.mounted || generation !== this.generation) {
@@ -88,7 +90,7 @@ export class CreateReportController extends React.Component<Properties, State> {
   }
 
   private onChange = (value: ReportFormTemplate.Value) => {
-    this.setState({value});
+    this.setState({value, errorMessage: ''});
   };
 
   private onSubmit = async (value: ReportFormTemplate.Value) => {
@@ -96,6 +98,7 @@ export class CreateReportController extends React.Component<Properties, State> {
       return;
     }
     this.submitting = true;
+    this.setState({errorMessage: ''});
     const model = this.props.model;
     const generation = this.generation;
     const scheduled = value.scheduled;
@@ -106,6 +109,13 @@ export class CreateReportController extends React.Component<Properties, State> {
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
+        const errorMessage = (() => {
+          if(error instanceof Error) {
+            return error.message;
+          }
+          return String(error);
+        })();
+        this.setState({errorMessage});
         this.props.onError?.(error);
       }
     } finally {

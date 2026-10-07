@@ -34,6 +34,9 @@ interface Properties {
   /** Whether submission is disabled by the containing page. */
   submitDisabled?: boolean;
 
+  /** The form-level error message, if any. */
+  errorMessage?: string;
+
   /** The model used to look up accounts and groups. */
   accountModel: AccountGroupQueryModel;
 
@@ -124,6 +127,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
         </Collapse>
         <SubmitSection mode={props.mode} scheduled={props.value.scheduled}
           valid={!props.submitDisabled && this.isValid()}/>
+        <ErrorBlock message={props.errorMessage}/>
       </form>
     </div>;
   }
@@ -475,8 +479,33 @@ function SubmitSection(props: {mode: ReportFormTemplate.Mode;
   })();
   return <section className={css(STYLES.submit)}>
     <Button type='submit' label={label} disabled={!props.valid}
-      style={{width: '100%'}}/>
+      className={css(STYLES.submitButton)}/>
   </section>;
+}
+
+class ErrorBlock extends React.Component<{message: string}, {message: string}> {
+  public static getDerivedStateFromProps(props: {message: string}):
+      {message: string} {
+    if(props.message) {
+      return {message: props.message};
+    }
+    return null;
+  }
+
+  constructor(props: {message: string}) {
+    super(props);
+    this.state = {message: props.message};
+  }
+
+  public render(): JSX.Element {
+    return <Collapse open={!!this.props.message} spacing={false}>
+      <div className={css(STYLES.errorBlock)}>
+        <span role='alert' className={css(STYLES.errorMessage)}>
+          {this.state.message}
+        </span>
+      </div>
+    </Collapse>;
+  }
 }
 
 interface CollapseState {
@@ -617,5 +646,12 @@ const STYLES = StyleSheet.create({
     '@container (width < 384px)': {paddingInlineStart: '10px'},
     '@container (min-width: 384px)': {paddingInlineStart: 0}},
   submit: {backgroundColor: '#FFFFFF', borderTop: '1px solid #E6E6E6',
-    paddingTop: '30px'}
+    paddingTop: '30px', display: 'flex', justifyContent: 'center'},
+  submitButton: {
+    '@container (width < 384px)': {width: '100%'},
+    '@container (min-width: 384px)': {width: '246px'}
+  },
+  errorBlock: {paddingTop: '18px'},
+  errorMessage: {display: 'block', color: '#E63F44', textAlign: 'center',
+    overflowWrap: 'anywhere'}
 });

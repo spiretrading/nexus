@@ -1375,7 +1375,8 @@ const reportFormTemplate =
     [new PropertySchema('title', 'Create Report', TextInput),
       new PropertySchema('mode', WebPortal.ReportFormTemplate.Mode.CREATE,
         EnumInput(WebPortal.ReportFormTemplate.Mode)),
-      new PropertySchema('showRuntime', true, BooleanInput)],
+      new PropertySchema('showRuntime', true, BooleanInput),
+      new PropertySchema('errorMessage', '', TextInput)],
     [new SignalSchema('onSubmit', '')], ReportFormTemplateExample, 560);
 
 const reportTable =

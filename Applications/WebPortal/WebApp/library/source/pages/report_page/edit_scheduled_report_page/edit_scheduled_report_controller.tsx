@@ -24,6 +24,7 @@ interface Properties {
 interface State {
   model: EditScheduledReportModel;
   loaded: boolean;
+  errorMessage: string;
   id: string;
   original: ReportFormTemplate.Value;
   value: ReportFormTemplate.Value;
@@ -35,7 +36,7 @@ export class EditScheduledReportController extends
   constructor(props: Properties) {
     super(props);
     this.state = {model: props.model, id: props.id, loaded: false,
-      original: null, value: null};
+      original: null, value: null, errorMessage: ''};
     this.mounted = false;
     this.generation = 0;
     this.submitting = false;
@@ -51,7 +52,7 @@ export class EditScheduledReportController extends
       accountModel={this.props.model.accountModel}
       scopeModel={this.props.model.scopeModel} onChange={this.onChange}
       submitDisabled={isEqual(this.state.value, this.state.original)}
-      onSubmit={this.onSubmit}/>;
+      errorMessage={this.state.errorMessage} onSubmit={this.onSubmit}/>;
   }
 
   public componentDidMount(): void {
@@ -75,7 +76,8 @@ export class EditScheduledReportController extends
     const id = this.props.id;
     const generation = ++this.generation;
     this.submitting = false;
-    this.setState({model, id, loaded: false, original: null, value: null});
+    this.setState({model, id, loaded: false, original: null, value: null,
+      errorMessage: ''});
     try {
       await model.load();
       const value = await model.loadReport(id);
@@ -91,7 +93,7 @@ export class EditScheduledReportController extends
   }
 
   private onChange = (value: ReportFormTemplate.Value) => {
-    this.setState({value});
+    this.setState({value, errorMessage: ''});
   };
 
   private onSubmit = async (value: ReportFormTemplate.Value) => {
@@ -99,6 +101,7 @@ export class EditScheduledReportController extends
       return;
     }
     this.submitting = true;
+    this.setState({errorMessage: ''});
     const model = this.props.model;
     const generation = this.generation;
     const id = this.props.id;
@@ -109,6 +112,13 @@ export class EditScheduledReportController extends
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
+        const errorMessage = (() => {
+          if(error instanceof Error) {
+            return error.message;
+          }
+          return String(error);
+        })();
+        this.setState({errorMessage});
         this.props.onError?.(error);
       }
     } finally {

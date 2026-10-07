@@ -15,6 +15,9 @@ interface Properties {
   /** Whether to display the Run fieldset. */
   showRuntime: boolean;
 
+  /** The form-level error message, if any. */
+  errorMessage: string;
+
   /** Reports the submitted form values. */
   onSubmit?: (value: ReportFormTemplate.Value) => void;
 }
