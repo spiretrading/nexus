@@ -5,13 +5,14 @@
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
-#include "WebPortal/ReportingWebServlet.hpp"
+#include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   ReportJob make_job(const DirectoryEntry& account) {
@@ -25,15 +26,7 @@ namespace {
 
   HttpResponse share(ReportingWebServlet& servlet,
       const WebPortalSession& session, const std::string& body) {
-    auto request = HttpRequest(HttpMethod::POST,
-      Uri("/api/reporting_service/share_reports"), from<SharedBuffer>(body));
-    request.add(Cookie("sessionid", session.get_id()));
-    for(auto& slot : servlet.get_slots()) {
-      if(slot.m_predicate(request)) {
-        return slot.m_slot(request);
-      }
-    }
-    throw std::runtime_error("Missing report sharing route.");
+    return post(servlet, session, "/api/reporting_service/share_reports", body);
   }
 }
 

@@ -3,12 +3,13 @@
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
-#include "WebPortal/ReportingWebServlet.hpp"
+#include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 using namespace std::string_literals;
 
 namespace {
@@ -26,13 +27,7 @@ namespace {
       const WebPortalSession& session, const std::string& query) {
     auto request = HttpRequest(
       HttpMethod::GET, Uri("/api/reporting_service/download_report" + query));
-    request.add(Cookie("sessionid", session.get_id()));
-    for(auto& slot : servlet.get_slots()) {
-      if(slot.m_predicate(request)) {
-        return slot.m_slot(request);
-      }
-    }
-    throw std::runtime_error("Missing report download route.");
+    return dispatch(servlet, session, request);
   }
 }
 

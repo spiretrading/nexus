@@ -6,14 +6,15 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
-#include "WebPortal/ReportingWebServlet.hpp"
 #include "WebPortal/ReportSubmission.hpp"
+#include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   class CountingServiceLocatorClient : public ServiceLocatorClient {
@@ -60,16 +61,7 @@ output: {media_type: text/csv, extension: csv}
 
   HttpResponse submit(ReportingWebServlet& servlet,
       const WebPortalSession& session, const JsonObject& body) {
-    auto request = HttpRequest(HttpMethod::POST,
-      Uri("/api/reporting_service/submit_report"),
-      from<SharedBuffer>(to_string(body)));
-    request.add(Cookie("sessionid", session.get_id()));
-    for(auto& slot : servlet.get_slots()) {
-      if(slot.m_predicate(request)) {
-        return slot.m_slot(request);
-      }
-    }
-    throw std::runtime_error("Missing report submission route.");
+    return post(servlet, session, "/api/reporting_service/submit_report", body);
   }
 }
 

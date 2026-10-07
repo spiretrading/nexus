@@ -7,12 +7,13 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/LocalReportService.hpp"
-#include "WebPortal/ReportingWebServlet.hpp"
+#include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   int execute(const ReportJob&, std::stop_token) {
@@ -152,20 +153,10 @@ output:
     return definition;
   }
 
-  HttpRequest make_request(const WebPortalSession& session) {
-    auto request = HttpRequest(HttpMethod::POST,
-      Uri("/api/reporting_service/load_report_definitions"),
-      from<SharedBuffer>("{}"));
-    request.add(Cookie("sessionid", session.get_id()));
-    return request;
-  }
-
-  HttpResponse load(ReportingWebServlet& servlet, const HttpRequest& request) {
-    auto slots = servlet.get_slots();
-    auto slot = std::ranges::find_if(slots,
-      [&] (const auto& slot) { return slot.m_predicate(request); });
-    REQUIRE(slot != slots.end());
-    return slot->m_slot(request);
+  HttpResponse load(ReportingWebServlet& servlet,
+      const WebPortalSession& session) {
+    return post(servlet, session,
+      "/api/reporting_service/load_report_definitions", JsonObject());
   }
 
   std::vector<JsonValue> parse_response(const HttpResponse& response) {
@@ -361,10 +352,10 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(reports.m_loads == 0);
     auto request = HttpRequest(
       HttpMethod::POST, Uri("/api/reporting_service/load_report_definitions"));
-    REQUIRE(load(servlet, request).get_status_code() ==
+    REQUIRE(dispatch(servlet, request).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     auto session = sessions.create();
-    REQUIRE(load(servlet, make_request(*session)).get_status_code() ==
+    REQUIRE(load(servlet, *session).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     REQUIRE(reports.m_loads == 0);
   }
@@ -390,8 +381,7 @@ TEST_SUITE("ReportDefinition") {
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(account);
-    auto request = make_request(*session);
-    auto response = load(servlet, request);
+    auto response = load(servlet, *session);
     REQUIRE(response.get_status_code() == HttpStatusCode::OK);
     auto content_type = response.get_header("Content-Type");
     REQUIRE(static_cast<bool>(content_type));
@@ -407,18 +397,18 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<JsonObject>(values[2]).at("id") == "group");
     client.associate(account, directory);
     client.detach(account, subgroup);
-    values = parse_response(load(servlet, request));
+    values = parse_response(load(servlet, *session));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "global");
     REQUIRE(get<JsonObject>(values[1]).at("id") == "account");
     client.rename(account, "carol");
-    values = parse_response(load(servlet, request));
+    values = parse_response(load(servlet, *session));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "global");
     REQUIRE(get<JsonObject>(values[1]).at("id") == "renamed");
     session->reset_account();
     session->set_account(other);
-    values = parse_response(load(servlet, request));
+    values = parse_response(load(servlet, *session));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "global");
     REQUIRE(get<JsonObject>(values[1]).at("id") == "other");
@@ -428,7 +418,7 @@ TEST_SUITE("ReportDefinition") {
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
       Timer(std::in_place_type<TriggerTimer>)));
-    REQUIRE(parse_response(load(empty, request)).empty());
+    REQUIRE(parse_response(load(empty, *session)).empty());
   }
 
   TEST_CASE("reload_definitions") {
@@ -443,18 +433,17 @@ TEST_SUITE("ReportDefinition") {
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(client.get_account());
-    auto request = make_request(*session);
-    REQUIRE(parse_response(load(servlet, request)).empty());
+    REQUIRE(parse_response(load(servlet, *session)).empty());
     definitions.push_back(make_definition("first", {"*"}));
     reports.set_definitions(definitions);
-    auto values = parse_response(load(servlet, request));
+    auto values = parse_response(load(servlet, *session));
     REQUIRE(values.size() == 1);
     REQUIRE(get<JsonObject>(values[0]).at("id") == "first");
     definitions[0].m_name = "Updated report";
     definitions[0].m_parameters[2].m_default = JsonValue("CAD");
     definitions.push_back(make_definition("second", {"*"}));
     reports.set_definitions(definitions);
-    values = parse_response(load(servlet, request));
+    values = parse_response(load(servlet, *session));
     REQUIRE(values.size() == 2);
     REQUIRE(get<JsonObject>(values[0]).at("name") == "Updated report");
     auto& parameters =
@@ -464,6 +453,6 @@ TEST_SUITE("ReportDefinition") {
     definitions[0].m_access = {"other_account"};
     definitions.pop_back();
     reports.set_definitions(definitions);
-    REQUIRE(parse_response(load(servlet, request)).empty());
+    REQUIRE(parse_response(load(servlet, *session)).empty());
   }
 }
