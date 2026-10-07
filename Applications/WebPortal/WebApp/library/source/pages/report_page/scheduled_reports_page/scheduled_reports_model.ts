@@ -16,7 +16,7 @@ export abstract class ScheduledReportsModel {
    */
   public abstract run(id: string): Promise<void>;
 
-  /** Copies a scheduled report and inserts it after the original.
+  /** Copies a scheduled report and adds it at the front of the list.
    * @param id - The scheduled report's identifier.
    * @return The created scheduled report, including its assigned identifier.
    */

@@ -140,10 +140,10 @@ describe('LocalScheduledReportsModel', () => {
     const copy = await model.duplicate('1');
     assert.deepEqual(copy, {...original, id: '3'});
     assert.deepEqual(
-      model.schedules.map(schedule => schedule.id), ['1', '3', '2']);
+      model.schedules.map(schedule => schedule.id), ['3', '1', '2']);
     copy.parameters[0].value = 'Changed';
     copy.runDate.label = 'Changed';
-    assert.deepEqual(model.schedules[1], {...original, id: copy.id});
+    assert.deepEqual(model.schedules[0], {...original, id: copy.id});
     await model.run(copy.id);
     await model.delete(copy.id);
     assert.deepEqual(model.runs, [{...original, id: copy.id}]);

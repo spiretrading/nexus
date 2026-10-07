@@ -234,14 +234,11 @@ export class ScheduledReportsController extends
       return;
     }
     const {response, submission} = this.state;
-    const index = response.schedules.findIndex(entry => entry.id === id);
     if(request === this.request && response === originalResponse &&
-        submission.filters.query === '' &&
-        response.status === ScheduledReportsModel.ResponseStatus.READY &&
-        index >= 0) {
+        submission.filters.query === '' && submission.pageIndex === 0 &&
+        response.status === ScheduledReportsModel.ResponseStatus.READY) {
       ++this.request;
-      const schedules = response.schedules.slice();
-      schedules.splice(index + 1, 0, schedule);
+      const schedules = [schedule, ...response.schedules];
       this.setState({response: {...response, isEmpty: false,
         filteredCount: response.filteredCount + 1,
         schedules: schedules.slice(0, ScheduledReportsModel.PAGE_SIZE)}});

@@ -97,15 +97,8 @@ export class LocalScheduledReportsModel extends ScheduledReportsModel {
   public async duplicate(id: string): Promise<ScheduledReportsModel.Schedule> {
     this.ensureLoaded();
     const schedule = copySchedule(this.find(id));
-    while(this.entries.has(String(this.nextId))) {
-      ++this.nextId;
-    }
-    schedule.id = String(this.nextId++);
-    const entries = Array.from(this.entries);
-    const index = entries.findIndex(([key]) => key === id);
-    entries.splice(index + 1, 0, [schedule.id, schedule]);
-    this.entries = new Map(entries);
-    return copySchedule(schedule);
+    schedule.id = this.add(schedule);
+    return schedule;
   }
 
   public async delete(id: string): Promise<void> {
