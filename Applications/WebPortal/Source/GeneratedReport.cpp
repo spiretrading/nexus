@@ -12,15 +12,13 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-namespace {
-  std::string format_date(date value) {
-    static const auto LOCALE =
-      std::locale(std::locale::classic(), new date_facet("%b %d, %Y"));
-    auto stream = std::ostringstream();
-    stream.imbue(LOCALE);
-    stream << value;
-    return stream.str();
-  }
+std::string Nexus::format_report_date(date value) {
+  static const auto LOCALE =
+    std::locale(std::locale::classic(), new date_facet("%b %d, %Y"));
+  auto stream = std::ostringstream();
+  stream.imbue(LOCALE);
+  stream << value;
+  return stream.str();
 }
 
 GeneratedReports Nexus::query_generated_reports(
@@ -61,7 +59,7 @@ GeneratedReports Nexus::query_generated_reports(
       job.m_id, job.m_definition.m_name, format_report_parameters(job),
       Uri("/reports/" + uri_encode(job.m_id)), day);
     auto matches = text.empty() || icontains(report.m_type, text) ||
-      icontains(format_date(day), text) ||
+      icontains(format_report_date(day), text) ||
       std::ranges::any_of(report.m_parameters, [&] (const auto& parameter) {
         return icontains(parameter, text);
       });

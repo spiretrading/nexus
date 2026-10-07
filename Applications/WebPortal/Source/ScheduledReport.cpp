@@ -1,25 +1,12 @@
 #include "WebPortal/ScheduledReport.hpp"
 #include <algorithm>
-#include <locale>
-#include <sstream>
 #include <tuple>
 #include <boost/algorithm/string.hpp>
+#include "WebPortal/GeneratedReport.hpp"
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::gregorian;
 using namespace Nexus;
-
-namespace {
-  std::string format_date(date value) {
-    static const auto LOCALE =
-      std::locale(std::locale::classic(), new date_facet("%b %d, %Y"));
-    auto stream = std::ostringstream();
-    stream.imbue(LOCALE);
-    stream << value;
-    return stream.str();
-  }
-}
 
 ScheduledReport Nexus::make_scheduled_report(const ReportSchedule& schedule) {
   return ScheduledReport(schedule.m_id, schedule.m_definition.m_name,
@@ -50,7 +37,7 @@ ScheduledReports Nexus::query_scheduled_reports(
       title = "Recurring " + title;
     }
     if(icontains(title, text) ||
-        icontains(format_date(schedule.m_run_time.date()), text)) {
+        icontains(format_report_date(schedule.m_run_time.date()), text)) {
       matches.push_back(&schedule);
       continue;
     }

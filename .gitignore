@@ -121,6 +121,7 @@ CTestTestfile.cmake
 *.userprefs
 
 # Build results
+_build_tmp/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/

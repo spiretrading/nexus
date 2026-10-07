@@ -6,7 +6,7 @@
 #include <vector>
 #include <boost/asio/io_context.hpp>
 #include <boost/process/stdio.hpp>
-#include "../Source/ReportProcessGroup.hpp"
+#include "../../Source/ReportProcessGroup.hpp"
 
 using namespace boost::asio;
 using namespace boost::process;

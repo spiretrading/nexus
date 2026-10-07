@@ -89,6 +89,9 @@ namespace Nexus {
     std::vector<GeneratedReport> m_reports;
   };
 
+  /** Formats a report date for text searches. */
+  std::string format_report_date(boost::gregorian::date value);
+
   /** Selects completed reports owned by or shared with an account. */
   GeneratedReports query_generated_reports(const std::vector<ReportJob>& jobs,
     const Beam::DirectoryEntry& account, const GeneratedReportQuery& query,

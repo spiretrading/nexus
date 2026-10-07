@@ -24,6 +24,7 @@ add_executable(WebPortal Source/main.cpp)
 beam_configure_target(WebPortal DEPENDENCIES ${web_portal_dependencies})
 target_link_libraries(WebPortal PRIVATE WebPortalLibrary)
 file(GLOB_RECURSE test_files Tests/*.cpp)
+list(FILTER test_files EXCLUDE REGEX "/FunctionalTests/")
 add_executable(WebPortalTests ${test_files})
 beam_configure_target(WebPortalTests DEPENDENCIES
   ${web_portal_dependencies} DOCTEST)
@@ -41,12 +42,12 @@ if(UNIX)
   target_link_libraries(WebPortalLibrary PUBLIC
     ${BOOST_PROCESS_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY})
   add_executable(ReportProcessFixture EXCLUDE_FROM_ALL
-    FunctionalTests/ReportProcessFixture.cpp)
+    Tests/FunctionalTests/ReportProcessFixture.cpp)
   beam_configure_target(ReportProcessFixture DEPENDENCIES
     ${web_portal_dependencies})
   target_link_libraries(ReportProcessFixture PRIVATE WebPortalLibrary)
   add_executable(ReportProcessTests EXCLUDE_FROM_ALL
-    FunctionalTests/ReportProcessTests.cpp Tests/main.cpp)
+    Tests/FunctionalTests/ReportProcessTests.cpp Tests/main.cpp)
   beam_configure_target(ReportProcessTests DEPENDENCIES
     ${web_portal_dependencies} DOCTEST)
   target_link_libraries(ReportProcessTests PRIVATE WebPortalLibrary)
