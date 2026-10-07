@@ -38,6 +38,7 @@ class App extends React.Component<{}, State> {
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
+        <button onClick={this.onReload}>Reload</button>
       </div>
       <ReportDetailController key={this.state.revision} model={model}
         id={this.state.id} renderContent={renderReportContent}
@@ -51,9 +52,9 @@ class App extends React.Component<{}, State> {
     }
   }
 
-  private reload(): void {
+  private onReload = () => {
     this.setState(state => ({revision: state.revision + 1}));
-  }
+  };
 
   private onDelayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     settings.delay = Math.max(0, Number(event.target.value));
@@ -61,7 +62,6 @@ class App extends React.Component<{}, State> {
 
   private onFailQueries = (event: React.ChangeEvent<HTMLInputElement>) => {
     settings.failQueries = event.target.checked;
-    this.reload();
   };
 
   private onReportChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

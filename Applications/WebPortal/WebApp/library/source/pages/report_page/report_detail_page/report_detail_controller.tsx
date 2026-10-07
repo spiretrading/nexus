@@ -22,26 +22,30 @@ interface State {
   model: ReportDetailModel;
   id: string;
   report: ReportDetailModel.Report;
+  status: ReportDetailPage.Status;
 }
 
 /** Loads a generated report and displays its supplied content viewer. */
 export class ReportDetailController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.state = {model: props.model, id: props.id, report: null};
+    this.state = {model: props.model, id: props.id, report: null, status: null};
     this.mounted = false;
     this.generation = 0;
+    this.loading = false;
+    this.timer = null;
   }
 
   public render(): JSX.Element {
-    if(!this.state.report || this.state.model !== this.props.model ||
+    if(this.state.status === null || this.state.model !== this.props.model ||
         this.state.id !== this.props.id) {
       return <PageLayout/>;
     }
     const report = this.state.report;
-    return <ReportDetailPage key={this.generation} title={report.title}
-      parameters={report.parameters} filePath={report.filePath}
-      content={this.props.renderContent?.(report)}/>;
+    return <ReportDetailPage title={report?.title ?? ''}
+      parameters={report?.parameters ?? []} filePath={report?.filePath}
+      status={this.state.status} onRetry={this.onRetry}
+      content={report && this.props.renderContent?.(report)}/>;
   }
 
   public componentDidMount(): void {
@@ -58,26 +62,59 @@ export class ReportDetailController extends React.Component<Properties, State> {
   public componentWillUnmount(): void {
     this.mounted = false;
     ++this.generation;
+    window.clearTimeout(this.timer);
   }
 
   private async load(): Promise<void> {
     const model = this.props.model;
     const id = this.props.id;
     const generation = ++this.generation;
-    this.setState({model, id, report: null});
+    this.loading = true;
+    window.clearTimeout(this.timer);
+    const status = (() => {
+      if(this.state.model === model && this.state.id === id) {
+        return this.state.status;
+      }
+      return null;
+    })();
+    this.setState({model, id, report: null, status});
+    const PLACEHOLDER_DELAY = 500;
+    this.timer = window.setTimeout(() => {
+      if(this.mounted && generation === this.generation) {
+        this.setState({status: ReportDetailPage.Status.IN_PROGRESS});
+      }
+    }, PLACEHOLDER_DELAY);
     try {
       await model.load();
+      if(!this.mounted || generation !== this.generation) {
+        return;
+      }
       const report = await model.loadReport(id);
       if(this.mounted && generation === this.generation) {
-        this.setState({report});
+        this.setState({report, status: ReportDetailPage.Status.READY});
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
+        this.setState({status: ReportDetailPage.Status.ERROR});
         this.props.onError?.(error);
+      }
+    } finally {
+      if(this.mounted && generation === this.generation) {
+        this.loading = false;
+        window.clearTimeout(this.timer);
+        this.timer = null;
       }
     }
   }
 
+  private onRetry = () => {
+    if(!this.loading) {
+      this.load();
+    }
+  };
+
   private mounted: boolean;
   private generation: number;
+  private loading: boolean;
+  private timer: number;
 }
