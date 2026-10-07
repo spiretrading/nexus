@@ -24,6 +24,7 @@ interface Properties {
 interface State {
   model: EditScheduledReportModel;
   loaded: boolean;
+  submitting: boolean;
   errorMessage: string;
   id: string;
   original: ReportFormTemplate.Value;
@@ -36,7 +37,7 @@ export class EditScheduledReportController extends
   constructor(props: Properties) {
     super(props);
     this.state = {model: props.model, id: props.id, loaded: false,
-      original: null, value: null, errorMessage: ''};
+      submitting: false, original: null, value: null, errorMessage: ''};
     this.mounted = false;
     this.generation = 0;
     this.submitting = false;
@@ -51,7 +52,8 @@ export class EditScheduledReportController extends
       reports={this.props.model.reports} value={this.state.value}
       accountModel={this.props.model.accountModel}
       scopeModel={this.props.model.scopeModel} onChange={this.onChange}
-      submitDisabled={isEqual(this.state.value, this.state.original)}
+      submitDisabled={this.state.submitting ||
+        isEqual(this.state.value, this.state.original)}
       errorMessage={this.state.errorMessage} onSubmit={this.onSubmit}/>;
   }
 
@@ -76,8 +78,8 @@ export class EditScheduledReportController extends
     const id = this.props.id;
     const generation = ++this.generation;
     this.submitting = false;
-    this.setState({model, id, loaded: false, original: null, value: null,
-      errorMessage: ''});
+    this.setState({model, id, loaded: false, submitting: false, original: null,
+      value: null, errorMessage: ''});
     try {
       await model.load();
       const value = await model.loadReport(id);
@@ -101,7 +103,7 @@ export class EditScheduledReportController extends
       return;
     }
     this.submitting = true;
-    this.setState({errorMessage: ''});
+    this.setState({submitting: true, errorMessage: ''});
     const model = this.props.model;
     const generation = this.generation;
     const id = this.props.id;
@@ -112,18 +114,13 @@ export class EditScheduledReportController extends
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
-        const errorMessage = (() => {
-          if(error instanceof Error) {
-            return error.message;
-          }
-          return String(error);
-        })();
-        this.setState({errorMessage});
+        this.setState({errorMessage: 'Server issue'});
         this.props.onError?.(error);
       }
     } finally {
       if(this.mounted && generation === this.generation) {
         this.submitting = false;
+        this.setState({submitting: false});
       }
     }
   };
