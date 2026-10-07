@@ -83,7 +83,7 @@ namespace Nexus {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "timeout") {
         timeout = boost::posix_time::seconds(
-          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
+          static_cast<int>(std::get<Quantity>(parameter.m_value)));
       }
     }
     using Rule = OpposingCancelComplianceRule<
