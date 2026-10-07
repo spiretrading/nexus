@@ -41,15 +41,23 @@ ScheduledReports Nexus::query_scheduled_reports(
       continue;
     }
     result.m_is_empty = false;
+    if(text.empty()) {
+      matches.push_back(&schedule);
+      continue;
+    }
     auto title = schedule.m_definition.m_name;
     if(schedule.m_repeat_interval) {
       title = "Recurring " + title;
     }
+    if(icontains(title, text) ||
+        icontains(format_date(schedule.m_run_time.date()), text)) {
+      matches.push_back(&schedule);
+      continue;
+    }
     auto parameters =
       format_report_parameters(schedule.m_definition, schedule.m_parameters);
-    auto is_match = text.empty() || icontains(title, text) ||
-      icontains(format_date(schedule.m_run_time.date()), text) ||
-      std::ranges::any_of(parameters, [&] (const auto& parameter) {
+    auto is_match = std::ranges::any_of(parameters,
+      [&] (const auto& parameter) {
         return icontains(parameter.m_label, text) ||
           icontains(parameter.m_value, text);
       });
@@ -69,6 +77,7 @@ ScheduledReports Nexus::query_scheduled_reports(
   auto start =
     std::size_t(query.m_page_index) * ScheduledReportQuery::PAGE_SIZE;
   auto end = std::min(start + ScheduledReportQuery::PAGE_SIZE, matches.size());
+  result.m_schedules.reserve(end - start);
   for(auto i = start; i != end; ++i) {
     result.m_schedules.push_back(make_scheduled_report(*matches[i]));
   }

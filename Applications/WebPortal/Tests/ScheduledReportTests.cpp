@@ -114,6 +114,14 @@ TEST_SUITE("ScheduledReport") {
       page = query_scheduled_reports(
         schedules, account, ScheduledReportQuery(text, 0));
       REQUIRE(page.m_filtered_count == 101);
+      REQUIRE(to_json(page.m_schedules.front()) ==
+        to_json(make_scheduled_report(schedules.back())));
+      page = query_scheduled_reports(
+        schedules, account, ScheduledReportQuery(text, 2));
+      REQUIRE(page.m_filtered_count == 101);
+      REQUIRE(page.m_schedules.size() == 1);
+      REQUIRE(to_json(page.m_schedules.front()) ==
+        to_json(make_scheduled_report(schedules.front())));
     }
     for(auto& text : {"recurring", "Dec 07, 2026"}) {
       page = query_scheduled_reports(
@@ -130,6 +138,41 @@ TEST_SUITE("ScheduledReport") {
     auto second = make_schedule("b", account);
     page = query_scheduled_reports({second, first}, account, {});
     REQUIRE(page.m_schedules[0].m_id == "a");
+  }
+
+  TEST_CASE("mixed_filter_matches") {
+    auto account = DirectoryEntry::make_account(1, "Alice");
+    auto schedules = std::vector<ReportSchedule>();
+    for(auto i = 0; i != 5; ++i) {
+      auto schedule = make_schedule(std::to_string(i), account);
+      schedule.m_created += seconds(i);
+      schedule.m_run_time = time_from_string("2026-11-01 12:00:00");
+      if(i == 0) {
+        schedule.m_definition.m_name = "October Summary";
+      } else if(i == 1) {
+        schedule.m_run_time = time_from_string("2026-10-07 12:00:00");
+      } else if(i == 2) {
+        schedule.m_definition.m_parameters[0].m_label = "October Currency";
+      } else if(i == 3) {
+        schedule.m_parameters["account"] =
+          parse<JsonValue>(to_json(DirectoryEntry::make_account(2, "Octavia")));
+      }
+      schedules.push_back(schedule);
+    }
+    auto page = query_scheduled_reports(
+      schedules, account, ScheduledReportQuery(" oCt ", 0));
+    REQUIRE(!page.m_is_empty);
+    REQUIRE(page.m_filtered_count == 4);
+    REQUIRE(page.m_schedules.size() == 4);
+    for(auto i = std::size_t(0); i != page.m_schedules.size(); ++i) {
+      REQUIRE(to_json(page.m_schedules[i]) ==
+        to_json(make_scheduled_report(schedules[3 - i])));
+    }
+    page = query_scheduled_reports(
+      schedules, account, ScheduledReportQuery(" oCt ", 1));
+    REQUIRE(!page.m_is_empty);
+    REQUIRE(page.m_filtered_count == 4);
+    REQUIRE(page.m_schedules.empty());
   }
 
   TEST_CASE("snapshot_and_serialization") {
