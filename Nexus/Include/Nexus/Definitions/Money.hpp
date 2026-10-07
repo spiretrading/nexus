@@ -287,8 +287,8 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
-    auto fraction =
-      static_cast<Quantity>(value) - floor(static_cast<Quantity>(value));
+    auto fraction = std::fmod(
+      static_cast<boost::float64_t>(static_cast<Quantity>(value)), 1);
     if(fraction == 0) {
       return out << static_cast<Quantity>(value) << ".00";
     }

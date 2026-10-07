@@ -1,3 +1,4 @@
+#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
@@ -20,6 +21,23 @@ TEST_SUITE("Money") {
     REQUIRE(to_string(Money::ONE / 1000000) == "0.000001");
     REQUIRE(to_string(13 * Money::CENT + Money::CENT / 2) == "0.135");
     REQUIRE(to_string(3 * Money::CENT + Money::CENT / 2) == "0.035");
+  }
+
+  TEST_CASE("large_value_output") {
+    REQUIRE(to_string(from_json<Money>("10000000000000000000000000")) ==
+      "10000000000000000000.00");
+    REQUIRE(to_string(from_json<Money>("-10000000000000000000000000")) ==
+      "-10000000000000000000.00");
+    REQUIRE(to_string(Money(Quantity::from_representation(1e31))) ==
+      "9999999999999998758486016.00");
+    auto maximum = Quantity::from_representation(
+      std::numeric_limits<double>::max());
+    REQUIRE(to_string(Money(maximum)) == to_string(maximum) + ".00");
+    auto output = std::ostringstream();
+    output << std::showpoint << std::scientific;
+    output.precision(3);
+    output << Money(Quantity(1e19)) << ' ' << 1.0;
+    REQUIRE(output.str() == "10000000000000000000.00 1.000e+00");
   }
 
   TEST_CASE("from_string") {

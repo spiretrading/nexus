@@ -244,11 +244,18 @@ namespace Nexus {
     auto unscaled_value = value.get_representation() / Quantity::MULTIPLIER;
     auto integer_part = boost::float64_t();
     auto fraction = std::modf(unscaled_value, &integer_part);
-    if(fraction == 0) {
+    constexpr auto LIMIT = -static_cast<boost::float64_t>(
+      std::numeric_limits<std::int64_t>::min());
+    if(fraction == 0 && integer_part >= -LIMIT && integer_part < LIMIT) {
       return out << static_cast<std::int64_t>(integer_part);
     }
     auto ifs = boost::io::ios_flags_saver(out);
+    auto precision = boost::io::ios_precision_saver(out);
     out << std::fixed;
+    if(fraction == 0) {
+      out << std::noshowpoint;
+      out.precision(0);
+    }
     out << unscaled_value;
     return out;
   }
