@@ -180,11 +180,18 @@ namespace Nexus {
         std::shared_ptr<WebPortalSession> session);
       Beam::HttpResponse on_load_report_definitions(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_query_report_activities(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_cancel_report_jobs(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_retry_report_jobs(const Beam::HttpRequest& request);
       Beam::HttpResponse on_query_generated_reports(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_download_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_share_reports(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_reports(const Beam::HttpRequest& request);
       Beam::HttpResponse on_query_scheduled_reports(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_scheduled_report(
@@ -193,17 +200,10 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_duplicate_scheduled_report(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_delete_scheduled_report(
-        const Beam::HttpRequest& request);
       Beam::HttpResponse on_run_scheduled_report(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_load_report(const Beam::HttpRequest& request);
-      Beam::HttpResponse on_download_report(const Beam::HttpRequest& request);
-      Beam::HttpResponse on_share_reports(const Beam::HttpRequest& request);
-      Beam::HttpResponse on_delete_reports(const Beam::HttpRequest& request);
-      Beam::HttpResponse on_cancel_report_jobs(
+      Beam::HttpResponse on_delete_scheduled_report(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_retry_report_jobs(const Beam::HttpRequest& request);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(

@@ -1,7 +1,7 @@
 #include <sstream>
 #include <Beam/Json/JsonParser.hpp>
-#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
@@ -19,93 +19,98 @@ namespace {
     return 0;
   }
 
-  struct DefinitionService {
-    int m_loads = 0;
+  class DefinitionService {
+    public:
+      int m_loads = 0;
 
-    void update_schedule(const DirectoryEntry&, const std::string&,
-        const ReportScheduleSubmission&) {
-      throw std::runtime_error("Unexpected schedule update.");
-    }
+      std::vector<ReportDefinition> load_definitions(const DirectoryEntry&) {
+        ++m_loads;
+        return {};
+      }
 
-    ReportSchedule load_schedule(const DirectoryEntry&, const std::string&) {
-      throw std::runtime_error("Unexpected schedule lookup.");
-    }
+      GeneratedReports query(
+          const DirectoryEntry&, const GeneratedReportQuery&) {
+        throw std::runtime_error("Unexpected generated report query.");
+      }
 
-    ScheduledReports query(const DirectoryEntry&, const ScheduledReportQuery&) {
-      throw std::runtime_error("Unexpected schedule query.");
-    }
+      ReportDetail load_report(const DirectoryEntry&, const std::string&) {
+        throw std::runtime_error("Unexpected report detail query.");
+      }
 
-    void store(const ReportSchedule&) {
-      throw std::runtime_error("Unexpected schedule storage.");
-    }
+      ReportFile load_file(const DirectoryEntry&, const std::string&) {
+        throw std::runtime_error("Unexpected file query.");
+      }
 
-    GeneratedReports query(const DirectoryEntry&, const GeneratedReportQuery&) {
-      throw std::runtime_error("Unexpected generated report query.");
-    }
+      ReportActivities query(
+          const DirectoryEntry&, const ReportActivityQuery&) {
+        throw std::runtime_error("Unexpected activity query.");
+      }
 
-    ReportDetail load_report(const DirectoryEntry&, const std::string&) {
-      throw std::runtime_error("Unexpected report detail query.");
-    }
+      std::optional<ReportJob> load_job(const std::string&) {
+        throw std::runtime_error("Unexpected job lookup.");
+      }
 
-    ReportFile load_file(const DirectoryEntry&, const std::string&) {
-      throw std::runtime_error("Unexpected file query.");
-    }
+      void store(const ReportJob&) {
+        throw std::runtime_error("Unexpected job storage.");
+      }
 
-    ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&) {
-      throw std::runtime_error("Unexpected activity query.");
-    }
+      std::string submit(const DirectoryEntry&, const ReportSubmission&) {
+        throw std::runtime_error("Unexpected report submission.");
+      }
 
-    std::vector<ReportDefinition> load_definitions(const DirectoryEntry&) {
-      ++m_loads;
-      return {};
-    }
+      void share(const DirectoryEntry&, const std::vector<std::string>&,
+          const std::vector<DirectoryEntry>&) {
+        throw std::runtime_error("Unexpected report sharing.");
+      }
 
-    std::string submit(const DirectoryEntry&, const ReportSubmission&) {
-      throw std::runtime_error("Unexpected report submission.");
-    }
+      void cancel(const DirectoryEntry&, const std::vector<std::string>&) {
+        throw std::runtime_error("Unexpected report cancellation.");
+      }
 
-    std::string submit(const DirectoryEntry&, const ReportScheduleSubmission&) {
-      throw std::runtime_error("Unexpected report submission.");
-    }
+      void retry(const DirectoryEntry&, const std::vector<std::string>&) {
+        throw std::runtime_error("Unexpected report retry.");
+      }
 
-    void remove_schedule(const DirectoryEntry&, const std::string&) {
-      throw std::runtime_error("Unexpected schedule deletion.");
-    }
+      int execute(const ReportJob&, std::stop_token) {
+        throw std::runtime_error("Unexpected job execution.");
+      }
 
-    void share(const DirectoryEntry&, const std::vector<std::string>&,
-        const std::vector<DirectoryEntry>&) {
-      throw std::runtime_error("Unexpected report sharing.");
-    }
+      void remove(const DirectoryEntry&, const std::vector<std::string>&) {
+        throw std::runtime_error("Unexpected report deletion.");
+      }
 
-    void remove(const DirectoryEntry&, const std::vector<std::string>&) {
-      throw std::runtime_error("Unexpected report deletion.");
-    }
+      void remove(const std::string&) {
+        throw std::runtime_error("Unexpected job removal.");
+      }
 
-    void remove(const std::string&) {
-      throw std::runtime_error("Unexpected job removal.");
-    }
+      ScheduledReports query(
+          const DirectoryEntry&, const ScheduledReportQuery&) {
+        throw std::runtime_error("Unexpected schedule query.");
+      }
 
-    void cancel(const DirectoryEntry&, const std::vector<std::string>&) {
-      throw std::runtime_error("Unexpected report cancellation.");
-    }
+      ReportSchedule load_schedule(const DirectoryEntry&, const std::string&) {
+        throw std::runtime_error("Unexpected schedule lookup.");
+      }
 
-    void retry(const DirectoryEntry&, const std::vector<std::string>&) {
-      throw std::runtime_error("Unexpected report retry.");
-    }
+      void store(const ReportSchedule&) {
+        throw std::runtime_error("Unexpected schedule storage.");
+      }
 
-    std::optional<ReportJob> load_job(const std::string&) {
-      throw std::runtime_error("Unexpected job lookup.");
-    }
+      std::string submit(
+          const DirectoryEntry&, const ReportScheduleSubmission&) {
+        throw std::runtime_error("Unexpected report submission.");
+      }
 
-    void store(const ReportJob&) {
-      throw std::runtime_error("Unexpected job storage.");
-    }
+      void update_schedule(const DirectoryEntry&, const std::string&,
+          const ReportScheduleSubmission&) {
+        throw std::runtime_error("Unexpected schedule update.");
+      }
 
-    int execute(const ReportJob&, std::stop_token) {
-      throw std::runtime_error("Unexpected job execution.");
-    }
+      void remove_schedule(const DirectoryEntry&, const std::string&) {
+        throw std::runtime_error("Unexpected schedule deletion.");
+      }
 
-    void close() {}
+      void close() {}
   };
 
   YAML::Node make_definition() {

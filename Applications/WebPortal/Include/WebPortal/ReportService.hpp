@@ -218,94 +218,98 @@ namespace Nexus {
       void close();
 
     private:
-      struct VirtualReportService {
-        virtual ~VirtualReportService() = default;
+      class VirtualReportService {
+        public:
+          virtual ~VirtualReportService() = default;
 
-        virtual std::vector<ReportDefinition> load_definitions(
-          const Beam::DirectoryEntry& account) = 0;
-        virtual GeneratedReports query(const Beam::DirectoryEntry& account,
-          const GeneratedReportQuery& query) = 0;
-        virtual ReportDetail load_report(
-          const Beam::DirectoryEntry& account, const std::string& id) = 0;
-        virtual ReportFile load_file(
-          const Beam::DirectoryEntry& account, const std::string& id) = 0;
-        virtual ReportActivities query(const Beam::DirectoryEntry& account,
-          const ReportActivityQuery& query) = 0;
-        virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
-        virtual void store(const ReportJob& job) = 0;
-        virtual std::string submit(const Beam::DirectoryEntry& account,
-          const ReportSubmission& submission) = 0;
-        virtual void share(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids,
-          const std::vector<Beam::DirectoryEntry>& recipients) = 0;
-        virtual void cancel(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) = 0;
-        virtual void retry(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) = 0;
-        virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
-        virtual void remove(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) = 0;
-        virtual void remove(const std::string& id) = 0;
-        virtual ScheduledReports query(const Beam::DirectoryEntry& account,
-          const ScheduledReportQuery& query) = 0;
-        virtual ReportSchedule load_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id) = 0;
-        virtual void store(const ReportSchedule& schedule) = 0;
-        virtual std::string submit(const Beam::DirectoryEntry& account,
-          const ReportScheduleSubmission& submission) = 0;
-        virtual void update_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id,
-          const ReportScheduleSubmission& submission) = 0;
-        virtual void remove_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id) = 0;
-        virtual void close() = 0;
+          virtual std::vector<ReportDefinition> load_definitions(
+            const Beam::DirectoryEntry& account) = 0;
+          virtual GeneratedReports query(const Beam::DirectoryEntry& account,
+            const GeneratedReportQuery& query) = 0;
+          virtual ReportDetail load_report(
+            const Beam::DirectoryEntry& account, const std::string& id) = 0;
+          virtual ReportFile load_file(
+            const Beam::DirectoryEntry& account, const std::string& id) = 0;
+          virtual ReportActivities query(const Beam::DirectoryEntry& account,
+            const ReportActivityQuery& query) = 0;
+          virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
+          virtual void store(const ReportJob& job) = 0;
+          virtual std::string submit(const Beam::DirectoryEntry& account,
+            const ReportSubmission& submission) = 0;
+          virtual void share(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids,
+            const std::vector<Beam::DirectoryEntry>& recipients) = 0;
+          virtual void cancel(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) = 0;
+          virtual void retry(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) = 0;
+          virtual int execute(const ReportJob& job, std::stop_token stop) = 0;
+          virtual void remove(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) = 0;
+          virtual void remove(const std::string& id) = 0;
+          virtual ScheduledReports query(const Beam::DirectoryEntry& account,
+            const ScheduledReportQuery& query) = 0;
+          virtual ReportSchedule load_schedule(
+            const Beam::DirectoryEntry& account, const std::string& id) = 0;
+          virtual void store(const ReportSchedule& schedule) = 0;
+          virtual std::string submit(const Beam::DirectoryEntry& account,
+            const ReportScheduleSubmission& submission) = 0;
+          virtual void update_schedule(
+            const Beam::DirectoryEntry& account, const std::string& id,
+            const ReportScheduleSubmission& submission) = 0;
+          virtual void remove_schedule(
+            const Beam::DirectoryEntry& account, const std::string& id) = 0;
+          virtual void close() = 0;
       };
       template<typename S>
-      struct WrappedReportService final : VirtualReportService {
-        using Service = S;
-        Beam::local_ptr_t<Service> m_service;
+      class WrappedReportService final : public VirtualReportService {
+        public:
+          using Service = S;
+          Beam::local_ptr_t<Service> m_service;
 
-        template<typename... Args>
-        WrappedReportService(Args&&... args);
+          template<typename... Args>
+          WrappedReportService(Args&&... args);
 
-        std::vector<ReportDefinition> load_definitions(
-          const Beam::DirectoryEntry& account) override;
-        GeneratedReports query(const Beam::DirectoryEntry& account,
-          const GeneratedReportQuery& query) override;
-        ReportDetail load_report(const Beam::DirectoryEntry& account,
-          const std::string& id) override;
-        ReportFile load_file(const Beam::DirectoryEntry& account,
-          const std::string& id) override;
-        ReportActivities query(const Beam::DirectoryEntry& account,
-          const ReportActivityQuery& query) override;
-        std::optional<ReportJob> load_job(const std::string& id) override;
-        void store(const ReportJob& job) override;
-        std::string submit(const Beam::DirectoryEntry& account,
-          const ReportSubmission& submission) override;
-        void share(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids,
-          const std::vector<Beam::DirectoryEntry>& recipients) override;
-        void cancel(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) override;
-        void retry(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) override;
-        int execute(const ReportJob& job, std::stop_token stop) override;
-        void remove(const Beam::DirectoryEntry& account,
-          const std::vector<std::string>& ids) override;
-        void remove(const std::string& id) override;
-        ScheduledReports query(const Beam::DirectoryEntry& account,
-          const ScheduledReportQuery& query) override;
-        ReportSchedule load_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id) override;
-        void store(const ReportSchedule& schedule) override;
-        std::string submit(const Beam::DirectoryEntry& account,
-          const ReportScheduleSubmission& submission) override;
-        void update_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id,
-          const ReportScheduleSubmission& submission) override;
-        void remove_schedule(
-          const Beam::DirectoryEntry& account, const std::string& id) override;
-        void close() override;
+          std::vector<ReportDefinition> load_definitions(
+            const Beam::DirectoryEntry& account) override;
+          GeneratedReports query(const Beam::DirectoryEntry& account,
+            const GeneratedReportQuery& query) override;
+          ReportDetail load_report(const Beam::DirectoryEntry& account,
+            const std::string& id) override;
+          ReportFile load_file(const Beam::DirectoryEntry& account,
+            const std::string& id) override;
+          ReportActivities query(const Beam::DirectoryEntry& account,
+            const ReportActivityQuery& query) override;
+          std::optional<ReportJob> load_job(const std::string& id) override;
+          void store(const ReportJob& job) override;
+          std::string submit(const Beam::DirectoryEntry& account,
+            const ReportSubmission& submission) override;
+          void share(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids,
+            const std::vector<Beam::DirectoryEntry>& recipients) override;
+          void cancel(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) override;
+          void retry(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) override;
+          int execute(const ReportJob& job, std::stop_token stop) override;
+          void remove(const Beam::DirectoryEntry& account,
+            const std::vector<std::string>& ids) override;
+          void remove(const std::string& id) override;
+          ScheduledReports query(const Beam::DirectoryEntry& account,
+            const ScheduledReportQuery& query) override;
+          ReportSchedule load_schedule(
+            const Beam::DirectoryEntry& account,
+            const std::string& id) override;
+          void store(const ReportSchedule& schedule) override;
+          std::string submit(const Beam::DirectoryEntry& account,
+            const ReportScheduleSubmission& submission) override;
+          void update_schedule(
+            const Beam::DirectoryEntry& account, const std::string& id,
+            const ReportScheduleSubmission& submission) override;
+          void remove_schedule(
+            const Beam::DirectoryEntry& account,
+            const std::string& id) override;
+          void close() override;
       };
       Beam::VirtualPtr<VirtualReportService> m_service;
   };

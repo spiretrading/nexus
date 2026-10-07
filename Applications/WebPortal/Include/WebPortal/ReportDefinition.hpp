@@ -7,11 +7,11 @@
 #include <variant>
 #include <vector>
 #include <Beam/Json/JsonObject.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Serialization/ShuttleJsonValue.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace Nexus {

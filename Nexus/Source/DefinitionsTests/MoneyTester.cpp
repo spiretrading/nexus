@@ -34,8 +34,8 @@ TEST_SUITE("Money") {
       "-10000000000000000000.00");
     REQUIRE(to_string(Money(Quantity::from_representation(1e31))) ==
       "9999999999999998758486016.00");
-    auto maximum = Quantity::from_representation(
-      std::numeric_limits<double>::max());
+    auto maximum =
+      Quantity::from_representation(std::numeric_limits<double>::max());
     REQUIRE(to_string(Money(maximum)) == to_string(maximum) + ".00");
     auto output = std::ostringstream();
     output << std::showpoint << std::scientific;

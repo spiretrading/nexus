@@ -173,23 +173,25 @@ namespace {
       read_string(object.at("name"));
       static_cast<void>(get<bool>(object.at("is_global")));
       for(auto& country : get<std::vector<JsonValue>>(object.at("countries"))) {
-        read_integer(country, 1, 999);
+        constexpr auto MAXIMUM_COUNTRY_CODE = 999;
+        read_integer(country, 1, MAXIMUM_COUNTRY_CODE);
       }
       for(auto& venue : get<std::vector<JsonValue>>(object.at("venues"))) {
         auto& text = read_string(venue);
-        if(text.empty() || text.size() > 4) {
+        if(text.empty() || text.size() > Venue::Code::SIZE) {
           throw std::invalid_argument("Invalid venue.");
         }
       }
       for(auto& ticker : get<std::vector<JsonValue>>(object.at("tickers"))) {
         auto& entry = read_object(ticker);
-        if(read_string(entry.at("symbol")).empty() ||
-            std::ranges::any_of(read_string(entry.at("symbol")),
-              [] (auto character) {
-                return std::isspace(static_cast<unsigned char>(character));
-              }) ||
-            read_string(entry.at("venue")).empty() ||
-            read_string(entry.at("venue")).size() > 4) {
+        auto& symbol = read_string(entry.at("symbol"));
+        auto has_whitespace = std::ranges::any_of(symbol,
+          [] (auto character) {
+            return std::isspace(static_cast<unsigned char>(character));
+          });
+        auto& venue = read_string(entry.at("venue"));
+        if(symbol.empty() || has_whitespace || venue.empty() ||
+            venue.size() > Venue::Code::SIZE) {
           throw std::invalid_argument("Invalid ticker.");
         }
       }

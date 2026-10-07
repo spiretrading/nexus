@@ -29,9 +29,8 @@ namespace {
     parameters["currency"] = 840;
     parameters["period"] =
       parse<JsonValue>(R"({"start":"20261001","end":null})");
-    return ReportJob("report /?", account, {}, std::move(definition),
-      std::move(parameters), {"private_argument"},
-      time_from_string("2026-10-01 12:00:00"),
+    return ReportJob("report /?", account, {}, definition, parameters,
+      {"private_argument"}, time_from_string("2026-10-01 12:00:00"),
       time_from_string("2026-10-06 12:00:00"), {}, ReportJob::Status::COMPLETED,
       0, "private_diagnostic");
   }

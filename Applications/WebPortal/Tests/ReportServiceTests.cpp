@@ -23,12 +23,14 @@ namespace {
   template<typename E>
   concept AcceptsExecutor = requires { typename LocalReportService<E>; };
 
-  struct LvalueExecutor {
-    int operator ()(const ReportJob&, std::stop_token&) &;
+  class LvalueExecutor {
+    public:
+      int operator ()(const ReportJob&, std::stop_token&) &;
   };
 
-  struct RvalueExecutor {
-    int operator ()(const ReportJob&, std::stop_token) &&;
+  class RvalueExecutor {
+    public:
+      int operator ()(const ReportJob&, std::stop_token) &&;
   };
 
   static_assert(AcceptsExecutor<LvalueExecutor>);
@@ -38,30 +40,33 @@ namespace {
   static_assert(!AcceptsExecutor<int (*)(ReportJob&, std::stop_token)>);
   static_assert(!AcceptsExecutor<int (*)(const ReportJob&, std::stop_token&&)>);
 
-  struct RvalueReportService {
-    void update_schedule(const DirectoryEntry&, const std::string&,
-      const ReportScheduleSubmission&);
-    ReportSchedule load_schedule(const DirectoryEntry&, const std::string&);
-    ScheduledReports query(const DirectoryEntry&, const ScheduledReportQuery&);
-    void store(const ReportSchedule&);
-    ReportDetail load_report(const DirectoryEntry&, const std::string&);
-    ReportFile load_file(const DirectoryEntry&, const std::string&);
-    GeneratedReports query(const DirectoryEntry&, const GeneratedReportQuery&);
-    ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&);
-    std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
-    std::string submit(DirectoryEntry&&, ReportSubmission&&);
-    std::string submit(DirectoryEntry&&, ReportScheduleSubmission&&);
-    void remove_schedule(const DirectoryEntry&, const std::string&);
-    void share(const DirectoryEntry&, const std::vector<std::string>&,
-      const std::vector<DirectoryEntry>&);
-    void remove(const DirectoryEntry&, const std::vector<std::string>&);
-    void remove(const std::string&);
-    void cancel(const DirectoryEntry&, const std::vector<std::string>&);
-    void retry(const DirectoryEntry&, const std::vector<std::string>&);
-    std::optional<ReportJob> load_job(const std::string&);
-    void store(const ReportJob& job);
-    int execute(const ReportJob& job, std::stop_token stop);
-    void close();
+  class RvalueReportService {
+    public:
+      std::vector<ReportDefinition> load_definitions(DirectoryEntry&&);
+      GeneratedReports query(
+        const DirectoryEntry&, const GeneratedReportQuery&);
+      ReportDetail load_report(const DirectoryEntry&, const std::string&);
+      ReportFile load_file(const DirectoryEntry&, const std::string&);
+      ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&);
+      std::optional<ReportJob> load_job(const std::string&);
+      void store(const ReportJob& job);
+      std::string submit(DirectoryEntry&&, ReportSubmission&&);
+      void share(const DirectoryEntry&, const std::vector<std::string>&,
+        const std::vector<DirectoryEntry>&);
+      void cancel(const DirectoryEntry&, const std::vector<std::string>&);
+      void retry(const DirectoryEntry&, const std::vector<std::string>&);
+      int execute(const ReportJob& job, std::stop_token stop);
+      void remove(const DirectoryEntry&, const std::vector<std::string>&);
+      void remove(const std::string&);
+      ScheduledReports query(
+        const DirectoryEntry&, const ScheduledReportQuery&);
+      ReportSchedule load_schedule(const DirectoryEntry&, const std::string&);
+      void store(const ReportSchedule&);
+      std::string submit(DirectoryEntry&&, ReportScheduleSubmission&&);
+      void update_schedule(const DirectoryEntry&, const std::string&,
+        const ReportScheduleSubmission&);
+      void remove_schedule(const DirectoryEntry&, const std::string&);
+      void close();
   };
 
   static_assert(!IsReportService<RvalueReportService>);

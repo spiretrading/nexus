@@ -22,9 +22,8 @@ namespace {
     parameters["account"] = parse<JsonValue>(to_json(account));
     auto definition = ReportDefinition("example", "Example", {}, {},
       {{"account", "Account", "DirectoryEntry", true}}, "private_command");
-    return ReportJob(std::move(id), account, {}, std::move(definition),
-      std::move(parameters), {"private_argument"},
-      time_from_string("2026-10-01 12:00:00"),
+    return ReportJob(id, account, {}, definition, parameters,
+      {"private_argument"}, time_from_string("2026-10-01 12:00:00"),
       time_from_string("2026-10-05 13:00:00"), std::nullopt,
       ReportJob::Status::COMPLETED);
   }

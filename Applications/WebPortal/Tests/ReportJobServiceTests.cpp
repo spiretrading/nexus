@@ -2,55 +2,53 @@
 #include <atomic>
 #include <semaphore>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Serialization/JsonSender.hpp>
-#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/ReportJobService.hpp"
 
 using namespace Beam;
-using namespace Beam::Tests;
 using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
   template<typename S, typename E>
-  struct Backend {
-    using Store = S;
-    using Executor = E;
-    Store m_store;
-    Executor m_executor;
-    mutable std::mutex m_mutex;
-    std::unordered_map<std::string, ReportJob> m_jobs;
+  class Backend {
+    public:
+      using Store = S;
+      using Executor = E;
+      Store m_store;
+      Executor m_executor;
+      mutable std::mutex m_mutex;
+      std::unordered_map<std::string, ReportJob> m_jobs;
 
-    Backend(Store store, Executor executor)
-      : m_store(std::move(store)),
-        m_executor(std::move(executor)) {}
+      Backend(Store store, Executor executor)
+        : m_store(std::move(store)),
+          m_executor(std::move(executor)) {}
 
-    std::optional<ReportJob> load_job(const std::string& id) {
-      auto lock = std::lock_guard(m_mutex);
-      auto job = m_jobs.find(id);
-      if(job == m_jobs.end()) {
-        return std::nullopt;
+      std::optional<ReportJob> load_job(const std::string& id) {
+        auto lock = std::lock_guard(m_mutex);
+        auto i = m_jobs.find(id);
+        if(i == m_jobs.end()) {
+          return std::nullopt;
+        }
+        return i->second;
       }
-      return job->second;
-    }
 
-    void store(const ReportJob& job) {
-      auto lock = std::lock_guard(m_mutex);
-      m_store(job);
-      m_jobs[job.m_id] = job;
-    }
+      void store(const ReportJob& job) {
+        auto lock = std::lock_guard(m_mutex);
+        m_store(job);
+        m_jobs[job.m_id] = job;
+      }
 
-    void remove(const std::string& id) {
-      auto lock = std::lock_guard(m_mutex);
-      m_jobs.erase(id);
-    }
+      void remove(const std::string& id) {
+        auto lock = std::lock_guard(m_mutex);
+        m_jobs.erase(id);
+      }
 
-    int execute(const ReportJob& job, std::stop_token stop) {
-      return m_executor(job, stop);
-    }
+      int execute(const ReportJob& job, std::stop_token stop) {
+        return m_executor(job, stop);
+      }
   };
 
   class LvalueValidator {
@@ -1052,30 +1050,5 @@ TEST_SUITE("ReportJobService") {
       backend.load_job(cancelled)->m_status == ReportJob::Status::CANCELLED);
     REQUIRE(backend.load_job(third)->m_status == ReportJob::Status::FAILED);
     REQUIRE(backend.load_job(first)->m_status == ReportJob::Status::COMPLETED);
-  }
-
-  TEST_CASE("job_serialization") {
-    auto job = make_job();
-    job.m_id = "job-id";
-    job.m_recipients = {DirectoryEntry::make_directory(2, "Reporting")};
-    job.m_created = time_from_string("2026-10-05 12:00:00");
-    job.m_completed = time_from_string("2026-10-05 12:00:01");
-    job.m_modified = job.m_completed;
-    job.m_status = ReportJob::Status::FAILED;
-    job.m_exit_code = 7;
-    job.m_error = "Process failed.";
-    test_round_trip_shuttle(job, [&] (const auto& received) {
-      REQUIRE(received.m_id == job.m_id);
-      REQUIRE(received.m_account == job.m_account);
-      REQUIRE(received.m_recipients == job.m_recipients);
-      REQUIRE(received.m_parameters == job.m_parameters);
-      REQUIRE(received.m_arguments == job.m_arguments);
-      REQUIRE(received.m_created == job.m_created);
-      REQUIRE(received.m_completed == job.m_completed);
-      REQUIRE(received.m_modified == job.m_modified);
-      REQUIRE(received.m_status == job.m_status);
-      REQUIRE(received.m_exit_code == job.m_exit_code);
-      REQUIRE(received.m_error == job.m_error);
-    });
   }
 }

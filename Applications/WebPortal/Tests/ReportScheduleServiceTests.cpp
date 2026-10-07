@@ -72,26 +72,6 @@ namespace {
         return m_definitions;
       }
 
-      std::vector<ReportSchedule> load_schedules() {
-        auto lock = std::lock_guard(m_mutex);
-        auto result = std::vector<ReportSchedule>();
-        for(auto& [id, schedule] : m_schedules) {
-          result.push_back(schedule);
-        }
-        return result;
-      }
-
-      ReportSchedule load_schedule(
-          const DirectoryEntry& account, const std::string& id) {
-        auto lock = std::lock_guard(m_mutex);
-        auto schedule = m_schedules.find(id);
-        if(schedule == m_schedules.end() || schedule->second.m_account !=
-            account) {
-          throw ReportNotFoundException();
-        }
-        return schedule->second;
-      }
-
       std::vector<ReportJob> load_jobs() {
         auto lock = std::lock_guard(m_mutex);
         auto result = std::vector<ReportJob>();
@@ -103,16 +83,16 @@ namespace {
 
       std::optional<ReportJob> load_job(const std::string& id) {
         auto lock = std::lock_guard(m_mutex);
-        auto job = m_jobs.find(id);
-        if(job == m_jobs.end()) {
+        auto i = m_jobs.find(id);
+        if(i == m_jobs.end()) {
           return std::nullopt;
         }
         if(m_is_ready_failing &&
-            job->second.m_status == ReportJob::Status::STAGED) {
+            i->second.m_status == ReportJob::Status::STAGED) {
           m_is_ready_failing = false;
           throw std::runtime_error("Injected queue handoff failure.");
         }
-        return job->second;
+        return i->second;
       }
 
       void store(const ReportJob& job) {
@@ -128,6 +108,35 @@ namespace {
         m_states.push(job);
       }
 
+      void remove(const std::string& id) {
+        auto lock = std::lock_guard(m_mutex);
+        m_jobs.erase(id);
+      }
+
+      int execute(const ReportJob& job, std::stop_token stop) {
+        return m_executor(job, stop);
+      }
+
+      std::vector<ReportSchedule> load_schedules() {
+        auto lock = std::lock_guard(m_mutex);
+        auto result = std::vector<ReportSchedule>();
+        for(auto& [id, schedule] : m_schedules) {
+          result.push_back(schedule);
+        }
+        return result;
+      }
+
+      ReportSchedule load_schedule(
+          const DirectoryEntry& account, const std::string& id) {
+        auto lock = std::lock_guard(m_mutex);
+        auto i = m_schedules.find(id);
+        if(i == m_schedules.end() || i->second.m_account !=
+            account) {
+          throw ReportNotFoundException();
+        }
+        return i->second;
+      }
+
       void store(const ReportSchedule& schedule) {
         auto lock = std::lock_guard(m_mutex);
         if(m_is_pending_failing && schedule.m_pending_job_id) {
@@ -139,20 +148,11 @@ namespace {
         m_schedules[schedule.m_id] = schedule;
       }
 
-      void remove(const std::string& id) {
-        auto lock = std::lock_guard(m_mutex);
-        m_jobs.erase(id);
-      }
-
       void remove_schedule(const std::string& id) {
         auto lock = std::lock_guard(m_mutex);
         if(m_schedules.erase(id) == 0) {
           throw ReportNotFoundException();
         }
-      }
-
-      int execute(const ReportJob& job, std::stop_token stop) {
-        return m_executor(job, stop);
       }
   };
 

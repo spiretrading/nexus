@@ -343,10 +343,10 @@ namespace Nexus {
         m_backend->store(job);
       });
       m_results.erase(job.m_id);
-      auto entry = m_pending.find(job.m_id);
-      if(entry != m_pending.end()) {
-        entry->second->m_job = std::move(job);
-        stops.push_back(entry->second->m_stop);
+      auto i = m_pending.find(job.m_id);
+      if(i != m_pending.end()) {
+        i->second->m_job = std::move(job);
+        stops.push_back(i->second->m_stop);
       }
     }
   }
@@ -476,8 +476,8 @@ namespace Nexus {
   void ReportJobService<B, T>::enqueue(const std::shared_ptr<Job>& entry) {
     m_pending.emplace(entry->m_job.m_id, entry);
     auto account = entry->m_job.m_account.m_id;
-    auto [queue, is_new] = m_jobs.try_emplace(account);
-    queue->second.push_back(entry);
+    auto [i, is_new] = m_jobs.try_emplace(account);
+    i->second.push_back(entry);
     if(is_new) {
       m_accounts.push_back(account);
       m_is_available.notify_one();
@@ -489,9 +489,9 @@ namespace Nexus {
   void ReportJobService<B, T>::finish(const std::shared_ptr<Job>& entry) {
     m_pending.erase(entry->m_job.m_id);
     auto account = entry->m_job.m_account.m_id;
-    auto queue = m_jobs.find(account);
-    if(queue->second.empty()) {
-      m_jobs.erase(queue);
+    auto i = m_jobs.find(account);
+    if(i->second.empty()) {
+      m_jobs.erase(i);
     } else {
       m_accounts.push_back(account);
       m_is_available.notify_one();

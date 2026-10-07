@@ -312,14 +312,14 @@ void ReportingWebServlet::generate_group_reports(
 HttpResponse ReportingWebServlet::on_load_report_definitions(
     const HttpRequest& request) {
   struct Response {
-    const ReportDefinition& m_definition;
+    const ReportDefinition* m_definition;
 
     void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("id", m_definition.m_id);
-      shuttle.shuttle("name", m_definition.m_name);
-      shuttle.shuttle("description", m_definition.m_description);
-      shuttle.shuttle("parameters", m_definition.m_parameters);
-      shuttle.shuttle("output", m_definition.m_output);
+      shuttle.shuttle("id", m_definition->m_id);
+      shuttle.shuttle("name", m_definition->m_name);
+      shuttle.shuttle("description", m_definition->m_description);
+      shuttle.shuttle("parameters", m_definition->m_parameters);
+      shuttle.shuttle("output", m_definition->m_output);
     }
   };
   auto response = HttpResponse();
@@ -331,9 +331,79 @@ HttpResponse ReportingWebServlet::on_load_report_definitions(
   auto definitions = m_reports.load_definitions(session->get_account());
   auto values = std::vector<Response>();
   for(auto& definition : definitions) {
-    values.emplace_back(definition);
+    values.emplace_back(&definition);
   }
   session->shuttle_response(values, out(response));
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_query_report_activities(
+    const HttpRequest& request) {
+  struct Sort {
+    double m_column;
+    double m_order;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("column", m_column);
+      shuttle.shuttle("order", m_order);
+    }
+  };
+  struct Parameters {
+    Sort m_sort;
+    double m_page_index;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("sort", m_sort);
+      shuttle.shuttle("page_index", m_page_index);
+    }
+  };
+  struct Response {
+    const ReportActivities* m_page;
+
+    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
+      constexpr auto READY = 1;
+      auto is_empty = m_page->m_total_count == 0;
+      shuttle.shuttle("status", READY);
+      shuttle.shuttle("is_empty", is_empty);
+      auto total_count = static_cast<double>(m_page->m_total_count);
+      shuttle.shuttle("total_count", total_count);
+      shuttle.shuttle("activities", m_page->m_activities);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto query = ReportActivityQuery();
+  try {
+    auto parameters = session->shuttle_parameters<Parameters>(request);
+    auto read_index = [] (double value, double maximum) {
+      if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
+          value > maximum) {
+        throw std::invalid_argument("Invalid report activity query.");
+      }
+      return static_cast<std::uint32_t>(value);
+    };
+    query.m_column = ReportActivityQuery::Column(read_index(
+      parameters.m_sort.m_column,
+      static_cast<int>(ReportActivityQuery::Column::DATE_MODIFIED)));
+    query.m_order = ReportActivityQuery::Order(read_index(
+      parameters.m_sort.m_order,
+      static_cast<int>(ReportActivityQuery::Order::DESCENDING)));
+    query.m_page_index = read_index(parameters.m_page_index,
+      std::numeric_limits<std::uint32_t>::max());
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto page = m_reports.query(session->get_account(), query);
+    session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
   return response;
 }
 
@@ -417,37 +487,13 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
   return response;
 }
 
-HttpResponse ReportingWebServlet::on_query_report_activities(
+HttpResponse ReportingWebServlet::on_cancel_report_jobs(
     const HttpRequest& request) {
-  struct Sort {
-    double m_column;
-    double m_order;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("column", m_column);
-      shuttle.shuttle("order", m_order);
-    }
-  };
   struct Parameters {
-    Sort m_sort;
-    double m_page_index;
+    std::vector<std::string> m_ids;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("sort", m_sort);
-      shuttle.shuttle("page_index", m_page_index);
-    }
-  };
-  struct Response {
-    const ReportActivities& m_page;
-
-    void shuttle(JsonSender<SharedBuffer>& shuttle, unsigned int version) {
-      constexpr auto READY = 1;
-      auto is_empty = m_page.m_total_count == 0;
-      shuttle.shuttle("status", READY);
-      shuttle.shuttle("is_empty", is_empty);
-      auto total_count = static_cast<double>(m_page.m_total_count);
-      shuttle.shuttle("total_count", total_count);
-      shuttle.shuttle("activities", m_page.m_activities);
+      shuttle.shuttle("ids", m_ids);
     }
   };
   auto response = HttpResponse();
@@ -456,31 +502,53 @@ HttpResponse ReportingWebServlet::on_query_report_activities(
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto query = ReportActivityQuery();
+  auto parameters = Parameters();
   try {
-    auto parameters = session->shuttle_parameters<Parameters>(request);
-    auto read_index = [] (double value, double maximum) {
-      if(!std::isfinite(value) || std::trunc(value) != value || value < 0 ||
-          value > maximum) {
-        throw std::invalid_argument("Invalid report activity query.");
-      }
-      return static_cast<std::uint32_t>(value);
-    };
-    query.m_column = ReportActivityQuery::Column(read_index(
-      parameters.m_sort.m_column,
-      static_cast<int>(ReportActivityQuery::Column::DATE_MODIFIED)));
-    query.m_order = ReportActivityQuery::Order(read_index(
-      parameters.m_sort.m_order,
-      static_cast<int>(ReportActivityQuery::Order::DESCENDING)));
-    query.m_page_index = read_index(parameters.m_page_index,
-      std::numeric_limits<std::uint32_t>::max());
+    parameters = session->shuttle_parameters<Parameters>(request);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::BAD_REQUEST);
     return response;
   }
   try {
-    auto page = m_reports.query(session->get_account(), query);
-    session->shuttle_response(Response(page), out(response));
+    m_reports.cancel(session->get_account(), parameters.m_ids);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_retry_report_jobs(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.retry(session->get_account(), parameters.m_ids);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }
@@ -587,6 +655,159 @@ HttpResponse ReportingWebServlet::on_query_generated_reports(
   try {
     auto page = m_reports.query(session->get_account(), query);
     session->shuttle_response(Response(&page), out(response));
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_load_report(const HttpRequest& request) {
+  struct Parameters {
+    std::string m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  response.set_header({"Cache-Control", "private, no-store"});
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    if(parameters.m_id.empty()) {
+      throw std::invalid_argument("Missing report identifier.");
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto report =
+      m_reports.load_report(session->get_account(), parameters.m_id);
+    session->shuttle_response(report, out(response));
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_download_report(
+    const HttpRequest& request) {
+  auto response = HttpResponse();
+  response.set_header({"Cache-Control", "private, no-store"});
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = parse_query(request.get_uri());
+  if(parameters.count("id") != 1 || parameters.find("id")->second.empty()) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    auto file = m_reports.load_file(
+      session->get_account(), parameters.find("id")->second);
+    auto is_valid_type = !file.m_media_type.empty() &&
+      std::ranges::all_of(file.m_media_type, [] (auto character) {
+        return character >= ' ' && character <= '~';
+      });
+    if(!is_valid_type) {
+      throw std::runtime_error("Invalid report media type.");
+    }
+    response.set_header({"Content-Type", file.m_media_type});
+    auto name = file.m_name.u8string();
+    response.set_header({"Content-Disposition",
+      "attachment; filename*=UTF-8''" +
+        uri_encode(std::string(name.begin(), name.end()))});
+    response.set_header({"X-Content-Type-Options", "nosniff"});
+    response.set_body(file.m_content);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_share_reports(const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+    std::vector<JsonValue> m_recipients;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+      shuttle.shuttle("recipients", m_recipients);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  auto recipients = std::vector<DirectoryEntry>();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+    for(auto& value : parameters.m_recipients) {
+      recipients.push_back(parse_report_entry(value));
+    }
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.share(session->get_account(), parameters.m_ids, recipients);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
+  }
+  return response;
+}
+
+HttpResponse ReportingWebServlet::on_delete_reports(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::vector<std::string> m_ids;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("ids", m_ids);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session || !session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = Parameters();
+  try {
+    parameters = session->shuttle_parameters<Parameters>(request);
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  try {
+    m_reports.remove(session->get_account(), parameters.m_ids);
+  } catch(const ReportNotFoundException&) {
+    response.set_status_code(HttpStatusCode::NOT_FOUND);
+  } catch(const std::invalid_argument&) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
   }
@@ -826,43 +1047,6 @@ HttpResponse ReportingWebServlet::on_duplicate_scheduled_report(
   return response;
 }
 
-HttpResponse ReportingWebServlet::on_delete_scheduled_report(
-    const HttpRequest& request) {
-  struct Parameters {
-    std::string m_id;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("id", m_id);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = Parameters();
-  try {
-    parameters = session->shuttle_parameters<Parameters>(request);
-    if(parameters.m_id.empty()) {
-      throw std::invalid_argument("Missing schedule identifier.");
-    }
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    m_reports.remove_schedule(session->get_account(), parameters.m_id);
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
 HttpResponse ReportingWebServlet::on_run_scheduled_report(
     const HttpRequest& request) {
   struct Parameters {
@@ -900,7 +1084,8 @@ HttpResponse ReportingWebServlet::on_run_scheduled_report(
   return response;
 }
 
-HttpResponse ReportingWebServlet::on_load_report(const HttpRequest& request) {
+HttpResponse ReportingWebServlet::on_delete_scheduled_report(
+    const HttpRequest& request) {
   struct Parameters {
     std::string m_id;
 
@@ -909,7 +1094,6 @@ HttpResponse ReportingWebServlet::on_load_report(const HttpRequest& request) {
     }
   };
   auto response = HttpResponse();
-  response.set_header({"Cache-Control", "private, no-store"});
   auto session = m_sessions->find(request);
   if(!session || !session->is_logged_in()) {
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
@@ -919,198 +1103,14 @@ HttpResponse ReportingWebServlet::on_load_report(const HttpRequest& request) {
   try {
     parameters = session->shuttle_parameters<Parameters>(request);
     if(parameters.m_id.empty()) {
-      throw std::invalid_argument("Missing report identifier.");
+      throw std::invalid_argument("Missing schedule identifier.");
     }
   } catch(const std::exception&) {
     response.set_status_code(HttpStatusCode::BAD_REQUEST);
     return response;
   }
   try {
-    auto report =
-      m_reports.load_report(session->get_account(), parameters.m_id);
-    session->shuttle_response(report, out(response));
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
-HttpResponse ReportingWebServlet::on_download_report(
-    const HttpRequest& request) {
-  auto response = HttpResponse();
-  response.set_header({"Cache-Control", "private, no-store"});
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = parse_query(request.get_uri());
-  if(parameters.count("id") != 1 || parameters.find("id")->second.empty()) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    auto file = m_reports.load_file(
-      session->get_account(), parameters.find("id")->second);
-    auto is_valid_type = !file.m_media_type.empty() &&
-      std::ranges::all_of(file.m_media_type, [] (auto character) {
-        return character >= ' ' && character <= '~';
-      });
-    if(!is_valid_type) {
-      throw std::runtime_error("Invalid report media type.");
-    }
-    response.set_header({"Content-Type", file.m_media_type});
-    auto name = file.m_name.u8string();
-    response.set_header({"Content-Disposition",
-      "attachment; filename*=UTF-8''" +
-        uri_encode(std::string(name.begin(), name.end()))});
-    response.set_header({"X-Content-Type-Options", "nosniff"});
-    response.set_body(file.m_content);
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
-HttpResponse ReportingWebServlet::on_share_reports(const HttpRequest& request) {
-  struct Parameters {
-    std::vector<std::string> m_ids;
-    std::vector<JsonValue> m_recipients;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("ids", m_ids);
-      shuttle.shuttle("recipients", m_recipients);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = Parameters();
-  auto recipients = std::vector<DirectoryEntry>();
-  try {
-    parameters = session->shuttle_parameters<Parameters>(request);
-    for(auto& value : parameters.m_recipients) {
-      recipients.push_back(parse_report_entry(value));
-    }
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    m_reports.share(session->get_account(), parameters.m_ids, recipients);
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
-HttpResponse ReportingWebServlet::on_delete_reports(
-    const HttpRequest& request) {
-  struct Parameters {
-    std::vector<std::string> m_ids;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("ids", m_ids);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = Parameters();
-  try {
-    parameters = session->shuttle_parameters<Parameters>(request);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    m_reports.remove(session->get_account(), parameters.m_ids);
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
-HttpResponse ReportingWebServlet::on_cancel_report_jobs(
-    const HttpRequest& request) {
-  struct Parameters {
-    std::vector<std::string> m_ids;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("ids", m_ids);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = Parameters();
-  try {
-    parameters = session->shuttle_parameters<Parameters>(request);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    m_reports.cancel(session->get_account(), parameters.m_ids);
-  } catch(const ReportNotFoundException&) {
-    response.set_status_code(HttpStatusCode::NOT_FOUND);
-  } catch(const std::invalid_argument&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::INTERNAL_SERVER_ERROR);
-  }
-  return response;
-}
-
-HttpResponse ReportingWebServlet::on_retry_report_jobs(
-    const HttpRequest& request) {
-  struct Parameters {
-    std::vector<std::string> m_ids;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("ids", m_ids);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session || !session->is_logged_in()) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = Parameters();
-  try {
-    parameters = session->shuttle_parameters<Parameters>(request);
-  } catch(const std::exception&) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
-    return response;
-  }
-  try {
-    m_reports.retry(session->get_account(), parameters.m_ids);
+    m_reports.remove_schedule(session->get_account(), parameters.m_id);
   } catch(const ReportNotFoundException&) {
     response.set_status_code(HttpStatusCode::NOT_FOUND);
   } catch(const std::invalid_argument&) {

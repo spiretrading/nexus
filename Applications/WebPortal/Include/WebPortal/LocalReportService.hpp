@@ -244,22 +244,22 @@ namespace Nexus {
   std::optional<ReportJob> LocalReportService<E>::load_job(
       const std::string& id) {
     auto lock = std::lock_guard(m_mutex);
-    auto job = std::ranges::find(m_jobs, id, &ReportJob::m_id);
-    if(job == m_jobs.end()) {
+    auto i = std::ranges::find(m_jobs, id, &ReportJob::m_id);
+    if(i == m_jobs.end()) {
       return std::nullopt;
     }
-    return *job;
+    return *i;
   }
 
   template<IsReportExecutor E>
   void LocalReportService<E>::store(const ReportJob& job) {
     auto snapshot = job;
     auto lock = std::lock_guard(m_mutex);
-    auto existing = std::ranges::find(m_jobs, job.m_id, &ReportJob::m_id);
-    if(existing == m_jobs.end()) {
+    auto i = std::ranges::find(m_jobs, job.m_id, &ReportJob::m_id);
+    if(i == m_jobs.end()) {
       m_jobs.push_back(std::move(snapshot));
     } else {
-      *existing = std::move(snapshot);
+      *i = std::move(snapshot);
     }
   }
 
@@ -330,12 +330,12 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& id) {
     m_open_state.ensure_open();
     auto lock = std::lock_guard(m_mutex);
-    auto schedule = std::ranges::find(m_schedules, id, &ReportSchedule::m_id);
-    if(schedule == m_schedules.end() || schedule->m_account != account ||
+    auto i = std::ranges::find(m_schedules, id, &ReportSchedule::m_id);
+    if(i == m_schedules.end() || i->m_account != account ||
         account.m_type != Beam::DirectoryEntry::Type::ACCOUNT) {
       throw ReportNotFoundException();
     }
-    return *schedule;
+    return *i;
   }
 
   template<IsReportExecutor E>
@@ -343,12 +343,12 @@ namespace Nexus {
     m_open_state.ensure_open();
     auto snapshot = schedule;
     auto lock = std::lock_guard(m_mutex);
-    auto existing =
+    auto i =
       std::ranges::find(m_schedules, schedule.m_id, &ReportSchedule::m_id);
-    if(existing == m_schedules.end()) {
+    if(i == m_schedules.end()) {
       m_schedules.push_back(std::move(snapshot));
     } else {
-      *existing = std::move(snapshot);
+      *i = std::move(snapshot);
     }
   }
 
