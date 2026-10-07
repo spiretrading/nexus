@@ -1,5 +1,5 @@
 #include "Spire/CanvasView/CanvasTableWidget.hpp"
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
+#include <Beam/Utilities/OverloadSet.hpp>
 #include <QApplication>
 #include <QEvent>
 #include <QKeyEvent>
@@ -155,7 +155,7 @@ void CanvasTableWidget::Edit(const CanvasNode& node, QEvent* event) {
   m_editor.reset(new CanvasNodeEditor());
   auto editAction = m_editor->GetEditor(Ref(node), Ref(*this),
     Ref(*m_userProfile), event);
-  auto visitor = make_variant_lambda_visitor(
+  Beam::visit(editAction,
     [&] (QWidget* cellEditor) {
       m_cellEditor = cellEditor;
       m_cellEditor->installEventFilter(this);
@@ -166,7 +166,6 @@ void CanvasTableWidget::Edit(const CanvasNode& node, QEvent* event) {
     [&] (QUndoCommand* command) {
       m_commandSignal(command);
     });
-  std::visit(visitor, editAction);
 }
 
 connection CanvasTableWidget::ConnectBeginEditSignal(

@@ -1,7 +1,6 @@
 #include "Spire/Canvas/LuaNodes/RecordLuaReactorParameter.hpp"
 #include <Beam/Utilities/Instantiate.hpp>
 #include <boost/mpl/remove.hpp>
-#include <boost/variant/get.hpp>
 #include "Spire/Canvas/LuaNodes/LuaInterop.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
@@ -20,7 +19,7 @@ namespace {
 
     template<typename T>
     void operator ()(lua_State& luaState, const Record::Field& value) const {
-      PushLuaValue<T>()(luaState, boost::get<T>(value));
+      PushLuaValue<T>()(luaState, std::get<T>(value));
     }
   };
 
@@ -33,7 +32,7 @@ namespace {
       lua_pushstring(&state, field.m_name.c_str());
       if(field.m_type->GetCompatibility(RecordType::GetEmptyRecordType()) ==
           CanvasType::Compatibility::EQUAL) {
-        PushRecord(state, boost::get<Record>(value),
+        PushRecord(state, std::get<Record>(value),
           static_cast<const RecordType&>(*field.m_type));
       } else {
         instantiate<LuaValuePusher>(field.m_type->GetNativeType())(
