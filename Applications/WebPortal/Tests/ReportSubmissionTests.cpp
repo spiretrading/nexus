@@ -156,7 +156,7 @@ TEST_SUITE("ReportSubmission") {
       {"decimal", "Decimal", "Decimal", true, {}}};
     auto input = get<JsonObject>(parse<JsonValue>(R"({
       "date":"2026-10-05", "time":"12:34:56.125",
-      "timestamp":"20261005T123456", "money":"1.25",
+      "timestamp":"20261005T123456", "money":1250000,
       "scope":"*", "decimal":0.000000125})"));
     auto values = prepare_report_parameters(
       definition, input, client.get_account(), client);
@@ -178,6 +178,82 @@ TEST_SUITE("ReportSubmission") {
     input.set("time", "12:99:00");
     REQUIRE_THROWS_AS(prepare_report_parameters(definition, input,
       client.get_account(), client), std::invalid_argument);
+  }
+
+  TEST_CASE("money_normalization") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_parameters = {{"money", "Money", "Money", true}};
+    definition.m_arguments = {"{money}"};
+    auto cases = std::vector({0.0, 1000000.0, 1250000.0, -1250000.0,
+      0.1, -0.1, 9007199254740991.0, -9007199254740991.0,
+      9007199254740992.0, -9007199254740992.0});
+    for(auto expected : cases) {
+      CAPTURE(expected);
+      auto input = JsonObject();
+      input["money"] = expected;
+      auto values = prepare_report_parameters(
+        definition, input, client.get_account(), client);
+      REQUIRE(values.at("money") == expected);
+      auto restored = get<JsonObject>(parse<JsonValue>(to_string(values)));
+      auto repeated = prepare_report_parameters(
+        definition, restored, client.get_account(), client);
+      REQUIRE(repeated.at("money") == expected);
+      REQUIRE(make_report_arguments(definition, repeated) ==
+        make_report_arguments(definition, values));
+      definition.m_parameters[0].m_default = input.at("money");
+      REQUIRE(prepare_report_parameters(definition, JsonObject(),
+        client.get_account(), client).at("money") == expected);
+    }
+  }
+
+  TEST_CASE("invalid_money") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_parameters = {{"money", "Money", "Money", true}};
+    auto cases = std::vector<JsonValue>({"1.0", "1000000", true,
+      JsonObject(), std::vector<JsonValue>(),
+      std::numeric_limits<double>::infinity(),
+      -std::numeric_limits<double>::infinity(),
+      std::numeric_limits<double>::quiet_NaN()});
+    for(auto& value : cases) {
+      CAPTURE(value);
+      auto input = JsonObject();
+      input["money"] = value;
+      REQUIRE_THROWS_AS(prepare_report_parameters(definition, input,
+        client.get_account(), client), std::invalid_argument);
+      definition.m_parameters[0].m_default = value;
+      REQUIRE_THROWS_AS(prepare_report_parameters(definition, JsonObject(),
+        client.get_account(), client), std::invalid_argument);
+    }
+  }
+
+  TEST_CASE("saved_money_parameters") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_parameters = {{"money", "Money", "Money", true}};
+    definition.m_arguments = {"{money}"};
+    auto input = JsonObject();
+    input["money"] = 0.1;
+    auto now = time_from_string("2026-10-06 12:00:00");
+    auto submission = ReportScheduleSubmission(
+      ReportSubmission(definition.m_id, input, {}),
+      time_from_string("2026-10-07 12:00:00"), {}, "UTC");
+    auto schedule = prepare_report_schedule(
+      {definition}, client.get_account(), submission, client, now);
+    submission.m_report.m_parameters = schedule.m_parameters;
+    auto updated =
+      prepare_report_schedule(schedule, submission, {definition}, client, now);
+    auto duplicate = prepare_report_schedule(
+      {definition}, client.get_account(), submission, client, now);
+    auto job = prepare_report_job(
+      {definition}, client.get_account(), submission.m_report, client);
+    REQUIRE(updated.m_parameters.at("money") == 0.1);
+    REQUIRE(duplicate.m_parameters.at("money") == 0.1);
+    REQUIRE(job.m_parameters.at("money") == 0.1);
   }
 
   TEST_CASE("directory_permissions") {

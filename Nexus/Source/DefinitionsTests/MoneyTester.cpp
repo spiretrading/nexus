@@ -82,6 +82,16 @@ TEST_SUITE("Money") {
     REQUIRE(try_parse_money("0.00000100") == (Money::ONE / 1000000));
   }
 
+  TEST_CASE("parse_overflow") {
+    for(auto& value : {"9223372036854775808", "-9223372036854775808",
+        "0.9223372036854775808", "-0.9223372036854775808"}) {
+      REQUIRE(!try_parse_money(value));
+      REQUIRE_THROWS_AS(parse_money(value), std::invalid_argument);
+    }
+    REQUIRE(static_cast<Quantity>(
+      parse_money("0.0000001")).get_representation() == doctest::Approx(0.1));
+  }
+
   TEST_CASE("floor_to") {
     auto value = 2.055 * Money::CENT;
     auto floored_value = floor_to(value, Money::CENT);

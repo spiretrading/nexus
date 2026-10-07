@@ -6,6 +6,7 @@
 #include <string_view>
 #include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include "Nexus/Definitions/Money.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -122,8 +123,17 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
     }
     parameter.m_is_required = extract<bool>(entry, "required", false);
     if(auto value = entry["default"]) {
-      auto ancestors = std::vector<YAML::Node>();
-      parameter.m_default = parse_json(value, ancestors);
+      if(parameter.m_type == "Money" && !value.IsNull()) {
+        if(auto money = try_parse_money(value.as<std::string>())) {
+          parameter.m_default =
+            static_cast<Quantity>(*money).get_representation();
+        } else {
+          throw std::runtime_error("Invalid Money default.");
+        }
+      } else {
+        auto ancestors = std::vector<YAML::Node>();
+        parameter.m_default = parse_json(value, ancestors);
+      }
     }
     definition.m_parameters.push_back(std::move(parameter));
   }

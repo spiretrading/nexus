@@ -13,7 +13,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/StandardCurrencies.hpp"
 
@@ -123,15 +122,8 @@ namespace {
       constexpr auto MAXIMUM = static_cast<double>(
         (std::uint64_t(1) << std::numeric_limits<double>::digits) - 1);
       return read_integer(value, -MAXIMUM, MAXIMUM);
-    } else if(type == "Decimal") {
+    } else if(type == "Decimal" || type == "Money") {
       return read_number(value);
-    } else if(type == "Money") {
-      if(auto text = get<std::string>(&value)) {
-        return encode_value(parse_money(*text));
-      }
-      constexpr auto MAXIMUM = static_cast<double>(
-        (std::uint64_t(1) << std::numeric_limits<double>::digits) - 1);
-      return read_integer(value, -MAXIMUM, MAXIMUM);
     } else if(type == "Currency") {
       auto currency = [&] {
         if(auto text = get<std::string>(&value)) {

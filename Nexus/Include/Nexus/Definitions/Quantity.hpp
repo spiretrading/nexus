@@ -176,12 +176,17 @@ namespace Nexus {
         ++i;
       }
     }
+    constexpr auto RADIX = 10;
+    constexpr auto MAXIMUM = std::numeric_limits<std::int64_t>::max();
     auto left_hand = std::int64_t(0);
     auto has_decimals = false;
     while(i != value.end()) {
       if(*i >= '0' && *i <= '9') {
-        left_hand *= 10;
-        left_hand += *i - '0';
+        auto digit = *i - '0';
+        if(left_hand > (MAXIMUM - digit) / RADIX) {
+          return boost::none;
+        }
+        left_hand = RADIX * left_hand + digit;
         ++i;
       } else if(*i == '.') {
         has_decimals = true;
@@ -200,8 +205,11 @@ namespace Nexus {
       }
       while(i <= q) {
         if(*i >= '0' && *i <= '9') {
-          right_hand *= 10;
-          right_hand += *i - '0';
+          auto digit = *i - '0';
+          if(right_hand > (MAXIMUM - digit) / RADIX) {
+            return boost::none;
+          }
+          right_hand = RADIX * right_hand + digit;
           --exponent;
           ++i;
         } else {
@@ -212,7 +220,7 @@ namespace Nexus {
     auto lhs = Quantity::MULTIPLIER * static_cast<boost::float64_t>(left_hand);
     auto rhs = Quantity::MULTIPLIER * static_cast<boost::float64_t>(right_hand);
     while(exponent != 0) {
-      rhs /= 10;
+      rhs /= RADIX;
       ++exponent;
     }
     return Quantity::from_representation(sign * (lhs + rhs));

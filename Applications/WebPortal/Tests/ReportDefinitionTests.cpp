@@ -249,7 +249,7 @@ TEST_SUITE("ReportDefinition") {
     REQUIRE(get<double>(get<JsonObject>(parameters[0]).at("default")) == 0);
     REQUIRE(
       get<double>(get<JsonObject>(parameters[1]).at("default")) == 0.000000125);
-    REQUIRE(get<JsonObject>(parameters[2]).at("default") == "001");
+    REQUIRE(get<JsonObject>(parameters[2]).at("default") == 1000000);
     auto& date = get<JsonObject>(parameters[3]);
     REQUIRE(static_cast<bool>(date.get("default")));
     REQUIRE(get<JsonNull>(&date.at("default")));
@@ -270,6 +270,51 @@ TEST_SUITE("ReportDefinition") {
     receiver.shuttle(received);
     REQUIRE(parse<JsonValue>(to_json(received)) ==
       parse<JsonValue>(to_json(definition)));
+  }
+
+  TEST_CASE("money_defaults") {
+    auto cases = std::vector({
+      std::pair("0", 0.0),
+      std::pair("+.", 0.0),
+      std::pair("-.", 0.0),
+      std::pair("1", 1000000.0),
+      std::pair("1.0", 1000000.0),
+      std::pair("1.25", 1250000.0),
+      std::pair("-1.25", -1250000.0),
+      std::pair("0.0000001", 0.1),
+      std::pair("9007199254.740992", 9007199254740992.0)});
+    for(auto& [text, expected] : cases) {
+      CAPTURE(std::string(text));
+      for(auto is_quoted : {false, true}) {
+        auto node = make_definition();
+        auto scalar = std::string(text);
+        if(is_quoted) {
+          scalar = '"' + scalar + '"';
+        }
+        node["parameters"] = YAML::Load(
+          "[{name: amount, label: Amount, type: Money, default: " + scalar +
+          "}]");
+        auto definition = parse_report_definition(node);
+        REQUIRE(*definition.m_parameters[0].m_default == expected);
+        auto encoded = get<JsonObject>(parse<JsonValue>(to_json(definition)));
+        auto& parameters = get<std::vector<JsonValue>>(encoded.at("parameters"));
+        REQUIRE(get<JsonObject>(parameters[0]).at("default") == expected);
+      }
+    }
+    for(auto& value : {"null", "~"}) {
+      auto node = make_definition();
+      node["parameters"][0]["type"] = "Money";
+      node["parameters"][0]["default"] = YAML::Load(value);
+      auto definition = parse_report_definition(node);
+      REQUIRE(get<JsonNull>(&*definition.m_parameters[0].m_default));
+    }
+    for(auto& value : {"true", "[]", "{}", "\"\"", ".inf", ".nan",
+        "18446744073709551616", "0.9223372036854775808"}) {
+      auto node = make_definition();
+      node["parameters"][0]["type"] = "Money";
+      node["parameters"][0]["default"] = YAML::Load(value);
+      REQUIRE_THROWS_AS(parse_report_definition(node), std::runtime_error);
+    }
   }
 
   TEST_CASE("invalid_definitions") {

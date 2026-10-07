@@ -1,3 +1,4 @@
+#include <vector>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -20,6 +21,32 @@ TEST_SUITE("Quantity") {
     REQUIRE(parse_quantity("1") == Quantity(1));
     REQUIRE(parse_quantity("1.1") == Quantity(1.1));
     REQUIRE(try_parse_quantity("1a.1") == none);
+  }
+
+  TEST_CASE("parse_overflow") {
+    for(auto& value : std::vector<std::string>({
+        "9223372036854775808", "-9223372036854775808",
+        "0.9223372036854775808", "-0.9223372036854775808",
+        "18446744073709551616", std::string(1024, '9'),
+        "0." + std::string(1024, '9')})) {
+      CAPTURE(value);
+      REQUIRE(!try_parse_quantity(value));
+      REQUIRE_THROWS_AS(parse_quantity(value), std::invalid_argument);
+    }
+    constexpr auto MAXIMUM = std::numeric_limits<std::int64_t>::max();
+    auto text = std::to_string(MAXIMUM);
+    auto expected = static_cast<double>(MAXIMUM) * Quantity::MULTIPLIER;
+    REQUIRE(parse_quantity(text).get_representation() == expected);
+    REQUIRE(parse_quantity('-' + text).get_representation() == -expected);
+    REQUIRE(parse_quantity("0." + text).get_representation() ==
+      doctest::Approx(expected / 1e19));
+    REQUIRE(parse_quantity(std::string(1024, '0') + "1") == Quantity(1));
+    REQUIRE(
+      parse_quantity("0.125" + std::string(1024, '0')) == Quantity(0.125));
+    REQUIRE(
+      parse_quantity("0.0000001").get_representation() == doctest::Approx(0.1));
+    REQUIRE(parse_quantity(
+      "0." + std::string(64, '0') + "1").get_representation() > 0);
   }
 
   TEST_CASE("assignment") {
