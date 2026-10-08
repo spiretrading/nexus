@@ -229,6 +229,7 @@ TEST_SUITE("ReportService") {
     get<JsonObject>(
       *loaded[0].m_parameters[1].m_default).set("start", "2001-01-01");
     auto submission = ReportSubmission();
+    submission.m_time_zone = "UTC";
     submission.m_report_type = "example";
     submission.m_parameters["count"] = 5;
     submission.m_recipients = {
@@ -270,6 +271,7 @@ TEST_SUITE("ReportService") {
       Timer(std::in_place_type<TriggerTimer>));
     auto service = ReportService(local);
     auto submission = ReportSubmission();
+    submission.m_time_zone = "UTC";
     submission.m_report_type = "example";
     submission.m_parameters["count"] = 0.5;
     REQUIRE_THROWS_AS(
@@ -305,6 +307,7 @@ TEST_SUITE("ReportService") {
         Timer(std::in_place_type<TriggerTimer>),
         Timer(std::in_place_type<TriggerTimer>));
     auto submission = ReportSubmission();
+    submission.m_time_zone = "UTC";
     submission.m_report_type = "example";
     REQUIRE(!service.submit(client.get_account(), submission).empty());
     REQUIRE(observer->pop() == 7);

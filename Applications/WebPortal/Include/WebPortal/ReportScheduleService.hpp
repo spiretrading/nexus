@@ -268,12 +268,13 @@ namespace Details {
             schedule.m_parameters, schedule.m_recipients);
           *job =
             prepare_report_job(m_backend.load_definitions(schedule.m_account),
-              schedule.m_account, submission, m_client);
+              schedule.m_account, submission, m_client, schedule.m_run_time);
         } catch(const std::exception& exception) {
           *job = ReportJob(id, schedule.m_account, schedule.m_recipients,
             schedule.m_definition, schedule.m_parameters, {}, now, now, now,
             ReportJob::Status::STAGED, {}, exception.what(), false);
         }
+        job->m_reference_time = schedule.m_run_time;
         job->m_status = ReportJob::Status::STAGED;
         job->m_id = id;
         job->m_created = now;

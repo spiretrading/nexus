@@ -69,6 +69,11 @@ namespace Nexus {
 
     /** Whether the parameters and command arguments have been prepared. */
     bool m_is_prepared = true;
+
+    /**
+     * The local calendar time used to resolve date rules, including retries.
+     */
+    boost::posix_time::ptime m_reference_time;
   };
 
   /** Formats a normalized parameter value for display. */
@@ -124,6 +129,7 @@ namespace Beam {
       shuttle.shuttle("exit_code", value.m_exit_code);
       shuttle.shuttle("error", value.m_error);
       shuttle.shuttle("is_prepared", value.m_is_prepared);
+      shuttle.shuttle("reference_time", value.m_reference_time);
     }
   };
 }

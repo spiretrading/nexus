@@ -426,11 +426,11 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
       shuttle.shuttle("parameters", m_parameters);
       shuttle.shuttle("recipients", m_recipients);
       shuttle.shuttle("scheduled", m_is_scheduled);
+      shuttle.shuttle("time_zone", m_time_zone);
       if(m_is_scheduled) {
         shuttle.shuttle("schedule_date_time", m_start_time);
         shuttle.shuttle("repeats", m_is_repeating);
         shuttle.shuttle("repeat_interval", m_interval);
-        shuttle.shuttle("time_zone", m_time_zone);
       }
     }
   };
@@ -446,6 +446,7 @@ HttpResponse ReportingWebServlet::on_submit_report(const HttpRequest& request) {
     auto parameters = session->shuttle_parameters<Parameters>(request);
     submission.m_report_type = std::move(parameters.m_report_type);
     submission.m_parameters = get<JsonObject>(parameters.m_parameters);
+    submission.m_time_zone = parameters.m_time_zone;
     for(auto& recipient : parameters.m_recipients) {
       submission.m_recipients.push_back(parse_report_entry(recipient));
     }

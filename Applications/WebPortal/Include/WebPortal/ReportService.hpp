@@ -343,7 +343,8 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& id) {
     auto schedule = service.load_schedule(account, id);
     auto submission = ReportSubmission(schedule.m_definition.m_id,
-      std::move(schedule.m_parameters), std::move(schedule.m_recipients));
+      std::move(schedule.m_parameters), std::move(schedule.m_recipients),
+      schedule.m_time_zone);
     return service.submit(account, submission);
   }
 

@@ -17,6 +17,9 @@ namespace Nexus {
 
     /** The accounts/groups receiving access to the result. */
     std::vector<Beam::DirectoryEntry> m_recipients;
+
+    /** The IANA timezone used to resolve immediate report date rules. */
+    std::string m_time_zone;
   };
 
   /** The editable settings of a scheduled report. */
@@ -67,6 +70,14 @@ namespace Nexus {
   ReportJob prepare_report_job(const std::vector<ReportDefinition>& definitions,
     const Beam::DirectoryEntry& account, const ReportSubmission& submission,
     Beam::ServiceLocatorClient& client);
+
+  /**
+   * Prepares a job, resolving date rules against a local calendar timestamp.
+   * The resulting parameters contain fixed dates for execution and retries.
+   */
+  ReportJob prepare_report_job(const std::vector<ReportDefinition>& definitions,
+    const Beam::DirectoryEntry& account, const ReportSubmission& submission,
+    Beam::ServiceLocatorClient& client, boost::posix_time::ptime reference);
 
   /** Resolves distinct, readable accounts/groups for report sharing. */
   std::vector<Beam::DirectoryEntry> prepare_report_recipients(

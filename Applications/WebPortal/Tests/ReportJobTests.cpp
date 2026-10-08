@@ -24,7 +24,7 @@ TEST_SUITE("ReportJob") {
       {"--count", "5"}, time_from_string("2026-10-01 12:00:00"),
       time_from_string("2026-10-01 12:01:00"),
       time_from_string("2026-10-01 12:02:00"), ReportJob::Status::FAILED,
-      7, "Report failed.", false);
+      7, "Report failed.", false, time_from_string("2026-09-30 23:00:00"));
     auto expected = parse<JsonValue>(to_json(job));
     test_round_trip_shuttle(job, [&] (const auto& received) {
       REQUIRE(parse<JsonValue>(to_json(received)) == expected);

@@ -267,8 +267,9 @@ namespace Nexus {
   std::string LocalReportService<E>::submit(const Beam::DirectoryEntry& account,
       const ReportSubmission& submission) {
     m_open_state.ensure_open();
-    return m_service->submit(
-      prepare_report_job(load_definitions(), account, submission, m_client));
+    return m_service->submit(prepare_report_job(
+      load_definitions(), account, submission, m_client, convert_report_time(
+        m_time_client.get_time(), "UTC", submission.m_time_zone)));
   }
 
   template<IsReportExecutor E>

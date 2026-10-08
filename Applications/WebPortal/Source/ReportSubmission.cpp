@@ -293,6 +293,83 @@ namespace {
     }
     return result;
   }
+
+  JsonObject resolve_parameters(const ReportDefinition& definition,
+      const JsonObject& parameters, ptime reference) {
+    auto result = parameters;
+    for(auto& parameter : definition.m_parameters) {
+      if(parameter.m_type != "DateRange") {
+        continue;
+      }
+      auto value = parameters.get(parameter.m_name);
+      if(!value || std::get_if<JsonNull>(&*value)) {
+        if(parameter.m_default) {
+          value = *parameter.m_default;
+        }
+      }
+      if(!value || std::get_if<JsonNull>(&*value)) {
+        continue;
+      }
+      try {
+        auto& range = read_object(*value);
+        auto rules = range.get("rules");
+        if(!rules) {
+          continue;
+        }
+        auto& bounds = read_object(*rules);
+        auto resolved = JsonObject();
+        for(auto& name : {"start", "end"}) {
+          auto& rule = read_member(bounds, name);
+          if(std::get_if<JsonNull>(&rule)) {
+            resolved[name] = JsonNull();
+          } else {
+            resolved[name] =
+              to_iso_string(apply(from_json<DateRule>(rule), reference).date());
+          }
+        }
+        result[parameter.m_name] = std::move(resolved);
+      } catch(const std::exception&) {
+        std::throw_with_nested(std::invalid_argument(
+          "Invalid report parameter: " + parameter.m_name));
+      }
+    }
+    return result;
+  }
+
+  ReportJob prepare_job(const std::vector<ReportDefinition>& definitions,
+      const DirectoryEntry& account, const ReportSubmission& submission,
+      ServiceLocatorClient& client, const std::optional<ptime>& reference) {
+    auto i = std::ranges::find(
+      definitions, submission.m_report_type, &ReportDefinition::m_id);
+    if(i == definitions.end()) {
+      throw ReportNotFoundException();
+    }
+    auto permitted =
+      filter_report_definitions(std::span(&*i, 1), account, client);
+    if(permitted.empty()) {
+      throw ReportNotFoundException();
+    }
+    auto& definition = permitted.front();
+    auto owner = client.load_directory_entry(account.m_id);
+    auto input = [&] {
+      if(reference) {
+        return resolve_parameters(
+          definition, submission.m_parameters, *reference);
+      }
+      return submission.m_parameters;
+    }();
+    auto parameters =
+      prepare_report_parameters(definition, input, owner, client);
+    auto arguments = make_report_arguments(definition, parameters);
+    auto recipients =
+      prepare_report_recipients(submission.m_recipients, owner, client);
+    auto job = ReportJob({}, std::move(owner), std::move(recipients),
+      std::move(definition), std::move(parameters), std::move(arguments));
+    if(reference) {
+      job.m_reference_time = *reference;
+    }
+    return job;
+  }
 }
 
 ReportNotFoundException::ReportNotFoundException()
@@ -398,25 +475,17 @@ ReportJob Nexus::prepare_report_job(
     const std::vector<ReportDefinition>& definitions,
     const DirectoryEntry& account, const ReportSubmission& submission,
     ServiceLocatorClient& client) {
-  auto i = std::ranges::find(
-    definitions, submission.m_report_type, &ReportDefinition::m_id);
-  if(i == definitions.end()) {
-    throw ReportNotFoundException();
+  return prepare_job(definitions, account, submission, client, std::nullopt);
+}
+
+ReportJob Nexus::prepare_report_job(
+    const std::vector<ReportDefinition>& definitions,
+    const DirectoryEntry& account, const ReportSubmission& submission,
+    ServiceLocatorClient& client, ptime reference) {
+  if(reference.is_special()) {
+    throw std::invalid_argument("Invalid report reference timestamp.");
   }
-  auto permitted =
-    filter_report_definitions(std::span(&*i, 1), account, client);
-  if(permitted.empty()) {
-    throw ReportNotFoundException();
-  }
-  auto& definition = permitted.front();
-  auto owner = client.load_directory_entry(account.m_id);
-  auto parameters = prepare_report_parameters(
-    definition, submission.m_parameters, owner, client);
-  auto arguments = make_report_arguments(definition, parameters);
-  auto recipients =
-    prepare_report_recipients(submission.m_recipients, owner, client);
-  return ReportJob({}, std::move(owner), std::move(recipients),
-    std::move(definition), std::move(parameters), std::move(arguments));
+  return prepare_job(definitions, account, submission, client, reference);
 }
 
 std::vector<DirectoryEntry> Nexus::prepare_report_recipients(
@@ -469,8 +538,8 @@ void Nexus::prepare_report_retries(std::vector<ReportJob>& jobs,
     if(!job.m_is_prepared) {
       auto submission = ReportSubmission(
         job.m_definition.m_id, job.m_parameters, job.m_recipients);
-      auto prepared =
-        prepare_report_job(definitions, job.m_account, submission, client);
+      auto prepared = prepare_report_job(
+        definitions, job.m_account, submission, client, job.m_reference_time);
       job.m_definition = std::move(prepared.m_definition);
       job.m_parameters = std::move(prepared.m_parameters);
       job.m_recipients = std::move(prepared.m_recipients);

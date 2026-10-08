@@ -1,3 +1,4 @@
+#include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
@@ -20,6 +21,35 @@ namespace {
 }
 
 TEST_SUITE("ReportScheduleRun") {
+  TEST_CASE("date_rules_use_run_now_in_schedule_timezone") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = ReportDefinition("example", "Example", {}, {"*"},
+      {{"period", "Period", "DateRange", true}}, "program", {"{period.start}"});
+    auto parameters = JsonObject();
+    parameters["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"DayOffset","value":{"offset":0}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    auto time = FixedTimeClient(time_from_string("2024-03-01 02:00:00"));
+    auto schedule = ReportSchedule("schedule", client.get_account(), definition,
+      parameters, {}, time.get_time(),
+      time_from_string("2024-03-02 09:00:00"),
+      time_from_string("2024-03-02 09:00:00"), {}, "America/Toronto");
+    auto started = Queue<ReportJob>();
+    auto service = LocalReportService({definition}, client,
+      [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
+      Timer(std::in_place_type<TriggerTimer>));
+    service.store(schedule);
+    auto id = run_schedule(service, schedule.m_account, schedule.m_id);
+    auto job = started.pop();
+    REQUIRE(job.m_id == id);
+    REQUIRE(job.m_arguments == std::vector<std::string>({"20240229"}));
+    REQUIRE(job.m_reference_time == time_from_string("2024-02-29 21:00:00"));
+    REQUIRE(to_json(service.load_schedule(schedule.m_account, schedule.m_id)) ==
+      to_json(schedule));
+  }
+
   TEST_CASE("owned_schedule_execution_and_validation") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();

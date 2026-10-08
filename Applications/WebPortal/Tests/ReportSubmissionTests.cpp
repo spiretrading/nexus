@@ -245,6 +245,86 @@ TEST_SUITE("ReportSubmission") {
 
   }
 
+  TEST_CASE("date_rules_resolve_before_argument_expansion") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_arguments = {"{period.start}", "{period.end}"};
+    auto input = make_parameters(client.get_account());
+    input["period"] = parse<JsonValue>(R"({"start":"invalid","end":17,
+      "rules":{"start":{"type":"MonthBoundary","value":{
+        "offset":-1,"boundary":"Last","day_offset":-1}},
+        "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    auto reference = time_from_string("2024-03-01 09:00:00");
+    auto job = prepare_report_job({definition}, client.get_account(),
+      ReportSubmission("example", input, {}), client, reference);
+    REQUIRE(job.m_arguments ==
+      std::vector<std::string>({"20240228", "20240301"}));
+    REQUIRE(job.m_reference_time == reference);
+    REQUIRE(!get<JsonObject>(job.m_parameters.at("period")).get("rules"));
+    REQUIRE(get<JsonObject>(input.at("period")).get("rules").has_value());
+    definition.m_parameters.back().m_default = input.at("period");
+    auto defaults = make_parameters(client.get_account());
+    REQUIRE(prepare_report_job({definition}, client.get_account(),
+      ReportSubmission("example", defaults, {}), client, reference).
+        m_arguments == job.m_arguments);
+    auto jobs = std::vector({job});
+    prepare_report_retries(jobs, {definition}, client);
+    REQUIRE(jobs.front().m_parameters == job.m_parameters);
+    REQUIRE(jobs.front().m_arguments == job.m_arguments);
+    input["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"DayOffset","value":{"offset":1}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    REQUIRE_THROWS_AS(prepare_report_job({definition}, client.get_account(),
+      ReportSubmission("example", input, {}), client, reference),
+      std::invalid_argument);
+  }
+
+  TEST_CASE("immediate_date_rules_use_browser_timezone") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_arguments = {"{period.start}", "{period.end}"};
+    auto time = FixedTimeClient(time_from_string("2024-03-01 02:00:00"));
+    auto started = Queue<ReportJob>();
+    auto reports = LocalReportService({definition}, client,
+      [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 1,
+      Timer(std::in_place_type<TriggerTimer>),
+      Timer(std::in_place_type<TriggerTimer>));
+    auto sessions = WebSessionStore<WebPortalSession>();
+    auto session = sessions.create();
+    session->set_account(client.get_account());
+    auto servlet = ReportingWebServlet(Ref(sessions), &reports);
+    auto body = get<JsonObject>(parse<JsonValue>(R"({"report_type":"example",
+      "scheduled":false,"recipients":[],"parameters":{}})"));
+    auto parameters = make_parameters(client.get_account());
+    parameters["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"DayOffset","value":{"offset":0}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    body["parameters"] = parameters;
+    REQUIRE(submit(servlet, *session, body).get_status_code() ==
+      HttpStatusCode::BAD_REQUEST);
+    for(auto& [zone, expected] : std::vector({
+        std::pair("America/Toronto", "20240229"),
+        std::pair("Asia/Tokyo", "20240301")})) {
+      body.set("time_zone", zone);
+      REQUIRE(submit(servlet, *session, body).get_status_code() ==
+        HttpStatusCode::OK);
+      auto job = started.pop();
+      REQUIRE(job.m_arguments ==
+        std::vector<std::string>({expected, expected}));
+      REQUIRE(job.m_reference_time ==
+        convert_report_time(time.get_time(), "UTC", zone));
+      REQUIRE(!get<JsonObject>(job.m_parameters.at("period")).get("rules"));
+    }
+    for(auto& invalid : {"", "Not/AZone"}) {
+      body.set("time_zone", invalid);
+      REQUIRE(submit(servlet, *session, body).get_status_code() ==
+        HttpStatusCode::BAD_REQUEST);
+    }
+    REQUIRE(reports.load_jobs().size() == 2);
+  }
+
   TEST_CASE("parameter_validation") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -424,6 +504,7 @@ TEST_SUITE("ReportSubmission") {
     body["parameters"] = make_parameters(client.get_account());
     body["recipients"] = std::vector<JsonValue>();
     body["scheduled"] = false;
+    body.set("time_zone", "UTC");
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     REQUIRE(reports.load_jobs().empty());
@@ -454,6 +535,7 @@ TEST_SUITE("ReportSubmission") {
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::BAD_REQUEST);
     body["scheduled"] = false;
+    body.set("time_zone", "UTC");
     body["parameters"] = JsonObject();
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::BAD_REQUEST);

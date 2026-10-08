@@ -1,5 +1,6 @@
 #include <latch>
 #include <semaphore>
+#include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
@@ -729,11 +730,98 @@ TEST_SUITE("ReportScheduleService") {
     worker.close();
   }
 
+  TEST_CASE("date_rules_use_occurrence_time_and_retry_snapshot") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_start_time = time_from_string("2024-02-29 23:30:00");
+    source.m_run_time = source.m_start_time;
+    source.m_time_zone = "America/Toronto";
+    source.m_definition.m_parameters.push_back(
+      ReportParameterDefinition("period", "Period", "DateRange", true));
+    source.m_definition.m_arguments = {"{period.start}", "{period.end}"};
+    source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"MonthBoundary","value":{
+        "offset":0,"boundary":"First","day_offset":0}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    auto backend = Backend([] (const auto&, auto) { return 1; });
+    backend.m_definitions = {source.m_definition};
+    backend.store(source);
+    auto time = FixedTimeClient(time_from_string("2024-03-03 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
+      TimeClient(&time), &timer);
+    auto first = wait_for_terminal(backend);
+    REQUIRE(first.m_is_prepared);
+    REQUIRE(first.m_reference_time == source.m_run_time);
+    REQUIRE(first.m_arguments ==
+      std::vector<std::string>({"20240201", "20240229"}));
+    REQUIRE(backend.load_jobs().size() == 1);
+    auto next = backend.load_schedule(source.m_account, source.m_id);
+    REQUIRE(next.m_run_time == time_from_string("2024-03-03 23:30:00"));
+    REQUIRE(next.m_parameters == source.m_parameters);
+    time.set(time_from_string("2024-03-04 04:30:00"));
+    timer.trigger();
+    auto second = wait_for_terminal(backend);
+    REQUIRE(second.m_arguments ==
+      std::vector<std::string>({"20240301", "20240303"}));
+    worker.retry(source.m_account, {first.m_id}, [&] (auto& jobs) {
+      prepare_report_retries(jobs, backend.m_definitions, client);
+    });
+    auto retried = wait_for_terminal(backend);
+    REQUIRE(retried.m_id == first.m_id);
+    REQUIRE(retried.m_parameters == first.m_parameters);
+    REQUIRE(retried.m_arguments == first.m_arguments);
+    REQUIRE(retried.m_reference_time == first.m_reference_time);
+    scheduler.close();
+    worker.close();
+  }
+
+  TEST_CASE("date_rule_resolution_failure") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto source = make_schedule(client.get_account());
+    source.m_repeat_interval.reset();
+    source.m_definition.m_parameters.push_back(
+      ReportParameterDefinition("period", "Period", "DateRange", true));
+    source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"DayOffset","value":{"offset":2147483647}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    auto backend = Backend([] (const auto&, auto) {
+      FAIL("An unresolved date rule must not execute.");
+      return 0;
+    });
+    backend.m_definitions = {source.m_definition};
+    backend.store(source);
+    auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
+    auto timer = ScheduleTimer();
+    auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
+      Timer(std::in_place_type<TriggerTimer>));
+    auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
+      TimeClient(&time), &timer);
+    auto failed = wait_for_terminal(backend);
+    REQUIRE(failed.m_status == ReportJob::Status::FAILED);
+    REQUIRE(!failed.m_is_prepared);
+    REQUIRE(!failed.m_error.empty());
+    REQUIRE(failed.m_reference_time == source.m_run_time);
+    REQUIRE(failed.m_parameters == source.m_parameters);
+    scheduler.close();
+    worker.close();
+  }
+
   TEST_CASE("retry_prepares_validation_failure") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
     auto source = make_schedule(client.get_account());
     source.m_repeat_interval.reset();
+    source.m_definition.m_parameters.push_back(
+      ReportParameterDefinition("period", "Period", "DateRange", true));
+    source.m_definition.m_arguments.push_back("{period.start}");
+    source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"DayOffset","value":{"offset":0}},
+      "end":{"type":"DayOffset","value":{"offset":0}}}})");
     auto started = Queue<ReportJob>();
     auto backend = Backend([&] (const auto& job, auto) {
       started.push(job);
@@ -748,6 +836,8 @@ TEST_SUITE("ReportScheduleService") {
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
     REQUIRE(!failed.m_is_prepared);
+    REQUIRE(failed.m_reference_time == source.m_run_time);
+    time.set(time_from_string("2026-10-08 12:00:00"));
     auto validate = [&] (auto& jobs) {
       prepare_report_retries(jobs, backend.m_definitions, client);
     };
@@ -758,7 +848,9 @@ TEST_SUITE("ReportScheduleService") {
     auto retried = started.pop();
     REQUIRE(retried.m_id == failed.m_id);
     REQUIRE(retried.m_is_prepared);
-    REQUIRE(retried.m_arguments == std::vector<std::string>({"1"}));
+    REQUIRE(retried.m_arguments ==
+      std::vector<std::string>({"1", "20261001"}));
+    REQUIRE(retried.m_reference_time == source.m_run_time);
     REQUIRE(wait_for_terminal(backend).m_status ==
       ReportJob::Status::COMPLETED);
     timer.trigger();

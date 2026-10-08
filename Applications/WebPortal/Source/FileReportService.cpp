@@ -210,8 +210,9 @@ void FileReportService::store(const ReportJob& job) {
 std::string FileReportService::submit(const DirectoryEntry& account,
     const ReportSubmission& submission) {
   m_open_state.ensure_open();
-  return m_jobs->submit(
-    prepare_report_job(load_definitions(), account, submission, m_client));
+  return m_jobs->submit(prepare_report_job(
+    load_definitions(), account, submission, m_client, convert_report_time(
+      m_time_client.get_time(), "UTC", submission.m_time_zone)));
 }
 
 void FileReportService::share(const DirectoryEntry& account,
