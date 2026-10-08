@@ -17,7 +17,7 @@ interface Properties extends Omit<React.InputHTMLAttributes<HTMLInputElement>,
   onChange?: (value: Beam.DirectoryEntry[]) => void;
 }
 
-/** Displays selected accounts and groups and opens their editor on focus. */
+/** Displays selected accounts and groups with a modal editor. */
 export class AccountGroupListInput extends React.Component<Properties> {
   public render(): JSX.Element {
     return <ListInput {...this.props}

@@ -40,13 +40,12 @@ interface State {
   isOpen: boolean;
 }
 
-/** Displays a comma-separated selection and opens a list editor on focus. */
+/** Displays a selection and opens its editor on click or Space. */
 export class ListInput<T> extends React.Component<Properties<T>, State> {
   constructor(props: Properties<T>) {
     super(props);
     this.state = {isOpen: false};
     this.input = React.createRef<HTMLInputElement>();
-    this.closing = false;
   }
 
   public componentDidUpdate(previous: Properties<T>): void {
@@ -57,7 +56,7 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
 
   public render(): JSX.Element {
     const {value, model, getLabel, isEqual, title, listHeading, editListModal,
-      onChange, readOnly, className, style, onFocus, onClick, ...rest} =
+      onChange, readOnly, className, style, onClick, onKeyDown, ...rest} =
         this.props;
     const Modal = editListModal ?? EditListModal<T>;
     return (
@@ -68,7 +67,7 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
           className={[css(STYLES.input, !readOnly && STYLES.interactive),
             className].join(' ')}
           style={{width: '100%', ...style}}
-          onFocus={this.onFocus} onClick={this.onClick}/>
+          onClick={this.onClick} onKeyDown={this.onKeyDown}/>
         {this.state.isOpen &&
           <Modal title={title} listHeading={listHeading}
             model={model} selected={value} getLabel={getLabel} isEqual={isEqual}
@@ -78,17 +77,10 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
   }
 
   private open(): void {
-    if(!this.props.disabled && !this.closing && !this.state.isOpen) {
+    if(!this.props.disabled && !this.state.isOpen) {
       this.setState({isOpen: true});
     }
   }
-
-  private onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
-    this.props.onFocus?.(event);
-    if(!event.defaultPrevented) {
-      this.open();
-    }
-  };
 
   private onClick = (event: React.MouseEvent<HTMLInputElement>) => {
     this.props.onClick?.(event);
@@ -97,12 +89,20 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
     }
   };
 
+  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    this.props.onKeyDown?.(event);
+    if(event.defaultPrevented || event.key !== ' ' ||
+        event.nativeEvent.isComposing) {
+      return;
+    }
+    event.preventDefault();
+    if(!event.repeat) {
+      this.open();
+    }
+  };
+
   private onClose = () => {
-    this.closing = true;
-    this.setState({isOpen: false}, () => {
-      this.input.current?.blur();
-      this.closing = false;
-    });
+    this.setState({isOpen: false}, () => this.input.current?.focus());
   };
 
   private onSubmit = (value: T[]) => {
@@ -111,7 +111,6 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
   };
 
   private input: React.RefObject<HTMLInputElement>;
-  private closing: boolean;
 }
 
 const STYLES = StyleSheet.create({
