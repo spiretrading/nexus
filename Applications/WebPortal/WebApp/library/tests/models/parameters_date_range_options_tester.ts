@@ -1,7 +1,8 @@
 import * as assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as Beam from 'beam';
-import { DateRule, resolveDateRule } from '../../source/models/date_rule';
+import { DateRuleType, DayOffsetDateRule, MonthBoundaryDateRule,
+  resolveDateRule } from '../../source/models/date_rule';
 import { makeParametersDateRangeOptions } from
   '../../source/pages/report_page/parameters_date_range_options';
 
@@ -25,9 +26,9 @@ test('reporting presets and calendar boundaries', () => {
     {today: [2026, 9, 27], yesterday: [2026, 9, 26],
       previousStart: [2026, 8, 1], previousEnd: [2026, 8, 31],
       monthEnd: [2026, 9, 30]},
-    {today: [99, 3, 1], yesterday: [99, 2, 28],
-      previousStart: [99, 2, 1], previousEnd: [99, 2, 28],
-      monthEnd: [99, 3, 31]}
+    {today: [1499, 3, 1], yesterday: [1499, 2, 28],
+      previousStart: [1499, 2, 1], previousEnd: [1499, 2, 28],
+      monthEnd: [1499, 3, 31]}
   ];
   for(const entry of cases) {
     const [year, month, day] = entry.today;
@@ -61,8 +62,12 @@ test('relative presets retain their meaning for another reference date', () => {
       ['previous-month', '20261001', '20261031']]) {
     const rules = options.find(option => option.value === id).rules;
     assert.ok(rules);
-    assert.notEqual(rules.start.type, DateRule.Type.SPECIFIC_DATE);
-    assert.notEqual(rules.end.type, DateRule.Type.SPECIFIC_DATE);
+    for(const rule of [rules.start, rules.end]) {
+      assert.ok(rule instanceof DayOffsetDateRule ||
+        rule instanceof MonthBoundaryDateRule);
+    }
+    assert.notEqual(rules.start.type, DateRuleType.SPECIFIC_DATE);
+    assert.notEqual(rules.end.type, DateRuleType.SPECIFIC_DATE);
     assert.equal(resolveDateRule(rules.start, reference).toJson(), start);
     assert.equal(resolveDateRule(rules.end, reference).toJson(), end);
   }
