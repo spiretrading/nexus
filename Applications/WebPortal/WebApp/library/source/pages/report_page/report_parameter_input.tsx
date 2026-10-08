@@ -219,7 +219,10 @@ export class ReportParameterInput extends React.Component<Properties, State> {
     }
   }
 
-  private onInput = () => {
+  private onInput = (event?: React.FormEvent<HTMLDivElement>) => {
+    if((event?.target as HTMLElement)?.tagName === 'SELECT') {
+      return;
+    }
     queueMicrotask(() => {
       if(this.mounted) {
         this.readDraft(false);
