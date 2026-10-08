@@ -2,8 +2,10 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DateRange, DateRangeOption, DateRangeRules, DateRangeValidation,
-  DateRule, isDateRangeEqual, isDateRuleEqual, resolveDateRule,
-  validateDateRange } from '../../models';
+  DateRule, DateRuleType, DayOffsetDateRule, DayOfMonthDateRule,
+  isDateRangeEqual, isDateRuleEqual, MonthBoundaryDateRule, resolveDateRule,
+  SpecificDateRule, validateDateRange, Weekday, WeekdayDateRule } from
+  '../../models';
 import { DateInput } from '../date_input';
 import { IntegerInput } from '../integer_input';
 import { Select } from '../select';
@@ -210,13 +212,19 @@ export class DateRangeInput extends React.Component<Properties, State> {
 
   private getValidation(): DateRangeValidation {
     const {Error, Target} = DateRangeValidation;
-    let validation = validateDateRange(this.state.value,
-      this.props.boundsRequired !== false);
-    if(!this.state.startComplete || !this.state.endComplete) {
+    let validation =
+      validateDateRange(this.state.value, this.props.boundsRequired !== false);
+    const startComplete = this.state.startComplete &&
+      isComplete(this.state.rules.start,
+        resolveDateRule(this.state.rules.start, this.state.reference));
+    const endComplete = this.state.endComplete &&
+      isComplete(this.state.rules.end,
+        resolveDateRule(this.state.rules.end, this.state.reference));
+    if(!startComplete || !endComplete) {
       let target = Target.START_AND_END;
-      if(this.state.startComplete) {
+      if(startComplete) {
         target = Target.END;
-      } else if(this.state.endComplete) {
+      } else if(endComplete) {
         target = Target.START;
       }
       validation = new DateRangeValidation(Error.FORMAT, target, false);
@@ -312,7 +320,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
 
   private onStartInput = (start: Beam.Date, startComplete: boolean) => {
     this.setState(state => ({value: new DateRange(start, state.value.end),
-      rules: new DateRangeRules({...state.rules.start, date: start},
+      rules: new DateRangeRules(new SpecificDateRule(start),
         state.rules.end), startComplete, showError: false}),
       this.publishValidation);
   };
@@ -320,7 +328,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
   private onEndInput = (end: Beam.Date, endComplete: boolean) => {
     this.setState(state => ({value: new DateRange(state.value.start, end),
       rules: new DateRangeRules(state.rules.start,
-        {...state.rules.end, date: end}), endComplete, showError: false}),
+        new SpecificDateRule(end)), endComplete, showError: false}),
       this.publishValidation);
   };
 
@@ -654,17 +662,60 @@ interface DateRuleInputProperties extends Omit<BoundDateProperties, 'value'> {
   onChange: (rule: DateRule) => void;
 }
 
-class DateRuleInput extends React.Component<DateRuleInputProperties> {
+enum OffsetDirection {
+  BEFORE = 'Before',
+  AFTER = 'After'
+}
+
+interface DateRuleInputState {
+  direction: OffsetDirection;
+  boundaryDirection: OffsetDirection;
+}
+
+class DateRuleInput extends React.Component<DateRuleInputProperties,
+    DateRuleInputState> {
+  constructor(props: DateRuleInputProperties) {
+    super(props);
+    const state = {direction: OffsetDirection.BEFORE,
+      boundaryDirection: OffsetDirection.BEFORE};
+    if(props.value.type !== DateRuleType.SPECIFIC_DATE &&
+        props.value.offset > 0) {
+      state.direction = OffsetDirection.AFTER;
+    }
+    if(props.value.type === DateRuleType.MONTH_BOUNDARY &&
+        props.value.dayOffset > 0) {
+      state.boundaryDirection = OffsetDirection.AFTER;
+    }
+    this.state = state;
+  }
+
+  public componentDidUpdate(previous: DateRuleInputProperties): void {
+    const rule = this.props.value;
+    if(previous.value === rule) {
+      return;
+    }
+    if(previous.value.type !== rule.type) {
+      this.setState({direction: OffsetDirection.BEFORE,
+        boundaryDirection: OffsetDirection.BEFORE});
+    }
+    if(rule.type !== DateRuleType.SPECIFIC_DATE && rule.offset) {
+      this.setState({direction: getDirection(rule.offset)});
+    }
+    if(rule.type === DateRuleType.MONTH_BOUNDARY && rule.dayOffset) {
+      this.setState({boundaryDirection: getDirection(rule.dayOffset)});
+    }
+  }
+
   public render(): JSX.Element {
     const props = this.props;
     const rule = props.value;
-    const specific = rule.type === DateRule.Type.SPECIFIC_DATE;
+    const specific = rule.type === DateRuleType.SPECIFIC_DATE;
     const style: React.CSSProperties = {width: '100%', minWidth: 0,
       boxSizing: 'border-box'};
     const unit = (() => {
-      if(rule.type === DateRule.Type.DAY_OFFSET) {
+      if(rule.type === DateRuleType.DAY_OFFSET) {
         return 'Days';
-      } else if(rule.type === DateRule.Type.WEEKDAY) {
+      } else if(rule.type === DateRuleType.WEEKDAY) {
         return 'Weeks';
       }
       return 'Months';
@@ -674,26 +725,25 @@ class DateRuleInput extends React.Component<DateRuleInputProperties> {
       <Select id={props.id} aria-label={`${props.label} rule`}
           value={rule.type} style={style} readOnly={props.readOnly}
           disabled={props.disabled} onChange={this.onTypeChange}>
-        <option value={DateRule.Type.SPECIFIC_DATE}>Specific date</option>
-        <option value={DateRule.Type.DAY_OFFSET}>Day offset</option>
-        <option value={DateRule.Type.WEEKDAY}>Weekday</option>
-        <option value={DateRule.Type.DAY_OF_MONTH}>Day of month</option>
-        <option value={DateRule.Type.MONTH_BOUNDARY}>Month boundary</option>
+        <option value={DateRuleType.SPECIFIC_DATE}>Specific date</option>
+        <option value={DateRuleType.DAY_OFFSET}>Day offset</option>
+        <option value={DateRuleType.WEEKDAY}>Weekday</option>
+        <option value={DateRuleType.DAY_OF_MONTH}>Day of month</option>
+        <option value={DateRuleType.MONTH_BOUNDARY}>Month boundary</option>
       </Select>
       {specific && <BoundDate id={`${props.id}-date`}
         label={`${props.label} date`} value={props.dateValue}
         error={props.error} errorId={props.errorId} readOnly={props.readOnly}
         disabled={props.disabled} onInput={props.onInput}
         onCommit={props.onCommit}/>}
-      {rule.type === DateRule.Type.WEEKDAY &&
-        <Select aria-label={`${props.label} weekday`} value={rule.weekday}
+      {rule.type === DateRuleType.WEEKDAY &&
+        <Select aria-label={`${props.label} weekday`} value={rule.day}
             style={style} readOnly={props.readOnly} disabled={props.disabled}
             onChange={this.onWeekdayChange}>
-          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
-            'Sunday'].map((day, index) =>
-              <option value={index} key={day}>{day}</option>)}
+          {Object.values(Weekday).map(day =>
+            <option value={day} key={day}>{day}</option>)}
         </Select>}
-      {rule.type === DateRule.Type.DAY_OF_MONTH &&
+      {rule.type === DateRuleType.DAY_OF_MONTH &&
         <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
           Day
           <IntegerInput aria-label={`${props.label} day of month`}
@@ -702,23 +752,24 @@ class DateRuleInput extends React.Component<DateRuleInputProperties> {
             aria-invalid={props.error} aria-describedby={props.errorId}
             style={{width: '64px', minWidth: 0}} onChange={this.onDayChange}/>
         </label>}
-      {rule.type === DateRule.Type.MONTH_BOUNDARY &&
+      {rule.type === DateRuleType.MONTH_BOUNDARY &&
         <div style={{display: 'grid', gap: '6px',
             gridTemplateColumns: '40px minmax(0, 1.2fr) minmax(0, 1fr)'}}>
           <IntegerInput aria-label={`${props.label} boundary day offset`}
-            value={rule.boundaryOffset} min={0} step={1} inputMode='numeric'
+            value={getMagnitude(rule.dayOffset)} min={0} step={1}
+            inputMode='numeric'
             readOnly={props.readOnly} disabled={props.disabled}
             aria-invalid={props.error} aria-describedby={props.errorId}
             style={{width: '100%', minWidth: 0}}
             onChange={this.onBoundaryOffsetChange}/>
           <Select aria-label={`${props.label} boundary direction`}
-              value={rule.boundaryDirection}
+              value={this.state.boundaryDirection}
               style={{...style, paddingLeft: '6px', paddingRight: '20px',
                 backgroundPosition: 'right 7px top 50%'}}
               readOnly={props.readOnly} disabled={props.disabled}
               onChange={this.onBoundaryDirectionChange}>
-            <option value={DateRule.Direction.BEFORE}>Days before</option>
-            <option value={DateRule.Direction.AFTER}>Days after</option>
+            <option value={OffsetDirection.BEFORE}>Days before</option>
+            <option value={OffsetDirection.AFTER}>Days after</option>
           </Select>
           <Select aria-label={`${props.label} month boundary`}
               value={rule.boundary}
@@ -726,24 +777,30 @@ class DateRuleInput extends React.Component<DateRuleInputProperties> {
                 backgroundPosition: 'right 7px top 50%'}}
               readOnly={props.readOnly} disabled={props.disabled}
               onChange={this.onBoundaryChange}>
-            <option value={DateRule.Boundary.FIRST}>First day</option>
-            <option value={DateRule.Boundary.LAST}>Last day</option>
+            <option value={MonthBoundaryDateRule.Boundary.FIRST}>
+              First day
+            </option>
+            <option value={MonthBoundaryDateRule.Boundary.LAST}>
+              Last day
+            </option>
           </Select>
         </div>}
-      {!specific && <div
+      {rule.type !== DateRuleType.SPECIFIC_DATE && <div
           style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-        <IntegerInput aria-label={`${props.label} offset`} value={rule.count}
+        <IntegerInput aria-label={`${props.label} offset`}
+          value={getMagnitude(rule.offset)}
           min={0} step={1} inputMode='numeric' readOnly={props.readOnly}
           disabled={props.disabled} aria-invalid={props.error}
           aria-describedby={props.errorId}
           style={{width: '64px', flex: '0 0 64px', minWidth: 0}}
           onChange={this.onCountChange}/>
-        <Select aria-label={`${props.label} direction`} value={rule.direction}
+        <Select aria-label={`${props.label} direction`}
+            value={this.state.direction}
             style={{...style, flex: '1 1 116px', width: 'auto'}}
             readOnly={props.readOnly} disabled={props.disabled}
             onChange={this.onDirectionChange}>
-          <option value={DateRule.Direction.BEFORE}>{unit} ago</option>
-          <option value={DateRule.Direction.AFTER}>{unit} ahead</option>
+          <option value={OffsetDirection.BEFORE}>{unit} ago</option>
+          <option value={OffsetDirection.AFTER}>{unit} ahead</option>
         </Select>
       </div>}
     </div>;
@@ -755,43 +812,118 @@ class DateRuleInput extends React.Component<DateRuleInputProperties> {
     }
   }
 
+  private setOffset(offset: number): void {
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.DAY_OFFSET) {
+      this.change(new DayOffsetDateRule(offset));
+    } else if(rule.type === DateRuleType.WEEKDAY) {
+      this.change(new WeekdayDateRule(offset, rule.day));
+    } else if(rule.type === DateRuleType.DAY_OF_MONTH) {
+      this.change(new DayOfMonthDateRule(offset, rule.day));
+    } else if(rule.type === DateRuleType.MONTH_BOUNDARY) {
+      this.change(new MonthBoundaryDateRule(offset, rule.boundary,
+        rule.dayOffset));
+    }
+  }
+
   private onTypeChange = (type: string) => {
-    this.change(new DateRule(Number(type),
-      this.props.resolved ?? this.props.reference));
+    if(type === DateRuleType.SPECIFIC_DATE) {
+      this.change(new SpecificDateRule(
+        this.props.resolved ?? this.props.reference));
+    } else if(type === DateRuleType.DAY_OFFSET) {
+      this.change(new DayOffsetDateRule(0));
+    } else if(type === DateRuleType.WEEKDAY) {
+      this.change(new WeekdayDateRule(0, Weekday.MONDAY));
+    } else if(type === DateRuleType.DAY_OF_MONTH) {
+      this.change(new DayOfMonthDateRule(0,
+        (this.props.resolved ?? this.props.reference).day));
+    } else if(type === DateRuleType.MONTH_BOUNDARY) {
+      this.change(new MonthBoundaryDateRule(0,
+        MonthBoundaryDateRule.Boundary.LAST, 0));
+    }
   };
 
-  private onWeekdayChange = (weekday: string) => {
-    this.change({...this.props.value, weekday: Number(weekday)});
+  private onWeekdayChange = (day: string) => {
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.WEEKDAY) {
+      this.change(new WeekdayDateRule(rule.offset, day as Weekday));
+    }
   };
 
   private onDayChange = (day: number) => {
-    this.change({...this.props.value, day: day ?? null});
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.DAY_OF_MONTH) {
+      this.change(new DayOfMonthDateRule(rule.offset, day ?? null));
+    }
   };
 
   private onBoundaryChange = (boundary: string) => {
-    this.change({...this.props.value, boundary: Number(boundary)});
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.MONTH_BOUNDARY) {
+      this.change(new MonthBoundaryDateRule(rule.offset,
+        boundary as MonthBoundaryDateRule.Boundary, rule.dayOffset));
+    }
   };
 
-  private onBoundaryOffsetChange = (boundaryOffset: number) => {
-    this.change({...this.props.value, boundaryOffset: boundaryOffset ?? null});
+  private onBoundaryOffsetChange = (offset: number) => {
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.MONTH_BOUNDARY) {
+      this.change(new MonthBoundaryDateRule(rule.offset, rule.boundary,
+        signedOffset(offset, this.state.boundaryDirection)));
+    }
   };
 
-  private onBoundaryDirectionChange = (direction: string) => {
-    this.change({...this.props.value, boundaryDirection: Number(direction)});
+  private onBoundaryDirectionChange = (value: string) => {
+    const direction = value as OffsetDirection;
+    const rule = this.props.value;
+    if(rule.type === DateRuleType.MONTH_BOUNDARY) {
+      this.setState({boundaryDirection: direction});
+      this.change(new MonthBoundaryDateRule(rule.offset, rule.boundary,
+        signedOffset(getMagnitude(rule.dayOffset), direction)));
+    }
   };
 
   private onCountChange = (count: number) => {
-    this.change({...this.props.value, count: count ?? null});
+    this.setOffset(signedOffset(count, this.state.direction));
   };
 
-  private onDirectionChange = (direction: string) => {
-    this.change({...this.props.value, direction: Number(direction)});
+  private onDirectionChange = (value: string) => {
+    const direction = value as OffsetDirection;
+    if(this.props.value.type !== DateRuleType.SPECIFIC_DATE) {
+      this.setState({direction});
+      this.setOffset(signedOffset(
+        getMagnitude(this.props.value.offset), direction));
+    }
   };
 }
 
+function getDirection(offset: number): OffsetDirection {
+  if(offset > 0) {
+    return OffsetDirection.AFTER;
+  }
+  return OffsetDirection.BEFORE;
+}
+
+function getMagnitude(offset: number): number {
+  if(offset == null) {
+    return null;
+  }
+  return Math.abs(offset);
+}
+
+function signedOffset(count: number, direction: OffsetDirection): number {
+  if(count == null) {
+    return null;
+  }
+  if(direction === OffsetDirection.BEFORE) {
+    return -count;
+  }
+  return count;
+}
+
 function makeFixedRules(value: DateRange): DateRangeRules {
-  return new DateRangeRules(new DateRule(DateRule.Type.SPECIFIC_DATE,
-    value.start), new DateRule(DateRule.Type.SPECIFIC_DATE, value.end));
+  return new DateRangeRules(new SpecificDateRule(value.start),
+    new SpecificDateRule(value.end));
 }
 
 function resolveRules(rules: DateRangeRules, reference: Beam.Date): DateRange {
@@ -800,7 +932,8 @@ function resolveRules(rules: DateRangeRules, reference: Beam.Date): DateRange {
 }
 
 function isComplete(rule: DateRule, date: Beam.Date): boolean {
-  return rule.type === DateRule.Type.SPECIFIC_DATE || date != null;
+  return rule.type === DateRuleType.SPECIFIC_DATE && rule.date == null ||
+    date != null;
 }
 
 function formatPreview(date: Beam.Date): string {
