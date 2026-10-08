@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
@@ -50,14 +51,17 @@ namespace Spire {
       /** Sets whether data is randomly generated. */
       void set_data_random(bool is_random);
 
-      QtPromise<std::vector<Entry>> query_until(
-        Beam::Sequence sequence, int max_count) override;
+      QtPromise<void> load_older(int max_count) override;
+      int get_size() const override;
+      const Type& get(int index) const override;
+      boost::signals2::connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override;
 
-      boost::signals2::connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override;
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
 
     private:
-      mutable UpdateSignal m_update_signal;
+      ArrayListModel<Details::TimeAndSalesEntry> m_entries;
       Nexus::Money m_price;
       BboIndicator m_indicator;
       boost::posix_time::time_duration m_period;
@@ -67,7 +71,8 @@ namespace Spire {
       QTimer m_timer;
       std::vector<std::shared_ptr<Beam::LiveTimer>> m_query_duration_timers;
 
-      Entry make_entry(boost::posix_time::ptime timestamp) const;
+      Details::TimeAndSalesEntry make_entry(
+        boost::posix_time::ptime timestamp) const;
       void on_timeout();
   };
 }

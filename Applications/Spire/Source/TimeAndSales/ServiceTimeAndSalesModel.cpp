@@ -56,7 +56,7 @@ namespace {
   }
 
   void replay_bbo_indicators(MarketDataClient& client, const Ticker& ticker,
-      std::vector<TimeAndSalesModel::Entry>& entries) {
+      std::vector<Spire::Details::TimeAndSalesEntry>& entries) {
     if(entries.empty()) {
       return;
     }
@@ -88,9 +88,13 @@ ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
     std::bind_front(&ServiceTimeAndSalesModel::on_time_and_sale, this)));
 }
 
-QtPromise<std::vector<TimeAndSalesModel::Entry>>
-    ServiceTimeAndSalesModel::query_until(
-      Beam::Sequence sequence, int max_count) {
+QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
+  auto sequence = [&] {
+    if(m_entries.get_size() == 0) {
+      return Beam::Sequence::PRESENT;
+    }
+    return m_entries.get(0).m_time_and_sale.get_sequence();
+  }();
   return QtPromise([=, ticker = m_ticker, client = m_client] () mutable {
     auto query = TickerQuery();
     query.set_index(ticker);
@@ -98,22 +102,60 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
     auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
     client.query(query, queue);
-    auto result = std::vector<TimeAndSalesModel::Entry>();
+    auto result = std::vector<Spire::Details::TimeAndSalesEntry>();
     try {
       while(true) {
         auto time_and_sale = queue->pop();
-        result.push_back(
-          Entry(std::move(time_and_sale), BboIndicator::UNKNOWN));
+        result.push_back(Spire::Details::TimeAndSalesEntry(
+          std::move(time_and_sale), BboIndicator::UNKNOWN));
       }
     } catch(const PipeBrokenException&) {}
     replay_bbo_indicators(client, ticker, result);
     return result;
-  }, LaunchPolicy::ASYNC);
+  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+    try {
+      auto& snapshot = result.get();
+      auto end = [&] {
+        if(m_entries.get_size() == 0) {
+          return snapshot.end();
+        }
+        return std::lower_bound(snapshot.begin(), snapshot.end(),
+          m_entries.get(0).m_time_and_sale.get_sequence(),
+          [] (const auto& entry, const auto& bound) {
+            return entry.m_time_and_sale.get_sequence() < bound;
+          });
+      }();
+      auto count = static_cast<int>(std::distance(snapshot.begin(), end));
+      if(count != 0) {
+        m_entries.transact([&] {
+          for(auto i = 0; i < count; ++i) {
+            m_entries.insert(snapshot[i], i);
+          }
+        });
+      }
+    } catch(const std::exception&) {}
+  });
 }
 
-connection ServiceTimeAndSalesModel::connect_update_signal(
-    const UpdateSignal::slot_type& slot) const {
-  return m_update_signal.connect(slot);
+int ServiceTimeAndSalesModel::get_size() const {
+  return m_entries.get_size();
+}
+
+const ServiceTimeAndSalesModel::Type&
+    ServiceTimeAndSalesModel::get(int index) const {
+  return m_entries.get(index);
+}
+
+connection ServiceTimeAndSalesModel::connect_operation_signal(
+    const OperationSignal::slot_type& slot) const {
+  return m_entries.connect_operation_signal(slot);
+}
+
+void ServiceTimeAndSalesModel::transact(
+    const std::function<void ()>& transaction) {
+  m_entries.transact([&] {
+    transaction();
+  });
 }
 
 void ServiceTimeAndSalesModel::on_bbo(const SequencedBboQuote& bbo) {
@@ -122,5 +164,10 @@ void ServiceTimeAndSalesModel::on_bbo(const SequencedBboQuote& bbo) {
 
 void ServiceTimeAndSalesModel::on_time_and_sale(
     const SequencedTimeAndSale& time_and_sale) {
-  m_update_signal({time_and_sale, get_indicator(*m_bbo, *time_and_sale)});
+  if(m_entries.get_size() != 0 && time_and_sale.get_sequence() <=
+      m_entries.get(m_entries.get_size() - 1).m_time_and_sale.get_sequence()) {
+    return;
+  }
+  m_entries.push(Spire::Details::TimeAndSalesEntry(
+    time_and_sale, get_indicator(*m_bbo, *time_and_sale)));
 }

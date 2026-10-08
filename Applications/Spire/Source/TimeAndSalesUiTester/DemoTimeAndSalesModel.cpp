@@ -12,10 +12,6 @@ namespace {
   const auto markets = std::vector<std::string>{"XNYS", "TSE", "CHD", "CHI"};
   const auto mpids = std::vector<std::string>{"NBFI", "CIBC", "PFSS", "RBCD"};
 
-  ptime from_time_t_milliseconds(std::time_t t) {
-    return time_from_string("1970-01-01 00:00:00") + milliseconds(t);
-  }
-
   std::time_t to_time_t_milliseconds(ptime pt) {
     return (pt - time_from_string("1970-01-01 00:00:00")).total_milliseconds();
   }
@@ -89,44 +85,69 @@ void DemoTimeAndSalesModel::set_data_random(bool is_random) {
   m_is_data_random = is_random;
 }
 
-QtPromise<std::vector<TimeAndSalesModel::Entry>>
-DemoTimeAndSalesModel::query_until(Beam::Sequence sequence, int max_count) {
+QtPromise<void> DemoTimeAndSalesModel::load_older(int max_count) {
   if(m_query_duration != pos_infin) {
     m_resume_update_time = microsec_clock::universal_time() + m_query_duration;
   }
   auto timer = std::make_shared<LiveTimer>(m_query_duration);
   m_query_duration_timers.push_back(timer);
-  return QtPromise([=, query_duration = m_query_duration, period = m_period] {
-    auto result = std::vector<TimeAndSalesModel::Entry>();
-    if(query_duration == pos_infin) {
-      return result;
-    }
-    auto populate = [&] (ptime timestamp) {
-      auto count = max_count;
-      while(count > 0) {
-        result.insert(std::begin(result), make_entry(timestamp));
-        --count;
-        timestamp -= period;
+  auto entries = std::vector<Spire::Details::TimeAndSalesEntry>();
+  if(m_query_duration != pos_infin) {
+    auto timestamp = [&] {
+      if(m_entries.get_size() == 0) {
+        return microsec_clock::universal_time();
       }
-    };
-    auto now = microsec_clock::universal_time();
-    if(sequence >= Beam::Sequence(to_time_t_milliseconds(now))) {
-      populate(now);
-    } else {
-      populate(from_time_t_milliseconds(sequence.get_ordinal()) - period);
+      return m_entries.get(0).m_time_and_sale->m_timestamp - m_period;
+    }();
+    for(auto i = 0; i < max_count; ++i) {
+      entries.insert(entries.begin(), make_entry(timestamp));
+      timestamp -= m_period;
     }
-    timer->start();
-    timer->wait();
-    return result;
-  }, LaunchPolicy::ASYNC);
+  }
+  return QtPromise([=, query_duration = m_query_duration] {
+    if(query_duration != pos_infin) {
+      timer->start();
+      timer->wait();
+    }
+    return entries;
+  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+    auto loaded = std::move(result).get();
+    if(m_entries.get_size() != 0) {
+      auto front = m_entries.get(0).m_time_and_sale.get_sequence();
+      std::erase_if(loaded, [&] (const auto& entry) {
+        return entry.m_time_and_sale.get_sequence() >= front;
+      });
+    }
+    m_entries.transact([&] {
+      for(auto i = 0; i < std::ssize(loaded); ++i) {
+        m_entries.insert(loaded[i], i);
+      }
+    });
+  });
 }
 
-connection DemoTimeAndSalesModel::connect_update_signal(
-    const UpdateSignal::slot_type& slot) const {
-  return m_update_signal.connect(slot);
+int DemoTimeAndSalesModel::get_size() const {
+  return m_entries.get_size();
 }
 
-DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
+const DemoTimeAndSalesModel::Type&
+    DemoTimeAndSalesModel::get(int index) const {
+  return m_entries.get(index);
+}
+
+connection DemoTimeAndSalesModel::connect_operation_signal(
+    const OperationSignal::slot_type& slot) const {
+  return m_entries.connect_operation_signal(slot);
+}
+
+void DemoTimeAndSalesModel::transact(
+    const std::function<void ()>& transaction) {
+  m_entries.transact([&] {
+    transaction();
+  });
+}
+
+Spire::Details::TimeAndSalesEntry DemoTimeAndSalesModel::make_entry(
     ptime timestamp) const {
   if(m_is_data_random) {
     auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));
@@ -149,5 +170,10 @@ void DemoTimeAndSalesModel::on_timeout() {
   if(microsec_clock::universal_time() < m_resume_update_time) {
     return;
   }
-  m_update_signal(make_entry(microsec_clock::universal_time()));
+  auto entry = make_entry(microsec_clock::universal_time());
+  if(m_entries.get_size() == 0 ||
+      entry.m_time_and_sale.get_sequence() >
+        m_entries.get(get_size() - 1).m_time_and_sale.get_sequence()) {
+    m_entries.push(entry);
+  }
 }
