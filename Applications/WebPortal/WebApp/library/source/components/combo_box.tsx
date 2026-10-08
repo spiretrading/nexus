@@ -62,6 +62,11 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
     this.identifier = `combo-${ComboBox.nextIdentifier++}`;
   }
 
+  /** Moves keyboard focus to the input field. */
+  public focus(): void {
+    this.input.current?.focus();
+  }
+
   /** Discards pending queries and restores the committed value. */
   public reset(): void {
     this.cancelSearch();
