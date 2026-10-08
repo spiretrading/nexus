@@ -1,161 +1,354 @@
 import * as Beam from 'beam';
 
-/** A fixed date or a calendar rule evaluated against a reference date. */
-export class DateRule {
+/** The supported calendar date transformations. */
+export enum DateRuleType {
 
-  /** The calculation used to produce the date. */
-  public readonly type: DateRule.Type;
+  /** A fixed calendar date. */
+  SPECIFIC_DATE = 'SpecificDate',
 
-  /** The date used by SPECIFIC_DATE, or null for an unbounded date. */
+  /** A calendar day offset. */
+  DAY_OFFSET = 'DayOffset',
+
+  /** A weekday in a relative week. */
+  WEEKDAY = 'Weekday',
+
+  /** A numbered day in a relative month. */
+  DAY_OF_MONTH = 'DayOfMonth',
+
+  /** A date near a relative month boundary. */
+  MONTH_BOUNDARY = 'MonthBoundary',
+}
+
+/** The days of a calendar week, named as in the C++ API. */
+export enum Weekday {
+
+  /** Monday. */
+  MONDAY = 'Monday',
+
+  /** Tuesday. */
+  TUESDAY = 'Tuesday',
+
+  /** Wednesday. */
+  WEDNESDAY = 'Wednesday',
+
+  /** Thursday. */
+  THURSDAY = 'Thursday',
+
+  /** Friday. */
+  FRIDAY = 'Friday',
+
+  /** Saturday. */
+  SATURDAY = 'Saturday',
+
+  /** Sunday. */
+  SUNDAY = 'Sunday',
+}
+
+/** A fixed calendar date. */
+export class SpecificDateRule {
+
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.SPECIFIC_DATE;
+
+  /** The fixed date, or null while the input is empty. */
   public readonly date: Beam.Date;
 
-  /** The number of days, weeks, or months to offset, or null while empty. */
-  public readonly count: number;
-
-  /** Whether the offset is before or after the reference period. */
-  public readonly direction: DateRule.Direction;
-
-  /** The weekday for WEEKDAY, from Monday (0) through Sunday (6). */
-  public readonly weekday: number;
-
-  /** The day number for DAY_OF_MONTH, clamped to the month's last day. */
-  public readonly day: number;
-
-  /** The first or last day used by MONTH_BOUNDARY. */
-  public readonly boundary: DateRule.Boundary;
-
-  /** The days to offset from a month boundary, or null while empty. */
-  public readonly boundaryOffset: number;
-
-  /** Whether the day offset is before or after the month boundary. */
-  public readonly boundaryDirection: DateRule.Direction;
-
-  /** Constructs a rule with a zero offset.
-   * @param type - The date calculation.
-   * @param date - The initial specific date and preferred day of month.
-   */
-  constructor(type: DateRule.Type, date: Beam.Date) {
-    this.type = type;
+  /** Constructs the rule with its calendar parameters. */
+  constructor(date: Beam.Date) {
+    this.type = DateRuleType.SPECIFIC_DATE;
     this.date = date;
-    this.count = 0;
-    this.direction = DateRule.Direction.BEFORE;
-    this.weekday = 0;
-    this.day = date?.day ?? 1;
-    this.boundary = DateRule.Boundary.LAST;
-    this.boundaryOffset = 0;
-    this.boundaryDirection = DateRule.Direction.BEFORE;
   }
 }
 
-export namespace DateRule {
+/** A calendar day offset. */
+export class DayOffsetDateRule {
 
-  /** The supported date calculations. */
-  export enum Type {
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.DAY_OFFSET;
 
-    /** A fixed calendar date. */
-    SPECIFIC_DATE,
+  /** The signed day offset, or null while the input is empty. */
+  public readonly offset: number;
 
-    /** A number of days before or after the reference date. */
-    DAY_OFFSET,
-
-    /** A weekday in an offset calendar week. */
-    WEEKDAY,
-
-    /** A numbered day in an offset calendar month. */
-    DAY_OF_MONTH,
-
-    /** A day offset from the first or last day of a calendar month. */
-    MONTH_BOUNDARY
+  /** Constructs the rule with its calendar parameters. */
+  constructor(offset: number) {
+    this.type = DateRuleType.DAY_OFFSET;
+    this.offset = offset;
   }
+}
 
-  /** The direction of a calendar offset. */
-  export enum Direction {
+/** A weekday in a relative week. */
+export class WeekdayDateRule {
 
-    /** An earlier date or period. */
-    BEFORE,
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.WEEKDAY;
 
-    /** A later date or period. */
-    AFTER
+  /** The signed week offset, or null while the input is empty. */
+  public readonly offset: number;
+
+  /** The selected day in a Monday-based week. */
+  public readonly day: Weekday;
+
+  /** Constructs the rule with its calendar parameters. */
+  constructor(offset: number, day: Weekday) {
+    this.type = DateRuleType.WEEKDAY;
+    this.offset = offset;
+    this.day = day;
   }
+}
 
-  /** The supported calendar month boundaries. */
+/** A numbered day in a relative month. */
+export class DayOfMonthDateRule {
+
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.DAY_OF_MONTH;
+
+  /** The signed month offset, or null while the input is empty. */
+  public readonly offset: number;
+
+  /** The day from 1 to 31, clamped to the month's last day. */
+  public readonly day: number;
+
+  /** Constructs the rule with its calendar parameters. */
+  constructor(offset: number, day: number) {
+    this.type = DateRuleType.DAY_OF_MONTH;
+    this.offset = offset;
+    this.day = day;
+  }
+}
+
+/** A date near a relative month boundary. */
+export class MonthBoundaryDateRule {
+
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.MONTH_BOUNDARY;
+
+  /** The signed month offset, or null while the input is empty. */
+  public readonly offset: number;
+
+  /** The selected month boundary. */
+  public readonly boundary: MonthBoundaryDateRule.Boundary;
+
+  /** The signed day offset from the boundary, or null while empty. */
+  public readonly dayOffset: number;
+
+  /** Constructs the rule with its calendar parameters. */
+  constructor(offset: number, boundary: MonthBoundaryDateRule.Boundary,
+      dayOffset: number) {
+    this.type = DateRuleType.MONTH_BOUNDARY;
+    this.offset = offset;
+    this.boundary = boundary;
+    this.dayOffset = dayOffset;
+  }
+}
+
+export namespace MonthBoundaryDateRule {
+
+  /** A calendar month's boundary. */
   export enum Boundary {
 
     /** The first day of the month. */
-    FIRST,
+    FIRST = 'First',
 
     /** The last day of the month. */
-    LAST
+    LAST = 'Last'
   }
 }
 
-/** Resolves a rule, returning null for an empty or invalid result.
- * Weeks begin on Monday. Months clamp numbered days to their last day.
- */
-export function resolveDateRule(rule: DateRule, reference: Beam.Date):
-    Beam.Date {
-  if(rule.type === DateRule.Type.SPECIFIC_DATE) {
-    return rule.date;
+/** A calendar rule with only the parameters required by its discriminator. */
+export type DateRule = SpecificDateRule | DayOffsetDateRule | WeekdayDateRule |
+  DayOfMonthDateRule | MonthBoundaryDateRule;
+
+/** Parses the C++ rule representation, with null for an unspecified bound. */
+export function parseDateRule(json: any): DateRule {
+  if(json == null) {
+    return new SpecificDateRule(null);
   }
-  if(!reference || rule.count == null || !Number.isSafeInteger(rule.count) ||
-      rule.count < 0) {
+  const value = json.value;
+  let rule: DateRule;
+  switch(json.type) {
+    case DateRuleType.SPECIFIC_DATE:
+      rule = new SpecificDateRule(Beam.Date.fromJson(value.date));
+      break;
+    case DateRuleType.DAY_OFFSET:
+      rule = new DayOffsetDateRule(value.offset);
+      break;
+    case DateRuleType.WEEKDAY:
+      rule = new WeekdayDateRule(value.offset, value.day);
+      break;
+    case DateRuleType.DAY_OF_MONTH:
+      rule = new DayOfMonthDateRule(value.offset, value.day);
+      break;
+    case DateRuleType.MONTH_BOUNDARY:
+      rule = new MonthBoundaryDateRule(value.offset, value.boundary,
+        value.day_offset);
+      break;
+    default:
+      throw new Error('Unknown date rule type.');
+  }
+  validateRule(rule);
+  return rule;
+}
+
+/** Encodes a rule using the C++ discriminator and parameter names. */
+export function dateRuleToJson(rule: DateRule): any {
+  if(rule.type === DateRuleType.SPECIFIC_DATE && rule.date == null) {
     return null;
   }
-  let offset = rule.count;
-  if(rule.direction === DateRule.Direction.BEFORE) {
-    offset = -offset;
+  validateRule(rule);
+  let value: any;
+  switch(rule.type) {
+    case DateRuleType.SPECIFIC_DATE:
+      value = {date: rule.date.toJson()};
+      break;
+    case DateRuleType.DAY_OFFSET:
+      value = {offset: rule.offset};
+      break;
+    case DateRuleType.WEEKDAY:
+    case DateRuleType.DAY_OF_MONTH:
+      value = {offset: rule.offset, day: rule.day};
+      break;
+    case DateRuleType.MONTH_BOUNDARY:
+      value = {offset: rule.offset, boundary: rule.boundary,
+        day_offset: rule.dayOffset};
+      break;
+  }
+  return {type: rule.type, value};
+}
+
+/**
+ * Applies a calendar rule, preserving the reference's time of day.
+ * Invalid inputs or results outside years 1400 through 9999 throw an error.
+ * The reference is a calendar timestamp in the caller's chosen timezone.
+ */
+export function applyDateRule(rule: DateRule, reference: Beam.DateTime):
+    Beam.DateTime {
+  validateRule(rule);
+  if(!reference || !isDate(reference.date) || !reference.timeOfDay ||
+      !Number.isFinite(reference.timeOfDay.ticks) ||
+      reference.timeOfDay.ticks < 0 ||
+      reference.timeOfDay.ticks >= Beam.Duration.HOUR.multiply(24).ticks) {
+    throw new Error('Invalid reference timestamp.');
+  }
+  if(rule.type === DateRuleType.SPECIFIC_DATE) {
+    return new Beam.DateTime(rule.date, reference.timeOfDay);
   }
   const date = new Date(0);
-  date.setUTCFullYear(reference.year, reference.month - 1, reference.day);
-  if(rule.type === DateRule.Type.DAY_OFFSET) {
-    date.setUTCDate(date.getUTCDate() + offset);
-  } else if(rule.type === DateRule.Type.WEEKDAY) {
-    if(!Number.isInteger(rule.weekday) || rule.weekday < 0 ||
-        rule.weekday > 6) {
-      return null;
-    }
+  date.setUTCFullYear(reference.date.year, reference.date.month - 1,
+    reference.date.day);
+  if(rule.type === DateRuleType.DAY_OFFSET) {
+    date.setUTCDate(date.getUTCDate() + rule.offset);
+  } else if(rule.type === DateRuleType.WEEKDAY) {
     const weekday = (date.getUTCDay() + 6) % 7;
-    date.setUTCDate(date.getUTCDate() - weekday + 7 * offset + rule.weekday);
+    const target = Object.values(Weekday).indexOf(rule.day);
+    date.setUTCDate(date.getUTCDate() - weekday + 7 * rule.offset + target);
   } else {
     date.setUTCDate(1);
-    date.setUTCMonth(date.getUTCMonth() + offset + 1);
+    date.setUTCMonth(date.getUTCMonth() + rule.offset);
+    if(date.getUTCFullYear() < 1400 || date.getUTCFullYear() > 9999 ||
+        !Number.isFinite(date.getTime())) {
+      throw new RangeError('Date rule month is out of range.');
+    }
+    date.setUTCMonth(date.getUTCMonth() + 1);
     date.setUTCDate(0);
-    if(rule.type === DateRule.Type.DAY_OF_MONTH) {
-      if(!Number.isInteger(rule.day) || rule.day < 1 || rule.day > 31) {
-        return null;
-      }
+    if(rule.type === DateRuleType.DAY_OF_MONTH) {
       date.setUTCDate(Math.min(rule.day, date.getUTCDate()));
-    } else if(rule.type === DateRule.Type.MONTH_BOUNDARY) {
-      if(rule.boundaryOffset == null ||
-          !Number.isSafeInteger(rule.boundaryOffset) ||
-          rule.boundaryOffset < 0) {
-        return null;
-      }
-      if(rule.boundary === DateRule.Boundary.FIRST) {
+    } else {
+      if(rule.boundary === MonthBoundaryDateRule.Boundary.FIRST) {
         date.setUTCDate(1);
       }
-      let offset = rule.boundaryOffset;
-      if(rule.boundaryDirection === DateRule.Direction.BEFORE) {
-        offset = -offset;
-      }
-      date.setUTCDate(date.getUTCDate() + offset);
-    } else {
-      return null;
+      date.setUTCDate(date.getUTCDate() + rule.dayOffset);
     }
   }
   const year = date.getUTCFullYear();
-  if(!Number.isFinite(date.getTime()) || year < 0 || year > 9999) {
-    return null;
+  if(!Number.isFinite(date.getTime()) || year < 1400 || year > 9999) {
+    throw new RangeError('Date rule result is out of range.');
   }
-  return new Beam.Date(year, date.getUTCMonth() + 1, date.getUTCDate());
+  return new Beam.DateTime(new Beam.Date(year, date.getUTCMonth() + 1,
+    date.getUTCDate()), reference.timeOfDay);
 }
 
-/** Compares the configuration of two date rules. */
+/** Resolves an input rule, returning null for an empty or invalid result. */
+export function resolveDateRule(rule: DateRule, reference: Beam.Date):
+    Beam.Date {
+  try {
+    return applyDateRule(rule,
+      new Beam.DateTime(reference, Beam.Duration.ZERO)).date;
+  } catch {
+    return null;
+  }
+}
+
+/** Compares the parameters of two date rules, including incomplete drafts. */
 export function isDateRuleEqual(first: DateRule, second: DateRule): boolean {
-  return first.type === second.type && first.count === second.count &&
-    first.direction === second.direction && first.weekday === second.weekday &&
-    first.day === second.day && first.boundary === second.boundary &&
-    first.boundaryOffset === second.boundaryOffset &&
-    first.boundaryDirection === second.boundaryDirection &&
-    (first.date === second.date || Boolean(first.date?.equals(second.date)));
+  if(first.type !== second.type) {
+    return false;
+  }
+  if(first.type === DateRuleType.SPECIFIC_DATE &&
+      second.type === DateRuleType.SPECIFIC_DATE) {
+    return first.date === second.date ||
+      Boolean(first.date?.equals(second.date));
+  }
+  if(first.type === DateRuleType.SPECIFIC_DATE ||
+      second.type === DateRuleType.SPECIFIC_DATE ||
+      first.offset !== second.offset) {
+    return false;
+  }
+  if(first.type === DateRuleType.WEEKDAY &&
+      second.type === DateRuleType.WEEKDAY ||
+      first.type === DateRuleType.DAY_OF_MONTH &&
+      second.type === DateRuleType.DAY_OF_MONTH) {
+    return first.day === second.day;
+  }
+  if(first.type === DateRuleType.MONTH_BOUNDARY &&
+      second.type === DateRuleType.MONTH_BOUNDARY) {
+    return first.boundary === second.boundary &&
+      first.dayOffset === second.dayOffset;
+  }
+  return true;
+}
+
+function isDate(date: Beam.Date): boolean {
+  if(!date || !Number.isInteger(date.year) || date.year < 1400 ||
+      date.year > 9999 || !Number.isInteger(date.month) ||
+      !Number.isInteger(date.day)) {
+    return false;
+  }
+  const value = new Date(0);
+  value.setUTCFullYear(date.year, date.month - 1, date.day);
+  return value.getUTCFullYear() === date.year &&
+    value.getUTCMonth() === date.month - 1 && value.getUTCDate() === date.day;
+}
+
+function isOffset(value: number): boolean {
+  const MINIMUM = -(2 ** 31);
+  const MAXIMUM = 2 ** 31 - 1;
+  return Number.isInteger(value) && value >= MINIMUM && value <= MAXIMUM;
+}
+
+function validateRule(rule: DateRule): void {
+  if(rule.type === DateRuleType.SPECIFIC_DATE) {
+    if(!isDate(rule.date)) {
+      throw new Error('Invalid fixed date.');
+    }
+    return;
+  }
+  if(!isOffset(rule.offset)) {
+    throw new Error('Invalid date rule offset.');
+  }
+  if(rule.type === DateRuleType.WEEKDAY) {
+    if(!Object.values(Weekday).includes(rule.day)) {
+      throw new Error('Invalid weekday.');
+    }
+  } else if(rule.type === DateRuleType.DAY_OF_MONTH) {
+    if(!Number.isInteger(rule.day) || rule.day < 1 || rule.day > 31) {
+      throw new Error('Invalid day of month.');
+    }
+  } else if(rule.type === DateRuleType.MONTH_BOUNDARY) {
+    if(!Object.values(MonthBoundaryDateRule.Boundary).includes(rule.boundary) ||
+        !isOffset(rule.dayOffset)) {
+      throw new Error('Invalid month boundary.');
+    }
+  } else if(rule.type !== DateRuleType.DAY_OFFSET) {
+    throw new Error('Unknown date rule type.');
+  }
 }

@@ -1,105 +1,119 @@
 import * as assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import * as Beam from 'beam';
-import { DateRule, isDateRuleEqual, resolveDateRule } from
-  '../../source/models/date_rule';
+import { applyDateRule, DateRule, DateRuleType, dateRuleToJson,
+  DayOffsetDateRule, DayOfMonthDateRule, isDateRuleEqual,
+  MonthBoundaryDateRule, parseDateRule, resolveDateRule, SpecificDateRule,
+  Weekday, WeekdayDateRule } from '../../source/models/date_rule';
 
 const REFERENCE = new Beam.Date(2026, 10, 7);
+const BOUNDARY = MonthBoundaryDateRule.Boundary;
 
 describe('DateRule', () => {
-  it('resolves_fixed_dates_and_day_offsets', () => {
-    const date = new Beam.Date(2026, 9, 15);
-    const fixed = new DateRule(DateRule.Type.SPECIFIC_DATE, date);
-    assert.ok(resolveDateRule(fixed, REFERENCE).equals(date));
-    assert.equal(resolveDateRule({...fixed, date: null}, REFERENCE), null);
-    const rule = new DateRule(DateRule.Type.DAY_OFFSET, null);
-    assert.equal(resolveDateRule(rule, REFERENCE).toJson(), '20261007');
-    assert.equal(resolveDateRule({...rule, count: 7}, REFERENCE).toJson(),
-      '20260930');
-    assert.equal(resolveDateRule({...rule, count: 7,
-      direction: DateRule.Direction.AFTER}, REFERENCE).toJson(), '20261014');
-  });
-
-  it('resolves_weekdays_from_monday', () => {
-    const rule = new DateRule(DateRule.Type.WEEKDAY, null);
-    assert.equal(resolveDateRule({...rule, count: 2}, REFERENCE).toJson(),
-      '20260921');
-    assert.equal(resolveDateRule({...rule, weekday: 4}, REFERENCE).toJson(),
-      '20261009');
-    assert.equal(resolveDateRule({...rule, count: 1, weekday: 1},
-      REFERENCE).toJson(), '20260929');
-    assert.equal(resolveDateRule({...rule, weekday: 6},
-      new Beam.Date(2026, 10, 11)).toJson(), '20261011');
-    assert.equal(resolveDateRule({...rule, count: 1,
-      direction: DateRule.Direction.AFTER}, REFERENCE).toJson(), '20261012');
-  });
-
-  it('resolves_month_days_and_boundaries', () => {
-    const rule = new DateRule(DateRule.Type.DAY_OF_MONTH, null);
-    assert.equal(resolveDateRule({...rule, count: 1, day: 15},
-      REFERENCE).toJson(), '20260915');
-    for(const [reference, expected] of [
-        [new Beam.Date(2024, 3, 31), '20240229'],
-        [new Beam.Date(2025, 3, 31), '20250228'],
-        [new Beam.Date(2026, 1, 31), '20251231']] as const) {
-      assert.equal(resolveDateRule({...rule, count: 1, day: 31},
-        reference).toJson(), expected);
+  it('applies_the_same_calendar_rules_as_cpp_and_preserves_time', () => {
+    const reference = new Beam.DateTime(REFERENCE,
+      Beam.Duration.fromJson('12:34:56.123'));
+    const cases: [DateRule, string][] = [
+      [new SpecificDateRule(new Beam.Date(2024, 2, 29)), '20240229'],
+      [new DayOffsetDateRule(-1), '20261006'],
+      [new DayOffsetDateRule(0), '20261007'],
+      [new DayOffsetDateRule(2), '20261009'],
+      [new WeekdayDateRule(-2, Weekday.MONDAY), '20260921'],
+      [new WeekdayDateRule(-1, Weekday.TUESDAY), '20260929'],
+      [new WeekdayDateRule(0, Weekday.THURSDAY), '20261008'],
+      [new WeekdayDateRule(0, Weekday.SUNDAY), '20261011'],
+      [new WeekdayDateRule(1, Weekday.MONDAY), '20261012'],
+      [new DayOfMonthDateRule(-1, 15), '20260915'],
+      [new DayOfMonthDateRule(-1, 31), '20260930'],
+      [new DayOfMonthDateRule(3, 1), '20270101'],
+      [new MonthBoundaryDateRule(0, BOUNDARY.FIRST, 0), '20261001'],
+      [new MonthBoundaryDateRule(0, BOUNDARY.LAST, -1), '20261030'],
+      [new MonthBoundaryDateRule(0, BOUNDARY.FIRST, -1), '20260930'],
+      [new MonthBoundaryDateRule(0, BOUNDARY.LAST, 1), '20261101'],
+      [new MonthBoundaryDateRule(-10, BOUNDARY.FIRST, -1), '20251130']];
+    for(const [rule, expected] of cases) {
+      const result = applyDateRule(rule, reference);
+      assert.equal(result.date.toJson(), expected);
+      assert.equal(result.timeOfDay.ticks, reference.timeOfDay.ticks);
     }
-    const boundary = new DateRule(DateRule.Type.MONTH_BOUNDARY, null);
-    assert.equal(resolveDateRule(boundary, REFERENCE).toJson(), '20261031');
-    assert.equal(resolveDateRule({...boundary, count: 1,
-      boundary: DateRule.Boundary.FIRST}, REFERENCE).toJson(), '20260901');
+    assert.equal(resolveDateRule(new WeekdayDateRule(0, Weekday.MONDAY),
+      new Beam.Date(2026, 10, 11)).toJson(), '20261005');
+    for(const [year, end] of [
+        [2024, '20240229'], [2025, '20250228']] as const) {
+      assert.equal(resolveDateRule(new DayOfMonthDateRule(-1, 31),
+        new Beam.Date(year, 3, 31)).toJson(), end);
+      assert.equal(resolveDateRule(new MonthBoundaryDateRule(-1,
+        BOUNDARY.LAST, 0), new Beam.Date(year, 3, 31)).toJson(), end);
+    }
   });
 
-  it('offsets_before_and_after_month_boundaries', () => {
-    const rule = new DateRule(DateRule.Type.MONTH_BOUNDARY, null);
-    assert.equal(resolveDateRule({...rule, boundaryOffset: 1},
-      REFERENCE).toJson(), '20261030');
-    for(const [reference, expected] of [
-        [new Beam.Date(2024, 2, 15), '20240228'],
-        [new Beam.Date(2025, 2, 15), '20250227']] as const) {
-      assert.equal(resolveDateRule({...rule, boundaryOffset: 1},
-        reference).toJson(), expected);
+  it('round_trips_the_cpp_wire_format_with_names', () => {
+    const cases = [
+      {type: 'SpecificDate', value: {date: '20240229'}},
+      {type: 'DayOffset', value: {offset: -2147483648}},
+      {type: 'Weekday', value: {offset: -2, day: 'Sunday'}},
+      {type: 'DayOfMonth', value: {offset: 1, day: 31}},
+      {type: 'MonthBoundary', value: {offset: -1, boundary: 'Last',
+        day_offset: -1}},
+      {type: 'DayOffset', value: {offset: 2147483647}}];
+    for(const json of cases) {
+      const rule = parseDateRule(json);
+      assert.equal(rule.type, json.type);
+      assert.deepEqual(dateRuleToJson(rule), json);
+      assert.ok(isDateRuleEqual(rule, parseDateRule(dateRuleToJson(rule))));
+      assert.deepEqual(dateRuleToJson(parseDateRule({...json, __version: 0,
+        value: {...json.value, __version: 0}})), json);
     }
-    assert.equal(resolveDateRule({...rule, boundaryOffset: 2,
-      boundaryDirection: DateRule.Direction.AFTER,
-      boundary: DateRule.Boundary.FIRST}, REFERENCE).toJson(), '20261003');
-    assert.equal(resolveDateRule({...rule, count: 1, boundaryOffset: 1},
-      REFERENCE).toJson(), '20260929');
-    assert.equal(resolveDateRule({...rule, count: 1,
-      direction: DateRule.Direction.AFTER, boundaryOffset: 1,
-      boundaryDirection: DateRule.Direction.AFTER}, REFERENCE).toJson(),
-      '20261201');
-    assert.equal(resolveDateRule({...rule, boundary: DateRule.Boundary.FIRST,
-      boundaryOffset: 1}, REFERENCE).toJson(), '20260930');
-    for(const boundaryOffset of [null, -1, 1.5, Infinity]) {
-      assert.equal(resolveDateRule({...rule, boundaryOffset}, REFERENCE), null);
+    assert.equal(dateRuleToJson(parseDateRule(null)), null);
+    for(const invalid of [
+        {type: 1, value: {offset: 0}}, {type: 'Unknown', value: {}},
+        {type: 'DayOffset', value: {offset: 0.5}},
+        {type: 'DayOffset', value: {offset: 2147483648}},
+        {type: 'DayOffset', value: {offset: -2147483649}},
+        {type: 'DayOffset', value: {offset: null}},
+        {type: 'Weekday', value: {offset: 0, day: 0}},
+        {type: 'DayOfMonth', value: {offset: 0, day: 32}},
+        {type: 'MonthBoundary', value: {offset: 0, boundary: 1, day_offset: 0}},
+        {type: 'SpecificDate', value: {date: '20260230'}}]) {
+      assert.throws(() => parseDateRule(invalid));
     }
-    assert.ok(!isDateRuleEqual(rule, {...rule, boundaryOffset: 1}));
-    assert.ok(!isDateRuleEqual(rule, {...rule,
-      boundaryDirection: DateRule.Direction.AFTER}));
   });
 
-  it('rejects_incomplete_and_out_of_range_rules', () => {
-    const rule = new DateRule(DateRule.Type.DAY_OFFSET, null);
-    for(const count of [null, -1, 1.5, Infinity, Number.MAX_SAFE_INTEGER]) {
-      assert.equal(resolveDateRule({...rule, count}, REFERENCE), null);
+  it('rejects_incomplete_rules_and_results_outside_cpp_date_limits', () => {
+    const reference = new Beam.DateTime(REFERENCE, Beam.Duration.ZERO);
+    for(const rule of [new SpecificDateRule(null),
+        new SpecificDateRule(new Beam.Date(2026, 2, 30)),
+        new DayOffsetDateRule(null), new DayOffsetDateRule(0.5),
+        new DayOffsetDateRule(Infinity), new DayOfMonthDateRule(0, 0),
+        new MonthBoundaryDateRule(0, BOUNDARY.LAST, null)]) {
+      assert.throws(() => applyDateRule(rule, reference));
+      assert.equal(resolveDateRule(rule, REFERENCE), null);
     }
-    assert.equal(resolveDateRule({...rule, count: 1},
-      new Beam.Date(0, 1, 1)), null);
-    assert.equal(resolveDateRule({...rule, count: 1,
-      direction: DateRule.Direction.AFTER}, new Beam.Date(9999, 12, 31)), null);
-    assert.equal(resolveDateRule({...rule, type: DateRule.Type.DAY_OF_MONTH,
-      day: null}, REFERENCE), null);
-    assert.equal(resolveDateRule({...rule, type: DateRule.Type.WEEKDAY,
-      weekday: 7}, REFERENCE), null);
+    const minimum = new Beam.Date(1400, 1, 1);
+    const maximum = new Beam.Date(9999, 12, 31);
+    assert.equal(resolveDateRule(new DayOffsetDateRule(0), minimum).toJson(),
+      '14000101');
+    assert.equal(resolveDateRule(new DayOffsetDateRule(-1), minimum), null);
+    assert.equal(resolveDateRule(new DayOffsetDateRule(1), maximum), null);
+    assert.equal(resolveDateRule(new MonthBoundaryDateRule(1,
+      BOUNDARY.FIRST, -31), maximum), null);
+    for(const offset of [-2147483648, 2147483647]) {
+      for(const rule of [new DayOffsetDateRule(offset),
+          new WeekdayDateRule(offset, Weekday.MONDAY),
+          new DayOfMonthDateRule(offset, 1),
+          new MonthBoundaryDateRule(offset, BOUNDARY.LAST, 0)]) {
+        assert.throws(() => applyDateRule(rule, reference), RangeError);
+      }
+    }
   });
 
-  it('compares_rules_independently_of_resolved_dates', () => {
-    const rule = new DateRule(DateRule.Type.DAY_OFFSET, null);
-    assert.ok(isDateRuleEqual(rule, {...rule}));
-    assert.ok(!isDateRuleEqual(rule, {...rule,
-      direction: DateRule.Direction.AFTER}));
-    assert.ok(!isDateRuleEqual(rule, {...rule, count: 1}));
+  it('compares_only_the_active_rule_parameters', () => {
+    const day = new DayOffsetDateRule(-1);
+    assert.ok(isDateRuleEqual(day, new DayOffsetDateRule(-1)));
+    assert.ok(!isDateRuleEqual(day, new DayOffsetDateRule(1)));
+    assert.ok(!isDateRuleEqual(day, new WeekdayDateRule(-1, Weekday.MONDAY)));
+    const boundary = new MonthBoundaryDateRule(0, BOUNDARY.LAST, -1);
+    assert.ok(!isDateRuleEqual(boundary, {...boundary, dayOffset: 1}));
+    assert.equal(boundary.type, DateRuleType.MONTH_BOUNDARY);
   });
 });
