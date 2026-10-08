@@ -6,7 +6,7 @@ import { makeParametersDateRangeOptions } from
   './parameters_date_range_options';
 
 interface Properties extends Omit<React.ComponentProps<typeof DateRangeInput>,
-    'options' | 'orientation' | 'labelPosition'> {
+    'options' | 'orientation' | 'labelPosition' | 'referenceDate'> {
 
   /** The selector's label. Defaults to Date Range. */
   label?: string;
@@ -49,7 +49,7 @@ export class ParametersDateRangeInput extends
     })();
     return <div ref={this.element}
         style={{width: '100%', minWidth: 0, ...style}}>
-      <DateRangeInput {...properties} label={label}
+      <DateRangeInput {...properties} label={label} referenceDate={reference}
         options={this.options} labelPosition={labelPosition}
         orientation={DateRangeInput.Orientation.VERTICAL}
         boundsRequired={boundsRequired}/>

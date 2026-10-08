@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
-import { DateRangeOption } from '../../models/date_range';
+import { DateRangeOption, DateRangeRules } from '../../models/date_range';
+import { DateRule, resolveDateRule } from '../../models/date_rule';
 
 /** Builds the reporting presets relative to a local calendar date.
  * @param today - The reference date for the presets.
@@ -7,25 +8,20 @@ import { DateRangeOption } from '../../models/date_range';
  */
 export function makeParametersDateRangeOptions(today: Beam.Date):
     DateRangeOption[] {
-  const date = new Date(0);
-  date.setUTCFullYear(today.year, today.month - 1, today.day);
-  const weekday = date.getUTCDay();
-  const day = (month: number, value: number) => {
-    const result = new Date(0);
-    result.setUTCFullYear(today.year, month - 1, value);
-    return new Beam.Date(result.getUTCFullYear(), result.getUTCMonth() + 1,
-      result.getUTCDate());
-  };
-  const yesterday = day(today.month, today.day - 1);
+  const currentDay = new DateRule(DateRule.Type.DAY_OFFSET, null);
+  const yesterday = {...currentDay, count: 1};
+  const firstDay = {...new DateRule(DateRule.Type.MONTH_BOUNDARY, null),
+    boundary: DateRule.Boundary.FIRST};
+  const lastDay = new DateRule(DateRule.Type.MONTH_BOUNDARY, null);
+  const option = (value: string, label: string, start: DateRule,
+      end: DateRule) => new DateRangeOption(value, label,
+    resolveDateRule(start, today), resolveDateRule(end, today),
+    new DateRangeRules(start, end));
   return [
-    new DateRangeOption('today', 'Today', today, today),
-    new DateRangeOption('yesterday', 'Yesterday', yesterday, yesterday),
-    new DateRangeOption('week-to-date', 'Week to Date',
-      day(today.month, today.day - (weekday + 6) % 7), today),
-    new DateRangeOption('month-to-date', 'Month to Date',
-      new Beam.Date(today.year, today.month, 1), today),
-    new DateRangeOption('previous-month', 'Previous Month',
-      day(today.month - 1, 1), day(today.month, 0)),
-    new DateRangeOption('year-to-date', 'Year to Date',
-      new Beam.Date(today.year, 1, 1), today)];
+    option('today', 'Today', currentDay, currentDay),
+    option('yesterday', 'Yesterday', yesterday, yesterday),
+    option('month-to-date', 'Month to Date', firstDay, currentDay),
+    option('this-month', 'This Month', firstDay, lastDay),
+    option('previous-month', 'Last Month', {...firstDay, count: 1},
+      {...lastDay, count: 1})];
 }

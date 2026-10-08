@@ -442,10 +442,10 @@ const dateRangeInput =
   new ComponentSchema('DateRangeInput',
     [new PropertySchema('value', (() => {
         const today = Beam.Date.today();
-        return new WebPortal.DateRange(
-          new Beam.Date(today.year, today.month, 1), today);
+        return new WebPortal.DateRange(today, today);
       })(), DateRangeValueInput),
       new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('referenceDate', Beam.Date.today(), BeamDateInput),
       new PropertySchema('orientation',
         WebPortal.DateRangeInput.Orientation.VERTICAL,
         EnumInput(WebPortal.DateRangeInput.Orientation)),
@@ -455,7 +455,8 @@ const dateRangeInput =
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onValidationChange', 'validation')],
+      new SignalSchema('onValidationChange', 'validation'),
+      new SignalSchema('onRulesChange', 'rules')],
     DateRangeInputExample, 284);
 
 const decimalInput =
