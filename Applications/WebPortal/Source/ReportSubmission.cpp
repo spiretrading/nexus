@@ -15,6 +15,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/StandardCurrencies.hpp"
+#include "WebPortal/DateRule.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -80,6 +81,25 @@ namespace {
     }
     std::erase(text, '-');
     return to_iso_string(from_undelimited_string(text));
+  }
+
+  JsonValue read_date_rule(const JsonValue& value,
+      const JsonValue& resolved, bool is_required) {
+    if(std::get_if<JsonNull>(&value)) {
+      if(is_required || !std::get_if<JsonNull>(&resolved)) {
+        throw std::invalid_argument("Invalid unspecified date rule.");
+      }
+      return JsonNull();
+    }
+    auto rule = from_json<DateRule>(value);
+    if(auto fixed = std::get_if<SpecificDateRule>(&rule)) {
+      if(JsonValue(to_iso_string(fixed->m_date)) != resolved) {
+        throw std::invalid_argument("Invalid fixed date rule.");
+      }
+    } else if(std::get_if<JsonNull>(&resolved)) {
+      throw std::invalid_argument("Missing resolved date.");
+    }
+    return encode_value(rule);
   }
 
   time_duration read_time(const std::string& text) {
@@ -154,6 +174,15 @@ namespace {
       }
       if(end) {
         range["end"] = read_date(*end);
+      }
+      if(auto value = object.get("rules")) {
+        auto& rules = read_object(*value);
+        auto normalized = JsonObject();
+        for(auto& name : {"start", "end"}) {
+          normalized[name] = read_date_rule(read_member(rules, name),
+            range.at(name), parameter.m_is_required);
+        }
+        range["rules"] = std::move(normalized);
       }
       auto first = std::get_if<std::string>(&range.at("start"));
       auto last = std::get_if<std::string>(&range.at("end"));

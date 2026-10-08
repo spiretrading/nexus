@@ -1,10 +1,12 @@
 #include <Beam/Json/JsonParser.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
+#include "WebPortal/DateRule.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportSubmission.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
@@ -159,6 +161,88 @@ TEST_SUITE("ReportSubmission") {
     definition.m_arguments = {"{unknown}"};
     REQUIRE_THROWS_AS(make_report_arguments(definition, values),
       std::runtime_error);
+  }
+
+  TEST_CASE("date_range_rules") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    auto input = make_parameters(client.get_account());
+    auto rules = std::vector({
+      R"({"type":"SpecificDate","value":{"date":"20261007"}})",
+      R"({"type":"DayOffset","value":{"offset":0}})",
+      R"({"type":"Weekday","value":{"offset":-2,"day":"Friday"}})",
+      R"({"type":"DayOfMonth","value":{"offset":-1,"day":31}})",
+      R"({"type":"MonthBoundary","value":{"offset":0,"boundary":"Last",
+        "day_offset":-1}})"});
+    for(auto& text : rules) {
+      auto rule = parse<JsonValue>(text);
+      auto period = get<JsonObject>(parse<JsonValue>(
+        R"({"start":"20261007","end":"20261007","rules":{}})"));
+      auto& bounds = get<JsonObject>(period["rules"]);
+      bounds["start"] = rule;
+      bounds["end"] = rule;
+      input["period"] = period;
+      auto normalized = parse<JsonValue>(to_json(from_json<DateRule>(rule)));
+      bounds["start"] = normalized;
+      bounds["end"] = normalized;
+      auto submission = ReportScheduleSubmission(
+        ReportSubmission("example", input, {}),
+        time_from_string("2026-10-08 09:00:00"), {}, "America/Toronto");
+      auto schedule = prepare_report_schedule({definition},
+        client.get_account(), submission, client,
+        time_from_string("2026-10-07 12:00:00"));
+      REQUIRE(schedule.m_parameters.at("period") == period);
+      auto restored = from_json<ReportSchedule>(to_json(schedule));
+      REQUIRE(restored.m_parameters.at("period") == period);
+      REQUIRE(make_report_arguments(definition, restored.m_parameters).back() ==
+        "20261007");
+    }
+    auto invalid = std::vector({"null", "{}",
+      R"({"type":1,"value":{"offset":0}})",
+      R"({"type":"Unknown","value":{}})",
+      R"({"type":"SpecificDate","value":{"date":"20261008"}})",
+      R"({"type":"DayOffset","value":{"offset":null}})",
+      R"({"type":"DayOffset","value":{"offset":0.5}})",
+      R"({"type":"DayOffset","value":{"offset":2147483648}})",
+      R"({"type":"Weekday","value":{"offset":0,"day":4}})",
+      R"({"type":"DayOfMonth","value":{"offset":0,"day":32}})",
+      R"({"type":"MonthBoundary","value":{"offset":0,"boundary":1,
+        "day_offset":0}})"});
+    for(auto& text : invalid) {
+      auto& period = get<JsonObject>(input["period"]);
+      get<JsonObject>(period["rules"])["start"] = parse<JsonValue>(text);
+      REQUIRE_THROWS_AS(prepare_report_parameters(
+        definition, input, client.get_account(), client),
+        std::invalid_argument);
+    }
+    for(auto& text : {"null", "{}", R"({"start":null})"}) {
+      get<JsonObject>(input["period"])["rules"] = parse<JsonValue>(text);
+      REQUIRE_THROWS_AS(prepare_report_parameters(
+        definition, input, client.get_account(), client),
+        std::invalid_argument);
+    }
+    for(auto& name : {"start", "end"}) {
+      auto period = get<JsonObject>(parse<JsonValue>(R"({
+        "start":"20261007","end":"20261007","rules":{
+          "start":{"type":"DayOffset","value":{"offset":0}},
+          "end":{"type":"DayOffset","value":{"offset":0}}}})"));
+      period[name] = JsonNull();
+      get<JsonObject>(period["rules"])[name] = JsonNull();
+      input["period"] = period;
+      auto normalized = prepare_report_parameters(
+        definition, input, client.get_account(), client);
+      auto& range = get<JsonObject>(normalized.at("period"));
+      REQUIRE(std::get_if<JsonNull>(&range.at(name)));
+      REQUIRE(std::get_if<JsonNull>(
+        &get<JsonObject>(range.at("rules")).at(name)));
+      definition.m_parameters.back().m_is_required = true;
+      REQUIRE_THROWS_AS(prepare_report_parameters(
+        definition, input, client.get_account(), client),
+        std::invalid_argument);
+      definition.m_parameters.back().m_is_required = false;
+    }
+
   }
 
   TEST_CASE("parameter_validation") {
@@ -490,6 +574,13 @@ TEST_SUITE("ReportSubmission") {
       "repeats":false, "repeat_interval":null,
       "time_zone":"America/Toronto"})"));
     body["parameters"] = make_parameters(client.get_account());
+    auto period = parse<JsonValue>(R"({"start":"20261007","end":"20261007",
+      "rules":{"start":{"type":"DayOffset","value":{"offset":0}},
+        "end":{"type":"DayOffset","value":{"offset":0}}}})");
+    get<JsonObject>(body["parameters"])["period"] = period;
+    period = prepare_report_parameters(make_definition(),
+      get<JsonObject>(body["parameters"]), client.get_account(), client).
+        at("period");
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::UNAUTHORIZED);
     session->set_account(client.get_account());
@@ -500,6 +591,15 @@ TEST_SUITE("ReportSubmission") {
     REQUIRE(!schedule.m_repeat_interval);
     REQUIRE(schedule.m_start_time == time_from_string("2026-10-07 09:00:00"));
     REQUIRE(schedule.m_time_zone == "America/Toronto");
+    REQUIRE(schedule.m_parameters.at("period") == period);
+    auto request = JsonObject();
+    request["id"] = id;
+    request.set("time_zone", "America/Toronto");
+    auto loaded = post(servlet, *session,
+      "/api/reporting_service/load_scheduled_report", request);
+    REQUIRE(loaded.get_status_code() == HttpStatusCode::OK);
+    auto saved = get<JsonObject>(parse<JsonValue>(loaded.get_body()));
+    REQUIRE(get<JsonObject>(saved.at("parameters")).at("period") == period);
     auto valid = to_string(body);
     auto inputs = std::vector({
       std::pair("time_zone", JsonValue("Not/AZone")),
