@@ -28,8 +28,8 @@ TEST_SUITE("ReportScheduleRun") {
       {{"period", "Period", "DateRange", true}}, "program", {"{period.start}"});
     auto parameters = JsonObject();
     parameters["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"DayOffset","value":{"offset":0}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"DAY_OFFSET","value":{"offset":0}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     auto time = FixedTimeClient(time_from_string("2024-03-01 02:00:00"));
     auto schedule = ReportSchedule("schedule", client.get_account(), definition,
       parameters, {}, time.get_time(),

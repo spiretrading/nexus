@@ -49,13 +49,13 @@ describe('DateRule', () => {
 
   it('round_trips_the_cpp_wire_format_with_names', () => {
     const cases = [
-      {type: 'SpecificDate', value: {date: '20240229'}},
-      {type: 'DayOffset', value: {offset: -2147483648}},
-      {type: 'Weekday', value: {offset: -2, day: 'Sunday'}},
-      {type: 'DayOfMonth', value: {offset: 1, day: 31}},
-      {type: 'MonthBoundary', value: {offset: -1, boundary: 'Last',
+      {type: 'SPECIFIC_DATE', value: {date: '20240229'}},
+      {type: 'DAY_OFFSET', value: {offset: -2147483648}},
+      {type: 'WEEKDAY', value: {offset: -2, day: 'SUNDAY'}},
+      {type: 'DAY_OF_MONTH', value: {offset: 1, day: 31}},
+      {type: 'MONTH_BOUNDARY', value: {offset: -1, boundary: 'LAST',
         day_offset: -1}},
-      {type: 'DayOffset', value: {offset: 2147483647}}];
+      {type: 'DAY_OFFSET', value: {offset: 2147483647}}];
     for(const json of cases) {
       const rule = parseDateRule(json);
       assert.equal(rule.type, json.type);
@@ -67,14 +67,14 @@ describe('DateRule', () => {
     assert.equal(dateRuleToJson(parseDateRule(null)), null);
     for(const invalid of [
         {type: 1, value: {offset: 0}}, {type: 'Unknown', value: {}},
-        {type: 'DayOffset', value: {offset: 0.5}},
-        {type: 'DayOffset', value: {offset: 2147483648}},
-        {type: 'DayOffset', value: {offset: -2147483649}},
-        {type: 'DayOffset', value: {offset: null}},
-        {type: 'Weekday', value: {offset: 0, day: 0}},
-        {type: 'DayOfMonth', value: {offset: 0, day: 32}},
-        {type: 'MonthBoundary', value: {offset: 0, boundary: 1, day_offset: 0}},
-        {type: 'SpecificDate', value: {date: '20260230'}}]) {
+        {type: 'DAY_OFFSET', value: {offset: 0.5}},
+        {type: 'DAY_OFFSET', value: {offset: 2147483648}},
+        {type: 'DAY_OFFSET', value: {offset: -2147483649}},
+        {type: 'DAY_OFFSET', value: {offset: null}},
+        {type: 'WEEKDAY', value: {offset: 0, day: 0}},
+        {type: 'DAY_OF_MONTH', value: {offset: 0, day: 32}},
+        {type: 'MONTH_BOUNDARY', value: {offset: 0, boundary: 1, day_offset: 0}},
+        {type: 'SPECIFIC_DATE', value: {date: '20260230'}}]) {
       assert.throws(() => parseDateRule(invalid));
     }
   });

@@ -51,11 +51,11 @@ describe('ReportParameterValue', () => {
       new ReportParameterDefinition('period', 'Period', 'DateRange', true)],
       null);
     const cases = [
-      {type: 'SpecificDate', value: {date: '20261007'}},
-      {type: 'DayOffset', value: {offset: 0}},
-      {type: 'Weekday', value: {offset: -2, day: 'Friday'}},
-      {type: 'DayOfMonth', value: {offset: 1, day: 31}},
-      {type: 'MonthBoundary', value: {offset: 0, boundary: 'Last',
+      {type: 'SPECIFIC_DATE', value: {date: '20261007'}},
+      {type: 'DAY_OFFSET', value: {offset: 0}},
+      {type: 'WEEKDAY', value: {offset: -2, day: 'FRIDAY'}},
+      {type: 'DAY_OF_MONTH', value: {offset: 1, day: 31}},
+      {type: 'MONTH_BOUNDARY', value: {offset: 0, boundary: 'LAST',
         day_offset: -1}}];
     for(const start of cases) {
       const json = {start: '20261007', end: '20261007',
@@ -93,8 +93,8 @@ describe('ReportParameterValue', () => {
     for(const name of ['preset', 'saved']) {
       assert.deepEqual(request.parameters[name], {
         start: today.toJson(), end: today.toJson(),
-        rules: {start: {type: 'DayOffset', value: {offset: 0}},
-          end: {type: 'DayOffset', value: {offset: 0}}}});
+        rules: {start: {type: 'DAY_OFFSET', value: {offset: 0}},
+          end: {type: 'DAY_OFFSET', value: {offset: 0}}}});
     }
     const copy = copyReportFormValue(form, [report]);
     assert.deepEqual(reportFormValueToJson(copy), request);

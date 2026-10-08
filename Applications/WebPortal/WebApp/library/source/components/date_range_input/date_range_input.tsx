@@ -741,7 +741,9 @@ class DateRuleInput extends React.Component<DateRuleInputProperties,
             style={style} readOnly={props.readOnly} disabled={props.disabled}
             onChange={this.onWeekdayChange}>
           {Object.values(Weekday).map(day =>
-            <option value={day} key={day}>{day}</option>)}
+            <option value={day} key={day}>
+              {day[0] + day.slice(1).toLowerCase()}
+            </option>)}
         </Select>}
       {rule.type === DateRuleType.DAY_OF_MONTH &&
         <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>

@@ -135,7 +135,7 @@ describe('HTTP report models', () => {
       account: Beam.DirectoryEntry.STAR_DIRECTORY.toJson(),
       accounts: [Beam.DirectoryEntry.makeAccount(1, 'Alice').toJson()],
       range: {start: '20261001', end: null,
-        rules: {start: {type: 'SpecificDate', value: {date: '20261001'}},
+        rules: {start: {type: 'SPECIFIC_DATE', value: {date: '20261001'}},
           end: null}}, currency: 840,
       money: Nexus.Money.parse('12.34').toJson(),
       scope: Nexus.Scope.GLOBAL.toJson(), count: 0, optional: null},

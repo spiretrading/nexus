@@ -741,9 +741,9 @@ TEST_SUITE("ReportScheduleService") {
       ReportParameterDefinition("period", "Period", "DateRange", true));
     source.m_definition.m_arguments = {"{period.start}", "{period.end}"};
     source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"MonthBoundary","value":{
-        "offset":0,"boundary":"First","day_offset":0}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"MONTH_BOUNDARY","value":{
+        "offset":0,"boundary":"FIRST","day_offset":0}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     auto backend = Backend([] (const auto&, auto) { return 1; });
     backend.m_definitions = {source.m_definition};
     backend.store(source);
@@ -787,8 +787,8 @@ TEST_SUITE("ReportScheduleService") {
     source.m_definition.m_parameters.push_back(
       ReportParameterDefinition("period", "Period", "DateRange", true));
     source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"DayOffset","value":{"offset":2147483647}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"DAY_OFFSET","value":{"offset":2147483647}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     auto backend = Backend([] (const auto&, auto) {
       FAIL("An unresolved date rule must not execute.");
       return 0;
@@ -820,8 +820,8 @@ TEST_SUITE("ReportScheduleService") {
       ReportParameterDefinition("period", "Period", "DateRange", true));
     source.m_definition.m_arguments.push_back("{period.start}");
     source.m_parameters["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"DayOffset","value":{"offset":0}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"DAY_OFFSET","value":{"offset":0}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     auto started = Queue<ReportJob>();
     auto backend = Backend([&] (const auto& job, auto) {
       started.push(job);

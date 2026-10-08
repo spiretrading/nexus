@@ -169,11 +169,11 @@ TEST_SUITE("ReportSubmission") {
     auto definition = make_definition();
     auto input = make_parameters(client.get_account());
     auto rules = std::vector({
-      R"({"type":"SpecificDate","value":{"date":"20261007"}})",
-      R"({"type":"DayOffset","value":{"offset":0}})",
-      R"({"type":"Weekday","value":{"offset":-2,"day":"Friday"}})",
-      R"({"type":"DayOfMonth","value":{"offset":-1,"day":31}})",
-      R"({"type":"MonthBoundary","value":{"offset":0,"boundary":"Last",
+      R"({"type":"SPECIFIC_DATE","value":{"date":"20261007"}})",
+      R"({"type":"DAY_OFFSET","value":{"offset":0}})",
+      R"({"type":"WEEKDAY","value":{"offset":-2,"day":"FRIDAY"}})",
+      R"({"type":"DAY_OF_MONTH","value":{"offset":-1,"day":31}})",
+      R"({"type":"MONTH_BOUNDARY","value":{"offset":0,"boundary":"LAST",
         "day_offset":-1}})"});
     for(auto& text : rules) {
       auto rule = parse<JsonValue>(text);
@@ -201,13 +201,13 @@ TEST_SUITE("ReportSubmission") {
     auto invalid = std::vector({"null", "{}",
       R"({"type":1,"value":{"offset":0}})",
       R"({"type":"Unknown","value":{}})",
-      R"({"type":"SpecificDate","value":{"date":"20261008"}})",
-      R"({"type":"DayOffset","value":{"offset":null}})",
-      R"({"type":"DayOffset","value":{"offset":0.5}})",
-      R"({"type":"DayOffset","value":{"offset":2147483648}})",
-      R"({"type":"Weekday","value":{"offset":0,"day":4}})",
-      R"({"type":"DayOfMonth","value":{"offset":0,"day":32}})",
-      R"({"type":"MonthBoundary","value":{"offset":0,"boundary":1,
+      R"({"type":"SPECIFIC_DATE","value":{"date":"20261008"}})",
+      R"({"type":"DAY_OFFSET","value":{"offset":null}})",
+      R"({"type":"DAY_OFFSET","value":{"offset":0.5}})",
+      R"({"type":"DAY_OFFSET","value":{"offset":2147483648}})",
+      R"({"type":"WEEKDAY","value":{"offset":0,"day":4}})",
+      R"({"type":"DAY_OF_MONTH","value":{"offset":0,"day":32}})",
+      R"({"type":"MONTH_BOUNDARY","value":{"offset":0,"boundary":1,
         "day_offset":0}})"});
     for(auto& text : invalid) {
       auto& period = get<JsonObject>(input["period"]);
@@ -225,8 +225,8 @@ TEST_SUITE("ReportSubmission") {
     for(auto& name : {"start", "end"}) {
       auto period = get<JsonObject>(parse<JsonValue>(R"({
         "start":"20261007","end":"20261007","rules":{
-          "start":{"type":"DayOffset","value":{"offset":0}},
-          "end":{"type":"DayOffset","value":{"offset":0}}}})"));
+          "start":{"type":"DAY_OFFSET","value":{"offset":0}},
+          "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})"));
       period[name] = JsonNull();
       get<JsonObject>(period["rules"])[name] = JsonNull();
       input["period"] = period;
@@ -252,9 +252,9 @@ TEST_SUITE("ReportSubmission") {
     definition.m_arguments = {"{period.start}", "{period.end}"};
     auto input = make_parameters(client.get_account());
     input["period"] = parse<JsonValue>(R"({"start":"invalid","end":17,
-      "rules":{"start":{"type":"MonthBoundary","value":{
-        "offset":-1,"boundary":"Last","day_offset":-1}},
-        "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "rules":{"start":{"type":"MONTH_BOUNDARY","value":{
+        "offset":-1,"boundary":"LAST","day_offset":-1}},
+        "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     auto reference = time_from_string("2024-03-01 09:00:00");
     auto job = prepare_report_job({definition}, client.get_account(),
       ReportSubmission("example", input, {}), client, reference);
@@ -273,8 +273,8 @@ TEST_SUITE("ReportSubmission") {
     REQUIRE(jobs.front().m_parameters == job.m_parameters);
     REQUIRE(jobs.front().m_arguments == job.m_arguments);
     input["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"DayOffset","value":{"offset":1}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"DAY_OFFSET","value":{"offset":1}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     REQUIRE_THROWS_AS(prepare_report_job({definition}, client.get_account(),
       ReportSubmission("example", input, {}), client, reference),
       std::invalid_argument);
@@ -299,8 +299,8 @@ TEST_SUITE("ReportSubmission") {
       "scheduled":false,"recipients":[],"parameters":{}})"));
     auto parameters = make_parameters(client.get_account());
     parameters["period"] = parse<JsonValue>(R"({"rules":{
-      "start":{"type":"DayOffset","value":{"offset":0}},
-      "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "start":{"type":"DAY_OFFSET","value":{"offset":0}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     body["parameters"] = parameters;
     REQUIRE(submit(servlet, *session, body).get_status_code() ==
       HttpStatusCode::BAD_REQUEST);
@@ -657,8 +657,8 @@ TEST_SUITE("ReportSubmission") {
       "time_zone":"America/Toronto"})"));
     body["parameters"] = make_parameters(client.get_account());
     auto period = parse<JsonValue>(R"({"start":"20261007","end":"20261007",
-      "rules":{"start":{"type":"DayOffset","value":{"offset":0}},
-        "end":{"type":"DayOffset","value":{"offset":0}}}})");
+      "rules":{"start":{"type":"DAY_OFFSET","value":{"offset":0}},
+        "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
     get<JsonObject>(body["parameters"])["period"] = period;
     period = prepare_report_parameters(make_definition(),
       get<JsonObject>(body["parameters"]), client.get_account(), client).

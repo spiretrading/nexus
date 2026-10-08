@@ -60,15 +60,15 @@ DateRuleType Nexus::get_type(const DateRule& rule) {
 }
 
 DateRuleType Nexus::parse_date_rule_type(std::string_view value) {
-  if(value == "SpecificDate") {
+  if(value == "SPECIFIC_DATE") {
     return DateRuleType::SPECIFIC_DATE;
-  } else if(value == "DayOffset") {
+  } else if(value == "DAY_OFFSET") {
     return DateRuleType::DAY_OFFSET;
-  } else if(value == "Weekday") {
+  } else if(value == "WEEKDAY") {
     return DateRuleType::WEEKDAY;
-  } else if(value == "DayOfMonth") {
+  } else if(value == "DAY_OF_MONTH") {
     return DateRuleType::DAY_OF_MONTH;
-  } else if(value == "MonthBoundary") {
+  } else if(value == "MONTH_BOUNDARY") {
     return DateRuleType::MONTH_BOUNDARY;
   }
   throw std::invalid_argument("Unknown date rule type.");
@@ -77,7 +77,7 @@ DateRuleType Nexus::parse_date_rule_type(std::string_view value) {
 greg_weekday Nexus::parse_weekday(std::string_view value) {
   for(auto i = 0; i < DAYS_PER_WEEK; ++i) {
     auto day = greg_weekday(static_cast<unsigned short>(i));
-    if(value == day.as_long_string()) {
+    if(value == boost::to_upper_copy(std::string(day.as_long_string()))) {
       return day;
     }
   }
@@ -86,9 +86,9 @@ greg_weekday Nexus::parse_weekday(std::string_view value) {
 
 MonthBoundaryDateRule::Boundary Nexus::parse_month_boundary(
     std::string_view value) {
-  if(value == "First") {
+  if(value == "FIRST") {
     return MonthBoundaryDateRule::Boundary::FIRST;
-  } else if(value == "Last") {
+  } else if(value == "LAST") {
     return MonthBoundaryDateRule::Boundary::LAST;
   }
   throw std::invalid_argument("Unknown month boundary.");
@@ -96,15 +96,15 @@ MonthBoundaryDateRule::Boundary Nexus::parse_month_boundary(
 
 std::ostream& Nexus::operator <<(std::ostream& out, DateRuleType type) {
   if(type == DateRuleType::SPECIFIC_DATE) {
-    return out << "SpecificDate";
+    return out << "SPECIFIC_DATE";
   } else if(type == DateRuleType::DAY_OFFSET) {
-    return out << "DayOffset";
+    return out << "DAY_OFFSET";
   } else if(type == DateRuleType::WEEKDAY) {
-    return out << "Weekday";
+    return out << "WEEKDAY";
   } else if(type == DateRuleType::DAY_OF_MONTH) {
-    return out << "DayOfMonth";
+    return out << "DAY_OF_MONTH";
   } else if(type == DateRuleType::MONTH_BOUNDARY) {
-    return out << "MonthBoundary";
+    return out << "MONTH_BOUNDARY";
   }
   throw std::invalid_argument("Invalid date rule type.");
 }
@@ -112,9 +112,9 @@ std::ostream& Nexus::operator <<(std::ostream& out, DateRuleType type) {
 std::ostream& Nexus::operator <<(
     std::ostream& out, MonthBoundaryDateRule::Boundary boundary) {
   if(boundary == MonthBoundaryDateRule::Boundary::FIRST) {
-    return out << "First";
+    return out << "FIRST";
   } else if(boundary == MonthBoundaryDateRule::Boundary::LAST) {
-    return out << "Last";
+    return out << "LAST";
   }
   throw std::invalid_argument("Invalid month boundary.");
 }

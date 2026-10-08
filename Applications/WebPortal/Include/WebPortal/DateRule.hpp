@@ -7,6 +7,7 @@
 #include <variant>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Utilities/ToString.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 
 namespace Nexus {
 
@@ -172,6 +173,36 @@ namespace Details {
 
 namespace Beam {
   template<>
+  struct Shuttle<Nexus::DateRuleType> {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, const char* name, Nexus::DateRuleType& value) const {
+      if constexpr(IsReceiver<S>) {
+        auto type = std::string();
+        shuttle.shuttle(name, type);
+        value = Nexus::parse_date_rule_type(type);
+      } else {
+        shuttle.shuttle(name, to_string(value));
+      }
+    }
+  };
+
+  template<>
+  struct Shuttle<Nexus::MonthBoundaryDateRule::Boundary> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, const char* name,
+        Nexus::MonthBoundaryDateRule::Boundary& value) const {
+      if constexpr(IsReceiver<S>) {
+        auto boundary = std::string();
+        shuttle.shuttle(name, boundary);
+        value = Nexus::parse_month_boundary(boundary);
+      } else {
+        shuttle.shuttle(name, to_string(value));
+      }
+    }
+  };
+
+  template<>
   struct Shuttle<Nexus::SpecificDateRule> {
     template<IsShuttle S>
     void operator ()(S& shuttle, Nexus::SpecificDateRule& value,
@@ -200,7 +231,8 @@ namespace Beam {
         unsigned int version) const {
       Nexus::Details::shuttle_date_rule_offset(
         shuttle, "offset", value.m_offset);
-      auto day = std::string(value.m_day.as_long_string());
+      auto day =
+        boost::to_upper_copy(std::string(value.m_day.as_long_string()));
       shuttle.shuttle("day", day);
       if constexpr(IsReceiver<S>) {
         value.m_day = Nexus::parse_weekday(day);
@@ -228,11 +260,7 @@ namespace Beam {
         unsigned int version) const {
       Nexus::Details::shuttle_date_rule_offset(
         shuttle, "offset", value.m_offset);
-      auto boundary = to_string(value.m_boundary);
-      shuttle.shuttle("boundary", boundary);
-      if constexpr(IsReceiver<S>) {
-        value.m_boundary = Nexus::parse_month_boundary(boundary);
-      }
+      shuttle.shuttle("boundary", value.m_boundary);
       Nexus::Details::shuttle_date_rule_offset(
         shuttle, "day_offset", value.m_day_offset);
     }
@@ -243,7 +271,7 @@ namespace Beam {
     template<IsSender S>
     void operator ()(
         S& sender, const Nexus::DateRule& value, unsigned int version) const {
-      sender.send("type", to_string(Nexus::get_type(value)));
+      sender.send("type", Nexus::get_type(value));
       std::visit([&] (const auto& rule) {
         sender.send("value", rule);
       }, value);
@@ -255,8 +283,7 @@ namespace Beam {
     template<IsReceiver R>
     void operator ()(
         R& receiver, Nexus::DateRule& value, unsigned int version) const {
-      auto type = Nexus::parse_date_rule_type(
-        receive<std::string>(receiver, "type"));
+      auto type = receive<Nexus::DateRuleType>(receiver, "type");
       if(type == Nexus::DateRuleType::SPECIFIC_DATE) {
         value = receive<Nexus::SpecificDateRule>(receiver, "value");
       } else if(type == Nexus::DateRuleType::DAY_OFFSET) {

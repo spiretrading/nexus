@@ -4,44 +4,44 @@ import * as Beam from 'beam';
 export enum DateRuleType {
 
   /** A fixed calendar date. */
-  SPECIFIC_DATE = 'SpecificDate',
+  SPECIFIC_DATE = 'SPECIFIC_DATE',
 
   /** A calendar day offset. */
-  DAY_OFFSET = 'DayOffset',
+  DAY_OFFSET = 'DAY_OFFSET',
 
   /** A weekday in a relative week. */
-  WEEKDAY = 'Weekday',
+  WEEKDAY = 'WEEKDAY',
 
   /** A numbered day in a relative month. */
-  DAY_OF_MONTH = 'DayOfMonth',
+  DAY_OF_MONTH = 'DAY_OF_MONTH',
 
   /** A date near a relative month boundary. */
-  MONTH_BOUNDARY = 'MonthBoundary',
+  MONTH_BOUNDARY = 'MONTH_BOUNDARY',
 }
 
 /** The days of a calendar week, named as in the C++ API. */
 export enum Weekday {
 
   /** Monday. */
-  MONDAY = 'Monday',
+  MONDAY = 'MONDAY',
 
   /** Tuesday. */
-  TUESDAY = 'Tuesday',
+  TUESDAY = 'TUESDAY',
 
   /** Wednesday. */
-  WEDNESDAY = 'Wednesday',
+  WEDNESDAY = 'WEDNESDAY',
 
   /** Thursday. */
-  THURSDAY = 'Thursday',
+  THURSDAY = 'THURSDAY',
 
   /** Friday. */
-  FRIDAY = 'Friday',
+  FRIDAY = 'FRIDAY',
 
   /** Saturday. */
-  SATURDAY = 'Saturday',
+  SATURDAY = 'SATURDAY',
 
   /** Sunday. */
-  SUNDAY = 'Sunday',
+  SUNDAY = 'SUNDAY',
 }
 
 /** A fixed calendar date. */
@@ -147,10 +147,10 @@ export namespace MonthBoundaryDateRule {
   export enum Boundary {
 
     /** The first day of the month. */
-    FIRST = 'First',
+    FIRST = 'FIRST',
 
     /** The last day of the month. */
-    LAST = 'Last'
+    LAST = 'LAST'
   }
 }
 
