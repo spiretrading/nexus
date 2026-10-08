@@ -56,6 +56,7 @@ TEST_SUITE("ReportScheduleDeletion") {
       schedule.m_definition, schedule.m_parameters, {}, schedule.m_created,
       schedule.m_created, {}, ReportJob::Status::COMPLETED);
     local.store(job);
+    job = *local.load_job(job.m_id);
     local.set_output(job.m_id, from<SharedBuffer>("value\n1"));
     for(auto& account : {group, recipient, DirectoryEntry(),
         DirectoryEntry::make_directory(schedule.m_account.m_id)}) {

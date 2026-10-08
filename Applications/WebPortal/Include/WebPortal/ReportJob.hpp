@@ -74,6 +74,12 @@ namespace Nexus {
      * The local calendar time used to resolve date rules, including retries.
      */
     boost::posix_time::ptime m_reference_time;
+
+    /** The submitting user's timezone for the filename's creation date. */
+    std::string m_time_zone = "UTC";
+
+    /** The persisted download filename, including its extension. */
+    std::string m_filename;
   };
 
   /** Formats a normalized parameter value for display. */
@@ -130,6 +136,8 @@ namespace Beam {
       shuttle.shuttle("error", value.m_error);
       shuttle.shuttle("is_prepared", value.m_is_prepared);
       shuttle.shuttle("reference_time", value.m_reference_time);
+      shuttle.shuttle("time_zone", value.m_time_zone);
+      shuttle.shuttle("filename", value.m_filename);
     }
   };
 }

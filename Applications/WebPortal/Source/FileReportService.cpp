@@ -201,10 +201,26 @@ std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
 
 void FileReportService::store(const ReportJob& job) {
   auto path = report_directory(job.m_id, m_jobs_directory);
-  auto text = to_json(job);
+  auto snapshot = job;
+  snapshot.m_filename.clear();
   auto lock = std::lock_guard(m_mutex);
+  auto i = m_filenames.find(job.m_id);
+  if(i != m_filenames.end()) {
+    snapshot.m_filename = i->second;
+  } else if(job.m_is_prepared && !job.m_created.is_special()) {
+    auto filenames = std::vector<std::string>();
+    for(auto& [id, filename] : m_filenames) {
+      filenames.push_back(filename);
+    }
+    auto name = make_report_filename(snapshot, filenames).u8string();
+    snapshot.m_filename.assign(name.begin(), name.end());
+  }
+  auto text = to_json(snapshot);
   std::filesystem::create_directories(path);
   write_metadata(path, text);
+  if(!snapshot.m_filename.empty()) {
+    m_filenames.insert_or_assign(job.m_id, std::move(snapshot.m_filename));
+  }
 }
 
 std::string FileReportService::submit(const DirectoryEntry& account,
@@ -382,6 +398,9 @@ void FileReportService::remove_directory(
     throw ReportNotFoundException();
   }
   std::filesystem::remove_all(resolved);
+  if(subdirectory.empty()) {
+    m_filenames.erase(id);
+  }
 }
 
 std::vector<ReportDefinition> FileReportService::load_definitions() {
@@ -432,7 +451,13 @@ std::optional<ReportJob> FileReportService::read_job(
 }
 
 void FileReportService::recover() {
-  for(auto& job : load_jobs()) {
+  auto jobs = load_jobs();
+  for(auto& job : jobs) {
+    if(!job.m_filename.empty()) {
+      m_filenames.emplace(job.m_id, job.m_filename);
+    }
+  }
+  for(auto& job : jobs) {
     if(job.m_status == ReportJob::Status::RUNNING) {
       job.m_status = ReportJob::Status::FAILED;
       job.m_error = "Server stopped before report completion.";

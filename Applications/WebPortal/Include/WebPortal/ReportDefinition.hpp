@@ -43,6 +43,13 @@ namespace Nexus {
 
     /** The file extension without a leading dot. */
     std::string m_extension;
+
+    /**
+     * The filename stem template with parameter placeholders such as
+     * "report_{period.start}_{period.end}". The extension is added
+     * automatically. Empty uses the report id and local creation date.
+     */
+    std::string m_filename;
   };
 
   /** Arguments included when a parameter or one of its members is present. */
@@ -129,6 +136,7 @@ namespace Beam {
         unsigned int version) const {
       shuttle.shuttle("media_type", value.m_media_type);
       shuttle.shuttle("extension", value.m_extension);
+      shuttle.shuttle("filename", value.m_filename);
     }
   };
 

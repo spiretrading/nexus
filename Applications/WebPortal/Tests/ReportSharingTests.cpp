@@ -48,6 +48,7 @@ TEST_SUITE("ReportSharing") {
     auto job = make_job(client.get_account());
     job.m_recipients = {existing};
     local.store(job);
+    job = *local.load_job(job.m_id);
     local.set_output(job.m_id, from<SharedBuffer>("a,b"));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

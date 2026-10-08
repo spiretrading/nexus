@@ -18,13 +18,14 @@ TEST_SUITE("ReportJob") {
     auto definition = ReportDefinition("example", "Example", "Description",
       {"*"}, {{"count", "Count", "Integer", true, JsonValue(5)}},
       "report", {"--count", "{count}"},
-      ReportOutputDefinition("text/csv", "csv"));
+      ReportOutputDefinition("text/csv", "csv", "Report_{count}"));
     auto job = ReportJob("job-id", DirectoryEntry::make_account(1, "Alice"),
       {DirectoryEntry::make_directory(2, "Group")}, definition, parameters,
       {"--count", "5"}, time_from_string("2026-10-01 12:00:00"),
       time_from_string("2026-10-01 12:01:00"),
       time_from_string("2026-10-01 12:02:00"), ReportJob::Status::FAILED,
-      7, "Report failed.", false, time_from_string("2026-09-30 23:00:00"));
+      7, "Report failed.", false, time_from_string("2026-09-30 23:00:00"),
+      "America/Toronto", "Report_5.csv");
     auto expected = parse<JsonValue>(to_json(job));
     test_round_trip_shuttle(job, [&] (const auto& received) {
       REQUIRE(parse<JsonValue>(to_json(received)) == expected);

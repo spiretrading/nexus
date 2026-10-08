@@ -32,6 +32,63 @@ namespace {
 }
 
 TEST_SUITE("ReportDownload") {
+
+  TEST_CASE("filename_templates") {
+    auto job = make_job(DirectoryEntry::make_account(1));
+    job.m_created = time_from_string("2026-10-05 02:00:00");
+    job.m_time_zone = "America/Toronto";
+    REQUIRE(make_report_filename(job) == "example_2026-10-04.bin");
+    job.m_definition.m_parameters = {
+      {"period", "Period", "DateRange", true}};
+    job.m_parameters["period"] = parse<JsonValue>(
+      R"({"start":"20261001","end":"20261004"})");
+    job.m_definition.m_output.m_filename =
+      "Profit and Loss_{period.start}_{period.end}";
+    auto name = "Profit and Loss_2026-10-01_2026-10-04.bin";
+    REQUIRE(make_report_filename(job) == name);
+    auto names = std::vector<std::string>{name,
+      "Profit and Loss_2026-10-01_2026-10-04_2.bin"};
+    REQUIRE(make_report_filename(job, names) ==
+      "Profit and Loss_2026-10-01_2026-10-04_3.bin");
+    job.m_definition.m_output.m_filename = "CON";
+    REQUIRE(make_report_filename(job) == "_CON.bin");
+    job.m_definition.m_output.m_filename = "../unsafe\\name:\r\n*? . ";
+    REQUIRE(make_report_filename(job) == ".._unsafe_name_____.bin");
+    job.m_definition.m_output.m_filename = "...";
+    REQUIRE(make_report_filename(job) == "report.bin");
+    job.m_definition.m_output.m_filename = std::string(300, 'x');
+    REQUIRE(make_report_filename(job).string().size() == 164);
+    job.m_definition.m_output.m_filename = "{missing}";
+    REQUIRE_THROWS_AS(make_report_filename(job), std::runtime_error);
+    job.m_definition.m_output.m_filename = "{period.start";
+    REQUIRE_THROWS_AS(make_report_filename(job), std::runtime_error);
+  }
+
+  TEST_CASE("saved_filenames") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto local =
+      LocalReportService({}, client, [] (const auto&, auto) { return 0; },
+        TimeClient(std::in_place_type<LocalTimeClient>), 1,
+        Timer(std::in_place_type<TriggerTimer>),
+        Timer(std::in_place_type<TriggerTimer>));
+    auto job = make_job(client.get_account());
+    local.store(job);
+    job.m_id = "second";
+    local.store(job);
+    REQUIRE(local.load_job(job.m_id)->m_filename ==
+      "example_2026-10-05_2.bin");
+    job.m_definition.m_output.m_filename = "Changed";
+    local.store(job);
+    REQUIRE(local.load_job(job.m_id)->m_filename ==
+      "example_2026-10-05_2.bin");
+    job.m_id = "third";
+    job.m_definition.m_output.m_filename = "EXAMPLE_2026-10-05";
+    local.store(job);
+    REQUIRE(local.load_job(job.m_id)->m_filename ==
+      "EXAMPLE_2026-10-05_3.bin");
+  }
+
   TEST_CASE("endpoint") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -66,7 +123,7 @@ TEST_SUITE("ReportDownload") {
     REQUIRE(*response.get_header("Content-Type") == "application/octet-stream");
     REQUIRE(response.get_header("Content-Disposition").has_value());
     REQUIRE(*response.get_header("Content-Disposition") ==
-      "attachment; filename*=UTF-8''example-report.bin");
+      "attachment; filename*=UTF-8''example_2026-10-05.bin");
     REQUIRE(response.get_header("Cache-Control").has_value());
     REQUIRE(*response.get_header("Cache-Control") == "private, no-store");
     REQUIRE(response.get_header("X-Content-Type-Options").has_value());
@@ -152,7 +209,7 @@ TEST_SUITE("ReportDownload") {
     local.set_output(job.m_id, content);
     content.get_mutable_data()[0] = 'X';
     auto file = local.load_file(job.m_account, job.m_id);
-    REQUIRE(file.m_name == std::filesystem::path("example-report.bin"));
+    REQUIRE(file.m_name == std::filesystem::path("example_2026-10-05.bin"));
     REQUIRE(file.m_media_type == "application/octet-stream");
     REQUIRE(to_string(file.m_content) == "original");
     file.m_content.get_mutable_data()[0] = 'Y';
@@ -184,18 +241,20 @@ TEST_SUITE("ReportDownload") {
     REQUIRE(response.get_status_code() == HttpStatusCode::OK);
     REQUIRE(response.get_header("Content-Disposition").has_value());
     REQUIRE(*response.get_header("Content-Disposition") ==
-      "attachment; filename*=UTF-8''type%22%0D%0A-report%20%2F%3F.csv");
+      "attachment; filename*=UTF-8''type____2026-10-05.csv");
     job.m_definition.m_id = "caf\xC3\xA9";
+    job.m_id = "unicode";
     local.store(job);
-    response = download(servlet, *session, "?id=report%20%2F%3F");
+    local.set_output(job.m_id, from<SharedBuffer>("a,b"));
+    response = download(servlet, *session, "?id=unicode");
     REQUIRE(response.get_status_code() == HttpStatusCode::OK);
     REQUIRE(response.get_header("Content-Disposition").has_value());
     REQUIRE(*response.get_header("Content-Disposition") ==
-      "attachment; filename*=UTF-8''caf%C3%A9-report%20%2F%3F.csv");
+      "attachment; filename*=UTF-8''caf%C3%A9_2026-10-05.csv");
     for(auto& type : {"", "text/csv\r\nInjected: true"}) {
       job.m_definition.m_output.m_media_type = type;
       local.store(job);
-      response = download(servlet, *session, "?id=report%20%2F%3F");
+      response = download(servlet, *session, "?id=unicode");
       REQUIRE(
         response.get_status_code() == HttpStatusCode::INTERNAL_SERVER_ERROR);
       REQUIRE(response.get_body().get_size() == 0);

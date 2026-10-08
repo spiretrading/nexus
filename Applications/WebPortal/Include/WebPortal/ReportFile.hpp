@@ -20,8 +20,12 @@ namespace Nexus {
     Beam::SharedBuffer m_content;
   };
 
-  /** Formats a filename from the report type, job id, and extension. */
+  /** Returns the saved download filename or formats its initial name. */
   std::filesystem::path make_report_filename(const ReportJob& job);
+
+  /** Formats a download filename with a suffix to avoid existing names. */
+  std::filesystem::path make_report_filename(
+    const ReportJob& job, std::span<const std::string> filenames);
 }
 
 #endif

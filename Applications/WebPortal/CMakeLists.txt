@@ -34,6 +34,23 @@ beam_configure_target(WebPortalTests DEPENDENCIES
 target_link_libraries(WebPortalTests PRIVATE WebPortalLibrary)
 add_custom_command(TARGET WebPortalTests POST_BUILD COMMAND WebPortalTests)
 add_dependencies(WebPortal WebPortalTests)
+file(GLOB_RECURSE functional_test_header_files
+  Include/WebPortal/Tests/FunctionalTests/*.hpp Tests/FunctionalTests/*.hpp)
+file(GLOB_RECURSE functional_test_source_files Tests/FunctionalTests/*.cpp)
+list(REMOVE_ITEM functional_test_source_files
+  "${CMAKE_CURRENT_SOURCE_DIR}/Tests/FunctionalTests/ReportProcessFixture.cpp")
+if(NOT UNIX)
+  list(REMOVE_ITEM functional_test_source_files
+    "${CMAKE_CURRENT_SOURCE_DIR}/Tests/FunctionalTests/ReportProcessTests.cpp")
+endif()
+add_executable(WebPortalFunctionalTests EXCLUDE_FROM_ALL
+  ${functional_test_header_files} ${functional_test_source_files}
+  Tests/main.cpp)
+beam_configure_target(WebPortalFunctionalTests DEPENDENCIES
+  ${web_portal_dependencies} DOCTEST)
+target_link_libraries(WebPortalFunctionalTests PRIVATE WebPortalLibrary)
+add_custom_command(TARGET WebPortalFunctionalTests POST_BUILD
+  COMMAND WebPortalFunctionalTests)
 if(WIN32)
   target_link_libraries(WebPortalLibrary PUBLIC Crypt32.lib ntdll.lib)
 endif()
@@ -43,16 +60,9 @@ if(UNIX)
   beam_configure_target(ReportProcessFixture DEPENDENCIES
     ${web_portal_dependencies})
   target_link_libraries(ReportProcessFixture PRIVATE WebPortalLibrary)
-  add_executable(ReportProcessTests EXCLUDE_FROM_ALL
-    Tests/FunctionalTests/ReportProcessTests.cpp Tests/main.cpp)
-  beam_configure_target(ReportProcessTests DEPENDENCIES
-    ${web_portal_dependencies} DOCTEST)
-  target_link_libraries(ReportProcessTests PRIVATE WebPortalLibrary)
-  target_compile_definitions(ReportProcessTests PRIVATE
+  target_compile_definitions(WebPortalFunctionalTests PRIVATE
     REPORT_PROCESS_FIXTURE="$<TARGET_FILE:ReportProcessFixture>")
-  add_dependencies(ReportProcessTests ReportProcessFixture)
-  add_custom_command(TARGET ReportProcessTests POST_BUILD
-    COMMAND ReportProcessTests)
+  add_dependencies(WebPortalFunctionalTests ReportProcessFixture)
 endif()
 beam_install_target(WebPortal "${PROJECT_BINARY_DIR}/Application")
 install(FILES Application/config.default.yml Application/setup.py

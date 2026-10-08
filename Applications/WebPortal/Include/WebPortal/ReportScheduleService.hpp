@@ -275,6 +275,7 @@ namespace Details {
             ReportJob::Status::STAGED, {}, exception.what(), false);
         }
         job->m_reference_time = schedule.m_run_time;
+        job->m_time_zone = schedule.m_time_zone;
         job->m_status = ReportJob::Status::STAGED;
         job->m_id = id;
         job->m_created = now;

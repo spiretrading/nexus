@@ -112,6 +112,10 @@ namespace Nexus {
   /** Expands argument templates into individual command-line arguments. */
   std::vector<std::string> make_report_arguments(
     const ReportDefinition& definition, const Beam::JsonObject& parameters);
+
+  /** Expands parameter placeholders in a report template. */
+  std::string expand_report_template(const ReportDefinition& definition,
+    const Beam::JsonObject& parameters, const std::string& text);
 }
 
 #endif

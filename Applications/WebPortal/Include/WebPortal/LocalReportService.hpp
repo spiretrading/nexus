@@ -256,6 +256,20 @@ namespace Nexus {
     auto snapshot = job;
     auto lock = std::lock_guard(m_mutex);
     auto i = std::ranges::find(m_jobs, job.m_id, &ReportJob::m_id);
+    if(i != m_jobs.end()) {
+      snapshot.m_filename = i->m_filename;
+    } else {
+      snapshot.m_filename.clear();
+    }
+    if(snapshot.m_filename.empty() && job.m_is_prepared &&
+        !job.m_created.is_special()) {
+      auto filenames = std::vector<std::string>();
+      for(auto& stored : m_jobs) {
+        filenames.push_back(stored.m_filename);
+      }
+      auto name = make_report_filename(snapshot, filenames).u8string();
+      snapshot.m_filename.assign(name.begin(), name.end());
+    }
     if(i == m_jobs.end()) {
       m_jobs.push_back(std::move(snapshot));
     } else {

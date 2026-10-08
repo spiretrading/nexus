@@ -156,6 +156,9 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
   auto output = get_node(node, "output");
   definition.m_output.m_media_type = parse_name(output, "media_type");
   definition.m_output.m_extension = parse_name(output, "extension");
+  if(auto filename = output["filename"]) {
+    definition.m_output.m_filename = parse_name(output, "filename");
+  }
   if(definition.m_output.m_extension.front() == '.' ||
       definition.m_output.m_extension.find_first_of("/\\") !=
         std::string::npos) {

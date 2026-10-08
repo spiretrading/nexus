@@ -261,39 +261,6 @@ namespace {
     return &*value;
   }
 
-  std::string expand(const ReportDefinition& definition,
-      const JsonObject& parameters, const std::string& argument) {
-    auto result = std::string();
-    for(auto i = std::size_t(0); i < argument.size();) {
-      if(argument[i] == '{') {
-        auto end = argument.find('}', i + 1);
-        if(end == std::string::npos) {
-          throw std::runtime_error("Unclosed report argument placeholder.");
-        }
-        auto path = argument.substr(i + 1, end - i - 1);
-        auto value = resolve(definition, parameters, path);
-        if(!value) {
-          throw std::invalid_argument("Missing report argument: " + path);
-        }
-        if(auto text = std::get_if<std::string>(value)) {
-          result += *text;
-        } else {
-          result += to_string(*value);
-        }
-        i = end + 1;
-      } else if(argument[i] == '}') {
-        throw std::runtime_error("Unexpected report argument brace.");
-      } else {
-        result += argument[i];
-        ++i;
-      }
-    }
-    if(result.find('\0') != std::string::npos) {
-      throw std::invalid_argument("Null byte in report argument.");
-    }
-    return result;
-  }
-
   JsonObject resolve_parameters(const ReportDefinition& definition,
       const JsonObject& parameters, ptime reference) {
     auto result = parameters;
@@ -361,6 +328,10 @@ namespace {
     auto parameters =
       prepare_report_parameters(definition, input, owner, client);
     auto arguments = make_report_arguments(definition, parameters);
+    if(!definition.m_output.m_filename.empty()) {
+      expand_report_template(
+        definition, parameters, definition.m_output.m_filename);
+    }
     auto recipients =
       prepare_report_recipients(submission.m_recipients, owner, client);
     auto job = ReportJob({}, std::move(owner), std::move(recipients),
@@ -368,6 +339,7 @@ namespace {
     if(reference) {
       job.m_reference_time = *reference;
     }
+    job.m_time_zone = submission.m_time_zone;
     return job;
   }
 }
@@ -610,15 +582,49 @@ std::vector<std::string> Nexus::make_report_arguments(
   auto result = std::vector<std::string>();
   for(auto& argument : definition.m_arguments) {
     if(auto text = std::get_if<std::string>(&argument)) {
-      result.push_back(expand(definition, parameters, *text));
+      result.push_back(expand_report_template(definition, parameters, *text));
     } else {
       auto& group = std::get<OptionalReportArguments>(argument);
       if(resolve(definition, parameters, group.m_if_present)) {
         for(auto& text : group.m_arguments) {
-          result.push_back(expand(definition, parameters, text));
+          result.push_back(
+            expand_report_template(definition, parameters, text));
         }
       }
     }
+  }
+  return result;
+}
+
+std::string Nexus::expand_report_template(const ReportDefinition& definition,
+    const JsonObject& parameters, const std::string& argument) {
+  auto result = std::string();
+  for(auto i = std::size_t(0); i < argument.size();) {
+    if(argument[i] == '{') {
+      auto end = argument.find('}', i + 1);
+      if(end == std::string::npos) {
+        throw std::runtime_error("Unclosed report argument placeholder.");
+      }
+      auto path = argument.substr(i + 1, end - i - 1);
+      auto value = resolve(definition, parameters, path);
+      if(!value) {
+        throw std::invalid_argument("Missing report argument: " + path);
+      }
+      if(auto text = std::get_if<std::string>(value)) {
+        result += *text;
+      } else {
+        result += to_string(*value);
+      }
+      i = end + 1;
+    } else if(argument[i] == '}') {
+      throw std::runtime_error("Unexpected report argument brace.");
+    } else {
+      result += argument[i];
+      ++i;
+    }
+  }
+  if(result.find('\0') != std::string::npos) {
+    throw std::invalid_argument("Null byte in report argument.");
   }
   return result;
 }

@@ -168,10 +168,12 @@ output:
 TEST_SUITE("ReportDefinition") {
   TEST_CASE("load_definition") {
     auto node = make_definition();
+    node["output"]["filename"] = "Report_{period.start}";
     auto source = std::istringstream(YAML::Dump(node));
     auto definition = load_report_definition(source);
     REQUIRE(definition.m_id == "profit_and_loss");
     REQUIRE(definition.m_command == "/opt/spire/reports/profit_and_loss");
+    REQUIRE(definition.m_output.m_filename == "Report_{period.start}");
     REQUIRE(definition.m_access == std::vector<std::string>({"Reporting"}));
     REQUIRE(to_json(definition) == to_json(parse_report_definition(node)));
     auto invalid = std::istringstream("id: [invalid");

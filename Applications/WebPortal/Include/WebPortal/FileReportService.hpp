@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <mutex>
 #include <stop_token>
+#include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include "WebPortal/ReportScheduleService.hpp"
 #include "WebPortal/ReportService.hpp"
@@ -78,6 +79,7 @@ namespace Nexus {
       Beam::ServiceLocatorClient m_client;
       Beam::TimeClient m_time_client;
       mutable std::mutex m_mutex;
+      std::unordered_map<std::string, std::string> m_filenames;
       Beam::OpenState m_open_state;
       std::optional<ReportJobService<FileReportService, Beam::TimeClient>>
         m_jobs;
