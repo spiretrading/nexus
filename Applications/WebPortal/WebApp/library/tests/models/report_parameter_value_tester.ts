@@ -2,7 +2,12 @@ import * as assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { DateRange, ValidationError } from '../../source/models';
+import { DateRange, DateRangeRules, DateRuleType, DayOffsetDateRule,
+  ValidationError } from '../../source/models';
+import { ReportParameterInput } from
+  '../../source/pages/report_page/report_parameter_input';
+import { copyReportFormValue, parseReportFormValue, reportFormValueToJson }
+  from '../../source/pages/report_page/report_form_value';
 import { parseReportParameterValue, reportParameterValueToJson,
   ReportDefinition, ReportFormTemplate, ReportParameterDefinition,
   validateReportParameter } from '../../source/pages/report_page';
@@ -39,6 +44,93 @@ describe('ReportParameterValue', () => {
       Nexus.Currency;
     assert.equal(currency.equals(
       Nexus.buildCurrencyDatabase().fromCode('USD').currency), true);
+  });
+
+  it('preserves_date_rules_in_submissions_and_saved_forms', () => {
+    const report = new ReportDefinition('test', 'Test', '', [
+      new ReportParameterDefinition('period', 'Period', 'DateRange', true)],
+      null);
+    const cases = [
+      {type: 'SpecificDate', value: {date: '20261007'}},
+      {type: 'DayOffset', value: {offset: 0}},
+      {type: 'Weekday', value: {offset: -2, day: 'Friday'}},
+      {type: 'DayOfMonth', value: {offset: 1, day: 31}},
+      {type: 'MonthBoundary', value: {offset: 0, boundary: 'Last',
+        day_offset: -1}}];
+    for(const start of cases) {
+      const json = {start: '20261007', end: '20261007',
+        rules: {start, end: cases[1]}};
+      const value = parseReportParameterValue('DateRange', json) as DateRange;
+      assert.deepEqual(reportParameterValueToJson(value), json);
+      const form = {...ReportFormTemplate.makeValue(report),
+        parameters: {period: value}};
+      const request = reportFormValueToJson(form);
+      assert.deepEqual(request.parameters.period.rules, json.rules);
+      const loaded = parseReportFormValue(request, [report]);
+      assert.deepEqual(reportFormValueToJson(loaded).parameters.period,
+        request.parameters.period);
+      const copy = copyReportFormValue(loaded, [report]);
+      assert.deepEqual(reportFormValueToJson(copy).parameters.period,
+        request.parameters.period);
+      assert.notEqual((copy.parameters.period as DateRange).rules,
+        (loaded.parameters.period as DateRange).rules);
+    }
+  });
+
+  it('submits_untouched_presets_and_saved_relative_dates_together', () => {
+    const today = Beam.Date.today();
+    const rules = new DateRangeRules(
+      new DayOffsetDateRule(0),
+      new DayOffsetDateRule(0));
+    const report = new ReportDefinition('test', 'Test', '',
+      ['preset', 'saved'].map(name => new ReportParameterDefinition(
+        name, name, 'DateRange', true)), null);
+    const form = {...ReportFormTemplate.makeValue(report), parameters: {
+      preset: new DateRange(today, today),
+      saved: new DateRange(new Beam.Date(2000, 1, 1),
+        new Beam.Date(2000, 1, 1), rules)}};
+    const request = reportFormValueToJson(form);
+    for(const name of ['preset', 'saved']) {
+      assert.deepEqual(request.parameters[name], {
+        start: today.toJson(), end: today.toJson(),
+        rules: {start: {type: 'DayOffset', value: {offset: 0}},
+          end: {type: 'DayOffset', value: {offset: 0}}}});
+    }
+    const copy = copyReportFormValue(form, [report]);
+    assert.deepEqual(reportFormValueToJson(copy), request);
+    const saved = {...request, parameters: {...request.parameters,
+      saved: {...request.parameters.saved,
+        start: '20000101', end: '20000101'}}};
+    const loaded = parseReportFormValue(saved, [report]);
+    assert.ok((loaded.parameters.saved as DateRange).start.equals(today));
+    assert.deepEqual(reportFormValueToJson(loaded), request);
+  });
+
+  it('commits_date_rules_when_the_resolved_dates_do_not_change', () => {
+    const values: DateRange[] = [];
+    const today = Beam.Date.today();
+    const input = new ReportParameterInput({
+      definition: new ReportParameterDefinition(
+        'period', 'Period', 'DateRange', true),
+      value: new DateRange(today, today), accountModel: null,
+      scopeModel: null, onChange: value => values.push(value as DateRange),
+      onValidationChange: () => {}});
+    const props = input.render().props;
+    const rules = new DateRangeRules(
+      new DayOffsetDateRule(0),
+      new DayOffsetDateRule(0));
+    props.onValidationChange({valid: true});
+    props.onRulesChange(rules);
+    assert.equal(values.length, 1);
+    assert.equal(values[0].rules, rules);
+    assert.ok(values[0].start.equals(today));
+    assert.ok(values[0].end.equals(today));
+    props.onValidationChange({valid: false});
+    props.onRulesChange(new DateRangeRules(new DayOffsetDateRule(null),
+      rules.end));
+    assert.equal(values.length, 1);
+    const saved = new ReportParameterInput({...input.props, value: values[0]});
+    assert.equal(saved.render().props.rules, rules);
   });
 
   it('validates_required_values_ranges_and_entry_lists', () => {

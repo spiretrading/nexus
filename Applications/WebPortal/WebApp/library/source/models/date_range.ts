@@ -10,10 +10,14 @@ export class DateRange {
   /** The last date, or null for an unspecified end. */
   public readonly end: Beam.Date;
 
-  /** Constructs a range with the given bounds. */
-  constructor(start: Beam.Date, end: Beam.Date) {
+  /** The rules defining these dates, or undefined for fixed bounds. */
+  public readonly rules: DateRangeRules;
+
+  /** Constructs a range with date bounds and optional relative rules. */
+  constructor(start: Beam.Date, end: Beam.Date, rules?: DateRangeRules) {
     this.start = start;
     this.end = end;
+    this.rules = rules;
   }
 }
 

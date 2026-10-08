@@ -134,7 +134,9 @@ describe('HTTP report models', () => {
       time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone, parameters: {
       account: Beam.DirectoryEntry.STAR_DIRECTORY.toJson(),
       accounts: [Beam.DirectoryEntry.makeAccount(1, 'Alice').toJson()],
-      range: {start: '20261001', end: null}, currency: 840,
+      range: {start: '20261001', end: null,
+        rules: {start: {type: 'SpecificDate', value: {date: '20261001'}},
+          end: null}}, currency: 840,
       money: Nexus.Money.parse('12.34').toJson(),
       scope: Nexus.Scope.GLOBAL.toJson(), count: 0, optional: null},
       recipients: [Beam.DirectoryEntry.makeDirectory(2, 'Group').toJson()],

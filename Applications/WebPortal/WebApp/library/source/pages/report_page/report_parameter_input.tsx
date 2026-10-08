@@ -4,8 +4,8 @@ import * as React from 'react';
 import { AccountGroupListInput, AccountGroupQueryModel, ComboBox, DateInput,
   DecimalInput, InputErrorMessage, InputGroup, IntegerInput, MoneyInput,
   ScopeInput, Select, TimeOfDayInput } from '../../components';
-import { DateRange, DateRangeValidation, QueryModel, ValidationError } from
-  '../../models';
+import { DateRange, DateRangeRules, DateRangeValidation, QueryModel,
+  resolveDateRule, ValidationError } from '../../models';
 import { ParametersDateRangeInput } from './parameters_date_range_input';
 import { ReportParameterDefinition } from './report_parameter_definition';
 import { ReportParameterValue, validateReportParameter } from
@@ -47,13 +47,16 @@ export class ReportParameterInput extends React.Component<Properties, State> {
     this.element = React.createRef();
     this.mounted = false;
     this.emptyRange = new DateRange(null, null);
+    this.rangeValid = false;
   }
 
   public render(): JSX.Element {
     const {definition, value} = this.props;
     if(definition.type === 'DateRange') {
       return <ParametersDateRangeInput
-        value={value as DateRange ?? this.emptyRange} onChange={this.onChange}
+        value={value as DateRange ?? this.emptyRange}
+        rules={(value as DateRange)?.rules}
+        onRulesChange={this.onRangeRulesChange}
         label={definition.label} boundsRequired={definition.required}
         style={{maxWidth: '384px'}}
         onValidationChange={this.onRangeValidation}/>;
@@ -247,7 +250,16 @@ export class ReportParameterInput extends React.Component<Properties, State> {
     }
   };
 
+  private onRangeRulesChange = (rules: DateRangeRules) => {
+    if(this.rangeValid) {
+      const today = Beam.Date.today();
+      this.props.onChange(new DateRange(resolveDateRule(rules.start, today),
+        resolveDateRule(rules.end, today), rules));
+    }
+  };
+
   private onRangeValidation = (validation: DateRangeValidation) => {
+    this.rangeValid = validation.valid;
     let error = ValidationError.NONE;
     if(!validation.valid) {
       const range = this.props.value as DateRange;
@@ -283,6 +295,7 @@ export class ReportParameterInput extends React.Component<Properties, State> {
   private element: React.RefObject<HTMLDivElement>;
   private mounted: boolean;
   private emptyRange: DateRange;
+  private rangeValid: boolean;
 }
 
 interface DateTimeProperties extends

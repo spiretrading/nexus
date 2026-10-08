@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { DateRange, validateDateRange, ValidationError } from '../../models';
+import { DateRange, DateRangeRules, dateRuleToJson, parseDateRule,
+  validateDateRange, ValidationError } from '../../models';
 import { ReportParameterDefinition } from './report_parameter_definition';
 
 /** A value accepted by a report parameter. Null represents an omitted value. */
@@ -20,7 +21,9 @@ export function parseReportParameterValue(type: string, value: any):
     case 'DirectoryEntryList':
       return value.map(Beam.DirectoryEntry.fromJson);
     case 'DateRange':
-      return new DateRange(parseDate(value.start), parseDate(value.end));
+      return new DateRange(parseDate(value.start), parseDate(value.end),
+        value.rules && new DateRangeRules(parseDateRule(value.rules.start),
+          parseDateRule(value.rules.end)));
     case 'Date':
       return parseDate(value);
     case 'DateTime':
@@ -58,8 +61,13 @@ export function reportParameterValueToJson(value: ReportParameterValue): any {
   if(value == null || typeof value === 'number') {
     return value;
   } else if(value instanceof DateRange) {
-    return {start: value.start?.toJson() ?? null,
+    const result: any = {start: value.start?.toJson() ?? null,
       end: value.end?.toJson() ?? null};
+    if(value.rules) {
+      result.rules = {start: dateRuleToJson(value.rules.start),
+        end: dateRuleToJson(value.rules.end)};
+    }
+    return result;
   } else if(Array.isArray(value)) {
     return value.map(entry => entry.toJson());
   }
