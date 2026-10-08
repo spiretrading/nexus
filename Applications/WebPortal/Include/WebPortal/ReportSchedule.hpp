@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_SCHEDULE_HPP
 #include <cstdint>
 #include <stdexcept>
+#include "WebPortal/DateRule.hpp"
 #include "WebPortal/ReportJob.hpp"
 
 namespace Nexus {
@@ -33,6 +34,9 @@ namespace Nexus {
 
       /** The calendar unit. */
       Unit m_unit = Unit::DAY;
+
+      /** The date rule within each interval, absent to use its anchor date. */
+      std::optional<DateRule> m_rule;
     };
 
     /** The schedule identifier. */
@@ -82,6 +86,9 @@ namespace Nexus {
   boost::posix_time::ptime convert_report_time(boost::posix_time::ptime value,
     const std::string& source, const std::string& destination);
 
+  /** Validates an interval and its permitted date rule. */
+  void validate(const ReportSchedule::Interval& interval);
+
   /**
    * Finds the next recurring run after now, or a one-time schedule's start.
    * @throws ReportScheduleExhaustedException If no supported occurrence
@@ -99,6 +106,7 @@ namespace Beam {
         unsigned int version) const {
       shuttle.shuttle("count", value.m_count);
       shuttle.shuttle("unit", value.m_unit);
+      shuttle.shuttle("rule", value.m_rule);
     }
   };
 

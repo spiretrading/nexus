@@ -2,9 +2,9 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { AccountGroupQueryModel, Button, Checkbox, InputErrorMessage,
-  InputGroup, IntervalInput, RadioButton } from '../../components';
-import { Interval, QueryModel, ValidationError } from '../../models';
+import { AccountGroupQueryModel, Button, InputErrorMessage,
+  InputGroup, RadioButton } from '../../components';
+import { DateRule, Interval, QueryModel, ValidationError } from '../../models';
 import { ReportDefinition } from './report_definition';
 import { ReportParameterDefinition } from './report_parameter_definition';
 import { ReportParameterInput } from './report_parameter_input';
@@ -13,6 +13,7 @@ import { parseReportParameterValue, ReportParameterValue,
 import { isReportRecipient, ReportRecipientQueryModel } from
   './report_recipient_query_model';
 import { ReportTypeSelect } from './report_type_select';
+import { isValidReportRepeat, ReportRepeatInput } from './report_repeat_input';
 
 interface Properties {
 
@@ -120,8 +121,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
             scopeModel={props.scopeModel} error={this.getDateTimeError()}
             onDateChange={this.onDateTimeChange}
             onValidation={this.onDateTimeValidation}
-            onRepeatsChange={this.onRepeatsChange}
-            onIntervalChange={this.onIntervalChange}
+            onRepeatChange={this.onRepeatChange}
             intervalError={this.state.intervalError}
             onIntervalInput={this.onIntervalInput}/>
         </Collapse>
@@ -182,7 +182,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     if(value.scheduled && value.repeats) {
       const interval = value.repeatInterval;
       if(this.state.intervalError || !interval ||
-          !Number.isInteger(interval.count) || interval.count < 1) {
+          !isValidReportRepeat(interval, value.repeatRule)) {
         return false;
       }
     }
@@ -244,13 +244,9 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     }
   };
 
-  private onRepeatsChange = (repeats: boolean) => {
-    this.update({repeats});
-  };
-
-  private onIntervalChange = (repeatInterval: Interval) => {
+  private onRepeatChange = (interval: Interval, repeatRule: DateRule) => {
     this.setState({intervalError: ValidationError.NONE});
-    this.update({repeatInterval});
+    this.update({repeats: !!interval, repeatInterval: interval, repeatRule});
   };
 
   private onIntervalInput = (event: React.FormEvent<HTMLDivElement>) => {
@@ -325,6 +321,9 @@ export namespace ReportFormTemplate {
 
     /** The interval between repeated runs. */
     repeatInterval: Interval;
+
+    /** The date rule applied within each repeat interval. */
+    repeatRule?: DateRule;
   }
 }
 
@@ -419,18 +418,20 @@ function ScheduleFieldset(props: {id: string; value: ReportFormTemplate.Value;
     accountModel: AccountGroupQueryModel; scopeModel: QueryModel<Nexus.Scope>;
     error: ValidationError; onDateChange: (value: ReportParameterValue) => void;
     onValidation: (error: ValidationError) => void;
-    onRepeatsChange: (value: boolean) => void;
-    onIntervalChange: (value: Interval) => void;
+    onRepeatChange: (interval: Interval, rule: DateRule) => void;
     intervalError: ValidationError;
     onIntervalInput: React.FormEventHandler<HTMLDivElement>}): JSX.Element {
   const interval = props.value.repeatInterval;
   const error = (() => {
+    if(!props.value.repeats) {
+      return ValidationError.NONE;
+    }
     if(props.intervalError) {
       return props.intervalError;
     }
     if(interval?.count == null) {
       return ValidationError.REQUIRED;
-    } else if(!Number.isInteger(interval.count) || interval.count < 1) {
+    } else if(!isValidReportRepeat(interval, props.value.repeatRule)) {
       return ValidationError.FORMAT;
     }
     return ValidationError.NONE;
@@ -442,29 +443,23 @@ function ScheduleFieldset(props: {id: string; value: ReportFormTemplate.Value;
       value={props.value.scheduleDateTime} error={props.error}
       accountModel={props.accountModel} scopeModel={props.scopeModel}
       onChange={props.onDateChange} onValidationChange={props.onValidation}/>
-    <Repeat value={props.value.repeats} onChange={props.onRepeatsChange}
-      controls={`${props.id}-interval`}/>
-    <Collapse open={props.value.repeats} spacing={false}>
-      <div id={`${props.id}-interval`} style={{paddingTop: '10px'}}>
-        <InputGroup label='Every'
-            validation={{valid: error === ValidationError.NONE, error}}
-            errorMessage={<InputErrorMessage error={error} label='Interval'
-              value='interval'/>}>
-          <IntervalInput value={interval} required
-            onInput={props.onIntervalInput} onChange={props.onIntervalChange}/>
-        </InputGroup>
-      </div>
-    </Collapse>
+    <div onInput={props.onIntervalInput} style={{paddingTop: '10px'}}>
+      <InputGroup label='Repeat'
+          validation={{valid: error === ValidationError.NONE, error}}
+          errorMessage={<InputErrorMessage error={error} label='Repeat'
+            value='recurrence'/>}>
+        <ReportRepeatInput id={`${props.id}-repeat`}
+          interval={(() => {
+            if(props.value.repeats) {
+              return interval;
+            }
+            return null;
+          })()} rule={props.value.repeatRule}
+          reference={props.value.scheduleDateTime?.date ?? Beam.Date.today()}
+          onChange={props.onRepeatChange}/>
+      </InputGroup>
+    </div>
   </fieldset>;
-}
-
-function Repeat(props: {value: boolean; controls: string;
-    onChange: (value: boolean) => void}): JSX.Element {
-  return <label className={css(STYLES.repeat)}>
-    <span className={css(STYLES.repeatLabel)}>Repeat</span>
-    <Checkbox checked={props.value} onClick={props.onChange}
-      aria-controls={props.controls}/>
-  </label>;
 }
 
 function SubmitSection(props: {mode: ReportFormTemplate.Mode;
@@ -636,15 +631,6 @@ const STYLES = StyleSheet.create({
       paddingLeft: '10px', clear: 'both'},
     '@container (min-width: 384px)': {marginLeft: '138px'}},
   schedule: {marginBottom: 0},
-  repeat: {display: 'grid', alignItems: 'center', width: 'fit-content',
-    marginTop: '10px',
-    '@container (width < 384px)': {
-      gridTemplateColumns: 'minmax(0, 1fr)', rowGap: '12px'},
-    '@container (min-width: 384px)': {
-      gridTemplateColumns: '130px 20px', columnGap: '8px', minHeight: '34px'}},
-  repeatLabel: {display: 'flex', alignItems: 'center', alignSelf: 'stretch',
-    '@container (width < 384px)': {paddingInlineStart: '10px'},
-    '@container (min-width: 384px)': {paddingInlineStart: 0}},
   submit: {backgroundColor: '#FFFFFF', borderTop: '1px solid #E6E6E6',
     paddingTop: '30px', display: 'flex', justifyContent: 'center'},
   submitButton: {

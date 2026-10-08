@@ -2,6 +2,7 @@ import { StyleSheetTestUtils } from 'aphrodite/no-important';
 import * as assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import * as Beam from 'beam';
+import { DateRuleInput } from '../../source/components/date_rule_input';
 import { DateRangeInput } from
   '../../source/components/date_range_input/date_range_input';
 import { DateRange, DateRangeOption, DateRangeRules, DateRuleType,
@@ -41,6 +42,13 @@ describe('DateRangeInput rules', () => {
   afterEach(() => {
     StyleSheetTestUtils.clearBufferAndResumeStyleInjection();
     globalThis.window = original;
+  });
+
+  it('shared_rule_editor_preserves_empty_fixed_date_drafts', () => {
+    const reference = new Beam.Date(2026, 10, 8);
+    const input = new DateRuleInput({value: new SpecificDateRule(reference),
+      reference, dateValue: null, label: 'From', onChange: () => {}});
+    assert.equal(input.render().props.children[1].props.value, null);
   });
 
   it('offset_controls_preserve_rule_types_and_calendar_parameters', () => {

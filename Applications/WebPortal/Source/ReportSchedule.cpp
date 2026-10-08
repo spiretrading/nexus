@@ -97,6 +97,41 @@ ptime Nexus::convert_report_time(
   return from_utc(*utc, destination_zone);
 }
 
+void Nexus::validate(const ReportSchedule::Interval& interval) {
+  using Unit = ReportSchedule::Interval::Unit;
+  if(interval.m_count == 0 || interval.m_unit < Unit::DAY ||
+      interval.m_unit > Unit::YEAR) {
+    throw std::invalid_argument("Invalid repeat interval.");
+  }
+  if(!interval.m_rule) {
+    return;
+  }
+  auto is_valid = std::visit([&] (const auto& rule) {
+    using Rule = std::remove_cvref_t<decltype(rule)>;
+    if constexpr(std::is_same_v<Rule, SpecificDateRule>) {
+      return false;
+    } else if constexpr(std::is_same_v<Rule, DayOffsetDateRule>) {
+      return rule.m_offset == 0;
+    } else if constexpr(std::is_same_v<Rule, WeekdayDateRule>) {
+      return interval.m_unit == Unit::WEEK && rule.m_offset == 0;
+    } else {
+      if((interval.m_unit != Unit::MONTH && interval.m_unit != Unit::YEAR) ||
+          rule.m_offset != 0) {
+        return false;
+      }
+      if constexpr(std::is_same_v<Rule, DayOfMonthDateRule>) {
+        return rule.m_day >= 1 && rule.m_day <= 31;
+      } else {
+        return rule.m_boundary == MonthBoundaryDateRule::Boundary::FIRST ||
+          rule.m_boundary == MonthBoundaryDateRule::Boundary::LAST;
+      }
+    }
+  }, *interval.m_rule);
+  if(!is_valid) {
+    throw std::invalid_argument("Invalid repeat date rule.");
+  }
+}
+
 ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
   auto& zone = find_zone(schedule.m_time_zone);
   auto start = to_utc(schedule.m_start_time, zone);
@@ -108,15 +143,26 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
     return schedule.m_start_time;
   }
   auto interval = *schedule.m_repeat_interval;
-  if(interval.m_count == 0 ||
-      interval.m_unit < ReportSchedule::Interval::Unit::DAY ||
-      interval.m_unit > ReportSchedule::Interval::Unit::YEAR) {
-    throw std::invalid_argument("Invalid repeat interval.");
-  }
-  if(*start > now) {
+  validate(interval);
+  if(!interval.m_rule && *start > now) {
     return schedule.m_start_time;
   }
-  auto local = from_utc(now, zone);
+  auto local = std::max(from_utc(now, zone), schedule.m_start_time);
+  auto day_offset = std::int64_t(0);
+  if(interval.m_rule) {
+    if(auto rule = std::get_if<MonthBoundaryDateRule>(&*interval.m_rule)) {
+      day_offset = rule->m_day_offset;
+    }
+    auto minimum = date(boost::date_time::min_date_time);
+    auto maximum = date(boost::date_time::max_date_time);
+    if(-day_offset > (maximum - local.date()).days()) {
+      throw ReportScheduleExhaustedException();
+    } else if(-day_offset < (minimum - local.date()).days()) {
+      local = ptime(minimum, local.time_of_day());
+    } else {
+      local -= days(static_cast<long>(day_offset));
+    }
+  }
   auto elapsed = std::int64_t(0);
   if(interval.m_unit == ReportSchedule::Interval::Unit::DAY ||
       interval.m_unit == ReportSchedule::Interval::Unit::WEEK) {
@@ -134,10 +180,25 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
   }
   auto steps =
     std::uint64_t(std::max<std::int64_t>(elapsed, 0)) / interval.m_count;
+  if(interval.m_rule && steps != 0) {
+    --steps;
+  }
   while(true) {
     auto candidate = advance(schedule.m_start_time, interval, steps);
+    if(interval.m_rule) {
+      try {
+        candidate = apply(*interval.m_rule, candidate);
+      } catch(const std::out_of_range&) {
+        if(day_offset < 0 || candidate.date().year() ==
+            date(boost::date_time::min_date_time).year()) {
+          ++steps;
+          continue;
+        }
+        throw ReportScheduleExhaustedException();
+      }
+    }
     auto utc = to_utc(candidate, zone);
-    if(utc && *utc > now) {
+    if(candidate >= schedule.m_start_time && utc && *utc > now) {
       return candidate;
     }
     ++steps;

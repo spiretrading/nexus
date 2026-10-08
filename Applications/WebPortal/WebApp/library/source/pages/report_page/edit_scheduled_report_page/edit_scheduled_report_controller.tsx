@@ -1,7 +1,8 @@
 import * as Beam from 'beam';
 import * as React from 'react';
 import { PageLayout } from '../../../components';
-import { DateRange, isDateRangeEqual, isScopeEqual } from '../../../models';
+import { DateRange, isDateRangeEqual, isDateRuleEqual, isScopeEqual } from
+  '../../../models';
 import { ReportFormTemplate } from '../report_form_template';
 import { EditScheduledReportModel } from './edit_scheduled_report_model';
 import { EditScheduledReportPage } from './edit_scheduled_report_page';
@@ -154,6 +155,9 @@ function isEqual(left: ReportFormTemplate.Value,
     equals(left.scheduleDateTime, right.scheduleDateTime) &&
     left.repeatInterval?.count === right.repeatInterval?.count &&
     left.repeatInterval?.unit === right.repeatInterval?.unit &&
+    ((!left.repeatRule && !right.repeatRule) ||
+      !!left.repeatRule && !!right.repeatRule &&
+      isDateRuleEqual(left.repeatRule, right.repeatRule)) &&
     Object.keys(left.parameters).length ===
       Object.keys(right.parameters).length &&
     Object.keys(left.parameters).every(name =>

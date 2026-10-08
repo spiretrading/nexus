@@ -41,6 +41,25 @@ namespace {
 }
 
 TEST_SUITE("ReportScheduleUpdate") {
+  TEST_CASE("changed_date_rule") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto schedule = make_schedule(client.get_account());
+    schedule.m_repeat_interval = ReportSchedule::Interval(1,
+      ReportSchedule::Interval::Unit::MONTH,
+      MonthBoundaryDateRule(0, MonthBoundaryDateRule::Boundary::FIRST, 0));
+    auto submission = make_submission(schedule);
+    submission.m_repeat_interval->m_rule =
+      MonthBoundaryDateRule(0, MonthBoundaryDateRule::Boundary::LAST, -1);
+    auto updated = prepare_report_schedule(schedule, submission,
+      {schedule.m_definition}, client,
+      time_from_string("2026-10-08 12:00:00"));
+    REQUIRE(updated.m_run_time == time_from_string("2026-10-30 09:00:00"));
+    auto encoded = parse<JsonValue>(to_json(*updated.m_repeat_interval));
+    auto decoded = parse_report_interval(encoded);
+    REQUIRE(to_json(decoded) == to_json(*updated.m_repeat_interval));
+  }
+
   TEST_CASE("settings_and_unchanged_timing") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();

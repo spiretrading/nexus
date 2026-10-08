@@ -377,8 +377,14 @@ ReportSchedule::Interval Nexus::parse_report_interval(const JsonValue& value) {
     read_member(object, "count"), 1, std::numeric_limits<std::uint32_t>::max());
   auto unit = read_integer(read_member(object, "unit"), 0,
     static_cast<int>(ReportSchedule::Interval::Unit::YEAR));
-  return ReportSchedule::Interval(static_cast<std::uint32_t>(count),
+  auto interval = ReportSchedule::Interval(static_cast<std::uint32_t>(count),
     ReportSchedule::Interval::Unit(static_cast<int>(unit)));
+  auto rule = object.get("rule");
+  if(rule && !std::holds_alternative<JsonNull>(*rule)) {
+    interval.m_rule = from_json<DateRule>(*rule);
+  }
+  validate(interval);
+  return interval;
 }
 
 ReportSchedule Nexus::prepare_report_schedule(
@@ -406,10 +412,8 @@ ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,
     const std::vector<ReportDefinition>& definitions,
     ServiceLocatorClient& client, ptime now) {
   auto& interval = submission.m_repeat_interval;
-  if(interval && (interval->m_count == 0 ||
-      interval->m_unit < ReportSchedule::Interval::Unit::DAY ||
-      interval->m_unit > ReportSchedule::Interval::Unit::YEAR)) {
-    throw std::invalid_argument("Invalid repeat interval.");
+  if(interval) {
+    validate(*interval);
   }
   auto start = convert_report_time(
     schedule.m_start_time, schedule.m_time_zone, submission.m_time_zone);
@@ -417,8 +421,16 @@ ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,
     if(!interval || !schedule.m_repeat_interval) {
       return interval.has_value() == schedule.m_repeat_interval.has_value();
     }
+    auto& rule = interval->m_rule;
+    auto& previous_rule = schedule.m_repeat_interval->m_rule;
+    auto is_same_rule = [&] {
+      if(!rule || !previous_rule) {
+        return rule.has_value() == previous_rule.has_value();
+      }
+      return to_json(*rule) == to_json(*previous_rule);
+    }();
     return interval->m_count == schedule.m_repeat_interval->m_count &&
-      interval->m_unit == schedule.m_repeat_interval->m_unit;
+      interval->m_unit == schedule.m_repeat_interval->m_unit && is_same_rule;
   }();
   auto job = prepare_report_job(
     definitions, schedule.m_account, submission.m_report, client);

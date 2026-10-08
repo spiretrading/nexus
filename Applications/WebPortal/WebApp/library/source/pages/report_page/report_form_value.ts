@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
-import { DateRange, DateRangeRules, Interval, isDateRangeEqual, resolveDateRule,
-  SpecificDateRule } from '../../models';
+import { DateRange, DateRangeRules, dateRuleToJson, Interval, isDateRangeEqual,
+  parseDateRule, resolveDateRule, SpecificDateRule } from '../../models';
 import { makeParametersDateRangeOptions } from
   './parameters_date_range_options';
 import { ReportDefinition } from './report_definition';
@@ -28,7 +28,8 @@ export function reportFormValueToJson(value: ReportFormTemplate.Value): any {
     repeat_interval: (() => {
       if(value.scheduled && value.repeats && value.repeatInterval) {
         return {count: value.repeatInterval.count,
-          unit: value.repeatInterval.unit};
+          unit: value.repeatInterval.unit,
+          rule: value.repeatRule && dateRuleToJson(value.repeatRule)};
       }
       return null;
     })()};
@@ -59,7 +60,9 @@ export function parseReportFormValue(value: any,
       return null;
     })(), repeats: value.repeats,
     repeatInterval: value.repeat_interval &&
-      new Interval(value.repeat_interval.count, value.repeat_interval.unit)};
+      new Interval(value.repeat_interval.count, value.repeat_interval.unit),
+    repeatRule: value.repeat_interval?.rule &&
+      parseDateRule(value.repeat_interval.rule)};
 }
 
 /** Copies a form configuration using its report's parameter types. */
@@ -81,7 +84,9 @@ export function copyReportFormValue(value: ReportFormTemplate.Value,
       }
       return null;
     })(), repeatInterval: value.repeatInterval &&
-      new Interval(value.repeatInterval.count, value.repeatInterval.unit)};
+      new Interval(value.repeatInterval.count, value.repeatInterval.unit),
+    repeatRule: value.repeatRule &&
+      parseDateRule(dateRuleToJson(value.repeatRule))};
 }
 
 function prepareParameter(value: ReportParameterValue, today: Beam.Date):

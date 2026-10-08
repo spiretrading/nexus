@@ -17,6 +17,74 @@ namespace {
 }
 
 TEST_SUITE("ReportScheduleTime") {
+  TEST_CASE("recurring_date_rules") {
+    using Unit = ReportSchedule::Interval::Unit;
+    using Boundary = MonthBoundaryDateRule::Boundary;
+    auto schedule =
+      make_schedule("2026-01-15 10:00:00", ReportSchedule::Interval(
+        1, Unit::MONTH, MonthBoundaryDateRule(0, Boundary::LAST, -1)));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-01-01 00:00:00")) ==
+      time_from_string("2026-01-30 10:00:00"));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-01-30 15:00:00")) ==
+      time_from_string("2026-02-27 10:00:00"));
+    schedule.m_repeat_interval->m_rule =
+      MonthBoundaryDateRule(0, Boundary::FIRST, -1);
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-01-31 15:00:00")) ==
+      time_from_string("2026-02-28 10:00:00"));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-02-28 15:00:00")) ==
+      time_from_string("2026-03-31 10:00:00"));
+    schedule.m_repeat_interval->m_rule = DayOfMonthDateRule(0, 15);
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-01-15 15:00:00")) ==
+      time_from_string("2026-02-15 10:00:00"));
+    schedule = make_schedule("2026-10-07 09:00:00",
+      ReportSchedule::Interval(2, Unit::WEEK,
+        WeekdayDateRule(0, boost::gregorian::Tuesday)));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-10-01 00:00:00")) ==
+      time_from_string("2026-10-20 09:00:00"));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-10-20 13:00:00")) ==
+      time_from_string("2026-11-03 09:00:00"));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-11-03 13:30:00")) ==
+      time_from_string("2026-11-03 09:00:00"));
+    auto copy = from_json<ReportSchedule>(to_json(schedule));
+    REQUIRE(to_json(copy) == to_json(schedule));
+  }
+
+  TEST_CASE("recurring_date_rule_limits") {
+    using Unit = ReportSchedule::Interval::Unit;
+    using Boundary = MonthBoundaryDateRule::Boundary;
+    auto schedule = make_schedule("2026-01-15 10:00:00",
+      ReportSchedule::Interval(1, Unit::MONTH,
+        MonthBoundaryDateRule(0, Boundary::LAST, 400)));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2027-03-07 15:00:00")) ==
+      time_from_string("2027-04-04 10:00:00"));
+    for(auto offset : {std::numeric_limits<std::int32_t>::min(),
+        std::numeric_limits<std::int32_t>::max()}) {
+      schedule.m_repeat_interval->m_rule =
+        MonthBoundaryDateRule(0, Boundary::LAST, offset);
+      REQUIRE_THROWS_AS(next_report_run(schedule,
+        time_from_string("2026-01-15 15:00:00")),
+        ReportScheduleExhaustedException);
+    }
+    schedule.m_repeat_interval->m_rule = SpecificDateRule();
+    REQUIRE_THROWS_AS(validate(*schedule.m_repeat_interval),
+      std::invalid_argument);
+    schedule.m_repeat_interval->m_rule = WeekdayDateRule();
+    REQUIRE_THROWS_AS(validate(*schedule.m_repeat_interval),
+      std::invalid_argument);
+    schedule.m_repeat_interval->m_rule = DayOfMonthDateRule(1, 15);
+    REQUIRE_THROWS_AS(validate(*schedule.m_repeat_interval),
+      std::invalid_argument);
+  }
+
   TEST_CASE("browser_timezones") {
     REQUIRE(convert_report_time(time_from_string("2026-07-01 12:00:00"),
       "America/Toronto", "UTC") == time_from_string("2026-07-01 16:00:00"));
