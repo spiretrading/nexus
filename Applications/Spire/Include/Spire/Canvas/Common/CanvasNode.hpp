@@ -2,16 +2,17 @@
 #define SPIRE_CANVASNODE_HPP
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <variant>
+#include <vector>
 #include <Beam/Collections/View.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
+#include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Utilities/Casts.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -31,7 +32,7 @@ namespace Spire {
     public:
 
       //! Defines the types of meta-data that can be stored in a CanvasNode.
-      typedef boost::variant<bool, Nexus::Quantity, double,
+      typedef std::variant<bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::Money, Nexus::OrderType, Nexus::Side,
         Nexus::Ticker, Nexus::TimeInForce, Nexus::Venue> MetaData;

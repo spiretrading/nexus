@@ -98,7 +98,7 @@ ListModel<std::any>::const_reverse_iterator ListModel<std::any>::crend() const {
 connection ListModel<std::any>::connect_operation_signal(
     const AnyListModel::OperationSignal::slot_type& slot) const {
   return connect_operation_signal([=] (const Operation& operation) {
-    slot(static_cast<const AnyListModel::Operation&>(operation));
+    std::visit(slot, operation);
   });
 }
 

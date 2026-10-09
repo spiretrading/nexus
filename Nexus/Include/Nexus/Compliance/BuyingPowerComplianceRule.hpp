@@ -105,9 +105,9 @@ namespace Nexus {
     auto currency = Currencies::USD;
     for(auto& parameter : parameters) {
       if(parameter.m_name == "buying_power") {
-        buying_power = boost::get<Money>(parameter.m_value);
+        buying_power = std::get<Money>(parameter.m_value);
       } else if(parameter.m_name == "currency") {
-        currency = boost::get<CurrencyId>(parameter.m_value);
+        currency = std::get<CurrencyId>(parameter.m_value);
       }
     }
     using Rule = BuyingPowerComplianceRule<

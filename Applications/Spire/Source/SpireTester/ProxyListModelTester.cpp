@@ -125,15 +125,16 @@ TEST_SUITE("ProxyListModel") {
         operations.push_back(operation);
         sizes.push_back(proxy.get_size());
         if(auto pre_remove =
-            get<ListModel<int>::PreRemoveOperation>(&operation)) {
+            std::get_if<ListModel<int>::PreRemoveOperation>(&operation)) {
           REQUIRE(pre_remove->m_index == proxy.get_size() - 1);
           REQUIRE(
             proxy.get(pre_remove->m_index) == first->get(pre_remove->m_index));
         } else if(auto remove =
-            get<ListModel<int>::RemoveOperation>(&operation)) {
+            std::get_if<ListModel<int>::RemoveOperation>(&operation)) {
           REQUIRE(remove->m_index == proxy.get_size());
           REQUIRE_THROWS_AS(proxy.get(remove->m_index), std::out_of_range);
-        } else if(auto add = get<ListModel<int>::AddOperation>(&operation)) {
+        } else if(auto add =
+            std::get_if<ListModel<int>::AddOperation>(&operation)) {
           REQUIRE(add->m_index == proxy.get_size() - 1);
           REQUIRE(proxy.get(add->m_index) == second->get(add->m_index));
         }

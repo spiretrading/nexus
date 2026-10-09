@@ -67,13 +67,16 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 3);
-        auto received_imbalance1 = get<VenueOrderImbalance>(&messages[0]);
+        auto received_imbalance1 =
+          std::get_if<VenueOrderImbalance>(&messages[0]);
         REQUIRE(received_imbalance1);
         REQUIRE(*received_imbalance1 == imbalance1);
-        auto received_imbalance2 = get<VenueOrderImbalance>(&messages[1]);
+        auto received_imbalance2 =
+          std::get_if<VenueOrderImbalance>(&messages[1]);
         REQUIRE(received_imbalance2);
         REQUIRE(*received_imbalance2 == imbalance2);
-        auto received_imbalance3 = get<VenueOrderImbalance>(&messages[2]);
+        auto received_imbalance3 =
+          std::get_if<VenueOrderImbalance>(&messages[2]);
         REQUIRE(received_imbalance3);
         REQUIRE(*received_imbalance3 == imbalance3);
         completion_token.get_eval().set();
@@ -96,7 +99,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBboQuote>(&message);
+        auto received_quote = std::get_if<TickerBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
         completion_token.get_eval().set();
@@ -135,7 +138,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE(messages.size() == 3);
         auto received_quotes = std::unordered_map<Ticker, TickerBboQuote>();
         for(auto& message : messages) {
-          auto quote = get<TickerBboQuote>(&message);
+          auto quote = std::get_if<TickerBboQuote>(&message);
           REQUIRE(quote);
           received_quotes.emplace(quote->get_index(), *quote);
         }
@@ -165,7 +168,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBookQuote>(&message);
+        auto received_quote = std::get_if<TickerBookQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == book_quote);
         completion_token.get_eval().set();
@@ -200,7 +203,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         auto received_quotes = std::vector<TickerBookQuote>();
         for(auto& message : messages) {
-          if(auto quote = get<TickerBookQuote>(&message)) {
+          if(auto quote = std::get_if<TickerBookQuote>(&message)) {
             received_quotes.push_back(*quote);
           }
         }
@@ -232,7 +235,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBboQuote>(&message);
+        auto received_quote = std::get_if<TickerBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
         completion_token.get_eval().set();
@@ -258,7 +261,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBookQuote>(&message);
+        auto received_quote = std::get_if<TickerBookQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(received_quote->get_index() == ticker);
         REQUIRE((*received_quote)->m_mpid == mpid);
@@ -289,7 +292,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBookQuote>(&message);
+        auto received_quote = std::get_if<TickerBookQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(received_quote->get_index() == ticker);
         REQUIRE((*received_quote)->m_mpid == mpid);
@@ -320,7 +323,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBookQuote>(&message);
+        auto received_quote = std::get_if<TickerBookQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(received_quote->get_index() == ticker);
         REQUIRE((*received_quote)->m_mpid == mpid);
@@ -348,7 +351,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
-        auto received_quote = get<TickerBboQuote>(&message);
+        auto received_quote = std::get_if<TickerBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
         completion_token.get_eval().set();
@@ -383,7 +386,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE(messages.size() == 2);
         auto received_quotes = std::vector<TickerBookQuote>();
         for(auto& message : messages) {
-          if(auto quote = get<TickerBookQuote>(&message)) {
+          if(auto quote = std::get_if<TickerBookQuote>(&message)) {
             received_quotes.push_back(*quote);
           }
         }
@@ -435,10 +438,10 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 2);
-        auto received_status1 = get<IndexedTickerStatus>(&messages[0]);
+        auto received_status1 = std::get_if<IndexedTickerStatus>(&messages[0]);
         REQUIRE(received_status1);
         REQUIRE(*received_status1 == status1);
-        auto received_status2 = get<IndexedTickerStatus>(&messages[1]);
+        auto received_status2 = std::get_if<IndexedTickerStatus>(&messages[1]);
         REQUIRE(received_status2);
         REQUIRE(*received_status2 == status2);
         completion_token.get_eval().set();
@@ -465,13 +468,16 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 3);
-        auto received_time_and_sale1 = get<TickerTimeAndSale>(&messages[0]);
+        auto received_time_and_sale1 =
+          std::get_if<TickerTimeAndSale>(&messages[0]);
         REQUIRE(received_time_and_sale1);
         REQUIRE(*received_time_and_sale1 == time_and_sale1);
-        auto received_time_and_sale2 = get<TickerTimeAndSale>(&messages[1]);
+        auto received_time_and_sale2 =
+          std::get_if<TickerTimeAndSale>(&messages[1]);
         REQUIRE(received_time_and_sale2);
         REQUIRE(*received_time_and_sale2 == time_and_sale2);
-        auto received_time_and_sale3 = get<TickerTimeAndSale>(&messages[2]);
+        auto received_time_and_sale3 =
+          std::get_if<TickerTimeAndSale>(&messages[2]);
         REQUIRE(received_time_and_sale3);
         REQUIRE(*received_time_and_sale3 == time_and_sale3);
         completion_token.get_eval().set();

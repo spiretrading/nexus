@@ -171,7 +171,7 @@ TEST_SUITE("ColumnViewListModel") {
       [&] (const auto& operation) {
         ++signal_count;
         auto move_operation =
-          get<ColumnViewListModel<int>::MoveOperation>(&operation);
+          std::get_if<ColumnViewListModel<int>::MoveOperation>(&operation);
         REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source_index);
         REQUIRE(move_operation->m_destination == destination_index);

@@ -945,7 +945,7 @@ namespace {
         : m_index(index) {}
 
       T operator ()(const Record& record) const {
-        return get<T>(record.GetFields()[m_index]);
+        return std::get<T>(record.GetFields()[m_index]);
       }
     };
 

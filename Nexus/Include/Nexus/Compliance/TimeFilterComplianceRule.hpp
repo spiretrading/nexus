@@ -97,9 +97,9 @@ namespace Nexus {
     auto end = boost::posix_time::time_duration(boost::posix_time::seconds(0));
     for(auto& parameter : parameters) {
       if(parameter.m_name == "start") {
-        start = boost::get<boost::posix_time::time_duration>(parameter.m_value);
+        start = std::get<boost::posix_time::time_duration>(parameter.m_value);
       } else if(parameter.m_name == "end") {
-        end = boost::get<boost::posix_time::time_duration>(parameter.m_value);
+        end = std::get<boost::posix_time::time_duration>(parameter.m_value);
       }
     }
     using Rule =

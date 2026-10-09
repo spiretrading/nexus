@@ -97,9 +97,9 @@ namespace Nexus {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "timeout") {
         timeout = boost::posix_time::seconds(
-          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
+          static_cast<int>(std::get<Quantity>(parameter.m_value)));
       } else if(parameter.m_name == "offset") {
-        offset = boost::get<Money>(parameter.m_value);
+        offset = std::get<Money>(parameter.m_value);
       }
     }
     using Rule = OpposingSubmissionComplianceRule<

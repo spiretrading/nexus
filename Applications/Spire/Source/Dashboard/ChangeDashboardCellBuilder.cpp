@@ -12,7 +12,7 @@ using namespace std;
 
 std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& ticker = boost::get<Ticker>(index);
+  auto& ticker = std::get<Ticker>(index);
   std::shared_ptr<Money> closePrice = std::make_shared<Money>();
   auto baseQueue = std::make_shared<Queue<TimeAndSale>>();
   auto queue = std::static_pointer_cast<QueueReader<double>>(

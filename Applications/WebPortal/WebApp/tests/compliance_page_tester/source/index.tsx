@@ -185,6 +185,10 @@ class TestApp extends React.Component<Properties, State> {
     const account = Beam.DirectoryEntry.makeAccount(2201, 'trader');
     const model = new WebPortal.ComplianceModel(account, makeSchemas(),
       makeEntries(), Nexus.buildCurrencyDatabase());
+    this.tickers = new WebPortal.LocalTickerQueryModel([
+      'ABX.TSX', 'BMO.TSX', 'BMO.ASX', 'RY.TSX', 'SHOP.TSX', 'TECK.B.TSX'
+    ].map(value => Nexus.Ticker.parse(value)));
+    this.scopes = new WebPortal.ScopeQueryModel(this.tickers);
     this.state = {
       model,
       readonly: false
@@ -203,6 +207,7 @@ class TestApp extends React.Component<Properties, State> {
         </div>
         <WebPortal.PageWrapper>
           <WebPortal.CompliancePage displaySize={this.props.displaySize}
+            tickerQueryModel={this.tickers} scopeQueryModel={this.scopes}
             roles={new Nexus.AccountRoles(role)} model={this.state.model}
             onRuleAdd={this.onRuleAdd} onRuleChange={this.onRuleChange}/>
         </WebPortal.PageWrapper>
@@ -236,6 +241,8 @@ class TestApp extends React.Component<Properties, State> {
       zIndex: 500
     }
   };
+  private tickers: WebPortal.QueryModel<Nexus.Ticker>;
+  private scopes: WebPortal.QueryModel<Nexus.Scope>;
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);

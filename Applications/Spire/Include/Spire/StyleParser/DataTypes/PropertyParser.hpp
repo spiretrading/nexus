@@ -6,7 +6,7 @@
 namespace Spire {
 
   /** Represents the type of property value for parsing. */
-  using PropertyValue = boost::variant<Token::Type, Styles::Property>;
+  using PropertyValue = std::variant<Token::Type, Styles::Property>;
 
   /**
    * The type of function used to convert a list of values to a list of

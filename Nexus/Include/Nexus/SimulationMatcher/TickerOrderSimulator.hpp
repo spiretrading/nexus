@@ -217,8 +217,7 @@ namespace Details {
       void advance(const Level& level, Quantity delta);
       Quantity allocate(
         const std::shared_ptr<PrimitiveOrder>& order, Quantity available);
-      bool match(const TimeAndSale& time_and_sale, Side side, Venue venue,
-        Quantity size);
+      bool match(const TimeAndSale& time_and_sale, Side side, Quantity size);
       void match(const TimeAndSale& time_and_sale);
       void erase(const std::shared_ptr<PrimitiveOrder>& order);
   };
@@ -411,8 +410,8 @@ namespace Details {
         set_session_timestamps(time_and_sale.m_timestamp);
       }
       if(m_is_moc_pending && time_and_sale.m_timestamp >= m_venue_close_time &&
-          from_market_center(time_and_sale.m_market_center).m_venue ==
-            m_ticker.get_venue()) {
+          from_market_center(time_and_sale.m_market_center,
+            m_ticker.get_venue()).m_venue == m_ticker.get_venue()) {
         m_is_moc_pending = false;
         is_triggered = true;
         closing_price = time_and_sale.m_price;
@@ -481,7 +480,7 @@ namespace Details {
     auto entry = PeggedOrderEntry();
     entry.m_exec_inst = PRIMARY_PEG;
     if(auto tag = find_field(fields, EXEC_INST_KEY)) {
-      if(auto* value = boost::get<std::string>(&tag->get_value())) {
+      if(auto* value = std::get_if<std::string>(&tag->get_value())) {
         auto stream = std::istringstream(*value);
         auto token = std::string();
         while(stream >> token) {
@@ -494,7 +493,7 @@ namespace Details {
       }
     }
     if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
-      if(auto* money = boost::get<Money>(&tag->get_value())) {
+      if(auto* money = std::get_if<Money>(&tag->get_value())) {
         entry.m_peg_difference = *money;
       }
     }
@@ -729,7 +728,7 @@ namespace Details {
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   bool TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale,
-      Side side, Venue venue, Quantity size) {
+      Side side, Quantity size) {
     auto direction = get_direction(side);
     auto available = size;
     auto has_update = false;
@@ -760,9 +759,6 @@ namespace Details {
       available -= allocate(selection, available);
       has_update = true;
     }
-    if(!venue) {
-      return has_update;
-    }
     while(available > 0) {
       auto selection = std::shared_ptr<PrimitiveOrder>();
       for(auto& order : m_orders) {
@@ -775,8 +771,12 @@ namespace Details {
         auto i = m_entries.find(order->get_info().m_id);
         if(i == m_entries.end() ||
             i->second.m_status == OrderStatus::PENDING_NEW ||
-            is_terminal(i->second.m_status) || i->second.m_venue != venue ||
+            is_terminal(i->second.m_status) || !i->second.m_venue ||
             i->second.m_queue_quantity > 0) {
+          continue;
+        }
+        if(VENUES.from(i->second.m_venue).m_market_center !=
+            time_and_sale.m_market_center) {
           continue;
         }
         selection = order;
@@ -803,11 +803,10 @@ namespace Details {
       if(m_orders.empty()) {
         return;
       }
-      auto venue = from_market_center(time_and_sale.m_market_center).m_venue;
-      if(match(time_and_sale, Side::ASK, venue, size)) {
+      if(match(time_and_sale, Side::ASK, size)) {
         has_update = true;
       }
-      if(match(time_and_sale, Side::BID, venue, size)) {
+      if(match(time_and_sale, Side::BID, size)) {
         has_update = true;
       }
     }

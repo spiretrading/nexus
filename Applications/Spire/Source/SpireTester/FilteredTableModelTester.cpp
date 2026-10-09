@@ -52,7 +52,7 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == filtered_model.get_row_size() - 1);
       }));
@@ -97,7 +97,7 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == added_index);
       }));
@@ -214,7 +214,8 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
+        auto move_operation =
+          std::get_if<TableModel::MoveOperation>(&operation);
         REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source_row);
         REQUIRE(move_operation->m_destination == destination_row);

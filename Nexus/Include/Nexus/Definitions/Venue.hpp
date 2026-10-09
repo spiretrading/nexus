@@ -156,28 +156,48 @@ namespace Nexus {
   };
 
   /**
-   * Returns the Entry with a specified market center.
+   * Resolves a market center using a ticker's listing venue.
    * @param market_center The market center to lookup.
+   * @param venue The ticker's listing venue, preferred when its market center
+   *        matches.
    * @param database The VenueDatabase containing the available Entry.
-   * @return The Entry with the specified <i>market_center</i>.
+   * @return The matching venue, or a unique matching entry when the listing
+   *         venue does not match. Returns NONE if missing or ambiguous.
    */
   inline const VenueDatabase::Entry& from_market_center(
-      std::string_view market_center, const VenueDatabase& database) {
-    return database.select_first([&] (const auto& entry) {
-      return entry.m_market_center == market_center;
-    });
+      std::string_view market_center, Venue venue,
+      const VenueDatabase& database) {
+    auto& listing = database.from(venue);
+    if(listing.m_venue && listing.m_market_center == market_center) {
+      return listing;
+    }
+    auto match = static_cast<const VenueDatabase::Entry*>(nullptr);
+    for(auto& entry : database.get_entries()) {
+      if(entry.m_market_center == market_center) {
+        if(match) {
+          return VenueDatabase::NONE;
+        }
+        match = &entry;
+      }
+    }
+    if(match) {
+      return *match;
+    }
+    return VenueDatabase::NONE;
   }
 
   /**
-   * Returns the Entry with a specified market center using the default venue
-   * database.
+   * Resolves a market center using the default venue database.
    * @param market_center The market center to lookup.
-   * @return The Entry with the specified <i>market_center</i>.
+   * @param venue The ticker's listing venue, preferred when its market center
+   *        matches.
+   * @return The matching venue, or a unique matching entry when the listing
+   *         venue does not match. Returns NONE if missing or ambiguous.
    */
   inline const VenueDatabase::Entry& from_market_center(
-      std::string_view market_center) {
+      std::string_view market_center, Venue venue) {
     extern const VenueDatabase& VENUES;
-    return from_market_center(market_center, VENUES);
+    return from_market_center(market_center, venue, VENUES);
   }
 
   /**

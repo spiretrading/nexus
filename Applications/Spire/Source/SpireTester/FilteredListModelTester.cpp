@@ -52,7 +52,8 @@ TEST_SUITE("FilteredListModel") {
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<ListModel<int>::AddOperation>(&operation);
+        auto add_operation =
+          std::get_if<ListModel<int>::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == filtered_list.get_size() - 1);
       }));
@@ -97,7 +98,8 @@ TEST_SUITE("FilteredListModel") {
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<ListModel<int>::AddOperation>(&operation);
+        auto add_operation =
+          std::get_if<ListModel<int>::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == added_index);
       }));
@@ -214,7 +216,8 @@ TEST_SUITE("FilteredListModel") {
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         ++signal_count;
-        auto move_operation = get<ListModel<int>::MoveOperation>(&operation);
+        auto move_operation =
+          std::get_if<ListModel<int>::MoveOperation>(&operation);
         REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source_row);
         REQUIRE(move_operation->m_destination == destination_row);

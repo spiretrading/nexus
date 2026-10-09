@@ -2,9 +2,9 @@
 #define SPIRE_VALUE_LIST_INPUT_DIALOG_HPP
 #include <memory>
 #include <typeinfo>
+#include <variant>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/variant/variant.hpp>
 #include <QDialog>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/UI/UI.hpp"
@@ -18,7 +18,7 @@ namespace Spire {
     public:
 
       /** The types that can be edited by this dialog. */
-      using Value = boost::variant<Nexus::Ticker>;
+      using Value = std::variant<Nexus::Ticker>;
 
       /**
        * Constructs a ValueListInputDialog.

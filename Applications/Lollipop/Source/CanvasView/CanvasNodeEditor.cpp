@@ -1,5 +1,4 @@
 #include "Spire/CanvasView/CanvasNodeEditor.hpp"
-#include <boost/variant/get.hpp>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/CanvasView/CommitCanvasEditor.hpp"
 #include "Spire/CanvasView/OpenCanvasEditor.hpp"
@@ -22,8 +21,8 @@ CanvasNodeEditor::EditVariant CanvasNodeEditor::GetEditor(
 }
 
 QUndoCommand* CanvasNodeEditor::Commit() {
-  auto editor = get<QWidget*>(m_editVariant);
-  if(editor == nullptr) {
+  auto editor = std::get<QWidget*>(m_editVariant);
+  if(!editor) {
     return nullptr;
   }
   return CommitCanvasEditor(*m_node, *editor, *m_view, *m_userProfile);

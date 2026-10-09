@@ -224,8 +224,8 @@ int main(int argc, char* argv[]) {
           auto services =
             clients.get_service_locator_client().locate("web_portal");
           if(!services.empty()) {
-            return Uri(
-              get<std::string>(services.front().get_properties().at("url")));
+            return Uri(std::get<std::string>(
+              services.front().get_properties().at("url")));
           }
         } catch(const std::exception&) {}
         return Uri();

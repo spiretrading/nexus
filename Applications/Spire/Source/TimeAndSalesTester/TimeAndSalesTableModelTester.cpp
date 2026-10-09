@@ -53,7 +53,7 @@ TEST_SUITE("TimeAndSalesTableModel") {
     time_and_sales->publish(make_entry(1));
     REQUIRE(model.get_row_size() == 1);
     REQUIRE(operations.size() == 1);
-    auto add = get<TableModel::AddOperation>(&operations.front());
+    auto add = std::get_if<TableModel::AddOperation>(&operations.front());
     REQUIRE(add);
     REQUIRE(add->m_index == 0);
     time_and_sales->publish(make_entry(2));
@@ -133,11 +133,13 @@ TEST_SUITE("TimeAndSalesTableModel") {
     auto added = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        if(auto remove = get<TableModel::RemoveOperation>(&operation)) {
+        if(auto remove =
+            std::get_if<TableModel::RemoveOperation>(&operation)) {
           ++removed;
           REQUIRE(remove->m_index == 0);
           REQUIRE(model.get_row_size() == 3 - removed);
-        } else if(auto add = get<TableModel::AddOperation>(&operation)) {
+        } else if(auto add =
+            std::get_if<TableModel::AddOperation>(&operation)) {
           ++added;
           REQUIRE(add->m_index == 0);
           REQUIRE(model.get_row_size() == added);
