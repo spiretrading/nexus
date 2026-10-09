@@ -93,7 +93,7 @@ QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
     if(m_entries.get_size() == 0) {
       return Beam::Sequence::PRESENT;
     }
-    return m_entries.get(0).m_time_and_sale.get_sequence();
+    return decrement(m_entries.get(0).m_time_and_sale.get_sequence());
   }();
   return QtPromise([=, ticker = m_ticker, client = m_client] () mutable {
     auto query = TickerQuery();
