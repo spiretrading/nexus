@@ -1,7 +1,9 @@
 #ifndef SPIRE_TEST_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TEST_TIME_AND_SALES_MODEL_HPP
 #include <deque>
+#include <vector>
 #include "Spire/Async/QtFuture.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
@@ -10,39 +12,43 @@ namespace Spire {
   class TestTimeAndSalesModel : public TimeAndSalesModel {
     public:
 
-      /** Stores the arguments and return value to a query_until call. */
-      struct QueryRequest {
-
-        /** The sequence the query stops at. */
-        Beam::Sequence m_sequence;
+      /** Stores the arguments and return value to a load_older call. */
+      struct LoadRequest {
 
         /** The maximum number of entries requested. */
         int m_max_count;
 
-        /** Resolves the promise returned to the caller of query_until. */
-        QtFuture<std::vector<Entry>> m_result;
+        /**
+         * Resolves the load with the entries to insert at the front, ordered
+         * from oldest to newest.
+         */
+        QtFuture<std::vector<Details::TimeAndSalesEntry>> m_result;
       };
 
       /**
-       * Publishes a time and sale to the update signal's subscribers.
-       * @param entry The entry to publish.
+       * Appends an entry.
+       * @param entry The entry to append.
        */
-      void publish(const Entry& entry);
+      void publish(const Details::TimeAndSalesEntry& entry);
 
-      /** Returns the query_until calls still awaiting a result. */
-      const std::deque<QueryRequest>& get_query_requests() const;
+      /** Returns the load_older calls still awaiting a result. */
+      const std::deque<LoadRequest>& get_requests() const;
 
-      /** Removes and returns the oldest query_until call awaiting a result. */
-      QueryRequest pop_query_request();
+      /** Removes and returns the oldest load_older call awaiting a result. */
+      LoadRequest pop_request();
 
-      QtPromise<std::vector<Entry>> query_until(
-        Beam::Sequence sequence, int max_count) override;
-      boost::signals2::connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override;
+      QtPromise<void> load_older(int max_count) override;
+      int get_size() const override;
+      const Type& get(int index) const override;
+      boost::signals2::connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override;
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
 
     private:
-      mutable UpdateSignal m_update_signal;
-      std::deque<QueryRequest> m_query_requests;
+      ArrayListModel<Details::TimeAndSalesEntry> m_entries;
+      std::deque<LoadRequest> m_requests;
   };
 }
 

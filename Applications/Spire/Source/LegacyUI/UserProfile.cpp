@@ -13,7 +13,6 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
-#include "Spire/TimeAndSales/CachedTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
@@ -23,12 +22,6 @@ using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
-  std::unique_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Ticker& ticker, MarketDataClient client) {
-    return std::make_unique<CachedTimeAndSalesModel>(
-      std::make_shared<ServiceTimeAndSalesModel>(ticker, std::move(client)));
-  }
-
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
       BlotterSettings& blotter, MarketDataClient market_data_client) {
     return std::make_unique<ServiceBookViewModel>(
@@ -73,12 +66,9 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-      m_time_and_sales_models([this] (const auto& ticker) {
-        return time_and_sales_model_builder(
-          ticker, m_clients.get_market_data_client());
-      }),
       m_time_and_sales_model_builder([this] (const auto& ticker) {
-        return m_time_and_sales_models.load(ticker);
+        return std::make_shared<ServiceTimeAndSalesModel>(
+          ticker, m_clients.get_market_data_client());
       }),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
