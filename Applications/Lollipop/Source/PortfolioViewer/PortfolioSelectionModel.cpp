@@ -1,6 +1,6 @@
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
+#include <Beam/Utilities/OverloadSet.hpp>
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -198,7 +198,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       boost::optional<SelectionVariant> selection = Find(index);
       if(selection.is_initialized()) {
-        return apply_variant_lambda_visitor(*selection,
+        return Beam::visit(*selection,
           [&] (const DirectoryEntry& group) -> QVariant {
             if(m_selectedGroups.find(group) != m_selectedGroups.end()) {
               return Qt::Checked;
@@ -242,7 +242,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        return apply_variant_lambda_visitor(*selection,
+        return Beam::visit(*selection,
           [] (const DirectoryEntry& group) {
             return QVariant(QString::fromStdString(group.m_name));
           },
@@ -315,7 +315,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        apply_variant_lambda_visitor(*selection,
+        Beam::visit(*selection,
           [&] (const DirectoryEntry& group) {
             if(state == Qt::Checked) {
               m_selectedGroups.insert(group);

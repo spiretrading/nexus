@@ -34,7 +34,7 @@ namespace {
 
     template<typename T>
     QVariant operator ()(const ValueListInputDialog::Value& value) const {
-      return QVariant::fromValue(get<T>(value));
+      return QVariant::fromValue(std::get<T>(value));
     }
   };
 
@@ -136,7 +136,7 @@ void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
       }
       return QString();
     }();
-    auto initialValue = [&] () -> variant<std::string, Ticker> {
+    auto initialValue = [&] () -> std::variant<std::string, Ticker> {
       if(text.isEmpty()) {
         return ticker;
       }

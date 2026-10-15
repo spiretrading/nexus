@@ -9,30 +9,30 @@ using namespace Spire;
 
 namespace {
   const std::string& extract_id(const BookEntry& entry) {
-    if(auto quote = get<BookQuote>(&entry)) {
+    if(auto quote = std::get_if<BookQuote>(&entry)) {
       return quote->m_mpid;
-    } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
+    } else if(auto order = std::get_if<BookViewModel::UserOrder>(&entry)) {
       return order->m_destination;
     }
-    return get<OrderFields>(entry).m_destination;
+    return std::get<OrderFields>(entry).m_destination;
   }
 
   const Money& extract_price(const BookEntry& entry) {
-    if(auto quote = get<BookQuote>(&entry)) {
+    if(auto quote = std::get_if<BookQuote>(&entry)) {
       return quote->m_quote.m_price;
-    } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
+    } else if(auto order = std::get_if<BookViewModel::UserOrder>(&entry)) {
       return order->m_price;
     }
-    return get<OrderFields>(entry).m_price;
+    return std::get<OrderFields>(entry).m_price;
   }
 
   const Quantity& extract_size(const BookEntry& entry) {
-    if(auto quote = get<BookQuote>(&entry)) {
+    if(auto quote = std::get_if<BookQuote>(&entry)) {
       return quote->m_quote.m_size;
-    } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
+    } else if(auto order = std::get_if<BookViewModel::UserOrder>(&entry)) {
       return order->m_size;
     }
-    return get<OrderFields>(entry).m_quantity;
+    return std::get<OrderFields>(entry).m_quantity;
   }
 
   bool is_column_unchanged(

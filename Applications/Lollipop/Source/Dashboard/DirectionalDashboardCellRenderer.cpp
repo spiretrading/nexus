@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/DirectionalDashboardCellRenderer.hpp"
-#include <boost/variant/apply_visitor.hpp>
 #include <QPainter>
 #include "Nexus/Definitions/Ticker.hpp"
 
@@ -72,7 +71,7 @@ void DirectionalDashboardCellRenderer::Draw(QPaintDevice& device,
       if(values.empty()) {
         return QObject::tr("N/A");
       } else {
-        auto value = apply_visitor(VariantVisitor{}, values.back());
+        auto value = std::visit(VariantVisitor(), values.back());
         if(value.type() == QVariant::Type::Double) {
           return QString{QString::number(100 * value.toDouble(), 'f', 2) + "%"};
         } else {

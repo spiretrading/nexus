@@ -84,20 +84,20 @@ namespace Nexus {
     auto arguments = std::vector<ComplianceValue>();
     for(auto& parameter : schema.get_parameters()) {
       if(parameter.m_name == "name") {
-        name = boost::get<std::string>(parameter.m_value);
+        name = std::get<std::string>(parameter.m_value);
       } else if(parameter.m_name == "arguments") {
-        arguments = boost::get<std::vector<ComplianceValue>>(parameter.m_value);
+        arguments = std::get<std::vector<ComplianceValue>>(parameter.m_value);
       }
     }
     auto parameters = std::vector<ComplianceParameter>();
     for(auto& argument : arguments) {
-      auto& parameter = boost::get<std::vector<ComplianceValue>>(argument);
+      auto& parameter = std::get<std::vector<ComplianceValue>>(argument);
       if(parameter.size() != 2) {
         boost::throw_with_location(
           std::runtime_error("Invalid ComplianceParameter specified."));
       }
-      parameters.push_back(ComplianceParameter(
-        boost::get<std::string>(parameter[0]), parameter[1]));
+      parameters.push_back(
+        ComplianceParameter(std::get<std::string>(parameter[0]), parameter[1]));
     }
     return ComplianceRuleSchema(std::move(name), std::move(parameters));
   }

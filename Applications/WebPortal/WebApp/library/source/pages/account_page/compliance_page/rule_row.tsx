@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, ExpandButton, HLine } from '../../..';
+import { QueryModel } from '../../../models';
 import { ParametersList } from './parameter_list';
 import { RuleExecutionDropDown } from './rule_execution_drop_down';
 
@@ -16,6 +17,12 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The model used to look up tickers. */
+  tickerQueryModel: QueryModel<Nexus.Ticker>;
+
+  /** The model used to look up scope entries. */
+  scopeQueryModel: QueryModel<Nexus.Scope>;
 
   /** Indicates if the component is readonly. */
   readonly?: boolean;
@@ -41,6 +48,8 @@ export class RuleRow extends React.Component<Properties, State> {
       isExpanded: false,
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     };
+    this.isEntered = false;
+    this.invalidField = null;
   }
 
   public render(): JSX.Element {
@@ -83,6 +92,8 @@ export class RuleRow extends React.Component<Properties, State> {
       state: this.props.complianceRule.state,
       applicability: this.props.complianceRule.schema.applicability
     };
+    const deleted = this.props.complianceRule.state ===
+      Nexus.ComplianceRuleEntry.State.DELETED;
     return (
       <div style={RuleRow.STYLE.wrapper}>
         <div style={boxStyle}>
@@ -110,31 +121,73 @@ export class RuleRow extends React.Component<Properties, State> {
           {spacing}
         </div>
           <Transition in={this.state.isExpanded}
-              timeout={RuleRow.TRANSITION_LENGTH_MS}>
+              timeout={RuleRow.TRANSITION_LENGTH_MS}
+              onEntered={this.onEntered} onExit={this.onExit}>
             {(state) => (
-              <div ref={(divElement) => this.ruleParameters = divElement}
+              <div
                   className={css((this.state.animationStyle as any)[state])}>
-                <HLine color='#E6E6E6'/>
-                <ParametersList 
-                  displaySize={this.props.displaySize}
-                  currencyDatabase={this.props.currencyDatabase}
-                  schema={this.flattenedEntry.schema}
-                  readonly={this.props.readonly}
-                  onChange={this.onParameterChange}/>
+                <fieldset ref={(element) => this.ruleParameters = element}
+                    disabled={deleted} style={RuleRow.STYLE.parameters}
+                    onInvalidCapture={this.onInvalid}>
+                  <HLine color='#E6E6E6'/>
+                  <ParametersList
+                    tickerQueryModel={this.props.tickerQueryModel}
+                    scopeQueryModel={this.props.scopeQueryModel}
+                    displaySize={this.props.displaySize}
+                    currencyDatabase={this.props.currencyDatabase}
+                    schema={this.flattenedEntry.schema}
+                    readonly={this.props.readonly || deleted}
+                    onChange={this.onParameterChange}/>
+                </fieldset>
               </div>)}
           </Transition>
       </div>);
   }
 
   public componentDidMount(): void {
-    this.applicabilityStyleDefinition.entering.maxHeight =
-      `${this.ruleParameters.scrollHeight}px`;
-    this.applicabilityStyleDefinition.entered.maxHeight =
-      `${this.ruleParameters.scrollHeight}px`;
+    this.observer = new ResizeObserver(this.onResize);
+    this.observer.observe(this.ruleParameters);
+    this.onResize();
+  }
+
+  public componentWillUnmount(): void {
+    this.observer.disconnect();
+  }
+
+  private onResize = () => {
+    const height = `${this.ruleParameters.scrollHeight}px`;
+    if(this.applicabilityStyleDefinition.entered.maxHeight === height) {
+      return;
+    }
+    this.applicabilityStyleDefinition.entering.maxHeight = height;
+    this.applicabilityStyleDefinition.entered.maxHeight = height;
     this.setState({
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     });
-  }
+  };
+
+  private onInvalid = (event: React.FormEvent<HTMLFieldSetElement>) => {
+    if(!this.isEntered) {
+      event.preventDefault();
+      this.invalidField = event.target as HTMLInputElement |
+        HTMLSelectElement | HTMLTextAreaElement;
+      this.setState({isExpanded: true});
+    }
+  };
+
+  private onEntered = () => {
+    this.isEntered = true;
+    const field = this.invalidField;
+    this.invalidField = null;
+    if(field?.isConnected && field.willValidate && !field.validity.valid) {
+      field.reportValidity();
+    }
+  };
+
+  private onExit = () => {
+    this.isEntered = false;
+    this.invalidField = null;
+  };
 
   private onRuleModeChange = (mode: RuleExecutionDropDown.Mode) => {
     const rule = new Nexus.ComplianceRuleEntry(
@@ -158,6 +211,12 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE: Record<string, React.CSSProperties> = {
+    parameters: {
+      border: 0,
+      margin: 0,
+      padding: 0,
+      minWidth: 0
+    },
     wrapper : {
       display: 'flex',
       flexDirection: 'column',
@@ -241,7 +300,11 @@ export class RuleRow extends React.Component<Properties, State> {
       overflow: 'hidden' as const
     }
   };
-  private ruleParameters: HTMLDivElement;
+  private ruleParameters: HTMLFieldSetElement;
+  private observer: ResizeObserver;
+  private isEntered: boolean;
+  private invalidField: HTMLInputElement | HTMLSelectElement |
+    HTMLTextAreaElement;
   private cachedEntry: Nexus.ComplianceRuleEntry;
   private flattenedEntry: Nexus.ComplianceRuleEntry;
 }

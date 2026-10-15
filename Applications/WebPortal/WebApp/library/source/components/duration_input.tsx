@@ -31,8 +31,10 @@ interface Properties extends
 }
 
 /** A component that displays a duration. */
-export function DurationInput({className, value, maxHourValue, minHourValue,
+export function DurationInput({id, className, value, maxHourValue, minHourValue,
     readOnly, disabled, error, onChange, ...rest}: Properties): JSX.Element {
+  const isInvalid = error || rest['aria-invalid'] === true ||
+    rest['aria-invalid'] === 'true';
   const hours = React.useRef(value?.split().hours);
   const minutes = React.useRef(value?.split().minutes);
   const seconds = React.useRef(value?.split().seconds);
@@ -62,10 +64,13 @@ export function DurationInput({className, value, maxHourValue, minHourValue,
   return (
     <div {...rest} className={[css(STYLES.container,
         disabled && STYLES.containerDisabled,
-        error && STYLES.containerError,
+        isInvalid && STYLES.containerError,
         readOnly && STYLES.containerReadonly),
         className].filter(Boolean).join(' ')}>
       <IntegerInput
+        id={id}
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         aria-label='Hours' placeholder='hh'
         min={minHourValue ?? 0} max={maxHourValue ?? 99}
         value={split?.hours}
@@ -79,6 +84,8 @@ export function DurationInput({className, value, maxHourValue, minHourValue,
       </span>
       <IntegerInput
         aria-label='Minutes' placeholder='mm'
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         min={0} max={59}
         value={split?.minutes}
         readOnly={readOnly}
@@ -91,6 +98,8 @@ export function DurationInput({className, value, maxHourValue, minHourValue,
       </span>
       <IntegerInput
         aria-label='Seconds' placeholder='ss'
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         min={0} max={59}
         value={split?.seconds}
         readOnly={readOnly}

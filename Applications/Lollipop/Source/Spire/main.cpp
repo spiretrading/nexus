@@ -275,7 +275,7 @@ int main(int argc, char* argv[]) {
       auto services =
         serviceClients->get_service_locator_client().locate("web_portal");
       if(!services.empty()) {
-        return Uri(boost::get<std::string>(
+        return Uri(std::get<std::string>(
           services.front().get_properties().at("url")));
       }
     } catch(const std::exception&) {}

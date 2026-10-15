@@ -3,7 +3,8 @@ import * as React from 'react';
 import { DateInput } from './date_input';
 import { TimeOfDayInput } from './time_of_day_input';
 
-interface Properties {
+interface Properties extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
 
   /** The value to display. */
   value?: Beam.DateTime;
@@ -28,28 +29,35 @@ const STYLE: React.CSSProperties = {
 
 /** A component that displays both date and time. */
 export function DateTimeInput(props: Properties): JSX.Element {
-  const value = props.value ?? Beam.DateTime.now();
+  const {id, style, value: supplied, readOnly, disabled, onChange,
+    ...attributes} = props;
+  const value = supplied ?? Beam.DateTime.now();
   const onDateChange = (date?: Beam.Date) => {
     if(date != null) {
-      props.onChange?.(new Beam.DateTime(date, value.timeOfDay));
+      onChange?.(new Beam.DateTime(date, value.timeOfDay));
     }
   };
   const onTimeChange = (time?: Beam.Duration) => {
     if(time != null) {
-      props.onChange?.(new Beam.DateTime(value.date, time));
+      onChange?.(new Beam.DateTime(value.date, time));
     }
   };
   return (
-    <div style={STYLE}>
+    <div {...attributes} style={{...STYLE, ...style}}>
       <DateInput
+        id={id}
+        aria-invalid={attributes['aria-invalid']}
+        aria-describedby={attributes['aria-describedby']}
         value={value.date}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onDateChange}/>
       <TimeOfDayInput
+        aria-invalid={attributes['aria-invalid']}
+        aria-describedby={attributes['aria-describedby']}
         value={value.timeOfDay}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onTimeChange}/>
     </div>);
 }

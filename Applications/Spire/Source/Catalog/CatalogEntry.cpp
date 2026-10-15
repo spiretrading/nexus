@@ -1,6 +1,5 @@
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include <sstream>
-#include <boost/variant/get.hpp>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <QMimeData>
@@ -68,7 +67,7 @@ boost::optional<uuid> CatalogEntry::FindUuid(const CanvasNode& node) {
   if(!catalogMetaData.is_initialized()) {
     return none;
   }
-  auto value = get<const string>(&*catalogMetaData);
+  auto value = std::get_if<string>(&*catalogMetaData);
   if(value == nullptr) {
     return none;
   }

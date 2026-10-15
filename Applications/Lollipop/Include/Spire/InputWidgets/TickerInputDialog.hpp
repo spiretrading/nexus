@@ -1,6 +1,7 @@
 #ifndef SPIRE_TICKER_INPUT_DIALOG_HPP
 #define SPIRE_TICKER_INPUT_DIALOG_HPP
 #include <functional>
+#include <variant>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/optional/optional.hpp>
 #include <QDialog>
@@ -75,7 +76,7 @@ namespace Spire {
    * @param resultSlot The slot to call when the dialog finishes.
    */
   void ShowTickerInputDialog(Beam::Ref<UserProfile> userProfile,
-    const boost::variant<std::string, Nexus::Ticker>& initialValue,
+    const std::variant<std::string, Nexus::Ticker>& initialValue,
     QWidget* parent,
     std::function<void (boost::optional<Nexus::Ticker> ticker)> onResult);
 }

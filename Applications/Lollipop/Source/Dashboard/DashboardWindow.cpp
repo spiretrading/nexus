@@ -129,7 +129,7 @@ boost::optional<Ticker> DashboardWindow::GetActiveTicker() const {
   if(values.empty()) {
     return none;
   }
-  auto ticker = boost::get<Ticker>(&values.back());
+  auto ticker = std::get_if<Ticker>(&values.back());
   if(ticker == nullptr) {
     return none;
   }
@@ -180,7 +180,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   if(values.empty()) {
     return;
   }
-  auto ticker = boost::get<Ticker>(&values.back());
+  auto ticker = std::get_if<Ticker>(&values.back());
   if(ticker == nullptr) {
     return;
   }
@@ -200,7 +200,7 @@ void DashboardWindow::OnRowRemoved(const DashboardRow& row) {
   if(values.empty()) {
     return;
   }
-  auto ticker = boost::get<Ticker>(&values.back());
+  auto ticker = std::get_if<Ticker>(&values.back());
   if(ticker == nullptr) {
     return;
   }

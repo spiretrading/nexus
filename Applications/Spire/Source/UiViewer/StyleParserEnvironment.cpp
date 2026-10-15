@@ -38,11 +38,10 @@ using namespace Spire::Styles;
 
 namespace {
   optional<bool> convert_boolean(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
-      if(identifier == "true") {
+    if(auto identifier = std::get_if<Identifier>(&value)) {
+      if(*identifier == "true") {
         return true;
-      } else if(identifier == "false") {
+      } else if(*identifier == "false") {
         return false;
       }
     }
@@ -50,10 +49,9 @@ namespace {
   }
 
   optional<int> convert_number(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      auto& literal = boost::get<Literal>(value);
-      if(*literal.get_type() == IntegerType()) {
-        return std::stoi(literal.get_value());
+    if(auto literal = std::get_if<Literal>(&value)) {
+      if(*literal->get_type() == IntegerType()) {
+        return std::stoi(literal->get_value());
       }
     }
     return none;
@@ -62,9 +60,11 @@ namespace {
   template<typename T>
   auto conver_number_property(std::span<const PropertyValue> values) {
     auto properties = std::vector<Property>();
-    if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-      if(auto number = convert_number(boost::get<Token::Type>(values[0]))) {
-        properties.push_back(T(*number));
+    if(values.size() == 1) {
+      if(auto token = std::get_if<Token::Type>(&values[0])) {
+        if(auto number = convert_number(*token)) {
+          properties.push_back(T(*number));
+        }
       }
     }
     return properties;
@@ -72,8 +72,9 @@ namespace {
 
   optional<int> convert_length(const Token::Type& value,
       const Token::Type& unit) {
-    if(value.type() == typeid(Literal) && unit.type() == typeid(Keyword) &&
-      boost::get<Keyword>(unit) == Keyword::PX) {
+    auto keyword = std::get_if<Keyword>(&unit);
+    if(std::holds_alternative<Literal>(value) && keyword &&
+        *keyword == Keyword::PX) {
       return convert_number(value);
     }
     return none;
@@ -84,14 +85,18 @@ namespace {
   }
 
   optional<int> convert_length(std::span<const PropertyValue> values) {
-    if(values.size() == 2 && values[0].type() == typeid(Token::Type) &&
-        values[1].type() == typeid(Token::Type)) {
-      return convert_length(boost::get<Token::Type>(values[0]),
-        boost::get<Token::Type>(values[1]));
-    } else if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-      if(auto length = convert_length(boost::get<Token::Type>(values[0]));
-          length && *length == 0) {
-        return length;
+    if(values.size() == 2) {
+      auto value = std::get_if<Token::Type>(&values[0]);
+      auto unit = std::get_if<Token::Type>(&values[1]);
+      if(value && unit) {
+        return convert_length(*value, *unit);
+      }
+    } else if(values.size() == 1) {
+      if(auto value = std::get_if<Token::Type>(&values[0])) {
+        auto length = convert_length(*value);
+        if(length && *length == 0) {
+          return length;
+        }
       }
     }
     return none;
@@ -124,10 +129,9 @@ namespace {
   }
 
   optional<std::string> convert_string(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      auto& literal = boost::get<Literal>(value);
-      if(*literal.get_type() == StringType()) {
-        auto text = literal.get_value();
+    if(auto literal = std::get_if<Literal>(&value)) {
+      if(*literal->get_type() == StringType()) {
+        auto text = literal->get_value();
         text.erase(std::remove(text.begin(), text.end(), '"'), text.end());
         return text;
       }
@@ -136,38 +140,36 @@ namespace {
   }
 
   optional<QColor> convert_hexadecimal_color(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      auto& literal = boost::get<Literal>(value);
-      if(*literal.get_type() == IntegerType() &&
-          literal.get_value().substr(0, 2) == "0x") {
-        return QColor(std::stoi(literal.get_value().substr(2), 0, 16));
+    if(auto literal = std::get_if<Literal>(&value)) {
+      if(*literal->get_type() == IntegerType() &&
+          literal->get_value().substr(0, 2) == "0x") {
+        return QColor(std::stoi(literal->get_value().substr(2), 0, 16));
       }
     }
     return none;
   }
 
   optional<QColor> convert_predefined_color(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
-      if(identifier == "white") {
+    if(auto identifier = std::get_if<Identifier>(&value)) {
+      if(*identifier == "white") {
         return QColor(Qt::white);
-      } else if(identifier == "black") {
+      } else if(*identifier == "black") {
         return QColor(Qt::black);
-      } else if(identifier == "red") {
+      } else if(*identifier == "red") {
         return QColor(Qt::red);
-      } else if(identifier == "green") {
+      } else if(*identifier == "green") {
         return QColor(Qt::green);
-      } else if(identifier == "blue") {
+      } else if(*identifier == "blue") {
         return QColor(Qt::blue);
-      } else if(identifier == "gray") {
+      } else if(*identifier == "gray") {
         return QColor(Qt::gray);
-      } else if(identifier == "cyan") {
+      } else if(*identifier == "cyan") {
         return QColor(Qt::cyan);
-      } else if(identifier == "magenta") {
+      } else if(*identifier == "magenta") {
         return QColor(Qt::magenta);
-      } else if(identifier == "yellow") {
+      } else if(*identifier == "yellow") {
         return QColor(Qt::yellow);
-      } else if(identifier == "transparent") {
+      } else if(*identifier == "transparent") {
         return QColor(Qt::transparent);
       }
       return QColor();
@@ -188,13 +190,12 @@ namespace {
   auto convert_color_property(std::span<const PropertyValue> values) {
     auto properties = std::vector<Property>();
     if(values.size() == 1) {
-      if(values[0].type() == typeid(Token::Type)) {
-        if(auto color = convert_color(boost::get<Token::Type>(values[0]))) {
+      if(auto token = std::get_if<Token::Type>(&values[0])) {
+        if(auto color = convert_color(*token)) {
           properties.push_back(T(*color));
         }
-      } else if(values[0].type() == typeid(Property)) {
-        properties.push_back(
-          T(boost::get<Property>(values[0]).expression_as<QColor>()));
+      } else if(auto property = std::get_if<Property>(&values[0])) {
+        properties.push_back(T(property->expression_as<QColor>()));
       }
     }
     return properties;
@@ -204,11 +205,13 @@ namespace {
   auto convert_composite_color_property_only_color(
       std::span<const PropertyValue> values, F&& f) {
     auto properties = std::vector<Property>();
-    if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-      if(auto color = convert_color(boost::get<Token::Type>(values[0]))) {
-        for_each(f(*color), [&] (auto& property) {
-          properties.push_back(property);
-        });
+    if(values.size() == 1) {
+      if(auto token = std::get_if<Token::Type>(&values[0])) {
+        if(auto color = convert_color(*token)) {
+          for_each(f(*color), [&] (auto& property) {
+            properties.push_back(property);
+          });
+        }
       }
     }
     return properties;
@@ -222,36 +225,36 @@ namespace {
       convert_composite_color_property_only_color(values, f);
     if(!color_properties.empty()) {
       properties = std::move(color_properties);
-    } else if(values.size() == 1 && values[0].type() == typeid(Property)) {
-      for_each(f(boost::get<Property>(values[0]).expression_as<QColor>()),
-        [&] (auto& property) {
+    } else if(values.size() == 1) {
+      if(auto property = std::get_if<Property>(&values[0])) {
+        for_each(f(property->expression_as<QColor>()), [&] (auto& property) {
           properties.push_back(property);
         });
+      }
     }
     return properties;
   }
 
   optional<QFont::Weight> convert_predefined_font_weight(
       const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
-      if(identifier == "normal") {
+    if(auto identifier = std::get_if<Identifier>(&value)) {
+      if(*identifier == "normal") {
         return QFont::Normal;
-      } else if(identifier == "medium") {
+      } else if(*identifier == "medium") {
         return QFont::Medium;
-      } else if(identifier == "bold") {
+      } else if(*identifier == "bold") {
         return QFont::Bold;
-      } else if(identifier == "thin") {
+      } else if(*identifier == "thin") {
         return QFont::Thin;
-      } else if(identifier == "extra_light") {
+      } else if(*identifier == "extra_light") {
         return QFont::ExtraLight;
-      } else if(identifier == "light") {
+      } else if(*identifier == "light") {
         return QFont::Light;
-      } else if(identifier == "demi_bold") {
+      } else if(*identifier == "demi_bold") {
         return QFont::DemiBold;
-      } else if(identifier == "extra_bold") {
+      } else if(*identifier == "extra_bold") {
         return QFont::ExtraBold;
-      } else if(identifier == "black") {
+      } else if(*identifier == "black") {
         return QFont::Black;
       }
     }
@@ -269,7 +272,7 @@ namespace {
 
   optional<QFont> convert_font(std::span<const PropertyValue> values) {
     for(auto& value : values) {
-      if(value.type() != typeid(Token::Type)) {
+      if(!std::holds_alternative<Token::Type>(value)) {
         return none;
       }
     }
@@ -287,37 +290,36 @@ namespace {
       }
     };
     if(values.size() == 4) {
-      convert_weight(boost::get<Token::Type>(values[0]));
+      convert_weight(std::get<Token::Type>(values[0]));
       if(auto length =
          convert_length({values.begin() + 1, values.begin() + 3})) {
         font.setPixelSize(scale_width(*length));
       }
-      convert_family(boost::get<Token::Type>(values[3]));
+      convert_family(std::get<Token::Type>(values[3]));
       return font;
     } else if(values.size() == 3) {
-      convert_weight(boost::get<Token::Type>(values[0]));
+      convert_weight(std::get<Token::Type>(values[0]));
       if(auto length =
           convert_length({values.begin() + 1, values.begin() + 2})) {
         font.setPixelSize(scale_width(*length));
       }
-      convert_family(boost::get<Token::Type>(values[2]));
+      convert_family(std::get<Token::Type>(values[2]));
       return font;
     }
     return none;
   }
 
   optional<Qt::Alignment> convert_alignment(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
-      if(identifier == "left") {
+    if(auto identifier = std::get_if<Identifier>(&value)) {
+      if(*identifier == "left") {
         return Qt::Alignment(Qt::AlignLeft);
-      } else if(identifier == "right") {
+      } else if(*identifier == "right") {
         return Qt::Alignment(Qt::AlignRight);
-      } else if(identifier == "top") {
+      } else if(*identifier == "top") {
         return Qt::Alignment(Qt::AlignTop);
-      } else if(identifier == "bottom") {
+      } else if(*identifier == "bottom") {
         return Qt::Alignment(Qt::AlignBottom);
-      } else if(identifier == "center") {
+      } else if(*identifier == "center") {
         return Qt::Alignment(Qt::AlignCenter);
       }
     }
@@ -326,18 +328,19 @@ namespace {
 
   optional<time_duration> convert_time_duration(const Token::Type& value,
       const Token::Type& unit) {
-    if(value.type() != typeid(Literal) || unit.type() != typeid(Keyword)) {
+    auto keyword = std::get_if<Keyword>(&unit);
+    if(!std::holds_alternative<Literal>(value) || !keyword) {
       return none;
     }
-    if(boost::get<Keyword>(unit) == Keyword::MS) {
+    if(*keyword == Keyword::MS) {
       if(auto number = convert_number(value)) {
         return milliseconds(*number);
       }
-    } else if(boost::get<Keyword>(unit) == Keyword::S) {
+    } else if(*keyword == Keyword::S) {
       if(auto number = convert_number(value)) {
         return seconds(*number);
       }
-    } else if(boost::get<Keyword>(unit) == Keyword::MIN) {
+    } else if(*keyword == Keyword::MIN) {
       if(auto number = convert_number(value)) {
         return minutes(*number);
       }
@@ -346,9 +349,8 @@ namespace {
   }
 
   optional<RevertPolymorph> convert_revert(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
-      if(identifier == "revert") {
+    if(auto identifier = std::get_if<Identifier>(&value)) {
+      if(*identifier == "revert") {
         return revert;
       }
     }
@@ -477,22 +479,25 @@ void Spire::register_property_converters() {
   register_property_converter("border",
     [] (const std::vector<PropertyValue>& values) {
       auto properties = std::vector<Property>();
-      if(values.size() == 3 && values[0].type() == typeid(Token::Type) &&
-          values[1].type() == typeid(Token::Type) &&
-          values[2].type() == typeid(Token::Type)) {
-        auto border_sizes = convert_composite_length_property(
-          {values.begin(), values.begin() + 2},
-          [] (int length) {
-            return BorderSize(scale_height(length), scale_width(length),
-              scale_height(length), scale_width(length));
-          });
-        for(auto& border_size : border_sizes) {
-          properties.push_back(border_size);
-        }
-        if(auto color = convert_color(boost::get<Token::Type>(values[2]))) {
-          for_each(border_color(*color), [&] (auto& property) {
-            properties.push_back(property);
-          });
+      if(values.size() == 3) {
+        auto value = std::get_if<Token::Type>(&values[0]);
+        auto unit = std::get_if<Token::Type>(&values[1]);
+        auto token = std::get_if<Token::Type>(&values[2]);
+        if(value && unit && token) {
+          auto border_sizes = convert_composite_length_property(
+            {values.begin(), values.begin() + 2},
+            [] (int length) {
+              return BorderSize(scale_height(length), scale_width(length),
+                scale_height(length), scale_width(length));
+            });
+          for(auto& border_size : border_sizes) {
+            properties.push_back(border_size);
+          }
+          if(auto color = convert_color(*token)) {
+            for_each(border_color(*color), [&] (auto& property) {
+              properties.push_back(property);
+            });
+          }
         }
       }
       return properties;
@@ -616,9 +621,12 @@ void Spire::register_property_converters() {
   register_property_converter("format",
     [] (const std::vector<PropertyValue>& values) {
       auto properties = std::vector<Property>();
-      if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-        if(auto format = convert_string(boost::get<Token::Type>(values[0]))) {
-          properties.push_back(DurationFormat(QString::fromStdString(*format)));
+      if(values.size() == 1) {
+        if(auto token = std::get_if<Token::Type>(&values[0])) {
+          if(auto format = convert_string(*token)) {
+            properties.push_back(
+              DurationFormat(QString::fromStdString(*format)));
+          }
         }
       }
       return properties;
@@ -627,10 +635,11 @@ void Spire::register_property_converters() {
   register_property_converter("text_align",
     [] (const std::vector<PropertyValue>& values) {
       auto properties = std::vector<Property>();
-      if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-        if(auto align = convert_alignment(boost::get<Identifier>(
-            boost::get<Token::Type>(values[0])))) {
-          properties.push_back(TextAlign(*align));
+      if(values.size() == 1) {
+        if(auto token = std::get_if<Token::Type>(&values[0])) {
+          if(auto align = convert_alignment(std::get<Identifier>(*token))) {
+            properties.push_back(TextAlign(*align));
+          }
         }
       }
       return properties;
@@ -657,7 +666,7 @@ void Spire::register_property_converters() {
         return properties;
       }
       auto font = convert_font(std::span(values.begin(), values.end() - 1));
-      auto color = convert_color(boost::get<Token::Type>(values[4]));
+      auto color = convert_color(std::get<Token::Type>(values[4]));
       if(font && color) {
         auto composite_property = TextStyle(*font, *color);
         for_each(composite_property, [&] (auto& property) {
@@ -670,10 +679,11 @@ void Spire::register_property_converters() {
   register_property_converter("year_field",
     [] (const std::vector<PropertyValue>& values) {
       auto properties = std::vector<Property>();
-      if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
-        if(auto year_field = convert_boolean(boost::get<Identifier>(
-            boost::get<Token::Type>(values[0])))) {
-          properties.push_back(YearField(*year_field));
+      if(values.size() == 1) {
+        if(auto token = std::get_if<Token::Type>(&values[0])) {
+          if(auto year_field = convert_boolean(std::get<Identifier>(*token))) {
+            properties.push_back(YearField(*year_field));
+          }
         }
       }
       return properties;
@@ -681,16 +691,17 @@ void Spire::register_property_converters() {
 
   register_function_converter("timeout",
     [] (const std::vector<PropertyValue>& values) {
-      if(values.size() == 3 && values[0].type() == typeid(Token::Type) &&
-          values[1].type() == typeid(Token::Type) &&
-          values[2].type() == typeid(Token::Type)) {
-        auto color = convert_color(boost::get<Token::Type>(values[0]));
-        auto duration = convert_time_duration(
-          boost::get<Token::Type>(values[1]),
-          boost::get<Token::Type>(values[2]));
-        if(color && duration) {
-          return BasicProperty<QColor, void>(Expression<QColor>(
-            TimeoutExpression(*color, *duration)));
+      if(values.size() == 3) {
+        auto value = std::get_if<Token::Type>(&values[0]);
+        auto length = std::get_if<Token::Type>(&values[1]);
+        auto unit = std::get_if<Token::Type>(&values[2]);
+        if(value && length && unit) {
+          auto color = convert_color(*value);
+          auto duration = convert_time_duration(*length, *unit);
+          if(color && duration) {
+            return BasicProperty<QColor, void>(Expression<QColor>(
+              TimeoutExpression(*color, *duration)));
+          }
         }
       }
       throw std::runtime_error("Cannot parse the timeout function.");
@@ -698,22 +709,22 @@ void Spire::register_property_converters() {
 
   register_function_converter("linear",
     [] (const std::vector<PropertyValue>& values) {
-      if(values.size() == 4 && values[0].type() == typeid(Token::Type) &&
-          values[1].type() == typeid(Token::Type) &&
-          values[2].type() == typeid(Token::Type) &&
-          values[3].type() == typeid(Token::Type)) {
-        auto start_color = convert_color(boost::get<Token::Type>(values[0]));
-        auto duration = convert_time_duration(
-          boost::get<Token::Type>(values[2]),
-          boost::get<Token::Type>(values[3]));
-        if(start_color && duration) {
-          if(auto revert = convert_revert(boost::get<Token::Type>(values[1]))) {
-            return BasicProperty<QColor, void>(Expression<QColor>(
-              LinearExpression(*start_color, *revert, *duration)));
-          } else if(auto end_color =
-              convert_color(boost::get<Token::Type>(values[1]))) {
-            return BasicProperty<QColor, void>(Expression<QColor>(
-              LinearExpression(*start_color, *end_color, *duration)));
+      if(values.size() == 4) {
+        auto start = std::get_if<Token::Type>(&values[0]);
+        auto end = std::get_if<Token::Type>(&values[1]);
+        auto length = std::get_if<Token::Type>(&values[2]);
+        auto unit = std::get_if<Token::Type>(&values[3]);
+        if(start && end && length && unit) {
+          auto start_color = convert_color(*start);
+          auto duration = convert_time_duration(*length, *unit);
+          if(start_color && duration) {
+            if(auto revert = convert_revert(*end)) {
+              return BasicProperty<QColor, void>(Expression<QColor>(
+                LinearExpression(*start_color, *revert, *duration)));
+            } else if(auto end_color = convert_color(*end)) {
+              return BasicProperty<QColor, void>(Expression<QColor>(
+                LinearExpression(*start_color, *end_color, *duration)));
+            }
           }
         }
       }
@@ -723,17 +734,17 @@ void Spire::register_property_converters() {
   register_function_converter("chain",
     [] (const std::vector<PropertyValue>& values) {
       if(values.size() == 2) {
-        if(values[0].type() == typeid(Property)) {
+        if(auto property = std::get_if<Property>(&values[0])) {
           if(auto first_expression =
-              convert_color_expression(boost::get<Property>(values[0]))) {
-            if(values[1].type() == typeid(Token::Type)) {
-              if(auto revert = convert_revert(boost::get<Token::Type>(values[1]))) {
+              convert_color_expression(*property)) {
+            if(auto token = std::get_if<Token::Type>(&values[1])) {
+              if(auto revert = convert_revert(*token)) {
                 return BasicProperty<QColor, void>(Expression<QColor>(
                   ChainExpression(*first_expression, *revert)));
               }
-            } else if(values[1].type() == typeid(Property)) {
+            } else if(auto property = std::get_if<Property>(&values[1])) {
               if(auto second_expression =
-                  convert_color_expression(boost::get<Property>(values[1]))) {
+                  convert_color_expression(*property)) {
                 return BasicProperty<QColor, void>(Expression<QColor>(
                   ChainExpression(*first_expression, *second_expression)));
               }

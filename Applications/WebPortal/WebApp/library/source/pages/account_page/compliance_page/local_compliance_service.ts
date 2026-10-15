@@ -1,3 +1,5 @@
+import * as Nexus from 'nexus';
+import { QueryModel } from '../../../models';
 import { ComplianceModel } from './compliance_model';
 import { ComplianceService } from './compliance_service';
 
@@ -7,9 +9,10 @@ export class LocalComplianceService extends ComplianceService {
   /**
    * Constructs a LocalComplianceService.
    * @param model The model to return on load.
+   * @param tickers The ticker lookup provider.
    */
-  constructor(model: ComplianceModel) {
-    super();
+  constructor(model: ComplianceModel, tickers: QueryModel<Nexus.Ticker>) {
+    super(tickers);
     this.model = model.clone();
   }
 

@@ -136,7 +136,7 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == translation.get_row_size() - 1);
       }));
@@ -167,7 +167,7 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == 3);
       }));
@@ -293,7 +293,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto update_operation = get<TableModel::UpdateOperation>(&operation);
+        auto update_operation =
+          std::get_if<TableModel::UpdateOperation>(&operation);
         REQUIRE(update_operation != nullptr);
         REQUIRE(update_operation->m_row == updated_row);
         REQUIRE(update_operation->m_column == 0);

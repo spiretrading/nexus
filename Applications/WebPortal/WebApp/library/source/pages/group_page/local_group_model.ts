@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { LocalTickerQueryModel } from '../../models';
 import { ComplianceModel, ComplianceService, LocalComplianceService } from
   '..';
 import { AccountEntry } from '../account_directory_page';
@@ -24,7 +25,8 @@ export class LocalGroupModel extends GroupModel {
     this._isLoaded = false;
     this._group = group;
     this._accounts = accounts.slice();
-    this._complianceService = new LocalComplianceService(complianceModel);
+    this._complianceService = new LocalComplianceService(
+      complianceModel, new LocalTickerQueryModel([]));
     this._currency = currency;
     this._profitAndLossModel = new NoneGroupProfitAndLossModel();
   }

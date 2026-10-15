@@ -177,7 +177,7 @@ TEST_SUITE("TimeAndSalesTableModel") {
       REQUIRE(model->get_model() == second);
       auto removed = 0;
       for(auto& operation : operations) {
-        if(get<TableModel::RemoveOperation>(&operation) != nullptr) {
+        if(std::get_if<TableModel::RemoveOperation>(&operation)) {
           ++removed;
         }
       }

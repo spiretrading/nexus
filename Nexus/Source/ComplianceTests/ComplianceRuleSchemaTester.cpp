@@ -36,18 +36,19 @@ TEST_SUITE("ComplianceRuleSchema") {
     auto found_scope = false;
     for(auto& parameter : wrapped_schema.get_parameters()) {
       if(parameter.m_name == "name") {
-        REQUIRE(get<std::string>(parameter.m_value) == "base_rule");
+        REQUIRE(std::get<std::string>(parameter.m_value) == "base_rule");
         found_name = true;
       } else if(parameter.m_name == "arguments") {
-        auto arguments = get<std::vector<ComplianceValue>>(parameter.m_value);
+        auto arguments =
+          std::get<std::vector<ComplianceValue>>(parameter.m_value);
         REQUIRE(arguments.size() == 1);
-        auto argument = get<std::vector<ComplianceValue>>(arguments[0]);
+        auto argument = std::get<std::vector<ComplianceValue>>(arguments[0]);
         REQUIRE(argument.size() == 2);
-        REQUIRE(get<std::string>(argument[0]) == "ticker");
-        REQUIRE(get<Ticker>(argument[1]) == parse_ticker("ABC.TSX"));
+        REQUIRE(std::get<std::string>(argument[0]) == "ticker");
+        REQUIRE(std::get<Ticker>(argument[1]) == parse_ticker("ABC.TSX"));
         found_arguments = true;
       } else if(parameter.m_name == "scope") {
-        REQUIRE(get<Scope>(parameter.m_value) == Scope::GLOBAL);
+        REQUIRE(std::get<Scope>(parameter.m_value) == Scope::GLOBAL);
         found_scope = true;
       }
     }

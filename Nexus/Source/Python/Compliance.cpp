@@ -20,6 +20,46 @@
 #include "Nexus/Python/ToPythonComplianceClient.hpp"
 #include "Nexus/Python/ToPythonComplianceRuleDataStore.hpp"
 
+namespace pybind11::detail {
+  template<>
+  class type_caster<Nexus::ComplianceValue> :
+      public Beam::Python::BasicTypeCaster<Nexus::ComplianceValue> {
+    public:
+      static constexpr auto name = const_name("ComplianceValue");
+
+      template<typename V>
+      static handle cast(V&& value, return_value_policy policy, handle parent) {
+        return std::visit([&] (auto&& value) {
+          using Type = std::remove_cvref_t<decltype(value)>;
+          return make_caster<Type>::cast(std::forward<decltype(value)>(value),
+            return_value_policy_override<Type>::policy(policy), parent);
+        }, std::forward<V>(value));
+      }
+
+      bool load(handle source, bool convert);
+  };
+
+  bool type_caster<Nexus::ComplianceValue>::load(handle source, bool convert) {
+    auto is_converted = false;
+    [&]<std::size_t... Is> (std::index_sequence<Is...>) {
+      ([&] {
+        if(is_converted) {
+          return;
+        }
+        using Type =
+          std::variant_alternative_t<Is, Nexus::Details::ComplianceVariant>;
+        auto caster = make_caster<Type>();
+        if(caster.load(source, convert)) {
+          m_value.emplace(cast_op<Type&&>(std::move(caster)));
+          is_converted = true;
+        }
+      }(), ...);
+    }(std::make_index_sequence<
+      std::variant_size_v<Nexus::Details::ComplianceVariant>>());
+    return is_converted;
+  }
+}
+
 using namespace Beam;
 using namespace Beam::Python;
 using namespace Nexus;

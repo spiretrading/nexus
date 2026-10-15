@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { HttpTickerQueryModel } from '../../../models';
 import { ComplianceModel } from './compliance_model';
 import { ComplianceService } from './compliance_service';
 
@@ -13,7 +14,7 @@ export class HttpComplianceService extends ComplianceService {
    */
   constructor(directoryEntry: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
-    super();
+    super(new HttpTickerQueryModel());
     this.directoryEntry = directoryEntry;
     this.serviceClients = serviceClients;
   }

@@ -2,7 +2,7 @@
 #define SPIRE_TOKEN_HPP
 #include <memory>
 #include <string>
-#include <boost/variant/variant.hpp>
+#include <variant>
 #include "Spire/StyleParser/DataTypes/DataType.hpp"
 
 namespace Spire {
@@ -113,8 +113,8 @@ namespace Spire {
     public:
 
       /** Consolidates all token types. */
-      using Type = boost::variant<Bracket, Identifier, Keyword, Literal,
-        Operator, Punctuation>;
+      using Type = std::variant<
+        Bracket, Identifier, Keyword, Literal, Operator, Punctuation>;
 
       /**
        * Constructs a Token.

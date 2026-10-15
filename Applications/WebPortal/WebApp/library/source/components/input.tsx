@@ -37,10 +37,10 @@ const STYLES = StyleSheet.create({
     ':focus': {
       borderColor: '#684BC7'
     },
-    ':invalid': {
+    ':is(.error, [aria-invalid="true"])': {
       borderColor: '#E63F44'
     },
-    ':user-invalid': {
+    ':user-invalid:not([data-pending="true"])': {
       borderColor: '#E63F44'
     },
     '::placeholder': {

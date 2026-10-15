@@ -172,6 +172,9 @@ function copy(name) {
 
 function configuration() {
   const files = ['package.json', 'package-lock.json', 'tsconfig.json'];
+  if(project == 'library') {
+    files.push('tsconfig.test.json');
+  }
   if(project == 'application') {
     files.push('webpack.config.js');
   }
@@ -182,20 +185,26 @@ function configureFiles() {
   if(samePath(root, source)) {
     return;
   }
-  const filename = path.join(root, 'source');
-  const target = path.join(source, 'source');
-  if(inspect(filename)) {
-    if(!samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
-      throw new Error(`Refusing to replace the existing ${filename}.`);
+  const directories = ['source'];
+  if(project == 'library') {
+    directories.push('tests');
+  }
+  for(const name of directories) {
+    const filename = path.join(root, name);
+    const target = path.join(source, name);
+    if(inspect(filename)) {
+      if(!samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
+        throw new Error(`Refusing to replace the existing ${filename}.`);
+      }
+    } else {
+      let type = 'dir';
+      if(process.platform == 'win32') {
+        type = 'junction';
+      }
+      fs.symlinkSync(target, filename, type);
+      state.generated.push(name);
+      save();
     }
-  } else {
-    let type = 'dir';
-    if(process.platform == 'win32') {
-      type = 'junction';
-    }
-    fs.symlinkSync(target, filename, type);
-    state.generated.push('source');
-    save();
   }
   for(const name of configuration()) {
     copy(name);

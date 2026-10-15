@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ReportException.hpp>
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
 namespace Nexus {
@@ -120,7 +119,7 @@ namespace Nexus {
     auto source_id = client.get_session().m_source_id;
     for(auto& message : messages) {
       try {
-        boost::apply_visitor([&] (const auto& data) {
+        std::visit([&] (const auto& data) {
           m_registry->publish(data, source_id);
         }, message);
       } catch(const std::exception&) {

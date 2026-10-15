@@ -1,6 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
+import { QueryModel } from '../../../models';
 import { ParameterEntry } from './parameter_entry';
 
 interface Properties {
@@ -13,6 +14,12 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The model used to look up tickers. */
+  tickerQueryModel: QueryModel<Nexus.Ticker>;
+
+  /** The model used to look up scope entries. */
+  scopeQueryModel: QueryModel<Nexus.Scope>;
 
   /** Indicates if the component is readonly. */
   readonly?: boolean;
@@ -48,6 +55,8 @@ export class ParametersList extends React.Component<Properties> {
             style={ParametersList.STYLE.fillerBetweenRows}/>);
       }
       parameterEntries.push(<ParameterEntry
+        tickerQueryModel={this.props.tickerQueryModel}
+        scopeQueryModel={this.props.scopeQueryModel}
         key={parameterEntries.length}
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}

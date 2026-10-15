@@ -27,7 +27,8 @@ TEST_SUITE("TableToListModel") {
       ListModel<RowView>::AddOperation(2)});
     auto connection = scoped_connection(list.connect_operation_signal(
       [&] (const auto& operation) {
-        auto update = get<ListModel<RowView>::UpdateOperation>(&operation);
+        auto update =
+          std::get_if<ListModel<RowView>::UpdateOperation>(&operation);
         REQUIRE(update != nullptr);
         REQUIRE(list.get_update().m_row == 1);
         REQUIRE(list.get_update().m_column == 2);

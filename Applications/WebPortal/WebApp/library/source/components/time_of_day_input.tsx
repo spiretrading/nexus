@@ -30,7 +30,7 @@ interface Properties extends
 }
 
 /** A component that displays a time of day in 12-hour format with AM/PM. */
-export function TimeOfDayInput({className, style, value, readOnly, disabled,
+export function TimeOfDayInput({id, className, style, value, readOnly, disabled,
     error, onChange, ...rest}: Properties): JSX.Element {
   const [period, setPeriod] = React.useState(() => getPeriod(value));
   const [displayedTime, setDisplayedTime] =
@@ -61,6 +61,9 @@ export function TimeOfDayInput({className, style, value, readOnly, disabled,
     <div {...rest} className={className}
         style={{...STYLE.wrapper, ...style}}>
       <DurationInput
+        id={id}
+        aria-invalid={rest['aria-invalid']}
+        aria-describedby={rest['aria-describedby']}
         style={{flex: 1}}
         value={displayedTime}
         readOnly={readOnly}
@@ -70,6 +73,8 @@ export function TimeOfDayInput({className, style, value, readOnly, disabled,
         minHourValue={1}
         onChange={onTimeChange}/>
       <Select
+          aria-invalid={rest['aria-invalid']}
+          aria-describedby={rest['aria-describedby']}
           onChange={onPeriodChange}
           value={String(period)}
           readOnly={readOnly}
