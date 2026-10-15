@@ -3,7 +3,7 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-void TestTimeAndSalesModel::publish(const Details::TimeAndSalesEntry& entry) {
+void TestTimeAndSalesModel::publish(const Type& entry) {
   m_entries.push(entry);
 }
 
@@ -19,8 +19,7 @@ TestTimeAndSalesModel::LoadRequest TestTimeAndSalesModel::pop_request() {
 }
 
 QtPromise<void> TestTimeAndSalesModel::load_older(int max_count) {
-  auto [future, promise] =
-    make_future<std::vector<Details::TimeAndSalesEntry>>();
+  auto [future, promise] = make_future<std::vector<Type>>();
   m_requests.push_back(LoadRequest(max_count, std::move(future)));
   return std::move(promise).then([=] (auto&& result) {
     auto entries = std::move(result).get();

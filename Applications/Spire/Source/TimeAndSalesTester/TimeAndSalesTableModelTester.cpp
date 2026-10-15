@@ -16,17 +16,16 @@ namespace {
   const auto CURRENT_TIME =
     ptime(date(2024, Jun, 01), time_duration(10, 15, 0));
 
-  Spire::Details::TimeAndSalesEntry make_entry(int index,
-      BboIndicator indicator = BboIndicator::UNKNOWN) {
-    return Spire::Details::TimeAndSalesEntry(SequencedValue(
+  TimeAndSalesModel::Type make_entry(
+      int index, BboIndicator indicator = BboIndicator::UNKNOWN) {
+    return TimeAndSalesModel::Type(SequencedValue(
       TimeAndSale(CURRENT_TIME + seconds(index), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
         "XNYS"), Beam::Sequence(100 + index)), indicator);
   }
 
-  std::vector<Spire::Details::TimeAndSalesEntry> make_entries(
-      int first, int last) {
-    auto entries = std::vector<Spire::Details::TimeAndSalesEntry>();
+  std::vector<TimeAndSalesModel::Type> make_entries(int first, int last) {
+    auto entries = std::vector<TimeAndSalesModel::Type>();
     for(auto i = first; i <= last; ++i) {
       entries.push_back(make_entry(i));
     }
@@ -41,7 +40,7 @@ namespace {
 
   void load_history(TimeAndSalesTableModel& model,
       TestTimeAndSalesModel& time_and_sales,
-      std::vector<Spire::Details::TimeAndSalesEntry> entries) {
+      std::vector<TimeAndSalesModel::Type> entries) {
     auto [future, promise] = make_future<void>();
     auto end = std::make_shared<QtFuture<void>>(std::move(future));
     auto connection = scoped_connection(model.connect_end_loading_signal([=] {

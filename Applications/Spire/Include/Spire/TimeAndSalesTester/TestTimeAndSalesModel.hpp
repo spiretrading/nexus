@@ -22,14 +22,14 @@ namespace Spire {
          * Resolves the load with the entries to insert at the front, ordered
          * from oldest to newest.
          */
-        QtFuture<std::vector<Details::TimeAndSalesEntry>> m_result;
+        QtFuture<std::vector<Type>> m_result;
       };
 
       /**
        * Appends an entry.
        * @param entry The entry to append.
        */
-      void publish(const Details::TimeAndSalesEntry& entry);
+      void publish(const Type& entry);
 
       /** Returns the load_older calls still awaiting a result. */
       const std::deque<LoadRequest>& get_requests() const;
@@ -48,7 +48,7 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
-      ArrayListModel<Details::TimeAndSalesEntry> m_entries;
+      ArrayListModel<Type> m_entries;
       std::deque<LoadRequest> m_requests;
   };
 }

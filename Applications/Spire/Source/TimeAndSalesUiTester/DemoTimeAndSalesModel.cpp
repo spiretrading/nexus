@@ -91,7 +91,7 @@ QtPromise<void> DemoTimeAndSalesModel::load_older(int max_count) {
   }
   auto timer = std::make_shared<LiveTimer>(m_query_duration);
   m_query_duration_timers.push_back(timer);
-  auto entries = std::vector<Spire::Details::TimeAndSalesEntry>();
+  auto entries = std::vector<Type>();
   if(m_query_duration != pos_infin) {
     auto timestamp = [&] {
       if(m_entries.get_size() == 0) {
@@ -147,7 +147,7 @@ void DemoTimeAndSalesModel::transact(
   });
 }
 
-Spire::Details::TimeAndSalesEntry DemoTimeAndSalesModel::make_entry(
+DemoTimeAndSalesModel::Type DemoTimeAndSalesModel::make_entry(
     ptime timestamp) const {
   if(m_is_data_random) {
     auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));

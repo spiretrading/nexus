@@ -62,7 +62,7 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
-      ArrayListModel<Details::TimeAndSalesEntry> m_entries;
+      ArrayListModel<Type> m_entries;
       Nexus::Money m_price;
       BboIndicator m_indicator;
       boost::posix_time::time_duration m_period;
@@ -72,8 +72,7 @@ namespace Spire {
       QTimer m_timer;
       std::vector<std::shared_ptr<Beam::LiveTimer>> m_query_duration_timers;
 
-      Details::TimeAndSalesEntry make_entry(
-        boost::posix_time::ptime timestamp) const;
+      Type make_entry(boost::posix_time::ptime timestamp) const;
       void on_timeout();
   };
 }

@@ -59,7 +59,7 @@ namespace {
   }
 
   void replay_bbo_indicators(MarketDataClient& client, const Ticker& ticker,
-      std::vector<Spire::Details::TimeAndSalesEntry>& entries) {
+      std::vector<TimeAndSalesModel::Type>& entries) {
     if(entries.empty()) {
       return;
     }
@@ -106,12 +106,11 @@ QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
     query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
     auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
     client.query(query, queue);
-    auto result = std::vector<Spire::Details::TimeAndSalesEntry>();
+    auto result = std::vector<Type>();
     try {
       while(true) {
         auto time_and_sale = queue->pop();
-        result.push_back(Spire::Details::TimeAndSalesEntry(
-          std::move(time_and_sale), BboIndicator::UNKNOWN));
+        result.push_back(Type(std::move(time_and_sale), BboIndicator::UNKNOWN));
       }
     } catch(const PipeBrokenException&) {}
     replay_bbo_indicators(client, ticker, result);
@@ -183,7 +182,7 @@ void ServiceTimeAndSalesModel::on_time_and_sale(
       m_entries.back().m_time_and_sale.get_sequence()) {
     return;
   }
-  m_entries.push_back(Spire::Details::TimeAndSalesEntry(
-    time_and_sale, get_indicator(*m_bbo, *time_and_sale)));
+  m_entries.push_back(
+    Type(time_and_sale, get_indicator(*m_bbo, *time_and_sale)));
   m_transaction.push(AddOperation(get_size() - 1));
 }
