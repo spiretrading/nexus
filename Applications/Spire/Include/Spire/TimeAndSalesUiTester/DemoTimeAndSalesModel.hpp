@@ -56,6 +56,7 @@ namespace Spire {
       const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
+      using TimeAndSalesModel::transact;
 
     protected:
       void transact(const std::function<void ()>& transaction) override;

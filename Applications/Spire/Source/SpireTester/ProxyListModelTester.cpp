@@ -21,7 +21,7 @@ namespace {
     auto operations = std::deque<ProxyListModel<int>::Operation>();
     auto connection = scoped_connection(proxy.connect_operation_signal(
       [&] (const auto& operation) {
-        if(is_throwing && get<T>(&operation)) {
+        if(is_throwing && std::get_if<T>(&operation)) {
           throw std::runtime_error("Failed.");
         }
         operations.push_back(operation);

@@ -3,6 +3,7 @@
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -51,7 +52,21 @@ TEST_SUITE("ServiceTimeAndSalesModel") {
       auto model =
         ServiceTimeAndSalesModel(TEST_TICKER, make_client(data_store));
       REQUIRE(model.get_size() == 0);
+      auto count = 0;
+      auto connection = scoped_connection(model.connect_operation_signal(
+        [&] (const auto& operation) {
+          if(auto add = std::get_if<
+              ServiceTimeAndSalesModel::AddOperation>(&operation)) {
+            ++count;
+            REQUIRE(add->m_index == 0);
+            REQUIRE(model.get_size() == count);
+            require_entries(model, 6 - count);
+            REQUIRE_THROWS_AS(model.get(-1), std::out_of_range);
+            REQUIRE_THROWS_AS(model.get(count), std::out_of_range);
+          }
+        }));
       wait(model.load_older(3));
+      REQUIRE(count == 3);
       REQUIRE(model.get_size() == 3);
       require_entries(model, 3);
     });
@@ -76,22 +91,39 @@ TEST_SUITE("ServiceTimeAndSalesModel") {
     run_test([] {
       auto data_store = LocalHistoricalDataStore();
       store_range(data_store, 1, 5);
-      auto model =
-        ServiceTimeAndSalesModel(TEST_TICKER, make_client(data_store));
-      wait(model.load_older(3));
-      REQUIRE(model.get_size() == 3);
+      auto model = std::make_shared<ServiceTimeAndSalesModel>(
+        TEST_TICKER, make_client(data_store));
+      auto table = TimeAndSalesTableModel(model);
+      wait(model->load_older(3));
+      REQUIRE(model->get_size() == 3);
       auto indexes = std::vector<int>();
-      auto connection = scoped_connection(model.connect_operation_signal(
+      auto connection = scoped_connection(model->connect_operation_signal(
         [&] (const auto& operation) {
           if(auto add = std::get_if<
               ServiceTimeAndSalesModel::AddOperation>(&operation)) {
             indexes.push_back(add->m_index);
+            REQUIRE(model->get_size() == 3 + std::ssize(indexes));
+            require_entries(*model, 3 - static_cast<int>(indexes.size()));
+            REQUIRE_THROWS_AS(model->get(model->get_size()), std::out_of_range);
           }
         }));
-      wait(model.load_older(5));
-      REQUIRE(indexes == std::vector{0, 1});
-      REQUIRE(model.get_size() == 5);
-      require_entries(model, 1);
+      auto rows = 3;
+      auto table_connection = scoped_connection(table.connect_operation_signal(
+        [&] (const auto& operation) {
+          if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
+            REQUIRE(add->m_index == rows);
+            ++rows;
+            REQUIRE(table.get_row_size() == rows);
+            for(auto i = 0; i < rows; ++i) {
+              REQUIRE(table.get<Quantity>(i, 2) == Quantity(5 - i));
+            }
+          }
+        }));
+      wait(model->load_older(5));
+      REQUIRE(indexes == std::vector{0, 0});
+      REQUIRE(rows == 5);
+      REQUIRE(model->get_size() == 5);
+      require_entries(*model, 1);
     });
   }
 

@@ -1,4 +1,7 @@
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
+#include <algorithm>
+#include <iterator>
+#include <stdexcept>
 
 using namespace Beam;
 using namespace boost;
@@ -79,7 +82,8 @@ namespace {
 ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
     Ticker ticker, MarketDataClient client)
     : m_ticker(std::move(ticker)),
-      m_client(std::move(client)) {
+      m_client(std::move(client)),
+      m_offset(0) {
   auto query = make_real_time_query(m_ticker);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(query, m_event_handler.get_slot<SequencedBboQuote>(
@@ -90,10 +94,10 @@ ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
 
 QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
   auto sequence = [&] {
-    if(m_entries.get_size() == 0) {
+    if(get_size() == 0) {
       return Beam::Sequence::PRESENT;
     }
-    return decrement(m_entries.get(0).m_time_and_sale.get_sequence());
+    return decrement(get(0).m_time_and_sale.get_sequence());
   }();
   return QtPromise([=, ticker = m_ticker, client = m_client] () mutable {
     auto query = TickerQuery();
@@ -112,50 +116,61 @@ QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
     } catch(const PipeBrokenException&) {}
     replay_bbo_indicators(client, ticker, result);
     return result;
-  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
     try {
       auto& snapshot = result.get();
       auto end = [&] {
-        if(m_entries.get_size() == 0) {
+        if(get_size() == 0) {
           return snapshot.end();
         }
-        return std::lower_bound(snapshot.begin(), snapshot.end(),
-          m_entries.get(0).m_time_and_sale.get_sequence(),
-          [] (const auto& entry, const auto& bound) {
-            return entry.m_time_and_sale.get_sequence() < bound;
+        return std::ranges::lower_bound(snapshot,
+          get(0).m_time_and_sale.get_sequence(),
+          std::ranges::less(), [] (const auto& entry) {
+            return entry.m_time_and_sale.get_sequence();
           });
       }();
       auto count = static_cast<int>(std::distance(snapshot.begin(), end));
       if(count != 0) {
-        m_entries.transact([&] {
-          for(auto i = 0; i < count; ++i) {
-            m_entries.insert(snapshot[i], i);
+        m_entries.insert(m_entries.begin(),
+          std::make_move_iterator(snapshot.begin()),
+          std::make_move_iterator(end));
+        m_offset = count;
+        m_transaction.transact([&] {
+          while(m_offset != 0) {
+            --m_offset;
+            m_transaction.push(AddOperation(0));
           }
         });
       }
-    } catch(const std::exception&) {}
+    } catch(const std::exception&) {
+      if(m_offset != 0) {
+        m_entries.erase(m_entries.begin(), m_entries.begin() + m_offset);
+        m_offset = 0;
+      }
+    }
   });
 }
 
 int ServiceTimeAndSalesModel::get_size() const {
-  return m_entries.get_size();
+  return static_cast<int>(m_entries.size()) - m_offset;
 }
 
 const ServiceTimeAndSalesModel::Type&
     ServiceTimeAndSalesModel::get(int index) const {
-  return m_entries.get(index);
+  if(index < 0 || index >= get_size()) {
+    throw std::out_of_range("The index is out of range.");
+  }
+  return m_entries[index + m_offset];
 }
 
 connection ServiceTimeAndSalesModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
-  return m_entries.connect_operation_signal(slot);
+  return m_transaction.connect_operation_signal(slot);
 }
 
 void ServiceTimeAndSalesModel::transact(
     const std::function<void ()>& transaction) {
-  m_entries.transact([&] {
-    transaction();
-  });
+  m_transaction.transact(transaction);
 }
 
 void ServiceTimeAndSalesModel::on_bbo(const SequencedBboQuote& bbo) {
@@ -164,10 +179,11 @@ void ServiceTimeAndSalesModel::on_bbo(const SequencedBboQuote& bbo) {
 
 void ServiceTimeAndSalesModel::on_time_and_sale(
     const SequencedTimeAndSale& time_and_sale) {
-  if(m_entries.get_size() != 0 && time_and_sale.get_sequence() <=
-      m_entries.get(m_entries.get_size() - 1).m_time_and_sale.get_sequence()) {
+  if(get_size() != 0 && time_and_sale.get_sequence() <=
+      m_entries.back().m_time_and_sale.get_sequence()) {
     return;
   }
-  m_entries.push(Spire::Details::TimeAndSalesEntry(
+  m_entries.push_back(Spire::Details::TimeAndSalesEntry(
     time_and_sale, get_indicator(*m_bbo, *time_and_sale)));
+  m_transaction.push(AddOperation(get_size() - 1));
 }

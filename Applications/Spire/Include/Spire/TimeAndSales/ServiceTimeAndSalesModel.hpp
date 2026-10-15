@@ -1,8 +1,9 @@
 #ifndef SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
+#include <vector>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
@@ -24,6 +25,7 @@ namespace Spire {
       const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
+      using TimeAndSalesModel::transact;
 
     protected:
       void transact(const std::function<void ()>& transaction) override;
@@ -31,7 +33,9 @@ namespace Spire {
     private:
       Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_client;
-      ArrayListModel<Details::TimeAndSalesEntry> m_entries;
+      std::vector<Type> m_entries;
+      int m_offset;
+      ListModelTransactionLog<Type> m_transaction;
       Nexus::SequencedBboQuote m_bbo;
       EventHandler m_event_handler;
 
