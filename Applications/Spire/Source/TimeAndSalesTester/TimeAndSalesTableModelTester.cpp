@@ -6,15 +6,13 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const auto CURRENT_TIME =
-    ptime(date(2024, Jun, 01), time_duration(10, 15, 0));
+  const auto CURRENT_TIME = time_from_string("2024-06-01 10:15:00");
 
   TimeAndSalesModel::Type make_entry(
       int index, BboIndicator indicator = BboIndicator::UNKNOWN) {
