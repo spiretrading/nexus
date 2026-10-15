@@ -17,6 +17,7 @@
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -946,8 +947,8 @@ namespace Nexus {
       }
       try {
         grant_scheduled_modifications();
-      } catch(const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+      } catch(const std::exception&) {
+        BEAM_LOG_CURRENT_EXCEPTION("operation=grant_scheduled_modifications");
       }
     }
   }
