@@ -1,5 +1,6 @@
 #ifndef NEXUS_RISK_SERVLET_HPP
 #define NEXUS_RISK_SERVLET_HPP
+#include <sstream>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -444,8 +445,9 @@ namespace Nexus {
         try {
           reset(account, scope);
         } catch(const std::exception&) {
-          std::cerr << "Scope reset failed for account:\n\t" << "Account: " <<
-            account << "\n\t" << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+          auto context = std::ostringstream();
+          context << "Scope reset failed for account:\nAccount: " << account;
+          BEAM_LOG_CURRENT_EXCEPTION(context.str());
         }
       }
     }
