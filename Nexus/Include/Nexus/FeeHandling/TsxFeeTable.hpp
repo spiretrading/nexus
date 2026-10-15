@@ -1,6 +1,8 @@
 #ifndef NEXUS_TSX_FEE_TABLE_HPP
 #define NEXUS_TSX_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
@@ -236,7 +238,7 @@ namespace Nexus {
           } else if(classification == TsxFeeTable::Classification::INTERLISTED) {
             return TsxFeeTable::PriceClass::DEFAULT_INTERLISTED;
           } else {
-            std::cout << "Unknown classification [TSX].\n";
+            Beam::report_message("Unknown classification [TSX].");
             return TsxFeeTable::PriceClass::DEFAULT;
           }
         }();
@@ -254,8 +256,9 @@ namespace Nexus {
               return TsxFeeTable::Type::ACTIVE;
             }
           } else {
-            std::cout << "Unknown liquidity flag [TSX]: \"" <<
-              report.m_liquidity_flag << "\".\n";
+            Beam::report_message(
+              std::format("Unknown liquidity flag [TSX]: \"{}\".",
+                report.m_liquidity_flag));
             return TsxFeeTable::Type::ACTIVE;
           }
         }();
@@ -267,8 +270,8 @@ namespace Nexus {
         if(report.m_liquidity_flag == "AO" || report.m_liquidity_flag == "AE") {
           return TsxFeeTable::AuctionType::CLOSE;
         } else {
-          std::cout << "Unknown liquidity flag [TSX]: \"" <<
-            report.m_liquidity_flag << "\".\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [TSX]: \"{}\".", report.m_liquidity_flag));
           return TsxFeeTable::AuctionType::CLOSE;
         }
       }();
@@ -278,8 +281,8 @@ namespace Nexus {
         lookup_auction_fee(table, TsxFeeTable::AuctionIndex::MAX_CHARGE, type);
       return std::min(report.m_last_quantity * fee, max_fee);
     } else {
-      std::cout << "Unknown liquidity flag [TSX]: \"" <<
-        report.m_liquidity_flag << "\".\n";
+      Beam::report_message(std::format(
+        "Unknown liquidity flag [TSX]: \"{}\".", report.m_liquidity_flag));
       return Money::ZERO;
     }
   }

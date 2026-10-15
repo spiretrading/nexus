@@ -1,7 +1,9 @@
 #ifndef NEXUS_CHIC_FEE_TABLE_HPP
 #define NEXUS_CHIC_FEE_TABLE_HPP
 #include <array>
+#include <format>
 #include <unordered_set>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -142,13 +144,13 @@ namespace Nexus {
             report.m_liquidity_flag[0] == 'D') {
           return ChicFeeTable::Index::HIDDEN_ACTIVE;
         } else {
-          std::cout << "Unknown liquidity flag [CHIC]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [CHIC]: \"{}\"", report.m_liquidity_flag));
           return ChicFeeTable::Index::ACTIVE;
         }
       } else {
-        std::cout << "Unknown liquidity flag [CHIC]: \"" <<
-          report.m_liquidity_flag << "\"\n";
+        Beam::report_message(std::format(
+          "Unknown liquidity flag [CHIC]: \"{}\"", report.m_liquidity_flag));
         return ChicFeeTable::Index::ACTIVE;
       }
     }();

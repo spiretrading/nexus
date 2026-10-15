@@ -7,6 +7,7 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <boost/callable_traits/args.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -429,7 +430,7 @@ namespace Details {
       auto exec_trans_type = FIX::ExecTransType();
       message.get(exec_trans_type);
       if(exec_trans_type != FIX::ExecTransType_NEW) {
-        std::cout << "Trade Revised: " << message.toString() << std::endl;
+        Beam::report_message("Trade Revised: " + message.toString());
         return;
       }
     }
@@ -452,7 +453,7 @@ namespace Details {
     }
     order->with([&] (auto status, const auto& reports) {
       if(reports.empty() || is_terminal(reports.back().m_status)) {
-        std::cout << "Stale Report: " << message.toString() << std::endl;
+        Beam::report_message("Stale Report: " + message.toString());
         return;
       }
       if(is_pending_cancel) {

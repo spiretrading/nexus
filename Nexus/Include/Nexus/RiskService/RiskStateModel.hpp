@@ -1,11 +1,12 @@
 #ifndef NEXUS_RISK_STATE_MODEL_HPP
 #define NEXUS_RISK_STATE_MODEL_HPP
-#include <iostream>
 #include <ranges>
+#include <sstream>
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -137,8 +138,10 @@ namespace Nexus {
           currency_profit_and_loss, currency, m_parameters.m_currency);
         profit_and_loss += converted_profit_and_loss;
       } catch(const CurrencyPairNotFoundException&) {
-        std::cerr << "Currency pair not found: " << currency << ' ' <<
-          m_parameters.m_currency << std::endl;
+        auto message = std::ostringstream();
+        message << "Currency pair not found: " << currency << ' ' <<
+          m_parameters.m_currency;
+        Beam::report_message(message.str());
         if(m_risk_state.m_type == RiskState::Type::ACTIVE) {
           m_risk_state.m_type = RiskState::Type::CLOSE_ORDERS;
           m_risk_state.m_expiry =
