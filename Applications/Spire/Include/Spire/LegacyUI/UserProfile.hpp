@@ -221,8 +221,6 @@ namespace Spire {
       RiskTimerProperties m_riskTimerProperties;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;
-      CachedModelBuilder<Nexus::Ticker, TimeAndSalesModel>
-        m_time_and_sales_models;
       TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
