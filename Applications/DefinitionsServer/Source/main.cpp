@@ -136,7 +136,7 @@ int main(int argc, const char** argv) {
     if(received_kill_event()) {
       return 0;
     }
-    report_current_exception();
+    BEAM_LOG_CURRENT_EXCEPTION();
     return -1;
   }
   return 0;
