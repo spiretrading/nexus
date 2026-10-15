@@ -4,8 +4,8 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Services/ReportServiceException.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <Beam/Utilities/ReportException.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
 namespace Nexus {
@@ -123,7 +123,9 @@ namespace Nexus {
           m_registry->publish(data, source_id);
         }, message);
       } catch(const std::exception&) {
-        BEAM_LOG_CURRENT_EXCEPTION();
+        Beam::report_service_exception(client, "publish_market_data",
+          typeid(Beam::RecordMessage<SendMarketDataFeedMessages,
+            ServiceProtocolClient>), std::nullopt);
       }
     }
   }
