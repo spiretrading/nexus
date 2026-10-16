@@ -79,12 +79,6 @@ namespace Details {
       ComplianceRuleSchema m_schema;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const ComplianceRuleEntry& entry) {
-    return out << '(' << entry.get_id() << ' ' << entry.get_directory_entry() <<
-      ' ' << entry.get_state() << ' ' << entry.get_schema() << ')';
-  }
-
   inline ComplianceRuleEntry::ComplianceRuleEntry() noexcept
     : m_id(0),
       m_state(State::ACTIVE) {}
@@ -131,6 +125,34 @@ namespace Beam {
       shuttle.shuttle("schema", value.m_schema);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ComplianceRuleEntry> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ComplianceRuleEntry& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.get_id(),
+          value.get_directory_entry(), value.get_state(), value.get_schema()),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceRuleEntry& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

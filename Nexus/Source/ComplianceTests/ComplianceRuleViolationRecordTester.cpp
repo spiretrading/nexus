@@ -18,9 +18,14 @@ TEST_SUITE("ComplianceRuleViolationRecord") {
     record.m_schema_name = "buying_power";
     record.m_reason = "Order exceeds available buying power.";
     record.m_timestamp = time_from_string("2024-07-25 15:30:00");
-    REQUIRE(to_string(record) ==
+    auto expected = std::string(
       "((ACCOUNT 42 alice) 12345 67890 buying_power "
       "\"Order exceeds available buying power.\" 2024-Jul-25 15:30:00)");
+    REQUIRE(to_string(record) == expected);
+    REQUIRE(std::format("{}", record) == expected);
+    REQUIRE(std::format("{:*>{}}", record, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.9}", record) == "((ACCOUNT");
     test_round_trip_shuttle(record);
   }
 }
