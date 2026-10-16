@@ -1,5 +1,6 @@
 #ifndef NEXUS_ACCOUNT_MODIFICATION_REQUEST_COUNTS_HPP
 #define NEXUS_ACCOUNT_MODIFICATION_REQUEST_COUNTS_HPP
+#include <format>
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 
@@ -19,12 +20,6 @@ namespace Nexus {
 
     bool operator ==(const AccountModificationRequestCounts&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequestCounts& counts) {
-    return out << '(' << counts.m_pending << ' ' << counts.m_granted << ' ' <<
-      counts.m_rejected << ')';
-  }
 }
 
 namespace Beam {
@@ -38,6 +33,25 @@ namespace Beam {
       shuttle.shuttle("rejected", value.m_rejected);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::AccountModificationRequestCounts> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountModificationRequestCounts& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", value.m_pending,
+          value.m_granted, value.m_rejected), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequestCounts& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

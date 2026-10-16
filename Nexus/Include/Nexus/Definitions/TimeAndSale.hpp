@@ -112,26 +112,24 @@ class std::formatter<Nexus::Details::ConditionTypeDefinition::Type> :
   public:
     auto format(Nexus::Details::ConditionTypeDefinition::Type value,
         auto& context) const {
-      auto name = [&] () -> std::string_view {
+      auto name = [&] {
         using Type = Nexus::Details::ConditionTypeDefinition;
-        switch(value) {
-          case Type::REGULAR:
-            return "@";
-          case Type::OPEN:
-            return "OPEN";
-          case Type::CLOSE:
-            return "CLOSE";
-          case Type::REOPEN:
-            return "REOPEN";
-          case Type::AUCTION:
-            return "AUCTION";
-          case Type::CORRECTION:
-            return "CORRECTION";
-          case Type::CANCELLATION:
-            return "CANCELLATION";
-          default:
-            return "NONE";
+        if(value == Type::REGULAR) {
+          return "@";
+        } else if(value == Type::OPEN) {
+          return "OPEN";
+        } else if(value == Type::CLOSE) {
+          return "CLOSE";
+        } else if(value == Type::REOPEN) {
+          return "REOPEN";
+        } else if(value == Type::AUCTION) {
+          return "AUCTION";
+        } else if(value == Type::CORRECTION) {
+          return "CORRECTION";
+        } else if(value == Type::CANCELLATION) {
+          return "CANCELLATION";
         }
+        return "NONE";
       }();
       return std::formatter<std::string_view>::format(name, context);
     }

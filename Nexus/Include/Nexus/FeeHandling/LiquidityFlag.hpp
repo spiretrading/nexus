@@ -29,16 +29,14 @@ class std::formatter<Nexus::LiquidityFlag> :
   public:
     auto format(Nexus::LiquidityFlag flag, auto& context) const {
       auto text = [&] {
-        switch(flag) {
-          case Nexus::LiquidityFlag::NONE:
-            return std::string_view();
-          case Nexus::LiquidityFlag::ACTIVE:
-            return std::string_view("A");
-          case Nexus::LiquidityFlag::PASSIVE:
-            return std::string_view("P");
-          default:
-            return std::string_view("?");
+        if(flag == Nexus::LiquidityFlag::NONE) {
+          return "";
+        } else if(flag == Nexus::LiquidityFlag::ACTIVE) {
+          return "A";
+        } else if(flag == Nexus::LiquidityFlag::PASSIVE) {
+          return "P";
         }
+        return "?";
       }();
       return std::formatter<std::string_view>::format(text, context);
     }
