@@ -166,4 +166,18 @@ namespace Nexus {
   }
 }
 
+template<>
+class std::formatter<Nexus::Ticker> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Ticker& value, auto& context) const {
+      if(!value.get_venue() || value.get_symbol().empty()) {
+        return std::formatter<std::string_view>::format(
+          value.get_symbol(), context);
+      }
+      return std::formatter<std::string_view>::format(
+        std::format("{}.{}", value.get_symbol(), value.get_venue()), context);
+    }
+};
+
 #endif

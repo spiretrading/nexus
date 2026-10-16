@@ -78,4 +78,15 @@ namespace Beam {
   };
 }
 
+template<>
+class std::formatter<Nexus::ExchangeRate> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ExchangeRate& rate, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format("({} {}/{})", rate.m_pair, rate.m_rate.numerator(),
+          rate.m_rate.denominator()), context);
+    }
+};
+
 #endif

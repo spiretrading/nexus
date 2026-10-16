@@ -1,7 +1,7 @@
 #ifndef NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
 #define NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
 #include <exception>
-#include <sstream>
+#include <format>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
@@ -435,17 +435,14 @@ namespace Nexus {
           return calculate_fee(table.m_tsxv_fee_table, classification,
             order.get_info().m_fields, report);
         } else {
-          auto message = std::ostringstream();
-          message << "Unknown venue [TMX]: \"" <<
-            order.get_info().m_fields.m_ticker.get_venue() << '"';
-          Beam::report_message(message.str());
+          Beam::report_message(std::format("Unknown venue [TMX]: \"{}\"",
+            order.get_info().m_fields.m_ticker.get_venue()));
           return calculate_fee(table.m_tsx_fee_table, classification,
             order.get_info().m_fields, report);
         }
       } else {
-        auto message = std::ostringstream();
-        message << "Unknown last market [TMX]: \"" << last_market << '"';
-        Beam::report_message(message.str());
+        Beam::report_message(
+          std::format("Unknown last market [TMX]: \"{}\"", last_market));
         return Money::ZERO;
       }
     }();

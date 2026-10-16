@@ -179,6 +179,17 @@ namespace Nexus {
     return Beam::ScopedStreamManipulator(out, database);
   }
 
+namespace Details {
+  inline std::string get_display_text(
+      CurrencyId value, const CurrencyDatabase& database) {
+    auto& entry = database.from(value);
+    if(entry.m_id) {
+      return std::string(entry.m_code.get_data());
+    }
+    return std::format("{}", static_cast<std::uint16_t>(value));
+  }
+}
+
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
     extern const CurrencyDatabase& CURRENCIES;
     auto database = static_cast<const CurrencyDatabase*>(
@@ -186,11 +197,7 @@ namespace Nexus {
     if(!database) {
       database = &CURRENCIES;
     }
-    auto& entry = database->from(value);
-    if(entry.m_id) {
-      return out << entry.m_code;
-    }
-    return out << static_cast<std::uint16_t>(value);
+    return out << Details::get_display_text(value, *database);
   }
 
   inline std::istream& operator >>(std::istream& in, CurrencyId& id) {
@@ -380,5 +387,19 @@ namespace std {
 }
 
 #include "Nexus/Definitions/StandardCurrencies.hpp"
+
+namespace Nexus {
+  extern const CurrencyDatabase& CURRENCIES;
+}
+
+template<>
+class std::formatter<Nexus::CurrencyId> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::CurrencyId value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        Nexus::Details::get_display_text(value, Nexus::CURRENCIES), context);
+    }
+};
 
 #endif

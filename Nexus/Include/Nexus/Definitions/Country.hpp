@@ -205,6 +205,17 @@ namespace Nexus {
     return Beam::ScopedStreamManipulator(out, database);
   }
 
+namespace Details {
+  inline std::string get_display_text(
+      CountryCode code, const CountryDatabase& database) {
+    auto& entry = database.from(code);
+    if(entry.m_code) {
+      return std::string(entry.m_two_letter_code.get_data());
+    }
+    return std::format("{}", static_cast<std::uint16_t>(code));
+  }
+}
+
   inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
     extern const CountryDatabase& COUNTRIES;
     auto database = static_cast<const CountryDatabase*>(
@@ -212,11 +223,7 @@ namespace Nexus {
     if(!database) {
       database = &COUNTRIES;
     }
-    auto& entry = database->from(code);
-    if(entry.m_code) {
-      return out << entry.m_two_letter_code;
-    }
-    return out << static_cast<std::uint16_t>(code);
+    return out << Details::get_display_text(code, *database);
   }
 
   inline std::istream& operator >>(std::istream& in, CountryCode& code) {
@@ -450,5 +457,19 @@ namespace std {
 }
 
 #include "Nexus/Definitions/StandardCountries.hpp"
+
+namespace Nexus {
+  extern const CountryDatabase& COUNTRIES;
+}
+
+template<>
+class std::formatter<Nexus::CountryCode> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::CountryCode code, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        Nexus::Details::get_display_text(code, Nexus::COUNTRIES), context);
+    }
+};
 
 #endif

@@ -322,6 +322,17 @@ namespace Nexus {
     return Beam::ScopedStreamManipulator(out, database);
   }
 
+namespace Details {
+  inline std::string get_display_text(
+      Venue venue, const VenueDatabase& database) {
+    auto& entry = database.from(venue);
+    if(entry.m_venue) {
+      return entry.m_display_name;
+    }
+    return std::string(venue.get_code().get_data());
+  }
+}
+
   inline std::ostream& operator <<(std::ostream& out, Venue venue) {
     extern const VenueDatabase& VENUES;
     auto database = static_cast<const VenueDatabase*>(
@@ -329,11 +340,7 @@ namespace Nexus {
     if(!database) {
       database = &VENUES;
     }
-    auto& entry = database->from(venue);
-    if(entry.m_venue) {
-      return out << entry.m_display_name;
-    }
-    return out << venue.get_code();
+    return out << Details::get_display_text(venue, *database);
   }
 
   inline std::ostream& operator <<(
@@ -793,5 +800,32 @@ namespace std {
 }
 
 #include "Nexus/Definitions/StandardVenues.hpp"
+
+namespace Nexus {
+  extern const VenueDatabase& VENUES;
+}
+
+template<>
+class std::formatter<Nexus::Venue> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::Venue venue, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        Nexus::Details::get_display_text(venue, Nexus::VENUES), context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::VenueDatabase::Entry> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::VenueDatabase::Entry& entry, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format("({} {} {} {} {} {} {})", entry.m_venue,
+          entry.m_country_code, entry.m_market_center, entry.m_time_zone,
+          entry.m_currency, entry.m_description, entry.m_display_name),
+        context);
+    }
+};
 
 #endif

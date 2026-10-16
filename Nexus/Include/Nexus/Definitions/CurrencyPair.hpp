@@ -97,4 +97,14 @@ namespace std {
   };
 }
 
+template<>
+class std::formatter<Nexus::CurrencyPair> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::CurrencyPair pair, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format("{}/{}", pair.m_base, pair.m_counter), context);
+    }
+};
+
 #endif

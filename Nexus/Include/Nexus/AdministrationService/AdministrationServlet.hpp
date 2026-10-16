@@ -3,8 +3,8 @@
 #include <atomic>
 #include <iostream>
 #include <limits>
+#include <print>
 #include <ranges>
-#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
@@ -707,22 +707,18 @@ namespace Nexus {
       if(entitlement_set.contains(entry)) {
         if(!std::ranges::contains(existing_entitlements, entry)) {
           m_service_locator_client->associate(account, entry);
-          auto ss = std::stringstream();
-          ss <<
-            boost::posix_time::to_simple_string(m_time_client->get_time()) <<
-            ": " << admin_account.m_name << " grants entitlement \"" <<
-            entitlement.m_name << "\"" << " to " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
+          std::println(std::cout, "{}: {} grants entitlement \"{}\" to {}.",
+            boost::posix_time::to_simple_string(m_time_client->get_time()),
+            admin_account.m_name, entitlement.m_name, account.m_name);
+          std::cout.flush();
         }
       } else {
         if(std::ranges::contains(existing_entitlements, entry)) {
           m_service_locator_client->detach(account, entry);
-          auto ss = std::stringstream();
-          ss <<
-            boost::posix_time::to_simple_string(m_time_client->get_time()) <<
-            ": " << admin_account.m_name << " revokes entitlement \"" <<
-            entitlement.m_name << "\"" << " from " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
+          std::println(std::cout, "{}: {} revokes entitlement \"{}\" from {}.",
+            boost::posix_time::to_simple_string(m_time_client->get_time()),
+            admin_account.m_name, entitlement.m_name, account.m_name);
+          std::cout.flush();
         }
       }
     }

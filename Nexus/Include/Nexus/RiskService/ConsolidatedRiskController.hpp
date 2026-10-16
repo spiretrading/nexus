@@ -1,8 +1,8 @@
 #ifndef NEXUS_CONSOLIDATED_RISK_CONTROLLER_HPP
 #define NEXUS_CONSOLIDATED_RISK_CONTROLLER_HPP
+#include <format>
 #include <functional>
 #include <memory>
-#include <sstream>
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -197,9 +197,8 @@ namespace Nexus {
           &*m_order_execution_client, m_transition_timer_factory(),
           &*m_time_client, &*m_data_store, m_exchange_rates);
       } catch(const std::exception&) {
-        auto context = std::ostringstream();
-        context << "Unable to load risk controller:\nAccount: " << account;
-        BEAM_LOG_CURRENT_EXCEPTION(context.str());
+        BEAM_LOG_CURRENT_EXCEPTION(
+          std::format("Unable to load risk controller:\nAccount: {}", account));
         return std::unique_ptr<RiskController>();
       }
     }();

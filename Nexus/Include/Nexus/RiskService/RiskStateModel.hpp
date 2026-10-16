@@ -1,7 +1,7 @@
 #ifndef NEXUS_RISK_STATE_MODEL_HPP
 #define NEXUS_RISK_STATE_MODEL_HPP
+#include <format>
 #include <ranges>
-#include <sstream>
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -138,10 +138,8 @@ namespace Nexus {
           currency_profit_and_loss, currency, m_parameters.m_currency);
         profit_and_loss += converted_profit_and_loss;
       } catch(const CurrencyPairNotFoundException&) {
-        auto message = std::ostringstream();
-        message << "Currency pair not found: " << currency << ' ' <<
-          m_parameters.m_currency;
-        Beam::report_message(message.str());
+        Beam::report_message(std::format("Currency pair not found: {} {}",
+          currency, m_parameters.m_currency));
         if(m_risk_state.m_type == RiskState::Type::ACTIVE) {
           m_risk_state.m_type = RiskState::Type::CLOSE_ORDERS;
           m_risk_state.m_expiry =
