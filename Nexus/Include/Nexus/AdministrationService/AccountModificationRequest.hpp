@@ -4,6 +4,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 namespace Nexus {
@@ -134,52 +135,6 @@ namespace Nexus {
       status == AccountModificationRequest::Status::REJECTED;
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, AccountModificationRequest::Type type) {
-    if(type == AccountModificationRequest::Type::ENTITLEMENTS) {
-      return out << "ENTITLEMENTS";
-    } else if(type == AccountModificationRequest::Type::RISK) {
-      return out << "RISK";
-    } else if(type == AccountModificationRequest::Type::COMPLIANCE) {
-      return out << "COMPLIANCE";
-    } else {
-      return out << "UNKNOWN";
-    }
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, AccountModificationRequest::Status status) {
-    if(status == AccountModificationRequest::Status::NONE) {
-      return out << "NONE";
-    } else if(status == AccountModificationRequest::Status::PENDING) {
-      return out << "PENDING";
-    } else if(status == AccountModificationRequest::Status::REVIEWED) {
-      return out << "REVIEWED";
-    } else if(status == AccountModificationRequest::Status::SCHEDULED) {
-      return out << "SCHEDULED";
-    } else if(status == AccountModificationRequest::Status::GRANTED) {
-      return out << "GRANTED";
-    } else if(status == AccountModificationRequest::Status::REJECTED) {
-      return out << "REJECTED";
-    } else {
-      return out << "UNKNOWN";
-    }
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequest::Update& update) {
-    return out << '(' << update.m_status << ' ' << update.m_account << ' '
-      << update.m_sequence_number << ' ' << update.m_timestamp << ')';
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequest& request) {
-    return out << '(' << request.get_id() << ' ' << request.get_type() <<
-      ' ' << request.get_account() << ' ' << request.get_submission_account() <<
-      ' ' << request.get_timestamp() << ' ' << request.get_effective_date() <<
-      ')';
-  }
-
   inline AccountModificationRequest::Update::Update() noexcept
     : Update(AccountModificationRequest::Status::NONE, Beam::DirectoryEntry(),
         -1, boost::posix_time::not_a_date_time) {}
@@ -266,6 +221,102 @@ namespace Beam {
       shuttle.shuttle("effective_date", value.m_effective_date);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::AccountModificationRequest::Type> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(
+        Nexus::AccountModificationRequest::Type value, auto& context) const {
+      auto text = [&] {
+        if(value == Nexus::AccountModificationRequest::Type::ENTITLEMENTS) {
+          return "ENTITLEMENTS";
+        } else if(value == Nexus::AccountModificationRequest::Type::RISK) {
+          return "RISK";
+        } else if(value == Nexus::AccountModificationRequest::Type::COMPLIANCE) {
+          return "COMPLIANCE";
+        }
+        return "UNKNOWN";
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::AccountModificationRequest::Status> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(
+        Nexus::AccountModificationRequest::Status value, auto& context) const {
+      auto text = [&] {
+        if(value == Nexus::AccountModificationRequest::Status::NONE) {
+          return "NONE";
+        } else if(value == Nexus::AccountModificationRequest::Status::PENDING) {
+          return "PENDING";
+        } else if(value == Nexus::AccountModificationRequest::Status::REVIEWED) {
+          return "REVIEWED";
+        } else if(
+            value == Nexus::AccountModificationRequest::Status::SCHEDULED) {
+          return "SCHEDULED";
+        } else if(value == Nexus::AccountModificationRequest::Status::GRANTED) {
+          return "GRANTED";
+        } else if(value == Nexus::AccountModificationRequest::Status::REJECTED) {
+          return "REJECTED";
+        }
+        return "UNKNOWN";
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::AccountModificationRequest::Update> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountModificationRequest::Update& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.m_status,
+          value.m_account, value.m_sequence_number,
+          Beam::to_string(value.m_timestamp)), context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::AccountModificationRequest> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(
+        const Nexus::AccountModificationRequest& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {} {})", value.get_id(),
+          value.get_type(), value.get_account(), value.get_submission_account(),
+          Beam::to_string(value.get_timestamp()),
+          Beam::to_string(value.get_effective_date())), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, AccountModificationRequest::Type value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, AccountModificationRequest::Status value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequest::Update& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequest& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

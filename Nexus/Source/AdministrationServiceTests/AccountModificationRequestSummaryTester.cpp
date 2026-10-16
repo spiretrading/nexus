@@ -28,6 +28,10 @@ TEST_SUITE("AccountModificationRequestSummary") {
       "2024-Jul-04 15:30:00 2024-Aug-01 00:00:00) "
       "(GRANTED (ACCOUNT 300 manager) 7 2024-Jul-05 10:00:00) 3)");
     REQUIRE(lexical_cast<std::string>(summary) == expected);
+    REQUIRE(std::format("{}", summary) == expected);
+    REQUIRE(
+      std::format("{:>180}", summary) == std::format("{:>180}", expected));
+    REQUIRE(std::format("{:.20}", summary) == expected.substr(0, 20));
     summary.m_previous_state = Modification(EntitlementModification(
       {DirectoryEntry::make_directory(23, "TSX")}));
     summary.m_modification = Modification(RiskModification(RiskParameters(

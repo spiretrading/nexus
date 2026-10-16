@@ -9,6 +9,61 @@ using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("Money") {
+  TEST_CASE("format") {
+    REQUIRE(std::format("{}", Money::ZERO) == "0.00");
+    REQUIRE(std::format("{}", Money::ONE) == "1.00");
+    REQUIRE(std::format("{}", -Money::ONE) == "-1.00");
+    REQUIRE(std::format("{}", Money::ONE / 10) == "0.10");
+    REQUIRE(std::format("{}", Money::CENT) == "0.01");
+    REQUIRE(std::format("{}", -Money::CENT) == "-0.01");
+    REQUIRE(std::format("{}", Money::ONE / 1000) == "0.001");
+    REQUIRE(std::format("{}", Money::BIP) == "0.0001");
+    REQUIRE(std::format("{}", Money::ONE / 100000) == "0.00001");
+    REQUIRE(std::format("{}", Money::ONE / 1000000) == "0.000001");
+    REQUIRE(std::format("{}", 13 * Money::CENT + Money::CENT / 2) == "0.135");
+    REQUIRE(std::format("{}", parse_money("12345.678")) == "12345.678");
+    REQUIRE(std::format("{}", parse_money("1.1234567")) == "1.123457");
+    REQUIRE(std::format("{:}", Money::ONE) == "1.00");
+    REQUIRE(std::format("{}", Money(Quantity(-0.0))) == "0.00");
+    REQUIRE(std::format("{}", parse_money("-0.0000001")) == "-0.00");
+    REQUIRE(std::format("{}", parse_money("0.9999999")) == "1.00");
+    REQUIRE(std::format("{}", Money(Quantity(1e20))) ==
+      "100000000000000000000.00");
+    REQUIRE(std::format("{}", Money(Quantity(-1e20))) ==
+      "-100000000000000000000.00");
+    REQUIRE(to_string(Money(Quantity(1e20))) == "100000000000000000000.00");
+    REQUIRE(to_string(-Money::CENT) == "-0.01");
+  }
+
+  TEST_CASE("numeric_format") {
+    auto value = parse_money("12.375");
+    REQUIRE(std::format("{:.2f}", value) == "12.38");
+    REQUIRE(std::format("{:.2f}", -value) == "-12.38");
+    REQUIRE(std::format("{:.0f}", value) == "12");
+    REQUIRE(std::format("{:.8f}", value) == "12.37500000");
+    REQUIRE(std::format("{:.2}", value) == "12");
+    REQUIRE(std::format("{:.3g}", value) == "12.4");
+    REQUIRE(std::format("{:.2e}", value) == "1.24e+01");
+    REQUIRE(std::format("{:.2E}", value) == "1.24E+01");
+    REQUIRE(std::format("{:.2e}", Money(Quantity(1e20))) == "1.00e+20");
+    REQUIRE(std::format("{:.2e}", Money::ONE / 1000000) == "1.00e-06");
+    REQUIRE(std::format("{:>8.2f}", value) == "   12.38");
+    REQUIRE(std::format("{:*<8.2f}", value) == "12.38***");
+    REQUIRE(std::format("{:*^9.2f}", value) == "**12.38**");
+    REQUIRE(std::format("{:+.2f}", value) == "+12.38");
+    REQUIRE(std::format("{: .2f}", value) == " 12.38");
+    REQUIRE(std::format("{:08.2f}", -value) == "-0012.38");
+    REQUIRE(std::format("{:#.0f}", value) == "12.");
+    REQUIRE(std::format("{:>6}", Money::ONE) == "     1");
+    REQUIRE(std::format("{:{}.{}f}", value, 8, 2) == "   12.38");
+    REQUIRE(std::format("{0:{1}.{2}f}", value, 8, 2) == "   12.38");
+    REQUIRE_THROWS_AS(
+      static_cast<void>(std::vformat("{:s}", std::make_format_args(value))),
+      std::format_error);
+    REQUIRE_THROWS_AS(
+      static_cast<void>(std::format("{:.{}f}", value, -1)), std::format_error);
+  }
+
   TEST_CASE("to_string") {
     REQUIRE(to_string(Money::ZERO) == "0.00");
     REQUIRE(to_string(Money::ONE) == "1.00");

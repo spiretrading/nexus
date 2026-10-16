@@ -1,7 +1,9 @@
 #ifndef SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
+#include <vector>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
@@ -18,15 +20,22 @@ namespace Spire {
       ServiceTimeAndSalesModel(
         Nexus::Ticker ticker, Nexus::MarketDataClient client);
 
-      QtPromise<std::vector<Entry>> query_until(
-        Beam::Sequence sequence, int max_count) override;
-      boost::signals2::connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override;
+      QtPromise<void> load_older(int max_count) override;
+      int get_size() const override;
+      const Type& get(int index) const override;
+      boost::signals2::connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override;
+      using TimeAndSalesModel::transact;
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
 
     private:
-      mutable UpdateSignal m_update_signal;
       Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_client;
+      std::vector<Type> m_entries;
+      int m_offset;
+      ListModelTransactionLog<Type> m_transaction;
       Nexus::SequencedBboQuote m_bbo;
       EventHandler m_event_handler;
 

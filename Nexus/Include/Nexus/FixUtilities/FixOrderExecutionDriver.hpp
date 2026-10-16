@@ -4,6 +4,7 @@
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Utilities/ReportException.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/throw_exception.hpp>
 #include <quickfix/Application.h>
@@ -147,8 +148,9 @@ namespace Nexus {
           }
           entry.m_initiator->start();
           entry.m_is_connected = true;
-        } catch(const std::exception& e) {
-          std::cerr << "Error: " << application.first << ": " << e.what();
+        } catch(const std::exception&) {
+          BEAM_LOG_CURRENT_EXCEPTION(
+            "operation=start_fix_application destination=" + application.first);
         }
       }
     } catch(const std::exception&) {

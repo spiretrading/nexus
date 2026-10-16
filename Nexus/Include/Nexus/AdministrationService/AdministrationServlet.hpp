@@ -3,8 +3,8 @@
 #include <atomic>
 #include <iostream>
 #include <limits>
+#include <print>
 #include <ranges>
-#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
@@ -17,6 +17,7 @@
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -706,22 +707,18 @@ namespace Nexus {
       if(entitlement_set.contains(entry)) {
         if(!std::ranges::contains(existing_entitlements, entry)) {
           m_service_locator_client->associate(account, entry);
-          auto ss = std::stringstream();
-          ss <<
-            boost::posix_time::to_simple_string(m_time_client->get_time()) <<
-            ": " << admin_account.m_name << " grants entitlement \"" <<
-            entitlement.m_name << "\"" << " to " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
+          std::println(std::cout, "{}: {} grants entitlement \"{}\" to {}.",
+            boost::posix_time::to_simple_string(m_time_client->get_time()),
+            admin_account.m_name, entitlement.m_name, account.m_name);
+          std::cout.flush();
         }
       } else {
         if(std::ranges::contains(existing_entitlements, entry)) {
           m_service_locator_client->detach(account, entry);
-          auto ss = std::stringstream();
-          ss <<
-            boost::posix_time::to_simple_string(m_time_client->get_time()) <<
-            ": " << admin_account.m_name << " revokes entitlement \"" <<
-            entitlement.m_name << "\"" << " from " << account.m_name << ".\n";
-          std::cout << ss.str() << std::flush;
+          std::println(std::cout, "{}: {} revokes entitlement \"{}\" from {}.",
+            boost::posix_time::to_simple_string(m_time_client->get_time()),
+            admin_account.m_name, entitlement.m_name, account.m_name);
+          std::cout.flush();
         }
       }
     }
@@ -946,8 +943,8 @@ namespace Nexus {
       }
       try {
         grant_scheduled_modifications();
-      } catch(const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+      } catch(const std::exception&) {
+        BEAM_LOG_CURRENT_EXCEPTION("operation=grant_scheduled_modifications");
       }
     }
   }

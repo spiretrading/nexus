@@ -36,11 +36,6 @@ namespace Nexus {
   using RiskPortfolioUpdatePublisher =
     Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, Inventory>>;
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const RiskPortfolioKey& key) {
-    return out << '(' << key.m_account << ' ' << key.m_ticker << ')';
-  }
-
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     auto seed = std::size_t(0);
     boost::hash_combine(seed, value.m_account);
@@ -68,6 +63,29 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::RiskPortfolioKey> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::RiskPortfolioKey& value, auto& context) const {
+      return std::formatter<std::string_view>::format(std::format(
+        context.locale(), "({} {})", value.m_account, value.m_ticker), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const RiskPortfolioKey& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

@@ -1,6 +1,5 @@
 #ifndef NEXUS_RISK_TRANSITION_MODEL_HPP
 #define NEXUS_RISK_TRANSITION_MODEL_HPP
-#include <iostream>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -209,7 +208,7 @@ namespace Nexus {
       try {
         m_order_execution_client->submit(fields);
       } catch(const std::exception&) {
-        std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+        BEAM_LOG_CURRENT_EXCEPTION();
       }
     }
     return s6();

@@ -61,8 +61,10 @@ PullIndicator::PullIndicator(TableView& table_view)
   loading_layout->addLayout(loading_middle_layout);
   loading_layout->addStretch(130);
   m_loading_panel->hide();
+  scroll_box.get_horizontal_scroll_bar().connect_position_signal(
+    std::bind_front(&PullIndicator::on_horizontal_position, this));
   scroll_box.get_vertical_scroll_bar().connect_position_signal(
-    std::bind_front(&PullIndicator::on_position, this));
+    std::bind_front(&PullIndicator::on_vertical_position, this));
   auto table = std::static_pointer_cast<TimeAndSalesTableModel>(
     m_table_view->get_table());
   table->connect_begin_loading_signal(
@@ -87,6 +89,9 @@ bool PullIndicator::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::Resize) {
       update_loading_panel();
+      if(isVisible()) {
+        update_position(m_table_view->get_body().sizeHint());
+      }
     }
   } else if(event->type() == QEvent::Resize && isVisible()) {
     auto& resize_event = *static_cast<QResizeEvent*>(event);
@@ -104,8 +109,11 @@ void PullIndicator::update_loading_panel() {
 }
 
 void PullIndicator::update_position(const QSize& size) {
-  setGeometry(0, size.height() - TABLE_BODY_BOTTOM_PADDING(),
-    size.width(), TABLE_BODY_BOTTOM_PADDING());
+  auto& scroll_bar =
+    m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+  setGeometry(scroll_bar.get_position(),
+    size.height() - TABLE_BODY_BOTTOM_PADDING(), scroll_bar.get_page_size(),
+    TABLE_BODY_BOTTOM_PADDING());
 }
 
 void PullIndicator::display() {
@@ -118,7 +126,13 @@ void PullIndicator::display() {
   }
 }
 
-void PullIndicator::on_position(int position) {
+void PullIndicator::on_horizontal_position(int position) {
+  if(isVisible()) {
+    update_position(m_table_view->get_body().sizeHint());
+  }
+}
+
+void PullIndicator::on_vertical_position(int position) {
   auto& scroll_box = m_table_view->get_scroll_box();
   auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
   if(m_is_loading) {

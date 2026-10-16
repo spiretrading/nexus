@@ -52,11 +52,6 @@ namespace Nexus {
     return (rate.m_rate.numerator() * value) / rate.m_rate.denominator();
   }
 
-  inline std::ostream& operator<<(std::ostream& out, const ExchangeRate& rate) {
-    return out << '(' << rate.m_pair << ' ' << rate.m_rate.numerator() << '/' <<
-      rate.m_rate.denominator() << ')';
-  }
-
   inline ExchangeRate::ExchangeRate() noexcept
     : m_rate(1) {}
 
@@ -76,6 +71,31 @@ namespace Beam {
       shuttle.shuttle("rate", value.m_rate);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ExchangeRate> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ExchangeRate& rate, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {}/{})",
+          rate.m_pair, rate.m_rate.numerator(), rate.m_rate.denominator()),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ExchangeRate& rate) {
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", rate);
+    }
+    return out << std::format(out.getloc(), "{}", rate);
+  }
 }
 
 #endif

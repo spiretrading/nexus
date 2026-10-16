@@ -17,6 +17,7 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include "Nexus/Definitions/DatabaseFacet.hpp"
 
 namespace Nexus {
 
@@ -179,19 +180,16 @@ namespace Nexus {
     return Beam::ScopedStreamManipulator(out, database);
   }
 
-  inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
-    extern const CurrencyDatabase& CURRENCIES;
-    auto database = static_cast<const CurrencyDatabase*>(
-      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
-    if(!database) {
-      database = &CURRENCIES;
-    }
-    auto& entry = database->from(value);
+namespace Details {
+  inline std::string get_display_text(
+      CurrencyId value, const CurrencyDatabase& database) {
+    auto& entry = database.from(value);
     if(entry.m_id) {
-      return out << entry.m_code;
+      return std::string(entry.m_code.get_data());
     }
-    return out << static_cast<std::uint16_t>(value);
+    return std::format("{}", static_cast<std::uint16_t>(value));
   }
+}
 
   inline std::istream& operator >>(std::istream& in, CurrencyId& id) {
     auto value = std::uint16_t();
@@ -380,5 +378,39 @@ namespace std {
 }
 
 #include "Nexus/Definitions/StandardCurrencies.hpp"
+
+namespace Nexus {
+  extern const CurrencyDatabase& CURRENCIES;
+}
+
+template<>
+class std::formatter<Nexus::CurrencyId> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::CurrencyId value, auto& context) const {
+      auto locale = context.locale();
+      if(std::has_facet<
+          Nexus::DatabaseFacet<Nexus::CurrencyDatabase>>(locale)) {
+        auto& database = std::use_facet<
+          Nexus::DatabaseFacet<Nexus::CurrencyDatabase>>(locale).get_database();
+        return std::formatter<std::string_view>::format(
+          Nexus::Details::get_display_text(value, database), context);
+      }
+      return std::formatter<std::string_view>::format(
+        Nexus::Details::get_display_text(value, Nexus::CURRENCIES), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
+}
 
 #endif

@@ -6,6 +6,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 
@@ -61,25 +62,6 @@ namespace Nexus {
     /** Whether the notification has been read. */
     bool m_is_read;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, Notification::Category category) {
-    if(category == Notification::Category::ACCOUNT_MODIFICATION) {
-      return out << "ACCOUNT_MODIFICATION";
-    } else if(category == Notification::Category::REPORT) {
-      return out << "REPORT";
-    } else {
-      return out << "UNKNOWN";
-    }
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const Notification& notification) {
-    return out << '(' << notification.m_id << ' ' << notification.m_account <<
-      " \"" << notification.m_description << "\" \"" << notification.m_data <<
-      "\" " << notification.m_category << ' ' << notification.m_timestamp <<
-      ' ' << notification.m_is_read << ')';
-  }
 
   /**
    * Makes a Notification for an entitlement modification.
@@ -159,6 +141,48 @@ namespace Beam {
       shuttle.shuttle("is_read", value.m_is_read);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Notification::Category> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::Notification::Category value, auto& context) const {
+      auto text = [&] {
+        if(value == Nexus::Notification::Category::ACCOUNT_MODIFICATION) {
+          return "ACCOUNT_MODIFICATION";
+        } else if(value == Nexus::Notification::Category::REPORT) {
+          return "REPORT";
+        }
+        return "UNKNOWN";
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::Notification> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Notification& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} \"{}\" \"{}\" {} {} {})",
+          value.m_id, value.m_account, value.m_description, value.m_data,
+          value.m_category, Beam::to_string(value.m_timestamp),
+          value.m_is_read), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, Notification::Category category) {
+    return out << std::format(out.getloc(), "{}", category);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const Notification& notification) {
+    return out << std::format(out.getloc(), "{}", notification);
+  }
 }
 
 #endif

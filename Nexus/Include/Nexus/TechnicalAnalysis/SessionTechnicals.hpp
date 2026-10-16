@@ -33,26 +33,6 @@ namespace Nexus {
     bool operator ==(const SessionTechnicals&) const = default;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const SessionTechnicals& value) {
-    auto print = [&] (const auto& price) {
-      if(price) {
-        out << *price;
-      } else {
-        out << "none";
-      }
-    };
-    out << '(';
-    print(value.m_open);
-    out << ' ';
-    print(value.m_previous_close);
-    out << ' ';
-    print(value.m_high);
-    out << ' ';
-    print(value.m_low);
-    return out << ' ' << value.m_volume << ')';
-  }
-
   /**
    * Updates a SessionTechnicals with a trade from a Ticker's session.
    * @param technicals The technicals to update.
@@ -88,6 +68,32 @@ namespace Beam {
       shuttle.shuttle("volume", value.m_volume);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::SessionTechnicals> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::SessionTechnicals& value, auto& context) const {
+      auto format_price = [&] (const auto& price) {
+        if(price) {
+          return std::format(context.locale(), "{}", *price);
+        }
+        return std::string("none");
+      };
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})",
+          format_price(value.m_open), format_price(value.m_previous_close),
+          format_price(value.m_high), format_price(value.m_low),
+          value.m_volume), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const SessionTechnicals& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

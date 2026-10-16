@@ -84,9 +84,14 @@ TEST_SUITE("OrderInfo") {
     auto timestamp = time_from_string("2024-05-21 01:02:03");
     auto info =
       OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
-    REQUIRE(to_string(info) ==
+    auto expected = std::string(
       "(((ACCOUNT 123 test) TST.TSX CAD LIMIT BID TSX 100"
-      " 1.00 DAY []) (ACCOUNT 456 submit) 123 1 2024-May-21 01:02:03)");
+      " 1.00 DAY []) (ACCOUNT 456 submit) 123 true 2024-May-21 01:02:03)");
+    REQUIRE(to_string(info) == expected);
+    REQUIRE(std::format("{}", info) == expected);
+    REQUIRE(std::format("{:*>{}}", info, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.5}", info) == expected.substr(0, 5));
     test_round_trip_shuttle(info);
   }
 }

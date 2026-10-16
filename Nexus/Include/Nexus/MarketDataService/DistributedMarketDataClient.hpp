@@ -424,10 +424,10 @@ namespace Nexus {
         m_discovery_exception = std::current_exception();
         m_available.notify_all();
       });
-      Beam::report_current_exception();
+      BEAM_LOG_CURRENT_EXCEPTION();
     } catch(const Beam::ConnectException&) {
     } catch(...) {
-      Beam::report_current_exception();
+      BEAM_LOG_CURRENT_EXCEPTION();
     }
   }
 
@@ -455,7 +455,7 @@ namespace Nexus {
       }
       add_client(scope);
     } catch(...) {
-      Beam::report_current_exception();
+      BEAM_LOG_CURRENT_EXCEPTION();
     }
   }
 
@@ -474,7 +474,7 @@ namespace Nexus {
       std::rethrow_exception(exception);
     } catch(const Beam::PipeBrokenException&) {
     } catch(...) {
-      Beam::report_current_exception();
+      BEAM_LOG_CURRENT_EXCEPTION();
     }
   }
 

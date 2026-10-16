@@ -1,6 +1,8 @@
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 
@@ -32,6 +34,77 @@ namespace {
 }
 
 TEST_SUITE("Portfolio") {
+  TEST_CASE("format_valuation") {
+    auto valuation = Valuation(CAD);
+    auto test = [&] (const std::string& expected) {
+      REQUIRE(std::format("{}", valuation) == expected);
+      REQUIRE(Beam::to_string(valuation) == expected);
+    };
+    test("(CAD None None)");
+    valuation.m_ask_value = Money::ZERO;
+    test("(CAD 0.00 None)");
+    valuation.m_bid_value = parse_money("12.25");
+    test("(CAD 0.00 12.25)");
+    valuation.m_ask_value = boost::none;
+    test("(CAD None 12.25)");
+    REQUIRE(std::format("{:*>18}", valuation) == "**(CAD None 12.25)");
+    REQUIRE(std::format("{:.4}", valuation) == "(CAD");
+  }
+
+  TEST_CASE("format_update") {
+    auto inventory = Inventory(Position(TST, CAD, 100, Money(1000)),
+      Money(50), Money::CENT, 200, 2);
+    auto total = Inventory(Position(Ticker(), CAD, 0, Money::ZERO),
+      Money(50), Money::CENT, 200, 2);
+    auto update = PortfolioUpdateEntry(inventory, Money(25), total, Money(30));
+    auto expected = std::string(
+      "(((TST.TSX CAD 100 1000.00) 50.00 0.01 200 2) 25.00 "
+      "(( CAD 0 0.00) 50.00 0.01 200 2) 30.00)");
+    REQUIRE(std::format("{}", update) == expected);
+    REQUIRE(Beam::to_string(update) == expected);
+    REQUIRE(std::format("{:*>{}}", update, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.6}", update) == "(((TST");
+  }
+
+  TEST_CASE("format_databases") {
+    auto currencies = CurrencyDatabase();
+    auto currency = CurrencyDatabase::Entry();
+    currency.m_id = CAD;
+    currency.m_code = "CUS";
+    currencies.add(currency);
+    auto venues = VenueDatabase();
+    auto venue = VenueDatabase::Entry();
+    venue.m_venue = TSX;
+    venue.m_display_name = "VENUE";
+    venues.add(venue);
+    auto locale = make_locale(currencies, venues);
+    auto test = [&] (const auto& value, const std::string& expected) {
+      REQUIRE(std::format(locale, "{}", value) == expected);
+      auto output = std::ostringstream();
+      output.imbue(locale);
+      output << value;
+      REQUIRE(output.str() == expected);
+      output.str("");
+      output << CURRENCIES << VENUES << value;
+      REQUIRE(output.str() == Beam::to_string(value));
+      output.str("");
+      output.imbue(std::locale::classic());
+      output << currencies << venues << value;
+      REQUIRE(output.str() == expected);
+    };
+    auto position = Position(TST, CAD, -100, Money(-1000));
+    test(position, "(TST.VENUE CUS -100 -1000.00)");
+    auto inventory = Inventory(position, Money(50), Money::CENT, 200, 2);
+    test(inventory, "((TST.VENUE CUS -100 -1000.00) 50.00 0.01 200 2)");
+    test(PositionOrderBook::PositionEntry(TST, -100), "(TST.VENUE -100)");
+    test(Valuation(CAD), "(CUS None None)");
+    auto update = PortfolioUpdateEntry(
+      inventory, Money(25), inventory, Money(30));
+    test(update, "(((TST.VENUE CUS -100 -1000.00) 50.00 0.01 200 2) 25.00 "
+      "((TST.VENUE CUS -100 -1000.00) 50.00 0.01 200 2) 30.00)");
+  }
+
   TEST_CASE("empty_portfolio") {
     auto portfolio = TestPortfolio();
     REQUIRE(portfolio.get_entries().empty());

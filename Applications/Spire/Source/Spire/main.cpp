@@ -1,6 +1,8 @@
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <unordered_set>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
 #include <QMessageBox>
@@ -120,8 +122,8 @@ int main(int argc, char* argv[]) {
       !password_argument.isSet() || !host_argument.isSet() ||
       !port_argument.isSet();
   } catch(const TCLAP::ArgException& e) {
-    std::cout << "Error parsing command line: " + e.error() + " for argument " +
-      e.argId() << std::flush;
+    report_message(std::format(
+      "Error parsing command line: {} for argument {}", e.error(), e.argId()));
   }
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Beta"));

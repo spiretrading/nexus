@@ -176,6 +176,7 @@ namespace {
             set(PaddingTop(scale_height(5))).
             set(PaddingBottom(scale_height(4)));
         });
+      table_view.get_header().installEventFilter(this);
       update_style(table_view.get_body(), [&] (auto& style) {
         style.get(Any()).
           set(grid_color(QColor(0xE0E0E0))).
@@ -201,6 +202,15 @@ namespace {
       apply_styles(m_properties->get());
       m_connection = m_properties->connect_update_signal(
         std::bind_front(&TableViewStylist::on_properties, this));
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::LayoutRequest) {
+        auto& header = *static_cast<QWidget*>(watched);
+        header.setMinimumHeight(
+          std::max(scale_height(20), header.sizeHint().height()));
+      }
+      return QObject::eventFilter(watched, event);
     }
 
     void apply_column_visibility(const TimeAndSalesProperties& properties) {

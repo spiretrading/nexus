@@ -261,30 +261,6 @@ namespace Nexus {
     }
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const PortfolioUpdateEntry& entry) {
-    return out << '(' << entry.m_inventory << ' ' << entry.m_unrealized <<
-      ' ' << entry.m_currency_inventory << ' ' << entry.m_currency_unrealized <<
-      ')';
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const Valuation& valuation) {
-    out << '(' << valuation.m_currency << ' ';
-    if(valuation.m_ask_value) {
-      out << *valuation.m_ask_value;
-    } else {
-      out << "None";
-    }
-    out << ' ';
-    if(valuation.m_bid_value) {
-      out << *valuation.m_bid_value;
-    } else {
-      out << "None";
-    }
-    out << ')';
-    return out;
-  }
 
   inline Valuation::Valuation(CurrencyId currency) noexcept
     : m_currency(currency) {}
@@ -434,6 +410,63 @@ namespace Beam {
       shuttle.shuttle("bid_value", value.m_bid_value);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::PortfolioUpdateEntry> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::PortfolioUpdateEntry& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.m_inventory,
+          value.m_unrealized, value.m_currency_inventory,
+          value.m_currency_unrealized), context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::Valuation> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Valuation& value, auto& context) const {
+      auto format_value = [&] (const boost::optional<Nexus::Money>& value) {
+        if(value) {
+          return std::format(context.locale(), "{}", *value);
+        }
+        return std::string("None");
+      };
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", value.m_currency,
+          format_value(value.m_ask_value), format_value(value.m_bid_value)),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const PortfolioUpdateEntry& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const Valuation& value) {
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

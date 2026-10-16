@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -98,27 +99,6 @@ namespace Nexus {
       report.m_commission;
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const ExecutionReport& report) {
-    out << '(' << report.m_id << ' ' << report.m_timestamp << ' ' <<
-      report.m_sequence << ' ' << report.m_status << ' ' <<
-      report.m_last_quantity << ' ' << report.m_last_price << ' ' <<
-      report.m_liquidity_flag << ' ' << report.m_last_market << ' ' <<
-      report.m_execution_fee << ' ' << report.m_processing_fee << ' ' <<
-      report.m_commission << ' ' << report.m_text;
-    out << " [";
-    auto is_first = true;
-    for(auto& tag : report.m_additional_tags) {
-      if(!is_first) {
-        out << ' ';
-      } else {
-        is_first = false;
-      }
-      out << tag;
-    }
-    return out << "])";
-  }
-
   inline ExecutionReport::ExecutionReport() noexcept
     : m_id(0),
       m_sequence(0),
@@ -154,6 +134,36 @@ namespace Beam {
       shuttle.shuttle("additional_tags", value.m_additional_tags);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ExecutionReport> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ExecutionReport& value, auto& context) const {
+      auto tags = std::string();
+      for(auto& tag : value.m_additional_tags) {
+        if(!tags.empty()) {
+          tags += ' ';
+        }
+        tags += std::format(context.locale(), "{}", tag);
+      }
+      return std::formatter<std::string_view>::format(
+        std::format(
+          context.locale(), "({} {} {} {} {} {} {} {} {} {} {} {} [{}])",
+          value.m_id, Beam::to_string(value.m_timestamp), value.m_sequence,
+          value.m_status, value.m_last_quantity, value.m_last_price,
+          value.m_liquidity_flag, value.m_last_market, value.m_execution_fee,
+          value.m_processing_fee, value.m_commission, value.m_text, tags),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ExecutionReport& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

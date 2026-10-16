@@ -127,26 +127,34 @@ const Publisher<Task::StateEntry>& Task::GetPublisher() const {
   return m_publisher;
 }
 
-std::ostream& Spire::operator <<(std::ostream& s, Task::State state) {
-  if(state == Task::State::READY) {
-    s << "Ready";
-  } else if(state == Task::State::INITIALIZING) {
-    s << "Initializing";
-  } else if(state == Task::State::ACTIVE) {
-    s << "Active";
-  } else if(state == Task::State::PENDING_CANCEL) {
-    s << "Pending Cancel";
-  } else if(state == Task::State::CANCELED) {
-    s << "Canceled";
-  } else if(state == Task::State::FAILED) {
-    s << "Failed";
-  } else if(state == Task::State::COMPLETE) {
-    s << "Complete";
-  }
-  return s;
+std::ostream& Spire::operator <<(std::ostream& out, Task::State state) {
+  return out << std::format(out.getloc(), "{}", state);
 }
 
 bool Spire::IsTerminal(Task::State state) {
   return state == Task::State::CANCELED || state == Task::State::FAILED ||
     state == Task::State::COMPLETE;
+}
+
+std::format_context::iterator std::formatter<Task::State>::format(
+    Task::State state, std::format_context& context) const {
+  auto text = [&] {
+    if(state == Task::State::READY) {
+      return "Ready";
+    } else if(state == Task::State::INITIALIZING) {
+      return "Initializing";
+    } else if(state == Task::State::ACTIVE) {
+      return "Active";
+    } else if(state == Task::State::PENDING_CANCEL) {
+      return "Pending Cancel";
+    } else if(state == Task::State::CANCELED) {
+      return "Canceled";
+    } else if(state == Task::State::FAILED) {
+      return "Failed";
+    } else if(state == Task::State::COMPLETE) {
+      return "Complete";
+    }
+    return "";
+  }();
+  return std::formatter<std::string_view>::format(text, context);
 }

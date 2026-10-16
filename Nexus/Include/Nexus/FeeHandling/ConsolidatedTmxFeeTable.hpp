@@ -1,10 +1,11 @@
 #ifndef NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
 #define NEXUS_CONSOLIDATED_TMX_FEE_TABLE_HPP
 #include <exception>
-#include <sstream>
+#include <format>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
@@ -434,13 +435,14 @@ namespace Nexus {
           return calculate_fee(table.m_tsxv_fee_table, classification,
             order.get_info().m_fields, report);
         } else {
-          std::cout << "Unknown venue [TMX]: \"" <<
-            order.get_info().m_fields.m_ticker.get_venue() << "\"\n";
+          Beam::report_message(std::format("Unknown venue [TMX]: \"{}\"",
+            order.get_info().m_fields.m_ticker.get_venue()));
           return calculate_fee(table.m_tsx_fee_table, classification,
             order.get_info().m_fields, report);
         }
       } else {
-        std::cout << "Unknown last market [TMX]: \"" << last_market << "\"\n";
+        Beam::report_message(
+          std::format("Unknown last market [TMX]: \"{}\"", last_market));
         return Money::ZERO;
       }
     }();

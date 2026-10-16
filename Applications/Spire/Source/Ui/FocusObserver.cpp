@@ -187,14 +187,22 @@ bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {
 }
 
 std::ostream& Spire::operator <<(std::ostream& out, FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    return out << "NONE";
-  } else if(state == FocusObserver::State::FOCUS_IN) {
-    return out << "FOCUS_IN";
-  } else if(state == FocusObserver::State::FOCUS) {
-    return out << "FOCUS";
-  } else if(state == FocusObserver::State::FOCUS_VISIBLE) {
-    return out << "FOCUS_VISIBLE";
-  }
-  return out << "?";
+  return out << std::format(out.getloc(), "{}", state);
+}
+
+std::format_context::iterator std::formatter<FocusObserver::State>::format(
+    FocusObserver::State state, std::format_context& context) const {
+  auto text = [&] {
+    if(state == FocusObserver::State::NONE) {
+      return "NONE";
+    } else if(state == FocusObserver::State::FOCUS_IN) {
+      return "FOCUS_IN";
+    } else if(state == FocusObserver::State::FOCUS) {
+      return "FOCUS";
+    } else if(state == FocusObserver::State::FOCUS_VISIBLE) {
+      return "FOCUS_VISIBLE";
+    }
+    return "?";
+  }();
+  return std::formatter<std::string_view>::format(text, context);
 }

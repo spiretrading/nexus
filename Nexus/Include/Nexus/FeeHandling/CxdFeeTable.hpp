@@ -1,6 +1,8 @@
 #ifndef NEXUS_CXD_FEE_TABLE_HPP
 #define NEXUS_CXD_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
@@ -184,8 +186,8 @@ namespace Nexus {
     auto bbo_type = get_cxd_bbo_type(report.m_liquidity_flag);
     auto flag = get_cxd_liquidity_flag(report.m_liquidity_flag);
     if(bbo_type == CxdFeeTable::BboType::NONE || flag == LiquidityFlag::NONE) {
-      std::cout << "Unknown liquidity flag [CXD]: \"" <<
-        report.m_liquidity_flag << "\"\n";
+      Beam::report_message(std::format(
+        "Unknown liquidity flag [CXD]: \"{}\"", report.m_liquidity_flag));
       bbo_type = CxdFeeTable::BboType::AT_BBO;
       flag = LiquidityFlag::ACTIVE;
     }

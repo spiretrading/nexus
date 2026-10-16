@@ -1,7 +1,7 @@
 #ifndef NEXUS_RISK_CONTROLLER_HPP
 #define NEXUS_RISK_CONTROLLER_HPP
-#include <iostream>
 #include <memory>
+#include <format>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -251,8 +251,8 @@ namespace Nexus {
     try {
       m_data_store->store(m_account, snapshot);
     } catch(const std::exception&) {
-      std::cerr << "Snapshot update failed for account:\n\t" << "Account: " <<
-        m_account << "\n\t" << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+      BEAM_LOG_CURRENT_EXCEPTION(std::format(
+        "Snapshot update failed for account:\nAccount: {}", m_account));
     }
   }
 

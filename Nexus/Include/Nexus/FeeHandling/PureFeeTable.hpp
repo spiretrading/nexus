@@ -1,6 +1,8 @@
 #ifndef NEXUS_PURE_FEE_TABLE_HPP
 #define NEXUS_PURE_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
@@ -103,8 +105,8 @@ namespace Nexus {
         return LiquidityFlag::ACTIVE;
       }
     }
-    std::cout << "Unknown liquidity flag [PURE]: \"" <<
-      report.m_liquidity_flag << "\"\n";
+    Beam::report_message(std::format(
+      "Unknown liquidity flag [PURE]: \"{}\"", report.m_liquidity_flag));
     return LiquidityFlag::ACTIVE;
   }
 

@@ -21,11 +21,24 @@ namespace {
     REQUIRE(static_cast<int>(tag.get_value().index()) == type_id);
     REQUIRE(
       to_string(tag) == "(" + to_string(key) + " " + to_string(value) + ")");
+    REQUIRE(std::format("{}", tag) == to_string(tag));
     test_round_trip_shuttle(tag);
   }
 }
 
 TEST_SUITE("Tag") {
+  TEST_CASE("format") {
+    REQUIRE(std::format("{}", Tag(1, 1.23456789)) == "(1 1.23456789)");
+    REQUIRE(to_string(Tag(1, 1.23456789)) == "(1 1.23456789)");
+    REQUIRE(std::format("{:>9}", Tag(1, "text")) == " (1 text)");
+    REQUIRE(std::format("{:.3}", Tag(1, "text")) == "(1 ");
+    REQUIRE(std::format("{}", Tag(1, std::string())) == "(1 )");
+    REQUIRE(std::format("{}", Tag(1, Quantity(1e20))) ==
+      "(1 100000000000000000000)");
+    REQUIRE(std::format("{}", Tag(1, Money(1e20))) ==
+      "(1 100000000000000000000.00)");
+  }
+
   TEST_CASE("types") {
     require_tag(Tag::INT_INDEX, 1, 42);
     require_tag(Tag::DOUBLE_INDEX, 2, 22.5);

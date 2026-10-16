@@ -1,9 +1,11 @@
 #ifndef SPIRE_LIST_MODEL_HPP
 #define SPIRE_LIST_MODEL_HPP
 #include <any>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <ostream>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -937,5 +939,59 @@ namespace Beam {
     }
   };
 }
+
+template<>
+class std::formatter<Spire::AnyListModel::AddOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::AddOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::PreRemoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::PreRemoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::RemoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::RemoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::MoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::MoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::UpdateOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::UpdateOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::Operation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::Operation& operation,
+      std::format_context& context) const;
+};
 
 #endif

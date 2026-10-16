@@ -10,6 +10,52 @@ using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("Quantity") {
+  TEST_CASE("format") {
+    REQUIRE(std::format("{}", Quantity(0)) == "0");
+    REQUIRE(std::format("{}", Quantity(12)) == "12");
+    REQUIRE(std::format("{}", Quantity(-12)) == "-12");
+    REQUIRE(std::format("{}", parse_quantity("1.1")) == "1.100000");
+    REQUIRE(std::format("{}", parse_quantity("-1.1")) == "-1.100000");
+    REQUIRE(std::format("{}", parse_quantity("0.000001")) == "0.000001");
+    REQUIRE(std::format("{}", parse_quantity("-0.000001")) == "-0.000001");
+    REQUIRE(std::format("{}", parse_quantity("12345.678")) == "12345.678000");
+    REQUIRE(std::format("{}", parse_quantity("1.1234567")) == "1.123457");
+    REQUIRE(std::format("{:}", Quantity(12)) == "12");
+    REQUIRE(std::format("{}", Quantity(-0.0)) == "0");
+    REQUIRE(std::format("{}", parse_quantity("-0.0000001")) == "-0.000000");
+    REQUIRE(std::format("{}", Quantity(1e20)) == "100000000000000000000");
+    REQUIRE(std::format("{}", Quantity(-1e20)) == "-100000000000000000000");
+    REQUIRE(to_string(Quantity(1e20)) == "100000000000000000000");
+    REQUIRE(to_string(parse_quantity("-1.1")) == "-1.100000");
+  }
+
+  TEST_CASE("numeric_format") {
+    auto value = parse_quantity("12.375");
+    REQUIRE(std::format("{:.2f}", value) == "12.38");
+    REQUIRE(std::format("{:.2f}", -value) == "-12.38");
+    REQUIRE(std::format("{:.0f}", value) == "12");
+    REQUIRE(std::format("{:.8f}", value) == "12.37500000");
+    REQUIRE(std::format("{:.2}", value) == "12");
+    REQUIRE(std::format("{:.3g}", value) == "12.4");
+    REQUIRE(std::format("{:.2e}", Quantity(1e20)) == "1.00e+20");
+    REQUIRE(std::format("{:.2E}", Quantity(0.000001)) == "1.00E-06");
+    REQUIRE(std::format("{:>8.2f}", value) == "   12.38");
+    REQUIRE(std::format("{:*<8.2f}", value) == "12.38***");
+    REQUIRE(std::format("{:*^9.2f}", value) == "**12.38**");
+    REQUIRE(std::format("{:+.2f}", value) == "+12.38");
+    REQUIRE(std::format("{: .2f}", value) == " 12.38");
+    REQUIRE(std::format("{:08.2f}", -value) == "-0012.38");
+    REQUIRE(std::format("{:#.0f}", value) == "12.");
+    REQUIRE(std::format("{:>6}", Quantity(1)) == "     1");
+    REQUIRE(std::format("{:{}.{}f}", value, 8, 2) == "   12.38");
+    REQUIRE(std::format("{0:{1}.{2}f}", value, 8, 2) == "   12.38");
+    REQUIRE_THROWS_AS(
+      static_cast<void>(std::vformat("{:s}", std::make_format_args(value))),
+      std::format_error);
+    REQUIRE_THROWS_AS(
+      static_cast<void>(std::format("{:.{}f}", value, -1)), std::format_error);
+  }
+
   TEST_CASE("to_string") {
     REQUIRE(to_string(Quantity(0)) == "0");
     REQUIRE(to_string(Quantity(1)) == "1");

@@ -26,11 +26,6 @@ namespace Nexus {
 
     bool operator ==(const TickerInfo&) const = default;
   };
-
-  inline std::ostream& operator <<(std::ostream& out, const TickerInfo& value) {
-    return out << '(' << value.m_ticker << ' ' << value.m_name << ' ' <<
-      value.m_sector << ' ' << value.m_board_lot << ')';
-  }
 }
 
 namespace Beam {
@@ -54,6 +49,29 @@ namespace std {
       return Nexus::hash_value(value.m_ticker);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::TickerInfo> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TickerInfo& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.m_ticker,
+          value.m_name, value.m_sector, value.m_board_lot), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const TickerInfo& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif
