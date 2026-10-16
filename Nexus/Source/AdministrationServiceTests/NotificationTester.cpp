@@ -50,8 +50,16 @@ TEST_SUITE("Notification") {
     auto expected = std::string(
       R"((abc-123 (ACCOUNT 100 account) "Your request has been approved.")"
       R"( "{"request_id":42}" ACCOUNT_MODIFICATION)"
-      R"( 2026-Apr-21 12:00:00 0))");
+      R"( 2026-Apr-21 12:00:00 false))");
     REQUIRE(to_string(notification) == expected);
+    REQUIRE(std::format("{}", notification) == expected);
+    REQUIRE(std::format("{:>150}", notification) ==
+      std::format("{:>150}", expected));
+    REQUIRE(std::format("{:.20}", notification) == expected.substr(0, 20));
+    auto read_notification = notification;
+    read_notification.m_is_read = true;
+    REQUIRE(std::format("{}", read_notification).ends_with(" true)"));
+    REQUIRE(to_string(read_notification).ends_with(" true)"));
   }
 
   TEST_CASE("make_entitlement_modification_notification_granted") {
@@ -117,5 +125,13 @@ TEST_SUITE("Notification") {
     out.str("");
     out << Notification::Category::REPORT;
     REQUIRE(out.str() == "REPORT");
+    REQUIRE(std::format("{}", Notification::Category::ACCOUNT_MODIFICATION) ==
+      "ACCOUNT_MODIFICATION");
+    REQUIRE(std::format("{}", Notification::Category::REPORT) == "REPORT");
+    REQUIRE(std::format("{:>8}", Notification::Category::REPORT) == "  REPORT");
+    REQUIRE(std::format("{:.3}", Notification::Category::REPORT) == "REP");
+    auto unknown = static_cast<Notification::Category>(-1);
+    REQUIRE(std::format("{}", unknown) == "UNKNOWN");
+    REQUIRE(to_string(unknown) == "UNKNOWN");
   }
 }

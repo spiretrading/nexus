@@ -30,6 +30,11 @@ TEST_SUITE("AccountIdentity") {
       "\"John\" \"Doe\" \"john.doe@example.com\" \"123 Main St\" \"Apt 4B\" "
       "\"Building 5\" \"Metropolis\" \"State\" US \"Test user\")";
     REQUIRE(to_string(identity) == expected);
+    REQUIRE(std::format("{}", identity) == expected);
+    REQUIRE(
+      std::format("{:>200}", identity) == std::format("{:>200}", expected));
+    REQUIRE(
+      std::format("{:.20}", identity) == std::string(expected).substr(0, 20));
     test_round_trip_shuttle(identity, [&] (const auto& received) {
       REQUIRE(received.m_registration_time == identity.m_registration_time);
       REQUIRE(received.m_last_login_time == identity.m_last_login_time);
@@ -45,5 +50,27 @@ TEST_SUITE("AccountIdentity") {
       REQUIRE(received.m_photo_id == identity.m_photo_id);
       REQUIRE(received.m_user_notes == identity.m_user_notes);
     });
+  }
+
+  TEST_CASE("format_country_database") {
+    auto identity = AccountIdentity();
+    identity.m_country = US;
+    auto countries = CountryDatabase();
+    countries.add(CountryDatabase::Entry(US, "Custom country", "XY", "XYZ"));
+    auto locale = make_locale(countries);
+    auto expected = std::string("(\"not-a-date-time\" \"not-a-date-time\" "
+      "\"\" \"\" \"\" \"\" \"\" \"\" \"\" \"\" XY \"\")");
+    REQUIRE(std::format(locale, "{}", identity) == expected);
+    auto out = std::ostringstream();
+    out.imbue(locale);
+    out << identity;
+    REQUIRE(out.str() == expected);
+    auto other_countries = CountryDatabase();
+    other_countries.add(
+      CountryDatabase::Entry(US, "Other country", "AB", "ABC"));
+    out.imbue(make_locale(other_countries));
+    out.str("");
+    out << countries << identity;
+    REQUIRE(out.str() == expected);
   }
 }
