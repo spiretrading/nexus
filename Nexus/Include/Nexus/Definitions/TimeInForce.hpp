@@ -6,6 +6,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Utilities/HashPosixTimeTypes.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/functional/hash.hpp>
 
@@ -89,14 +90,6 @@ namespace Details {
     return TimeInForce(TimeInForce::Type::GTD, expiry);
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const TimeInForce& value) {
-    if(value.get_expiry() == boost::posix_time::not_a_date_time) {
-      return out << value.get_type();
-    }
-    return out << '(' << value.get_type() << ' ' << value.get_expiry() << ')';
-  }
-
   inline std::size_t hash_value(const TimeInForce& value) noexcept {
     auto seed = std::size_t(0);
     boost::hash_combine(seed, value.get_type());
@@ -143,6 +136,28 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::TimeInForce> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TimeInForce& value, auto& context) const {
+      if(value.get_expiry() == boost::posix_time::not_a_date_time) {
+        return std::formatter<std::string_view>::format(
+          std::format(context.locale(), "{}", value.get_type()), context);
+      }
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", value.get_type(),
+          Beam::to_string(value.get_expiry())), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const TimeInForce& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

@@ -475,11 +475,17 @@ TEST_SUITE("OrderFields") {
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto time_in_force = TimeInForce::Type::FOK;
-    auto additional_fields = std::vector{Tag(1, 123)};
+    auto additional_fields = std::vector{Tag(1, 123), Tag(2, "value")};
     auto fields = OrderFields(account, ticker, currency, type, side,
       destination, quantity, price, time_in_force, additional_fields);
-    REQUIRE(to_string(fields) ==
-      "((ACCOUNT 123 test) TST.TSX USD LIMIT BID TSX 100 1.00 FOK [(1 123)])");
+    auto expected = std::string(
+      "((ACCOUNT 123 test) TST.TSX USD LIMIT BID TSX 100 1.00 FOK "
+      "[(1 123), (2 value)])");
+    REQUIRE(to_string(fields) == expected);
+    REQUIRE(std::format("{}", fields) == expected);
+    REQUIRE(std::format("{:*>{}}", fields, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.5}", fields) == expected.substr(0, 5));
     test_round_trip_shuttle(fields);
   }
 }
