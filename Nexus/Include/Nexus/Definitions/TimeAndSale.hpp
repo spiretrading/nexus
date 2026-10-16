@@ -5,6 +5,7 @@
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
@@ -33,26 +34,6 @@ namespace Details {
 
     /** A cancellation of a previously reported trade. */
     CANCELLATION);
-
-  inline std::ostream& operator <<(
-      std::ostream& out, ConditionTypeDefinition::Type value) {
-    if(value == ConditionTypeDefinition::REGULAR) {
-      return out << "@";
-    } else if(value == ConditionTypeDefinition::OPEN) {
-      return out << "OPEN";
-    } else if(value == ConditionTypeDefinition::CLOSE) {
-      return out << "CLOSE";
-    } else if(value == ConditionTypeDefinition::REOPEN) {
-      return out << "REOPEN";
-    } else if(value == ConditionTypeDefinition::AUCTION) {
-      return out << "AUCTION";
-    } else if(value == ConditionTypeDefinition::CORRECTION) {
-      return out << "CORRECTION";
-    } else if(value == ConditionTypeDefinition::CANCELLATION) {
-      return out << "CANCELLATION";
-    }
-    return out << "NONE";
-  }
 }
 
   /** Stores a record of a transaction on a Ticker. */
@@ -96,24 +77,6 @@ namespace Details {
 
     bool operator ==(const TimeAndSale&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, TimeAndSale::Condition::Type value) {
-    return out << TimeAndSale::Condition::Type::Type(value);
-  }
-
-  inline std::ostream& operator <<(std::ostream& out,
-      const TimeAndSale::Condition& value) {
-    return out << '(' << value.m_type << ' ' << value.m_code << ')';
-  }
-
-  inline std::ostream& operator <<(std::ostream& out,
-      const TimeAndSale& value) {
-    return out << '(' << value.m_timestamp << ' ' << value.m_price << ' ' <<
-      value.m_size << ' ' << value.m_condition << ' ' <<
-      value.m_market_center << ' ' << value.m_buyer_mpid << ' ' <<
-      value.m_seller_mpid << ')';
-  }
 }
 
 namespace Beam {
@@ -141,6 +104,86 @@ namespace Beam {
       shuttle.shuttle("seller_mpid", value.m_seller_mpid);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Details::ConditionTypeDefinition::Type> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::Details::ConditionTypeDefinition::Type value,
+        auto& context) const {
+      auto name = [&] () -> std::string_view {
+        using Type = Nexus::Details::ConditionTypeDefinition;
+        switch(value) {
+          case Type::REGULAR:
+            return "@";
+          case Type::OPEN:
+            return "OPEN";
+          case Type::CLOSE:
+            return "CLOSE";
+          case Type::REOPEN:
+            return "REOPEN";
+          case Type::AUCTION:
+            return "AUCTION";
+          case Type::CORRECTION:
+            return "CORRECTION";
+          case Type::CANCELLATION:
+            return "CANCELLATION";
+          default:
+            return "NONE";
+        }
+      }();
+      return std::formatter<std::string_view>::format(name, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::TimeAndSale::Condition> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TimeAndSale::Condition& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", value.m_type, value.m_code),
+        context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::TimeAndSale> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TimeAndSale& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {} {} {})",
+          Beam::to_string(value.m_timestamp), value.m_price, value.m_size,
+          value.m_condition, value.m_market_center, value.m_buyer_mpid,
+          value.m_seller_mpid), context);
+    }
+};
+
+namespace Nexus::Details {
+  inline std::ostream& operator <<(
+      std::ostream& out, ConditionTypeDefinition::Type value) {
+    return out << std::format("{}", value);
+  }
+}
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, TimeAndSale::Condition::Type value) {
+    return out << std::format("{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const TimeAndSale::Condition& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const TimeAndSale& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

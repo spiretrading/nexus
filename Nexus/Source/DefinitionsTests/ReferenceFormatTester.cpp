@@ -84,6 +84,58 @@ TEST_SUITE("ReferenceFormat") {
     venue.m_description = "description";
     venue.m_display_name = "CUSTOM";
     venues.add(venue);
+    SUBCASE("locale") {
+      auto locale = make_locale(countries, currencies, venues);
+      REQUIRE(std::format(locale, "{} {} {}",
+        country.m_code, currency.m_id, venue.m_venue) == "ZZ AAA CUSTOM");
+      REQUIRE(std::format(locale, "{}",
+        CurrencyPair(Currencies::CAD, Currencies::USD)) == "AAA/840");
+      REQUIRE(std::format(locale, "{}",
+        ExchangeRate(CurrencyPair(Currencies::CAD, Currencies::USD),
+          boost::rational<int>(3, 2))) == "(AAA/840 3/2)");
+      REQUIRE(std::format(locale, "{}", parse_ticker("ABC.TSX")) ==
+        "ABC.CUSTOM");
+      REQUIRE(std::format(locale, "{}", venue) ==
+        "(CUSTOM ZZ CENTER Etc/UTC AAA description CUSTOM)");
+      REQUIRE(std::format(make_locale(currencies), "{} {}",
+        country.m_code, currency.m_id) == "CA AAA");
+    }
+    SUBCASE("stream_locale") {
+      auto output = std::ostringstream();
+      output.imbue(make_locale(countries, currencies, venues));
+      auto pair = CurrencyPair(Currencies::CAD, Currencies::USD);
+      auto rate = ExchangeRate(pair, boost::rational<int>(3, 2));
+      output << country.m_code << ' ' << currency.m_id << ' ' <<
+        venue.m_venue << ' ' << pair << ' ' << rate << ' ' <<
+        parse_ticker("ABC.TSX") <<
+        ' ' << venue;
+      REQUIRE(output.str() == "ZZ AAA CUSTOM AAA/840 (AAA/840 3/2) ABC.CUSTOM "
+        "(CUSTOM ZZ CENTER Etc/UTC AAA description CUSTOM)");
+    }
+    SUBCASE("stream_locale_overrides") {
+      auto output = std::ostringstream();
+      output.imbue(make_locale(countries, currencies, venues));
+      output << COUNTRIES << country.m_code;
+      output << ' ' << CURRENCIES << currency.m_id;
+      output << ' ' << VENUES << venue.m_venue;
+      output << ' ' << country.m_code << ' ' << currency.m_id <<
+        ' ' << venue.m_venue;
+      REQUIRE(output.str() == "CA CAD TSX ZZ AAA CUSTOM");
+      output.str("");
+      auto pair = CurrencyPair(Currencies::CAD, Currencies::USD);
+      auto rate = ExchangeRate(pair, boost::rational<int>(3, 2));
+      output << CURRENCIES << pair << ' ' << rate;
+      output << ' ' << VENUES << parse_ticker("ABC.TSX");
+      REQUIRE(output.str() == "CAD/USD (CAD/USD 3/2) ABC.TSX");
+      output.str("");
+      output << CURRENCIES << venue;
+      output << ' ' << COUNTRIES << CURRENCIES << VENUES << venue;
+      output << ' ' << venue;
+      REQUIRE(output.str() ==
+        "(CUSTOM ZZ CENTER Etc/UTC CAD description CUSTOM) "
+        "(TSX CA CENTER Etc/UTC CAD description CUSTOM) "
+        "(CUSTOM ZZ CENTER Etc/UTC AAA description CUSTOM)");
+    }
     SUBCASE("identifiers") {
       auto output = std::ostringstream();
       output << countries << country.m_code;

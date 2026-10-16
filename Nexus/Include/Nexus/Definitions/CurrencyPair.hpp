@@ -67,10 +67,6 @@ namespace Nexus {
   inline CurrencyPair invert(CurrencyPair pair) {
     return CurrencyPair(pair.m_counter, pair.m_base);
   }
-
-  inline std::ostream& operator <<(std::ostream& out, CurrencyPair pair) {
-    return out << pair.m_base << '/' << pair.m_counter;
-  }
 }
 
 namespace Beam {
@@ -103,8 +99,21 @@ class std::formatter<Nexus::CurrencyPair> :
   public:
     auto format(Nexus::CurrencyPair pair, auto& context) const {
       return std::formatter<std::string_view>::format(
-        std::format("{}/{}", pair.m_base, pair.m_counter), context);
+        std::format(context.locale(), "{}/{}", pair.m_base, pair.m_counter),
+        context);
     }
 };
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, CurrencyPair pair) {
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", pair);
+    }
+    return out << std::format(out.getloc(), "{}", pair);
+  }
+}
 
 #endif

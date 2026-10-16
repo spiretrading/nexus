@@ -3,6 +3,7 @@
 #include <string>
 #include <ostream>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Quote.hpp"
@@ -53,12 +54,6 @@ namespace Nexus {
     }
     return lhs.m_mpid < rhs.m_mpid;
   }
-
-  inline std::ostream& operator <<(std::ostream& out, const BookQuote& quote) {
-    return out << '(' << quote.m_mpid << ' ' << quote.m_is_primary_mpid <<
-      ' ' << quote.m_venue << ' ' << quote.m_quote << ' ' <<
-      quote.m_timestamp << ')';
-  }
 }
 
 namespace Beam {
@@ -74,6 +69,30 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::BookQuote> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::BookQuote& quote, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})", quote.m_mpid,
+          quote.m_is_primary_mpid, quote.m_venue, quote.m_quote,
+          Beam::to_string(quote.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const BookQuote& quote) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", quote);
+    }
+    return out << std::format(out.getloc(), "{}", quote);
+  }
 }
 
 #endif

@@ -2,10 +2,10 @@
 #define NEXUS_TICKER_STATUS_HPP
 #include <cstdint>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/Venue.hpp"
@@ -70,39 +70,6 @@ namespace Nexus {
   constexpr bool has(TickerStatus::Flag flags, TickerStatus::Flag flag) {
     return (flags & flag) == flag;
   }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, TickerStatus::Flag flags) {
-    auto count = 0;
-    auto stream = std::ostringstream();
-    auto print = [&] (TickerStatus::Flag flag, const char* name) {
-      if(has(flags, flag)) {
-        if(count > 0) {
-          stream << " | ";
-        }
-        stream << name;
-        ++count;
-      }
-    };
-    print(TickerStatus::Flag::IS_MATCHING, "IS_MATCHING");
-    print(TickerStatus::Flag::IS_ACCEPTING_ORDERS, "IS_ACCEPTING_ORDERS");
-    print(TickerStatus::Flag::IS_ACCEPTING_CANCELS, "IS_ACCEPTING_CANCELS");
-    print(TickerStatus::Flag::IS_AUCTION, "IS_AUCTION");
-    if(count == 0) {
-      out << "NONE";
-    } else if(count == 1) {
-      out << stream.str();
-    } else {
-      out << '(' << stream.str() << ')';
-    }
-    return out;
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const TickerStatus& value) {
-    return out << '(' << value.m_venue << ' ' << value.m_state << ' ' <<
-      value.m_flags << ' ' << value.m_timestamp << ')';
-  }
 }
 
 namespace Beam {
@@ -117,6 +84,69 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::TickerStatus::Flag> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::TickerStatus::Flag flags, auto& context) const {
+      auto text = [&] {
+        auto count = 0;
+        auto text = std::string();
+        auto append = [&] (Nexus::TickerStatus::Flag flag, const char* name) {
+          if(has(flags, flag)) {
+            if(count != 0) {
+              text += " | ";
+            }
+            text += name;
+            ++count;
+          }
+        };
+        using Flag = Nexus::TickerStatus::Flag;
+        append(Flag::IS_MATCHING, "IS_MATCHING");
+        append(Flag::IS_ACCEPTING_ORDERS, "IS_ACCEPTING_ORDERS");
+        append(Flag::IS_ACCEPTING_CANCELS, "IS_ACCEPTING_CANCELS");
+        append(Flag::IS_AUCTION, "IS_AUCTION");
+        if(count == 0) {
+          return std::string("NONE");
+        } else if(count == 1) {
+          return text;
+        }
+        return std::format("({})", text);
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::TickerStatus> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TickerStatus& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.m_venue,
+          value.m_state, value.m_flags, Beam::to_string(value.m_timestamp)),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, TickerStatus::Flag flags) {
+    return out << std::format("{}", flags);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const TickerStatus& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

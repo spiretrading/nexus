@@ -46,10 +46,6 @@ namespace Nexus {
     : m_venue(std::move(venue)),
       m_source(std::move(source)) {}
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const EntitlementKey& key) {
-    return out << '(' << key.m_venue << ", " << key.m_source << ')';
-  }
 
   inline std::size_t hash_value(const EntitlementKey& value) {
     auto seed = std::size_t(0);
@@ -155,6 +151,30 @@ namespace Beam {
       shuttle.shuttle("source", value.m_source);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::EntitlementKey> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::EntitlementKey& key, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({}, {})", key.m_venue, key.m_source),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const EntitlementKey& key) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", key);
+    }
+    return out << std::format(out.getloc(), "{}", key);
+  }
 }
 
 #endif

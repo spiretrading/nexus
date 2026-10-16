@@ -18,6 +18,7 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include "Nexus/Definitions/DatabaseFacet.hpp"
 
 namespace Nexus {
 
@@ -215,16 +216,6 @@ namespace Details {
     return std::format("{}", static_cast<std::uint16_t>(code));
   }
 }
-
-  inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
-    extern const CountryDatabase& COUNTRIES;
-    auto database = static_cast<const CountryDatabase*>(
-      out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID));
-    if(!database) {
-      database = &COUNTRIES;
-    }
-    return out << Details::get_display_text(code, *database);
-  }
 
   inline std::istream& operator >>(std::istream& in, CountryCode& code) {
     auto value = std::uint16_t();
@@ -467,9 +458,28 @@ class std::formatter<Nexus::CountryCode> :
     public std::formatter<std::string_view> {
   public:
     auto format(Nexus::CountryCode code, auto& context) const {
+      auto locale = context.locale();
+      if(std::has_facet<Nexus::DatabaseFacet<Nexus::CountryDatabase>>(locale)) {
+        auto& database = std::use_facet<
+          Nexus::DatabaseFacet<Nexus::CountryDatabase>>(locale).get_database();
+        return std::formatter<std::string_view>::format(
+          Nexus::Details::get_display_text(code, database), context);
+      }
       return std::formatter<std::string_view>::format(
         Nexus::Details::get_display_text(code, Nexus::COUNTRIES), context);
     }
 };
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
+    auto database = static_cast<const CountryDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", code);
+    }
+    return out << std::format(out.getloc(), "{}", code);
+  }
+}
 
 #endif

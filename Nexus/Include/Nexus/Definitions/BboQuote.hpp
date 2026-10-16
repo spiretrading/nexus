@@ -4,6 +4,7 @@
 #include <ostream>
 #include <utility>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/Quote.hpp"
@@ -36,10 +37,6 @@ namespace Nexus {
     bool operator ==(const BboQuote&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
-    return out << '(' << value.m_bid << ' ' << value.m_ask << ' ' <<
-      value.m_timestamp << ')';
-  }
 
   inline BboQuote::BboQuote() noexcept {
     m_bid.m_side = Side::BID;
@@ -67,6 +64,23 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::BboQuote> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::BboQuote& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", value.m_bid, value.m_ask,
+          Beam::to_string(value.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

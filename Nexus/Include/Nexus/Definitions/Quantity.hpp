@@ -723,7 +723,7 @@ class std::formatter<Nexus::Quantity> :
 
 namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out, Quantity value) {
-    return out << std::format("{}", value);
+    return out << std::format(out.getloc(), "{}", value);
   }
 }
 

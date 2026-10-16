@@ -502,7 +502,7 @@ class std::formatter<Nexus::Money> : public std::formatter<boost::float64_t> {
 
 namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out, Money value) {
-    return out << std::format("{}", value);
+    return out << std::format(out.getloc(), "{}", value);
   }
 }
 
