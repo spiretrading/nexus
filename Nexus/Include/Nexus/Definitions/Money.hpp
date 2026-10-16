@@ -10,7 +10,6 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/functional/hash.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Quantity.hpp"
@@ -286,29 +285,6 @@ namespace Nexus {
     return std::hash<Quantity>()(static_cast<Quantity>(money));
   }
 
-  inline std::ostream& operator <<(std::ostream& out, Money value) {
-    auto fraction =
-      static_cast<Quantity>(value) - floor(static_cast<Quantity>(value));
-    if(fraction == 0) {
-      return out << static_cast<Quantity>(value) << ".00";
-    }
-    auto s = boost::lexical_cast<std::string>(static_cast<Quantity>(value));
-    if(s.size() > 1 && *(s.end() - 1) == '.') {
-      return out << s << "00";
-    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
-      return out << s << "0";
-    } else {
-      while(s.size() > 3) {
-        if(s.back() == '0' && *(s.end() - 3) != '.') {
-          s.pop_back();
-        } else {
-          break;
-        }
-      }
-      return out << s;
-    }
-  }
-
   inline std::istream& operator >>(std::istream& in, Money& value) {
     auto symbol = std::string();
     in >> symbol;
@@ -492,6 +468,42 @@ namespace std {
         return Nexus::Money(numeric_limits<Nexus::Quantity>::denorm_min());
       }
   };
+}
+
+template<>
+class std::formatter<Nexus::Money> : public std::formatter<boost::float64_t> {
+  public:
+    constexpr auto parse(std::format_parse_context& context) {
+      auto i = context.begin();
+      m_is_default = i == context.end() || *i == '}';
+      return std::formatter<boost::float64_t>::parse(context);
+    }
+
+    auto format(Nexus::Money value, auto& context) const {
+      auto number = static_cast<boost::float64_t>(value);
+      if(!m_is_default) {
+        return std::formatter<boost::float64_t>::format(number, context);
+      }
+      if(number == 0) {
+        number = 0;
+      }
+      auto text = std::format(
+        "{:.{}f}", number, Nexus::Quantity::DECIMAL_PLACES);
+      while(text.size() > 3 && text.back() == '0' &&
+          text[text.size() - 3] != '.') {
+        text.pop_back();
+      }
+      return std::format_to(context.out(), "{}", text);
+    }
+
+  private:
+    bool m_is_default = true;
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, Money value) {
+    return out << std::format("{}", value);
+  }
 }
 
 #endif
