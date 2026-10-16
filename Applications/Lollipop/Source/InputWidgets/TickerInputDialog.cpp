@@ -16,14 +16,14 @@ using namespace Spire;
 using namespace Spire::UI;
 
 void Spire::ShowTickerInputDialog(Ref<UserProfile> userProfile,
-    const variant<std::string, Ticker>& initialValue, QWidget* parent,
+    const std::variant<std::string, Ticker>& initialValue, QWidget* parent,
     std::function<void (optional<Ticker>)> onResult) {
   auto dialog = [&] {
-    if(auto text = get<std::string>(&initialValue)) {
+    if(auto text = std::get_if<std::string>(&initialValue)) {
       return new TickerInputDialog(Ref(userProfile), *text, parent);
     }
     return new TickerInputDialog(
-      Ref(userProfile), get<Ticker>(initialValue), parent);
+      Ref(userProfile), std::get<Ticker>(initialValue), parent);
   }();
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   QObject::connect(dialog, &TickerInputDialog::finished, parent,

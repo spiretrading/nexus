@@ -80,11 +80,6 @@ namespace Nexus {
     }
     return 1;
   }
-
-  inline std::ostream& operator <<(std::ostream& out, const Quote& quote) {
-    return out << "(" << quote.m_price << " " << quote.m_size << " " <<
-      quote.m_side << ")";
-  }
 }
 
 namespace Beam {
@@ -98,6 +93,23 @@ namespace Beam {
       shuttle.shuttle("side", value.m_side);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Quote> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Quote& quote, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", quote.m_price, quote.m_size,
+          quote.m_side), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const Quote& quote) {
+    return out << std::format(out.getloc(), "{}", quote);
+  }
 }
 
 #endif

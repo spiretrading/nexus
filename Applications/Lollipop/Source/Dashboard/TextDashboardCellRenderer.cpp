@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
-#include <boost/variant/apply_visitor.hpp>
 #include <QPainter>
 #include "Nexus/Definitions/Ticker.hpp"
 
@@ -70,7 +69,7 @@ void TextDashboardCellRenderer::Draw(QPaintDevice& device,
       if(values.empty()) {
         return QObject::tr("N/A");
       } else {
-        auto value = apply_visitor(VariantVisitor{}, values.back());
+        auto value = std::visit(VariantVisitor(), values.back());
         return m_delegate->displayText(value, QLocale{});
       }
     }();

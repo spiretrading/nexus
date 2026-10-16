@@ -8,12 +8,16 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 
-TEST_SUITE("message") {
+TEST_SUITE("Message") {
   TEST_CASE("body_stream") {
     auto body = Message::Body();
     body.m_content_type = "text/plain";
     body.m_message = "hello";
     REQUIRE(to_string(body) == "(text/plain hello)");
+    REQUIRE(std::format("{}", body) == "(text/plain hello)");
+    REQUIRE(std::format("{:>20}", body) == "  (text/plain hello)");
+    REQUIRE(std::format("{:.5}", body) == "(text");
+    REQUIRE(std::format("{}", Message::Body::EMPTY) == "(text/plain )");
   }
 
   TEST_CASE("make_plain_text") {

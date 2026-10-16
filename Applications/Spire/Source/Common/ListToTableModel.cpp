@@ -34,19 +34,19 @@ TableModel::RemoveOperation Spire::to_table_operation(
 
 TableModel::Operation Spire::to_table_operation(
     const AnyListModel::Operation& operation) {
-  if(auto start = boost::get<AnyListModel::StartTransaction>(&operation)) {
+  if(auto start = std::get_if<AnyListModel::StartTransaction>(&operation)) {
     return to_table_operation(*start);
-  } else if(auto end = boost::get<AnyListModel::EndTransaction>(&operation)) {
+  } else if(auto end = std::get_if<AnyListModel::EndTransaction>(&operation)) {
     return to_table_operation(*end);
-  } else if(auto add = boost::get<AnyListModel::AddOperation>(&operation)) {
+  } else if(auto add = std::get_if<AnyListModel::AddOperation>(&operation)) {
     return to_table_operation(*add);
-  } else if(auto move = boost::get<AnyListModel::MoveOperation>(&operation)) {
+  } else if(auto move = std::get_if<AnyListModel::MoveOperation>(&operation)) {
     return to_table_operation(*move);
   } else if(auto pre_remove =
-      boost::get<AnyListModel::PreRemoveOperation>(&operation)) {
+      std::get_if<AnyListModel::PreRemoveOperation>(&operation)) {
     return to_table_operation(*pre_remove);
   } else if(auto remove =
-      boost::get<AnyListModel::RemoveOperation>(&operation)) {
+      std::get_if<AnyListModel::RemoveOperation>(&operation)) {
     return to_table_operation(*remove);
   }
   return TableModel::Operation();

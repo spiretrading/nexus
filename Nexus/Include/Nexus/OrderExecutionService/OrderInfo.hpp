@@ -67,12 +67,6 @@ namespace Nexus {
     bool operator ==(const OrderInfo&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
-    return out << '(' << value.m_fields << ' ' << value.m_submission_account <<
-      ' ' << value.m_id << ' ' << value.m_shorting_flag << ' ' <<
-      value.m_timestamp << ')';
-  }
-
   inline OrderInfo::OrderInfo() noexcept
     : m_id(static_cast<OrderId>(-1)),
       m_shorting_flag(false) {}
@@ -112,6 +106,33 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::OrderInfo> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::OrderInfo& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})", value.m_fields,
+          value.m_submission_account, value.m_id, value.m_shorting_flag,
+          Beam::to_string(value.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

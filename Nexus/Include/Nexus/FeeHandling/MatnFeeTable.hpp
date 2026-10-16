@@ -1,6 +1,8 @@
 #ifndef NEXUS_MATN_FEE_TABLE_HPP
 #define NEXUS_MATN_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
@@ -168,13 +170,14 @@ namespace Nexus {
           } else if(report.m_liquidity_flag[0] == 'A') {
             return LiquidityFlag::ACTIVE;
           } else {
-            std::cout << "Unknown liquidity flag [MATN]: \"" <<
-              report.m_liquidity_flag << "\"\n";
+            Beam::report_message(
+              std::format("Unknown liquidity flag [MATN]: \"{}\"",
+                report.m_liquidity_flag));
             return LiquidityFlag::ACTIVE;
           }
         } else {
-          std::cout << "Unknown liquidity flag [MATN]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [MATN]: \"{}\"", report.m_liquidity_flag));
           return LiquidityFlag::ACTIVE;
         }
       }();
@@ -184,7 +187,7 @@ namespace Nexus {
         } else if(classification == MatnFeeTable::Classification::ETF) {
           return MatnFeeTable::Category::ETF;
         } else {
-          std::cout << "Unknown trade category [MATN].\n";
+          Beam::report_message("Unknown trade category [MATN].");
           return MatnFeeTable::Category::ETF;
         }
       }();

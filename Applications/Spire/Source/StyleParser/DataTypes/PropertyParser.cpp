@@ -47,7 +47,7 @@ namespace {
 
   auto check_length_property(TokenParser& token_parser,
       const Token& previous_token) {
-    if(previous_token.get_value().type() == typeid(Literal)) {
+    if(std::holds_alternative<Literal>(previous_token.get_value())) {
       if(check_token(token_parser, Keyword::PX) ||
           check_token(token_parser, Keyword::PT)) {
         if(get_adjacent_token<Keyword>(token_parser, previous_token)) {
@@ -62,7 +62,7 @@ namespace {
 
   auto check_time_property(TokenParser& token_parser,
       const Token& previous_token) {
-    if(previous_token.get_value().type() == typeid(Literal)) {
+    if(std::holds_alternative<Literal>(previous_token.get_value())) {
       if(check_token(token_parser, Keyword::MS) ||
           check_token(token_parser, Keyword::S) ||
           check_token(token_parser, Keyword::MIN)) {
@@ -104,9 +104,8 @@ namespace {
   optional<Property> parse_function(TokenParser& token_parser,
       const Token& token) {
     auto value = token.get_value();
-    if(value.type() == typeid(Identifier) && check_adjacent_token(
-        token_parser, token, Bracket::OPEN_ROUND)) {
-      auto& name = boost::get<Identifier>(value);
+    auto name = std::get_if<Identifier>(&value);
+    if(name && check_adjacent_token(token_parser, token, Bracket::OPEN_ROUND)) {
       auto values = std::vector<PropertyValue>();
       token_parser.pop();
       while(!check_token(token_parser, Bracket::CLOSE_ROUND)) {
@@ -121,7 +120,7 @@ namespace {
       }
       token_parser.pop();
       if(auto converter =
-          PropertyRegistry::get_instance()->get_function_converter(name)) {
+          PropertyRegistry::get_instance()->get_function_converter(*name)) {
         return converter(values);
       }
     }
@@ -153,12 +152,11 @@ void Spire::parse_block(TokenParser& token_parser, Rule& rule) {
     auto token = token_parser.peek();
     auto& value = token.get_value();
     token_parser.pop();
-    auto property_name = Identifier();
+    auto property_name = std::get_if<Identifier>(&value);
     auto values = std::vector<PropertyValue>();
-    if(value.type() == typeid(Identifier) &&
+    if(property_name &&
         check_adjacent_token(token_parser, token, Punctuation::COLON)) {
       token_parser.pop();
-      property_name = boost::get<Identifier>(value);
       while(!check_token(token_parser, Punctuation::SEMI_COLON) &&
           !check_token(token_parser, Bracket::CLOSE_CURLY)) {
         parse_value_list(token_parser, values);
@@ -169,7 +167,7 @@ void Spire::parse_block(TokenParser& token_parser, Rule& rule) {
           token_parser.pop();
         }
         if(auto converter =
-            PropertyRegistry::get_instance()->get_converter(property_name)) {
+            PropertyRegistry::get_instance()->get_converter(*property_name)) {
           insert(rule, converter(values));
         }
       }

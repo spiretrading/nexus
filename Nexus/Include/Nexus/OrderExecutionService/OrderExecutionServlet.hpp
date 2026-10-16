@@ -1,7 +1,7 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVLET_HPP
 #define NEXUS_ORDER_EXECUTION_SERVLET_HPP
 #include <algorithm>
-#include <iostream>
+#include <format>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -447,9 +447,9 @@ namespace Nexus {
         m_live_orders.erase(report.m_id);
       }
     } catch(const std::exception&) {
-      std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
-      std::cout << "\taccount: " << Beam::to_json(account) <<
-        "\n\texecution_report:" << Beam::to_json(report) << std::endl;
+      BEAM_LOG_CURRENT_EXCEPTION(
+        std::format("account: {}\nexecution_report: {}", Beam::to_json(account),
+          Beam::to_json(report)));
     }
   }
 

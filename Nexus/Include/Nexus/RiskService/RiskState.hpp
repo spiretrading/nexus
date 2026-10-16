@@ -4,6 +4,7 @@
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
 namespace Nexus {
@@ -59,15 +60,6 @@ namespace Details {
     bool operator ==(const RiskState&) const = default;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, RiskState::Type type) {
-    return out << static_cast<RiskState::Type::Type>(type);
-  }
-
-  inline std::ostream& operator <<(std::ostream& out, const RiskState& state) {
-    return out << '(' << state.m_type << ' ' << state.m_expiry << ')';
-  }
-
   inline RiskState::RiskState() noexcept
     : RiskState(Type::ACTIVE) {}
 
@@ -93,6 +85,27 @@ namespace Beam {
       shuttle.shuttle("expiry", value.m_expiry);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::RiskState> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::RiskState& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", value.m_type,
+          Beam::to_string(value.m_expiry)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, RiskState::Type type) {
+    return out << std::format(out.getloc(), "{}", type);
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, const RiskState& state) {
+    return out << std::format(out.getloc(), "{}", state);
+  }
 }
 
 #endif

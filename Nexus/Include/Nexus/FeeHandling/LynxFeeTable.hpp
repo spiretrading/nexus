@@ -2,8 +2,10 @@
 #define NEXUS_LYNX_FEE_TABLE_HPP
 #include <array>
 #include <exception>
+#include <format>
 #include <unordered_map>
 #include <unordered_set>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -113,13 +115,13 @@ namespace Nexus {
         } else if(report.m_liquidity_flag[0] == 'A') {
           return LiquidityFlag::ACTIVE;
         } else {
-          std::cout << "Unknown liquidity flag [LYNX]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [LYNX]: \"{}\"", report.m_liquidity_flag));
           return LiquidityFlag::ACTIVE;
         }
       } else {
-        std::cout << "Unknown liquidity flag [LYNX]: \"" <<
-          report.m_liquidity_flag << "\"\n";
+        Beam::report_message(std::format(
+          "Unknown liquidity flag [LYNX]: \"{}\"", report.m_liquidity_flag));
         return LiquidityFlag::ACTIVE;
       }
     }();

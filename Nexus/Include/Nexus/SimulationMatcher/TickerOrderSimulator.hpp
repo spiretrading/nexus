@@ -480,7 +480,7 @@ namespace Details {
     auto entry = PeggedOrderEntry();
     entry.m_exec_inst = PRIMARY_PEG;
     if(auto tag = find_field(fields, EXEC_INST_KEY)) {
-      if(auto* value = boost::get<std::string>(&tag->get_value())) {
+      if(auto* value = std::get_if<std::string>(&tag->get_value())) {
         auto stream = std::istringstream(*value);
         auto token = std::string();
         while(stream >> token) {
@@ -493,7 +493,7 @@ namespace Details {
       }
     }
     if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
-      if(auto* money = boost::get<Money>(&tag->get_value())) {
+      if(auto* money = std::get_if<Money>(&tag->get_value())) {
         entry.m_peg_difference = *money;
       }
     }

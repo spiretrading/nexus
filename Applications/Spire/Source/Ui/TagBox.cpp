@@ -107,7 +107,7 @@ namespace {
 
 struct AnyTagBox::PartialListModel : public AnyListModel {
   std::shared_ptr<AnyListModel> m_source;
-  ListModelTransactionLog<std::any> m_transaction;
+  ModelTransactionLog<AnyListModel> m_transaction;
   scoped_connection m_source_connection;
 
   explicit PartialListModel(std::shared_ptr<AnyListModel> source)
@@ -158,8 +158,7 @@ struct AnyTagBox::PartialListModel : public AnyListModel {
   }
 
   void on_operation(const Operation& operation) {
-    m_transaction.push(
-      reinterpret_cast<const ListModel<std::any>::Operation&>(operation));
+    m_transaction.push(operation);
   }
 };
 

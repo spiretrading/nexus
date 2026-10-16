@@ -4,7 +4,6 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include <Beam/Utilities/Streamable.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
@@ -84,28 +83,22 @@ namespace Nexus {
     auto arguments = std::vector<ComplianceValue>();
     for(auto& parameter : schema.get_parameters()) {
       if(parameter.m_name == "name") {
-        name = boost::get<std::string>(parameter.m_value);
+        name = std::get<std::string>(parameter.m_value);
       } else if(parameter.m_name == "arguments") {
-        arguments = boost::get<std::vector<ComplianceValue>>(parameter.m_value);
+        arguments = std::get<std::vector<ComplianceValue>>(parameter.m_value);
       }
     }
     auto parameters = std::vector<ComplianceParameter>();
     for(auto& argument : arguments) {
-      auto& parameter = boost::get<std::vector<ComplianceValue>>(argument);
+      auto& parameter = std::get<std::vector<ComplianceValue>>(argument);
       if(parameter.size() != 2) {
         boost::throw_with_location(
           std::runtime_error("Invalid ComplianceParameter specified."));
       }
-      parameters.push_back(ComplianceParameter(
-        boost::get<std::string>(parameter[0]), parameter[1]));
+      parameters.push_back(
+        ComplianceParameter(std::get<std::string>(parameter[0]), parameter[1]));
     }
     return ComplianceRuleSchema(std::move(name), std::move(parameters));
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const ComplianceRuleSchema& rule) {
-    return out << '(' << rule.get_name() << ' ' <<
-      Beam::Stream(rule.get_parameters()) << ')';
   }
 
   inline ComplianceRuleSchema::ComplianceRuleSchema(
@@ -133,6 +126,33 @@ namespace Beam {
       shuttle.shuttle("parameters", value.m_parameters);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ComplianceRuleSchema> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ComplianceRuleSchema& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {::})", value.get_name(),
+          value.get_parameters()), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceRuleSchema& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

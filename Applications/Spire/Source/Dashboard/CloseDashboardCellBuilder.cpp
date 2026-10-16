@@ -13,7 +13,7 @@ using namespace std;
 
 std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& ticker = boost::get<Ticker>(index);
+  auto& ticker = std::get<Ticker>(index);
   auto queue = std::make_shared<Queue<DashboardCell::Value>>();
   auto cell = std::make_unique<QueueDashboardCell>(queue);
   auto selfUserProfile = userProfile.get();

@@ -2,7 +2,6 @@
 #define NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #include <memory>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <boost/variant/get.hpp>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/Compliance/MapComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"

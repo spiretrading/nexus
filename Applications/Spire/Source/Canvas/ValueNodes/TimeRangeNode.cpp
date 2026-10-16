@@ -21,7 +21,7 @@ namespace {
         return std::string("Present");
       } else {
         return to_simple_string(
-          to_local_time(boost::get<ptime>(value.get_start())));
+          to_local_time(std::get<ptime>(value.get_start())));
       }
     }();
     auto endingPoint = [&] {
@@ -29,7 +29,7 @@ namespace {
         return std::string("Present");
       } else {
         return to_simple_string(
-          to_local_time(boost::get<ptime>(value.get_end())));
+          to_local_time(std::get<ptime>(value.get_end())));
       }
     }();
     return startingPoint + " -> " + endingPoint;

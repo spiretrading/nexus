@@ -2,8 +2,8 @@
 #define SPIRE_PORTFOLIOSELECTIONMODEL_HPP
 #include <array>
 #include <unordered_set>
+#include <variant>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/variant/variant.hpp>
 #include <QAbstractItemModel>
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
@@ -91,9 +91,9 @@ namespace Spire {
         int role) const;
 
     private:
-      using SelectionVariant = boost::variant<
-        Beam::DirectoryEntry, Nexus::CurrencyDatabase::Entry,
-        Nexus::VenueDatabase::Entry, Nexus::Side>;
+      using SelectionVariant =
+        std::variant<Beam::DirectoryEntry, Nexus::CurrencyDatabase::Entry,
+          Nexus::VenueDatabase::Entry, Nexus::Side>;
       UserProfile* m_userProfile;
       std::array<QModelIndex, SELECTION_TYPES_COUNT> m_roots;
       std::vector<Beam::DirectoryEntry> m_groups;

@@ -6,6 +6,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -13,7 +14,6 @@
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/variant/variant.hpp>
 #include <tsl/htrie_map.h>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/TickerEntry.hpp"
@@ -38,7 +38,7 @@ namespace Nexus::Details {
 
   struct PrimaryListingKey {
     std::string m_symbol;
-    boost::variant<Venue, CountryCode> m_scope;
+    std::variant<Venue, CountryCode> m_scope;
 
     bool operator ==(const PrimaryListingKey&) const = default;
   };

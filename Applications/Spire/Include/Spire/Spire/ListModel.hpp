@@ -1,17 +1,18 @@
 #ifndef SPIRE_LIST_MODEL_HPP
 #define SPIRE_LIST_MODEL_HPP
 #include <any>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <ostream>
+#include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/signals2/connection.hpp>
-#include <boost/variant/apply_visitor.hpp>
-#include <boost/variant/get.hpp>
 #include <QValidator>
 #include "Spire/Spire/Spire.hpp"
 
@@ -74,7 +75,7 @@ namespace Spire {
       struct EndTransaction {};
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+      using Operation = std::variant<AddOperation, PreRemoveOperation,
         RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
         EndTransaction>;
 
@@ -297,7 +298,7 @@ namespace Spire {
       };
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+      using Operation = std::variant<AddOperation, PreRemoveOperation,
         RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
         EndTransaction>;
 
@@ -462,7 +463,7 @@ namespace Spire {
         const Type& get_previous() const;
         const Type& get_value() const;
       };
-      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+      using Operation = std::variant<AddOperation, PreRemoveOperation,
         RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
         EndTransaction>;
       using OperationSignal = Signal<void (const Operation&)>;
@@ -517,7 +518,7 @@ namespace Spire {
   void visit(const Operation& operation, F&&... f) {
     if constexpr(sizeof...(F) == 1) {
       auto head = [&] (auto&& f) {
-        boost::apply_visitor([&] (const auto& operation) {
+        std::visit([&] (const auto& operation) {
           using Parameter = std::decay_t<decltype(operation)>;
           if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
             std::forward<decltype(f)>(f)(operation);
@@ -527,7 +528,7 @@ namespace Spire {
       head(std::forward<F>(f)...);
     } else if constexpr(sizeof...(F) != 0) {
       auto tail = [&] (auto&& f, auto&&... g) {
-        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+        auto is_visited = std::visit([&] (const auto& operation) {
           using Parameter = std::decay_t<decltype(operation)>;
           if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
             std::forward<decltype(f)>(f)(operation);
@@ -873,7 +874,8 @@ namespace Spire {
       return connect_operation_signal(
         static_cast<typename OperationSignal::slot_type>(slot));
     } else {
-      return AnyListModel::connect_operation_signal(slot);
+      return connect_operation_signal(
+        static_cast<AnyListModel::OperationSignal::slot_type>(slot));
     }
   }
 
@@ -886,7 +888,7 @@ namespace Spire {
   boost::signals2::connection ListModel<T>::connect_operation_signal(
       const AnyListModel::OperationSignal::slot_type& slot) const {
     return connect_operation_signal([=] (const Operation& operation) {
-      slot(static_cast<const AnyListModel::Operation&>(operation));
+      std::visit(slot, operation);
     });
   }
 
@@ -897,7 +899,8 @@ namespace Spire {
       return connect_operation_signal(
         static_cast<typename OperationSignal::slot_type>(slot));
     } else {
-      return AnyListModel::connect_operation_signal(slot);
+      return connect_operation_signal(
+        static_cast<AnyListModel::OperationSignal::slot_type>(slot));
     }
   }
 }
@@ -936,5 +939,59 @@ namespace Beam {
     }
   };
 }
+
+template<>
+class std::formatter<Spire::AnyListModel::AddOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::AddOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::PreRemoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::PreRemoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::RemoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::RemoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::MoveOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::MoveOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::UpdateOperation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::UpdateOperation& operation,
+      std::format_context& context) const;
+};
+
+template<>
+class std::formatter<Spire::AnyListModel::Operation> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::AnyListModel::Operation& operation,
+      std::format_context& context) const;
+};
 
 #endif

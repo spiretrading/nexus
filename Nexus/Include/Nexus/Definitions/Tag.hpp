@@ -4,10 +4,10 @@
 #include <string>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
@@ -18,8 +18,8 @@ namespace Nexus {
     public:
 
       /** Specifies the types of values that can be stored by a Tag. */
-      using Type = boost::variant<int, double, Quantity, Money, char,
-        std::string, boost::gregorian::date, boost::posix_time::time_duration,
+      using Type = std::variant<int, double, Quantity, Money, char, std::string,
+        boost::gregorian::date, boost::posix_time::time_duration,
         boost::posix_time::ptime>;
 
       /** The index of the int type. */
@@ -73,10 +73,6 @@ namespace Nexus {
       Type m_value;
   };
 
-  inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
-    return out << '(' << value.get_key() << ' ' << value.get_value() << ')';
-  }
-
   inline Tag::Tag(int key, Type value) noexcept
     : m_key(key),
       m_value(std::move(value)) {}
@@ -100,6 +96,29 @@ namespace Beam {
       shuttle.shuttle("value", value.m_value);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Tag> : public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Tag& tag, auto& context) const {
+      auto value = std::visit([&] (const auto& value) {
+        if constexpr(std::formattable<decltype(value), char>) {
+          return std::format(context.locale(), "{}", value);
+        } else {
+          return Beam::to_string(value);
+        }
+      }, tag.get_value());
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", tag.get_key(), value),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

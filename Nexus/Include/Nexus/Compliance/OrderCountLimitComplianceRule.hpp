@@ -58,7 +58,7 @@ namespace Nexus {
     auto count = Quantity(0);
     for(auto& parameter : parameters) {
       if(parameter.m_name == "count") {
-        count = boost::get<Quantity>(parameter.m_value);
+        count = std::get<Quantity>(parameter.m_value);
       }
     }
     return std::make_unique<OrderCountLimitComplianceRule>(

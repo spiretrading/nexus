@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
+#include "Spire/Spire/ProxyListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -96,13 +97,14 @@ namespace Spire {
       mutable BeginLoadingSignal m_begin_loading_signal;
       mutable EndLoadingSignal m_end_loading_signal;
       std::shared_ptr<TimeAndSalesModel> m_model;
-      std::vector<TimeAndSalesModel::Entry> m_entries;
+      std::shared_ptr<ProxyListModel<TimeAndSalesModel::Type>> m_source;
+      std::shared_ptr<TableModel> m_table;
+      bool m_is_loading;
       QtPromise<void> m_promise;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
 
-      void load_snapshot(Beam::Sequence last, int count);
-      void on_update(const TimeAndSalesModel::Entry& entry);
+      void on_operation(const Operation& operation);
   };
 }
 

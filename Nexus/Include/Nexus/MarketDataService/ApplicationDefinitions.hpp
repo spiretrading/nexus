@@ -143,7 +143,7 @@ namespace Nexus {
                     "No market data services available."));
                 }
                 return Beam::parse<std::vector<Beam::IpAddress>>(
-                  boost::get<std::string>(
+                  std::get<std::string>(
                     service->get_properties().at("addresses")));
               } catch(const Beam::AuthenticationException&) {
                 throw;
@@ -174,7 +174,7 @@ namespace Nexus {
                 }
                 auto& service = services.front();
                 return Beam::parse<std::vector<Beam::IpAddress>>(
-                  boost::get<std::string>(
+                  std::get<std::string>(
                     service.get_properties().at("addresses")));
               } catch(const Beam::AuthenticationException&) {
                 throw;

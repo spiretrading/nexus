@@ -3,7 +3,6 @@
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QTableView>
-#include <boost/variant/get.hpp>
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_TickerInputDialog.h"
@@ -136,14 +135,15 @@ void ScopeItemInputDialog::OnDataChanged(
 }
 
 void Spire::ShowScopeItemInputDialog(
-    const variant<std::string, QVariant>& item, Ref<UserProfile> userProfile,
-    QWidget* parent, std::function<void (optional<QVariant> item)> onResult) {
+    const std::variant<std::string, QVariant>& item,
+    Ref<UserProfile> userProfile, QWidget* parent,
+    std::function<void (optional<QVariant> item)> onResult) {
   auto dialog = [&] {
-    if(auto text = get<std::string>(&item)) {
+    if(auto text = std::get_if<std::string>(&item)) {
       return new ScopeItemInputDialog(*text, Ref(userProfile), parent);
     }
     return new ScopeItemInputDialog(
-      get<QVariant>(item), Ref(userProfile), parent);
+      std::get<QVariant>(item), Ref(userProfile), parent);
   }();
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   QObject::connect(dialog, &ScopeItemInputDialog::finished, parent,

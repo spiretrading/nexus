@@ -78,13 +78,6 @@ namespace Nexus {
     return parse_ticker(source, VENUES);
   }
 
-  inline std::ostream& operator <<(std::ostream& out, const Ticker& value) {
-    if(!value.get_venue() || value.get_symbol().empty()) {
-      return out << value.get_symbol();
-    }
-    return out << value.get_symbol() << '.' << value.get_venue();
-  }
-
   inline std::istream& operator >>(std::istream& in, Ticker& value) {
     auto s = std::string();
     in >> s;
@@ -163,6 +156,33 @@ namespace Nexus {
    */
   inline std::unordered_set<Ticker> parse_ticker_set(const YAML::Node& config) {
     return parse_ticker_set(config, VENUES);
+  }
+}
+
+template<>
+class std::formatter<Nexus::Ticker> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Ticker& value, auto& context) const {
+      if(!value.get_venue() || value.get_symbol().empty()) {
+        return std::formatter<std::string_view>::format(
+          value.get_symbol(), context);
+      }
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "{}.{}", value.get_symbol(),
+          value.get_venue()), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const Ticker& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
   }
 }
 

@@ -1,4 +1,5 @@
 #include "Spire/Spire/ListModel.hpp"
+#include <Beam/Utilities/OverloadSet.hpp>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -98,7 +99,7 @@ ListModel<std::any>::const_reverse_iterator ListModel<std::any>::crend() const {
 connection ListModel<std::any>::connect_operation_signal(
     const AnyListModel::OperationSignal::slot_type& slot) const {
   return connect_operation_signal([=] (const Operation& operation) {
-    slot(static_cast<const AnyListModel::Operation&>(operation));
+    std::visit(slot, operation);
   });
 }
 
@@ -128,54 +129,101 @@ void Spire::clear(AnyListModel& model) {
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::AddOperation& operation) {
-  return out << operation.m_index;
+  return out << std::format(out.getloc(), "{}", operation);
 }
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::PreRemoveOperation& operation) {
-  return out << operation.m_index;
+  return out << std::format(out.getloc(), "{}", operation);
 }
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::RemoveOperation& operation) {
-  return out << operation.m_index;
+  return out << std::format(out.getloc(), "{}", operation);
 }
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::MoveOperation& operation) {
-  return out <<
-    '(' << operation.m_source << ' ' << operation.m_destination << ')';
+  return out << std::format(out.getloc(), "{}", operation);
 }
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::UpdateOperation& operation) {
-  return out << operation.m_index;
+  return out << std::format(out.getloc(), "{}", operation);
 }
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::Operation& operation) {
-  visit(operation,
-    [&] (const AnyListModel::StartTransaction& operation) {
-      out << "StartTransaction";
+  return out << std::format(out.getloc(), "{}", operation);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::AddOperation>::format(
+      const AnyListModel::AddOperation& operation,
+      std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "{}", operation.m_index), context);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::PreRemoveOperation>::format(
+      const AnyListModel::PreRemoveOperation& operation,
+      std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "{}", operation.m_index), context);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::RemoveOperation>::format(
+      const AnyListModel::RemoveOperation& operation,
+      std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "{}", operation.m_index), context);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::MoveOperation>::format(
+      const AnyListModel::MoveOperation& operation,
+      std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "({} {})",
+      operation.m_source, operation.m_destination), context);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::UpdateOperation>::format(
+      const AnyListModel::UpdateOperation& operation,
+      std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "{}", operation.m_index), context);
+}
+
+std::format_context::iterator
+    std::formatter<AnyListModel::Operation>::format(
+      const AnyListModel::Operation& operation,
+      std::format_context& context) const {
+  auto text = std::visit(Beam::OverloadSet(
+    [&] (const AnyListModel::StartTransaction&) {
+      return std::string("StartTransaction");
     },
-    [&] (const AnyListModel::EndTransaction& operation) {
-      out << "EndTransaction";
+    [&] (const AnyListModel::EndTransaction&) {
+      return std::string("EndTransaction");
     },
     [&] (const AnyListModel::AddOperation& operation) {
-      out << "(AddOperation " << operation << ')';
+      return std::format(context.locale(), "(AddOperation {})", operation);
     },
     [&] (const AnyListModel::PreRemoveOperation& operation) {
-      out << "(PreRemoveOperation " << operation << ')';
+      return std::format(context.locale(), "(PreRemoveOperation {})", operation);
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      out << "(RemoveOperation " << operation << ')';
+      return std::format(context.locale(), "(RemoveOperation {})", operation);
     },
     [&] (const AnyListModel::MoveOperation& operation) {
-      out << "(MoveOperation " <<
-        operation.m_source << ' ' << operation.m_destination << ')';
+      return std::format(context.locale(), "(MoveOperation {} {})",
+        operation.m_source, operation.m_destination);
     },
     [&] (const AnyListModel::UpdateOperation& operation) {
-      out << "(UpdateOperation " << operation << ')';
-    });
-  return out;
+      return std::format(context.locale(), "(UpdateOperation {})", operation);
+    }), operation);
+  return std::formatter<std::string_view>::format(text, context);
 }

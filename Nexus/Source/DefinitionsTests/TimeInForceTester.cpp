@@ -10,6 +10,17 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 TEST_SUITE("TimeInForce") {
+  TEST_CASE("format") {
+    REQUIRE(std::format("{}", TimeInForce()) == "NONE");
+    REQUIRE(std::format("{}", TimeInForce(TimeInForce::Type::GTC)) == "GTC");
+    REQUIRE(std::format("{:>5}", TimeInForce(TimeInForce::Type::GTC)) ==
+      "  GTC");
+    auto value = make_gtd(time_from_string("2026-10-16 16:00:00"));
+    REQUIRE(std::format("{}", value) == "(GTD 2026-Oct-16 16:00:00)");
+    REQUIRE(std::format("{:.4}", value) == "(GTD");
+    REQUIRE(std::format("{}", make_gtd(ptime(pos_infin))) == "(GTD +infinity)");
+  }
+
   TEST_CASE("constructor") {
     auto tif = TimeInForce();
     REQUIRE((tif.get_type() == TimeInForce::Type::NONE));

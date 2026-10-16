@@ -1,5 +1,4 @@
 #include <deque>
-#include <boost/variant/get.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 
@@ -16,7 +15,7 @@ TEST_SUITE("ArrayTableModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
       }));
     REQUIRE_NOTHROW(model.push({3, 1, 4}));
@@ -46,7 +45,7 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
@@ -94,7 +93,7 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
@@ -112,7 +111,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
+        auto move_operation =
+          std::get_if<TableModel::MoveOperation>(&operation);
         REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source);
         REQUIRE(move_operation->m_destination == destination);
@@ -161,7 +161,7 @@ TEST_SUITE("ArrayTableModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == index);
       }));
@@ -188,7 +188,7 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == index);
       });
@@ -239,7 +239,7 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
+        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
         REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
@@ -254,7 +254,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto update_operation = get<TableModel::UpdateOperation>(&operation);
+        auto update_operation =
+          std::get_if<TableModel::UpdateOperation>(&operation);
         REQUIRE(update_operation != nullptr);
         REQUIRE(update_operation->m_row == row);
         REQUIRE(update_operation->m_column == column);
@@ -302,32 +303,32 @@ TEST_SUITE("ArrayTableModel") {
       });
     });
     REQUIRE(operations.size() == 8);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
-    REQUIRE(get<TableModel::UpdateOperation>(&operations[2]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[3]) != nullptr);
-    REQUIRE(get<TableModel::PreRemoveOperation>(&operations[4]) != nullptr);
-    REQUIRE(get<TableModel::RemoveOperation>(&operations[5]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[6]) != nullptr);
-    REQUIRE(get<TableModel::EndTransaction>(&operations[7]) != nullptr);
+    REQUIRE(std::get_if<TableModel::StartTransaction>(&operations[0]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[1]));
+    REQUIRE(std::get_if<TableModel::UpdateOperation>(&operations[2]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[3]));
+    REQUIRE(std::get_if<TableModel::PreRemoveOperation>(&operations[4]));
+    REQUIRE(std::get_if<TableModel::RemoveOperation>(&operations[5]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[6]));
+    REQUIRE(std::get_if<TableModel::EndTransaction>(&operations[7]));
     operations.clear();
     model.transact([&] {
       model.push({1, 2, 3});
       model.push({4, 5, 6});
     });
     REQUIRE(operations.size() == 4);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[2]) != nullptr);
-    REQUIRE(get<TableModel::EndTransaction>(&operations[3]) != nullptr);
+    REQUIRE(std::get_if<TableModel::StartTransaction>(&operations[0]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[1]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[2]));
+    REQUIRE(std::get_if<TableModel::EndTransaction>(&operations[3]));
     operations.clear();
     model.transact([&] {
       model.push({1, 2, 3});
     });
     REQUIRE(operations.size() == 3);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
-    REQUIRE(get<TableModel::EndTransaction>(&operations[2]) != nullptr);
+    REQUIRE(std::get_if<TableModel::StartTransaction>(&operations[0]));
+    REQUIRE(std::get_if<TableModel::AddOperation>(&operations[1]));
+    REQUIRE(std::get_if<TableModel::EndTransaction>(&operations[2]));
     operations.clear();
     model.transact([&] {});
     REQUIRE(operations.empty());

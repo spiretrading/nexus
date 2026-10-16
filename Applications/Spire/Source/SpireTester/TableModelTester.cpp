@@ -34,14 +34,14 @@ void Spire::require_transaction(
   if(expected.size() == 1) {
     if(operations.size() != 1) {
       REQUIRE(operations.size() == 3);
-      REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+      REQUIRE(std::get_if<TableModel::StartTransaction>(&operations[0]));
       offset = 1;
     }
   } else {
     REQUIRE(!operations.empty());
-    if(get<TableModel::StartTransaction>(&operations[0]) == nullptr) {
+    if(!std::get_if<TableModel::StartTransaction>(&operations[0])) {
       REQUIRE(operations.size() == 2);
-      REQUIRE(get<TableModel::PreRemoveOperation>(&operations[0]) != nullptr);
+      REQUIRE(std::get_if<TableModel::PreRemoveOperation>(&operations[0]));
     } else {
       REQUIRE(operations.size() == expected.size() + 2);
       offset = 1;
@@ -50,32 +50,33 @@ void Spire::require_transaction(
   for(auto i = 0; i != std::ssize(expected); ++i) {
     visit(expected[i],
       [&] (const TableModel::AddOperation& expected) {
-        auto operation = get<TableModel::AddOperation>(&operations[i + offset]);
+        auto operation =
+          std::get_if<TableModel::AddOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
       [&] (const TableModel::PreRemoveOperation& expected) {
         auto operation =
-          get<TableModel::PreRemoveOperation>(&operations[i + offset]);
+          std::get_if<TableModel::PreRemoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
       [&] (const TableModel::RemoveOperation& expected) {
         auto operation =
-          get<TableModel::RemoveOperation>(&operations[i + offset]);
+          std::get_if<TableModel::RemoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
       [&] (const TableModel::MoveOperation& expected) {
         auto operation =
-          get<TableModel::MoveOperation>(&operations[i + offset]);
+          std::get_if<TableModel::MoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_source == expected.m_source);
         REQUIRE(operation->m_destination == expected.m_destination);
       },
       [&] (const TableModel::UpdateOperation& expected) {
         auto operation =
-          get<TableModel::UpdateOperation>(&operations[i + offset]);
+          std::get_if<TableModel::UpdateOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_row == expected.m_row);
         REQUIRE(operation->m_column == expected.m_column);
@@ -84,7 +85,7 @@ void Spire::require_transaction(
       });
   }
   if(offset != 0) {
-    REQUIRE(get<TableModel::EndTransaction>(&operations.back()) != nullptr);
+    REQUIRE(std::get_if<TableModel::EndTransaction>(&operations.back()));
   }
 }
 

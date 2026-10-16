@@ -64,7 +64,7 @@ namespace Spire {
       struct EndTransaction {};
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+      using Operation = std::variant<AddOperation, PreRemoveOperation,
         RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
         EndTransaction>;
 

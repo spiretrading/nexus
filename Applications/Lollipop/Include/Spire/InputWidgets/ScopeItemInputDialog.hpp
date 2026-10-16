@@ -1,8 +1,8 @@
 #ifndef SPIRE_SCOPE_ITEM_INPUT_DIALOG_HPP
 #define SPIRE_SCOPE_ITEM_INPUT_DIALOG_HPP
 #include <memory>
+#include <variant>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/variant/variant.hpp>
 #include <QDialog>
 #include <QVariant>
 #include "Nexus/Definitions/Scope.hpp"
@@ -83,7 +83,7 @@ namespace Spire {
    * @param resultSlot The slot to call when the dialog closes.
    */
   void ShowScopeItemInputDialog(
-    const boost::variant<std::string, QVariant>& item,
+    const std::variant<std::string, QVariant>& item,
     Beam::Ref<UserProfile> userProfile, QWidget* parent,
     std::function<void (boost::optional<QVariant> item)> onResult);
 }

@@ -25,7 +25,7 @@ using namespace Spire::Styles;
 
 namespace {
   optional<int> parse_number(const Token::Type& value) {
-    auto& literal = boost::get<Literal>(value);
+    auto& literal = std::get<Literal>(value);
     if(*literal.get_type() == IntegerType()) {
       return std::stoi(literal.get_value());
     }
@@ -34,8 +34,9 @@ namespace {
 
   optional<int> convert_length(const Token::Type& value,
       const Token::Type& unit) {
-    if(value.type() == typeid(Literal) && unit.type() == typeid(Keyword) &&
-        boost::get<Keyword>(unit) == Keyword::PX) {
+    if(std::holds_alternative<Literal>(value) &&
+        std::holds_alternative<Keyword>(unit) &&
+        std::get<Keyword>(unit) == Keyword::PX) {
       return parse_number(value);
     }
     return none;
@@ -44,10 +45,10 @@ namespace {
   template<typename T>
   auto convert_length_property(const std::vector<PropertyValue>& values) {
     auto properties = std::vector<Property>();
-    if(values.size() == 2 && values[0].type() == typeid(Token::Type) &&
-        values[1].type() == typeid(Token::Type)) {
-      if(auto length = convert_length(boost::get<Token::Type>(values[0]),
-          boost::get<Token::Type>(values[1]))) {
+    if(values.size() == 2 && std::holds_alternative<Token::Type>(values[0]) &&
+        std::holds_alternative<Token::Type>(values[1])) {
+      if(auto length = convert_length(std::get<Token::Type>(values[0]),
+          std::get<Token::Type>(values[1]))) {
         properties.push_back(T(*length));
       }
     }
@@ -57,10 +58,10 @@ namespace {
   template<auto T>
   auto convert_length_property(const std::vector<PropertyValue>& values) {
     auto properties = std::vector<Property>();
-    if(values.size() == 2 && values[0].type() == typeid(Token::Type) &&
-        values[1].type() == typeid(Token::Type)) {
-      if(auto length = convert_length(boost::get<Token::Type>(values[0]),
-          boost::get<Token::Type>(values[1]))) {
+    if(values.size() == 2 && std::holds_alternative<Token::Type>(values[0]) &&
+        std::holds_alternative<Token::Type>(values[1])) {
+      if(auto length = convert_length(std::get<Token::Type>(values[0]),
+          std::get<Token::Type>(values[1]))) {
           for_each(T(*length), [&] (auto& property) {
             properties.push_back(property);
           });
@@ -70,8 +71,8 @@ namespace {
   }
 
   optional<QColor> convert_hexadecimal_color(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      auto& literal = boost::get<Literal>(value);
+    if(std::holds_alternative<Literal>(value)) {
+      auto& literal = std::get<Literal>(value);
       if(*literal.get_type() == IntegerType() &&
         literal.get_value().substr(0, 2) == "0x") {
         return QColor(std::stoi(literal.get_value().substr(2), 0, 16));
@@ -81,8 +82,8 @@ namespace {
   }
 
   optional<QFont::Weight> convert_font_weight(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
+    if(std::holds_alternative<Identifier>(value)) {
+      auto& identifier = std::get<Identifier>(value);
       if(identifier == "normal") {
         return QFont::Normal;
       } else if(identifier == "medium") {
@@ -96,8 +97,8 @@ namespace {
   }
 
   optional<std::string> convert_string(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      auto& literal = boost::get<Literal>(value);
+    if(std::holds_alternative<Literal>(value)) {
+      auto& literal = std::get<Literal>(value);
       if(*literal.get_type() == StringType()) {
         auto text = literal.get_value();
         text.erase(std::remove(text.begin(), text.end(), '"'), text.end());
@@ -108,8 +109,8 @@ namespace {
   }
 
   optional<QColor> convert_color(const Token::Type& value) {
-    if(value.type() == typeid(Identifier)) {
-      auto& identifier = boost::get<Identifier>(value);
+    if(std::holds_alternative<Identifier>(value)) {
+      auto& identifier = std::get<Identifier>(value);
       if(identifier == "white") {
         return QColor(Qt::white);
       } else if(identifier == "black") {
@@ -124,18 +125,19 @@ namespace {
 
   optional<time_duration> convert_time_duration(const Token::Type& value,
       const Token::Type& unit) {
-    if(value.type() != typeid(Literal) || unit.type() != typeid(Keyword)) {
+    if(!std::holds_alternative<Literal>(value) ||
+        !std::holds_alternative<Keyword>(unit)) {
       return none;
     }
-    if(boost::get<Keyword>(unit) == Keyword::MS) {
+    if(std::get<Keyword>(unit) == Keyword::MS) {
       if(auto number = parse_number(value)) {
         return milliseconds(*number);
       }
-    } else if(boost::get<Keyword>(unit) == Keyword::S) {
+    } else if(std::get<Keyword>(unit) == Keyword::S) {
       if(auto number = parse_number(value)) {
         return seconds(*number);
       }
-    } else if(boost::get<Keyword>(unit) == Keyword::MIN) {
+    } else if(std::get<Keyword>(unit) == Keyword::MIN) {
       if(auto number = parse_number(value)) {
         return minutes(*number);
       }
@@ -165,14 +167,14 @@ void Spire::StyleParser::Tests::register_property_converters() {
     [] (const std::vector<PropertyValue>& values) {
       auto properties = std::vector<Property>();
       if(values.size() == 1) {
-        if(values[0].type() == typeid(Token::Type)) {
+        if(std::holds_alternative<Token::Type>(values[0])) {
           if(auto color = convert_hexadecimal_color(
-              boost::get<Literal>(boost::get<Token::Type>(values[0])))) {
+              std::get<Literal>(std::get<Token::Type>(values[0])))) {
             properties.push_back(BackgroundColor(*color));
           }
-        } else if(values[0].type() == typeid(Property)) {
+        } else if(std::holds_alternative<Property>(values[0])) {
           properties.push_back(BackgroundColor(
-            boost::get<Property>(values[0]).expression_as<QColor>()));
+            std::get<Property>(values[0]).expression_as<QColor>()));
         }
       }
       return properties;
@@ -204,23 +206,23 @@ void Spire::StyleParser::Tests::register_property_converters() {
       auto font = QFont();
       if(values.size() == 5) {
         for(auto& value : values) {
-          if(value.type() != typeid(Token::Type)) {
+          if(!std::holds_alternative<Token::Type>(value)) {
             return properties;
           }
         }
-        if(auto weight = convert_font_weight(boost::get<Identifier>(
-            boost::get<Token::Type>(values[0])))) {
+        if(auto weight = convert_font_weight(std::get<Identifier>(
+            std::get<Token::Type>(values[0])))) {
           font.setWeight(*weight);
         }
-        if(auto length = convert_length(boost::get<Token::Type>(values[1]),
-            boost::get<Token::Type>(values[2]))) {
+        if(auto length = convert_length(std::get<Token::Type>(values[1]),
+            std::get<Token::Type>(values[2]))) {
           font.setPixelSize(*length);
         }
-        if(auto family = convert_string(boost::get<Token::Type>(values[3]))) {
+        if(auto family = convert_string(std::get<Token::Type>(values[3]))) {
           font.setFamily(QString::fromStdString(*family));
         }
-        auto color = convert_color(boost::get<Identifier>(
-          boost::get<Token::Type>(values[4])));
+        auto color = convert_color(std::get<Identifier>(
+          std::get<Token::Type>(values[4])));
         if(!color) {
           return properties;
         }
@@ -234,14 +236,14 @@ void Spire::StyleParser::Tests::register_property_converters() {
 
   register_function_converter("timeout",
     [] (const std::vector<PropertyValue>& values) {
-      if(values.size() == 3 && values[0].type() == typeid(Token::Type) &&
-          values[1].type() == typeid(Token::Type) &&
-          values[2].type() == typeid(Token::Type)) {
+      if(values.size() == 3 && std::holds_alternative<Token::Type>(values[0]) &&
+          std::holds_alternative<Token::Type>(values[1]) &&
+          std::holds_alternative<Token::Type>(values[2])) {
         auto color = convert_hexadecimal_color(
-          boost::get<Token::Type>(values[0]));
+          std::get<Token::Type>(values[0]));
         auto duration = convert_time_duration(
-          boost::get<Token::Type>(values[1]),
-          boost::get<Token::Type>(values[2]));
+          std::get<Token::Type>(values[1]),
+          std::get<Token::Type>(values[2]));
         if(color && duration) {
           return BasicProperty<QColor, void>(Expression<QColor>(
             TimeoutExpression(*color, *duration)));
@@ -253,15 +255,15 @@ void Spire::StyleParser::Tests::register_property_converters() {
   register_function_converter("chain",
     [] (const std::vector<PropertyValue>& values) {
       if(values.size() == 2) {
-        if(values[0].type() == typeid(Property) &&
-            values[1].type() == typeid(Token::Type)) {
-          auto& property = boost::get<Property>(values[0]);
-          auto& token = boost::get<Token::Type>(values[1]);
+        if(std::holds_alternative<Property>(values[0]) &&
+            std::holds_alternative<Token::Type>(values[1])) {
+          auto& property = std::get<Property>(values[0]);
+          auto& token = std::get<Token::Type>(values[1]);
           if(property.get_type() == typeid(BasicProperty<QColor, void>)) {
             auto expression =
               property.as<BasicProperty<QColor, void>>().get_expression();
-            if(token.type() == typeid(Identifier)) {
-              auto& identifier = boost::get<Identifier>(token);
+            if(std::holds_alternative<Identifier>(token)) {
+              auto& identifier = std::get<Identifier>(token);
               if(identifier == "revert") {
                 return BasicProperty<QColor, void>(Expression<QColor>(
                   ChainExpression(expression, revert)));

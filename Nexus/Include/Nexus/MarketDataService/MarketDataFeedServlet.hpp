@@ -4,9 +4,8 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Services/ReportServiceException.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <Beam/Utilities/ReportException.hpp>
-#include <Beam/Utilities/VariantLambdaVisitor.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
 namespace Nexus {
@@ -120,11 +119,13 @@ namespace Nexus {
     auto source_id = client.get_session().m_source_id;
     for(auto& message : messages) {
       try {
-        boost::apply_visitor([&] (const auto& data) {
+        std::visit([&] (const auto& data) {
           m_registry->publish(data, source_id);
         }, message);
       } catch(const std::exception&) {
-        std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
+        Beam::report_service_exception(client, "publish_market_data",
+          typeid(Beam::RecordMessage<SendMarketDataFeedMessages,
+            ServiceProtocolClient>), std::nullopt);
       }
     }
   }

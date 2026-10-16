@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/DirectionalDashboardCellRenderer.hpp"
-#include <boost/variant/apply_visitor.hpp>
 #include <QPainter>
 #include "Nexus/Definitions/Ticker.hpp"
 
@@ -86,7 +85,7 @@ void DirectionalDashboardCellRenderer::UpdateText() {
   if(values.empty()) {
     m_text = QObject::tr("N/A");
   } else {
-    auto variant = apply_visitor(VariantVisitor(), values.back());
+    auto variant = std::visit(VariantVisitor(), values.back());
     if(variant.type() == QVariant::Type::Double) {
       m_text = QString::number(100 * variant.toDouble(), 'f', 2) + "%";
     } else {

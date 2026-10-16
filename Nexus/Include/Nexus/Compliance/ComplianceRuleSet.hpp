@@ -12,6 +12,7 @@
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Active.hpp>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -349,8 +350,8 @@ namespace Nexus {
       }
       entry.m_rules.push_back(rule);
     } else {
-      std::cerr << "Unknown compliance rule: " <<
-        updated_entry.get_schema().get_name() << "\n";
+      Beam::report_message(
+        "Unknown compliance rule: " + updated_entry.get_schema().get_name());
     }
   }
 

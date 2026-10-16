@@ -2,7 +2,6 @@
 #include <Beam/Utilities/AssertionException.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/variant.hpp>
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -28,7 +27,7 @@ std::string CanvasNodeModel::GetIdentityKey() {
 optional<CanvasNodeModel::Identity>
     CanvasNodeModel::FindIdentity(const CanvasNode& node) {
   if(auto identity = node.FindMetaData(GetIdentityKey())) {
-    auto value = get<const std::string>(&*identity);
+    auto value = std::get_if<std::string>(&*identity);
     if(!value) {
       return none;
     }
@@ -62,7 +61,7 @@ optional<const CanvasNode&>
   if(!referentKey) {
     return none;
   }
-  auto referentValue = get<const std::string>(&*referentKey);
+  auto referentValue = std::get_if<std::string>(&*referentKey);
   if(!referentValue) {
     return none;
   }
@@ -140,7 +139,7 @@ void CanvasNodeModel::Remove(const Coordinate& coordinate) {
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const CanvasNodeModel::Coordinate& coordinate) {
-  return out << '(' << coordinate.m_row << ", " << coordinate.m_column << ')';
+  return out << std::format(out.getloc(), "{}", coordinate);
 }
 
 size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
@@ -149,4 +148,12 @@ size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
   hash_combine(seed, value.m_row);
   hash_combine(seed, value.m_column);
   return seed;
+}
+
+std::format_context::iterator
+    std::formatter<CanvasNodeModel::Coordinate>::format(
+    const CanvasNodeModel::Coordinate& value, std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "({}, {})", value.m_row, value.m_column),
+    context);
 }

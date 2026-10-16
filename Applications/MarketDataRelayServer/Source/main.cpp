@@ -47,9 +47,10 @@ namespace {
   Scope parse_scope(const JsonObject& node) {
     auto scope = Scope();
     if(auto countries_node = node.get("countries")) {
-      if(auto country_list = get<std::vector<JsonValue>>(&*countries_node)) {
+      if(auto country_list =
+          std::get_if<std::vector<JsonValue>>(&*countries_node)) {
         for(auto& country_value : *country_list) {
-          if(auto country = get<double>(&country_value)) {
+          if(auto country = std::get_if<double>(&country_value)) {
             scope += CountryCode(static_cast<std::uint16_t>(*country));
           }
         }
@@ -115,7 +116,7 @@ int main(int argc, const char** argv) {
     if(received_kill_event()) {
       return 0;
     }
-    report_current_exception();
+    BEAM_LOG_CURRENT_EXCEPTION();
     return -1;
   }
   return 0;

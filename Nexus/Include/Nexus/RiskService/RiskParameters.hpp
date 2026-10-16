@@ -33,13 +33,6 @@ namespace Nexus {
 
     bool operator ==(const RiskParameters&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const RiskParameters& parameters) {
-    return out << '(' << parameters.m_currency << ' ' <<
-      parameters.m_buying_power << ' ' << parameters.m_allowed_state << ' ' <<
-      parameters.m_net_loss << ' ' << parameters.m_transition_time << ')';
-  }
 }
 
 namespace Beam {
@@ -55,6 +48,31 @@ namespace Beam {
       shuttle.shuttle("transition_time", value.m_transition_time);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::RiskParameters> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::RiskParameters& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})", value.m_currency,
+          value.m_buying_power, value.m_allowed_state, value.m_net_loss,
+          Beam::to_string(value.m_transition_time)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const RiskParameters& value) {
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

@@ -29,12 +29,6 @@ namespace Nexus {
     bool operator ==(const Position&) const = default;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const Position& position) {
-    return out << '(' << position.m_ticker << ' ' << position.m_currency <<
-      ' ' << position.m_quantity << ' ' << position.m_cost_basis << ')';
-  }
-
   /**
    * Returns the average price of a Position.
    * @param position The Position to measure.
@@ -69,6 +63,32 @@ namespace Beam {
       shuttle.shuttle("cost_basis", value.m_cost_basis);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Position> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Position& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {})", value.m_ticker,
+          value.m_currency, value.m_quantity, value.m_cost_basis), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const Position& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif
