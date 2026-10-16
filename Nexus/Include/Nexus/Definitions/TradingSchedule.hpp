@@ -10,6 +10,7 @@
 #include <Beam/Parsers/TimeDurationParser.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -243,10 +244,6 @@ namespace Nexus {
     return parse_trading_schedule(node, VENUES);
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const TradingSchedule::Event& event) {
-    return out << '(' << event.m_code << ' ' << event.m_timestamp << ')';
-  }
 
   inline TradingSchedule::TradingSchedule(std::vector<Rule> rules) noexcept
     : m_rules(std::move(rules)) {}
@@ -311,6 +308,25 @@ namespace Beam {
       shuttle.shuttle("rules", value.m_rules);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::TradingSchedule::Event> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::TradingSchedule::Event& event,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", event.m_code,
+          Beam::to_string(event.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const TradingSchedule::Event& event) {
+    return out << std::format(out.getloc(), "{}", event);
+  }
 }
 
 #endif

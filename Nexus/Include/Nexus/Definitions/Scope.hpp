@@ -124,14 +124,6 @@ namespace Nexus {
       Scope(GlobalTag, std::string name);
   };
 
-  inline std::ostream& operator <<(std::ostream& out, const Scope& scope) {
-    if(!scope.get_name().empty()) {
-      return out << scope.get_name();
-    } else {
-      return out;
-    }
-  }
-
   inline bool operator <(const Ticker& ticker, const Scope& scope) {
     return Scope(ticker) < scope;
   }
@@ -347,6 +339,21 @@ namespace std {
       return Nexus::hash_value(scope);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Scope> : public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Scope& scope, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        scope.get_name(), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, const Scope& scope) {
+    return out << std::format("{}", scope);
+  }
 }
 
 #endif

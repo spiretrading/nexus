@@ -6,7 +6,6 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Utilities/Streamable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
@@ -387,15 +386,6 @@ namespace Nexus {
         fields.m_additional_fields.end();
   }
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const OrderFields& value) {
-    return out << '(' << value.m_account << ' ' << value.m_ticker << ' ' <<
-      value.m_currency << ' ' << value.m_type << ' ' << value.m_side << ' ' <<
-      value.m_destination << ' ' << value.m_quantity << ' ' << value.m_price <<
-      ' ' << value.m_time_in_force << ' ' <<
-      Beam::Stream(value.m_additional_fields) << ')';
-  }
-
   inline OrderFields::OrderFields() noexcept
     : m_type(OrderType::NONE),
       m_side(Side::NONE),
@@ -443,6 +433,42 @@ namespace Beam {
       shuttle.shuttle("additional_fields", value.m_additional_fields);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::OrderFields> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::OrderFields& value, auto& context) const {
+      auto fields = std::string();
+      for(auto& field : value.m_additional_fields) {
+        if(!fields.empty()) {
+          fields += ", ";
+        }
+        fields += std::format(context.locale(), "{}", field);
+      }
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {} {} {} {} {} [{}])",
+          value.m_account, value.m_ticker, value.m_currency, value.m_type,
+          value.m_side, value.m_destination, value.m_quantity, value.m_price,
+          value.m_time_in_force, fields), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const OrderFields& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

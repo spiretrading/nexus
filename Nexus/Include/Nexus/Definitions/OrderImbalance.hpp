@@ -3,6 +3,7 @@
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
@@ -31,13 +32,6 @@ namespace Nexus {
 
     bool operator ==(const OrderImbalance&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const OrderImbalance& value) {
-    return out << "(" << value.m_ticker << " " << value.m_side << " " <<
-      value.m_size << " " << value.m_reference_price << " " <<
-      value.m_timestamp << ")";
-  }
 }
 
 namespace Beam {
@@ -53,6 +47,31 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::OrderImbalance> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::OrderImbalance& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})", value.m_ticker,
+          value.m_side, value.m_size, value.m_reference_price,
+          Beam::to_string(value.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const OrderImbalance& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

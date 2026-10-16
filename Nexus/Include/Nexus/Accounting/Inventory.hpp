@@ -70,13 +70,6 @@ namespace Nexus {
       m_fees(fees),
       m_volume(volume),
       m_transaction_count(transaction_count) {}
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const Inventory& inventory) {
-    return out << '(' << inventory.m_position << ' ' <<
-      inventory.m_gross_profit_and_loss << ' ' << inventory.m_fees << ' ' <<
-      inventory.m_volume << ' ' << inventory.m_transaction_count << ')';
-  }
 }
 
 namespace Beam {
@@ -92,6 +85,34 @@ namespace Beam {
       shuttle.shuttle("transaction_count", value.m_transaction_count);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Inventory> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Inventory& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {})", value.m_position,
+          value.m_gross_profit_and_loss, value.m_fees, value.m_volume,
+          value.m_transaction_count), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const Inventory& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

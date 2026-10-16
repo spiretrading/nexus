@@ -1,15 +1,26 @@
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 
-using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
 
-QtPromise<std::vector<TimeAndSalesModel::Entry>>
-    NoneTimeAndSalesModel::query_until(Sequence sequence, int max_count) {
-  return std::vector<Entry>();
+QtPromise<void> NoneTimeAndSalesModel::load_older(int max_count) {
+  return QtPromise<void>();
 }
 
-connection NoneTimeAndSalesModel::connect_update_signal(
-    const UpdateSignal::slot_type& slot) const {
+int NoneTimeAndSalesModel::get_size() const {
+  return 0;
+}
+
+const NoneTimeAndSalesModel::Type& NoneTimeAndSalesModel::get(int index) const {
+  throw std::out_of_range("The index is out of range.");
+}
+
+connection NoneTimeAndSalesModel::connect_operation_signal(
+    const OperationSignal::slot_type& slot) const {
   return {};
+}
+
+void NoneTimeAndSalesModel::transact(
+    const std::function<void ()>& transaction) {
+  transaction();
 }

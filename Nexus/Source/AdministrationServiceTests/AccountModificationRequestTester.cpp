@@ -38,6 +38,9 @@ TEST_SUITE("AccountModificationRequest") {
     auto expected =
       std::string("(GRANTED (ACCOUNT 300 manager) 7 2024-Jul-05 10:00:00)");
     REQUIRE(to_string(update) == expected);
+    REQUIRE(std::format("{}", update) == expected);
+    REQUIRE(std::format("{:>60}", update) == std::format("{:>60}", expected));
+    REQUIRE(std::format("{:.10}", update) == expected.substr(0, 10));
     test_round_trip_shuttle(get_test_request(), [] (const auto& received) {
       auto& expected = get_test_request();
       REQUIRE(received.get_id() == expected.get_id());
@@ -55,5 +58,48 @@ TEST_SUITE("AccountModificationRequest") {
       DirectoryEntry::make_account(300, "manager"), 7,
       time_from_string("2024-07-05 10:00:00"));
     test_round_trip_shuttle(update);
+  }
+
+  TEST_CASE("format_request") {
+    auto& request = get_test_request();
+    auto expected = std::string(
+      "(42 RISK (ACCOUNT 100 account) (ACCOUNT 200 submitter) "
+      "2024-Jul-04 15:30:00 2024-Jul-04 15:30:00)");
+    REQUIRE(std::format("{}", request) == expected);
+    REQUIRE(to_string(request) == expected);
+    REQUIRE(std::format("{:>110}", request) ==
+      std::format("{:>110}", expected));
+    REQUIRE(std::format("{:.10}", request) == expected.substr(0, 10));
+  }
+
+  TEST_CASE("format_type") {
+    using Type = AccountModificationRequest::Type;
+    for(auto& [type, expected] : {
+        std::pair(Type::ENTITLEMENTS, "ENTITLEMENTS"),
+        std::pair(Type::RISK, "RISK"),
+        std::pair(Type::COMPLIANCE, "COMPLIANCE"),
+        std::pair(static_cast<Type>(-1), "UNKNOWN")}) {
+      REQUIRE(std::format("{}", type) == expected);
+      REQUIRE(to_string(type) == expected);
+    }
+    REQUIRE(std::format("{:>6}", Type::RISK) == "  RISK");
+    REQUIRE(std::format("{:.2}", Type::RISK) == "RI");
+  }
+
+  TEST_CASE("format_status") {
+    using Status = AccountModificationRequest::Status;
+    for(auto& [status, expected] : {
+        std::pair(Status::NONE, "NONE"),
+        std::pair(Status::PENDING, "PENDING"),
+        std::pair(Status::REVIEWED, "REVIEWED"),
+        std::pair(Status::SCHEDULED, "SCHEDULED"),
+        std::pair(Status::GRANTED, "GRANTED"),
+        std::pair(Status::REJECTED, "REJECTED"),
+        std::pair(static_cast<Status>(-1), "UNKNOWN")}) {
+      REQUIRE(std::format("{}", status) == expected);
+      REQUIRE(to_string(status) == expected);
+    }
+    REQUIRE(std::format("{:>6}", Status::NONE) == "  NONE");
+    REQUIRE(std::format("{:.2}", Status::NONE) == "NO");
   }
 }

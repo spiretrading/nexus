@@ -34,12 +34,6 @@ namespace Nexus {
 
     bool operator ==(const AccountModificationRequestSummary&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequestSummary& summary) {
-    return out << '(' << summary.m_request << ' ' << summary.m_status << ' ' <<
-      summary.m_comment_count << ')';
-  }
 }
 
 namespace Beam {
@@ -56,6 +50,25 @@ namespace Beam {
       shuttle.shuttle("modification", value.m_modification);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::AccountModificationRequestSummary> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountModificationRequestSummary& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", value.m_request,
+          value.m_status, value.m_comment_count), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequestSummary& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

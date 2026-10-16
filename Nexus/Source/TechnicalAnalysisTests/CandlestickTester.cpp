@@ -109,9 +109,31 @@ TEST_SUITE("Candlestick") {
       TestCandlestick(start, end, open, close, high, low, volume);
     REQUIRE(to_string(candlestick) == "(2024-Jan-31 10:00:00, 2024-Jan-31 "
       "11:00:00, 10.00, 15.00, 9.00, 12.00, 5000)");
+    auto expected = std::string("(2024-Jan-31 10:00:00, 2024-Jan-31 "
+      "11:00:00, 10.00, 15.00, 9.00, 12.00, 5000)");
+    REQUIRE(std::format("{}", candlestick) == expected);
+    REQUIRE(std::format("{:>90}", candlestick) ==
+      std::format("{:>90}", expected));
+    REQUIRE(std::format("{:.20}", candlestick) == expected.substr(0, 20));
     auto empty_candlestick = TestCandlestick(start, end);
     REQUIRE(to_string(empty_candlestick) ==
       "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00)");
+    REQUIRE(std::format("{}", empty_candlestick) ==
+      "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00)");
+    REQUIRE(std::format("{}", TestCandlestick()) ==
+      "(not-a-date-time, not-a-date-time)");
+    empty_candlestick.update(Money::ZERO);
+    REQUIRE(std::format("{}", empty_candlestick) ==
+      "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00, "
+      "0.00, 0.00, 0.00, 0.00, 0)");
     test_round_trip_shuttle(candlestick);
+  }
+
+  TEST_CASE("format_numeric_values") {
+    auto candlestick = Candlestick(1, 2, 1.123456789, 2.5, 3.5, 0.5,
+      Quantity(1000000000000LL));
+    auto expected = "(1, 2, 1.123456789, 3.5, 0.5, 2.5, 1000000000000)";
+    REQUIRE(std::format("{}", candlestick) == expected);
+    REQUIRE(to_string(candlestick) == expected);
   }
 }

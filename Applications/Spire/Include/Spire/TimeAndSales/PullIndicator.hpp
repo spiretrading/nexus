@@ -38,7 +38,8 @@ namespace Spire {
       void update_position(const QSize& size);
       void update_loading_panel();
       void display();
-      void on_position(int position);
+      void on_horizontal_position(int position);
+      void on_vertical_position(int position);
       void on_begin_loading();
       void on_end_loading();
       void on_timeout();

@@ -1,6 +1,8 @@
 #ifndef NEXUS_CSE_FEE_TABLE_HPP
 #define NEXUS_CSE_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
@@ -129,11 +131,13 @@ namespace Nexus {
       } else if(flag[0] == 'T') {
         return LiquidityFlag::ACTIVE;
       } else {
-        std::cout << "Unknown liquidity flag [CSE]: \"" << flag << "\"\n";
+        Beam::report_message(
+          std::format("Unknown liquidity flag [CSE]: \"{}\"", flag));
         return LiquidityFlag::ACTIVE;
       }
     } else {
-      std::cout << "Unknown liquidity flag [CSE]: \"" << flag << "\"\n";
+      Beam::report_message(
+        std::format("Unknown liquidity flag [CSE]: \"{}\"", flag));
       return LiquidityFlag::ACTIVE;
     }
   }

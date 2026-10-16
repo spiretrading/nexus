@@ -11,6 +11,9 @@ TEST_SUITE("AccountModificationRequestCounts") {
   TEST_CASE("stream") {
     auto counts = AccountModificationRequestCounts(4, 2, 1);
     REQUIRE(lexical_cast<std::string>(counts) == "(4 2 1)");
+    REQUIRE(std::format("{}", counts) == "(4 2 1)");
+    REQUIRE(std::format("{:>10}", counts) == "   (4 2 1)");
+    REQUIRE(std::format("{:.4}", counts) == "(4 2");
     test_round_trip_shuttle(counts);
   }
 }

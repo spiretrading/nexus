@@ -102,11 +102,6 @@ namespace Nexus {
       Beam::CachedValue<std::vector<PositionEntry>> m_positions;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const PositionOrderBook::PositionEntry& entry) {
-    return out << '(' << entry.m_ticker << ' ' << entry.m_quantity << ')';
-  }
-
   inline PositionOrderBook::OrderEntry::OrderEntry(
     std::shared_ptr<Order> order, int sequence_number) noexcept
     : m_order(std::move(order)),
@@ -288,6 +283,31 @@ namespace Nexus {
       m_fields.erase(report.m_id);
       orders.erase(order_iterator);
     }
+  }
+}
+
+template<>
+class std::formatter<Nexus::PositionOrderBook::PositionEntry> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::PositionOrderBook::PositionEntry& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})",
+          value.m_ticker, value.m_quantity), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const PositionOrderBook::PositionEntry& value) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", value);
+    }
+    return out << std::format(out.getloc(), "{}", value);
   }
 }
 

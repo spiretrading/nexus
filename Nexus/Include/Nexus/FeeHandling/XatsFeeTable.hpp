@@ -1,6 +1,8 @@
 #ifndef NEXUS_XATS_FEE_TABLE_HPP
 #define NEXUS_XATS_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
@@ -156,13 +158,13 @@ namespace Nexus {
         } else if(report.m_liquidity_flag[0] == 'A') {
           return XatsFeeTable::Type::ACTIVE;
         } else {
-          std::cout << "Unknown liquidity flag [XATS]: " <<
-            report.m_liquidity_flag << "\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [XATS]: {}", report.m_liquidity_flag));
           return XatsFeeTable::Type::ACTIVE;
         }
       } else {
-        std::cout << "Unknown liquidity flag [XATS]: " <<
-          report.m_liquidity_flag << "\n";
+        Beam::report_message(std::format(
+          "Unknown liquidity flag [XATS]: {}", report.m_liquidity_flag));
         return XatsFeeTable::Type::ACTIVE;
       }
     }();

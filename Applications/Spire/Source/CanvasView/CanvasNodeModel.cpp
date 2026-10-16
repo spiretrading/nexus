@@ -139,7 +139,7 @@ void CanvasNodeModel::Remove(const Coordinate& coordinate) {
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const CanvasNodeModel::Coordinate& coordinate) {
-  return out << '(' << coordinate.m_row << ", " << coordinate.m_column << ')';
+  return out << std::format(out.getloc(), "{}", coordinate);
 }
 
 size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
@@ -148,4 +148,12 @@ size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
   hash_combine(seed, value.m_row);
   hash_combine(seed, value.m_column);
   return seed;
+}
+
+std::format_context::iterator
+    std::formatter<CanvasNodeModel::Coordinate>::format(
+    const CanvasNodeModel::Coordinate& value, std::format_context& context) const {
+  return std::formatter<std::string_view>::format(
+    std::format(context.locale(), "({}, {})", value.m_row, value.m_column),
+    context);
 }

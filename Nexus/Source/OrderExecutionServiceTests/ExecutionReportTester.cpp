@@ -85,9 +85,14 @@ TEST_SUITE("ExecutionReport") {
     report.m_text = "text";
     report.m_additional_tags.emplace_back(100, "value1");
     report.m_additional_tags.emplace_back(200, "value2");
-    REQUIRE(to_string(report) ==
+    auto expected = std::string(
       "(123 2024-May-21 01:02:03 0 FILLED 100 1.00 A XNYS"
       " 1.00 2.00 3.00 text [(100 value1) (200 value2)])");
+    REQUIRE(to_string(report) == expected);
+    REQUIRE(std::format("{}", report) == expected);
+    REQUIRE(std::format("{:*>{}}", report, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.5}", report) == expected.substr(0, 5));
     test_round_trip_shuttle(report);
   }
 }

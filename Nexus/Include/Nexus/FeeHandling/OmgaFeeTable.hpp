@@ -1,6 +1,8 @@
 #ifndef NEXUS_OMGA_FEE_TABLE_HPP
 #define NEXUS_OMGA_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
@@ -130,13 +132,14 @@ namespace Nexus {
           } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::HIDDEN_PASSIVE;
           } else {
-            std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              report.m_liquidity_flag << "\"\n";
+            Beam::report_message(
+              std::format("Unknown liquidity flag [OMGA]: \"{}\"",
+                report.m_liquidity_flag));
             return OmgaFeeTable::Type::HIDDEN_PASSIVE;
           }
         } else {
-          std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [OMGA]: \"{}\"", report.m_liquidity_flag));
           return OmgaFeeTable::Type::HIDDEN_PASSIVE;
         }
       } else if(is_etf) {
@@ -146,13 +149,14 @@ namespace Nexus {
           } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::ETF_PASSIVE;
           } else {
-            std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              report.m_liquidity_flag << "\"\n";
+            Beam::report_message(
+              std::format("Unknown liquidity flag [OMGA]: \"{}\"",
+                report.m_liquidity_flag));
             return OmgaFeeTable::Type::ETF_PASSIVE;
           }
         } else {
-          std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [OMGA]: \"{}\"", report.m_liquidity_flag));
           return OmgaFeeTable::Type::ETF_PASSIVE;
         }
       } else {
@@ -162,13 +166,14 @@ namespace Nexus {
           } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::PASSIVE;
           } else {
-            std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              report.m_liquidity_flag << "\"\n";
+            Beam::report_message(
+              std::format("Unknown liquidity flag [OMGA]: \"{}\"",
+                report.m_liquidity_flag));
             return OmgaFeeTable::Type::PASSIVE;
           }
         } else {
-          std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [OMGA]: \"{}\"", report.m_liquidity_flag));
           return OmgaFeeTable::Type::PASSIVE;
         }
       }

@@ -71,5 +71,8 @@ TEST_SUITE("Inventory") {
     test_round_trip_shuttle(inventory);
     REQUIRE(
       to_string(inventory) == "((TST.TSX CAD 100 1000.00) 50.00 0.01 200 2)");
+    REQUIRE(std::format("{}", inventory) ==
+      "((TST.TSX CAD 100 1000.00) 50.00 0.01 200 2)");
+    REQUIRE(std::format("{:.5}", inventory) == "((TST");
   }
 }

@@ -19,6 +19,9 @@ TEST_SUITE("Position") {
     auto position = Position(TST, CAD, 100, 1000 * Money::ONE);
     test_round_trip_shuttle(Position(TST, CAD, 100, 1000 * Money::ONE));
     REQUIRE(to_string(position) == "(TST.TSX CAD 100 1000.00)");
+    REQUIRE(std::format("{}", position) == "(TST.TSX CAD 100 1000.00)");
+    REQUIRE(std::format("{:*>27}", position) == "**(TST.TSX CAD 100 1000.00)");
+    REQUIRE(std::format("{:.8}", position) == "(TST.TSX");
   }
 
   TEST_CASE("get_average_price") {

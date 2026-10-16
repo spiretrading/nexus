@@ -1,3 +1,4 @@
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -13,6 +14,15 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 TEST_SUITE("PositionOrderBook") {
+  TEST_CASE("position_entry_format") {
+    auto entry =
+      PositionOrderBook::PositionEntry(parse_ticker("TST.TSX"), -100);
+    REQUIRE(std::format("{}", entry) == "(TST.TSX -100)");
+    REQUIRE(to_string(entry) == "(TST.TSX -100)");
+    REQUIRE(std::format("{:*>16}", entry) == "**(TST.TSX -100)");
+    REQUIRE(std::format("{:.8}", entry) == "(TST.TSX");
+  }
+
   TEST_CASE("constructor") {
     auto book = PositionOrderBook();
     REQUIRE(book.get_positions().empty());

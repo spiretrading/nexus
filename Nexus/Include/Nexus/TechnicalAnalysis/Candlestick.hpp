@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
@@ -95,8 +96,7 @@ namespace Nexus {
       bool operator ==(const Candlestick&) const = default;
 
     private:
-      template<typename U, typename V>
-      friend std::ostream& operator <<(std::ostream&, const Candlestick<U, V>&);
+      friend struct std::formatter<Candlestick>;
       friend struct Beam::Shuttle<Candlestick>;
       bool m_has_open;
       Domain m_start;
@@ -107,19 +107,6 @@ namespace Nexus {
       Range m_low;
       Quantity m_volume;
   };
-
-  template<typename D, typename R>
-  std::ostream& operator <<(
-      std::ostream& out, const Candlestick<D, R>& candlestick) {
-    if(!candlestick.m_has_open) {
-      return out << '(' << candlestick.get_start() << ", " <<
-        candlestick.get_end() << ')';
-    }
-    return out << '(' << candlestick.get_start() << ", " <<
-      candlestick.get_end() << ", " << candlestick.get_open() << ", " <<
-      candlestick.get_high() << ", " << candlestick.get_low() << ", " <<
-      candlestick.get_close() << ", " << candlestick.get_volume() << ')';
-  }
 
   template<typename D, typename R>
   Candlestick<D, R>::Candlestick() noexcept(
@@ -242,6 +229,41 @@ namespace Beam {
       shuttle.shuttle("volume", value.m_volume);
     }
   };
+}
+
+template<typename D, typename R>
+class std::formatter<Nexus::Candlestick<D, R>> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Candlestick<D, R>& value, auto& context) const {
+      auto format_value = [&] (const auto& value) {
+        if constexpr(std::formattable<decltype(value), char>) {
+          return std::format(context.locale(), "{}", value);
+        } else {
+          return Beam::to_string(value);
+        }
+      };
+      auto text = [&] {
+        if(!value.m_has_open) {
+          return std::format(context.locale(), "({}, {})",
+            format_value(value.m_start), format_value(value.m_end));
+        }
+        return std::format(context.locale(), "({}, {}, {}, {}, {}, {}, {})",
+          format_value(value.m_start), format_value(value.m_end),
+          format_value(value.m_open), format_value(value.m_high),
+          format_value(value.m_low), format_value(value.m_close),
+          value.m_volume);
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+namespace Nexus {
+  template<typename D, typename R>
+  std::ostream& operator <<(
+      std::ostream& out, const Candlestick<D, R>& candlestick) {
+    return out << std::format(out.getloc(), "{}", candlestick);
+  }
 }
 
 #endif
