@@ -1,8 +1,10 @@
 #ifndef SPIRE_CANVAS_NODE_MODEL_HPP
 #define SPIRE_CANVAS_NODE_MODEL_HPP
+#include <format>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <string_view>
 #include <tuple>
 #include <vector>
 #include <Beam/Collections/View.hpp>
@@ -194,5 +196,14 @@ namespace std {
     size_t operator()(const Spire::CanvasNodeModel::Coordinate& value) const;
   };
 }
+
+template<>
+class std::formatter<Spire::CanvasNodeModel::Coordinate> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Spire::CanvasNodeModel::Coordinate& value,
+      std::format_context& context) const;
+};
 
 #endif

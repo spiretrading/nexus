@@ -1,7 +1,9 @@
 #ifndef SPIRE_FOCUS_OBSERVER_HPP
 #define SPIRE_FOCUS_OBSERVER_HPP
+#include <format>
 #include <memory>
 #include <ostream>
+#include <string_view>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 
@@ -71,5 +73,13 @@ namespace Spire {
 
   std::ostream& operator <<(std::ostream& out, FocusObserver::State state);
 }
+
+template<>
+class std::formatter<Spire::FocusObserver::State> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      Spire::FocusObserver::State state, std::format_context& context) const;
+};
 
 #endif

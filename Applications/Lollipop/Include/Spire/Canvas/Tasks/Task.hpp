@@ -1,8 +1,10 @@
 #ifndef SPIRE_TASK_HPP
 #define SPIRE_TASK_HPP
 #include <atomic>
+#include <format>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
@@ -133,5 +135,13 @@ namespace Spire {
    */
   bool IsTerminal(Task::State state);
 }
+
+template<>
+class std::formatter<Spire::Task::State> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      Spire::Task::State state, std::format_context& context) const;
+};
 
 #endif
