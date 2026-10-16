@@ -2,9 +2,9 @@
 #define OTC_LINK_SNAPSHOT_CLIENT_HPP
 #include <functional>
 #include <iostream>
+#include <print>
 #include <sstream>
 #include <stop_token>
-#include <syncstream>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -130,8 +130,9 @@ namespace Nexus {
         if(stop_token.stop_requested() || attempt >= retries) {
           throw;
         }
-        std::osyncstream(std::cout) << "(snapshot_retry " << attempt + 1 <<
-          ' ' << error.what() << ')' << std::endl;
+        std::println(
+          std::cout, "(snapshot_retry {} {})", attempt + 1, error.what());
+        std::cout.flush();
       }
     }
   }

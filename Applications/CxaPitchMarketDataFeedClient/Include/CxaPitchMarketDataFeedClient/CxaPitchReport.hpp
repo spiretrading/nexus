@@ -2,6 +2,7 @@
 #define CXA_PITCH_REPORT_HPP
 #include <concepts>
 #include <iostream>
+#include <print>
 #include <sstream>
 #include <type_traits>
 #include <utility>
@@ -18,8 +19,8 @@ namespace Nexus {
   void print(F&& writer) {
     auto stream = std::stringstream();
     std::forward<F>(writer)(stream);
-    stream << '\n';
-    std::cout << stream.view() << std::flush;
+    std::println(std::cout, "{}", stream.view());
+    std::cout.flush();
   }
 }
 

@@ -1,11 +1,12 @@
 #ifndef OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #define OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #include <atomic>
-#include <iomanip>
 #include <iostream>
-#include <syncstream>
+#include <iterator>
+#include <print>
 #include <unordered_map>
 #include <unordered_set>
+#include <Beam/Utilities/ToString.hpp>
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkClient.hpp"
@@ -332,7 +333,7 @@ namespace Nexus {
       if constexpr(std::same_as<Message, OtcLinkMessage>) {
         log_raw(message);
       } else {
-        std::osyncstream(std::cout) << message << '\n';
+        std::println(std::cout, "{}", Beam::to_string(message));
       }
     });
   }
@@ -343,14 +344,13 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::log_raw(
       const OtcLinkMessage& message) {
-    auto out = std::osyncstream(std::cout);
-    out << "(message " << static_cast<unsigned int>(message.m_type) << ' ' <<
-      std::hex << std::setfill('0');
+    auto text = std::format(
+      "(message {} ", static_cast<unsigned int>(message.m_type));
     for(auto value : message.m_payload) {
-      out << std::setw(2) <<
-        static_cast<unsigned int>(static_cast<unsigned char>(value));
+      std::format_to(
+        std::back_inserter(text), "{:02x}", static_cast<unsigned char>(value));
     }
-    out << ')' << '\n';
+    std::println(std::cout, "{})", text);
   }
 
   template<typename M, typename C, typename T> requires
@@ -360,9 +360,9 @@ namespace Nexus {
   void OtcLinkMarketDataFeedClient<M, C, T>::log(
       const OtcLinkMessage& message, const std::exception& exception) const {
     log_raw(message);
-    std::osyncstream(std::cout) << "(bad_message " <<
-      static_cast<unsigned int>(message.m_type) << ' ' <<
-      exception.what() << ')' << std::endl;
+    std::println(std::cout, "(bad_message {} {})",
+      static_cast<unsigned int>(message.m_type), exception.what());
+    std::cout.flush();
   }
 
   template<typename M, typename C, typename T> requires
@@ -372,8 +372,9 @@ namespace Nexus {
   void OtcLinkMarketDataFeedClient<M, C, T>::log_unmapped(
       std::uint32_t security) {
     if(m_unmapped_securities.insert(security).second) {
-      std::osyncstream(std::cout) << "(unmapped_security " <<
-        m_time_client->get_time() << ' ' << security << ')' << std::endl;
+      std::println(std::cout, "(unmapped_security {} {})",
+        Beam::to_string(m_time_client->get_time()), security);
+      std::cout.flush();
     }
   }
 

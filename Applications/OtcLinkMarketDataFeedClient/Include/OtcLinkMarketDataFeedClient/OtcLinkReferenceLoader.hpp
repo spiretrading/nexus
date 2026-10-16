@@ -2,12 +2,13 @@
 #define OTC_LINK_REFERENCE_LOADER_HPP
 #include <functional>
 #include <iostream>
+#include <print>
 #include <stop_token>
-#include <syncstream>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkSnapshot.hpp"
@@ -137,8 +138,9 @@ namespace Nexus {
       }
     } catch(const std::exception& e) {
       if(m_open_state.is_open()) {
-        std::osyncstream(std::cout) << "(reference_failed " << m_timestamp <<
-          ' ' << e.what() << ')' << std::endl;
+        std::println(std::cout, "(reference_failed {} {})",
+          Beam::to_string(m_timestamp), e.what());
+        std::cout.flush();
       }
     }
     if(m_open_state.is_open()) {
@@ -152,8 +154,9 @@ namespace Nexus {
     try {
       return load();
     } catch(const std::exception& e) {
-      std::osyncstream(std::cout) << "(reference_failed " << timestamp <<
-        ' ' << e.what() << ')' << std::endl;
+      std::println(std::cout, "(reference_failed {} {})",
+        Beam::to_string(timestamp), e.what());
+      std::cout.flush();
       return OtcLinkSnapshot();
     }
   }

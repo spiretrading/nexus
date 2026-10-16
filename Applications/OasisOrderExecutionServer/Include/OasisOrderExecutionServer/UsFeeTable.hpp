@@ -1,11 +1,12 @@
 #ifndef OASIS_US_FEE_TABLE_HPP
 #define OASIS_US_FEE_TABLE_HPP
-#include <iostream>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <boost/rational.hpp>
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/FeeHandling/OtcmFeeTable.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus {
 
@@ -81,7 +82,8 @@ namespace Nexus {
         return calculate_fee(
           table.m_otcm_fee_table, order.get_info().m_fields, report);
       } else {
-        std::cout << "Unknown last market [US]: \"" << last_market << "\"\n";
+        Beam::report_message(
+          std::format("Unknown last market [US]: \"{}\"", last_market));
         return Money::ZERO;
       }
     }();

@@ -3,7 +3,8 @@
 #include <atomic>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
+#include <iterator>
+#include <print>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -12,6 +13,7 @@
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -337,21 +339,21 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::log(const StampMessage& message) {
-    auto out = std::stringstream();
+    auto text = std::string("(stamp");
     auto write_section = [&] (
         std::string_view name, const StampMessage::Section& section) {
-      out << " (" << name;
+      std::format_to(std::back_inserter(text), " ({}", name);
       for(auto& field : section) {
-        out << " (" << field.m_identifier << ' ' << field.m_index << ' ' <<
-          std::quoted(field.m_value) << ')';
+        std::format_to(std::back_inserter(text), " ({} {} {})",
+          field.m_identifier, field.m_index,
+          Beam::to_string(std::quoted(field.m_value)));
       }
-      out << ')';
+      text += ')';
     };
-    out << "(stamp";
     write_section("control", message.m_control_header);
     write_section("business", message.m_business_content);
-    out << ")\n";
-    std::cout << out.str() << std::flush;
+    std::println(std::cout, "{})", text);
+    std::cout.flush();
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -1407,10 +1409,9 @@ namespace Nexus {
     if(!m_config.m_is_logging_messages) {
       log(message);
     }
-    auto out = std::stringstream();
-    out << "(bad_message " << m_time_client->get_time() << ' ' <<
-      error.what() << ")\n";
-    std::cout << out.str() << std::flush;
+    std::println(std::cout, "(bad_message {} {})",
+      Beam::to_string(m_time_client->get_time()), error.what());
+    std::cout.flush();
   }
 
   template<typename C, typename D, typename T, typename M> requires

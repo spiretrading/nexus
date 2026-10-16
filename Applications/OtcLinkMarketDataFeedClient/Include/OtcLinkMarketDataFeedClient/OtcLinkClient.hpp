@@ -5,14 +5,15 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <print>
 #include <stop_token>
-#include <syncstream>
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/Timer.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/StandardTimeZones.hpp"
@@ -419,17 +420,18 @@ namespace Nexus {
     }
     if(!state.m_is_loading_snapshot) {
       if(auto gap = state.m_sequencer.get_gap()) {
-        std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
-          gap->m_sequence << ' ' << gap->m_count << " session_reset)" <<
-          std::endl;
+        std::println(std::cout, "(dropped {} {} {} session_reset)",
+          Beam::to_string(timestamp), gap->m_sequence, gap->m_count);
+        std::cout.flush();
       }
     }
     cancel(state);
     if(state.m_is_loading_snapshot) {
       state.m_is_loading_snapshot = false;
       m_tasks.push([&] { m_snapshot_stop_source.request_stop(); });
-      std::osyncstream(std::cout) << "(snapshot_failed " << timestamp <<
-        " session_reset)" << std::endl;
+      std::println(std::cout, "(snapshot_failed {} session_reset)",
+        Beam::to_string(timestamp));
+      std::cout.flush();
     }
     state.m_session = source.m_session;
     state.m_sequencer.reset(1);
@@ -527,8 +529,9 @@ namespace Nexus {
         break;
       }
       auto count = std::min(gap->m_count, end - gap->m_sequence);
-      std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
-        gap->m_sequence << ' ' << count << ' ' << reason << ')' << std::endl;
+      std::println(std::cout, "(dropped {} {} {} {})",
+        Beam::to_string(timestamp), gap->m_sequence, count, reason);
+      std::cout.flush();
       state.m_sequencer.skip(count);
     }
     state.m_gap_sequence = boost::none;
@@ -658,8 +661,9 @@ namespace Nexus {
           }
         } else {
           state.m_sequencer.resume();
-          std::osyncstream(std::cout) << "(snapshot_failed " << timestamp <<
-            ' ' << *failure << ')' << std::endl;
+          std::println(std::cout, "(snapshot_failed {} {})",
+            Beam::to_string(timestamp), *failure);
+          std::cout.flush();
         }
         flush(state, timestamp);
       });
@@ -705,8 +709,8 @@ namespace Nexus {
           return;
         }
       } catch(const OtcLinkParserException& error) {
-        std::osyncstream(std::cout) << "(bad_datagram " << feed << ' ' <<
-          error.what() << ')' << std::endl;
+        std::println(std::cout, "(bad_datagram {} {})", feed, error.what());
+        std::cout.flush();
       } catch(const std::exception& error) {
         auto exception = std::current_exception();
         Beam::with(m_state, [&] (auto& state) {
@@ -714,8 +718,8 @@ namespace Nexus {
           if(state.m_is_finished) {
             return;
           }
-          std::osyncstream(std::cout) << "(feed_failed " << feed << ' ' <<
-            error.what() << ')' << std::endl;
+          std::println(std::cout, "(feed_failed {} {})", feed, error.what());
+          std::cout.flush();
           if(std::ranges::all_of(state.m_feeds, [] (const auto& feed) {
               return feed.m_is_closed;
             })) {

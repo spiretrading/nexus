@@ -3,12 +3,13 @@
 #include <atomic>
 #include <cmath>
 #include <functional>
-#include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <limits>
-#include <syncstream>
+#include <print>
 #include <unordered_set>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchClient.hpp"
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchConfiguration.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
@@ -241,7 +242,7 @@ namespace Nexus {
       if constexpr(std::same_as<Message, AsxTradeItchMessage>) {
         log_raw(message);
       } else {
-        std::osyncstream(std::cout) << message << '\n';
+        std::println(std::cout, "{}", Beam::to_string(message));
       }
     });
   }
@@ -251,15 +252,13 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::log_raw(
       const AsxTradeItchMessage& message) {
-    auto out = std::osyncstream(std::cout);
-    out << "(message " << static_cast<char>(message.m_type) << ' ' <<
-      std::hex << std::setfill('0');
+    auto text = std::format("(message {} ", static_cast<char>(message.m_type));
     for(auto i = std::size_t(0);
         i != message.m_length - AsxTradeItchMessage::HEADER_LENGTH; ++i) {
-      out << std::setw(2) << static_cast<unsigned int>(
+      std::format_to(std::back_inserter(text), "{:02x}",
         static_cast<unsigned char>(message.m_payload[i]));
     }
-    out << ")\n";
+    std::println(std::cout, "{})", text);
   }
 
   template<typename M, typename C> requires
@@ -635,7 +634,7 @@ namespace Nexus {
           dispatch(message);
         } catch(const std::exception&) {
           log_raw(message);
-          std::cout << std::flush;
+          std::cout.flush();
           throw;
         }
       }

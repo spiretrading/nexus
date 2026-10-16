@@ -1,7 +1,8 @@
 #ifndef NEXUS_OTCM_FEE_TABLE_HPP
 #define NEXUS_OTCM_FEE_TABLE_HPP
 #include <array>
-#include <iostream>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/rational.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -249,8 +250,8 @@ namespace Nexus {
     }
     auto type = get_otcm_type(report.m_liquidity_flag);
     if(type == OtcmFeeTable::Type::NONE) {
-      std::cout << "Unknown liquidity flag [OTCM]: \"" <<
-        report.m_liquidity_flag << "\"\n";
+      Beam::report_message(std::format("Unknown liquidity flag [OTCM]: \"{}\"",
+        report.m_liquidity_flag));
       type = OtcmFeeTable::Type::ACTIVE;
     }
     if(price_class == OtcmFeeTable::PriceClass::SUBPENNY) {

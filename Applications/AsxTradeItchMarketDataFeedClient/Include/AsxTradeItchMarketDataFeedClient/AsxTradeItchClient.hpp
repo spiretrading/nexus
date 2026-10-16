@@ -2,7 +2,7 @@
 #define ASX_TRADE_ITCH_CLIENT_HPP
 #include <iostream>
 #include <iterator>
-#include <sstream>
+#include <print>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -11,6 +11,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchGlimpseClient.hpp"
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchRecoveryScheduler.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
@@ -292,10 +293,9 @@ namespace Nexus {
         }
         return;
       }
-      auto out = std::stringstream();
-      out << "(dropped " << timestamp << ' ' << gap->m_sequence << ' ' <<
-        gap->m_count << ' ' << reason << ")\n";
-      std::cout << out.str() << std::flush;
+      std::println(std::cout, "(dropped {} {} {} {})",
+        Beam::to_string(timestamp), gap->m_sequence, gap->m_count, reason);
+      std::cout.flush();
       state.m_sequencer.reset(gap->m_sequence + gap->m_count);
       state.m_recovery.reset();
       state.m_gap_sequence = boost::none;

@@ -2,7 +2,7 @@
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <functional>
 #include <iomanip>
-#include <syncstream>
+#include <print>
 #include <tuple>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -10,6 +10,7 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchReport.hpp"
@@ -402,7 +403,7 @@ namespace Nexus {
       try {
         if(m_config.m_is_logging_messages) {
           visit(message, [] (const auto& message) {
-            std::osyncstream(std::cout) << message << '\n';
+            std::println(std::cout, "{}", Beam::to_string(message));
           });
         }
         dispatch(message);

@@ -1,10 +1,10 @@
 #ifndef TMX_IP_CLIENT_HPP
 #define TMX_IP_CLIENT_HPP
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <map>
-#include <sstream>
+#include <print>
 #include <utility>
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
@@ -14,6 +14,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include "TmxIpMarketDataFeedClient/TmxIpMessageBuilder.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpRecoveryClient.hpp"
@@ -361,16 +362,18 @@ namespace Nexus {
         break;
       }
     }
-    auto out = std::stringstream();
+    auto text = std::string();
     if(count != 0) {
-      out << "(dropped " << timestamp << ' ' << *sequence << ' ' << count <<
-        " session_reset)\n";
+      text += std::format("(dropped {} {} {} session_reset)\n",
+        Beam::to_string(timestamp), *sequence, count);
     }
     if(state.m_builder.has_pending_message()) {
-      out << "(dropped " << timestamp << " incomplete_message session_reset)\n";
+      text += std::format("(dropped {} incomplete_message session_reset)\n",
+        Beam::to_string(timestamp));
     }
-    if(!out.str().empty()) {
-      std::cout << out.str() << std::flush;
+    if(!text.empty()) {
+      std::print(std::cout, "{}", text);
+      std::cout.flush();
     }
     state.m_retired_sessions[m_session_start] =
       state.m_sequencer.get_sequence();
@@ -416,10 +419,9 @@ namespace Nexus {
     if(offset > MAXIMUM_SEQUENCE / 2) {
       return;
     }
-    auto out = std::stringstream();
-    out << "(dropped " << m_time_client->get_time() << ' ' << *expected <<
-      ' ' << offset + 1 << " session_reset)\n";
-    std::cout << out.str() << std::flush;
+    std::println(std::cout, "(dropped {} {} {} session_reset)",
+      Beam::to_string(m_time_client->get_time()), *expected, offset + 1);
+    std::cout.flush();
     expected = *sequence % MAXIMUM_SEQUENCE + 1;
   }
 
@@ -457,16 +459,15 @@ namespace Nexus {
             m_messages.push(
               Message(std::move(*payload), message, state.m_session));
           } catch(const StampParserException& e) {
-            auto out = std::stringstream();
-            out << "(bad_message " << m_time_client->get_time() << ' ' <<
-              *packet->m_header.m_sequence << ' ' << e.what() << ' ' <<
-              std::hex << std::setfill('0');
+            auto text = std::format("(bad_message {} {} {} ",
+              Beam::to_string(m_time_client->get_time()),
+              *packet->m_header.m_sequence, e.what());
             for(auto i = std::size_t(0); i != payload->get_size(); ++i) {
-              out << std::setw(2) << static_cast<unsigned int>(
+              std::format_to(std::back_inserter(text), "{:02x}",
                 static_cast<unsigned char>(payload->get_data()[i]));
             }
-            out << ")\n";
-            std::cout << out.str() << std::flush;
+            std::println(std::cout, "{})", text);
+            std::cout.flush();
           }
         }
       }
@@ -483,10 +484,10 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   void TmxIpClient<P, G, R, T>::drop(
       State& state, const TmxIpGap& gap, std::string_view reason) {
-    auto out = std::stringstream();
-    out << "(dropped " << m_time_client->get_time() << ' ' <<
-      gap.m_sequence << ' ' << gap.m_count << ' ' << reason << ")\n";
-    std::cout << out.str() << std::flush;
+    std::println(std::cout, "(dropped {} {} {} {})",
+      Beam::to_string(m_time_client->get_time()),
+      gap.m_sequence, gap.m_count, reason);
+    std::cout.flush();
     state.m_builder.reset();
     state.m_sequencer.skip(gap.m_count);
     state.m_gap = boost::none;
