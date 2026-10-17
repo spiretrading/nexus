@@ -20,7 +20,7 @@ namespace {
 
   void populate_anonymous(
       const Tag& tag, FIX42::NewOrderSingle& new_order_single) {
-    if(auto value = get<std::string>(&tag.get_value())) {
+    if(auto value = std::get_if<std::string>(&tag.get_value())) {
       if(*value == "Y" || *value == "N") {
         new_order_single.setField(ANONYMOUS_TAG, *value);
         return;
@@ -32,7 +32,7 @@ namespace {
 
   void populate_long_life(
       const Tag& tag, FIX42::NewOrderSingle& new_order_single) {
-    if(auto value = get<std::string>(&tag.get_value())) {
+    if(auto value = std::get_if<std::string>(&tag.get_value())) {
       if(*value == "Y" || *value == "N") {
         new_order_single.setField(LONG_LIFE_TAG, *value);
         return;
@@ -60,7 +60,7 @@ namespace {
   void populate_exec_inst(
       const Tag& tag, FIX42::NewOrderSingle& new_order_single,
       std::initializer_list<const char*> cases) {
-    if(auto value = get<std::string>(&tag.get_value())) {
+    if(auto value = std::get_if<std::string>(&tag.get_value())) {
       if(std::find(cases.begin(), cases.end(), *value) != cases.end()) {
         new_order_single.setField(FIX::ExecInst(*value));
         return;
@@ -307,7 +307,7 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_ca(
       }
       for(auto& tag : info.m_fields.m_additional_fields) {
         if(tag.get_key() == LONG_LIFE_TAG) {
-          if(auto value = get<std::string>(&tag.get_value())) {
+          if(auto value = std::get_if<std::string>(&tag.get_value())) {
             if(*value == "Y" || *value == "N") {
               new_order_single->setField(LONG_LIFE_TAG, *value);
             }
@@ -395,7 +395,7 @@ void SerenityFixApplication::route_to_chix(
     if(tag.get_key() == LONG_LIFE_TAG) {
       populate_long_life(tag, *new_order_single);
     } else if(tag.get_key() == FIX::FIELD::ExDestination) {
-      if(auto value = boost::get<std::string>(&tag.get_value())) {
+      if(auto value = std::get_if<std::string>(&tag.get_value())) {
         auto destination = [&] {
           if(*value == "SMRTCHIX") {
             return FIX::ExDestination("CX01");
@@ -523,7 +523,7 @@ void SerenityFixApplication::route_to_matn(
     } else if(tag.get_key() == ANONYMOUS_TAG) {
       populate_anonymous(tag, *new_order_single);
     } else if(tag.get_key() == MATN_CONSTRAINTS_TAG) {
-      if(auto value = get<std::string>(&tag.get_value())) {
+      if(auto value = std::get_if<std::string>(&tag.get_value())) {
         if(*value == "PAG") {
           new_order_single->setField(FIX::ExecInst("R"));
           new_order_single->setField(FIX::OrdType(FIX::OrdType_PEGGED));
@@ -543,7 +543,7 @@ void SerenityFixApplication::route_to_neo(
   auto is_neo_book = false;
   for(auto& tag : info.m_fields.m_additional_fields) {
     if(tag.get_key() == FIX::FIELD::ExecInst) {
-      if(auto value = get<std::string>(&tag.get_value())) {
+      if(auto value = std::get_if<std::string>(&tag.get_value())) {
         if(*value == "M") {
           is_protected = false;
           is_mid_point = true;
@@ -553,7 +553,7 @@ void SerenityFixApplication::route_to_neo(
           "Invalid value for tag 18 (ExecInst)."));
       }
     } else if(tag.get_key() == FIX::FIELD::ExDestination) {
-      if(auto value = get<std::string>(&tag.get_value())) {
+      if(auto value = std::get_if<std::string>(&tag.get_value())) {
         auto destination = [&] {
           if(*value == "N") {
             return FIX::ExDestination("NEON");
@@ -592,7 +592,7 @@ void SerenityFixApplication::route_to_tsx(
     if(tag.get_key() == LONG_LIFE_TAG) {
       populate_long_life(tag, *new_order_single);
     } else if(tag.get_key() == FIX::FIELD::ExDestination) {
-      if(auto value = boost::get<std::string>(&tag.get_value())) {
+      if(auto value = std::get_if<std::string>(&tag.get_value())) {
         auto destination = [&] {
           if(*value == "SMRTXOPG-X2") {
             return FIX::ExDestination("CX25");
