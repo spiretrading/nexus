@@ -131,7 +131,7 @@ TEST_SUITE("Candlestick") {
 
   TEST_CASE("format_numeric_values") {
     auto candlestick = Candlestick(1, 2, 1.123456789, 2.5, 3.5, 0.5,
-      Quantity(1000000000000LL));
+      Quantity(std::int64_t(1000000000000)));
     auto expected = "(1, 2, 1.123456789, 3.5, 0.5, 2.5, 1000000000000)";
     REQUIRE(std::format("{}", candlestick) == expected);
     REQUIRE(to_string(candlestick) == expected);
