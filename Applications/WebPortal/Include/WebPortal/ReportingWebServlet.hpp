@@ -2,10 +2,10 @@
 #define NEXUS_REPORTING_WEB_SERVLET_HPP
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <boost/thread/mutex.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -156,7 +156,7 @@ namespace Nexus {
         GroupReports();
       };
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<int, std::shared_ptr<AccountReports>> m_accounts;
       std::unordered_map<int, std::shared_ptr<GroupReports>> m_groups;
       Beam::OpenState m_open_state;

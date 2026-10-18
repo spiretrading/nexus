@@ -4,7 +4,6 @@
 #include <string>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <boost/noncopyable.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -21,12 +20,13 @@ namespace Details {
   /*! \class CanvasType
       \brief Stores information about a CanvasNode's data type.
    */
-  class CanvasType : public std::enable_shared_from_this<CanvasType>,
-      private boost::noncopyable {
+  class CanvasType : public std::enable_shared_from_this<CanvasType> {
     public:
 
       //! Enumerates types of compatibilities between CanvasTypes.
       using Compatibility = Details::CanvasTypeCompatibilityDefinition;
+
+      CanvasType() = default;
 
       //! Returns the shared_ptr managing this CanvasType.
       operator std::shared_ptr<CanvasType> () const;
@@ -55,6 +55,10 @@ namespace Details {
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
+
+    private:
+      CanvasType(const CanvasType&) = delete;
+      CanvasType& operator =(const CanvasType&) = delete;
   };
 
   template<Beam::IsShuttle S>

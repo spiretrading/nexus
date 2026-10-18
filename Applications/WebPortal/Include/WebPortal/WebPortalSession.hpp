@@ -8,7 +8,6 @@
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Nexus/Clients/Clients.hpp"
 
 namespace Nexus {
@@ -50,7 +49,7 @@ namespace Nexus {
         const T& value, Beam::Out<Beam::HttpResponse> response);
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::TypeRegistry<Beam::JsonSender<Beam::SharedBuffer>> m_types;
       Beam::JsonReceiver<Beam::SharedBuffer> m_receiver;
       Beam::JsonSender<Beam::SharedBuffer> m_sender;

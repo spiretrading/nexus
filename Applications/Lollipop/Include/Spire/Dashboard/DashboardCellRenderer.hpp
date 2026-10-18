@@ -1,7 +1,6 @@
 #ifndef SPIRE_DASHBOARDCELLRENDERER_HPP
 #define SPIRE_DASHBOARDCELLRENDERER_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QPaintDevice>
 #include <QRect>
@@ -12,7 +11,7 @@ namespace Spire {
   /*! \class DashboardCellRenderer
       \brief Draws a single DashboardCell.
    */
-  class DashboardCellRenderer : private boost::noncopyable {
+  class DashboardCellRenderer {
     public:
 
       //! Signals that this renderer has a draw operation available.
@@ -48,6 +47,9 @@ namespace Spire {
 
     private:
       const DashboardCell* m_cell;
+
+      DashboardCellRenderer(const DashboardCellRenderer&) = delete;
+      DashboardCellRenderer& operator =(const DashboardCellRenderer&) = delete;
   };
 }
 
