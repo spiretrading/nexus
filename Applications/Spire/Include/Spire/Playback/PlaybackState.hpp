@@ -1,7 +1,6 @@
 #ifndef SPIRE_PLAYBACK_STATE_HPP
 #define SPIRE_PLAYBACK_STATE_HPP
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 

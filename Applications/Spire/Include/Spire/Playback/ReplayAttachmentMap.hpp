@@ -82,8 +82,8 @@ namespace Spire {
    * is currently attached to, and removing a PropertyHub detaches it. The list
    * updates when a PropertyHub is attached to or detached from the session
    * elsewhere.
-   * @param attachment_map The ReplaySession every PropertyHub is attached
-   *        to.
+   * @param attachment_map The map recording which ReplaySession each
+   *        PropertyHub is attached to.
    * @param session The ReplaySession whose PropertyHubs are listed.
    */
   std::shared_ptr<PropertyHubListModel> make_attached_hub_list(
@@ -95,8 +95,8 @@ namespace Spire {
    * its PropertyHub is attached to, otherwise null. The model updates when the
    * member joins another PropertyHub or the attachments change.
    * @param member The member whose session is modeled.
-   * @param attachment_map The ReplaySession every PropertyHub is attached
-   *        to.
+   * @param attachment_map The map recording which ReplaySession each
+   *        PropertyHub is attached to.
    */
   std::shared_ptr<ReplaySessionModel> make_attached_session_model(
     const PropertyHubMember& member,

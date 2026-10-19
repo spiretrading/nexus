@@ -12,8 +12,7 @@ namespace Spire {
 
   /**
    * Represents a single replay, advancing its playhead along a timeline at the
-   * playback speed and tracking whether it is paused, replaying or in real
-   * time.
+   * playback speed.
    */
   class ReplaySession {
     public:
@@ -63,7 +62,7 @@ namespace Spire {
         boost::posix_time::time_duration m_playhead;
         Decimal m_speed;
       };
-      Beam::TimeClient m_time_client;
+      mutable Beam::TimeClient m_time_client;
       std::shared_ptr<TimelineModel> m_timeline;
       std::shared_ptr<DurationModel> m_playhead;
       std::shared_ptr<PlaybackSpeedModel> m_speed;
@@ -79,10 +78,10 @@ namespace Spire {
 
       ReplaySession(const ReplaySession&) = delete;
       ReplaySession& operator =(const ReplaySession&) = delete;
-      bool is_before_start();
-      bool is_at_present();
+      bool is_before_start() const;
+      bool is_at_present() const;
       bool is_at_end() const;
-      PlaybackState get_playing_state();
+      PlaybackState get_playing_state() const;
       void set_state(PlaybackState state);
       void reset_anchor();
       boost::posix_time::time_duration get_playhead_at(

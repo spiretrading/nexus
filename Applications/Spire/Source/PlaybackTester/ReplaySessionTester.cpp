@@ -221,15 +221,6 @@ TEST_SUITE("ReplaySession") {
       REQUIRE(session.get_state()->get() == PlaybackState::REPLAYING);
       session.pause();
       REQUIRE(session.get_state()->get() == PlaybackState::PAUSED);
-    });
-  }
-
-  TEST_CASE("pausing_stops_the_playhead") {
-    run_test([] {
-      auto fixture = Fixture(minutes(10));
-      auto& session = *fixture.m_session;
-      session.play();
-      session.pause();
       fixture.advance(seconds(5));
       process_events_for(std::chrono::milliseconds(300));
       REQUIRE(session.get_playhead()->get() == minutes(10));

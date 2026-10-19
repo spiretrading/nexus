@@ -136,8 +136,8 @@ struct DemoPlaybackController {
       m_attached_hubs(
         std::make_shared<ArrayListModel<std::shared_ptr<PropertyHub>>>()),
       m_session(std::make_shared<ReplaySession>(
-        Timeline{ptime(microsec_clock::universal_time().date(),
-          time_duration(4, 0, 0)), time_duration(8, 0, 0)},
+        Timeline(ptime(microsec_clock::universal_time().date(),
+          time_duration(4, 0, 0)), time_duration(8, 0, 0)),
         time_duration(0, 0, 0), Decimal(1), TimeClient(UtcTimeClient()))),
       m_replay_window(m_session, m_roster, m_attached_hubs,
         microsec_clock::universal_time().date() - months(6)) {}
@@ -243,8 +243,8 @@ struct ReplayWindowTester : QWidget {
   void on_date_time_changed(const QDateTime& date_time) {
     if(to_ptime(date_time) != get_timeline()->get().m_start) {
       auto blocker = shared_connection_block(m_timeline_connection);
-      get_timeline()->set(Timeline{to_ptime(date_time),
-        get_timeline()->get().m_duration});
+      get_timeline()->set(Timeline(to_ptime(date_time),
+        get_timeline()->get().m_duration));
     }
     m_event_log->append(QString("Start Time(UTC): %1").
       arg(QString::fromStdString(to_simple_string(
@@ -256,8 +256,7 @@ struct ReplayWindowTester : QWidget {
     m_playhead->setMaximumTime(time);
     m_playhead->blockSignals(false);
     get_timeline()->set(
-      Timeline{get_timeline()->get().m_start,
-        to_time_duration(time)});
+      Timeline(get_timeline()->get().m_start, to_time_duration(time)));
   }
 
   void on_playhead_changed(const QTime& time) {

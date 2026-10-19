@@ -1,7 +1,5 @@
 #include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include <algorithm>
-#include <stdexcept>
-#include <utility>
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"

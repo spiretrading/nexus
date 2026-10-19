@@ -224,7 +224,8 @@ struct ReplayUiTester : QWidget {
 
   ReplayWindow* open_replay_window() {
     ++m_replay_count;
-    auto replay = std::make_unique<Replay>();
+    auto entry = std::make_unique<Replay>();
+    auto replay = entry.get();
     replay->m_name = tr("Replay %1").arg(m_replay_count);
     replay->m_session = std::make_shared<ReplaySession>(
       Timeline(m_start, TIMELINE_DURATION), time_duration(0, 0, 0),
@@ -232,23 +233,22 @@ struct ReplayUiTester : QWidget {
     replay->m_attachments =
       make_attached_hub_list(m_attachment_map, replay->m_session);
     auto& session = *replay->m_session;
-    auto replay_ptr = replay.get();
     replay->m_attachments_connection =
       replay->m_attachments->connect_operation_signal(
         [=] (const auto& operation) {
-          on_attachments_operation(*replay_ptr, operation);
+          on_attachments_operation(*replay, operation);
         });
     replay->m_state_connection =
       session.get_state()->connect_update_signal([=] (auto state) {
-        on_state_update(*replay_ptr, state);
+        on_state_update(*replay, state);
       });
     replay->m_speed_connection =
       session.get_speed()->connect_update_signal([=] (const auto& speed) {
-        on_speed_update(*replay_ptr, speed);
+        on_speed_update(*replay, speed);
       });
     replay->m_timeline_connection =
       session.get_timeline()->connect_update_signal([=] (const auto& timeline) {
-        on_timeline_update(*replay_ptr, timeline);
+        on_timeline_update(*replay, timeline);
       });
     auto window = new ReplayWindow(replay->m_session,
       m_user_profile.GetPropertyHubMembers(), replay->m_attachments,
@@ -256,10 +256,10 @@ struct ReplayUiTester : QWidget {
     window->setWindowTitle(replay->m_name);
     window->setAttribute(Qt::WA_DeleteOnClose);
     connect(window, &QObject::destroyed, this, [=] {
-      remove_replay(*replay_ptr);
+      remove_replay(*replay);
     });
     m_event_log->append(tr("%1 Opened").arg(replay->m_name));
-    m_replays.push_back(std::move(replay));
+    m_replays.push_back(std::move(entry));
     window->show();
     if(m_replay_count != 1) {
       auto offset = scale(WINDOW_GAP * (m_replay_count - 1),
@@ -358,11 +358,10 @@ struct ReplayUiTester : QWidget {
     auto entry = std::make_unique<MemberSession>();
     entry->m_member = &member;
     entry->m_session = make_attached_session_model(member, m_attachment_map);
-    auto member_ptr = &member;
-    entry->m_connection =
-      entry->m_session->connect_update_signal([=] (const auto& session) {
+    entry->m_connection = entry->m_session->connect_update_signal(
+      [=, &member] (const auto& session) {
         m_event_log->append(tr("Member Session: %1 follows %2").
-          arg(member_ptr->get_name()).arg(get_replay_name(session)));
+          arg(member.get_name()).arg(get_replay_name(session)));
       });
     if(auto& session = entry->m_session->get()) {
       m_event_log->append(tr("Member Session: %1 follows %2").

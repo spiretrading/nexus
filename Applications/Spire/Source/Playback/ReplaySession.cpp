@@ -163,11 +163,11 @@ void ReplaySession::pause() {
   }
 }
 
-bool ReplaySession::is_before_start() {
+bool ReplaySession::is_before_start() const {
   return m_time_client.get_time() < m_timeline->get().m_start;
 }
 
-bool ReplaySession::is_at_present() {
+bool ReplaySession::is_at_present() const {
   auto& timeline = m_timeline->get();
   auto now = m_time_client.get_time();
   if(now - timeline.m_start > timeline.m_duration) {
@@ -181,7 +181,7 @@ bool ReplaySession::is_at_end() const {
   return m_playhead->get() >= m_timeline->get().m_duration;
 }
 
-PlaybackState ReplaySession::get_playing_state() {
+PlaybackState ReplaySession::get_playing_state() const {
   if(is_before_start()) {
     return PlaybackState::PAUSED;
   } else if(is_at_present()) {
@@ -206,7 +206,8 @@ void ReplaySession::set_state(PlaybackState state) {
 }
 
 void ReplaySession::reset_anchor() {
-  m_anchor = {m_time_client.get_time(), m_playhead->get(), m_speed->get()};
+  m_anchor =
+    Anchor(m_time_client.get_time(), m_playhead->get(), m_speed->get());
 }
 
 time_duration ReplaySession::get_playhead_at(ptime now) const {
@@ -272,6 +273,6 @@ void ReplaySession::on_playhead(const time_duration& playhead) {
 void ReplaySession::on_speed(const Decimal& speed) {
   if(m_state->get() == PlaybackState::REPLAYING) {
     auto now = m_time_client.get_time();
-    m_anchor = {now, get_playhead_at(now), speed};
+    m_anchor = Anchor(now, get_playhead_at(now), speed);
   }
 }

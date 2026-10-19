@@ -2,7 +2,6 @@
 #define SPIRE_TIMELINE_HPP
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
