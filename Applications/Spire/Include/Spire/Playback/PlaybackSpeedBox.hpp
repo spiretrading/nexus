@@ -1,16 +1,9 @@
 #ifndef SPIRE_PLAYBACK_SPEED_BOX_HPP
 #define SPIRE_PLAYBACK_SPEED_BOX_HPP
-#include "Spire/Spire/Decimal.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Playback/PlaybackSpeed.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 
 namespace Spire {
-
-  /** A ValueModel that represents the playback speed as a Decimal. */
-  using PlaybackSpeedModel = ValueModel<Decimal>;
-
-  /** A LocalValueModel that represents the playback speed as a Decimal. */
-  using LocalPlaybackSpeedModel = LocalValueModel<Decimal>;
 
   /** An EnumBox specialized for the playback speed. */
   using PlaybackSpeedBox = EnumBox<Decimal>;

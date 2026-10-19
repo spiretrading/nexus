@@ -1,27 +1,12 @@
 #ifndef SPIRE_SEEK_BAR_HPP
 #define SPIRE_SEEK_BAR_HPP
+#include "Spire/Playback/Timeline.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/MouseMoveObserver.hpp"
 
 namespace Spire {
   class Slider;
-
-  /** Represents the timeline. */
-  struct Timeline {
-
-    /** The start time of the timeline. */
-    boost::posix_time::ptime m_start;
-
-    /** The duration of the timeline. */
-    boost::posix_time::time_duration m_duration;
-  };
-
-  /** A ValueModel over a Timeline*/
-  using TimelineModel = ValueModel<Timeline>;
-
-  /** A LocalValueModel over a Timeline*/
-  using LocalTimelineModel = LocalValueModel<Timeline>;
 
   /**
    * Represents a timeline along a track that the user can view and seek.
@@ -75,12 +60,6 @@ namespace Spire {
       void on_mouse_move(QWidget& target, QMouseEvent& event);
       void on_hover(HoverObserver::State state);
   };
-
-  /**
-   * Returns the end time of the timeline.
-   * @param timeline The timeline to get the end time of.
-   */
-  boost::posix_time::ptime get_end_time(const Timeline& timeline);
 }
 
 #endif
