@@ -8,7 +8,6 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QTimer>
@@ -21,7 +20,7 @@ namespace Spire {
       \brief Serves as controller between a single ChartPlotView and the many
              ChartPlotSeries that populate it.
    */
-  class ChartPlotController : private boost::noncopyable {
+  class ChartPlotController {
     public:
 
       //! Constructs a ChartPlotController.
@@ -84,6 +83,8 @@ namespace Spire {
       QTimer m_updateTimer;
       Beam::RoutineTaskQueue m_taskQueue;
 
+      ChartPlotController(const ChartPlotController&) = delete;
+      ChartPlotController& operator =(const ChartPlotController&) = delete;
       boost::optional<ChartValue> LoadLastValue();
       void UpdateAutoScale();
       void UpdateLockGrid();

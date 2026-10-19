@@ -2,7 +2,6 @@
 #define SPIRE_DASHBOARDSELECTIONCONTROLLER_HPP
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 
@@ -14,7 +13,7 @@ namespace Spire {
   /*! \class DashboardSelectionController
       \brief Updates a DashboardSelectionModel based on user input events.
    */
-  class DashboardSelectionController : private boost::noncopyable {
+  class DashboardSelectionController {
     public:
 
       DashboardSelectionController(
@@ -40,6 +39,10 @@ namespace Spire {
       std::vector<int> m_multiSelectedRows;
       std::tuple<int, int> m_multiSelectRange;
 
+      DashboardSelectionController(
+        const DashboardSelectionController&) = delete;
+      DashboardSelectionController& operator =(
+        const DashboardSelectionController&) = delete;
       void SetActiveRow(const boost::optional<int>& row);
   };
 }

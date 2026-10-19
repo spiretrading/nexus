@@ -140,7 +140,7 @@ namespace Nexus {
     auto exception = std::exception_ptr();
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(order);
       for(auto& rule : entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
@@ -162,7 +162,7 @@ namespace Nexus {
     }
     for(auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.push_back(order);
       if(exception) {
         continue;
@@ -198,7 +198,7 @@ namespace Nexus {
       const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       for(auto& rule : entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
         if(rule_entry->get_state() == ComplianceRuleEntry::State::DISABLED) {
@@ -218,7 +218,7 @@ namespace Nexus {
     }
     for(auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       for(auto& rule : parent_entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
         if(rule_entry->get_state() == ComplianceRuleEntry::State::DISABLED) {
@@ -244,7 +244,7 @@ namespace Nexus {
   void ComplianceRuleSet<C, S>::add(const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(order);
       for(auto& rule : entry->m_rules) {
         rule->m_rule->add(order);
@@ -252,7 +252,7 @@ namespace Nexus {
     }
     for(const auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.push_back(order);
       for(auto& rule : parent_entry->m_rules) {
         rule->m_rule->add(order);
@@ -268,7 +268,7 @@ namespace Nexus {
       const std::vector<std::shared_ptr<Order>>& orders) {
     auto entry = load(account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.insert(
         entry->m_orders.end(), orders.begin(), orders.end());
       for(auto& rule : entry->m_rules) {
@@ -277,7 +277,7 @@ namespace Nexus {
     }
     for(const auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.insert(
         parent_entry->m_orders.end(), orders.begin(), orders.end());
       for(auto& rule : parent_entry->m_rules) {
@@ -332,7 +332,7 @@ namespace Nexus {
       Beam::IsServiceLocatorClient<Beam::dereference_t<S>>
   void ComplianceRuleSet<C, S>::update(
       const ComplianceRuleEntry& updated_entry, Entry& entry) {
-    auto lock = boost::lock_guard(entry.m_mutex);
+    auto lock = std::lock_guard(entry.m_mutex);
     entry.m_rules.erase(
       std::remove_if(entry.m_rules.begin(), entry.m_rules.end(),
         [&] (const auto& rule) {

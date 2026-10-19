@@ -2,12 +2,11 @@
 #define NEXUS_LOCAL_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
 namespace Nexus {
@@ -33,7 +32,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<ComplianceRuleEntry::Id,
         std::shared_ptr<ComplianceRuleEntry>> m_entries_by_id;
       std::unordered_map<Beam::DirectoryEntry,
@@ -54,7 +53,7 @@ namespace Nexus {
   inline std::vector<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::load_all_compliance_rule_entries() {
     auto entries = std::vector<ComplianceRuleEntry>();
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     entries.reserve(m_entries_by_id.size());
     std::transform(m_entries_by_id.begin(), m_entries_by_id.end(),
       std::back_inserter(entries), [] (const auto& entry) {
@@ -66,7 +65,7 @@ namespace Nexus {
   inline ComplianceRuleEntry::Id
       LocalComplianceRuleDataStore::load_next_compliance_rule_entry_id() {
     auto id = ComplianceRuleEntry::Id(1);
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     for(auto& entry : m_entries_by_id) {
       id = std::max(entry.second->get_id() + 1, id);
     }
@@ -76,7 +75,7 @@ namespace Nexus {
   inline boost::optional<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::load_compliance_rule_entry(
         ComplianceRuleEntry::Id id) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_entries_by_id.find(id);
     if(i == m_entries_by_id.end()) {
       return boost::none;
@@ -87,7 +86,7 @@ namespace Nexus {
   inline std::vector<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::load_compliance_rule_entries(
         const Beam::DirectoryEntry& directory_entry) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_entries_by_directory_entry.find(directory_entry);
     if(i == m_entries_by_directory_entry.end()) {
       return {};
@@ -105,7 +104,7 @@ namespace Nexus {
   inline void LocalComplianceRuleDataStore::store(
       const ComplianceRuleEntry& entry) {
     auto new_entry = std::make_shared<ComplianceRuleEntry>(entry);
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& previous_entry = m_entries_by_id[entry.get_id()];
     if(previous_entry) {
       auto& previous_account_entries =
@@ -123,7 +122,7 @@ namespace Nexus {
   }
 
   inline void LocalComplianceRuleDataStore::remove(ComplianceRuleEntry::Id id) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto entry_by_id_iterator = m_entries_by_id.find(id);
     if(entry_by_id_iterator == m_entries_by_id.end()) {
       return;

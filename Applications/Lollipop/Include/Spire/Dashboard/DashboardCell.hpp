@@ -3,7 +3,6 @@
 #include <string>
 #include <variant>
 #include <boost/circular_buffer.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -14,7 +13,7 @@ namespace Spire {
   /*! \class DashboardCell
       \brief Represents a single cell within a dashboard.
    */
-  class DashboardCell : private boost::noncopyable {
+  class DashboardCell {
     public:
 
       //! The type used to represent a dashboard value.
@@ -44,6 +43,10 @@ namespace Spire {
 
       //! Constructs a DashboardCell.
       DashboardCell() = default;
+
+    private:
+      DashboardCell(const DashboardCell&) = delete;
+      DashboardCell& operator =(const DashboardCell&) = delete;
   };
 }
 

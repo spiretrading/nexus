@@ -83,7 +83,7 @@ namespace Nexus {
     IsComplianceRuleDataStore<Beam::dereference_t<D>>
   std::vector<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_all_compliance_rule_entries() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     return m_cache.load_all_compliance_rule_entries();
   }
 
@@ -91,7 +91,7 @@ namespace Nexus {
     IsComplianceRuleDataStore<Beam::dereference_t<D>>
   ComplianceRuleEntry::Id
       CachedComplianceRuleDataStore<D>::load_next_compliance_rule_entry_id() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     return m_data_store->load_next_compliance_rule_entry_id();
   }
 
@@ -100,7 +100,7 @@ namespace Nexus {
   boost::optional<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_compliance_rule_entry(
         ComplianceRuleEntry::Id id) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     return m_cache.load_compliance_rule_entry(id);
   }
 
@@ -109,7 +109,7 @@ namespace Nexus {
   std::vector<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_compliance_rule_entries(
         const Beam::DirectoryEntry& directory_entry) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     return m_cache.load_compliance_rule_entries(directory_entry);
   }
 
@@ -117,7 +117,7 @@ namespace Nexus {
     IsComplianceRuleDataStore<Beam::dereference_t<D>>
   void CachedComplianceRuleDataStore<D>::store(
       const ComplianceRuleEntry& entry) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_data_store->store(entry);
     m_cache.store(entry);
   }
@@ -125,7 +125,7 @@ namespace Nexus {
   template<typename D> requires
     IsComplianceRuleDataStore<Beam::dereference_t<D>>
   void CachedComplianceRuleDataStore<D>::remove(ComplianceRuleEntry::Id id) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_data_store->remove(id);
     m_cache.remove(id);
   }
@@ -134,7 +134,7 @@ namespace Nexus {
     IsComplianceRuleDataStore<Beam::dereference_t<D>>
   void CachedComplianceRuleDataStore<D>::store(
       const ComplianceRuleViolationRecord& record) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_data_store->store(record);
     m_cache.store(record);
   }
