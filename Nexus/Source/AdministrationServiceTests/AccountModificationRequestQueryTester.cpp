@@ -59,6 +59,18 @@ TEST_SUITE("AccountModificationRequestQuery") {
   }
 
   TEST_CASE("sort_field_stream") {
+    using SortField = AccountModificationRequestQuery::SortField;
+    for(auto& [field, expected] : {
+        std::pair(SortField::CREATED, "CREATED"),
+        std::pair(SortField::LAST_UPDATED, "LAST_UPDATED"),
+        std::pair(SortField::EFFECTIVE_DATE, "EFFECTIVE_DATE"),
+        std::pair(SortField::ACCOUNT, "ACCOUNT"),
+        std::pair(SortField::REQUESTER, "REQUESTER"),
+        std::pair(static_cast<SortField>(99), "CREATED")}) {
+      REQUIRE(std::format("{}", field) == expected);
+    }
+    REQUIRE(std::format("{:>9}", SortField::CREATED) == "  CREATED");
+    REQUIRE(std::format("{:.3}", SortField::CREATED) == "CRE");
     REQUIRE(lexical_cast<std::string>(
       AccountModificationRequestQuery::SortField::CREATED) == "CREATED");
     REQUIRE(lexical_cast<std::string>(
@@ -77,6 +89,14 @@ TEST_SUITE("AccountModificationRequestQuery") {
   }
 
   TEST_CASE("anchor_stream") {
+    auto anchor = AccountModificationRequestAnchor(
+      42, time_from_string("2024-07-04 12:00:00"), "alpha");
+    auto expected = std::string("(42 2024-Jul-04 12:00:00 alpha)");
+    REQUIRE(std::format("{}", anchor) == expected);
+    REQUIRE(std::format("{:>35}", anchor) == std::format("{:>35}", expected));
+    REQUIRE(std::format("{:.10}", anchor) == expected.substr(0, 10));
+    REQUIRE(std::format("{}", AccountModificationRequestAnchor()) ==
+      "(-1 -infinity )");
     REQUIRE(lexical_cast<std::string>(AccountModificationRequestAnchor(
       42, time_from_string("2024-07-04 12:00:00"), "alpha")) ==
         "(42 2024-Jul-04 12:00:00 alpha)");
@@ -92,11 +112,19 @@ TEST_SUITE("AccountModificationRequestQuery") {
       AccountModificationRequestQuery::SortField::LAST_UPDATED);
     REQUIRE(lexical_cast<std::string>(query) ==
       "(((ACCOUNT 100 account) (HEAD 25) true) LAST_UPDATED)");
+    REQUIRE(std::format("{}", query) ==
+      "(((ACCOUNT 100 account) (HEAD 25) true) LAST_UPDATED)");
     query.set_anchor(AccountModificationRequestAnchor(
       42, time_from_string("2024-07-04 12:00:00"), "alpha"));
     query.set_offset(3);
     REQUIRE(
       lexical_cast<std::string>(query) == "(((ACCOUNT 100 account) (HEAD 25) "
       "(42 2024-Jul-04 12:00:00 alpha) 3 true) LAST_UPDATED)");
+    auto expected = std::string("(((ACCOUNT 100 account) (HEAD 25) "
+      "(42 2024-Jul-04 12:00:00 alpha) 3 true) LAST_UPDATED)");
+    REQUIRE(std::format("{}", query) == expected);
+    REQUIRE(std::format("{:>100}", query) ==
+      std::format("{:>100}", expected));
+    REQUIRE(std::format("{:.20}", query) == expected.substr(0, 20));
   }
 }

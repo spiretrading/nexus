@@ -33,13 +33,6 @@ namespace Nexus {
 
     bool operator ==(const ComplianceRuleViolationRecord&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const ComplianceRuleViolationRecord& record) {
-    return out << '(' << record.m_account << ' ' << record.m_order_id << ' ' <<
-      record.m_rule_id << ' ' << record.m_schema_name << " \"" <<
-      record.m_reason << "\" " << record.m_timestamp << ')';
-  }
 }
 
 namespace Beam {
@@ -56,6 +49,27 @@ namespace Beam {
       shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ComplianceRuleViolationRecord> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ComplianceRuleViolationRecord& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} \"{}\" {})",
+          value.m_account, value.m_order_id, value.m_rule_id,
+          value.m_schema_name, value.m_reason,
+          Beam::to_string(value.m_timestamp)), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceRuleViolationRecord& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

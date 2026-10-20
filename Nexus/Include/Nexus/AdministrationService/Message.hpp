@@ -80,12 +80,6 @@ namespace Nexus {
   inline const Message::Body Message::Body::EMPTY =
     Message::Body::make_plain_text("");
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const Message::Body& body) {
-    out << '(' << body.m_content_type << ' ' << body.m_message << ')';
-    return out;
-  }
-
   inline Message::Body Message::Body::make_plain_text(std::string message) {
     return Body("text/plain", std::move(message));
   }
@@ -157,6 +151,24 @@ namespace Beam {
       }
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::Message::Body> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::Message::Body& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", value.m_content_type,
+          value.m_message), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const Message::Body& body) {
+    return out << std::format(out.getloc(), "{}", body);
+  }
 }
 
 #endif

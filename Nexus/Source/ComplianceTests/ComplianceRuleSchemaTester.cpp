@@ -12,6 +12,19 @@ using namespace Nexus;
 using namespace Nexus::Venues;
 
 TEST_SUITE("ComplianceRuleSchema") {
+  TEST_CASE("format") {
+    REQUIRE(std::format("{}", ComplianceRuleSchema()) == "( [])");
+    auto schema = ComplianceRuleSchema("test_rule",
+      {ComplianceParameter("enabled", false),
+        ComplianceParameter("count", Quantity(2))});
+    auto expected = std::string("(test_rule [(enabled false), (count 2)])");
+    REQUIRE(std::format("{}", schema) == expected);
+    REQUIRE(to_string(schema) == expected);
+    REQUIRE(std::format("{:*>{}}", schema, expected.size() + 2) ==
+      "**" + expected);
+    REQUIRE(std::format("{:.5}", schema) == "(test");
+  }
+
   TEST_CASE("constructor") {
     auto parameter = ComplianceParameter();
     parameter.m_name = "ticker";

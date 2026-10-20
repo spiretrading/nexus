@@ -1,10 +1,11 @@
 #ifndef NEXUS_ACCOUNT_IDENTITY_HPP
 #define NEXUS_ACCOUNT_IDENTITY_HPP
-#include <string>
 #include <ostream>
+#include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Country.hpp"
 
@@ -52,22 +53,6 @@ namespace Nexus {
     /** Some additional/misc. user notes. */
     std::string m_user_notes;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountIdentity& identity) {
-    return out << "(\"" << identity.m_registration_time << "\" " <<
-      '"' << identity.m_last_login_time << "\" " <<
-      '"' << identity.m_first_name << "\" " <<
-      '"' << identity.m_last_name << "\" " <<
-      '"' << identity.m_email_address << "\" " <<
-      '"' << identity.m_address_line_one << "\" " <<
-      '"' << identity.m_address_line_two << "\" " <<
-      '"' << identity.m_address_line_three << "\" " <<
-      '"' << identity.m_city << "\" " <<
-      '"' << identity.m_province << "\" " <<
-      identity.m_country << ' ' <<
-      '"' << identity.m_user_notes << "\")";
-  }
 }
 
 namespace Beam {
@@ -91,6 +76,36 @@ namespace Beam {
       shuttle.shuttle("user_notes", value.m_user_notes);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::AccountIdentity> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountIdentity& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(),
+          "(\"{}\" \"{}\" \"{}\" \"{}\" \"{}\" \"{}\" \"{}\" \"{}\" "
+          "\"{}\" \"{}\" {} \"{}\")",
+          Beam::to_string(value.m_registration_time),
+          Beam::to_string(value.m_last_login_time), value.m_first_name,
+          value.m_last_name, value.m_email_address, value.m_address_line_one,
+          value.m_address_line_two, value.m_address_line_three, value.m_city,
+          value.m_province, value.m_country, value.m_user_notes), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountIdentity& identity) {
+    auto database = static_cast<const CountryDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", identity);
+    }
+    return out << std::format(out.getloc(), "{}", identity);
+  }
 }
 
 #endif

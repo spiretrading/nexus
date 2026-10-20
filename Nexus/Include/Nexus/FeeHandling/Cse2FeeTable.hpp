@@ -1,6 +1,8 @@
 #ifndef NEXUS_CSE2_FEE_TABLE_HPP
 #define NEXUS_CSE2_FEE_TABLE_HPP
 #include <array>
+#include <format>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
@@ -333,8 +335,8 @@ namespace Nexus {
     } else if(section == Cse2FeeTable::Section::ODDLOT) {
       return calculate_oddlot_fee(table, report);
     }
-    std::cout << "Unknown liquidity flag [CSE2]: \"" <<
-      report.m_liquidity_flag << "\"\n";
+    Beam::report_message(std::format(
+      "Unknown liquidity flag [CSE2]: \"{}\"", report.m_liquidity_flag));
     return calculate_regular_fee(table, report);
   }
 }

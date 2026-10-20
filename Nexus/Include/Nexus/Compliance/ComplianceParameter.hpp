@@ -9,7 +9,7 @@
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Utilities/Streamable.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Scope.hpp"
@@ -34,19 +34,6 @@ namespace Details {
       using Details::ComplianceVariant::operator =;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const ComplianceValue& value) {
-    std::visit([&] (const auto& value) {
-      if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
-          std::vector<ComplianceValue>>) {
-        out << Beam::Stream(value);
-      } else {
-        out << value;
-      }
-    }, value);
-    return out;
-  }
-
   /** Stores a single parameter used by a compliance rule. */
   struct ComplianceParameter {
 
@@ -58,11 +45,6 @@ namespace Details {
 
     bool operator ==(const ComplianceParameter&) const = default;
   };
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const ComplianceParameter& parameter) {
-    return out << '(' << parameter.m_name << ' ' << parameter.m_value << ')';
-  }
 }
 
 namespace Beam {
@@ -83,6 +65,67 @@ namespace Beam {
       shuttle.shuttle("value", value.m_value);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::ComplianceValue> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ComplianceValue& value, auto& context) const ->
+        decltype(context.out()) {
+      auto text = std::visit([&] (const auto& value) -> std::string {
+        if constexpr(std::is_same_v<std::remove_cvref_t<decltype(value)>,
+            std::vector<Nexus::ComplianceValue>>) {
+          return std::format(context.locale(), "{::}", value);
+        } else if constexpr(std::formattable<decltype(value), char>) {
+          return std::format(context.locale(), "{}", value);
+        } else {
+          return Beam::to_string(value);
+        }
+      }, value);
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::ComplianceParameter> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::ComplianceParameter& value, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})", value.m_name, value.m_value),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceValue& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceParameter& value) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", value);
+  }
 }
 
 #endif

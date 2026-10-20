@@ -32,12 +32,8 @@ TEST_SUITE("BookQuote") {
     auto quote =
       BookQuote("MPX", true, Venue("TEST"), make_ask(500 * Money::ONE, 25),
         time_from_string("2025-06-25 15:30:00.000"));
-    auto expected = std::stringstream();
-    expected << "(" << quote.m_mpid << " " << quote.m_is_primary_mpid << " " <<
-      quote.m_venue << " " << "(" << quote.m_quote.m_price << " " <<
-      quote.m_quote.m_size << " " << quote.m_quote.m_side << ") " <<
-      quote.m_timestamp << ")";
-    REQUIRE(to_string(quote) == expected.str());
+    REQUIRE(to_string(quote) ==
+      "(MPX true TEST (500.00 25 ASK) 2025-Jun-25 15:30:00)");
     test_round_trip_shuttle(quote);
   }
 }

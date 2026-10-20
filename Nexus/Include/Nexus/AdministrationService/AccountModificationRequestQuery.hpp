@@ -106,28 +106,6 @@ namespace Nexus {
     return query;
   }
 
-  inline std::ostream& operator <<(
-      std::ostream& out, AccountModificationRequestQuery::SortField field) {
-    if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
-      return out << "LAST_UPDATED";
-    } else if(
-        field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
-      return out << "EFFECTIVE_DATE";
-    } else if(field == AccountModificationRequestQuery::SortField::ACCOUNT) {
-      return out << "ACCOUNT";
-    } else if(field == AccountModificationRequestQuery::SortField::REQUESTER) {
-      return out << "REQUESTER";
-    }
-    return out << "CREATED";
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequestQuery& query) {
-    return out << '(' << static_cast<const Beam::PagedQuery<
-      Beam::DirectoryEntry, AccountModificationRequestAnchor>&>(query) << ' ' <<
-      query.get_sort_field() << ')';
-  }
-
   inline AccountModificationRequestAnchor::AccountModificationRequestAnchor()
     noexcept
     : m_id(-1),
@@ -139,12 +117,6 @@ namespace Nexus {
     : m_id(id),
       m_date(date),
       m_name(std::move(name)) {}
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const AccountModificationRequestAnchor& anchor) {
-    return out << '(' << anchor.m_id << ' ' << anchor.m_date << ' ' <<
-      anchor.m_name << ')';
-  }
 
   inline AccountModificationRequestQuery::AccountModificationRequestQuery()
     : m_sort_field(SortField::CREATED) {}
@@ -198,6 +170,72 @@ namespace Beam {
       shuttle.shuttle("name", value.m_name);
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::AccountModificationRequestAnchor> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountModificationRequestAnchor& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {})", value.m_id,
+          Beam::to_string(value.m_date), value.m_name), context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::AccountModificationRequestQuery::SortField> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::AccountModificationRequestQuery::SortField value,
+        auto& context) const {
+      using SortField = Nexus::AccountModificationRequestQuery::SortField;
+      auto text = [&] {
+        if(value == SortField::LAST_UPDATED) {
+          return "LAST_UPDATED";
+        } else if(value == SortField::EFFECTIVE_DATE) {
+          return "EFFECTIVE_DATE";
+        } else if(value == SortField::ACCOUNT) {
+          return "ACCOUNT";
+        } else if(value == SortField::REQUESTER) {
+          return "REQUESTER";
+        }
+        return "CREATED";
+      }();
+      return std::formatter<std::string_view>::format(text, context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::AccountModificationRequestQuery> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::AccountModificationRequestQuery& value,
+        auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {})",
+          static_cast<const Beam::PagedQuery<Beam::DirectoryEntry,
+            Nexus::AccountModificationRequestAnchor>&>(value),
+          value.get_sort_field()), context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequestAnchor& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, AccountModificationRequestQuery::SortField value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequestQuery& value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

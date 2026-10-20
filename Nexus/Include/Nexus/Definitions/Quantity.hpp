@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <format>
 #include <functional>
 #include <istream>
 #include <limits>
@@ -13,8 +14,6 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/cstdfloat.hpp>
 #include <boost/functional/hash.hpp>
-#include <boost/io/ios_state.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/rational.hpp>
 #include <boost/throw_exception.hpp>
@@ -230,19 +229,6 @@ namespace Nexus {
     }
     boost::throw_with_location(
       std::invalid_argument("Invalid Quantity value given."));
-  }
-
-  inline std::ostream& operator <<(std::ostream& out, Quantity value) {
-    auto unscaled_value = value.get_representation() / Quantity::MULTIPLIER;
-    auto integer_part = boost::float64_t();
-    auto fraction = std::modf(unscaled_value, &integer_part);
-    if(fraction == 0) {
-      return out << static_cast<std::int64_t>(integer_part);
-    }
-    auto ifs = boost::io::ios_flags_saver(out);
-    out << std::fixed;
-    out << unscaled_value;
-    return out;
   }
 
   inline std::istream& operator >>(std::istream& in, Quantity& value) {
@@ -704,6 +690,41 @@ namespace std {
           numeric_limits<boost::float64_t>::denorm_min());
       }
   };
+}
+
+template<>
+class std::formatter<Nexus::Quantity> :
+    public std::formatter<boost::float64_t> {
+  public:
+    constexpr auto parse(std::format_parse_context& context) {
+      auto i = context.begin();
+      m_is_default = i == context.end() || *i == '}';
+      return std::formatter<boost::float64_t>::parse(context);
+    }
+
+    auto format(Nexus::Quantity value, auto& context) const {
+      auto number = static_cast<boost::float64_t>(value);
+      if(!m_is_default) {
+        return std::formatter<boost::float64_t>::format(number, context);
+      }
+      if(number == 0) {
+        number = 0;
+      }
+      if(std::trunc(number) == number) {
+        return std::format_to(context.out(), "{:.0f}", number);
+      }
+      return std::format_to(
+        context.out(), "{:.{}f}", number, Nexus::Quantity::DECIMAL_PLACES);
+    }
+
+  private:
+    bool m_is_default = true;
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, Quantity value) {
+    return out << std::format(out.getloc(), "{}", value);
+  }
 }
 
 #endif

@@ -19,6 +19,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/DatabaseFacet.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/StandardTimeZones.hpp"
 
@@ -322,27 +323,16 @@ namespace Nexus {
     return Beam::ScopedStreamManipulator(out, database);
   }
 
-  inline std::ostream& operator <<(std::ostream& out, Venue venue) {
-    extern const VenueDatabase& VENUES;
-    auto database = static_cast<const VenueDatabase*>(
-      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
-    if(!database) {
-      database = &VENUES;
-    }
-    auto& entry = database->from(venue);
+namespace Details {
+  inline std::string get_display_text(
+      Venue venue, const VenueDatabase& database) {
+    auto& entry = database.from(venue);
     if(entry.m_venue) {
-      return out << entry.m_display_name;
+      return entry.m_display_name;
     }
-    return out << venue.get_code();
+    return std::string(venue.get_code().get_data());
   }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, const VenueDatabase::Entry& entry) {
-    return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
-      entry.m_market_center << ' ' << entry.m_time_zone << ' ' <<
-      entry.m_currency << ' ' << entry.m_description << ' ' <<
-      entry.m_display_name << ')';
-  }
+}
 
   /**
    * Converts a UTC date/time into a venue's local date/time.
@@ -793,5 +783,69 @@ namespace std {
 }
 
 #include "Nexus/Definitions/StandardVenues.hpp"
+
+namespace Nexus {
+  extern const VenueDatabase& VENUES;
+}
+
+template<>
+class std::formatter<Nexus::Venue> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(Nexus::Venue venue, auto& context) const {
+      auto locale = context.locale();
+      if(std::has_facet<Nexus::DatabaseFacet<Nexus::VenueDatabase>>(locale)) {
+        auto& database = std::use_facet<
+          Nexus::DatabaseFacet<Nexus::VenueDatabase>>(locale).get_database();
+        return std::formatter<std::string_view>::format(
+          Nexus::Details::get_display_text(venue, database), context);
+      }
+      return std::formatter<std::string_view>::format(
+        Nexus::Details::get_display_text(venue, Nexus::VENUES), context);
+    }
+};
+
+template<>
+class std::formatter<Nexus::VenueDatabase::Entry> :
+    public std::formatter<std::string_view> {
+  public:
+    auto format(const Nexus::VenueDatabase::Entry& entry, auto& context) const {
+      return std::formatter<std::string_view>::format(
+        std::format(context.locale(), "({} {} {} {} {} {} {})", entry.m_venue,
+          entry.m_country_code, entry.m_market_center, entry.m_time_zone,
+          entry.m_currency, entry.m_description, entry.m_display_name),
+        context);
+    }
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out, Venue venue) {
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(database) {
+      return out <<
+        std::format(make_locale(out.getloc(), *database), "{}", venue);
+    }
+    return out << std::format(out.getloc(), "{}", venue);
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const VenueDatabase::Entry& entry) {
+    auto locale = out.getloc();
+    if(auto database = static_cast<const CountryDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const CurrencyDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    if(auto database = static_cast<const VenueDatabase*>(
+        out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID))) {
+      locale = make_locale(locale, *database);
+    }
+    return out << std::format(locale, "{}", entry);
+  }
+}
 
 #endif

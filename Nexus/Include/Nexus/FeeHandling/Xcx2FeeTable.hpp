@@ -1,7 +1,9 @@
 #ifndef NEXUS_XCX2_FEE_TABLE_HPP
 #define NEXUS_XCX2_FEE_TABLE_HPP
 #include <array>
+#include <format>
 #include <unordered_set>
+#include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
@@ -170,13 +172,13 @@ namespace Nexus {
             report.m_liquidity_flag[0] == 'D') {
           return Xcx2FeeTable::Type::HIDDEN_ACTIVE;
         } else {
-          std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-            report.m_liquidity_flag << "\"\n";
+          Beam::report_message(std::format(
+            "Unknown liquidity flag [XCX2]: \"{}\"", report.m_liquidity_flag));
           return Xcx2FeeTable::Type::PASSIVE;
         }
       } else {
-        std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-          report.m_liquidity_flag << "\"\n";
+        Beam::report_message(std::format(
+          "Unknown liquidity flag [XCX2]: \"{}\"", report.m_liquidity_flag));
         return Xcx2FeeTable::Type::PASSIVE;
       }
     }();

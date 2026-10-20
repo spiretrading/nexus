@@ -52,8 +52,16 @@ TEST_SUITE("SessionTechnicals") {
     technicals.m_low = 8 * Money::ONE;
     technicals.m_volume = Quantity(5000);
     REQUIRE(to_string(technicals) == "(10.00 9.00 12.00 8.00 5000)");
+    REQUIRE(std::format("{}", technicals) == "(10.00 9.00 12.00 8.00 5000)");
+    REQUIRE(std::format("{:>30}", technicals) ==
+      "  (10.00 9.00 12.00 8.00 5000)");
+    REQUIRE(std::format("{:.10}", technicals) == "(10.00 9.0");
     auto empty = SessionTechnicals();
     REQUIRE(to_string(empty) == "(none none none none 0)");
+    REQUIRE(std::format("{}", empty) == "(none none none none 0)");
+    empty.m_previous_close = Money::ZERO;
+    REQUIRE(std::format("{}", empty) == "(none 0.00 none none 0)");
+    REQUIRE(to_string(empty) == "(none 0.00 none none 0)");
     test_round_trip_shuttle(technicals);
   }
 }
