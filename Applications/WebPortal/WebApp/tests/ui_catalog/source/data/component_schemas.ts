@@ -11,7 +11,8 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   IntervalValueInput,
   NumberInput,
   NumberSliderInput, MoneyInput,
-  ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
+  ReadonlyInput, RecurrenceValueInput, ScopeValueInput, TextInput,
+  TickerValueInput } from
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
@@ -1371,6 +1372,16 @@ const parametersDateRangeInput =
       new SignalSchema('onValidationChange', 'validation')],
     WebPortal.ParametersDateRangeInput, 284);
 
+const RECURRENCE_INPUT = new ComponentSchema('RecurrenceInput',
+  [new PropertySchema('value',
+      new WebPortal.Recurrence(new WebPortal.Interval(1,
+        WebPortal.Interval.Unit.DAY), null), RecurrenceValueInput),
+    new PropertySchema('readOnly', false, BooleanInput),
+    new PropertySchema('disabled', false, BooleanInput)],
+  [new SignalSchema('onChange', 'value'),
+    new SignalSchema('onValidationChange', 'validation')],
+  WebPortal.RecurrenceInput, 284);
+
 const activityTable =
   new ComponentSchema('ActivityTable',
     [new PropertySchema('activityCount', 3, NumberInput),
@@ -1566,6 +1577,7 @@ export const componentSections = [
     profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [activityTable, activityTableRow,
     activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
+    RECURRENCE_INPUT,
     reportActivityStatusTag, reportFormTemplate, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
