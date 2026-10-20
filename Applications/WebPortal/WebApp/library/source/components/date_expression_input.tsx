@@ -21,11 +21,11 @@ interface Properties extends
   /** Whether interaction is disabled. */
   disabled?: boolean;
 
-  /** Reports edits made while typing. */
-  onInput?: (value: DateExpression) => void;
+  /** Reports a draft and whether all fixed-date segments are complete. */
+  onInput?: (value: DateExpression, complete?: boolean) => void;
 
-  /** Reports a selection or a value committed by blur or Enter. */
-  onChange?: (value: DateExpression) => void;
+  /** Reports a commit and whether all fixed-date segments are complete. */
+  onChange?: (value: DateExpression, complete?: boolean) => void;
 }
 
 interface State {
@@ -146,16 +146,17 @@ export class DateExpressionInput extends React.Component<Properties, State> {
     }
   }
 
-  private update(value: DateExpression, isInput: boolean): void {
+  private update(value: DateExpression, isInput: boolean,
+      complete?: boolean): void {
     if(this.props.readOnly || this.props.disabled) {
       return;
     }
     this.store(value);
     this.setState({value});
     if(isInput) {
-      this.props.onInput?.(value);
+      this.props.onInput?.(value, complete);
     } else {
-      this.props.onChange?.(value);
+      this.props.onChange?.(value, complete);
     }
   }
 
@@ -173,6 +174,11 @@ export class DateExpressionInput extends React.Component<Properties, State> {
       this.update({...value, date: {...value.date, offset}} as DateExpression,
         isInput);
     }
+  }
+
+  private isDateEmpty(): boolean {
+    return Array.from(this.dateElement.current.querySelectorAll('input')).
+      every(input => input.value === '');
   }
 
   private readDate(): Beam.Date {
@@ -251,12 +257,15 @@ export class DateExpressionInput extends React.Component<Properties, State> {
 
   private onDateInput = () => {
     this.isDirty = true;
-    this.update({mode: DateExpression.Mode.FIXED, date: this.readDate()}, true);
+    const date = this.readDate();
+    this.update({mode: DateExpression.Mode.FIXED, date}, true,
+      date != null || this.isDateEmpty());
   };
 
   private onDateChange = (date: Beam.Date) => {
     this.isDirty = false;
-    this.update({mode: DateExpression.Mode.FIXED, date: date ?? null}, false);
+    this.update({mode: DateExpression.Mode.FIXED, date: date ?? null}, false,
+      date != null || this.isDateEmpty());
   };
 
   private onDateBlur = () => {

@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import { DayOfMonth } from './day_of_month';
-import { Weekday } from './date_rule';
+import { DayOffsetDateRule, DayOfMonthDateRule, resolveDateRule,
+  SpecificDateRule, Weekday, WeekdayDateRule } from './date_rule';
 
 /** A signed calendar offset, or an incomplete numeric draft. */
 export interface DateOffset {
@@ -96,4 +97,86 @@ export namespace DateExpression {
     /** A day in a relative month. */
     DAY_OF_MONTH = 'DAY_OF_MONTH'
   }
+}
+
+/** Resolves an expression, returning null for an empty or invalid value. */
+export function resolveDateExpression(expression: DateExpression,
+    reference: Beam.Date): Beam.Date {
+  if(expression.mode === DateExpression.Mode.FIXED) {
+    return resolveDateRule(new SpecificDateRule(expression.date), reference);
+  } else if(expression.mode === DateExpression.Mode.DAY_OFFSET) {
+    return resolveDateRule(new DayOffsetDateRule(expression.date.value),
+      reference);
+  } else if(expression.mode === DateExpression.Mode.WEEKDAY) {
+    return resolveDateRule(new WeekdayDateRule(expression.date.offset.value,
+      expression.date.day), reference);
+  }
+  const {day, offset} = expression.date;
+  if(day.position === DayOfMonth.Position.DAY) {
+    return resolveDateRule(new DayOfMonthDateRule(offset.value,
+      day.day as number), reference);
+  }
+  const first = resolveDateRule(new DayOfMonthDateRule(offset.value, 1),
+    reference);
+  if(!first) {
+    return null;
+  }
+  const date = new Date(0);
+  date.setUTCFullYear(first.year, first.month, 0);
+  const days = date.getUTCDate();
+  const positions = [DayOfMonth.Position.FIRST, DayOfMonth.Position.SECOND,
+    DayOfMonth.Position.THIRD, DayOfMonth.Position.FOURTH];
+  let remaining = positions.indexOf(day.position) + 1;
+  let step = 1;
+  let number = 1;
+  if(day.position === DayOfMonth.Position.LAST) {
+    remaining = 1;
+    step = -1;
+    number = days;
+  } else if(remaining === 0) {
+    return null;
+  }
+  const DAYS_PER_WEEK = 7;
+  const WEEKDAYS = 5;
+  for(; number >= 1 && number <= days; number += step) {
+    date.setUTCDate(number);
+    const weekday = (date.getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK;
+    if(day.day === DayOfMonth.DayType.DAY ||
+        day.day === DayOfMonth.DayType.WEEKDAY && weekday < WEEKDAYS ||
+        Object.values(Weekday)[weekday] === day.day) {
+      --remaining;
+      if(remaining === 0) {
+        return new Beam.Date(first.year, first.month, number);
+      }
+    }
+  }
+  return null;
+}
+
+/** Compares expression parameters, including incomplete drafts. */
+export function isDateExpressionEqual(first: DateExpression,
+    second: DateExpression): boolean {
+  if(first === second) {
+    return true;
+  }
+  if(!first || !second || first.mode !== second.mode) {
+    return false;
+  }
+  if(first.mode === DateExpression.Mode.FIXED &&
+      second.mode === DateExpression.Mode.FIXED) {
+    return first.date === second.date || !!first.date?.equals(second.date);
+  } else if(first.mode === DateExpression.Mode.DAY_OFFSET &&
+      second.mode === DateExpression.Mode.DAY_OFFSET) {
+    return first.date.value === second.date.value;
+  } else if(first.mode === DateExpression.Mode.WEEKDAY &&
+      second.mode === DateExpression.Mode.WEEKDAY) {
+    return first.date.day === second.date.day &&
+      first.date.offset.value === second.date.offset.value;
+  } else if(first.mode === DateExpression.Mode.DAY_OF_MONTH &&
+      second.mode === DateExpression.Mode.DAY_OF_MONTH) {
+    return first.date.day.position === second.date.day.position &&
+      first.date.day.day === second.date.day.day &&
+      first.date.offset.value === second.date.offset.value;
+  }
+  return false;
 }

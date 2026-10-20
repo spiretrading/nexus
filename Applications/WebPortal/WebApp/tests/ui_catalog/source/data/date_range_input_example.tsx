@@ -17,6 +17,15 @@ interface Properties {
   /** The label above or beside the selector. */
   label: string;
 
+  /** The custom date editor type. */
+  customType: DateRangeInput.CustomType;
+
+  /** The custom start label. */
+  startLabel: string;
+
+  /** The custom end label. */
+  endLabel: string;
+
   /** The arrangement of the controls. */
   orientation: DateRangeInput.Orientation;
 
@@ -44,6 +53,8 @@ export class DateRangeInputExample extends React.Component<Properties> {
   public render(): JSX.Element {
     const today = this.props.referenceDate ?? Beam.Date.today();
     const options = makeParametersDateRangeOptions(today);
-    return <DateRangeInput {...this.props} options={options}/>;
+    const {startLabel, endLabel, ...properties} = this.props;
+    return <DateRangeInput {...properties} options={options}
+      customLabel={{start: startLabel, end: endLabel}}/>;
   }
 }

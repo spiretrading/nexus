@@ -11,10 +11,7 @@ interface Properties {
 }
 
 /** Edits a date expression property. */
-export class DateExpressionValueInput extends React.Component<Properties> {
-  public render(): JSX.Element {
-    return <DateExpressionInput aria-label='Date expression property'
-      value={this.props.value} onInput={this.props.update}
-      onChange={this.props.update}/>;
-  }
+export function DateExpressionValueInput(props: Properties): JSX.Element {
+  return <DateExpressionInput aria-label='Date expression property'
+    value={props.value} onInput={props.update} onChange={props.update}/>;
 }

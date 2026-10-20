@@ -487,6 +487,10 @@ const dateRangeInput =
         return new WebPortal.DateRange(today, today);
       })(), DateRangeValueInput),
       new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('customType', WebPortal.DateRangeInput.CustomType.FIXED,
+        EnumInput(WebPortal.DateRangeInput.CustomType)),
+      new PropertySchema('startLabel', 'Start', TextInput),
+      new PropertySchema('endLabel', 'End', TextInput),
       new PropertySchema('referenceDate', Beam.Date.today(), BeamDateInput),
       new PropertySchema('orientation',
         WebPortal.DateRangeInput.Orientation.VERTICAL,

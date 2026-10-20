@@ -5,7 +5,8 @@ import * as Beam from 'beam';
 import { DateRuleInput } from '../../source/components/date_rule_input';
 import { DateRangeInput } from
   '../../source/components/date_range_input/date_range_input';
-import { DateRange, DateRangeOption, DateRangeRules, DateRuleType,
+import { DateExpression, DateOffset, DateRangeExpressions, DateRange,
+  DateRangeOption, DateRangeRules, DateRuleType,
   DayOffsetDateRule, DayOfMonthDateRule, MonthBoundaryDateRule,
   SpecificDateRule, Weekday, WeekdayDateRule } from
   '../../source/models';
@@ -30,6 +31,14 @@ function updateProps(input: any, props: any): void {
   const previous = input.props;
   input.props = {...previous, ...props};
   input.componentDidUpdate(previous);
+}
+
+function setStartRule(input: any, start: any): void {
+  input.setRules(new DateRangeRules(start, input.state.rules.end), true);
+}
+
+function setEndRule(input: any, end: any): void {
+  input.setRules(new DateRangeRules(input.state.rules.start, end), true);
 }
 
 describe('DateRangeInput rules', () => {
@@ -58,9 +67,9 @@ describe('DateRangeInput rules', () => {
       new MonthBoundaryDateRule(-2, MonthBoundaryDateRule.Boundary.LAST, -1)];
     for(const rule of rules) {
       const input = makeInput();
-      input.onStartRule(rule);
-      const element = input.render().props.children[1].props.start;
-      const editor = new element.type(element.props);
+      setStartRule(input, rule);
+      const editor = new DateRuleInput({value: rule, label: 'Start',
+        reference: input.state.reference, onChange: () => {}}) as any;
       editor.setState = (update: any) => {
         editor.state = {...editor.state, ...update};
       };
@@ -96,8 +105,8 @@ describe('DateRangeInput rules', () => {
     const changes: DateRangeRules[] = [];
     const input = makeInput({onChange: (value: DateRange) => values.push(value),
       onRulesChange: (rules: DateRangeRules) => changes.push(rules)});
-    input.onStartRule(new WeekdayDateRule(-2, Weekday.MONDAY));
-    input.onEndRule(new WeekdayDateRule(0, Weekday.FRIDAY));
+    setStartRule(input, new WeekdayDateRule(-2, Weekday.MONDAY));
+    setEndRule(input, new WeekdayDateRule(0, Weekday.FRIDAY));
     const value = values.at(-1);
     assert.equal(value.start.toJson(), '20260921');
     assert.equal(value.end.toJson(), '20261009');
@@ -123,14 +132,15 @@ describe('DateRangeInput rules', () => {
 
   it('does_not_publish_invalid_or_incomplete_resolved_ranges', () => {
     const values: DateRange[] = [];
-    const input = makeInput({onChange: (value: DateRange) => values.push(value)});
-    input.onStartRule(new DayOffsetDateRule(1));
+    const input = makeInput({
+      onChange: (value: DateRange) => values.push(value)});
+    setStartRule(input, new DayOffsetDateRule(1));
     assert.equal(values.length, 0);
     assert.equal(input.getValidation().valid, false);
-    input.onStartRule(new DayOffsetDateRule(null));
+    setStartRule(input, new DayOffsetDateRule(null));
     assert.equal(values.length, 0);
     assert.equal(input.getValidation().valid, false);
-    input.onStartRule(new DayOffsetDateRule(-1));
+    setStartRule(input, new DayOffsetDateRule(-1));
     assert.equal(values.at(-1).start.toJson(), '20261006');
     assert.equal(input.getValidation().valid, true);
   });
@@ -149,16 +159,18 @@ describe('DateRangeInput rules', () => {
     assert.equal(values.length, 1);
   });
 
-  it('commits_edits_after_simultaneous_external_rules_and_value_updates', () => {
+  it('commits_edits_after_simultaneous_external_rules_and_value_updates',
+      () => {
     const values: DateRange[] = [];
-    const input = makeInput({onChange: (value: DateRange) => values.push(value)});
+    const input = makeInput({
+      onChange: (value: DateRange) => values.push(value)});
     const original = input.props.value;
     const date = new Beam.Date(2026, 10, 6);
     updateProps(input, {value: new DateRange(date, original.end),
       rules: new DateRangeRules(
         new SpecificDateRule(date),
         new SpecificDateRule(original.end))});
-    input.onStartRule(new SpecificDateRule(original.start));
+    setStartRule(input, new SpecificDateRule(original.start));
     assert.equal(values.at(-1).start.toJson(), '20261007');
     assert.equal(values.at(-1).end.toJson(), '20261007');
   });
@@ -168,7 +180,7 @@ describe('DateRangeInput rules', () => {
     const input = makeInput({boundsRequired: false,
       onChange: (value: DateRange) => values.push(value)});
     input.onStartInput(null, false);
-    input.onEndRule(new DayOffsetDateRule(0));
+    setEndRule(input, new DayOffsetDateRule(0));
     assert.equal(input.getValidation().valid, false);
     assert.equal(values.length, 0);
     input.onStartInput(null, true);
@@ -183,7 +195,7 @@ describe('DateRangeInput rules', () => {
     const input = makeInput({options: [
       new DateRangeOption('saved', 'Saved range', date, date)],
       onRulesChange: (rules: DateRangeRules) => changes.push(rules)});
-    input.onStartRule(new DayOffsetDateRule(0));
+    setStartRule(input, new DayOffsetDateRule(0));
     input.onSelect('saved');
     assert.equal(input.state.selection, 'saved');
     assert.equal(changes.at(-1).start.type, DateRuleType.SPECIFIC_DATE);
@@ -212,7 +224,8 @@ describe('DateRangeInput rules', () => {
 
   it('keeps_the_active_preset_when_its_reference_changes', () => {
     const reference = new Beam.Date(2026, 10, 7);
-    const input = makeInput({options: makeParametersDateRangeOptions(reference)});
+    const input = makeInput({
+      options: makeParametersDateRangeOptions(reference)});
     input.onSelect('month-to-date');
     const next = new Beam.Date(2026, 11, 5);
     updateProps(input, {referenceDate: next,
@@ -231,12 +244,90 @@ describe('DateRangeInput rules', () => {
 
   it('resets_to_specific_dates_when_the_caller_replaces_the_value', () => {
     const input = makeInput();
-    input.onStartRule(new DayOffsetDateRule(-7));
+    setStartRule(input, new DayOffsetDateRule(-7));
     const value = new DateRange(new Beam.Date(2026, 1, 1),
       new Beam.Date(2026, 1, 31));
     updateProps(input, {value});
     assert.equal(input.state.rules.start.type, DateRuleType.SPECIFIC_DATE);
     assert.equal(input.state.rules.end.type, DateRuleType.SPECIFIC_DATE);
     assert.ok(input.state.rules.start.date.equals(value.start));
+  });
+});
+
+describe('DateRangeInput expressions', () => {
+  const fixed = (date: Beam.Date): DateExpression =>
+    ({mode: DateExpression.Mode.FIXED, date});
+  const offset = (value: number): DateExpression =>
+    ({mode: DateExpression.Mode.DAY_OFFSET,
+      date: {value, unit: DateOffset.Unit.DAY}});
+
+  it('publishes_expressions_even_when_resolved_dates_are_unchanged', () => {
+    const values: DateRange[] = [];
+    const input = makeInput({customType: DateRangeInput.CustomType.EXPRESSION,
+      onChange: (value: DateRange) => values.push(value)});
+    input.onStartExpressionChange(offset(0));
+    assert.equal(values.length, 1);
+    assert.equal(values[0].expressions.start.mode,
+      DateExpression.Mode.DAY_OFFSET);
+    input.onStartExpressionChange(fixed(input.state.reference));
+    assert.equal(values.length, 2);
+    assert.equal(values[1].expressions.start.mode, DateExpression.Mode.FIXED);
+    updateProps(input, {value: values[1]});
+    assert.equal(input.state.selection, 'custom');
+    input.onStartExpressionChange(offset(0));
+    updateProps(input, {value: new DateRange(input.state.value.start,
+      input.state.value.end)});
+    assert.equal(input.state.expressions.start.mode, DateExpression.Mode.FIXED);
+  });
+
+  it('preserves_incomplete_bounds_and_only_publishes_valid_commits', () => {
+    const values: DateRange[] = [];
+    const input = makeInput({boundsRequired: false,
+      customType: DateRangeInput.CustomType.EXPRESSION,
+      onChange: (value: DateRange) => values.push(value)});
+    input.onStartExpressionInput(fixed(null), false);
+    input.onEndExpressionChange(offset(1));
+    assert.equal(input.getValidation().valid, false);
+    assert.equal(values.length, 0);
+    input.onStartExpressionChange(fixed(null), true);
+    assert.equal(values.length, 1);
+    input.onStartExpressionChange(offset(2));
+    assert.equal(input.getValidation().valid, false);
+    assert.equal(values.length, 1);
+    input.onStartExpressionInput(offset(0));
+    assert.equal(values.length, 1);
+    input.onStartExpressionChange(offset(0));
+    assert.equal(values.length, 2);
+  });
+
+  it('uses_external_expressions_and_resolves_reference_updates', () => {
+    const original = globalThis.window;
+    globalThis.window = {clearTimeout: () => {}} as any;
+    try {
+      const values: DateRange[] = [];
+      const input = makeInput({customType: DateRangeInput.CustomType.EXPRESSION,
+        onChange: (value: DateRange) => values.push(value)});
+      updateProps(input, {referenceDate: new Beam.Date(2024, 3, 1),
+        value: new DateRange(null, null, undefined,
+          new DateRangeExpressions(offset(-1), offset(0)))});
+      assert.equal(input.state.value.start.toJson(), '20240229');
+      updateProps(input, {referenceDate: new Beam.Date(2024, 3, 2)});
+      assert.equal(input.state.value.start.toJson(), '20240301');
+      assert.equal(input.state.value.end.toJson(), '20240302');
+      assert.equal(values.length, 0);
+      updateProps(input, {value: new DateRange(new Beam.Date(2024, 2, 29),
+        new Beam.Date(2024, 3, 1), undefined,
+        new DateRangeExpressions(offset(-1), offset(0)))});
+      assert.equal(input.state.expressions.start.mode,
+        DateExpression.Mode.DAY_OFFSET);
+      assert.equal(input.state.value.start.toJson(), '20240301');
+      updateProps(input, {customType: DateRangeInput.CustomType.FIXED});
+      updateProps(input, {customType: DateRangeInput.CustomType.EXPRESSION,
+        value: new DateRange(null, null, undefined,
+          new DateRangeExpressions(offset(-2), offset(0)))});
+      assert.equal(input.state.value.start.toJson(), '20240229');
+    } finally {
+      globalThis.window = original;
+    }
   });
 });

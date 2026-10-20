@@ -1,12 +1,13 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DateRange, DateRangeOption, DateRangeRules, DateRangeValidation,
-  DateRule, DateRuleType,
-  isDateRangeEqual, isDateRuleEqual, resolveDateRule,
-  SpecificDateRule, validateDateRange } from
-  '../../models';
-import { DateRuleInput } from '../date_rule_input';
+import { DateExpression, DateOffset, DateRange, DateRangeExpressions,
+  DateRangeOption, DateRangeRules, DateRangeValidation, DateRule, DateRuleType,
+  DayOfMonth, isDateExpressionEqual, isDateRangeEqual, isDateRuleEqual,
+  resolveDateExpression, resolveDateRule, SpecificDateRule, validateDateRange }
+  from '../../models';
+import { DateExpressionInput } from '../date_expression_input';
+import { DateInput } from '../date_input';
 import { Select } from '../select';
 
 interface Properties extends
@@ -14,6 +15,12 @@ interface Properties extends
 
   /** The optional label for the preset selector. */
   label?: string;
+
+  /** The custom start and end labels. Defaults to Start and End. */
+  customLabel?: {start?: string; end?: string};
+
+  /** The custom date editor type. Defaults to FIXED. */
+  customType?: DateRangeInput.CustomType;
 
   /** The committed range to display. */
   value: DateRange;
@@ -65,6 +72,7 @@ interface State {
   revision: number;
   rules: DateRangeRules;
   reference: Beam.Date;
+  expressions: DateRangeExpressions;
 }
 
 /** Selects a preset date range or commits a validated custom range. */
@@ -75,16 +83,24 @@ export class DateRangeInput extends React.Component<Properties, State> {
     const selection = findSelection(props.value, props.options);
     const option = props.options.find(option => option.value === selection);
     const rules = props.rules ?? option?.rules ?? makeFixedRules(props.value);
-    const value = resolveRules(rules, reference);
+    const expressions = props.value.expressions ??
+      makeExpressions(rules, reference);
+    const value = (() => {
+      if(props.customType === DateRangeInput.CustomType.EXPRESSION &&
+          props.value.expressions) {
+        return resolveExpressions(expressions, reference);
+      }
+      return resolveRules(rules, reference);
+    })();
     this.state = {value, inputValue: value,
       selection: (() => {
-        if(props.rules) {
+        if(props.rules || props.value.expressions) {
           return 'custom';
         }
         return selection;
       })(), startComplete: isComplete(rules.start, value.start),
       endComplete: isComplete(rules.end, value.end), showError: false,
-      revision: 0, rules, reference};
+      revision: 0, rules, reference, expressions};
     this.identifier = `date-range-${DateRangeInput.nextIdentifier++}`;
     this.submission = props.value;
     this.timer = null;
@@ -106,11 +122,25 @@ export class DateRangeInput extends React.Component<Properties, State> {
       this.submission = this.props.value;
     }
     let updated = false;
-    if(rulesChanged) {
+    if(this.props.value !== previous.value && this.props.value.expressions) {
+      if(!isDateExpressionEqual(this.props.value.expressions.start,
+          this.state.expressions.start) ||
+          !isDateExpressionEqual(this.props.value.expressions.end,
+            this.state.expressions.end) ||
+          previous.referenceDate !== this.props.referenceDate ||
+          !this.state.startComplete || !this.state.endComplete) {
+        this.setExpressions(this.props.value.expressions, false, false);
+      }
+      updated = true;
+    } else if(rulesChanged) {
       updated = true;
       this.setRules(this.props.rules, false);
     } else if(previous.value !== this.props.value) {
       if(!isDateRangeEqual(this.props.value, this.state.value) ||
+          !isDateExpressionEqual(this.props.value.expressions?.start,
+            this.state.value.expressions?.start) ||
+          !isDateExpressionEqual(this.props.value.expressions?.end,
+            this.state.value.expressions?.end) ||
           !this.state.startComplete || !this.state.endComplete) {
         updated = true;
         const selection = findSelection(this.props.value, this.props.options);
@@ -118,6 +148,8 @@ export class DateRangeInput extends React.Component<Properties, State> {
           option => option.value === selection);
         this.setState(state => ({value: this.props.value,
           inputValue: this.props.value,
+          expressions: makeExpressions(makeFixedRules(this.props.value),
+            this.props.referenceDate ?? Beam.Date.today()),
           rules: option?.rules ?? makeFixedRules(this.props.value),
           reference: this.props.referenceDate ?? Beam.Date.today(),
           selection,
@@ -143,6 +175,37 @@ export class DateRangeInput extends React.Component<Properties, State> {
         }
       }
     }
+    if(previous.customType !== this.props.customType) {
+      const selection = (() => {
+        if(this.props.value.expressions) {
+          return 'custom';
+        } else if(previous.value !== this.props.value) {
+          return findSelection(this.props.value, this.props.options);
+        }
+        return this.state.selection;
+      })();
+      updated = true;
+      const rules = (() => {
+        if(previous.value !== this.props.value) {
+          return this.props.rules ?? makeFixedRules(this.props.value);
+        }
+        return this.state.rules;
+      })();
+      if(this.props.customType === DateRangeInput.CustomType.EXPRESSION) {
+        this.setExpressions(this.props.value.expressions ??
+          makeExpressions(rules, this.props.referenceDate ?? Beam.Date.today()),
+          false, false);
+      } else {
+        const value = (() => {
+          if(previous.value !== this.props.value) {
+            return this.props.value;
+          }
+          return this.state.value;
+        })();
+        this.setRules(makeFixedRules(value), false);
+      }
+      this.setState({selection});
+    }
     if(previous.referenceDate !== this.props.referenceDate) {
       if(!updated) {
         this.onReferenceChange();
@@ -161,20 +224,25 @@ export class DateRangeInput extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const {label, value, rules, referenceDate, onRulesChange, options,
+    const {label, customLabel, customType, value, rules, referenceDate,
+      onRulesChange, options,
       orientation, labelPosition, boundsRequired, readOnly, disabled,
       validation: supplied, onChange, onValidationChange,
       className, style, ...rest} = this.props;
-    const horizontal = orientation === DateRangeInput.Orientation.HORIZONTAL;
+    const expression = customType === DateRangeInput.CustomType.EXPRESSION;
+    const horizontal = !expression &&
+      orientation === DateRangeInput.Orientation.HORIZONTAL;
     const inline = !horizontal &&
       labelPosition === DateRangeInput.LabelPosition.INLINE;
-    const labelInline = labelPosition === DateRangeInput.LabelPosition.INLINE;
+    const labelInline = horizontal || inline;
     const custom = this.state.selection === 'custom';
     const validation = supplied ?? this.getValidation();
     const visibleError = validation.showError && !validation.valid;
     const {Target} = DateRangeValidation;
     const identifier = rest.id ?? this.identifier;
     const errorId = `${identifier}-error`;
+    const startLabel = customLabel?.start ?? 'Start';
+    const endLabel = customLabel?.end ?? 'End';
     const error = (target: DateRangeValidation.Target) => visibleError &&
       (validation.target === target ||
         validation.target === Target.START_AND_END);
@@ -187,25 +255,45 @@ export class DateRangeInput extends React.Component<Properties, State> {
         labelInline={labelInline}
         readOnly={readOnly} disabled={disabled} onChange={this.onSelect}/>
       <CustomDates id={`${identifier}-custom`} custom={custom}
-          horizontal={horizontal} inline={inline} labelInline={labelInline}
+          horizontal={horizontal} inline={inline}
           startId={`${identifier}-start`}
           endId={`${identifier}-end`} errorId={errorId} label={label}
           validation={validation} preview={this.state.value}
-          start={<DateRuleInput key={`start-${this.state.revision}`}
-            id={`${identifier}-start`} label='From'
-            value={this.state.rules.start}
-            dateValue={this.state.inputValue.start}
-            resolved={this.state.value.start} reference={this.state.reference}
-            error={error(Target.START)} errorId={errorId} readOnly={readOnly}
-            disabled={disabled || !custom} onChange={this.onStartRule}
-            onInput={this.onStartInput} onCommit={this.onCommit}/>}
-          end={<DateRuleInput key={`end-${this.state.revision}`}
-            id={`${identifier}-end`} label='To'
-            value={this.state.rules.end} dateValue={this.state.inputValue.end}
-            resolved={this.state.value.end} reference={this.state.reference}
-            error={error(Target.END)} errorId={errorId} readOnly={readOnly}
-            disabled={disabled || !custom} onChange={this.onEndRule}
-            onInput={this.onEndInput} onCommit={this.onCommit}/>}/>
+          startLabel={startLabel} endLabel={endLabel} expression={expression}
+          start={(() => {
+            if(expression) {
+              return <DateExpressionInput key={`start-${this.state.revision}`}
+                id={`${identifier}-start`} aria-label={startLabel}
+                value={this.state.expressions.start}
+                aria-invalid={error(Target.START)} aria-describedby={errorId}
+                readOnly={readOnly} disabled={disabled || !custom}
+                onInput={this.onStartExpressionInput}
+                onChange={this.onStartExpressionChange}/>;
+            }
+            return <BoundDate key={`start-${this.state.revision}`}
+              id={`${identifier}-start`} label={startLabel}
+              value={this.state.inputValue.start} error={error(Target.START)}
+              errorId={errorId} readOnly={readOnly}
+              disabled={disabled || !custom}
+              onInput={this.onStartInput} onCommit={this.onCommit}/>;
+          })()}
+          end={(() => {
+            if(expression) {
+              return <DateExpressionInput key={`end-${this.state.revision}`}
+                id={`${identifier}-end`} aria-label={endLabel}
+                value={this.state.expressions.end}
+                aria-invalid={error(Target.END)} aria-describedby={errorId}
+                readOnly={readOnly} disabled={disabled || !custom}
+                onInput={this.onEndExpressionInput}
+                onChange={this.onEndExpressionChange}/>;
+            }
+            return <BoundDate key={`end-${this.state.revision}`}
+              id={`${identifier}-end`} label={endLabel}
+              value={this.state.inputValue.end} error={error(Target.END)}
+              errorId={errorId} readOnly={readOnly}
+              disabled={disabled || !custom}
+              onInput={this.onEndInput} onCommit={this.onCommit}/>;
+          })()}/>
     </div>;
   }
 
@@ -213,12 +301,24 @@ export class DateRangeInput extends React.Component<Properties, State> {
     const {Error, Target} = DateRangeValidation;
     let validation =
       validateDateRange(this.state.value, this.props.boundsRequired !== false);
-    const startComplete = this.state.startComplete &&
-      isComplete(this.state.rules.start,
+    const expression = this.props.customType ===
+      DateRangeInput.CustomType.EXPRESSION;
+    const startComplete = this.state.startComplete && (() => {
+      if(expression) {
+        return isExpressionComplete(this.state.expressions.start,
+          this.state.value.start);
+      }
+      return isComplete(this.state.rules.start,
         resolveDateRule(this.state.rules.start, this.state.reference));
-    const endComplete = this.state.endComplete &&
-      isComplete(this.state.rules.end,
+    })();
+    const endComplete = this.state.endComplete && (() => {
+      if(expression) {
+        return isExpressionComplete(this.state.expressions.end,
+          this.state.value.end);
+      }
+      return isComplete(this.state.rules.end,
         resolveDateRule(this.state.rules.end, this.state.reference));
+    })();
     if(!startComplete || !endComplete) {
       let target = Target.START_AND_END;
       if(startComplete) {
@@ -256,6 +356,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
         ++revision;
       }
       return {rules, reference, value,
+        expressions: makeExpressions(rules, reference),
         inputValue: new DateRange(startInput, endInput), revision,
         selection: 'custom',
         startComplete: !preserveStart && isComplete(rules.start, value.start),
@@ -270,6 +371,39 @@ export class DateRangeInput extends React.Component<Properties, State> {
     });
   }
 
+  private setExpressions(expressions: DateRangeExpressions, commit: boolean,
+      input: boolean, completeness?: {start?: boolean; end?: boolean}): void {
+    if((commit || input) && (this.props.readOnly || this.props.disabled)) {
+      return;
+    }
+    const reference = this.props.referenceDate ?? Beam.Date.today();
+    const value = resolveExpressions(expressions, reference);
+    this.setState(state => ({expressions, reference, value,
+      inputValue: value, selection: 'custom',
+      revision: state.revision + Number(!commit && !input),
+      startComplete: completeness?.start ?? (() => {
+        if((commit || input) && isDateExpressionEqual(expressions.start,
+            state.expressions.start)) {
+          return state.startComplete;
+        }
+        return isExpressionComplete(expressions.start, value.start);
+      })(),
+      endComplete: completeness?.end ?? (() => {
+        if((commit || input) && isDateExpressionEqual(expressions.end,
+            state.expressions.end)) {
+          return state.endComplete;
+        }
+        return isExpressionComplete(expressions.end, value.end);
+      })(),
+      showError: commit}), () => {
+        if(commit) {
+          this.onCommit();
+        } else {
+          this.publishValidation();
+        }
+      });
+  }
+
   private selectPreset(option: DateRangeOption): void {
     const reference = this.props.referenceDate ?? Beam.Date.today();
     const rules = option.rules ??
@@ -277,6 +411,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
     const value = resolveRules(rules, reference);
     this.setState(state => ({value, inputValue: value,
       selection: option.value, reference, rules,
+      expressions: makeExpressions(rules, reference),
       startComplete: isComplete(rules.start, value.start),
       endComplete: isComplete(rules.end, value.end), showError: false,
       revision: state.revision + 1}), () => {
@@ -305,6 +440,9 @@ export class DateRangeInput extends React.Component<Properties, State> {
   };
 
   private onSelect = (selection: string) => {
+    if(this.props.readOnly || this.props.disabled) {
+      return;
+    }
     if(selection === 'custom') {
       this.setState({selection, showError: false}, this.publishValidation);
       return;
@@ -332,30 +470,59 @@ export class DateRangeInput extends React.Component<Properties, State> {
   };
 
   private onCommit = () => {
+    if(this.props.readOnly || this.props.disabled) {
+      return;
+    }
     this.setState({showError: true}, () => {
       this.publishValidation();
-      this.props.onRulesChange?.(this.state.rules);
+      if(this.props.customType !== DateRangeInput.CustomType.EXPRESSION) {
+        this.props.onRulesChange?.(this.state.rules);
+      }
       if(this.getValidation().valid &&
-          !isDateRangeEqual(this.state.value, this.submission)) {
+          (!isDateRangeEqual(this.state.value, this.submission) ||
+            !isDateExpressionEqual(this.state.value.expressions?.start,
+              this.submission.expressions?.start) ||
+            !isDateExpressionEqual(this.state.value.expressions?.end,
+              this.submission.expressions?.end))) {
         this.submission = this.state.value;
         this.props.onChange?.(this.state.value);
       }
     });
   };
 
-  private onStartRule = (start: DateRule) => {
-    this.setRules(new DateRangeRules(start, this.state.rules.end), true);
+  private onStartExpressionInput = (start: DateExpression,
+      complete?: boolean) => {
+    this.setExpressions(new DateRangeExpressions(start,
+      this.state.expressions.end), false, true, {start: complete});
   };
 
-  private onEndRule = (end: DateRule) => {
-    this.setRules(new DateRangeRules(this.state.rules.start, end), true);
+  private onEndExpressionInput = (end: DateExpression,
+      complete?: boolean) => {
+    this.setExpressions(new DateRangeExpressions(this.state.expressions.start,
+      end), false, true, {end: complete});
+  };
+
+  private onStartExpressionChange = (start: DateExpression,
+      complete?: boolean) => {
+    this.setExpressions(new DateRangeExpressions(start,
+      this.state.expressions.end), true, false, {start: complete});
+  };
+
+  private onEndExpressionChange = (end: DateExpression,
+      complete?: boolean) => {
+    this.setExpressions(new DateRangeExpressions(this.state.expressions.start,
+      end), true, false, {end: complete});
   };
 
   private onReferenceChange = () => {
     const reference = this.props.referenceDate ?? Beam.Date.today();
     if(!reference.equals(this.state.reference)) {
       if(this.state.selection === 'custom') {
-        this.setRules(this.state.rules, true);
+        if(this.props.customType === DateRangeInput.CustomType.EXPRESSION) {
+          this.setExpressions(this.state.expressions, false, false);
+        } else {
+          this.setRules(this.state.rules, true);
+        }
       } else {
         const option = this.props.options.find(
           option => option.value === this.state.selection);
@@ -376,6 +543,17 @@ export class DateRangeInput extends React.Component<Properties, State> {
 }
 
 export namespace DateRangeInput {
+
+  /** The editors used for custom bounds. */
+  export enum CustomType {
+
+    /** Fixed calendar date inputs. */
+    FIXED,
+
+    /** Fixed or relative date expression inputs. */
+    EXPRESSION
+  }
+
 
   /** The arrangement of the selector and custom date inputs. */
   export enum Orientation {
@@ -403,11 +581,13 @@ interface CustomDatesProperties {
   custom: boolean;
   horizontal: boolean;
   inline: boolean;
-  labelInline: boolean;
   startId: string;
   endId: string;
   errorId: string;
   label: string;
+  startLabel: string;
+  endLabel: string;
+  expression: boolean;
   validation: DateRangeValidation;
   start: React.ReactNode;
   end: React.ReactNode;
@@ -424,7 +604,6 @@ class CustomDates extends
   constructor(props: CustomDatesProperties) {
     super(props);
     this.state = {maximum: 0};
-    this.element = React.createRef<HTMLDivElement>();
     this.content = React.createRef<HTMLDivElement>();
     this.observer = null;
     this.frame = null;
@@ -449,60 +628,82 @@ class CustomDates extends
 
   public render(): JSX.Element {
     const props = this.props;
-    const bounds: React.CSSProperties = {display: 'flex', gap: '18px'};
-    const bound: React.CSSProperties = {display: 'grid', minWidth: 0,
-      gap: '8px', alignContent: 'start'};
+    const bounds: React.CSSProperties = {display: 'flex', minWidth: 0};
+    const bound: React.CSSProperties = {display: 'grid', minWidth: 0};
+    const labelStyle: React.CSSProperties = {lineHeight: '16px',
+      alignSelf: 'start', boxSizing: 'border-box'};
     if(props.horizontal) {
-      bounds.flexWrap = 'wrap';
-      bound.flex = '1 1 300px';
+      bounds.gap = '18px';
+      bound.gridTemplateColumns = 'max-content 150px';
+      bound.gap = '8px';
+      labelStyle.alignSelf = 'center';
+    } else if(props.inline) {
+      bounds.flexDirection = 'column';
+      bounds.gap = (() => {
+        if(props.expression) {
+          return '18px';
+        }
+        return '10px';
+      })();
+      bound.gridTemplateColumns = INLINE_COLUMNS;
+      bound.gap = '8px';
+      labelStyle.paddingTop = '9px';
+      labelStyle.minHeight = '34px';
+      if(props.label) {
+        labelStyle.paddingInlineStart = '24px';
+      }
     } else {
       bounds.flexDirection = 'column';
+      bounds.gap = '20px';
+      bound.gap = '12px';
+      labelStyle.paddingInlineStart = '10px';
     }
-    const boundClass = css(props.inline && STYLES.inlineBound,
-      props.horizontal && props.labelInline && STYLES.horizontalInlineBound);
     const style: React.CSSProperties = {maxHeight: this.state.maximum,
-      minWidth: 0, flex: '1 1 480px'};
-    if(!props.horizontal) {
+      minWidth: 0, overflow: 'clip',
+      transition: 'max-height 200ms ease-in-out'};
+    if(props.horizontal) {
+      style.flex = '0 0 auto';
+      if(props.custom) {
+        style.marginLeft = '18px';
+      } else {
+        style.width = 0;
+      }
+    } else {
       style.width = '100%';
     }
     if(!props.custom) {
-      style.display = 'none';
       style.visibility = 'hidden';
-      style.overflow = 'clip';
-    } else {
-      style.transition = 'max-height 200ms ease-in-out';
-      style.overflow = 'clip';
+      style.transition += ', visibility 0s 200ms';
     }
     const contentStyle: React.CSSProperties = {};
     if(!props.horizontal) {
-      contentStyle.paddingTop = '18px';
+      if(props.inline) {
+        contentStyle.paddingTop = '10px';
+      } else {
+        contentStyle.paddingTop = '18px';
+      }
     }
-    const labelStyle: React.CSSProperties = {display: 'flex',
-      alignItems: 'center', alignSelf: 'start', minHeight: '20px'};
-    if(props.labelInline) {
-      labelStyle.minHeight = '34px';
-    }
-    return <div id={props.id} ref={this.element} style={style}
+    return <div id={props.id} style={style}
         aria-hidden={!props.custom}>
       <div ref={this.content} style={contentStyle}>
         <div style={bounds}>
-          <div className={boundClass} style={bound}>
-            <label htmlFor={props.startId} style={labelStyle}>From</label>
+          <div style={bound}>
+            <label htmlFor={props.startId} style={labelStyle}>
+              {props.startLabel}
+            </label>
             {props.start}
           </div>
-          <div className={boundClass} style={bound}>
-            <label htmlFor={props.endId} style={labelStyle}>To</label>
+          <div style={bound}>
+            <label htmlFor={props.endId} style={labelStyle}>
+              {props.endLabel}
+            </label>
             {props.end}
           </div>
         </div>
         <Error id={props.errorId} label={props.label}
-          inline={false} validation={props.validation}/>
-        {props.validation.valid && <div aria-live='polite'
-            aria-label='Resolved date range'
-            style={{paddingTop: '12px', fontSize: '12px', color: '#7D7E90'}}>
-          {formatPreview(props.preview.start)} {'\u2013'}
-          {' '}{formatPreview(props.preview.end)}
-        </div>}
+          inline={props.inline} validation={props.validation}/>
+        {props.expression && <ResolvedDateBlock inline={props.inline}
+          value={props.preview}/>}
       </div>
     </div>;
   }
@@ -527,7 +728,6 @@ class CustomDates extends
     }
   };
 
-  private element: React.RefObject<HTMLDivElement>;
   private content: React.RefObject<HTMLDivElement>;
   private observer: ResizeObserver;
   private frame: number;
@@ -559,6 +759,50 @@ function Error(props: {id: string; label: string; inline: boolean;
   return <div id={props.id} style={style} aria-hidden={!visible}>
     {visible && <span role='alert'>{message}</span>}
   </div>;
+}
+
+function resolveExpressions(expressions: DateRangeExpressions,
+    reference: Beam.Date): DateRange {
+  return new DateRange(resolveDateExpression(expressions.start, reference),
+    resolveDateExpression(expressions.end, reference), undefined, expressions);
+}
+
+function isExpressionComplete(expression: DateExpression,
+    value: Beam.Date): boolean {
+  return expression.mode === DateExpression.Mode.FIXED &&
+    expression.date == null || value != null;
+}
+
+function makeExpressions(rules: DateRangeRules, reference: Beam.Date):
+    DateRangeExpressions {
+  const convert = (rule: DateRule): DateExpression => {
+    if(rule.type === DateRuleType.DAY_OFFSET) {
+      return {mode: DateExpression.Mode.DAY_OFFSET,
+        date: {value: rule.offset, unit: DateOffset.Unit.DAY}};
+    } else if(rule.type === DateRuleType.WEEKDAY) {
+      return {mode: DateExpression.Mode.WEEKDAY,
+        date: {day: rule.day,
+          offset: {value: rule.offset, unit: DateOffset.Unit.WEEK}}};
+    } else if(rule.type === DateRuleType.DAY_OF_MONTH) {
+      return {mode: DateExpression.Mode.DAY_OF_MONTH,
+        date: {day: new DayOfMonth(DayOfMonth.Position.DAY, rule.day),
+          offset: {value: rule.offset, unit: DateOffset.Unit.MONTH}}};
+    } else if(rule.type === DateRuleType.MONTH_BOUNDARY &&
+        rule.dayOffset === 0) {
+      const position = (() => {
+        if(rule.boundary === 'FIRST') {
+          return DayOfMonth.Position.FIRST;
+        }
+        return DayOfMonth.Position.LAST;
+      })();
+      return {mode: DateExpression.Mode.DAY_OF_MONTH,
+        date: {day: new DayOfMonth(position, DayOfMonth.DayType.DAY),
+          offset: {value: rule.offset, unit: DateOffset.Unit.MONTH}}};
+    }
+    return {mode: DateExpression.Mode.FIXED,
+      date: resolveDateRule(rule, reference)};
+  };
+  return new DateRangeExpressions(convert(rules.start), convert(rules.end));
 }
 
 function makeFixedRules(value: DateRange): DateRangeRules {
@@ -600,48 +844,52 @@ interface SelectGroupProperties {
   onChange: (selection: string) => void;
 }
 
-class SelectGroup extends React.Component<SelectGroupProperties> {
-  public render(): JSX.Element {
-    const props = this.props;
-    const style: React.CSSProperties = {flex: '1 1 0', minWidth: 0};
-    const selectStyle: React.CSSProperties = {width: '100%', minWidth: 0,
-      boxSizing: 'border-box'};
-    if(props.horizontal) {
-      style.flex = '0 0 auto';
-    }
-    if(props.label) {
-      if(props.horizontal) {
-        style.display = 'flex';
-        style.alignItems = 'center';
-        style.gap = '8px';
-        selectStyle.width = '150px';
-      } else if(props.inline) {
-        style.display = 'grid';
-        style.alignItems = 'center';
-        style.gridTemplateColumns = INLINE_COLUMNS;
-        style.gap = '8px';
-      } else {
-        style.display = 'flex';
-        style.flexDirection = 'column';
-        style.gap = '12px';
-      }
-    }
-    return <div style={style}>
-      {props.label && <label htmlFor={props.id}>
-        {props.label}
-      </label>}
-      <Select id={props.id} value={props.selection} style={selectStyle}
-          aria-label={props.label || 'Date range'}
-          aria-controls={props.controls}
-          readOnly={props.readOnly} disabled={props.disabled}
-          onChange={props.onChange}>
-        {props.options.map(option => <option key={option.value}
-          value={option.value}>{option.label}</option>)}
-        <option value='custom'>Custom</option>
-      </Select>
-    </div>;
+function SelectGroup(props: SelectGroupProperties): JSX.Element {
+  const style: React.CSSProperties = {minWidth: 0};
+  const selectStyle: React.CSSProperties = {width: '100%', minWidth: 0,
+    boxSizing: 'border-box'};
+  if(props.horizontal) {
+    style.flex = '0 0 auto';
   }
+  if(props.label) {
+    if(props.horizontal) {
+      style.display = 'flex';
+      style.alignItems = 'center';
+      style.gap = '8px';
+      selectStyle.width = '150px';
+    } else if(props.inline) {
+      style.display = 'grid';
+      style.alignItems = 'center';
+      style.gridTemplateColumns = INLINE_COLUMNS;
+      style.gap = '8px';
+    } else {
+      style.display = 'flex';
+      style.flexDirection = 'column';
+      style.gap = '12px';
+    }
+  }
+  return <div style={style}>
+    {props.label && <label htmlFor={props.id}
+        style={{lineHeight: '16px', paddingInlineStart: (() => {
+          if(props.labelInline) {
+            return 0;
+          }
+          return '10px';
+        })()}}>
+      {props.label}
+    </label>}
+    <Select id={props.id} value={props.selection} style={selectStyle}
+        aria-label={props.label || 'Date range'}
+        aria-controls={props.controls}
+        readOnly={props.readOnly} disabled={props.disabled}
+        onChange={props.onChange}>
+      {props.options.map(option => <option key={option.value}
+        value={option.value}>{option.label}</option>)}
+      <option value='custom'>Custom</option>
+    </Select>
+  </div>;
 }
+
 
 function findSelection(value: DateRange, options: readonly DateRangeOption[]):
     string {
@@ -650,18 +898,115 @@ function findSelection(value: DateRange, options: readonly DateRangeOption[]):
 }
 
 const INLINE_COLUMNS =
-  'clamp(50px, calc(50px + (100cqw - 246px) * (80 / 138)), 130px) ' +
-  'minmax(0, 1fr)';
+  'calc(50px + (100cqw - 246px) * (80 / 138)) minmax(0, 1fr)';
 const STYLES = StyleSheet.create({
-  inlineBound: {
-    '@container (min-width: 384px)': {gridTemplateColumns: INLINE_COLUMNS}
-  },
-  horizontalInlineBound: {
-    '@container (min-width: 384px)': {
-      gridTemplateColumns: 'max-content minmax(0, 1fr)'}
-  },
   container: {containerType: 'inline-size', width: '100%',
-    font: '400 14px Roboto, system-ui, sans-serif', color: '#333333'},
-  horizontal: {display: 'flex', flexWrap: 'wrap',
-    alignItems: 'flex-start', gap: '18px'}
+    fontSize: '14px', fontWeight: 400, color: '#333333'},
+  horizontal: {display: 'flex', alignItems: 'flex-start'}
 });
+
+function ResolvedDateBlock(props: {inline: boolean; value: DateRange}):
+    JSX.Element {
+  const style: React.CSSProperties = {paddingTop: '12px', fontSize: '0.75rem',
+    lineHeight: '14px', color: '#5D5E6D'};
+  if(props.inline) {
+    style.paddingInlineStart = 'calc(58px + (100cqw - 246px) * (80 / 138))';
+  }
+  return <div aria-live='polite' aria-label='Resolved date range' style={style}>
+    {formatPreview(props.value.start)} {'\u2013'}
+    {' '}{formatPreview(props.value.end)}
+  </div>;
+}
+
+interface BoundDateProperties {
+  id: string;
+  label: string;
+  value: Beam.Date;
+  error: boolean;
+  errorId: string;
+  readOnly: boolean;
+  disabled: boolean;
+  onInput: (value: Beam.Date, complete: boolean) => void;
+  onCommit: () => void;
+}
+
+/** Adapts segmented date editing to range input and commit events. */
+class BoundDate extends React.Component<BoundDateProperties> {
+  constructor(props: BoundDateProperties) {
+    super(props);
+    this.element = React.createRef<HTMLDivElement>();
+    this.hasNormalizedValue = false;
+  }
+
+  public render(): JSX.Element {
+    return <div ref={this.element} role='group' aria-label={this.props.label}
+        aria-invalid={this.props.error} aria-describedby={this.props.errorId}
+        onInput={this.onInput} onBlur={this.onBlur}
+        onKeyDown={this.onKeyDown}>
+      <DateInput id={this.props.id} value={this.props.value}
+        error={this.props.error} readOnly={this.props.readOnly}
+        disabled={this.props.disabled} style={{width: '100%'}}
+        aria-invalid={this.props.error}
+        aria-describedby={this.props.errorId} onChange={this.onChange}/>
+    </div>;
+  }
+
+  private onInput = () => {
+    this.hasNormalizedValue = false;
+    const parts = Array.from(this.element.current.querySelectorAll('input'),
+      input => input.value);
+    if(parts.every(part => part === '')) {
+      this.props.onInput(null, true);
+      return;
+    }
+    if(parts.some(part => !/^\d+$/.test(part))) {
+      this.props.onInput(null, false);
+      return;
+    }
+    const [year, month, day] = parts.map(Number);
+    const date = new Date(0);
+    date.setUTCFullYear(year, month - 1, day);
+    if(year > 9999 || date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+      this.props.onInput(null, false);
+      return;
+    }
+    this.props.onInput(new Beam.Date(year, month, day), true);
+  };
+
+  private onChange = (value: Beam.Date) => {
+    this.hasNormalizedValue = true;
+    this.props.onInput(value ?? null, true);
+  };
+
+  private onBlur = (event: React.FocusEvent) => {
+    if(this.props.readOnly || this.props.disabled) {
+      return;
+    }
+    const commit = !event.currentTarget.contains(event.relatedTarget as Node);
+    this.forceUpdate(() => {
+      if(this.props.readOnly || this.props.disabled) {
+        return;
+      }
+      if(!this.hasNormalizedValue) {
+        this.onInput();
+      }
+      if(commit) {
+        this.props.onCommit?.();
+      }
+    });
+  };
+
+  private onKeyDown = (event: React.KeyboardEvent) => {
+    if(event.key === 'Enter' && !event.nativeEvent.isComposing &&
+        !this.props.readOnly && !this.props.disabled) {
+      event.preventDefault();
+      const input = event.target as HTMLInputElement;
+      input.blur();
+      input.focus();
+    }
+  };
+
+  private element: React.RefObject<HTMLDivElement>;
+  private hasNormalizedValue: boolean;
+}

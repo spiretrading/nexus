@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import { DateExpression } from './date_expression';
 import { DateRule } from './date_rule';
 
 /** A calendar date range. Null bounds represent unspecified dates. */
@@ -13,11 +14,16 @@ export class DateRange {
   /** The rules defining these dates, or undefined for fixed bounds. */
   public readonly rules: DateRangeRules;
 
-  /** Constructs a range with date bounds and optional relative rules. */
-  constructor(start: Beam.Date, end: Beam.Date, rules?: DateRangeRules) {
+  /** The custom expressions, when edited with DateExpressionInput. */
+  public readonly expressions: DateRangeExpressions;
+
+  /** Constructs a range with resolved dates and optional relative values. */
+  constructor(start: Beam.Date, end: Beam.Date, rules?: DateRangeRules,
+      expressions?: DateRangeExpressions) {
     this.start = start;
     this.end = end;
     this.rules = rules;
+    this.expressions = expressions;
   }
 }
 
@@ -68,6 +74,22 @@ export class DateRangeRules {
 
   /** Constructs a custom range from its two date rules. */
   constructor(start: DateRule, end: DateRule) {
+    this.start = start;
+    this.end = end;
+  }
+}
+
+/** The expressions defining the inclusive bounds of a custom range. */
+export class DateRangeExpressions {
+
+  /** The expression for the first date. */
+  public readonly start: DateExpression;
+
+  /** The expression for the last date. */
+  public readonly end: DateExpression;
+
+  /** Constructs a range from its two expressions. */
+  constructor(start: DateExpression, end: DateExpression) {
     this.start = start;
     this.end = end;
   }
