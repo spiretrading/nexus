@@ -14,6 +14,7 @@ export * from './disclosure';
 export * from './decimal_input';
 export * from './date_time_input';
 export * from './day_of_week_select';
+export * from './day_of_month_input';
 export * from './duration_input';
 export * from './edit_account_group_modal';
 export * from './edit_list_modal';

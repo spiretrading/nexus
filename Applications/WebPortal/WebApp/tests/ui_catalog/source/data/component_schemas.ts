@@ -6,7 +6,8 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, DateRangeValueInput, EnumInput, IntervalValueInput,
+  CSSInput, DateInput, DateRangeValueInput, DayOfMonthValueInput, EnumInput,
+  IntervalValueInput,
   NumberInput,
   NumberSliderInput, MoneyInput,
   ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
@@ -246,6 +247,17 @@ const DAY_OF_WEEK_SELECT =
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DayOfWeekSelect);
+
+const DAY_OF_MONTH_INPUT =
+  new ComponentSchema('DayOfMonthInput',
+    [new PropertySchema('value', new WebPortal.DayOfMonth(
+        WebPortal.DayOfMonth.Position.FIRST, WebPortal.Weekday.MONDAY),
+      DayOfMonthValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onInput', 'value'),
+      new SignalSchema('onChange', 'value')],
+    WebPortal.DayOfMonthInput, 282);
 
 const MONTH_SELECT =
   new ComponentSchema('MonthSelect',
@@ -1525,7 +1537,8 @@ export const componentSections = [
     segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
     sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, dateRangeInput, DAY_OF_WEEK_SELECT, emptyMessage, errorMessage,
+    currencySelect, dateRangeInput, DAY_OF_MONTH_INPUT, DAY_OF_WEEK_SELECT,
+    emptyMessage, errorMessage,
     inputErrorMessage, inputGroup, moneyInput, MONTH_SELECT, pageLayout,
     relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Notifications', [notificationsFilterModal,
