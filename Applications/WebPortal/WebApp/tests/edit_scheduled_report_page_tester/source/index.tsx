@@ -2,8 +2,9 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { EditScheduledReportController, Interval, LocalAccountGroupQueryModel,
-  LocalEditScheduledReportModel, LocalTickerQueryModel, ReportDefinition,
+import { dateRuleToJson, DayOffsetDateRule, EditScheduledReportController,
+  Interval, LocalAccountGroupQueryModel, LocalEditScheduledReportModel,
+  LocalTickerQueryModel, OrdinalDayOfMonthDateRule, ReportDefinition,
   ReportFormTemplate, ScopeQueryModel } from 'web_portal';
 
 class DemoEditScheduledReportModel extends LocalEditScheduledReportModel {
@@ -103,7 +104,12 @@ function makeConfigurations(count: number):
     value.scheduleDateTime = new Beam.DateTime(new Beam.Date(date.getFullYear(),
       date.getMonth() + 1, date.getDate()), Beam.Duration.HOUR.multiply(9));
     value.repeats = index % 2 === 0;
-    value.repeatInterval = new Interval(1, Interval.Unit.MONTH);
+    if(value.repeats) {
+      value.repeatInterval = new Interval(1, Interval.Unit.MONTH);
+      value.repeatRule = new OrdinalDayOfMonthDateRule(0,
+        OrdinalDayOfMonthDateRule.Position.LAST,
+        OrdinalDayOfMonthDateRule.Day.WEEKDAY);
+    }
     return [String(index + 1), value];
   }));
 }
@@ -121,7 +127,9 @@ function makeDefinitions(): ReportDefinition[] {
           default: '*'},
         {name: 'period', label: 'Date Range', type: 'DateRange',
           required: true,
-          default: {start: today.toJson(), end: today.toJson()}},
+          default: {start: today.toJson(), end: today.toJson(), rules: {
+            start: dateRuleToJson(new DayOffsetDateRule(0)),
+            end: dateRuleToJson(new DayOffsetDateRule(0))}}},
         {name: 'currency', label: 'Currency', type: 'Currency', required: true,
           default: 'USD'}],
       output: {media_type: 'text/csv', extension: 'csv'}}));

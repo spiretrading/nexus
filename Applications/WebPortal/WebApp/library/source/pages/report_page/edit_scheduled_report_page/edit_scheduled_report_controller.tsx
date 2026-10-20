@@ -158,12 +158,13 @@ function isEqual(left: ReportFormTemplate.Value,
     left.scheduled === right.scheduled && left.repeats === right.repeats &&
     equals(left.recipients, right.recipients) &&
     equals(left.scheduleDateTime, right.scheduleDateTime) &&
-    left.repeatInterval?.count === right.repeatInterval?.count &&
-    left.repeatInterval?.unit === right.repeatInterval?.unit &&
-    left.repeatMonth === right.repeatMonth &&
-    ((!left.repeatRule && !right.repeatRule) ||
-      !!left.repeatRule && !!right.repeatRule &&
-      isDateRuleEqual(left.repeatRule, right.repeatRule)) &&
+    (!left.repeats ||
+      left.repeatInterval?.count === right.repeatInterval?.count &&
+      left.repeatInterval?.unit === right.repeatInterval?.unit &&
+      (left.repeatMonth ?? null) === (right.repeatMonth ?? null) &&
+      ((!left.repeatRule && !right.repeatRule) ||
+        !!left.repeatRule && !!right.repeatRule &&
+        isDateRuleEqual(left.repeatRule, right.repeatRule))) &&
     Object.keys(left.parameters).length ===
       Object.keys(right.parameters).length &&
     Object.keys(left.parameters).every(name =>
