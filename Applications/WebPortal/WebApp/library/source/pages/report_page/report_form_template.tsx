@@ -56,7 +56,7 @@ interface Properties {
 
 interface State {
   errors: ReadonlyMap<string, ValidationError>;
-  now: Beam.DateTime;
+  now: Date;
   sharingError: ValidationError;
   scheduleError: ValidationError;
   intervalError: ValidationError;
@@ -79,7 +79,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
 
   constructor(props: Properties) {
     super(props);
-    this.state = {errors: new Map(), now: Beam.DateTime.now(),
+    this.state = {errors: new Map(), now: new Date(),
       sharingError: ValidationError.NONE, scheduleError: ValidationError.NONE,
       intervalError: ValidationError.NONE};
     this.identifier = `report-form-${ReportFormTemplate.nextIdentifier++}`;
@@ -118,12 +118,20 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
         <Collapse open={props.value.scheduled}>
           <ScheduleFieldset id={`${this.identifier}-schedule`}
             value={props.value} accountModel={props.accountModel}
-            scopeModel={props.scopeModel} error={this.getDateTimeError()}
+            scopeModel={props.scopeModel} mode={props.mode}
             onDateChange={this.onDateTimeChange}
             onValidation={this.onDateTimeValidation}
             onRepeatChange={this.onRepeatChange}
-            intervalError={this.state.intervalError}
-            onIntervalInput={this.onIntervalInput}/>
+            now={(() => {
+              if(props.now) {
+                const {date, timeOfDay} = props.now;
+                const time = timeOfDay.split();
+                return new Date(date.year, date.month - 1, date.day,
+                  time.hours, time.minutes, time.seconds);
+              }
+              return this.state.now;
+            })()}
+            onIntervalValidation={this.onIntervalValidation}/>
         </Collapse>
         <SubmitSection mode={props.mode} scheduled={props.value.scheduled}
           valid={!props.submitDisabled && this.isValid()}/>
@@ -182,7 +190,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     if(value.scheduled && value.repeats) {
       const interval = value.repeatInterval;
       if(this.state.intervalError || !interval ||
-          !isValidReportRepeat(interval, value.repeatRule)) {
+          !isValidReportRepeat(interval, value.repeatRule, value.repeatMonth)) {
         return false;
       }
     }
@@ -244,23 +252,23 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     }
   };
 
-  private onRepeatChange = (interval: Interval, repeatRule: DateRule) => {
+  private onRepeatChange = (interval: Interval, repeatRule: DateRule,
+      repeatMonth: number) => {
     this.setState({intervalError: ValidationError.NONE});
-    this.update({repeats: !!interval, repeatInterval: interval, repeatRule});
+    this.update({repeats: !!interval, repeatInterval: interval, repeatRule,
+      repeatMonth});
   };
 
-  private onIntervalInput = (event: React.FormEvent<HTMLDivElement>) => {
-    if((event.target as HTMLElement).tagName !== 'INPUT') {
-      return;
+  private onIntervalValidation = (validation: InputGroup.ValidationState) => {
+    const intervalError = validation.error || (() => {
+      if(validation.valid) {
+        return ValidationError.NONE;
+      }
+      return ValidationError.FORMAT;
+    })();
+    if(intervalError !== this.state.intervalError) {
+      this.setState({intervalError});
     }
-    const text = event.currentTarget.querySelector('input').value;
-    let intervalError = ValidationError.NONE;
-    if(text === '') {
-      intervalError = ValidationError.REQUIRED;
-    } else if(!/^\d+$/.test(text) || Number(text) < 1) {
-      intervalError = ValidationError.FORMAT;
-    }
-    this.setState({intervalError});
   };
 
   private onSubmit = (event: React.FormEvent) => {
@@ -275,7 +283,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
 
   private onClock = () => {
     if(!this.props.now && this.props.value.scheduled) {
-      this.setState({now: Beam.DateTime.now()});
+      this.setState({now: new Date()});
     }
   };
 
@@ -324,6 +332,9 @@ export namespace ReportFormTemplate {
 
     /** The date rule applied within each repeat interval. */
     repeatRule?: DateRule;
+
+    /** The month selected for a yearly recurrence. */
+    repeatMonth?: number;
   }
 }
 
@@ -414,52 +425,112 @@ class RunFieldset extends React.Component<{name: string; scheduled: boolean;
   };
 }
 
-function ScheduleFieldset(props: {id: string; value: ReportFormTemplate.Value;
-    accountModel: AccountGroupQueryModel; scopeModel: QueryModel<Nexus.Scope>;
-    error: ValidationError; onDateChange: (value: ReportParameterValue) => void;
-    onValidation: (error: ValidationError) => void;
-    onRepeatChange: (interval: Interval, rule: DateRule) => void;
-    intervalError: ValidationError;
-    onIntervalInput: React.FormEventHandler<HTMLDivElement>}): JSX.Element {
-  const interval = props.value.repeatInterval;
-  const error = (() => {
-    if(!props.value.repeats) {
-      return ValidationError.NONE;
-    }
-    if(props.intervalError) {
-      return props.intervalError;
-    }
-    if(interval?.count == null) {
-      return ValidationError.REQUIRED;
-    } else if(!isValidReportRepeat(interval, props.value.repeatRule)) {
-      return ValidationError.FORMAT;
-    }
-    return ValidationError.NONE;
-  })();
-  return <fieldset id={props.id} className={css(STYLES.fieldset,
-      STYLES.schedule)}>
-    <legend className={css(STYLES.legend)}>Schedule</legend>
-    <ReportParameterInput definition={SCHEDULE_PARAMETER}
-      value={props.value.scheduleDateTime} error={props.error}
-      accountModel={props.accountModel} scopeModel={props.scopeModel}
-      onChange={props.onDateChange} onValidationChange={props.onValidation}/>
-    <div onInput={props.onIntervalInput} style={{paddingTop: '10px'}}>
-      <InputGroup label='Repeat'
-          validation={{valid: error === ValidationError.NONE, error}}
-          errorMessage={<InputErrorMessage error={error} label='Repeat'
-            value='recurrence'/>}>
-        <ReportRepeatInput id={`${props.id}-repeat`}
-          interval={(() => {
+interface ScheduleProperties {
+  id: string;
+  value: ReportFormTemplate.Value;
+  accountModel: AccountGroupQueryModel;
+  scopeModel: QueryModel<Nexus.Scope>;
+  mode: ReportFormTemplate.Mode;
+  now: Date;
+  onDateChange: (value: ReportParameterValue) => void;
+  onValidation: (error: ValidationError) => void;
+  onRepeatChange: (interval: Interval, rule: DateRule, month: number) => void;
+  onIntervalValidation: (validation: InputGroup.ValidationState) => void;
+}
+
+interface ScheduleState {
+  date: Beam.Date;
+  time: Beam.Duration;
+}
+
+class ScheduleFieldset extends
+    React.Component<ScheduleProperties, ScheduleState> {
+  constructor(props: ScheduleProperties) {
+    super(props);
+    this.state = {date: props.value.scheduleDateTime?.date,
+      time: props.value.scheduleDateTime?.timeOfDay};
+    this.dateError = ValidationError.NONE;
+    this.timeError = ValidationError.NONE;
+  }
+
+  public render(): JSX.Element {
+    const props = this.props;
+    return <fieldset id={props.id}
+        className={css(STYLES.fieldset, STYLES.schedule)}>
+      <legend className={css(STYLES.legend)}>Schedule</legend>
+      <div className={css(STYLES.parameters)}>
+        <ReportParameterInput definition={DATE_PARAMETER}
+          value={this.state.date} error={(() => {
+            if(props.mode !== ReportFormTemplate.Mode.EDIT &&
+                this.state.date?.compare(Beam.Date.fromDate(props.now)) < 0) {
+              return ValidationError.PAST_DATE;
+            }
+            return ValidationError.NONE;
+          })()}
+          accountModel={props.accountModel} scopeModel={props.scopeModel}
+          onChange={this.onDateChange}
+          onValidationChange={this.onDateValidation}/>
+        <ReportParameterInput definition={TIME_PARAMETER}
+          value={this.state.time} error={(() => {
+            if(props.mode !== ReportFormTemplate.Mode.EDIT &&
+                this.state.date?.equals(Beam.Date.fromDate(props.now)) &&
+                this.state.time?.compare(
+                  Beam.DateTime.fromDate(props.now).timeOfDay) <= 0) {
+              return ValidationError.PAST_DATE;
+            }
+            return ValidationError.NONE;
+          })()} accountModel={props.accountModel}
+          scopeModel={props.scopeModel} onChange={this.onTimeChange}
+          onValidationChange={this.onTimeValidation}/>
+        <ReportRepeatInput interval={(() => {
             if(props.value.repeats) {
-              return interval;
+              return props.value.repeatInterval;
             }
             return null;
-          })()} rule={props.value.repeatRule}
-          reference={props.value.scheduleDateTime?.date ?? Beam.Date.today()}
-          onChange={props.onRepeatChange}/>
-      </InputGroup>
-    </div>
-  </fieldset>;
+          })()} rule={props.value.repeatRule} month={props.value.repeatMonth}
+          start={props.value.scheduleDateTime} now={props.now}
+          onChange={props.onRepeatChange}
+          onValidationChange={props.onIntervalValidation}/>
+      </div>
+    </fieldset>;
+  }
+
+  public componentDidUpdate(previous: ScheduleProperties): void {
+    const value = this.props.value.scheduleDateTime;
+    if(value !== previous.value.scheduleDateTime && value !== this.submission) {
+      this.setState({date: value?.date, time: value?.timeOfDay});
+    }
+  }
+
+  private submit(): void {
+    this.submission = null;
+    if(this.state.date && this.state.time) {
+      this.submission = new Beam.DateTime(this.state.date, this.state.time);
+    }
+    this.props.onDateChange(this.submission);
+  }
+
+  private onDateChange = (value: ReportParameterValue) => {
+    this.setState({date: value as Beam.Date}, () => this.submit());
+  };
+
+  private onTimeChange = (value: ReportParameterValue) => {
+    this.setState({time: value as Beam.Duration}, () => this.submit());
+  };
+
+  private onDateValidation = (error: ValidationError) => {
+    this.dateError = error;
+    this.props.onValidation(this.dateError || this.timeError);
+  };
+
+  private onTimeValidation = (error: ValidationError) => {
+    this.timeError = error;
+    this.props.onValidation(this.dateError || this.timeError);
+  };
+
+  private submission: Beam.DateTime;
+  private dateError: ValidationError;
+  private timeError: ValidationError;
 }
 
 function SubmitSection(props: {mode: ReportFormTemplate.Mode;
@@ -605,6 +676,10 @@ class Collapse extends React.Component<{open: boolean; spacing?: boolean},
 
 const SHARING_PARAMETER = new ReportParameterDefinition(
   '$sharing', 'Sharing', 'DirectoryEntryList', false);
+const DATE_PARAMETER = new ReportParameterDefinition(
+  '$schedule-date', 'Date', 'Date', true);
+const TIME_PARAMETER = new ReportParameterDefinition(
+  '$schedule-time', 'Time', 'Time', true);
 const SCHEDULE_PARAMETER = new ReportParameterDefinition(
   '$schedule', 'Date & Time', 'DateTime', true);
 const STYLES = StyleSheet.create({
@@ -620,7 +695,8 @@ const STYLES = StyleSheet.create({
   legend: {float: 'left', width: '100%', boxSizing: 'border-box',
     padding: 0, marginBottom: '20px', color: '#4B23A0', fontWeight: 500},
   parameters: {clear: 'both', display: 'flex', flexDirection: 'column',
-    gap: '10px'},
+    gap: '20px',
+    '@container (min-width: 384px)': {gap: '10px'}},
   run: {marginBottom: 0},
   runLegend: {
     '@container (min-width: 384px)': {width: '130px',

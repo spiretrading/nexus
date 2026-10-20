@@ -120,15 +120,11 @@ describe('ReportParameterValue', () => {
       new DayOffsetDateRule(0),
       new DayOffsetDateRule(0));
     props.onValidationChange({valid: true});
-    props.onRulesChange(rules);
+    props.onChange(new DateRange(today, today, rules));
     assert.equal(values.length, 1);
     assert.equal(values[0].rules, rules);
     assert.ok(values[0].start.equals(today));
     assert.ok(values[0].end.equals(today));
-    props.onValidationChange({valid: false});
-    props.onRulesChange(new DateRangeRules(new DayOffsetDateRule(null),
-      rules.end));
-    assert.equal(values.length, 1);
     const saved = new ReportParameterInput({...input.props, value: values[0]});
     assert.equal(saved.render().props.rules, rules);
   });

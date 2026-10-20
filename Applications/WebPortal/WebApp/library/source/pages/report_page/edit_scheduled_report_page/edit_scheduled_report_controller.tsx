@@ -1,7 +1,8 @@
 import * as Beam from 'beam';
 import * as React from 'react';
 import { PageLayout } from '../../../components';
-import { DateRange, isDateRangeEqual, isDateRuleEqual, isScopeEqual } from
+import { DateRange, isDateRangeEqual, isDateRuleEqual, isScopeEqual,
+  SpecificDateRule } from
   '../../../models';
 import { ReportFormTemplate } from '../report_form_template';
 import { EditScheduledReportModel } from './edit_scheduled_report_model';
@@ -139,7 +140,11 @@ function isEqual(left: ReportFormTemplate.Value,
     } else if(a == null || b == null) {
       return false;
     } else if(a instanceof DateRange && b instanceof DateRange) {
-      return isDateRangeEqual(a, b);
+      return isDateRangeEqual(a, b) &&
+        isDateRuleEqual(a.rules?.start ?? new SpecificDateRule(a.start),
+          b.rules?.start ?? new SpecificDateRule(b.start)) &&
+        isDateRuleEqual(a.rules?.end ?? new SpecificDateRule(a.end),
+          b.rules?.end ?? new SpecificDateRule(b.end));
     } else if(typeof a.isGlobal === 'boolean' &&
         typeof b.isGlobal === 'boolean') {
       return isScopeEqual(a, b);
@@ -155,6 +160,7 @@ function isEqual(left: ReportFormTemplate.Value,
     equals(left.scheduleDateTime, right.scheduleDateTime) &&
     left.repeatInterval?.count === right.repeatInterval?.count &&
     left.repeatInterval?.unit === right.repeatInterval?.unit &&
+    left.repeatMonth === right.repeatMonth &&
     ((!left.repeatRule && !right.repeatRule) ||
       !!left.repeatRule && !!right.repeatRule &&
       isDateRuleEqual(left.repeatRule, right.repeatRule)) &&

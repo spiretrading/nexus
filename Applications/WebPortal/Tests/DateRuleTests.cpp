@@ -13,6 +13,50 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 TEST_SUITE("DateRule") {
+  TEST_CASE("ordinal_days") {
+    using First = OrdinalDayOfMonthDateRule::First;
+    using Last = OrdinalDayOfMonthDateRule::Last;
+    using Day = OrdinalDayOfMonthDateRule::DayType;
+    auto reference = time_from_string("2026-10-20 12:34:56");
+    auto cases = std::vector({
+      std::pair(OrdinalDayOfMonthDateRule(0, Last(), Day::WEEKDAY),
+        "2026-10-30 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(0, First(2), greg_weekday(Tuesday)),
+        "2026-10-13 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(-1, First(4), Day::DAY),
+        "2026-09-04 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(1, First(5),
+        greg_weekday(Monday)), "2026-11-30 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(0, First(12), Day::DAY),
+        "2026-10-12 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(0, Last(2), Day::WEEKDAY),
+        "2026-10-29 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(0, Last(2), greg_weekday(Monday)),
+        "2026-10-19 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(-32, Last(2), Day::DAY),
+        "2024-02-28 12:34:56"),
+      std::pair(OrdinalDayOfMonthDateRule(4, Last(), Day::DAY),
+        "2027-02-28 12:34:56")});
+    for(auto& [rule, expected] : cases) {
+      REQUIRE(apply(rule, reference) == time_from_string(expected));
+      auto json = to_json(DateRule(rule));
+      auto received = from_json<DateRule>(json);
+      REQUIRE(apply(received, reference) == time_from_string(expected));
+      REQUIRE(json.find("ORDINAL_DAY_OF_MONTH") != std::string::npos);
+    }
+    REQUIRE_THROWS_AS(apply(OrdinalDayOfMonthDateRule(
+      0, First(0), Day::DAY), reference),
+      std::invalid_argument);
+    for(auto position : {OrdinalDayOfMonthDateRule::Position(Last(0)),
+        OrdinalDayOfMonthDateRule::Position(Last(32)),
+        OrdinalDayOfMonthDateRule::Position(Last(255)),
+        OrdinalDayOfMonthDateRule::Position(
+          First(255))}) {
+      REQUIRE_THROWS_AS(apply(OrdinalDayOfMonthDateRule(
+        0, position, Day::DAY), reference), std::invalid_argument);
+    }
+  }
+
   TEST_CASE("calendar_rules") {
     auto reference = time_from_string("2026-10-07 12:34:56.123456");
     using Boundary = MonthBoundaryDateRule::Boundary;
@@ -86,7 +130,7 @@ TEST_SUITE("DateRule") {
     }
     auto rules = std::vector<DateRule>({SpecificDateRule(date(2026, 10, 7)),
       DayOffsetDateRule(), WeekdayDateRule(), DayOfMonthDateRule(),
-      MonthBoundaryDateRule()});
+      MonthBoundaryDateRule(), OrdinalDayOfMonthDateRule()});
     for(auto& rule : rules) {
       for(auto& special : {ptime(), ptime(pos_infin), ptime(neg_infin)}) {
         REQUIRE_THROWS_AS(apply(rule, special), std::invalid_argument);
@@ -97,7 +141,8 @@ TEST_SUITE("DateRule") {
   TEST_CASE("names") {
     auto types = std::vector({DateRuleType::SPECIFIC_DATE,
       DateRuleType::DAY_OFFSET, DateRuleType::WEEKDAY,
-      DateRuleType::DAY_OF_MONTH, DateRuleType::MONTH_BOUNDARY});
+      DateRuleType::DAY_OF_MONTH, DateRuleType::MONTH_BOUNDARY,
+      DateRuleType::ORDINAL_DAY_OF_MONTH});
     auto output = std::ostringstream();
     for(auto type : types) {
       REQUIRE(parse_date_rule_type(to_string(type)) == type);
@@ -106,7 +151,8 @@ TEST_SUITE("DateRule") {
       output << type << ' ';
     }
     REQUIRE(output.str() ==
-      "SPECIFIC_DATE DAY_OFFSET WEEKDAY DAY_OF_MONTH MONTH_BOUNDARY ");
+      "SPECIFIC_DATE DAY_OFFSET WEEKDAY DAY_OF_MONTH MONTH_BOUNDARY "
+      "ORDINAL_DAY_OF_MONTH ");
     REQUIRE_THROWS_AS(parse_date_rule_type("Unknown"), std::invalid_argument);
     REQUIRE_THROWS_AS(parse_date_rule_type("1"), std::invalid_argument);
     for(auto day : {Monday, Tuesday, Wednesday, Thursday, Friday, Saturday,
@@ -133,12 +179,68 @@ TEST_SUITE("DateRule") {
     REQUIRE_THROWS_AS(parse_month_boundary("last"), std::invalid_argument);
   }
 
+  TEST_CASE("ordinal_names") {
+    using Rule = OrdinalDayOfMonthDateRule;
+    using Day = Rule::Day;
+    using DayType = Rule::DayType;
+    auto position = Rule::Position(Rule::First(5));
+    REQUIRE(to_string(position) == "FIRST(5)");
+    auto json = get<JsonObject>(parse<JsonValue>(to_json(position)));
+    REQUIRE(json.at("type") == JsonValue("FIRST"));
+    REQUIRE(json.at("ordinal") == 5);
+    REQUIRE(std::get<Rule::First>(from_json<Rule::Position>(
+      to_json(position))).m_ordinal == 5);
+    position = Rule::Last(2);
+    REQUIRE(to_string(position) == "LAST(2)");
+    json = get<JsonObject>(parse<JsonValue>(to_json(position)));
+    REQUIRE(json.at("type") == JsonValue("LAST"));
+    REQUIRE(json.at("ordinal") == 2);
+    REQUIRE(std::get<Rule::Last>(
+      from_json<Rule::Position>(to_json(position))).m_ordinal == 2);
+    for(auto& [value, name] : std::vector({
+        std::pair(Day(greg_weekday(Monday)), "MONDAY"),
+        std::pair(Day(greg_weekday(Tuesday)), "TUESDAY"),
+        std::pair(Day(greg_weekday(Wednesday)), "WEDNESDAY"),
+        std::pair(Day(greg_weekday(Thursday)), "THURSDAY"),
+        std::pair(Day(greg_weekday(Friday)), "FRIDAY"),
+        std::pair(Day(greg_weekday(Saturday)), "SATURDAY"),
+        std::pair(Day(greg_weekday(Sunday)), "SUNDAY"),
+        std::pair(Day(DayType::DAY), "DAY"),
+        std::pair(Day(DayType::WEEKDAY), "WEEKDAY")})) {
+      auto output = std::ostringstream();
+      output << value;
+      REQUIRE(output.str() == name);
+      REQUIRE(std::format("{}", value) == name);
+      REQUIRE(std::format("{:>12}", value) ==
+        std::format("{:>12}", name));
+      REQUIRE(to_json(value) == to_json(std::string(name)));
+      REQUIRE(from_json<Day>(to_json(value)) == value);
+    }
+    for(auto& invalid : {R"({"type":"FIRST","ordinal":0})",
+        R"({"type":"FIRST","ordinal":-1})",
+        R"({"type":"FIRST","ordinal":1.5})",
+        R"({"type":"FIRST","ordinal":256})",
+        R"({"type":"LAST","ordinal":0})",
+        R"({"type":"LAST","ordinal":256})",
+        R"({"type":"LAST"})",
+        R"({"type":"UNKNOWN","ordinal":1})"}) {
+      REQUIRE_THROWS_AS(from_json<Rule::Position>(std::string(invalid)),
+        std::exception);
+    }
+    REQUIRE_THROWS_AS(from_json<Day>(std::string("0")), SerializationException);
+    REQUIRE_THROWS_AS(parse_ordinal_day("Mon"), std::invalid_argument);
+  }
+
   TEST_CASE("serialization") {
     auto rules = std::vector<DateRule>({SpecificDateRule(date(2024, 2, 29)),
       DayOffsetDateRule(std::numeric_limits<std::int32_t>::min()),
       WeekdayDateRule(-2, Sunday), DayOfMonthDateRule(1, 31),
       MonthBoundaryDateRule(-1, MonthBoundaryDateRule::Boundary::LAST, -1),
-      DayOffsetDateRule(std::numeric_limits<std::int32_t>::max())});
+      DayOffsetDateRule(std::numeric_limits<std::int32_t>::max()),
+      OrdinalDayOfMonthDateRule(0, OrdinalDayOfMonthDateRule::First(5),
+        greg_weekday(Monday)),
+      OrdinalDayOfMonthDateRule(-1, OrdinalDayOfMonthDateRule::Last(2),
+        OrdinalDayOfMonthDateRule::DayType::WEEKDAY)});
     auto expected = parse<JsonValue>(to_json(rules));
     test_round_trip_shuttle(rules, [&] (const auto& received) {
       REQUIRE(parse<JsonValue>(to_json(received)) == expected);

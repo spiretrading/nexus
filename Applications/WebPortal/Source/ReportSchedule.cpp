@@ -103,6 +103,10 @@ void Nexus::validate(const ReportSchedule::Interval& interval) {
       interval.m_unit > Unit::YEAR) {
     throw std::invalid_argument("Invalid repeat interval.");
   }
+  if(interval.m_month && (interval.m_unit != Unit::YEAR ||
+      *interval.m_month < Jan || *interval.m_month > Dec)) {
+    throw std::invalid_argument("Invalid recurrence month.");
+  }
   if(!interval.m_rule) {
     return;
   }
@@ -121,6 +125,14 @@ void Nexus::validate(const ReportSchedule::Interval& interval) {
       }
       if constexpr(std::is_same_v<Rule, DayOfMonthDateRule>) {
         return rule.m_day >= 1 && rule.m_day <= 31;
+      } else if constexpr(std::is_same_v<Rule, OrdinalDayOfMonthDateRule>) {
+        using DayType = OrdinalDayOfMonthDateRule::DayType;
+        auto ordinal = std::visit([] (const auto& position) {
+          return position.m_ordinal;
+        }, rule.m_position);
+        auto category = std::get_if<DayType>(&rule.m_day);
+        return ordinal != 0 && (!category ||
+          *category == DayType::DAY || *category == DayType::WEEKDAY);
       } else {
         return rule.m_boundary == MonthBoundaryDateRule::Boundary::FIRST ||
           rule.m_boundary == MonthBoundaryDateRule::Boundary::LAST;
@@ -144,7 +156,7 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
   }
   auto interval = *schedule.m_repeat_interval;
   validate(interval);
-  if(!interval.m_rule && *start > now) {
+  if(!interval.m_rule && !interval.m_month && *start > now) {
     return schedule.m_start_time;
   }
   auto local = std::max(from_utc(now, zone), schedule.m_start_time);
@@ -185,6 +197,13 @@ ptime Nexus::next_report_run(const ReportSchedule& schedule, ptime now) {
   }
   while(true) {
     auto candidate = advance(schedule.m_start_time, interval, steps);
+    if(interval.m_month) {
+      auto year = candidate.date().year();
+      auto month = *interval.m_month;
+      auto day = std::min<unsigned short>(schedule.m_start_time.date().day(),
+        gregorian_calendar::end_of_month_day(year, month));
+      candidate = ptime(date(year, month, day), candidate.time_of_day());
+    }
     if(interval.m_rule) {
       try {
         candidate = apply(*interval.m_rule, candidate);

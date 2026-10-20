@@ -383,6 +383,12 @@ ReportSchedule::Interval Nexus::parse_report_interval(const JsonValue& value) {
   if(rule && !std::holds_alternative<JsonNull>(*rule)) {
     interval.m_rule = from_json<DateRule>(*rule);
   }
+  if(auto month = object.get("month")) {
+    if(!std::holds_alternative<JsonNull>(*month)) {
+      interval.m_month =
+        static_cast<std::uint16_t>(read_integer(*month, 1, 12));
+    }
+  }
   validate(interval);
   return interval;
 }
@@ -430,7 +436,8 @@ ReportSchedule Nexus::prepare_report_schedule(const ReportSchedule& schedule,
       return to_json(*rule) == to_json(*previous_rule);
     }();
     return interval->m_count == schedule.m_repeat_interval->m_count &&
-      interval->m_unit == schedule.m_repeat_interval->m_unit && is_same_rule;
+      interval->m_unit == schedule.m_repeat_interval->m_unit &&
+      interval->m_month == schedule.m_repeat_interval->m_month && is_same_rule;
   }();
   auto job = prepare_report_job(
     definitions, schedule.m_account, submission.m_report, client);

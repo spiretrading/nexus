@@ -17,6 +17,9 @@ export enum DateRuleType {
 
   /** A date near a relative month boundary. */
   MONTH_BOUNDARY = 'MONTH_BOUNDARY',
+
+  /** An ordinal day within a relative month. */
+  ORDINAL_DAY_OF_MONTH = 'ORDINAL_DAY_OF_MONTH',
 }
 
 /** The days of a calendar week, named as in the C++ API. */
@@ -154,9 +157,67 @@ export namespace MonthBoundaryDateRule {
   }
 }
 
+/** An ordinal day within a relative calendar month. */
+export class OrdinalDayOfMonthDateRule {
+
+  /** The rule discriminator. */
+  public readonly type: DateRuleType.ORDINAL_DAY_OF_MONTH;
+
+  /** The signed month offset. */
+  public readonly offset: number;
+
+  /** The matching occurrence within the month. */
+  public readonly position: OrdinalDayOfMonthDateRule.Position | number;
+
+  /** The calendar days to match. */
+  public readonly day: Weekday | OrdinalDayOfMonthDateRule.Day;
+
+  /** Constructs the rule with its calendar parameters. */
+  constructor(offset: number,
+      position: OrdinalDayOfMonthDateRule.Position | number,
+      day: Weekday | OrdinalDayOfMonthDateRule.Day) {
+    this.type = DateRuleType.ORDINAL_DAY_OF_MONTH;
+    this.offset = offset;
+    this.position = position;
+    this.day = day;
+  }
+}
+
+export namespace OrdinalDayOfMonthDateRule {
+
+  /** The matching occurrence within a month. */
+  export enum Position {
+
+    /** The first matching day. */
+    FIRST = 'FIRST',
+
+    /** The second matching day. */
+    SECOND = 'SECOND',
+
+    /** The third matching day. */
+    THIRD = 'THIRD',
+
+    /** The fourth matching day. */
+    FOURTH = 'FOURTH',
+
+    /** The last matching day. */
+    LAST = 'LAST'
+  }
+
+  /** Day categories in addition to specific weekdays. */
+  export enum Day {
+
+    /** Any calendar day. */
+    DAY = 'DAY',
+
+    /** Monday through Friday. */
+    WEEKDAY = 'WEEKDAY'
+  }
+}
+
 /** A calendar rule with only the parameters required by its discriminator. */
 export type DateRule = SpecificDateRule | DayOffsetDateRule | WeekdayDateRule |
-  DayOfMonthDateRule | MonthBoundaryDateRule;
+  DayOfMonthDateRule | MonthBoundaryDateRule | OrdinalDayOfMonthDateRule;
 
 /** Parses the C++ rule representation, with null for an unspecified bound. */
 export function parseDateRule(json: any): DateRule {
@@ -182,6 +243,22 @@ export function parseDateRule(json: any): DateRule {
       rule = new MonthBoundaryDateRule(value.offset, value.boundary,
         value.day_offset);
       break;
+    case DateRuleType.ORDINAL_DAY_OF_MONTH:
+      rule = new OrdinalDayOfMonthDateRule(value.offset, (() => {
+        if(value.position.type === 'LAST' && value.position.ordinal === 1) {
+          return OrdinalDayOfMonthDateRule.Position.LAST;
+        }
+        if(value.position.type !== 'FIRST') {
+          throw new Error('Invalid ordinal position.');
+        }
+        const ordinal = value.position.ordinal;
+        if(Number.isInteger(ordinal) && ordinal >= 1 && ordinal <= 4) {
+          return Object.values(OrdinalDayOfMonthDateRule.Position)[ordinal - 1];
+        }
+        return ordinal;
+      })(),
+        value.day);
+      break;
     default:
       throw new Error('Unknown date rule type.');
   }
@@ -206,6 +283,14 @@ export function dateRuleToJson(rule: DateRule): any {
     case DateRuleType.WEEKDAY:
     case DateRuleType.DAY_OF_MONTH:
       value = {offset: rule.offset, day: rule.day};
+      break;
+    case DateRuleType.ORDINAL_DAY_OF_MONTH:
+      value = {offset: rule.offset, position: (() => {
+        if(rule.position === OrdinalDayOfMonthDateRule.Position.LAST) {
+          return {type: 'LAST', ordinal: 1};
+        }
+        return {type: 'FIRST', ordinal: ordinalPosition(rule.position)};
+      })(), day: rule.day};
       break;
     case DateRuleType.MONTH_BOUNDARY:
       value = {offset: rule.offset, boundary: rule.boundary,
@@ -252,6 +337,33 @@ export function applyDateRule(rule: DateRule, reference: Beam.DateTime):
     date.setUTCDate(0);
     if(rule.type === DateRuleType.DAY_OF_MONTH) {
       date.setUTCDate(Math.min(rule.day, date.getUTCDate()));
+    } else if(rule.type === DateRuleType.ORDINAL_DAY_OF_MONTH) {
+      const days = date.getUTCDate();
+      let remaining = ordinalPosition(rule.position);
+      let step = 1;
+      let number = 1;
+      if(rule.position === OrdinalDayOfMonthDateRule.Position.LAST) {
+        remaining = 1;
+        step = -1;
+        number = days;
+      }
+      const DAYS_PER_WEEK = 7;
+      const WEEKDAYS = 5;
+      for(; number >= 1 && number <= days; number += step) {
+        date.setUTCDate(number);
+        const weekday = (date.getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK;
+        if(rule.day === OrdinalDayOfMonthDateRule.Day.DAY ||
+            rule.day === OrdinalDayOfMonthDateRule.Day.WEEKDAY &&
+              weekday < WEEKDAYS ||
+            Object.values(Weekday)[weekday] === rule.day) {
+          if(--remaining === 0) {
+            break;
+          }
+        }
+      }
+      if(remaining !== 0) {
+        throw new Error('Ordinal day does not occur in the month.');
+      }
     } else {
       if(rule.boundary === MonthBoundaryDateRule.Boundary.FIRST) {
         date.setUTCDate(1);
@@ -304,6 +416,11 @@ export function isDateRuleEqual(first: DateRule, second: DateRule): boolean {
     return first.boundary === second.boundary &&
       first.dayOffset === second.dayOffset;
   }
+  if(first.type === DateRuleType.ORDINAL_DAY_OF_MONTH &&
+      second.type === DateRuleType.ORDINAL_DAY_OF_MONTH) {
+    return ordinalPosition(first.position) === ordinalPosition(second.position) &&
+      first.day === second.day;
+  }
   return true;
 }
 
@@ -348,7 +465,26 @@ function validateRule(rule: DateRule): void {
         !isOffset(rule.dayOffset)) {
       throw new Error('Invalid month boundary.');
     }
+  } else if(rule.type === DateRuleType.ORDINAL_DAY_OF_MONTH) {
+    const ordinal = ordinalPosition(rule.position);
+    if((rule.position !== OrdinalDayOfMonthDateRule.Position.LAST &&
+        (!Number.isInteger(ordinal) || ordinal < 1 || ordinal > 0xFF)) ||
+        ![...Object.values(Weekday),
+          ...Object.values(OrdinalDayOfMonthDateRule.Day)].includes(rule.day)) {
+      throw new Error('Invalid ordinal day of month.');
+    }
   } else if(rule.type !== DateRuleType.DAY_OFFSET) {
     throw new Error('Unknown date rule type.');
   }
+}
+
+function ordinalPosition(position: OrdinalDayOfMonthDateRule.Position | number):
+    number {
+  if(typeof position === 'number') {
+    return position;
+  }
+  if(position === OrdinalDayOfMonthDateRule.Position.LAST) {
+    return -1;
+  }
+  return Object.values(OrdinalDayOfMonthDateRule.Position).indexOf(position) + 1;
 }

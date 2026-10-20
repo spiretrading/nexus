@@ -1,5 +1,6 @@
 #include <latch>
 #include <semaphore>
+#include <thread>
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
@@ -233,7 +234,7 @@ TEST_SUITE("ReportScheduleService") {
       Timer(std::in_place_type<TriggerTimer>));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
-    auto count = std::max(1u, boost::thread::hardware_concurrency()) - 1;
+    auto count = std::max(1u, std::thread::hardware_concurrency()) - 1;
     auto started = std::latch(count);
     auto release = std::counting_semaphore<>(0);
     auto blockers = RoutineHandlerGroup();

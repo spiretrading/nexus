@@ -2,8 +2,10 @@ import { StyleSheetTestUtils } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
+import { Recurrence } from '../../source/pages/report_page/recurrence';
 import { DateRuleType, DayOffsetDateRule, DayOfMonthDateRule, Interval,
-  MonthBoundaryDateRule, SpecificDateRule, Weekday, WeekdayDateRule } from
+  MonthBoundaryDateRule, OrdinalDayOfMonthDateRule, SpecificDateRule, Weekday,
+  WeekdayDateRule } from
   '../../source/models';
 import { ReportDefinition } from
   '../../source/pages/report_page/report_definition';
@@ -16,9 +18,11 @@ import { isValidReportRepeat, ReportRepeatInput } from
 
 function makeInput(): any {
   const input = new ReportRepeatInput({interval: null,
-    reference: new Beam.Date(2026, 10, 8), onChange: (interval, rule) => {
+    start: new Beam.DateTime(new Beam.Date(2026, 10, 8), Beam.Duration.ZERO),
+    now: new Date(), onValidationChange: () => {},
+    onChange: (interval, rule, month) => {
       const previous = input.props;
-      Object.assign(input, {props: {...input.props, interval, rule}});
+      Object.assign(input, {props: {...input.props, interval, rule, month}});
       input.componentDidUpdate(previous);
     }});
   input.setState = (update: any) => {
@@ -35,8 +39,8 @@ describe('ReportRepeatInput', () => {
     const input = makeInput();
     for(const [preset, count, unit] of [
         ['daily', 1, Interval.Unit.DAY],
-        ['weekly', 1, Interval.Unit.WEEK],
-        ['fortnight', 2, Interval.Unit.WEEK],
+        ['weekly', 7, Interval.Unit.DAY],
+        ['fortnight', 14, Interval.Unit.DAY],
         ['month_start', 1, Interval.Unit.MONTH],
         ['month_end', 1, Interval.Unit.MONTH]]) {
       input.onSelectionChange(preset);
@@ -46,14 +50,11 @@ describe('ReportRepeatInput', () => {
       assert.ok(isValidReportRepeat(input.props.interval, input.props.rule));
     }
     input.onSelectionChange('custom');
-    input.onRuleChange(new MonthBoundaryDateRule(0,
-      MonthBoundaryDateRule.Boundary.LAST, -1));
+    input.onRecurrenceChange(new Recurrence(
+      new Interval(2, Interval.Unit.WEEK), Weekday.TUESDAY));
     assert.equal(input.state.selection, 'custom');
-    assert.equal(input.props.rule.dayOffset, -1);
-    input.onIntervalChange(new Interval(2, Interval.Unit.WEEK));
-    assert.equal(input.props.rule, null);
-    input.onDateChange('rule');
     assert.equal(input.props.rule.type, DateRuleType.WEEKDAY);
+    assert.equal(input.props.rule.day, Weekday.TUESDAY);
     input.onSelectionChange('never');
     assert.equal(input.props.interval, null);
     assert.equal(input.props.rule, null);
@@ -62,7 +63,8 @@ describe('ReportRepeatInput', () => {
   it('rejects_incomplete_or_incompatible_rules', () => {
     const monthly = new Interval(1, Interval.Unit.MONTH);
     assert.ok(isValidReportRepeat(monthly, new DayOffsetDateRule(0)));
-    assert.ok(!isValidReportRepeat(new Interval(null, Interval.Unit.MONTH), null));
+    assert.ok(!isValidReportRepeat(
+      new Interval(null, Interval.Unit.MONTH), null));
     assert.ok(!isValidReportRepeat(monthly, new DayOfMonthDateRule(0, null)));
     assert.ok(!isValidReportRepeat(monthly,
       new SpecificDateRule(new Beam.Date(2026, 10, 8))));
@@ -76,14 +78,18 @@ describe('ReportRepeatInput', () => {
     const value = ReportFormTemplate.makeValue(definition);
     value.scheduled = true;
     value.repeats = true;
-    value.repeatInterval = new Interval(1, Interval.Unit.MONTH);
-    value.repeatRule = new MonthBoundaryDateRule(0,
-      MonthBoundaryDateRule.Boundary.FIRST, -1);
+    value.repeatInterval = new Interval(1, Interval.Unit.YEAR);
+    value.repeatMonth = 2;
+    value.repeatRule = new OrdinalDayOfMonthDateRule(0,
+      OrdinalDayOfMonthDateRule.Position.LAST,
+      OrdinalDayOfMonthDateRule.Day.WEEKDAY);
     const json = reportFormValueToJson(value);
-    assert.deepEqual(json.repeat_interval.rule, {type: 'MONTH_BOUNDARY',
-      value: {offset: 0, boundary: 'FIRST', day_offset: -1}});
+    assert.equal(json.repeat_interval.month, 2);
+    assert.deepEqual(json.repeat_interval.rule, {type: 'ORDINAL_DAY_OF_MONTH',
+      value: {offset: 0, position: {type: 'LAST', ordinal: 1}, day: 'WEEKDAY'}});
     const loaded = parseReportFormValue(json, [definition]);
     const copied = copyReportFormValue(loaded, [definition]);
+    assert.equal(copied.repeatMonth, 2);
     assert.deepEqual(copied.repeatRule, value.repeatRule);
     assert.notEqual(copied.repeatRule, loaded.repeatRule);
     value.repeats = false;

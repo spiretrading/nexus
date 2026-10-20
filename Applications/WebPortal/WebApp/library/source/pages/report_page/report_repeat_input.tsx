@@ -1,77 +1,88 @@
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DateRuleInput, IntervalInput, Select } from '../../components';
+import { InputGroup, Select } from '../../components';
 import { DateRule, DateRuleType, dateRuleToJson, Interval,
-  MonthBoundaryDateRule, Weekday, WeekdayDateRule } from '../../models';
+  MonthBoundaryDateRule, ValidationError } from '../../models';
+import { Recurrence } from './recurrence';
+import { RecurrenceInput } from './recurrence_input';
+import { fromReportRecurrence, toReportRecurrence, upcomingReportRuns } from
+  './report_recurrence';
+import { RunsTable } from './runs_table';
 
-interface Properties extends
-    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
-
-  /** The identifier for the repeat selector. */
-  id?: string;
+interface Properties {
 
   /** The repeat interval, or null for a one-time report. */
   interval: Interval;
 
-  /** The date rule applied within each interval, or null for its anchor. */
+  /** The date rule applied within each interval. */
   rule?: DateRule;
 
-  /** The first allowed schedule date. */
-  reference: Beam.Date;
+  /** The selected month for yearly recurrences. */
+  month?: number;
 
-  /** Reports changes to the interval and rule together. */
-  onChange: (interval: Interval, rule: DateRule) => void;
+  /** The first allowed schedule timestamp. */
+  start: Beam.DateTime;
+
+  /** The current time used by the upcoming-runs preview. */
+  now: Date;
+
+  /** Reports a committed recurrence. */
+  onChange: (interval: Interval, rule: DateRule, month: number) => void;
+
+  /** Reports the validity of the current custom draft. */
+  onValidationChange: (validation: InputGroup.ValidationState) => void;
 }
 
 interface State {
   selection: string;
+  valid: boolean;
+  recurrence: Recurrence;
 }
 
-/** Edits a report's recurrence using presets and shared date-rule controls. */
+/** Edits a report recurrence and previews its next three runs. */
 export class ReportRepeatInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.state = {selection: findPreset(props.interval, props.rule)};
+    this.state = {selection: findPreset(props.interval, props.rule),
+      valid: true,
+      recurrence: this.makeRecurrence(props)};
   }
 
   public render(): JSX.Element {
-    const {id, interval, rule, reference, style, onChange, ...attributes} =
-      this.props;
-    return <div {...attributes} role='group'
-        style={{display: 'grid', gap: '10px', width: '100%', ...style}}>
-      <Select id={this.props.id} aria-label='Repeat'
-          value={this.state.selection} style={{width: '100%'}}
-          onChange={this.onSelectionChange}>
-        {PRESETS.map(([value, label]) =>
-          <option key={value} value={value}>{label}</option>)}
-      </Select>
-      {this.state.selection === 'custom' && interval && <>
-        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-          Every
-          <IntervalInput value={interval} required
-            style={{flex: 1, minWidth: 0}} onChange={this.onIntervalChange}/>
-        </div>
-        {interval.unit !== Interval.Unit.DAY &&
-          <Select aria-label='Repeat date' value={(() => {
-              if(!isDefaultRule(rule)) {
-                return 'rule';
-              }
-              return 'start';
-            })()} style={{width: '100%'}} onChange={this.onDateChange}>
-            <option value='start'>Same day as start</option>
-            <option value='rule'>Date rule</option>
-          </Select>}
-        {!isDefaultRule(rule) &&
-          <DateRuleInput id={`${this.props.id}-rule`} label='Repeat'
-            value={rule} reference={reference} types={ruleTypes(interval.unit)}
-            showOffset={false} onChange={this.onRuleChange}/>}
-      </>}
+    const props = this.props;
+    const recurrence = {interval: props.interval, rule: props.rule,
+      month: props.month};
+    const runs = (() => {
+      if(!this.state.valid || !isValidReportRepeat(props.interval, props.rule,
+          props.month)) {
+        return [];
+      }
+      return upcomingReportRuns(props.start, recurrence, props.now, 3);
+    })();
+    return <div>
+      <InputGroup label='Repeat'>
+        <Select value={this.state.selection} onChange={this.onSelectionChange}>
+          {PRESETS.map(([value, label]) =>
+            <option key={value} value={value}>{label}</option>)}
+        </Select>
+      </InputGroup>
+      {this.state.selection === 'custom' && props.interval &&
+        <div className={css(STYLES.custom)}>
+          <RecurrenceInput value={this.state.recurrence}
+            onChange={this.onRecurrenceChange}
+            onValidationChange={this.onValidationChange}/>
+        </div>}
+      {!!props.interval && runs.length > 0 &&
+        <div className={css(STYLES.runs)}><RunsTable runs={runs}/></div>}
     </div>;
   }
 
   public componentDidUpdate(previous: Properties): void {
     if(previous.interval !== this.props.interval ||
-        previous.rule !== this.props.rule) {
+        previous.rule !== this.props.rule ||
+        previous.month !== this.props.month) {
+      this.setState({recurrence: this.makeRecurrence(this.props)});
       if(!this.props.interval || this.state.selection !== 'custom') {
         const selection = findPreset(this.props.interval, this.props.rule);
         if(selection !== this.state.selection) {
@@ -81,63 +92,65 @@ export class ReportRepeatInput extends React.Component<Properties, State> {
     }
   }
 
+  private makeRecurrence(props: Properties): Recurrence {
+    return fromReportRecurrence({interval: props.interval ??
+      new Interval(1, Interval.Unit.DAY), rule: props.rule, month: props.month},
+      props.start?.date ?? Beam.Date.today());
+  }
+
   private onSelectionChange = (selection: string) => {
-    this.setState({selection});
+    this.setState({selection, valid: true});
+    this.props.onValidationChange({valid: true, error: ValidationError.NONE});
     if(selection === 'never') {
-      this.props.onChange(null, null);
+      this.props.onChange(null, null, null);
     } else if(selection === 'daily') {
-      this.props.onChange(new Interval(1, Interval.Unit.DAY), null);
+      this.props.onChange(new Interval(1, Interval.Unit.DAY), null, null);
     } else if(selection === 'weekly' || selection === 'fortnight') {
-      let count = 1;
+      let count = 7;
       if(selection === 'fortnight') {
-        count = 2;
+        count = 14;
       }
-      this.props.onChange(new Interval(count, Interval.Unit.WEEK), null);
+      this.props.onChange(new Interval(count, Interval.Unit.DAY), null, null);
     } else if(selection === 'month_start' || selection === 'month_end') {
       let boundary = MonthBoundaryDateRule.Boundary.FIRST;
       if(selection === 'month_end') {
         boundary = MonthBoundaryDateRule.Boundary.LAST;
       }
       this.props.onChange(new Interval(1, Interval.Unit.MONTH),
-        new MonthBoundaryDateRule(0, boundary, 0));
+        new MonthBoundaryDateRule(0, boundary, 0), null);
     } else {
-      this.props.onChange(this.props.interval ??
-        new Interval(1, Interval.Unit.DAY), this.props.rule ?? null);
+      const recurrence = fromReportRecurrence({
+        interval: this.props.interval ?? new Interval(1, Interval.Unit.DAY),
+        rule: this.props.rule, month: this.props.month},
+        this.props.start?.date ?? Beam.Date.today());
+      this.onRecurrenceChange(recurrence);
     }
   };
 
-  private onIntervalChange = (interval: Interval) => {
-    let rule = this.props.rule;
-    if(rule && !ruleTypes(interval.unit).includes(rule.type)) {
-      rule = null;
-    }
-    this.props.onChange(interval, rule);
+  private onRecurrenceChange = (value: Recurrence) => {
+    const {interval, rule, month} = toReportRecurrence(value);
+    this.props.onChange(interval, rule, month);
   };
 
-  private onDateChange = (selection: string) => {
-    let rule: DateRule = null;
-    if(selection === 'rule') {
-      if(this.props.interval.unit === Interval.Unit.WEEK) {
-        rule = new WeekdayDateRule(0, Weekday.MONDAY);
-      } else {
-        rule = new MonthBoundaryDateRule(0,
-          MonthBoundaryDateRule.Boundary.LAST, 0);
-      }
+  private onValidationChange = (validation: InputGroup.ValidationState) => {
+    if(validation.valid !== this.state.valid) {
+      this.setState({valid: validation.valid});
     }
-    this.props.onChange(this.props.interval, rule);
-  };
-
-  private onRuleChange = (rule: DateRule) => {
-    this.props.onChange(this.props.interval, rule);
+    this.props.onValidationChange(validation);
   };
 }
 
 /** Whether the recurrence contains a complete, supported interval and rule. */
-export function isValidReportRepeat(interval: Interval, rule: DateRule):
+export function isValidReportRepeat(interval: Interval, rule: DateRule,
+    month?: number):
     boolean {
   if(!interval || !Number.isInteger(interval.count) || interval.count < 1 ||
       interval.count > 0xFFFFFFFF || !Number.isInteger(interval.unit) ||
       interval.unit < Interval.Unit.DAY || interval.unit > Interval.Unit.YEAR) {
+    return false;
+  }
+  if(month != null && (interval.unit !== Interval.Unit.YEAR ||
+      !Number.isInteger(month) || month < 1 || month > 12)) {
     return false;
   }
   if(isDefaultRule(rule)) {
@@ -159,7 +172,8 @@ function ruleTypes(unit: Interval.Unit): readonly DateRuleType[] {
   if(unit === Interval.Unit.WEEK) {
     return [DateRuleType.WEEKDAY];
   } else if(unit === Interval.Unit.MONTH || unit === Interval.Unit.YEAR) {
-    return [DateRuleType.DAY_OF_MONTH, DateRuleType.MONTH_BOUNDARY];
+    return [DateRuleType.DAY_OF_MONTH, DateRuleType.MONTH_BOUNDARY,
+      DateRuleType.ORDINAL_DAY_OF_MONTH];
   }
   return [];
 }
@@ -175,9 +189,9 @@ function findPreset(interval: Interval, rule: DateRule): string {
   if(isDefaultRule(rule)) {
     if(interval.count === 1 && interval.unit === Interval.Unit.DAY) {
       return 'daily';
-    } else if(interval.count === 1 && interval.unit === Interval.Unit.WEEK) {
+    } else if(interval.count === 7 && interval.unit === Interval.Unit.DAY) {
       return 'weekly';
-    } else if(interval.count === 2 && interval.unit === Interval.Unit.WEEK) {
+    } else if(interval.count === 14 && interval.unit === Interval.Unit.DAY) {
       return 'fortnight';
     }
   } else if(interval.count === 1 && interval.unit === Interval.Unit.MONTH &&
@@ -195,8 +209,15 @@ const PRESETS = [
   ['never', 'Never'],
   ['daily', 'Every day'],
   ['weekly', 'Every week'],
-  ['fortnight', 'Every two weeks'],
+  ['fortnight', 'Every 2 weeks'],
   ['month_start', 'Beginning of every month'],
   ['month_end', 'End of every month'],
   ['custom', 'Custom']
 ];
+
+const STYLES = StyleSheet.create({
+  custom: {paddingTop: '20px',
+    '@container (min-width: 384px)': {paddingTop: '10px'}},
+  runs: {paddingTop: '30px',
+    '@container (min-width: 384px)': {paddingLeft: '138px'}}
+});

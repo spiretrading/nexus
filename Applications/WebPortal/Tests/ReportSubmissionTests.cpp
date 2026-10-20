@@ -90,6 +90,36 @@ TEST_SUITE("ReportSubmission") {
     }
   }
 
+  TEST_CASE("ordinal_recurrence_submission") {
+    auto interval = parse_report_interval(parse<JsonValue>(R"({
+      "count":1,"unit":3,"month":2,"rule":{
+        "type":"ORDINAL_DAY_OF_MONTH","value":{
+          "offset":0,"position":{"type":"LAST","ordinal":1},"day":"WEEKDAY"}}})"));
+    REQUIRE(interval.m_month == 2);
+    REQUIRE(get_type(*interval.m_rule) == DateRuleType::ORDINAL_DAY_OF_MONTH);
+    for(auto& invalid : {R"({"count":1,"unit":3,"month":0})",
+        R"({"count":1,"unit":3,"month":13})",
+        R"({"count":1,"unit":3,"month":1.5})",
+        R"({"count":1,"unit":2,"month":2})"}) {
+      REQUIRE_THROWS_AS(parse_report_interval(parse<JsonValue>(invalid)),
+        std::invalid_argument);
+    }
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto definition = make_definition();
+    definition.m_arguments = {"{period.start}", "{period.end}"};
+    auto input = make_parameters(client.get_account());
+    input["period"] = parse<JsonValue>(R"({"rules":{
+      "start":{"type":"ORDINAL_DAY_OF_MONTH","value":{
+        "offset":-1,"position":{"type":"LAST","ordinal":1},"day":"WEEKDAY"}},
+      "end":{"type":"DAY_OFFSET","value":{"offset":0}}}})");
+    auto job = prepare_report_job({definition}, client.get_account(),
+      ReportSubmission("example", input, {}), client,
+      time_from_string("2026-11-02 09:00:00"));
+    REQUIRE(job.m_arguments ==
+      std::vector<std::string>({"20261030", "20261102"}));
+  }
+
   TEST_CASE("submission_authorizes_only_requested_definition") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& root = environment.get_root();

@@ -227,7 +227,8 @@ describe('HTTP report models', () => {
       account: Beam.DirectoryEntry.STAR_DIRECTORY.toJson(), count: 0},
       recipients: [] as unknown[], scheduled: true,
       schedule_date_time: '20261101T123000',
-      repeats: true, repeat_interval: {count: 2, unit: Interval.Unit.MONTH}};
+      repeats: true, repeat_interval: {count: 2, unit: Interval.Unit.MONTH,
+        month: null as number}};
     const schedule = {id: 'schedule', type: 'Example',
       parameters: [{label: 'Account', value: '*'}],
       repeats: true, run_date: '20261101'};

@@ -1,6 +1,8 @@
 #ifndef NEXUS_DATE_RULE_HPP
 #define NEXUS_DATE_RULE_HPP
+#include <cmath>
 #include <cstdint>
+#include <format>
 #include <limits>
 #include <ostream>
 #include <string_view>
@@ -84,17 +86,65 @@ namespace Nexus {
     DAY_OF_MONTH,
 
     /** A day offset from a relative calendar month's boundary. */
-    MONTH_BOUNDARY
+    MONTH_BOUNDARY,
+
+    /** An ordinal day within a relative month. */
+    ORDINAL_DAY_OF_MONTH
+  };
+
+  /** Selects an ordinal day within a relative month. */
+  struct OrdinalDayOfMonthDateRule {
+
+    /** Counts matching days from the start of the month. */
+    struct First {
+
+      /** The one-based matching occurrence. */
+      std::uint8_t m_ordinal = 1;
+    };
+
+    /** Counts matching days from the end of the month. */
+    struct Last {
+
+      /** The one-based matching occurrence. */
+      std::uint8_t m_ordinal = 1;
+    };
+
+    /** A matching occurrence counted from either end of the month. */
+    using Position = std::variant<First, Last>;
+
+    /** The calendar day categories beyond specific weekdays. */
+    enum class DayType {
+
+      /** Any calendar day. */
+      DAY,
+
+      /** Monday through Friday. */
+      WEEKDAY
+    };
+
+    /** A Boost weekday or a calendar day category. */
+    using Day = std::variant<DayType, boost::gregorian::greg_weekday>;
+
+    /** The signed number of months from the reference month. */
+    std::int32_t m_offset = 0;
+
+    /** The matching occurrence within the month. */
+    Position m_position = First();
+
+    /** The calendar days to match. */
+    Day m_day = DayType::DAY;
   };
 
   /** A calendar date transformation. */
   class DateRule : public std::variant<SpecificDateRule, DayOffsetDateRule,
-      WeekdayDateRule, DayOfMonthDateRule, MonthBoundaryDateRule> {
+      WeekdayDateRule, DayOfMonthDateRule, MonthBoundaryDateRule,
+      OrdinalDayOfMonthDateRule> {
     public:
 
       /** The supported rule alternatives. */
       using Variant = std::variant<SpecificDateRule, DayOffsetDateRule,
-        WeekdayDateRule, DayOfMonthDateRule, MonthBoundaryDateRule>;
+        WeekdayDateRule, DayOfMonthDateRule, MonthBoundaryDateRule,
+        OrdinalDayOfMonthDateRule>;
 
       using Variant::Variant;
       using Variant::operator =;
@@ -115,6 +165,14 @@ namespace Nexus {
   std::ostream& operator <<(std::ostream& out, DateRuleType type);
   std::ostream& operator <<(
     std::ostream& out, MonthBoundaryDateRule::Boundary boundary);
+  std::ostream& operator <<(
+    std::ostream& out, const OrdinalDayOfMonthDateRule::Position& position);
+
+  /** Parses an ordinal day category's serialized name. */
+  OrdinalDayOfMonthDateRule::Day parse_ordinal_day(std::string_view value);
+
+  std::ostream& operator <<(std::ostream& out,
+    const std::same_as<OrdinalDayOfMonthDateRule::Day> auto& day);
 
   /** Replaces the reference date, preserving its time of day. */
   boost::posix_time::ptime apply(
@@ -137,6 +195,10 @@ namespace Nexus {
    */
   boost::posix_time::ptime apply(
     const MonthBoundaryDateRule& rule, boost::posix_time::ptime reference);
+
+  /** Selects an ordinal day, preserving the reference's time of day. */
+  boost::posix_time::ptime apply(
+    const OrdinalDayOfMonthDateRule& rule, boost::posix_time::ptime reference);
 
   /**
    * Applies a rule to a calendar timestamp in the caller's chosen timezone.
@@ -267,6 +329,85 @@ namespace Beam {
   };
 
   template<>
+  struct Send<Nexus::OrdinalDayOfMonthDateRule::Position> {
+    template<IsSender S>
+    void operator ()(S& sender,
+        const Nexus::OrdinalDayOfMonthDateRule::Position& value,
+        unsigned int version) const {
+      auto ordinal = std::visit([] (const auto& position) {
+        return position.m_ordinal;
+      }, value);
+      if(ordinal == 0) {
+        throw std::invalid_argument("Invalid ordinal position.");
+      }
+      if(std::holds_alternative<Nexus::OrdinalDayOfMonthDateRule::First>(
+          value)) {
+        sender.send("type", std::string("FIRST"));
+      } else {
+        sender.send("type", std::string("LAST"));
+      }
+      sender.send("ordinal", static_cast<double>(ordinal));
+    }
+  };
+
+  template<>
+  struct Receive<Nexus::OrdinalDayOfMonthDateRule::Position> {
+    template<IsReceiver R>
+    void operator ()(R& receiver,
+        Nexus::OrdinalDayOfMonthDateRule::Position& value,
+        unsigned int version) const {
+      auto type = receive<std::string>(receiver, "type");
+      auto ordinal = receive<double>(receiver, "ordinal");
+      if(!std::isfinite(ordinal) || std::trunc(ordinal) != ordinal ||
+          ordinal < 1 || ordinal > std::numeric_limits<std::uint8_t>::max()) {
+        throw std::invalid_argument("Invalid ordinal position.");
+      }
+      if(type == "FIRST") {
+        value = Nexus::OrdinalDayOfMonthDateRule::First(
+          static_cast<std::uint8_t>(ordinal));
+      } else if(type == "LAST") {
+        value = Nexus::OrdinalDayOfMonthDateRule::Last(
+          static_cast<std::uint8_t>(ordinal));
+      } else {
+        throw std::invalid_argument("Invalid ordinal position.");
+      }
+    }
+  };
+
+  template<>
+  constexpr auto is_structure<Nexus::OrdinalDayOfMonthDateRule::Day> = false;
+
+  template<>
+  struct Send<Nexus::OrdinalDayOfMonthDateRule::Day> {
+    template<IsSender S>
+    void operator ()(S& sender, const char* name,
+        const Nexus::OrdinalDayOfMonthDateRule::Day& value) const {
+      sender.send(name, to_string(value));
+    }
+  };
+
+  template<>
+  struct Receive<Nexus::OrdinalDayOfMonthDateRule::Day> {
+    template<IsReceiver R>
+    void operator ()(R& receiver, const char* name,
+        Nexus::OrdinalDayOfMonthDateRule::Day& value) const {
+      value = Nexus::parse_ordinal_day(receive<std::string>(receiver, name));
+    }
+  };
+
+  template<>
+  struct Shuttle<Nexus::OrdinalDayOfMonthDateRule> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::OrdinalDayOfMonthDateRule& value,
+        unsigned int version) const {
+      Nexus::Details::shuttle_date_rule_offset(
+        shuttle, "offset", value.m_offset);
+      shuttle.shuttle("position", value.m_position);
+      shuttle.shuttle("day", value.m_day);
+    }
+  };
+
+  template<>
   struct Send<Nexus::DateRule> {
     template<IsSender S>
     void operator ()(
@@ -292,11 +433,29 @@ namespace Beam {
         value = receive<Nexus::WeekdayDateRule>(receiver, "value");
       } else if(type == Nexus::DateRuleType::DAY_OF_MONTH) {
         value = receive<Nexus::DayOfMonthDateRule>(receiver, "value");
+      } else if(type == Nexus::DateRuleType::ORDINAL_DAY_OF_MONTH) {
+        value = receive<Nexus::OrdinalDayOfMonthDateRule>(receiver, "value");
       } else if(type == Nexus::DateRuleType::MONTH_BOUNDARY) {
         value = receive<Nexus::MonthBoundaryDateRule>(receiver, "value");
       }
     }
   };
+}
+
+template<>
+class std::formatter<Nexus::OrdinalDayOfMonthDateRule::Day> :
+    public std::formatter<std::string_view> {
+  public:
+    std::format_context::iterator format(
+      const Nexus::OrdinalDayOfMonthDateRule::Day& value,
+      std::format_context& context) const;
+};
+
+namespace Nexus {
+  inline std::ostream& operator <<(std::ostream& out,
+      const std::same_as<OrdinalDayOfMonthDateRule::Day> auto& day) {
+    return out << std::format(out.getloc(), "{}", day);
+  }
 }
 
 #endif

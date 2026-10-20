@@ -37,6 +37,9 @@ namespace Nexus {
 
       /** The date rule within each interval, absent to use its anchor date. */
       std::optional<DateRule> m_rule;
+
+      /** The month for yearly recurrences, absent to use the start month. */
+      std::optional<std::uint16_t> m_month;
     };
 
     /** The schedule identifier. */
@@ -107,6 +110,7 @@ namespace Beam {
       shuttle.shuttle("count", value.m_count);
       shuttle.shuttle("unit", value.m_unit);
       shuttle.shuttle("rule", value.m_rule);
+      shuttle.shuttle("month", value.m_month);
     }
   };
 

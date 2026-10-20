@@ -1,7 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DateExpression, DateOffset, DateRange, DateRangeExpressions,
+import { DateExpression, dateExpressionToRule, DateOffset, DateRange,
+  DateRangeExpressions,
   DateRangeOption, DateRangeRules, DateRangeValidation, DateRule, DateRuleType,
   DayOfMonth, isDateExpressionEqual, isDateRangeEqual, isDateRuleEqual,
   resolveDateExpression, resolveDateRule, SpecificDateRule, validateDateRange }
@@ -378,7 +379,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
     }
     const reference = this.props.referenceDate ?? Beam.Date.today();
     const value = resolveExpressions(expressions, reference);
-    this.setState(state => ({expressions, reference, value,
+    this.setState(state => ({expressions, reference, value, rules: value.rules,
       inputValue: value, selection: 'custom',
       revision: state.revision + Number(!commit && !input),
       startComplete: completeness?.start ?? (() => {
@@ -764,7 +765,9 @@ function Error(props: {id: string; label: string; inline: boolean;
 function resolveExpressions(expressions: DateRangeExpressions,
     reference: Beam.Date): DateRange {
   return new DateRange(resolveDateExpression(expressions.start, reference),
-    resolveDateExpression(expressions.end, reference), undefined, expressions);
+    resolveDateExpression(expressions.end, reference),
+    new DateRangeRules(dateExpressionToRule(expressions.start),
+      dateExpressionToRule(expressions.end)), expressions);
 }
 
 function isExpressionComplete(expression: DateExpression,
@@ -786,6 +789,12 @@ function makeExpressions(rules: DateRangeRules, reference: Beam.Date):
     } else if(rule.type === DateRuleType.DAY_OF_MONTH) {
       return {mode: DateExpression.Mode.DAY_OF_MONTH,
         date: {day: new DayOfMonth(DayOfMonth.Position.DAY, rule.day),
+          offset: {value: rule.offset, unit: DateOffset.Unit.MONTH}}};
+    } else if(rule.type === DateRuleType.ORDINAL_DAY_OF_MONTH) {
+      return {mode: DateExpression.Mode.DAY_OF_MONTH,
+        date: {day: new DayOfMonth(
+          rule.position as unknown as DayOfMonth.Position,
+          rule.day as unknown as DayOfMonth.DayType),
           offset: {value: rule.offset, unit: DateOffset.Unit.MONTH}}};
     } else if(rule.type === DateRuleType.MONTH_BOUNDARY &&
         rule.dayOffset === 0) {
@@ -812,7 +821,7 @@ function makeFixedRules(value: DateRange): DateRangeRules {
 
 function resolveRules(rules: DateRangeRules, reference: Beam.Date): DateRange {
   return new DateRange(resolveDateRule(rules.start, reference),
-    resolveDateRule(rules.end, reference));
+    resolveDateRule(rules.end, reference), rules);
 }
 
 function isComplete(rule: DateRule, date: Beam.Date): boolean {

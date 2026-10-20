@@ -17,6 +17,40 @@ namespace {
 }
 
 TEST_SUITE("ReportScheduleTime") {
+  TEST_CASE("ordinal_monthly_and_yearly_runs") {
+    using Unit = ReportSchedule::Interval::Unit;
+    using Last = OrdinalDayOfMonthDateRule::Last;
+    using Day = OrdinalDayOfMonthDateRule::DayType;
+    auto rule = OrdinalDayOfMonthDateRule(0, Last(), Day::WEEKDAY);
+    auto schedule = make_schedule("2026-10-20 09:00:00",
+      ReportSchedule::Interval(1, Unit::MONTH, rule));
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-10-20 13:00:00")) ==
+      time_from_string("2026-10-30 09:00:00"));
+    schedule.m_repeat_interval = ReportSchedule::Interval(
+      1, Unit::YEAR, rule, 2);
+    REQUIRE(next_report_run(schedule,
+      time_from_string("2026-10-20 13:00:00")) ==
+      time_from_string("2027-02-26 09:00:00"));
+    auto received = from_json<ReportSchedule>(to_json(schedule));
+    REQUIRE(received.m_repeat_interval->m_month == 2);
+    REQUIRE(next_report_run(received,
+      time_from_string("2027-02-26 14:00:00")) ==
+      time_from_string("2028-02-29 09:00:00"));
+    auto leap = make_schedule("2024-02-29 09:00:00",
+      ReportSchedule::Interval(1, Unit::YEAR, std::nullopt, 3));
+    REQUIRE(next_report_run(leap,
+      time_from_string("2025-01-01 00:00:00")) ==
+      time_from_string("2025-03-29 09:00:00"));
+    schedule.m_repeat_interval->m_month = 13;
+    REQUIRE_THROWS_AS(validate(*schedule.m_repeat_interval),
+      std::invalid_argument);
+    schedule.m_repeat_interval->m_month = 2;
+    schedule.m_repeat_interval->m_unit = Unit::MONTH;
+    REQUIRE_THROWS_AS(validate(*schedule.m_repeat_interval),
+      std::invalid_argument);
+  }
+
   TEST_CASE("recurring_date_rules") {
     using Unit = ReportSchedule::Interval::Unit;
     using Boundary = MonthBoundaryDateRule::Boundary;

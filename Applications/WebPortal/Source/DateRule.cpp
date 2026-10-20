@@ -53,6 +53,8 @@ DateRuleType Nexus::get_type(const DateRule& rule) {
       return DateRuleType::WEEKDAY;
     } else if constexpr(std::is_same_v<Rule, DayOfMonthDateRule>) {
       return DateRuleType::DAY_OF_MONTH;
+    } else if constexpr(std::is_same_v<Rule, OrdinalDayOfMonthDateRule>) {
+      return DateRuleType::ORDINAL_DAY_OF_MONTH;
     } else {
       return DateRuleType::MONTH_BOUNDARY;
     }
@@ -68,6 +70,8 @@ DateRuleType Nexus::parse_date_rule_type(std::string_view value) {
     return DateRuleType::WEEKDAY;
   } else if(value == "DAY_OF_MONTH") {
     return DateRuleType::DAY_OF_MONTH;
+  } else if(value == "ORDINAL_DAY_OF_MONTH") {
+    return DateRuleType::ORDINAL_DAY_OF_MONTH;
   } else if(value == "MONTH_BOUNDARY") {
     return DateRuleType::MONTH_BOUNDARY;
   }
@@ -103,6 +107,8 @@ std::ostream& Nexus::operator <<(std::ostream& out, DateRuleType type) {
     return out << "WEEKDAY";
   } else if(type == DateRuleType::DAY_OF_MONTH) {
     return out << "DAY_OF_MONTH";
+  } else if(type == DateRuleType::ORDINAL_DAY_OF_MONTH) {
+    return out << "ORDINAL_DAY_OF_MONTH";
   } else if(type == DateRuleType::MONTH_BOUNDARY) {
     return out << "MONTH_BOUNDARY";
   }
@@ -117,6 +123,25 @@ std::ostream& Nexus::operator <<(
     return out << "LAST";
   }
   throw std::invalid_argument("Invalid month boundary.");
+}
+
+std::ostream& Nexus::operator <<(
+    std::ostream& out, const OrdinalDayOfMonthDateRule::Position& value) {
+  if(auto first = std::get_if<OrdinalDayOfMonthDateRule::First>(&value)) {
+    return out << "FIRST(" << static_cast<int>(first->m_ordinal) << ')';
+  }
+  return out << "LAST(" << static_cast<int>(
+    std::get<OrdinalDayOfMonthDateRule::Last>(value).m_ordinal) << ')';
+}
+
+OrdinalDayOfMonthDateRule::Day Nexus::parse_ordinal_day(
+    std::string_view value) {
+  if(value == "DAY") {
+    return OrdinalDayOfMonthDateRule::DayType::DAY;
+  } else if(value == "WEEKDAY") {
+    return OrdinalDayOfMonthDateRule::DayType::WEEKDAY;
+  }
+  return parse_weekday(value);
 }
 
 ptime Nexus::apply(const SpecificDateRule& rule, ptime reference) {
@@ -168,6 +193,43 @@ ptime Nexus::apply(const MonthBoundaryDateRule& rule, ptime reference) {
     reference.time_of_day());
 }
 
+ptime Nexus::apply(const OrdinalDayOfMonthDateRule& rule, ptime reference) {
+  validate(reference);
+  using DayType = OrdinalDayOfMonthDateRule::DayType;
+  auto ordinal = std::visit([] (const auto& position) {
+    return position.m_ordinal;
+  }, rule.m_position);
+  auto category = std::get_if<DayType>(&rule.m_day);
+  if(ordinal == 0 || (category && *category != DayType::DAY &&
+      *category != DayType::WEEKDAY)) {
+    throw std::invalid_argument("Invalid ordinal day of month.");
+  }
+  auto month = offset_months(reference.date(), rule.m_offset);
+  auto last = static_cast<int>(month.end_of_month().day());
+  auto remaining = ordinal;
+  auto step = 1;
+  auto number = 1;
+  if(std::holds_alternative<OrdinalDayOfMonthDateRule::Last>(
+      rule.m_position)) {
+    step = -1;
+    number = last;
+  }
+  for(; number >= 1 && number <= last; number += step) {
+    auto day = date(month.year(), month.month(),
+      static_cast<unsigned short>(number));
+    auto weekday = std::get_if<greg_weekday>(&rule.m_day);
+    if((weekday && day.day_of_week() == *weekday) ||
+        (category && (*category == DayType::DAY ||
+          (day.day_of_week() != Saturday && day.day_of_week() != Sunday)))) {
+      --remaining;
+      if(remaining == 0) {
+        return ptime(day, reference.time_of_day());
+      }
+    }
+  }
+  throw std::invalid_argument("Ordinal day does not occur in the month.");
+}
+
 ptime Nexus::apply(const DateRule& rule, ptime reference) {
   return std::visit([&] (const auto& rule) {
     return apply(rule, reference);
@@ -181,4 +243,23 @@ std::int32_t Nexus::Details::parse_date_rule_integer(
     throw std::invalid_argument("Invalid date rule integer.");
   }
   return static_cast<std::int32_t>(value);
+}
+
+std::format_context::iterator
+    std::formatter<OrdinalDayOfMonthDateRule::Day>::format(
+      const OrdinalDayOfMonthDateRule::Day& value,
+      std::format_context& context) const {
+  auto name = [&] {
+    if(auto day = std::get_if<greg_weekday>(&value)) {
+      return boost::to_upper_copy(std::string(day->as_long_string()));
+    } else if(std::get<OrdinalDayOfMonthDateRule::DayType>(value) ==
+        OrdinalDayOfMonthDateRule::DayType::DAY) {
+      return std::string("DAY");
+    } else if(std::get<OrdinalDayOfMonthDateRule::DayType>(value) ==
+        OrdinalDayOfMonthDateRule::DayType::WEEKDAY) {
+      return std::string("WEEKDAY");
+    }
+    throw std::invalid_argument("Invalid ordinal day.");
+  }();
+  return std::formatter<std::string_view>::format(name, context);
 }

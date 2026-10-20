@@ -29,7 +29,8 @@ export function reportFormValueToJson(value: ReportFormTemplate.Value): any {
       if(value.scheduled && value.repeats && value.repeatInterval) {
         return {count: value.repeatInterval.count,
           unit: value.repeatInterval.unit,
-          rule: value.repeatRule && dateRuleToJson(value.repeatRule)};
+          rule: value.repeatRule && dateRuleToJson(value.repeatRule),
+          month: value.repeatMonth ?? null};
       }
       return null;
     })()};
@@ -62,7 +63,8 @@ export function parseReportFormValue(value: any,
     repeatInterval: value.repeat_interval &&
       new Interval(value.repeat_interval.count, value.repeat_interval.unit),
     repeatRule: value.repeat_interval?.rule &&
-      parseDateRule(value.repeat_interval.rule)};
+      parseDateRule(value.repeat_interval.rule),
+    repeatMonth: value.repeat_interval?.month};
 }
 
 /** Copies a form configuration using its report's parameter types. */

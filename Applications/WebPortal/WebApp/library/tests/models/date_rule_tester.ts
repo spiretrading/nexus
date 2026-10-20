@@ -55,7 +55,13 @@ describe('DateRule', () => {
       {type: 'DAY_OF_MONTH', value: {offset: 1, day: 31}},
       {type: 'MONTH_BOUNDARY', value: {offset: -1, boundary: 'LAST',
         day_offset: -1}},
-      {type: 'DAY_OFFSET', value: {offset: 2147483647}}];
+      {type: 'DAY_OFFSET', value: {offset: 2147483647}},
+      {type: 'ORDINAL_DAY_OF_MONTH', value: {offset: 0,
+        position: {type: 'FIRST', ordinal: 2}, day: 'TUESDAY'}},
+      {type: 'ORDINAL_DAY_OF_MONTH', value: {offset: 0,
+        position: {type: 'FIRST', ordinal: 12}, day: 'DAY'}},
+      {type: 'ORDINAL_DAY_OF_MONTH', value: {offset: 0,
+        position: {type: 'LAST', ordinal: 1}, day: 'WEEKDAY'}}];
     for(const json of cases) {
       const rule = parseDateRule(json);
       assert.equal(rule.type, json.type);
