@@ -4,6 +4,7 @@ import { DateRule, DateRuleType, DayOffsetDateRule, DayOfMonthDateRule,
   MonthBoundaryDateRule, SpecificDateRule, Weekday, WeekdayDateRule } from
   '../models';
 import { DateInput } from './date_input';
+import { DayOfWeekSelect } from './day_of_week_select';
 import { IntegerInput } from './integer_input';
 import { Select } from './select';
 
@@ -134,14 +135,9 @@ export class DateRuleInput extends React.Component<Properties,
         disabled={props.disabled} onInput={this.onDateInput}
         onCommit={props.onCommit}/>}
       {rule.type === DateRuleType.WEEKDAY &&
-        <Select aria-label={`${props.label} weekday`} value={rule.day}
-            style={style} readOnly={props.readOnly} disabled={props.disabled}
-            onChange={this.onWeekdayChange}>
-          {Object.values(Weekday).map(day =>
-            <option value={day} key={day}>
-              {day[0] + day.slice(1).toLowerCase()}
-            </option>)}
-        </Select>}
+        <DayOfWeekSelect aria-label={`${props.label} weekday`} value={rule.day}
+          style={style} readOnly={props.readOnly} disabled={props.disabled}
+          onChange={this.onWeekdayChange}/>}
       {rule.type === DateRuleType.DAY_OF_MONTH &&
         <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
           Day
@@ -251,10 +247,10 @@ export class DateRuleInput extends React.Component<Properties,
     }
   };
 
-  private onWeekdayChange = (day: string) => {
+  private onWeekdayChange = (day: Weekday) => {
     const rule = this.props.value;
     if(rule.type === DateRuleType.WEEKDAY) {
-      this.change(new WeekdayDateRule(rule.offset, day as Weekday));
+      this.change(new WeekdayDateRule(rule.offset, day));
     }
   };
 
