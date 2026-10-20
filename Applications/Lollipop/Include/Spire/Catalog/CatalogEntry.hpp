@@ -4,7 +4,6 @@
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <QIcon>
@@ -18,7 +17,7 @@ namespace Spire {
   /*! \class CatalogEntry
       \brief Contains information about a single entry in a CatalogWindow.
    */
-  class CatalogEntry : private boost::noncopyable {
+  class CatalogEntry {
     public:
 
       //! A CatalogEntry's MIME type.
@@ -113,6 +112,9 @@ namespace Spire {
 
     private:
       boost::uuids::uuid m_uuid;
+
+      CatalogEntry(const CatalogEntry&) = delete;
+      CatalogEntry& operator =(const CatalogEntry&) = delete;
   };
 
   template<Beam::IsShuttle S>

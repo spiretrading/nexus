@@ -1,11 +1,10 @@
 #ifndef SPIRE_CANVAS_NODE_TRANSLATION_CONTEXT_HPP
 #define SPIRE_CANVAS_NODE_TRANSLATION_CONTEXT_HPP
+#include <mutex>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Operations/Translation.hpp"
 
@@ -13,7 +12,7 @@ namespace Spire {
   class UserProfile;
 
   /** Stores all the context needed to translate a CanvasNode. */
-  class CanvasNodeTranslationContext : private boost::noncopyable {
+  class CanvasNodeTranslationContext {
     public:
 
       /**
@@ -86,7 +85,7 @@ namespace Spire {
         const CanvasNode& node) const;
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       CanvasNodeTranslationContext* m_parent;
       UserProfile* m_userProfile;
       Beam::DirectoryEntry m_executingAccount;
@@ -96,6 +95,10 @@ namespace Spire {
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
 
+      CanvasNodeTranslationContext(
+        const CanvasNodeTranslationContext&) = delete;
+      CanvasNodeTranslationContext& operator =(
+        const CanvasNodeTranslationContext&) = delete;
       void AddSubtranslation(Beam::Ref<const CanvasNode> node,
         const Translation& translation);
   };

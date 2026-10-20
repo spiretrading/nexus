@@ -5,7 +5,6 @@
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QPaintDevice>
@@ -25,7 +24,7 @@ namespace Spire {
   /*! \class DashboardRenderer
       \brief Draws a DashboardModel.
    */
-  class DashboardRenderer : private boost::noncopyable {
+  class DashboardRenderer {
     public:
 
       //! Signals that this renderer has a draw operation available.
@@ -204,6 +203,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_rowRemovedConnection;
       mutable DrawSignal m_drawSignal;
 
+      DashboardRenderer(const DashboardRenderer&) = delete;
+      DashboardRenderer& operator =(const DashboardRenderer&) = delete;
       void SetupHeader();
       void DrawBackground(QPainter& painter, QPaintDevice& device,
         const QRect& region, int index);

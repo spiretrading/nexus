@@ -1,6 +1,7 @@
 #ifndef NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
 #include <algorithm>
+#include <mutex>
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -14,7 +15,6 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
@@ -99,7 +99,7 @@ namespace Nexus {
         std::vector<TickerTimeAndSale> m_time_and_sales;
         std::vector<IndexedTickerStatus> m_ticker_statuses;
       };
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       ServiceProtocolClient m_client;
       Beam::local_ptr_t<S> m_sampling_timer;
       std::unordered_map<Ticker, QuoteUpdates> m_quote_updates;
@@ -207,7 +207,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
       const VenueOrderImbalance& imbalance) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_order_imbalances.push_back(imbalance);
   }
 
@@ -216,7 +216,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
       const TickerBboQuote& quote) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& updates = m_quote_updates[quote.get_index()];
     updates.m_bbo_quote = quote;
   }
@@ -231,7 +231,7 @@ namespace Nexus {
       quote->m_mpid + '-' +
       boost::lexical_cast<std::string>(quote->m_quote.m_price) +
       to_char(quote->m_quote.m_side);
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_orders.find(id);
     if(i == m_orders.end()) {
       locked_add_order(quote.get_index(), quote->m_venue, quote->m_mpid,
@@ -252,7 +252,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
       const TickerTimeAndSale& time_and_sale) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& updates = m_quote_updates[time_and_sale.get_index()];
     updates.m_time_and_sales.push_back(time_and_sale);
   }
@@ -262,7 +262,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
       const IndexedTickerStatus& status) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& updates = m_quote_updates[status.get_index()];
     updates.m_ticker_statuses.push_back(status);
   }
@@ -274,7 +274,7 @@ namespace Nexus {
       const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     locked_add_order(ticker, venue, mpid, is_primary_mpid, id, side, price,
       size, timestamp);
   }
@@ -284,7 +284,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::modify_order_size(
       const OrderId& id, Quantity size, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_orders.find(id);
     if(i == m_orders.end()) {
       return;
@@ -301,7 +301,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::offset_order_size(
       const OrderId& id, Quantity delta, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_orders.find(id);
     if(i == m_orders.end()) {
       return;
@@ -318,7 +318,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::modify_order_price(
       const OrderId& id, Money price, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_orders.find(id);
     if(i == m_orders.end()) {
       return;
@@ -335,7 +335,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::remove_order(
       const OrderId& id, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto i = m_orders.find(id);
     if(i == m_orders.end()) {
       return;
@@ -424,7 +424,7 @@ namespace Nexus {
     auto quote_updates = std::unordered_map<Ticker, QuoteUpdates>();
     auto order_imbalances = std::vector<VenueOrderImbalance>();
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       quote_updates.swap(m_quote_updates);
       order_imbalances.swap(m_order_imbalances);
     }

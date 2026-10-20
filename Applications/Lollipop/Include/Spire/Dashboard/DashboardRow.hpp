@@ -2,7 +2,6 @@
 #define SPIRE_DASHBOARDROW_HPP
 #include <memory>
 #include <vector>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
@@ -12,7 +11,7 @@ namespace Spire {
   /*! \class DashboardRow
       \brief Represents a row of DashboardCells on a dashboard.
    */
-  class DashboardRow : private boost::noncopyable {
+  class DashboardRow {
     public:
 
       //! Signals a cell was added to this row.
@@ -65,6 +64,9 @@ namespace Spire {
     private:
       std::vector<std::unique_ptr<DashboardCell>> m_cells;
       mutable CellAddedSignal m_cellAddedSignal;
+
+      DashboardRow(const DashboardRow&) = delete;
+      DashboardRow& operator =(const DashboardRow&) = delete;
   };
 }
 

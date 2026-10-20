@@ -3,7 +3,6 @@
 #include <functional>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QPaintDevice>
 #include <QRect>
@@ -16,7 +15,7 @@ namespace Spire {
   /*! \class DashboardRowRenderer
       \brief Draws a DashboardRow.
    */
-  class DashboardRowRenderer : private boost::noncopyable {
+  class DashboardRowRenderer {
     public:
 
       //! Signals that this renderer has a draw operation available.
@@ -105,6 +104,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_cellAddedConnection;
       mutable DrawSignal m_drawSignal;
 
+      DashboardRowRenderer(const DashboardRowRenderer&) = delete;
+      DashboardRowRenderer& operator =(const DashboardRowRenderer&) = delete;
       void OnCellAddedSignal(const DashboardCell& cell);
       void OnCellDrawSignal();
   };

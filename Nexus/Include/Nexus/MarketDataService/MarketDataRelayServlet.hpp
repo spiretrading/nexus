@@ -1,7 +1,9 @@
 #ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
+#include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <thread>
 #include <type_traits>
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
@@ -178,8 +180,8 @@ namespace Nexus {
           min_market_data_clients, max_market_data_clients),
         m_administration_client(std::forward<AF>(administration_client)),
         m_entitlement_database(m_administration_client->load_entitlements()) {
-    for(auto i = std::size_t(0); i < boost::thread::hardware_concurrency();
-        ++i) {
+    auto count = std::max(1u, std::thread::hardware_concurrency());
+    for(auto i = std::size_t(0); i < count; ++i) {
       m_real_time_query_entries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(market_data_client_builder()));
     }

@@ -1,7 +1,6 @@
 #ifndef SPIRE_CHARTPLOTTER_HPP
 #define SPIRE_CHARTPLOTTER_HPP
 #include <memory>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Charting/Charting.hpp"
@@ -11,7 +10,7 @@ namespace Spire {
   /*! \class ChartPlotter
       \brief Interface for a model that produces ChartPlots.
    */
-  class ChartPlotter : private boost::noncopyable {
+  class ChartPlotter {
     public:
 
       //! Signals a ChartPlot was added to a model.
@@ -50,6 +49,10 @@ namespace Spire {
 
       //! Constructs a ChartPlotter.
       ChartPlotter();
+
+    private:
+      ChartPlotter(const ChartPlotter&) = delete;
+      ChartPlotter& operator =(const ChartPlotter&) = delete;
   };
 }
 

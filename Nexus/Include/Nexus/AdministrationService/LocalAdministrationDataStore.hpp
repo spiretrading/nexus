@@ -1,10 +1,9 @@
 #ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
+#include <mutex>
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -99,7 +98,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<Beam::DirectoryEntry, AccountIdentity>
         m_account_identities;
       std::unordered_map<Beam::DirectoryEntry, RiskParameters>
@@ -653,7 +652,7 @@ namespace Nexus {
   template<typename F>
   decltype(auto) LocalAdministrationDataStore::with_transaction(
       F&& transaction) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     return std::forward<F>(transaction)();
   }
 
