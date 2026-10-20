@@ -1,3 +1,4 @@
+export * from './date_expression';
 export * from './date_range';
 export * from './date_range_validation';
 export * from './date_rule';

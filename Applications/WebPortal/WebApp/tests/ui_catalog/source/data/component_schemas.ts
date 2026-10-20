@@ -6,7 +6,8 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, DateRangeValueInput, DayOfMonthValueInput, EnumInput,
+  CSSInput, DateExpressionValueInput, DateInput, DateRangeValueInput,
+  DayOfMonthValueInput, EnumInput,
   IntervalValueInput,
   NumberInput,
   NumberSliderInput, MoneyInput,
@@ -247,6 +248,17 @@ const DAY_OF_WEEK_SELECT =
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DayOfWeekSelect);
+
+const DATE_EXPRESSION_INPUT =
+  new ComponentSchema('DateExpressionInput',
+    [new PropertySchema('value', {
+        mode: WebPortal.DateExpression.Mode.FIXED, date: Beam.Date.today()},
+      DateExpressionValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onInput', 'value'),
+      new SignalSchema('onChange', 'value')],
+    WebPortal.DateExpressionInput, 282);
 
 const DAY_OF_MONTH_INPUT =
   new ComponentSchema('DayOfMonthInput',
@@ -1537,7 +1549,8 @@ export const componentSections = [
     segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
     sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, dateRangeInput, DAY_OF_MONTH_INPUT, DAY_OF_WEEK_SELECT,
+    currencySelect, DATE_EXPRESSION_INPUT, dateRangeInput, DAY_OF_MONTH_INPUT,
+    DAY_OF_WEEK_SELECT,
     emptyMessage, errorMessage,
     inputErrorMessage, inputGroup, moneyInput, MONTH_SELECT, pageLayout,
     relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),

@@ -11,6 +11,7 @@ export * from './color_input';
 export * from './country_input';
 export * from './currency_input';
 export * from './css_input';
+export * from './date_expression_value_input';
 export * from './date_input';
 export * from './date_range_value_input';
 export * from './day_of_month_value_input';

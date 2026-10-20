@@ -7,6 +7,7 @@ export * from './combo_box';
 export * from './context_menu';
 export * from './country_select';
 export * from './currency_select';
+export * from './date_expression_input';
 export * from './date_input';
 export * from './date_range_input';
 export * from './date_rule_input';
