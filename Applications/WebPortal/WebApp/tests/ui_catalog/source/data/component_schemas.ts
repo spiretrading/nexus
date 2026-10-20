@@ -1382,6 +1382,17 @@ const RECURRENCE_INPUT = new ComponentSchema('RecurrenceInput',
     new SignalSchema('onValidationChange', 'validation')],
   WebPortal.RecurrenceInput, 284);
 
+const RUNS_TABLE = new ComponentSchema('RunsTable',
+  [new PropertySchema('runs', [
+      new Beam.DateTime(new Beam.Date(2026, 10, 21),
+        Beam.Duration.HOUR.multiply(9).add(Beam.Duration.MINUTE.multiply(30))),
+      new Beam.DateTime(new Beam.Date(2026, 10, 22), Beam.Duration.ZERO),
+      new Beam.DateTime(new Beam.Date(2026, 10, 23),
+        Beam.Duration.HOUR.multiply(12))],
+    ArrayInput(new PropertySchema('run',
+      new Beam.DateTime(Beam.Date.today(), Beam.Duration.HOUR.multiply(9)),
+      BeamDateTimeInput)))], [], WebPortal.RunsTable, 284);
+
 const activityTable =
   new ComponentSchema('ActivityTable',
     [new PropertySchema('activityCount', 3, NumberInput),
@@ -1579,7 +1590,7 @@ export const componentSections = [
     activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
     RECURRENCE_INPUT,
     reportActivityStatusTag, reportFormTemplate, reportTable, reportTableRow,
-    reportTableRowPlaceholder, reportTypeSelect, scheduledDate,
+    reportTableRowPlaceholder, reportTypeSelect, RUNS_TABLE, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
     scheduledReportItemPlaceholder, shareReportModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
