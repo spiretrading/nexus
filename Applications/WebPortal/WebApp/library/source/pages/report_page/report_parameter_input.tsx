@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountGroupListInput, AccountGroupQueryModel, ComboBox, DateInput,
-  DecimalInput, InputErrorMessage, InputGroup, IntegerInput, MoneyInput,
-  ScopeInput, Select, TimeOfDayInput } from '../../components';
+  DateRangeInput, DecimalInput, InputErrorMessage, InputGroup, IntegerInput,
+  MoneyInput, ScopeInput, Select, TimeOfDayInput } from '../../components';
 import { DateRange, DateRangeRules, DateRangeValidation, QueryModel,
   resolveDateRule, ValidationError } from '../../models';
 import { ParametersDateRangeInput } from './parameters_date_range_input';
@@ -54,6 +54,7 @@ export class ReportParameterInput extends React.Component<Properties, State> {
     const {definition, value} = this.props;
     if(definition.type === 'DateRange') {
       return <ParametersDateRangeInput
+        customType={DateRangeInput.CustomType.FIXED}
         value={value as DateRange ?? this.emptyRange}
         rules={(value as DateRange)?.rules}
         onRulesChange={this.onRangeRulesChange}

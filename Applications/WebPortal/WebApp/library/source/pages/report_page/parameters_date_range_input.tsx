@@ -11,6 +11,12 @@ interface Properties extends Omit<React.ComponentProps<typeof DateRangeInput>,
   /** The selector's label. Defaults to Date Range. */
   label?: string;
 
+  /** The custom bound labels. Defaults to From and To. */
+  customLabel?: {start?: string; end?: string};
+
+  /** The custom date editor type. Defaults to EXPRESSION. */
+  customType?: DateRangeInput.CustomType;
+
   /** The reference date for presets. Defaults to the current local date. */
   today?: Beam.Date;
 }
@@ -35,7 +41,8 @@ export class ParametersDateRangeInput extends
 
   public render(): JSX.Element {
     const {today, style, label = 'Date Range', boundsRequired = true,
-      ...properties} = this.props;
+      customType = DateRangeInput.CustomType.EXPRESSION,
+      customLabel = {start: 'From', end: 'To'}, ...properties} = this.props;
     const reference = today ?? this.state.today;
     if(!this.reference?.equals(reference)) {
       this.reference = reference;
@@ -51,6 +58,7 @@ export class ParametersDateRangeInput extends
         style={{width: '100%', minWidth: 0, ...style}}>
       <DateRangeInput {...properties} label={label} referenceDate={reference}
         options={this.options} labelPosition={labelPosition}
+        customType={customType} customLabel={customLabel}
         orientation={DateRangeInput.Orientation.VERTICAL}
         boundsRequired={boundsRequired}/>
     </div>;

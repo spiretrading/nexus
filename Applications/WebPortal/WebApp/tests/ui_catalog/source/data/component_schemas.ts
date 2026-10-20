@@ -1362,9 +1362,9 @@ const parametersDateRangeInput =
   new ComponentSchema('ParametersDateRangeInput',
     [new PropertySchema('value', (() => {
         const today = Beam.Date.today();
-        return new WebPortal.DateRange(
-          new Beam.Date(today.year, today.month, 1), today);
+        return new WebPortal.DateRange(today, today);
       })(), DateRangeValueInput),
+      new PropertySchema('today', Beam.Date.today(), BeamDateInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
