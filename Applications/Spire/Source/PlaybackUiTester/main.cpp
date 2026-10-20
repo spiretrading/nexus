@@ -9,7 +9,6 @@
 #include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
@@ -21,18 +20,15 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  using PlayStateModel = ValueModel<ReplayWindow::State>;
-  using LocalPlayStateModel = LocalValueModel<ReplayWindow::State>;
-
   auto to_qt_time(const time_duration& duration) {
     return QTime::fromMSecsSinceStartOfDay(duration.total_milliseconds());
   }
 
-  auto to_text(ReplayWindow::State state) {
-    if(state == ReplayWindow::State::REPLAYING) {
+  auto to_text(PlaybackState state) {
+    if(state == PlaybackState::REPLAYING) {
       static const auto value = QObject::tr("Replaying");
       return value;
-    } else if(state == ReplayWindow::State::PAUSED) {
+    } else if(state == PlaybackState::PAUSED) {
       static const auto value = QObject::tr("Paused");
       return value;
     } else {
@@ -129,60 +125,22 @@ namespace {
   };
 }
 
-struct DemoPlaybackController : private QObject {
+struct DemoPlaybackController {
   std::shared_ptr<ArrayListModel<PropertyHubMember*>> m_roster;
+  std::shared_ptr<ArrayListModel<std::shared_ptr<PropertyHub>>> m_attached_hubs;
+  std::shared_ptr<ReplaySession> m_session;
   ReplayWindow m_replay_window;
-  std::shared_ptr<BooleanModel> m_timer_enabled;
-  std::shared_ptr<ValueModel<ReplayWindow::State>> m_play_state;
-  QTimer m_timer;
 
   DemoPlaybackController()
-      : m_roster(std::make_shared<ArrayListModel<PropertyHubMember*>>()),
-        m_replay_window(ReplayWindow(
-          std::make_shared<LocalTimelineModel>(
-            Timeline{ptime(microsec_clock::universal_time().date(),
-              time_duration(4, 0, 0)), time_duration(8, 0, 0)}),
-          TimeClient(UtcTimeClient()),
-          std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-          m_roster,
-          std::make_shared<ArrayListModel<std::shared_ptr<PropertyHub>>>(),
-          std::make_shared<LocalPlaybackSpeedModel>(1),
-          microsec_clock::universal_time().date() - months(6))),
-        m_timer_enabled(std::make_shared<LocalBooleanModel>(false)),
-        m_play_state(std::make_shared<LocalPlayStateModel>(
-          ReplayWindow::State::PAUSED)),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-        m_timer(this) {
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
-    m_play_state->connect_update_signal(
-      std::bind_front(&DemoPlaybackController::on_state_update, this));
-    m_timer.setInterval(1000);
-    connect(&m_timer, &QTimer::timeout,
-      std::bind_front(&DemoPlaybackController::on_timeout, this));
-  }
-
-  void on_state_update(ReplayWindow::State state) {
-    if(state == ReplayWindow::State::PAUSED) {
-      m_timer.stop();
-    } else if(m_timer_enabled->get()) {
-      m_timer.start();
-    }
-  }
-
-  void on_timeout() {
-    auto& timeline = m_replay_window.get_timeline()->get();
-    if(m_play_state->get() == ReplayWindow::State::REAL_TIME) {
-      auto now = m_replay_window.get_time_client().get_time();
-      m_replay_window.get_playhead()->set(now - timeline.m_start);
-    } else {
-      auto duration = std::min(timeline.m_duration,
-        m_replay_window.get_time_client().get_time() - timeline.m_start);
-      m_replay_window.get_playhead()->set(
-        std::min(m_replay_window.get_playhead()->get() +
-          milliseconds(static_cast<long long>(m_replay_window.get_speed()->get()
-            * 1000)), duration));
-    }
-  }
+    : m_roster(std::make_shared<ArrayListModel<PropertyHubMember*>>()),
+      m_attached_hubs(
+        std::make_shared<ArrayListModel<std::shared_ptr<PropertyHub>>>()),
+      m_session(std::make_shared<ReplaySession>(
+        Timeline(ptime(microsec_clock::universal_time().date(),
+          time_duration(4, 0, 0)), time_duration(8, 0, 0)),
+        time_duration(0, 0, 0), Decimal(1), TimeClient(UtcTimeClient()))),
+      m_replay_window(m_session, m_roster, m_attached_hubs,
+        microsec_clock::universal_time().date() - months(6)) {}
 };
 
 struct ReplayWindowTester : QWidget {
@@ -194,7 +152,7 @@ struct ReplayWindowTester : QWidget {
   scoped_connection m_timeline_connection;
   scoped_connection m_playhead_connection;
   scoped_connection m_state_connection;
-  scoped_connection m_attachments_connection;
+  scoped_connection m_attached_hubs_connection;
 
   ReplayWindowTester(DemoPlaybackController& controller)
       : m_controller(&controller),
@@ -221,8 +179,6 @@ struct ReplayWindowTester : QWidget {
     connect(m_playhead, &QTimeEdit::timeChanged,
       std::bind_front(&ReplayWindowTester::on_playhead_changed, this));
     form_layout->addRow("Current:", m_playhead);
-    auto timer_check_box = new CheckBox(m_controller->m_timer_enabled);
-    form_layout->addRow("Enable Timer:", timer_check_box);
     layout->addLayout(form_layout);
     auto candidates_group = new QGroupBox("Candidate Targets");
     auto candidates_group_layout = new QVBoxLayout(candidates_group);
@@ -232,7 +188,7 @@ struct ReplayWindowTester : QWidget {
       auto& candidate = m_candidates[i];
       add_members(candidate);
       if(candidate.m_is_selected) {
-        m_controller->m_replay_window.get_attachments()->push(candidate.m_hub);
+        m_controller->m_attached_hubs->push(candidate.m_hub);
       }
       list_widget->addItem(
         to_text(candidate.m_hub, *m_controller->m_roster));
@@ -248,26 +204,26 @@ struct ReplayWindowTester : QWidget {
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
     m_timeline_connection =
-      m_controller->m_replay_window.get_timeline()->connect_update_signal(
+      m_controller->m_session->get_timeline()->connect_update_signal(
         std::bind_front(&ReplayWindowTester::on_timeline_update, this));
     m_playhead_connection =
-      m_controller->m_replay_window.get_playhead()->connect_update_signal(
+      m_controller->m_session->get_playhead()->connect_update_signal(
         std::bind_front(&ReplayWindowTester::on_playhead_update, this));
-    m_state_connection = m_controller->m_replay_window.connect_state_signal(
-      std::bind_front(&ReplayWindowTester::on_state_update, this));
-    m_attachments_connection =
-      m_controller->m_replay_window.get_attachments()->
-        connect_operation_signal(std::bind_front(
-          &ReplayWindowTester::on_attachments_operation, this));
+    m_state_connection =
+      m_controller->m_session->get_state()->connect_update_signal(
+        std::bind_front(&ReplayWindowTester::on_state_update, this));
+    m_attached_hubs_connection =
+      m_controller->m_attached_hubs->connect_operation_signal(std::bind_front(
+        &ReplayWindowTester::on_attached_hubs_operation, this));
     m_controller->m_replay_window.installEventFilter(this);
   }
 
   const std::shared_ptr<TimelineModel>& get_timeline() const {
-    return m_controller->m_replay_window.get_timeline();
+    return m_controller->m_session->get_timeline();
   }
 
   const std::shared_ptr<DurationModel>& get_playhead() const {
-    return m_controller->m_replay_window.get_playhead();
+    return m_controller->m_session->get_playhead();
   }
 
   bool eventFilter(QObject* object, QEvent* event) override {
@@ -287,8 +243,8 @@ struct ReplayWindowTester : QWidget {
   void on_date_time_changed(const QDateTime& date_time) {
     if(to_ptime(date_time) != get_timeline()->get().m_start) {
       auto blocker = shared_connection_block(m_timeline_connection);
-      get_timeline()->set(Timeline{to_ptime(date_time),
-        get_timeline()->get().m_duration});
+      get_timeline()->set(Timeline(to_ptime(date_time),
+        get_timeline()->get().m_duration));
     }
     m_event_log->append(QString("Start Time(UTC): %1").
       arg(QString::fromStdString(to_simple_string(
@@ -300,8 +256,7 @@ struct ReplayWindowTester : QWidget {
     m_playhead->setMaximumTime(time);
     m_playhead->blockSignals(false);
     get_timeline()->set(
-      Timeline{get_timeline()->get().m_start,
-        to_time_duration(time)});
+      Timeline(get_timeline()->get().m_start, to_time_duration(time)));
   }
 
   void on_playhead_changed(const QTime& time) {
@@ -326,8 +281,7 @@ struct ReplayWindowTester : QWidget {
         get_timeline()->get().m_start + playhead))));
   }
 
-  void on_state_update(ReplayWindow::State state) {
-    m_controller->m_play_state->set(state);
+  void on_state_update(PlaybackState state) {
     m_event_log->append(QString("State: %1").arg(to_text(state)));
   }
 
@@ -352,18 +306,18 @@ struct ReplayWindowTester : QWidget {
     }
   }
 
-  void on_attachments_operation(
+  void on_attached_hubs_operation(
       const PropertyHubListModel::Operation& operation) {
-    auto& attachments = *m_controller->m_replay_window.get_attachments();
+    auto& attached_hubs = *m_controller->m_attached_hubs;
     auto& roster = *m_controller->m_roster;
     visit(operation,
       [&] (const PropertyHubListModel::AddOperation& operation) {
         m_event_log->append(QString("Attached: %1").
-          arg(to_text(attachments.get(operation.m_index), roster)));
+          arg(to_text(attached_hubs.get(operation.m_index), roster)));
       },
       [&] (const PropertyHubListModel::PreRemoveOperation& operation) {
         m_event_log->append(QString("Detached: %1").
-          arg(to_text(attachments.get(operation.m_index), roster)));
+          arg(to_text(attached_hubs.get(operation.m_index), roster)));
       });
   }
 };

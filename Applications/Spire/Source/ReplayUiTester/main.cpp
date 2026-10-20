@@ -9,11 +9,12 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/ReplayUiTester/GeneratedTimeAndSalesModel.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -96,6 +97,15 @@ namespace {
       arg(QString::fromStdString(to_string(hub->get_id())).left(8));
   }
 
+  auto to_state_text(PlaybackState state) {
+    if(state == PlaybackState::PAUSED) {
+      return QObject::tr("Paused");
+    } else if(state == PlaybackState::REPLAYING) {
+      return QObject::tr("Replaying");
+    }
+    return QObject::tr("Real Time");
+  }
+
   auto populate_tickers() {
     auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
     for(auto& info : get_ticker_infos()) {
@@ -104,10 +114,25 @@ namespace {
     }
     return model;
   }
-
 }
 
 struct ReplayUiTester : QWidget {
+  struct Replay {
+    QString m_name;
+    std::shared_ptr<ReplaySession> m_session;
+    std::shared_ptr<PropertyHubListModel> m_attachments;
+    scoped_connection m_attachments_connection;
+    scoped_connection m_state_connection;
+    scoped_connection m_speed_connection;
+    scoped_connection m_timeline_connection;
+  };
+
+  struct MemberSession {
+    PropertyHubMember* m_member;
+    std::shared_ptr<ReplaySessionModel> m_session;
+    scoped_connection m_connection;
+  };
+
   ptime m_start;
   TestEnvironment m_environment;
   Clients m_clients;
@@ -117,15 +142,18 @@ struct ReplayUiTester : QWidget {
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
     m_time_and_sales_factory;
   std::shared_ptr<BookViewPropertiesWindowFactory> m_book_view_factory;
-  std::shared_ptr<ArrayListModel<std::shared_ptr<PropertyHub>>> m_attachments;
-  ReplayWindow m_replay_window;
+  std::shared_ptr<ReplayAttachmentMap> m_attachment_map;
+  std::vector<std::unique_ptr<Replay>> m_replays;
+  std::vector<std::unique_ptr<MemberSession>> m_member_sessions;
   QTextEdit* m_event_log;
+  int m_replay_count;
   int m_time_and_sale_count;
   int m_book_view_count;
-  scoped_connection m_attachments_connection;
+  scoped_connection m_attachment_map_connection;
+  scoped_connection m_roster_connection;
 
   ReplayUiTester()
-      : m_start(microsec_clock::universal_time() - HISTORY),
+      : m_start(second_clock::universal_time() - HISTORY),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_user_profile("", false, false, {}, {},
           get_default_additional_tag_database(), {}, {}, {}, m_clients),
@@ -135,15 +163,8 @@ struct ReplayUiTester : QWidget {
           std::make_shared<TimeAndSalesPropertiesWindowFactory>()),
         m_book_view_factory(
           std::make_shared<BookViewPropertiesWindowFactory>()),
-        m_attachments(std::make_shared<
-          ArrayListModel<std::shared_ptr<PropertyHub>>>()),
-        m_replay_window(std::make_shared<LocalTimelineModel>(
-          Timeline(m_start, TIMELINE_DURATION)),
-          TimeClient(UtcTimeClient()),
-          std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-          m_user_profile.GetPropertyHubMembers(), m_attachments,
-          std::make_shared<LocalPlaybackSpeedModel>(1),
-          day_clock::universal_day() - years(1)),
+        m_attachment_map(std::make_shared<ReplayAttachmentMap>()),
+        m_replay_count(0),
         m_time_and_sale_count(0),
         m_book_view_count(0) {
     setWindowTitle(tr("Replay Ui Tester"));
@@ -154,6 +175,9 @@ struct ReplayUiTester : QWidget {
     m_event_log = new QTextEdit();
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
+    auto open_replay_button = make_label_button(tr("Open Replay Window"));
+    open_replay_button->connect_click_signal(
+      std::bind_front(&ReplayUiTester::open_replay_window, this));
     auto open_time_and_sales_button =
       make_label_button(tr("Open Time and Sales Window"));
     open_time_and_sales_button->connect_click_signal(
@@ -164,24 +188,23 @@ struct ReplayUiTester : QWidget {
     auto button_layout = make_hbox_layout();
     button_layout->setSpacing(scale_width(8));
     button_layout->addWidget(open_book_view_button);
+    button_layout->addWidget(open_replay_button);
     button_layout->addWidget(open_time_and_sales_button);
     layout->addLayout(button_layout);
     resize(scale(500, 400));
-    m_attachments_connection = m_attachments->connect_operation_signal(
-      std::bind_front(&ReplayUiTester::on_attachments_operation, this));
-    m_replay_window.installEventFilter(this);
-  }
-
-  bool eventFilter(QObject* object, QEvent* event) override {
-    if(event->type() == QEvent::Close) {
-      QApplication::quit();
+    auto& roster = *m_user_profile.GetPropertyHubMembers();
+    for(auto member : roster) {
+      add_member_session(*member);
     }
-    return QWidget::eventFilter(object, event);
+    m_roster_connection = roster.connect_operation_signal(
+      std::bind_front(&ReplayUiTester::on_roster_operation, this));
+    m_attachment_map_connection = m_attachment_map->connect_update_signal(
+      std::bind_front(&ReplayUiTester::on_attachment_map_update, this));
   }
 
   void showEvent(QShowEvent* event) override {
-    m_replay_window.show();
-    move(m_replay_window.pos() + QPoint((m_replay_window.frameGeometry().
+    auto replay_window = open_replay_window();
+    move(replay_window->pos() + QPoint((replay_window->frameGeometry().
       width() - frameGeometry().width()) / 2, 200));
     open_time_and_sales_window();
     open_book_view_window();
@@ -197,6 +220,55 @@ struct ReplayUiTester : QWidget {
       const Ticker& ticker) {
     return std::make_shared<GeneratedTimeAndSalesModel>(
       ticker, m_start, TIME_AND_SALE_PERIOD);
+  }
+
+  ReplayWindow* open_replay_window() {
+    ++m_replay_count;
+    auto entry = std::make_unique<Replay>();
+    auto replay = entry.get();
+    replay->m_name = tr("Replay %1").arg(m_replay_count);
+    replay->m_session = std::make_shared<ReplaySession>(
+      Timeline(m_start, TIMELINE_DURATION), time_duration(0, 0, 0),
+      Decimal(1), TimeClient(UtcTimeClient()));
+    replay->m_attachments =
+      make_attached_hub_list(m_attachment_map, replay->m_session);
+    auto& session = *replay->m_session;
+    replay->m_attachments_connection =
+      replay->m_attachments->connect_operation_signal(
+        [=] (const auto& operation) {
+          on_attachments_operation(*replay, operation);
+        });
+    replay->m_state_connection =
+      session.get_state()->connect_update_signal([=] (auto state) {
+        on_state_update(*replay, state);
+      });
+    replay->m_speed_connection =
+      session.get_speed()->connect_update_signal([=] (const auto& speed) {
+        on_speed_update(*replay, speed);
+      });
+    replay->m_timeline_connection =
+      session.get_timeline()->connect_update_signal([=] (const auto& timeline) {
+        on_timeline_update(*replay, timeline);
+      });
+    auto window = new ReplayWindow(replay->m_session,
+      m_user_profile.GetPropertyHubMembers(), replay->m_attachments,
+      day_clock::universal_day() - years(1));
+    window->setWindowTitle(replay->m_name);
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    connect(window, &QObject::destroyed, this, [=] {
+      remove_replay(*replay);
+    });
+    m_event_log->append(tr("%1 Opened").arg(replay->m_name));
+    m_replays.push_back(std::move(entry));
+    window->show();
+    if(m_replay_count != 1) {
+      auto offset = scale(WINDOW_GAP * (m_replay_count - 1),
+        WINDOW_GAP * (m_replay_count - 1));
+      window->move(QPoint(x() - (window->frameGeometry().width() -
+        frameGeometry().width()) / 2, y() - 200) +
+        QPoint(offset.width(), offset.height()));
+    }
+    return window;
   }
 
   void open_time_and_sales_window() {
@@ -226,18 +298,91 @@ struct ReplayUiTester : QWidget {
     ++m_book_view_count;
   }
 
+  void remove_replay(Replay& replay) {
+    m_event_log->append(tr("%1 Closed").arg(replay.m_name));
+    std::erase_if(m_replays, [&] (const auto& entry) {
+      return entry.get() == &replay;
+    });
+  }
+
+  QString get_replay_name(const std::shared_ptr<ReplaySession>& session) const {
+    if(!session) {
+      return tr("None");
+    }
+    for(auto& replay : m_replays) {
+      if(replay->m_session == session) {
+        return replay->m_name;
+      }
+    }
+    return tr("Unknown");
+  }
+
   void on_attachments_operation(
-      const PropertyHubListModel::Operation& operation) {
+      Replay& replay, const PropertyHubListModel::Operation& operation) {
+    auto& roster = *m_user_profile.GetPropertyHubMembers();
     visit(operation,
       [&] (const PropertyHubListModel::AddOperation& operation) {
-        m_event_log->append(tr("Attached: %1").
-          arg(to_text(m_attachments->get(operation.m_index),
-            *m_user_profile.GetPropertyHubMembers())));
+        m_event_log->append(tr("%1 Attached: %2").arg(replay.m_name).
+          arg(to_text(replay.m_attachments->get(operation.m_index), roster)));
       },
       [&] (const PropertyHubListModel::PreRemoveOperation& operation) {
-        m_event_log->append(tr("Detached: %1").
-          arg(to_text(m_attachments->get(operation.m_index),
-            *m_user_profile.GetPropertyHubMembers())));
+        m_event_log->append(tr("%1 Detached: %2").arg(replay.m_name).
+          arg(to_text(replay.m_attachments->get(operation.m_index), roster)));
+      });
+  }
+
+  void on_state_update(Replay& replay, PlaybackState state) {
+    m_event_log->append(tr("%1 State: %2").arg(replay.m_name).
+      arg(to_state_text(state)));
+  }
+
+  void on_speed_update(Replay& replay, const Decimal& speed) {
+    m_event_log->append(tr("%1 Speed: %2x").arg(replay.m_name).
+      arg(QString::fromStdString(speed.str())));
+  }
+
+  void on_timeline_update(Replay& replay, const Timeline& timeline) {
+    m_event_log->append(tr("%1 Timeline: %2, Duration: %3").
+      arg(replay.m_name).arg(Spire::to_text(timeline.m_start)).
+      arg(Spire::to_text(timeline.m_duration)));
+  }
+
+  void on_attachment_map_update(const std::shared_ptr<PropertyHub>& hub,
+      const std::shared_ptr<ReplaySession>& session) {
+    m_event_log->append(tr("Attachment Map: %1 -> %2").
+      arg(to_text(hub, *m_user_profile.GetPropertyHubMembers())).
+      arg(get_replay_name(session)));
+  }
+
+  void add_member_session(PropertyHubMember& member) {
+    auto entry = std::make_unique<MemberSession>();
+    entry->m_member = &member;
+    entry->m_session = make_attached_session_model(member, m_attachment_map);
+    entry->m_connection = entry->m_session->connect_update_signal(
+      [=, &member] (const auto& session) {
+        m_event_log->append(tr("Member Session: %1 follows %2").
+          arg(member.get_name()).arg(get_replay_name(session)));
+      });
+    if(auto& session = entry->m_session->get()) {
+      m_event_log->append(tr("Member Session: %1 follows %2").
+        arg(member.get_name()).arg(get_replay_name(session)));
+    }
+    m_member_sessions.push_back(std::move(entry));
+  }
+
+  void on_roster_operation(
+      const ListModel<PropertyHubMember*>::Operation& operation) {
+    auto& roster = *m_user_profile.GetPropertyHubMembers();
+    visit(operation,
+      [&] (const ListModel<PropertyHubMember*>::AddOperation& operation) {
+        add_member_session(*roster.get(operation.m_index));
+      },
+      [&] (const ListModel<PropertyHubMember*>::PreRemoveOperation&
+          operation) {
+        auto member = roster.get(operation.m_index);
+        std::erase_if(m_member_sessions, [&] (const auto& entry) {
+          return entry->m_member == member;
+        });
       });
   }
 };

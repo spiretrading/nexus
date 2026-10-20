@@ -217,7 +217,3 @@ void SeekBar::on_hover(HoverObserver::State state) {
     m_mouse_move_observer.reset();
   }
 }
-
-ptime Spire::get_end_time(const Timeline& timeline) {
-  return timeline.m_start + timeline.m_duration;
-}
