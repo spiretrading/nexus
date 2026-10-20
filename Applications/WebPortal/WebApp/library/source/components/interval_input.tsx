@@ -38,7 +38,7 @@ export class IntervalInput extends React.Component<Properties> {
           aria-describedby={rest['aria-describedby']}
           inputMode='numeric' aria-label='Interval count'
           readOnly={readOnly} disabled={disabled} required={required}
-          style={{width: '64px', flex: '0 0 64px'}}
+          style={{width: '96px', flex: '0 0 96px'}}
           onChange={this.onCountChange}/>
         <Select value={value.unit} aria-label='Interval unit'
             aria-invalid={rest['aria-invalid']}
