@@ -36,6 +36,7 @@ export * from './link';
 export * from './list_input';
 export * from './modal';
 export * from './money_input';
+export * from './month_select';
 export * from './navigation_header';
 export * from './navigation_tab';
 export * from './page_layout';

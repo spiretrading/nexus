@@ -247,6 +247,15 @@ const DAY_OF_WEEK_SELECT =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DayOfWeekSelect);
 
+const MONTH_SELECT =
+  new ComponentSchema('MonthSelect',
+    [new PropertySchema('value', Beam.Date.Month.JANUARY,
+        EnumInput(Beam.Date.Month)),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.MonthSelect);
+
 const disclosure =
   new ComponentSchema('Disclosure',
     [new PropertySchema('open', false, BooleanInput)],
@@ -1517,8 +1526,8 @@ export const componentSections = [
     sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, dateRangeInput, DAY_OF_WEEK_SELECT, emptyMessage, errorMessage,
-    inputErrorMessage, inputGroup, moneyInput, pageLayout, relativeDate,
-    roleIcon, rolePanel, scopeInput, tickerInput]),
+    inputErrorMessage, inputGroup, moneyInput, MONTH_SELECT, pageLayout,
+    relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
