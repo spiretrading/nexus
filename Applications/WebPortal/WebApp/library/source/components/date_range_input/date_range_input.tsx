@@ -81,7 +81,7 @@ export class DateRangeInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     const reference = props.referenceDate ?? Beam.Date.today();
-    const selection = findSelection(props.value, props.options);
+    const selection = findSelection(props.value, props.options, props.rules);
     const option = props.options.find(option => option.value === selection);
     const rules = props.rules ?? option?.rules ?? makeFixedRules(props.value);
     const expressions = props.value.expressions ??
@@ -93,13 +93,8 @@ export class DateRangeInput extends React.Component<Properties, State> {
       }
       return resolveRules(rules, reference);
     })();
-    this.state = {value, inputValue: value,
-      selection: (() => {
-        if(props.rules || props.value.expressions) {
-          return 'custom';
-        }
-        return selection;
-      })(), startComplete: isComplete(rules.start, value.start),
+    this.state = {value, inputValue: value, selection,
+      startComplete: isComplete(rules.start, value.start),
       endComplete: isComplete(rules.end, value.end), showError: false,
       revision: 0, rules, reference, expressions};
     this.identifier = `date-range-${DateRangeInput.nextIdentifier++}`;
@@ -136,6 +131,8 @@ export class DateRangeInput extends React.Component<Properties, State> {
     } else if(rulesChanged) {
       updated = true;
       this.setRules(this.props.rules, false);
+      this.setState({selection: findSelection(this.props.value,
+        this.props.options, this.props.rules)});
     } else if(previous.value !== this.props.value) {
       if(!isDateRangeEqual(this.props.value, this.state.value) ||
           !isDateExpressionEqual(this.props.value.expressions?.start,
@@ -144,7 +141,8 @@ export class DateRangeInput extends React.Component<Properties, State> {
             this.state.value.expressions?.end) ||
           !this.state.startComplete || !this.state.endComplete) {
         updated = true;
-        const selection = findSelection(this.props.value, this.props.options);
+        const selection = findSelection(
+          this.props.value, this.props.options, this.props.rules);
         const option = this.props.options.find(
           option => option.value === selection);
         this.setState(state => ({value: this.props.value,
@@ -181,7 +179,8 @@ export class DateRangeInput extends React.Component<Properties, State> {
         if(this.props.value.expressions) {
           return 'custom';
         } else if(previous.value !== this.props.value) {
-          return findSelection(this.props.value, this.props.options);
+          return findSelection(
+            this.props.value, this.props.options, this.props.rules);
         }
         return this.state.selection;
       })();
@@ -900,10 +899,21 @@ function SelectGroup(props: SelectGroupProperties): JSX.Element {
 }
 
 
-function findSelection(value: DateRange, options: readonly DateRangeOption[]):
-    string {
-  return options.find(option => isDateRangeEqual(value,
-    new DateRange(option.startDate, option.endDate)))?.value ?? 'custom';
+function findSelection(value: DateRange, options: readonly DateRangeOption[],
+    rules?: DateRangeRules): string {
+  if(value.expressions) {
+    return 'custom';
+  }
+  return options.find(option => {
+    if(rules) {
+      const preset = option.rules ??
+        makeFixedRules(new DateRange(option.startDate, option.endDate));
+      return isDateRuleEqual(rules.start, preset.start) &&
+        isDateRuleEqual(rules.end, preset.end);
+    }
+    return isDateRangeEqual(value,
+      new DateRange(option.startDate, option.endDate));
+  })?.value ?? 'custom';
 }
 
 const INLINE_COLUMNS =

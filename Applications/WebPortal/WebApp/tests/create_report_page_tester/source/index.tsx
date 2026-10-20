@@ -2,9 +2,9 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { CreateReportController, LocalAccountGroupQueryModel,
-  LocalCreateReportModel, LocalTickerQueryModel, ReportDefinition,
-  ReportFormTemplate, ScopeQueryModel } from 'web_portal';
+import { CreateReportController, dateRuleToJson, DayOffsetDateRule,
+  LocalAccountGroupQueryModel, LocalCreateReportModel, LocalTickerQueryModel,
+  ReportDefinition, ReportFormTemplate, ScopeQueryModel } from 'web_portal';
 
 class DemoCreateReportModel extends LocalCreateReportModel {
   public async submit(value: ReportFormTemplate.Value): Promise<string> {
@@ -53,6 +53,7 @@ class App extends React.Component {
 
 function makeDefinitions(): ReportDefinition[] {
   const today = Beam.Date.today();
+  const rule = dateRuleToJson(new DayOffsetDateRule(0));
   return ['Profit and Loss', 'Trading Volume'].map((name, index) =>
     ReportDefinition.fromJson({id: `report_${index}`, name, description: '',
       parameters: [
@@ -64,7 +65,8 @@ function makeDefinitions(): ReportDefinition[] {
           default: '*'},
         {name: 'period', label: 'Date Range', type: 'DateRange',
           required: true,
-          default: {start: today.toJson(), end: today.toJson()}},
+          default: {start: today.toJson(), end: today.toJson(),
+            rules: {start: rule, end: rule}}},
         {name: 'currency', label: 'Currency', type: 'Currency', required: true,
           default: 'USD'}],
       output: {media_type: 'text/csv', extension: 'csv'}}));
