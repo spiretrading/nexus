@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { DayOfMonth } from '../models/day_of_month';
 import { Weekday } from '../models/date_rule';
@@ -52,33 +53,35 @@ export class DayOfMonthInput extends React.Component<Properties, State> {
     const fieldStyle: React.CSSProperties = {
       flex: '1 1 0', width: '100%', minWidth: 0, boxSizing: 'border-box'};
     return <div role='group' {...rest}
-        style={{display: 'flex', gap: '10px', width: '100%', ...style}}
+        style={{containerType: 'inline-size', width: '100%', ...style}}
         onBlur={this.onBlur} onKeyDown={this.onKeyDown}>
-      <Select id={id} aria-label='Position' value={value.position}
-          readOnly={readOnly} disabled={disabled}
-          style={{width: '96px', flex: '0 0 96px', boxSizing: 'border-box'}}
-          onChange={this.onPositionChange}>
-        {Object.values(DayOfMonth.Position).map(position =>
-          <option key={position} value={position}>
-            {position[0] + position.slice(1).toLowerCase()}
-          </option>)}
-      </Select>
-      {value.position === DayOfMonth.Position.DAY &&
-        <IntegerInput aria-label='Day number' value={this.state.dayNumber}
-          min={1} max={31} step={1} inputMode='numeric'
-          aria-invalid={rest['aria-invalid']}
-          aria-describedby={rest['aria-describedby']}
-          readOnly={readOnly} disabled={disabled} style={fieldStyle}
-          onInput={this.onNumberInput} onChange={this.onNumberChange}/>}
-      {value.position !== DayOfMonth.Position.DAY &&
-        <Select aria-label='Day type' value={value.day}
-            readOnly={readOnly} disabled={disabled} style={fieldStyle}
-            onChange={this.onDayTypeChange}>
-          {[...Object.values(Weekday), ...Object.values(DayOfMonth.DayType)].
-            map(day => <option key={day} value={day}>
-              {day[0] + day.slice(1).toLowerCase()}
+      <div className={css(STYLES.fields)}>
+        <Select id={id} aria-label='Position' value={value.position}
+            readOnly={readOnly} disabled={disabled}
+            style={fieldStyle}
+            onChange={this.onPositionChange}>
+          {Object.values(DayOfMonth.Position).map(position =>
+            <option key={position} value={position}>
+              {position[0] + position.slice(1).toLowerCase()}
             </option>)}
-        </Select>}
+        </Select>
+        {value.position === DayOfMonth.Position.DAY &&
+          <IntegerInput aria-label='Day number' value={this.state.dayNumber}
+            min={1} max={31} step={1} inputMode='numeric'
+            aria-invalid={rest['aria-invalid']}
+            aria-describedby={rest['aria-describedby']}
+            readOnly={readOnly} disabled={disabled} style={fieldStyle}
+            onInput={this.onNumberInput} onChange={this.onNumberChange}/>}
+        {value.position !== DayOfMonth.Position.DAY &&
+          <Select aria-label='Day type' value={value.day}
+              readOnly={readOnly} disabled={disabled} style={fieldStyle}
+              onChange={this.onDayTypeChange}>
+            {[...Object.values(Weekday), ...Object.values(DayOfMonth.DayType)].
+              map(day => <option key={day} value={day}>
+                {day[0] + day.slice(1).toLowerCase()}
+              </option>)}
+          </Select>}
+      </div>
     </div>;
   }
 
@@ -178,3 +181,14 @@ export class DayOfMonthInput extends React.Component<Properties, State> {
   private dayType: Weekday | DayOfMonth.DayType;
   private isNumberCommitted: boolean;
 }
+
+const STYLES = StyleSheet.create({
+  fields: {
+    display: 'grid',
+    gap: '10px',
+    '@container (width < 246px)': {gridTemplateColumns: 'minmax(0, 1fr)'},
+    '@container (min-width: 246px)': {
+      gridTemplateColumns: '96px minmax(0, 1fr)'
+    }
+  }
+});

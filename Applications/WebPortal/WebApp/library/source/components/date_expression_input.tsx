@@ -82,8 +82,9 @@ export class DateExpressionInput extends React.Component<Properties, State> {
     const fieldStyle: React.CSSProperties = {
       width: '100%', minWidth: 0, boxSizing: 'border-box'};
     return <div role='group' {...rest} onKeyDown={this.onKeyDown}
-        style={{display: 'flex', flexDirection: 'column', gap: '10px',
-          width: '100%', minWidth: 0, ...style}}>
+        style={{containerType: 'inline-size', display: 'flex',
+          flexDirection: 'column', gap: '10px', width: '100%', minWidth: 0,
+          ...style}}>
       <Select {...shared} id={id} aria-label='Date mode' value={value.mode}
           style={fieldStyle} onChange={this.onModeChange}>
         <option value={DateExpression.Mode.FIXED}>Fixed date</option>
@@ -106,7 +107,8 @@ export class DateExpressionInput extends React.Component<Properties, State> {
         <DayOfMonthInput {...shared} value={value.date.day}
           onInput={this.onDayInput} onChange={this.onDayChange}/>}
       {offset && <div style={{display: 'grid', gap: '10px', minWidth: 0,
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))'}}
+          gridTemplateColumns:
+            'clamp(50px, calc(100cqw - 150px), 96px) minmax(0, 1fr)'}}
           onBlur={this.onOffsetBlur}>
         <IntegerInput {...shared} aria-label={`${unit} offset`}
           value={getMagnitude(offset.value)} min={0} inputMode='numeric'

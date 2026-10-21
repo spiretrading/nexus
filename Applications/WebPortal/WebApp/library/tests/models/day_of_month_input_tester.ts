@@ -1,5 +1,6 @@
+import { StyleSheetTestUtils } from 'aphrodite/no-important';
 import * as assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import * as React from 'react';
 import { DayOfMonthInput } from '../../source/components/day_of_month_input';
 import { DayOfMonth } from '../../source/models/day_of_month';
@@ -26,13 +27,17 @@ function makeInput(value: DayOfMonth, echoInput = true) {
     input.componentDidUpdate(previous);
   }
   function fields(): React.ReactElement[] {
-    return React.Children.toArray(input.render().props.children).
+    return React.Children.toArray(
+      input.render().props.children.props.children).
       filter(React.isValidElement) as React.ReactElement[];
   }
   return {input, drafts, commits, replace, fields};
 }
 
 describe('DayOfMonthInput', () => {
+  beforeEach(() => StyleSheetTestUtils.suppressStyleInjection());
+  afterEach(() => StyleSheetTestUtils.clearBufferAndResumeStyleInjection());
+
   it('retains_each_mode_value_and_accepts_external_updates', () => {
     const fixture = makeInput(new DayOfMonth(DayOfMonth.Position.SECOND,
       Weekday.TUESDAY));
