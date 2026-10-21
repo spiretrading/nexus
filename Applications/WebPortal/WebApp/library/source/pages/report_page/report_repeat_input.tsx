@@ -218,6 +218,6 @@ const PRESETS = [
 const STYLES = StyleSheet.create({
   custom: {paddingTop: '20px',
     '@container (min-width: 384px)': {paddingTop: '10px'}},
-  runs: {paddingTop: '30px',
-    '@container (min-width: 384px)': {paddingLeft: '138px'}}
+  runs: {boxSizing: 'border-box', paddingTop: '30px',
+    '@container (min-width: 384px)': {width: '384px', paddingLeft: '138px'}}
 });
