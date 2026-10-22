@@ -3,8 +3,8 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { Checkbox, SortableTableHeaderCell } from '../../../components';
 import { ReportStatusTag } from '../report_status_tag';
+import { ReportTableRowPlaceholder } from '../report_table_row_placeholder';
 import { ActivityTableRow } from './activity_table_row';
-import { ActivityTableRowPlaceholder } from './activity_table_row_placeholder';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onSelect'> {
@@ -202,7 +202,7 @@ function Body(props: TableProperties): JSX.Element {
     {(() => {
       if(props.loading) {
         return Array.from({length: 5}, (_, index) =>
-          <ActivityTableRowPlaceholder key={index}/>);
+          <ReportTableRowPlaceholder key={index}/>);
       }
       return props.activities.map(report =>
         <ActivityTableRow key={report.id} {...report}

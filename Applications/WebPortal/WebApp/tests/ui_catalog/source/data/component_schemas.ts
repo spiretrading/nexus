@@ -18,8 +18,6 @@ import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ActivityTableExample } from './activity_table_example';
 import { ActivityTableRowExample } from './activity_table_row_example';
-import { ActivityTableRowPlaceholderExample } from
-  './activity_table_row_placeholder_example';
 import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
@@ -1436,10 +1434,6 @@ const activityTableRow =
       {parameterName: 'selected', propertyName: 'selected'}])],
     ActivityTableRowExample, 796);
 
-const activityTableRowPlaceholder =
-  new ComponentSchema('ActivityTableRowPlaceholder', [], [],
-    ActivityTableRowPlaceholderExample, 796);
-
 const REPORT_STATUS_TAG =
   new ComponentSchema('ReportStatusTag',
     [new PropertySchema('status',
@@ -1493,7 +1487,7 @@ const reportTableRow =
 
 const reportTableRowPlaceholder =
   new ComponentSchema('ReportTableRowPlaceholder', [], [],
-    ReportTableRowPlaceholderExample, 696);
+    ReportTableRowPlaceholderExample, 796);
 
 const reportTypeSelect =
   new ComponentSchema('ReportTypeSelect',
@@ -1596,7 +1590,7 @@ export const componentSections = [
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
   new ComponentSection('Report Page', [activityTable, activityTableRow,
-    activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
+    dateFilter, parametersDateRangeInput,
     RECURRENCE_INPUT,
     REPORT_STATUS_TAG, reportFormTemplate, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, RUNS_TABLE, scheduledDate,

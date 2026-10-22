@@ -7,4 +7,3 @@ export * from './http_generated_reports_model';
 export * from './local_generated_reports_model';
 export * from './report_table';
 export * from './report_table_row';
-export * from './report_table_row_placeholder';

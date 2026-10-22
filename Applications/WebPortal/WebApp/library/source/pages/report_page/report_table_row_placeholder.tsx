@@ -1,14 +1,15 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { Checkbox, Skeleton } from '../../../components';
+import { Checkbox, Skeleton } from '../../components';
 
 interface Properties extends
-    Omit<React.HTMLAttributes<HTMLTableRowElement>, 'children'> {}
+  Omit<React.HTMLAttributes<HTMLTableRowElement>, 'children'> {}
 
-/** Displays a loading row in the report activity table.
+/**
+ * Displays a loading row in a report jobs table.
  * The table's containing element must establish an inline-size container.
  */
-export function ActivityTableRowPlaceholder(
+export function ReportTableRowPlaceholder(
     {className, ...attributes}: Properties): JSX.Element {
   return <tr {...attributes} aria-hidden
       className={[css(STYLES.row), className].join(' ')}>

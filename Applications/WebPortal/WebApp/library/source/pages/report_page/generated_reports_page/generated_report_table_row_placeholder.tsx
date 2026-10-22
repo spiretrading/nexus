@@ -3,12 +3,12 @@ import * as React from 'react';
 import { Checkbox, Skeleton } from '../../../components';
 
 interface Properties extends
-    Omit<React.HTMLAttributes<HTMLTableRowElement>, 'children'> {}
+  Omit<React.HTMLAttributes<HTMLTableRowElement>, 'children'> {}
 
 /** Displays a generated report's loading row inside a table.
  * The table's containing element must establish an inline-size container.
  */
-export function ReportTableRowPlaceholder(
+export function GeneratedReportTableRowPlaceholder(
     {className, ...attributes}: Properties): JSX.Element {
   return <tr {...attributes} aria-hidden
       className={[css(STYLES.row), className].join(' ')}>
