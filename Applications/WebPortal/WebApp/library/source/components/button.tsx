@@ -3,8 +3,8 @@ import * as React from 'react';
 
 interface Properties extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
-  /** The text to display on the button. */
-  label: string;
+  /** The content to display on the button. */
+  label: React.ReactNode;
 
   /** The color theme. Defaults to LIGHT. */
   theme?: Button.Theme;
@@ -15,18 +15,18 @@ interface Properties extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 /** A custom button component. */
 export function Button(props: Properties): JSX.Element {
-  const theme = props.theme ?? Button.Theme.LIGHT;
-  const variant = props.variant ?? Button.Variant.PRIMARY;
+  const {label, theme: themeProp, variant: variantProp, className,
+    ...attributes} = props;
+  const theme = themeProp ?? Button.Theme.LIGHT;
+  const variant = variantProp ?? Button.Variant.PRIMARY;
   return (
-    <button type={props.type} style={props.style}
-        disabled={props.disabled}
+    <button {...attributes}
         className={[css(EXTRA_STYLE.button,
           theme === Button.Theme.DARK && EXTRA_STYLE.buttonDark,
           variant === Button.Variant.SECONDARY && EXTRA_STYLE.buttonSecondary,
           props.disabled && EXTRA_STYLE.buttonDisabled),
-          props.className].join(' ')}
-        onClick={props.onClick}>
-      {props.label}
+          className].join(' ')}>
+      {label}
     </button>);
 }
 

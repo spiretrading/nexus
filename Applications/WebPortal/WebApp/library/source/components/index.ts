@@ -5,6 +5,7 @@ export * from './button_link';
 export * from './checkbox';
 export * from './combo_box';
 export * from './context_menu';
+export * from './count_button';
 export * from './country_select';
 export * from './currency_select';
 export * from './date_expression_input';

@@ -10,7 +10,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   DayOfMonthValueInput, EnumInput,
   IntervalValueInput,
   NumberInput,
-  NumberSliderInput, MoneyInput,
+  NumberSliderInput, MoneyInput, OptionalInput,
   ReadonlyInput, RecurrenceValueInput, ScopeValueInput, TextInput,
   TickerValueInput } from
   '../viewer/propertyInput';
@@ -71,6 +71,15 @@ const buttonLink =
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
     WebPortal.ButtonLink);
+
+const COUNT_BUTTON =
+  new ComponentSchema('CountButton',
+    [new PropertySchema('label', 'Download', TextInput),
+      new PropertySchema('count', 3, OptionalInput(NumberInput)),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.CountButton);
 
 const burgerButton =
   new ComponentSchema('BurgerButton',
@@ -1568,7 +1577,7 @@ const shareReportModal =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
-    contextMenu, dateInput, dateTimeInput, decimalInput, disclosure,
+    contextMenu, COUNT_BUTTON, dateInput, dateTimeInput, decimalInput, disclosure,
     durationInput, expandButton, filterChip, filterInput, hLine, iconButton,
     iconLabelButton, input, integerField, intervalInput, labeledCheckbox, link,
     listInput, modal, navigationHeader, navigationTab, pagination, radioButton,
