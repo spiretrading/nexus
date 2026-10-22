@@ -5,7 +5,7 @@ import { AccountGroupQueryModel, SortableTableHeaderCell } from
 import { DateRange } from '../../../models/date_range';
 import { GeneratedReportsModel } from './generated_reports_model';
 import { GeneratedReportsPage } from './generated_reports_page';
-import { ReportTable } from './report_table';
+import { GeneratedReportTable } from './generated_report_table';
 
 interface Properties {
 
@@ -247,6 +247,6 @@ export class GeneratedReportsController extends
 
 function makeSubmission(): GeneratedReportsModel.Submission {
   return {filters: {query: '', dateRange: new DateRange(null, null)},
-    sort: {column: ReportTable.Column.DATE_CREATED,
+    sort: {column: GeneratedReportTable.Column.DATE_CREATED,
       order: SortableTableHeaderCell.SortOrder.NONE}, pageIndex: 0};
 }

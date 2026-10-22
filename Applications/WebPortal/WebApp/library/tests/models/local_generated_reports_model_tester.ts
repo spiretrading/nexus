@@ -4,10 +4,11 @@ import * as Beam from 'beam';
 import { LocalAccountGroupQueryModel, SortableTableHeaderCell } from
   '../../source/components';
 import { DateRange } from '../../source/models/date_range';
-import { GeneratedReportsModel, LocalGeneratedReportsModel, ReportTable } from
+import { GeneratedReportsModel, GeneratedReportTable,
+  LocalGeneratedReportsModel } from
   '../../source/pages/report_page/generated_reports_page';
 
-function makeReports(count: number): ReportTable.Report[] {
+function makeReports(count: number): GeneratedReportTable.Report[] {
   return Array.from({length: count}, (_, index) => ({id: String(index + 1),
     type: 'Profit and Loss', parameters: [`Group ${index + 1}`, 'Canada'],
     url: `/reports/${index + 1}`,
@@ -16,7 +17,7 @@ function makeReports(count: number): ReportTable.Report[] {
 
 function submission(): GeneratedReportsModel.Submission {
   return {filters: {query: '', dateRange: new DateRange(null, null)},
-    sort: {column: ReportTable.Column.DATE_CREATED,
+    sort: {column: GeneratedReportTable.Column.DATE_CREATED,
       order: SortableTableHeaderCell.SortOrder.NONE}, pageIndex: 0};
 }
 
@@ -106,14 +107,14 @@ describe('LocalGeneratedReportsModel', () => {
     reports[0].parameters[0] = 'mutated';
     await model.load();
     const request = submission();
-    request.sort = {column: ReportTable.Column.TYPE,
+    request.sort = {column: GeneratedReportTable.Column.TYPE,
       order: SortableTableHeaderCell.SortOrder.ASCENDING};
     assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
     assert.equal((await model.query(request)).reports[0].id, '1');
-    request.sort.column = ReportTable.Column.PARAMETERS;
+    request.sort.column = GeneratedReportTable.Column.PARAMETERS;
     assert.equal((await model.query(request)).reports[0].id, '2');
-    request.sort.column = ReportTable.Column.DATE_CREATED;
+    request.sort.column = GeneratedReportTable.Column.DATE_CREATED;
     assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.NONE;
     assert.equal((await model.query(request)).reports[0].id, '1');

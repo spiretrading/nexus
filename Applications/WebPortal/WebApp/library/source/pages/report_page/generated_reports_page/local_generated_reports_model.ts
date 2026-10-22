@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import { AccountGroupQueryModel, SortableTableHeaderCell } from
   '../../../components';
 import { GeneratedReportsModel } from './generated_reports_model';
-import { ReportTable } from './report_table';
+import { GeneratedReportTable } from './generated_report_table';
 import { formatReportDate } from './report_date';
 
 /** Stores generated reports and records share and download requests locally. */
@@ -12,7 +12,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
    * @param reports - The initial generated reports, in default order.
    * @param recipientModel - The account and group lookup model.
    */
-  constructor(reports: readonly ReportTable.Report[],
+  constructor(reports: readonly GeneratedReportTable.Report[],
       recipientModel: AccountGroupQueryModel) {
     super();
     this.loaded = false;
@@ -28,7 +28,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
   }
 
   /** Returns copies of the generated reports in default order. */
-  public get reports(): readonly ReportTable.Report[] {
+  public get reports(): readonly GeneratedReportTable.Report[] {
     this.ensureLoaded();
     return Array.from(this.entries.values(), copy);
   }
@@ -72,12 +72,12 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
       matches.sort((left, right) => {
         const result = (() => {
           switch(submission.sort.column) {
-            case ReportTable.Column.TYPE:
+            case GeneratedReportTable.Column.TYPE:
               return left.type.localeCompare(right.type);
-            case ReportTable.Column.PARAMETERS:
+            case GeneratedReportTable.Column.PARAMETERS:
               return left.parameters.join(' \u2022 ').localeCompare(
                 right.parameters.join(' \u2022 '));
-            case ReportTable.Column.DATE_CREATED:
+            case GeneratedReportTable.Column.DATE_CREATED:
               return left.dateCreated.compare(right.dateCreated);
           }
         })();
@@ -120,7 +120,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
   }
 
   private loaded: boolean;
-  private entries: Map<string, ReportTable.Report>;
+  private entries: Map<string, GeneratedReportTable.Report>;
   private recipients: AccountGroupQueryModel;
   private shareRequests: LocalGeneratedReportsModel.Share[];
   private downloadRequests: string[][];
@@ -139,7 +139,8 @@ export namespace LocalGeneratedReportsModel {
   }
 }
 
-function copy(report: ReportTable.Report): ReportTable.Report {
+function copy(report: GeneratedReportTable.Report):
+    GeneratedReportTable.Report {
   return {...report, parameters: [...report.parameters],
     dateCreated: new Beam.DateTime(
       report.dateCreated.date, report.dateCreated.timeOfDay)};

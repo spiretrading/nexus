@@ -8,7 +8,7 @@ import { DateRange } from '../../../models/date_range';
 import { ShareReportModal } from '../share_report_modal';
 import { DateFilter } from './date_filter';
 import { GeneratedReportsModel } from './generated_reports_model';
-import { ReportTable } from './report_table';
+import { GeneratedReportTable } from './generated_report_table';
 
 interface Properties extends GeneratedReportsModel.Submission {
 
@@ -139,7 +139,7 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
       sort: this.props.sort, pageIndex: 0});
   };
 
-  private onSort = (column: ReportTable.Column,
+  private onSort = (column: GeneratedReportTable.Column,
       order: SortableTableHeaderCell.SortOrder) => {
     this.submit({filters: this.props.filters, sort: {column, order},
       pageIndex: 0});
@@ -246,7 +246,7 @@ interface ContentProperties {
   highlight: string;
   actions: ActionProperties;
   onSelectionChange: (selected: ReadonlySet<string>) => void;
-  onSort: (column: ReportTable.Column,
+  onSort: (column: GeneratedReportTable.Column,
     order: SortableTableHeaderCell.SortOrder) => void;
   onNavigate: (pageIndex: number) => void;
   onRetry: () => void;
@@ -339,7 +339,8 @@ function ReportContent(props: ContentProperties): JSX.Element {
 
 function Reports(props: ContentProperties): JSX.Element {
   return <div className={css(STYLES.reports)}>
-    <ReportTable reports={props.response.reports} selected={props.selected}
+    <GeneratedReportTable reports={props.response.reports}
+      selected={props.selected}
       className={css(STYLES.reportTable)}
       highlight={props.highlight} sortColumn={props.sort.column}
       sortOrder={props.sort.order}

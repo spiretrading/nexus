@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { GeneratedReportsController, GeneratedReportsModel,
   LocalAccountGroupQueryModel, LocalGeneratedReportsModel,
-  ReportTable } from 'web_portal';
+  GeneratedReportTable } from 'web_portal';
 
 class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
   public async query(submission: GeneratedReportsModel.Submission):
@@ -110,7 +110,7 @@ class App extends React.Component<{}, State> {
   };
 }
 
-function makeReports(count: number): ReportTable.Report[] {
+function makeReports(count: number): GeneratedReportTable.Report[] {
   const today = new Date();
   return Array.from({length: count}, (_, index) => {
     const date = new Date(today.getFullYear(), today.getMonth(),

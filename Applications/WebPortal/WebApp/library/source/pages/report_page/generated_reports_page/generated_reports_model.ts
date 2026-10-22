@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import { AccountGroupQueryModel, SortableTableHeaderCell } from
   '../../../components';
 import { DateRange } from '../../../models/date_range';
-import { ReportTable } from './report_table';
+import { GeneratedReportTable } from './generated_report_table';
 
 /** Queries generated reports and performs actions on selected reports. */
 export abstract class GeneratedReportsModel {
@@ -60,7 +60,7 @@ export namespace GeneratedReportsModel {
   export interface Sort {
 
     /** The column to sort. */
-    column: ReportTable.Column;
+    column: GeneratedReportTable.Column;
 
     /** The sort direction, or NONE for the model's default ordering. */
     order: SortableTableHeaderCell.SortOrder;
@@ -92,6 +92,6 @@ export namespace GeneratedReportsModel {
     filteredCount: number;
 
     /** Up to PAGE_SIZE reports for the requested page. */
-    reports: readonly ReportTable.Report[];
+    reports: readonly GeneratedReportTable.Report[];
   }
 }

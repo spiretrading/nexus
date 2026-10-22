@@ -5,7 +5,7 @@ import { CreateReportController, CreateReportModel } from './create_report_page'
 import { EditScheduledReportController, EditScheduledReportModel } from
   './edit_scheduled_report_page';
 import { GeneratedReportsController, GeneratedReportsModel,
-  GeneratedReportsPage, ReportTable } from './generated_reports_page';
+  GeneratedReportsPage, GeneratedReportTable } from './generated_reports_page';
 import { ActivityTable, ReportActivityController, ReportActivityModel,
   ReportActivityPage } from './report_activity_page';
 import { ReportModel } from './report_model';
@@ -162,7 +162,7 @@ export class ReportController extends React.Component<Properties, State> {
       })();
       return <GeneratedReportsPage
         filters={{query: '', dateRange: new DateRange(null, null)}}
-        sort={{column: ReportTable.Column.DATE_CREATED,
+        sort={{column: GeneratedReportTable.Column.DATE_CREATED,
           order: SortableTableHeaderCell.SortOrder.NONE}}
         pageIndex={0} recipientModel={null}
         response={{status, isEmpty: false, filteredCount: 0, reports: []}}

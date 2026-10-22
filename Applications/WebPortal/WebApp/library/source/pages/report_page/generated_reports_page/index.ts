@@ -5,4 +5,4 @@ export * from './generated_reports_model';
 export * from './generated_reports_page';
 export * from './http_generated_reports_model';
 export * from './local_generated_reports_model';
-export * from './report_table';
+export * from './generated_report_table';

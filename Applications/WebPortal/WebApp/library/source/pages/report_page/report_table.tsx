@@ -1,15 +1,15 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { Checkbox, SortableTableHeaderCell } from '../../../components';
-import { GeneratedReportTableRow } from './generated_report_table_row';
-import { GeneratedReportTableRowPlaceholder } from
-  './generated_report_table_row_placeholder';
+import { Checkbox, SortableTableHeaderCell } from '../../components';
+import { ReportStatusTag } from './report_status_tag';
+import { ReportTableRow } from './report_table_row';
+import { ReportTableRowPlaceholder } from './report_table_row_placeholder';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onSelect'> {
 
-  /** The reports to display, in their current sort order. */
+  /** The report jobs to display, in their current sort order. */
   reports: readonly ReportTable.Report[];
 
   /** The identifiers of the selected reports. */
@@ -27,7 +27,8 @@ interface Properties extends
   /** The current sort order. Defaults to NONE. */
   sortOrder?: SortableTableHeaderCell.SortOrder;
 
-  /** Called with the updated set of selected report identifiers.
+  /**
+   * Called with the updated set of selected report identifiers.
    * Selection is cleared when the displayed report list changes.
    */
   onSelectionChange?: (selected: ReadonlySet<string>) => void;
@@ -37,7 +38,7 @@ interface Properties extends
     order: SortableTableHeaderCell.SortOrder) => void;
 }
 
-/** Displays generated reports with selection and sorting controls. */
+/** Displays report jobs with selection and sorting controls. */
 export class ReportTable extends React.Component<Properties> {
   public render(): JSX.Element {
     const {reports, selected, loading, highlight, sortColumn, sortOrder,
@@ -99,11 +100,14 @@ export namespace ReportTable {
     /** The report's parameter values. */
     PARAMETERS,
 
-    /** The date the report was generated. */
-    DATE_CREATED
+    /** The report's status. */
+    STATUS,
+
+    /** The date the report was last updated. */
+    DATE_MODIFIED
   }
 
-  /** A generated report displayed in the table. */
+  /** A report job displayed in the table. */
   export interface Report {
 
     /** The report's unique identifier. */
@@ -115,11 +119,14 @@ export namespace ReportTable {
     /** The report's parameter values, in display order. */
     readonly parameters: readonly string[];
 
-    /** The link to the page represented by the report. */
+    /** The link to the report's detail page. */
     readonly url: string;
 
-    /** The UTC timestamp when the report was generated. */
-    readonly dateCreated: Beam.DateTime;
+    /** The report's status. */
+    readonly status: ReportStatusTag.Status;
+
+    /** The UTC timestamp when the report was last updated. */
+    readonly dateModified: Beam.DateTime;
   }
 }
 
@@ -133,9 +140,10 @@ function Table(props: TableProperties): JSX.Element {
   return <table className={css(STYLES.table)} aria-busy={!!props.loading}>
     <colgroup className={css(STYLES.wide)}>
       <col style={{width: '48px'}}/>
-      <col style={{width: 'min(25cqw, 180px)'}}/>
+      <col style={{width: 'min(20cqw, 180px)'}}/>
       <col/>
-      <col style={{width: 'min(25cqw, 132px)'}}/>
+      <col style={{width: '100px'}}/>
+      <col style={{width: 'min(20cqw, 132px)'}}/>
     </colgroup>
     <Head {...props}/>
     <Body {...props}/>
@@ -156,8 +164,9 @@ class HeaderRow extends React.Component<TableProperties> {
       <SelectAllCell checked={checked}
         indeterminate={!checked && this.props.selected.size > 0}
         disabled={this.props.loading} onSelect={this.props.onSelectAll}/>
-      {['Type', 'Parameters', 'Date Created'].map((label, column) =>
+      {['Type', 'Parameters', 'Status', 'Last Modified'].map((label, column) =>
         <SortableTableHeaderCell key={column} scope='col'
+            className={css(STYLES.headerCell)}
             disabled={this.props.loading}
             sortOrder={(() => {
               if(column === this.props.sortColumn) {
@@ -200,10 +209,10 @@ function Body(props: TableProperties): JSX.Element {
     {(() => {
       if(props.loading) {
         return Array.from({length: 5}, (_, index) =>
-          <GeneratedReportTableRowPlaceholder key={index}/>);
+          <ReportTableRowPlaceholder key={index}/>);
       }
       return props.reports.map(report =>
-        <GeneratedReportTableRow key={report.id} {...report}
+        <ReportTableRow key={report.id} {...report}
           highlight={props.highlight}
           selected={props.selected.has(report.id)} onSelect={props.onSelect}/>);
     })()}
@@ -215,8 +224,8 @@ function areReportsEqual(left: readonly ReportTable.Report[],
   return left.length === right.length && left.every((report, index) => {
     const other = right[index];
     return report.id === other.id && report.type === other.type &&
-      report.url === other.url &&
-      report.dateCreated.compare(other.dateCreated) === 0 &&
+      report.url === other.url && report.status === other.status &&
+      report.dateModified.compare(other.dateModified) === 0 &&
       report.parameters.length === other.parameters.length &&
       report.parameters.every((value, index) =>
         value === other.parameters[index]);
@@ -228,7 +237,7 @@ const STYLES = StyleSheet.create({
   table: {
     boxSizing: 'border-box',
     width: '100%',
-    maxWidth: '696px',
+    maxWidth: '796px',
     tableLayout: 'fixed',
     borderCollapse: 'separate',
     borderSpacing: 0,
@@ -243,6 +252,7 @@ const STYLES = StyleSheet.create({
   },
   wide: {'@container (width <= 424px)': {display: 'none'}},
   head: {backgroundColor: '#F8F8F8'},
+  headerCell: {overflowWrap: 'anywhere'},
   selection: {
     boxSizing: 'border-box',
     padding: '10px 10px 10px 18px',

@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as React from 'react';
-import { ReportTable, SortableTableHeaderCell } from 'web_portal';
+import { ReportStatusTag, ReportTable, SortableTableHeaderCell } from
+  'web_portal';
 
 interface Properties {
 
@@ -34,15 +35,20 @@ interface Properties {
 export class ReportTableExample extends React.Component<Properties> {
   public render(): JSX.Element {
     const reports = Array.from({length: this.props.reportCount}, (_, index) => {
-      const types = ['Profit and Loss', 'Trading Volume',
+      const TYPES = ['Profit and Loss', 'Trading Volume',
         'Entitlement Activity'];
-      const groups = ['Alpha Group', 'Gamma Group', 'Beta Group'];
+      const GROUPS = ['Alpha Group', 'Gamma Group', 'Beta Group'];
       return {
         id: String(index + 1),
-        type: types[index % types.length],
-        parameters: ['Canada', groups[index % groups.length], 'Month to Date'],
+        type: TYPES[index % TYPES.length],
+        parameters: ['Canada', GROUPS[index % GROUPS.length], 'Month to Date'],
         url: `/reports/${index + 1}`,
-        dateCreated: new Beam.DateTime(new Beam.Date(2026, 9, 30 - index % 30))
+        status: [ReportStatusTag.Status.READY,
+          ReportStatusTag.Status.GENERATING,
+          ReportStatusTag.Status.FAILED][index % 3],
+        dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 22),
+          Beam.Duration.HOUR.multiply(12).subtract(
+            Beam.Duration.MINUTE.multiply(index)))
       };
     });
     if(this.props.sortOrder !== SortableTableHeaderCell.SortOrder.NONE) {
@@ -54,8 +60,10 @@ export class ReportTableExample extends React.Component<Properties> {
             case ReportTable.Column.PARAMETERS:
               return left.parameters.join(' ').localeCompare(
                 right.parameters.join(' '));
-            case ReportTable.Column.DATE_CREATED:
-              return left.dateCreated.compare(right.dateCreated);
+            case ReportTable.Column.STATUS:
+              return left.status - right.status;
+            case ReportTable.Column.DATE_MODIFIED:
+              return left.dateModified.compare(right.dateModified);
           }
         })();
         if(this.props.sortOrder ===

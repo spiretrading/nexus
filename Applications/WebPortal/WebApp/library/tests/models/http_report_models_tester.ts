@@ -10,7 +10,8 @@ import { ActivityTable, GeneratedReportsModel, HttpCreateReportModel,
   HttpEditScheduledReportModel, HttpGeneratedReportsModel,
   HttpReportActivityModel, HttpReportDetailModel, HttpReportModel,
   HttpScheduledReportsModel, ReportActivityModel, ReportStatusTag,
-  ReportFormTemplate, ReportTable } from '../../source/pages/report_page';
+  ReportFormTemplate, GeneratedReportTable } from
+  '../../source/pages/report_page';
 
 interface Call {
   url: string;
@@ -202,7 +203,7 @@ describe('HTTP report models', () => {
     };
     const response = await model.query({filters: {query: ' USD ',
       dateRange: new DateRange(null, new Beam.Date(2026, 10, 5))},
-      sort: {column: ReportTable.Column.TYPE,
+      sort: {column: GeneratedReportTable.Column.TYPE,
         order: SortableTableHeaderCell.SortOrder.ASCENDING}, pageIndex: 0});
     assert.deepEqual(Request.calls[0].body, {filters: {query: 'USD',
       start_date: null, end_date: '20261005'},
