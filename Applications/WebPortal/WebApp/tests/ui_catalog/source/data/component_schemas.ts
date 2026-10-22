@@ -17,7 +17,6 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { ActivityTableExample } from './activity_table_example';
-import { ActivityTableRowExample } from './activity_table_row_example';
 import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
@@ -1417,23 +1416,6 @@ const activityTable =
         {parameterName: 'order', propertyName: 'sortOrder'}])],
     ActivityTableExample, 796);
 
-const activityTableRow =
-  new ComponentSchema('ActivityTableRow',
-    [new PropertySchema('id', '42', TextInput),
-      new PropertySchema('type', 'Profit and Loss', TextInput),
-      new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
-        ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
-      new PropertySchema('status',
-        WebPortal.ReportStatusTag.Status.GENERATING,
-        EnumInput(WebPortal.ReportStatusTag.Status)),
-      new PropertySchema(
-        'dateModified', Beam.DateTime.now(), BeamDateTimeInput),
-      new PropertySchema('selected', false, BooleanInput)],
-    [new SignalSchema('onSelect', '', [
-      {parameterName: 'id', propertyName: ''},
-      {parameterName: 'selected', propertyName: 'selected'}])],
-    ActivityTableRowExample, 796);
-
 const REPORT_STATUS_TAG =
   new ComponentSchema('ReportStatusTag',
     [new PropertySchema('status',
@@ -1470,20 +1452,22 @@ const reportTable =
       new SignalSchema('onNavigate', '')],
     ReportTableExample, 696);
 
-const reportTableRow =
+const REPORT_TABLE_ROW =
   new ComponentSchema('ReportTableRow',
     [new PropertySchema('id', '42', TextInput),
       new PropertySchema('type', 'Profit and Loss', TextInput),
       new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
         ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
       new PropertySchema('url', '/reports/42', TextInput),
-      new PropertySchema('dateCreated', Beam.DateTime.now(), BeamDateTimeInput),
+      new PropertySchema('status', WebPortal.ReportStatusTag.Status.READY,
+        EnumInput(WebPortal.ReportStatusTag.Status)),
+      new PropertySchema('dateModified', Beam.DateTime.now(), BeamDateTimeInput),
       new PropertySchema('selected', false, BooleanInput)],
     [new SignalSchema('onSelect', '', [
         {parameterName: 'id', propertyName: ''},
         {parameterName: 'selected', propertyName: 'selected'}]),
       new SignalSchema('onNavigate', '')],
-    ReportTableRowExample, 696);
+    ReportTableRowExample, 796);
 
 const reportTableRowPlaceholder =
   new ComponentSchema('ReportTableRowPlaceholder', [], [],
@@ -1589,10 +1573,10 @@ export const componentSections = [
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
-  new ComponentSection('Report Page', [activityTable, activityTableRow,
+  new ComponentSection('Report Page', [activityTable,
     dateFilter, parametersDateRangeInput,
     RECURRENCE_INPUT,
-    REPORT_STATUS_TAG, reportFormTemplate, reportTable, reportTableRow,
+    REPORT_STATUS_TAG, reportFormTemplate, reportTable, REPORT_TABLE_ROW,
     reportTableRowPlaceholder, reportTypeSelect, RUNS_TABLE, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
     scheduledReportItemPlaceholder, shareReportModal]),

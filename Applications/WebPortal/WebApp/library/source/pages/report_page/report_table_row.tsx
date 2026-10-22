@@ -1,9 +1,10 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { Checkbox, Link } from '../../../components';
-import { highlightText } from '../highlight_text';
-import { formatReportDate } from './report_date';
+import { Checkbox, Link } from '../../components';
+import { formatReportDate } from './generated_reports_page/report_date';
+import { highlightText } from './highlight_text';
+import { ReportStatusTag } from './report_status_tag';
 
 interface Properties extends Omit<
     React.HTMLAttributes<HTMLTableRowElement>, 'id' | 'children' | 'onSelect'> {
@@ -17,11 +18,14 @@ interface Properties extends Omit<
   /** The report's parameter values, in display order. */
   parameters: readonly string[];
 
-  /** The link to the generated report. */
+  /** The link to the report's detail page. */
   url: string;
 
-  /** The UTC timestamp when the report was generated. */
-  dateCreated: Beam.DateTime;
+  /** The report's status. */
+  status: ReportStatusTag.Status;
+
+  /** The UTC timestamp when the report was last updated. */
+  dateModified: Beam.DateTime;
 
   /** Whether the report is selected. */
   selected: boolean;
@@ -29,26 +33,29 @@ interface Properties extends Omit<
   /** The literal query to highlight in displayed text. */
   highlight?: string;
 
-  /** Called when the checkbox changes.
+  /**
+   * Called when the checkbox changes.
    * @param id - The report's identifier.
    * @param selected - Whether the report should be selected.
    */
   onSelect?: (id: string, selected: boolean) => void;
 }
 
-/** Displays a generated report inside a table with controlled selection.
+/**
+ * Displays a report job inside a table with controlled selection.
  * The table's containing element must establish an inline-size container.
  */
 export class ReportTableRow extends React.Component<Properties> {
   public render(): JSX.Element {
-    const {id, type, parameters, url, dateCreated, selected, onSelect,
+    const {id, type, parameters, url, status, dateModified, selected, onSelect,
       highlight, className, ...attributes} = this.props;
     return <tr {...attributes} aria-selected={selected}
         className={[css(STYLES.row), className].join(' ')}>
       <Selected type={type} selected={selected} onSelect={this.onSelect}/>
       <TypeCell type={type} url={url} highlight={highlight}/>
       <ParametersCell parameters={parameters} highlight={highlight}/>
-      <DateCell date={dateCreated.date} highlight={highlight}/>
+      <StatusCell status={status}/>
+      <DateCell date={dateModified.date} highlight={highlight}/>
     </tr>;
   }
 
@@ -86,13 +93,22 @@ function ParametersCell(props:
   </td>;
 }
 
+function StatusCell(props: {status: ReportStatusTag.Status}): JSX.Element {
+  return <td className={css(STYLES.cell, STYLES.status)}>
+    <div className={css(STYLES.content, STYLES.statusContent)}>
+      <span className={css(STYLES.label)}>Status</span>
+      <ReportStatusTag status={props.status}/>
+    </div>
+  </td>;
+}
+
 function DateCell(props: {date: Beam.Date; highlight: string}): JSX.Element {
   const value = `${String(props.date.year).padStart(4, '0')}-` +
     `${String(props.date.month).padStart(2, '0')}-` +
     String(props.date.day).padStart(2, '0');
   return <td className={css(STYLES.cell)}>
     <div className={css(STYLES.content)}>
-      <span className={css(STYLES.label)}>Date Created</span>
+      <span className={css(STYLES.label)}>Last Modified</span>
       <time dateTime={value} className={css(STYLES.value)}>
         {highlightText(formatReportDate(props.date), props.highlight)}
       </time>
@@ -136,6 +152,8 @@ const STYLES = StyleSheet.create({
     '@container (width <= 424px)': {
       gridColumn: 1,
       gridRow: 1,
+      display: 'flex',
+      alignItems: 'center',
       padding: '10px 8px',
       backgroundColor: '#F8F8F8'
     },
@@ -158,6 +176,8 @@ const STYLES = StyleSheet.create({
   type: {
     '@container (width <= 424px)': {
       backgroundColor: '#F8F8F8',
+      display: 'flex',
+      alignItems: 'center',
       fontWeight: 500
     },
     '@container (424px < width)': {
@@ -165,6 +185,10 @@ const STYLES = StyleSheet.create({
       fontWeight: 400
     }
   },
+  status: {
+    '@container (424px < width)': {padding: '9px 10px'}
+  },
+  statusContent: {alignItems: 'center'},
   content: {
     display: 'flex',
     '@container (width <= 424px)': {gap: '8px'}

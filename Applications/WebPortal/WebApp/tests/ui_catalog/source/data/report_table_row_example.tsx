@@ -8,7 +8,7 @@ interface Properties extends React.ComponentProps<typeof ReportTableRow> {
   onNavigate?: (url: string) => void;
 }
 
-/** Demonstrates a generated report row in its containing table. */
+/** Demonstrates a report job row in its containing table. */
 export class ReportTableRowExample extends React.Component<Properties> {
   public render(): JSX.Element {
     const {onNavigate, ...properties} = this.props;
@@ -16,9 +16,10 @@ export class ReportTableRowExample extends React.Component<Properties> {
       <table className={css(STYLES.table)}>
         <colgroup className={css(STYLES.columns)}>
           <col style={{width: '48px'}}/>
-          <col style={{width: 'min(25cqw, 180px)'}}/>
+          <col style={{width: 'min(20cqw, 180px)'}}/>
           <col/>
-          <col style={{width: 'min(25cqw, 132px)'}}/>
+          <col style={{width: '100px'}}/>
+          <col style={{width: 'min(20cqw, 132px)'}}/>
         </colgroup>
         <tbody className={css(STYLES.body)}>
           <ReportTableRow {...properties} onClick={this.onClick}/>
@@ -40,7 +41,7 @@ const STYLES = StyleSheet.create({
   container: {containerType: 'inline-size', width: '100%'},
   table: {
     width: '100%',
-    maxWidth: '696px',
+    maxWidth: '796px',
     borderSpacing: 0,
     tableLayout: 'fixed',
     '@container (width <= 424px)': {display: 'block'}

@@ -2,9 +2,9 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Checkbox, SortableTableHeaderCell } from '../../../components';
+import { GeneratedReportTableRow } from './generated_report_table_row';
 import { GeneratedReportTableRowPlaceholder } from
   './generated_report_table_row_placeholder';
-import { ReportTableRow } from './report_table_row';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onSelect'> {
@@ -203,7 +203,7 @@ function Body(props: TableProperties): JSX.Element {
           <GeneratedReportTableRowPlaceholder key={index}/>);
       }
       return props.reports.map(report =>
-        <ReportTableRow key={report.id} {...report}
+        <GeneratedReportTableRow key={report.id} {...report}
           highlight={props.highlight}
           selected={props.selected.has(report.id)} onSelect={props.onSelect}/>);
     })()}
