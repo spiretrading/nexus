@@ -4,39 +4,45 @@ import * as React from 'react';
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> {
 
-  /** The activity status of the report. */
-  status: ReportActivityStatusTag.Status;
+  /** The status of the report. */
+  status: ReportStatusTag.Status;
 }
 
-/** Displays whether a report is being generated or its generation failed. */
-export function ReportActivityStatusTag(props: Properties): JSX.Element {
+/** Displays whether a report is generating, failed, or ready to view. */
+export function ReportStatusTag(props: Properties): JSX.Element {
   const {status, className, ...attributes} = props;
   const label = (() => {
     switch(status) {
-      case ReportActivityStatusTag.Status.GENERATING:
+      case ReportStatusTag.Status.GENERATING:
         return 'Generating';
-      case ReportActivityStatusTag.Status.FAILED:
+      case ReportStatusTag.Status.FAILED:
         return 'Failed';
+      case ReportStatusTag.Status.READY:
+        return 'Ready';
     }
   })();
   return <span {...attributes}
       className={[css(STYLES.tag,
-        status === ReportActivityStatusTag.Status.FAILED && STYLES.failed),
+        status === ReportStatusTag.Status.FAILED && STYLES.failed,
+        status === ReportStatusTag.Status.READY && STYLES.ready),
         className].join(' ')}>
     {label}
   </span>;
 }
 
-export namespace ReportActivityStatusTag {
+export namespace ReportStatusTag {
 
-  /** The activity status of a report. */
+  /** The status of a report. */
   export enum Status {
 
     /** The report is being generated. */
     GENERATING,
 
     /** Report generation failed. */
-    FAILED
+    FAILED,
+
+    /** The report is ready to view. */
+    READY
   }
 }
 
@@ -58,5 +64,9 @@ const STYLES = StyleSheet.create({
   failed: {
     backgroundColor: '#FFF1F1',
     color: '#941B1B'
+  },
+  ready: {
+    backgroundColor: '#EBFFF2',
+    color: '#0C7032'
   }
 });

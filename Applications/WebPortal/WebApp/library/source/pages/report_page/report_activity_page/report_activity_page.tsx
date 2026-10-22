@@ -2,9 +2,9 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { Button, EmptyMessage, ErrorMessage, PageLayout, Pagination,
   SortableTableHeaderCell } from '../../../components';
+import { ReportStatusTag } from '../report_status_tag';
 import { ActivityTable } from './activity_table';
 import { ReportActivityModel } from './report_activity_model';
-import { ReportActivityStatusTag } from './report_activity_status_tag';
 
 interface Properties extends ReportActivityModel.Submission {
 
@@ -109,7 +109,7 @@ export class ReportActivityPage extends React.Component<Properties, State> {
       ReportActivityModel.ResponseStatus.READY &&
       [...this.state.selected].every(id => this.state.response.activities.
         some(entry => entry.id === id &&
-          entry.status === ReportActivityStatusTag.Status.FAILED));
+          entry.status === ReportStatusTag.Status.FAILED));
   }
 
   private submit(submission: ReportActivityModel.Submission): void {

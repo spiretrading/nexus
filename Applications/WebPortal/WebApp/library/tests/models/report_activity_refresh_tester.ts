@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import * as Beam from 'beam';
 import { SortableTableHeaderCell } from '../../source/components';
 import { ActivityTable, ReportActivityController, ReportActivityModel,
-  ReportActivityPage, ReportActivityStatusTag } from
+  ReportActivityPage, ReportStatusTag } from
   '../../source/pages/report_page';
 
 class Clock {
@@ -49,7 +49,7 @@ function ready(ids: readonly string[]): ReportActivityModel.Response {
   return {status: ReportActivityModel.ResponseStatus.READY,
     isEmpty: ids.length === 0, totalCount: ids.length,
     activities: ids.map(id => ({id, type: 'Example', parameters: [] as string[],
-      status: ReportActivityStatusTag.Status.GENERATING,
+      status: ReportStatusTag.Status.GENERATING,
       dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 5))}))};
 }
 
@@ -194,7 +194,7 @@ describe('Report activity refresh', () => {
     const response = ready(['failed']);
     (page as any).props = {...props, response: {...response,
       activities: response.activities.map(entry => ({...entry,
-        status: ReportActivityStatusTag.Status.FAILED}))}};
+        status: ReportStatusTag.Status.FAILED}))}};
     (page as any).updateResponse(false);
     assert.deepEqual([...page.state.selected], ['failed']);
     assert.equal((page as any).isRetryEnabled(), true);

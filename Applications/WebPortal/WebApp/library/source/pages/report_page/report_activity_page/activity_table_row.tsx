@@ -3,7 +3,7 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { Checkbox } from '../../../components';
 import { formatReportDate } from '../generated_reports_page/report_date';
-import { ReportActivityStatusTag } from './report_activity_status_tag';
+import { ReportStatusTag } from '../report_status_tag';
 
 interface Properties extends Omit<
     React.HTMLAttributes<HTMLTableRowElement>, 'id' | 'children' | 'onSelect'> {
@@ -18,7 +18,7 @@ interface Properties extends Omit<
   parameters: readonly string[];
 
   /** The report's activity status. */
-  status: ReportActivityStatusTag.Status;
+  status: ReportStatusTag.Status;
 
   /** The UTC timestamp when the activity was last updated. */
   dateModified: Beam.DateTime;
@@ -82,11 +82,11 @@ function ParametersCell(props: {parameters: readonly string[]}): JSX.Element {
   </td>;
 }
 
-function StatusCell(props: {status: ReportActivityStatusTag.Status}): JSX.Element {
+function StatusCell(props: {status: ReportStatusTag.Status}): JSX.Element {
   return <td className={css(STYLES.cell, STYLES.status)}>
     <div className={css(STYLES.content, STYLES.statusContent)}>
       <span className={css(STYLES.label)}>Status</span>
-      <ReportActivityStatusTag status={props.status}/>
+      <ReportStatusTag status={props.status}/>
     </div>
   </td>;
 }

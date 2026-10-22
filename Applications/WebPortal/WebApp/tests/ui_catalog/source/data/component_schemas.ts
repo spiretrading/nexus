@@ -1426,8 +1426,8 @@ const activityTableRow =
       new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
         ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
       new PropertySchema('status',
-        WebPortal.ReportActivityStatusTag.Status.GENERATING,
-        EnumInput(WebPortal.ReportActivityStatusTag.Status)),
+        WebPortal.ReportStatusTag.Status.GENERATING,
+        EnumInput(WebPortal.ReportStatusTag.Status)),
       new PropertySchema(
         'dateModified', Beam.DateTime.now(), BeamDateTimeInput),
       new PropertySchema('selected', false, BooleanInput)],
@@ -1440,14 +1440,14 @@ const activityTableRowPlaceholder =
   new ComponentSchema('ActivityTableRowPlaceholder', [], [],
     ActivityTableRowPlaceholderExample, 796);
 
-const reportActivityStatusTag =
-  new ComponentSchema('ReportActivityStatusTag',
+const REPORT_STATUS_TAG =
+  new ComponentSchema('ReportStatusTag',
     [new PropertySchema('status',
-        WebPortal.ReportActivityStatusTag.Status.GENERATING,
-        EnumInput(WebPortal.ReportActivityStatusTag.Status)),
+        WebPortal.ReportStatusTag.Status.READY,
+        EnumInput(WebPortal.ReportStatusTag.Status)),
       new PropertySchema('style', {}, CSSInput)],
     [],
-    WebPortal.ReportActivityStatusTag);
+    WebPortal.ReportStatusTag);
 
 const reportFormTemplate =
   new ComponentSchema('ReportFormTemplate',
@@ -1598,7 +1598,7 @@ export const componentSections = [
   new ComponentSection('Report Page', [activityTable, activityTableRow,
     activityTableRowPlaceholder, dateFilter, parametersDateRangeInput,
     RECURRENCE_INPUT,
-    reportActivityStatusTag, reportFormTemplate, reportTable, reportTableRow,
+    REPORT_STATUS_TAG, reportFormTemplate, reportTable, reportTableRow,
     reportTableRowPlaceholder, reportTypeSelect, RUNS_TABLE, scheduledDate,
     scheduledReportItem, scheduledReportItemContextMenu,
     scheduledReportItemPlaceholder, shareReportModal]),

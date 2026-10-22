@@ -2,9 +2,9 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Checkbox, SortableTableHeaderCell } from '../../../components';
+import { ReportStatusTag } from '../report_status_tag';
 import { ActivityTableRow } from './activity_table_row';
 import { ActivityTableRowPlaceholder } from './activity_table_row_placeholder';
-import { ReportActivityStatusTag } from './report_activity_status_tag';
 
 interface Properties extends
     Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onSelect'> {
@@ -116,7 +116,7 @@ export namespace ActivityTable {
     readonly parameters: readonly string[];
 
     /** The report's activity status. */
-    readonly status: ReportActivityStatusTag.Status;
+    readonly status: ReportStatusTag.Status;
 
     /** The UTC timestamp when the activity was last updated. */
     readonly dateModified: Beam.DateTime;

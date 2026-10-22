@@ -18,6 +18,7 @@ export * from './report_output_definition';
 export * from './report_parameter_definition';
 export * from './report_parameter_value';
 export * from './report_router';
+export * from './report_status_tag';
 export * from './report_type_select';
 export * from './runs_table';
 export * from './scheduled_reports_page';

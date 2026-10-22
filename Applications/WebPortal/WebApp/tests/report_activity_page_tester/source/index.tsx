@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ActivityTable, LocalReportActivityModel, ReportActivityController,
-  ReportActivityModel, ReportActivityStatusTag } from 'web_portal';
+  ReportActivityModel, ReportStatusTag } from 'web_portal';
 
 class DelayedReportActivityModel extends LocalReportActivityModel {
   public async query(submission: ReportActivityModel.Submission):
@@ -117,9 +117,9 @@ function makeActivities(count: number): ActivityTable.Activity[] {
         date.getFullYear(), date.getMonth() + 1, date.getDate())),
       status: (() => {
         if(index % 2 === 0) {
-          return ReportActivityStatusTag.Status.GENERATING;
+          return ReportStatusTag.Status.GENERATING;
         }
-        return ReportActivityStatusTag.Status.FAILED;
+        return ReportStatusTag.Status.FAILED;
       })()};
   });
 }

@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as React from 'react';
-import { ActivityTable, ReportActivityStatusTag, SortableTableHeaderCell } from
+import { ActivityTable, ReportStatusTag, SortableTableHeaderCell } from
   'web_portal';
 
 interface Properties {
@@ -42,9 +42,9 @@ export class ActivityTableExample extends React.Component<Properties> {
         parameters: ['Canada', GROUPS[index % GROUPS.length], 'Month to Date'],
         status: (() => {
           if(index % 2 === 0) {
-            return ReportActivityStatusTag.Status.GENERATING;
+            return ReportStatusTag.Status.GENERATING;
           }
-          return ReportActivityStatusTag.Status.FAILED;
+          return ReportStatusTag.Status.FAILED;
         })(),
         dateModified: new Beam.DateTime(new Beam.Date(2026, 9, 30 - index % 30))
       };

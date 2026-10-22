@@ -5,7 +5,7 @@ import { LocalAccountGroupQueryModel } from '../../source/components';
 import { Interval, LocalTickerQueryModel, ScopeQueryModel } from
   '../../source/models';
 import { LocalCreateReportModel, LocalReportActivityModel,
-  LocalScheduledReportsModel, ReportActivityStatusTag, ReportDefinition,
+  LocalScheduledReportsModel, ReportStatusTag, ReportDefinition,
   ReportFormTemplate } from '../../source/pages/report_page';
 
 function definition(): ReportDefinition {
@@ -72,7 +72,7 @@ describe('LocalCreateReportModel', () => {
 
   it('inserts_created_entries', async () => {
     const activity = {type: 'Report', parameters: ['*'],
-      status: ReportActivityStatusTag.Status.GENERATING,
+      status: ReportStatusTag.Status.GENERATING,
       dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 2))};
     const activities = new LocalReportActivityModel([{...activity, id: '1'}]);
     assert.throws(() => activities.add(activity));

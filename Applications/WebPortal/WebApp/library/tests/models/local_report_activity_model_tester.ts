@@ -3,12 +3,12 @@ import { describe, it } from 'node:test';
 import * as Beam from 'beam';
 import { SortableTableHeaderCell } from '../../source/components';
 import { ActivityTable, LocalReportActivityModel, ReportActivityModel,
-  ReportActivityStatusTag } from '../../source/pages/report_page';
+  ReportStatusTag } from '../../source/pages/report_page';
 
 function makeActivities(count: number): ActivityTable.Activity[] {
   return Array.from({length: count}, (_, index) => ({id: String(index + 1),
     type: 'Profit and Loss', parameters: [`Group ${index + 1}`],
-    status: ReportActivityStatusTag.Status.FAILED,
+    status: ReportStatusTag.Status.FAILED,
     dateModified: new Beam.DateTime(new Beam.Date(2024, 2, index % 29 + 1))}));
 }
 
@@ -71,11 +71,11 @@ describe('LocalReportActivityModel', () => {
     await model.retry(['101']);
     response = await model.query(request);
     assert.equal(response.activities[0].status,
-      ReportActivityStatusTag.Status.GENERATING);
+      ReportStatusTag.Status.GENERATING);
     assert.equal(response.activities[0].dateModified.date.toJson(),
       new Date().toISOString().slice(0, 10).replace(/-/g, ''));
     assert.equal(response.activities[1].status,
-      ReportActivityStatusTag.Status.FAILED);
+      ReportStatusTag.Status.FAILED);
     await model.cancel(['101', '102', '103', '104', '105']);
     assert.equal((await model.query(request)).totalCount, 100);
     assert.equal((await model.query(request)).isEmpty, false);
@@ -91,7 +91,7 @@ describe('LocalReportActivityModel', () => {
       {...makeActivities(1)[0], id: '1', type: 'Zulu', parameters: ['A'],
         dateModified: new Beam.DateTime(new Beam.Date(2024, 2, 29))},
       {...makeActivities(1)[0], id: '2', type: 'Alpha', parameters: ['Z'],
-        status: ReportActivityStatusTag.Status.GENERATING,
+        status: ReportStatusTag.Status.GENERATING,
         dateModified: new Beam.DateTime(new Beam.Date(2024, 3, 1))}];
     const model = new LocalReportActivityModel(activities);
     activities[0].parameters[0] = 'changed';

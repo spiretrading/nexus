@@ -9,7 +9,7 @@ import { DateRange, Interval, LocalTickerQueryModel, ScopeQueryModel } from
 import { ActivityTable, GeneratedReportsModel, HttpCreateReportModel,
   HttpEditScheduledReportModel, HttpGeneratedReportsModel,
   HttpReportActivityModel, HttpReportDetailModel, HttpReportModel,
-  HttpScheduledReportsModel, ReportActivityModel, ReportActivityStatusTag,
+  HttpScheduledReportsModel, ReportActivityModel, ReportStatusTag,
   ReportFormTemplate, ReportTable } from '../../source/pages/report_page';
 
 interface Call {
@@ -180,7 +180,7 @@ describe('HTTP report models', () => {
     assert.equal(
       response.activities[0].dateModified.toJson(), '20261005T123456.125');
     assert.equal(response.activities[0].status,
-      ReportActivityStatusTag.Status.GENERATING);
+      ReportStatusTag.Status.GENERATING);
     await model.cancel(['job']);
     await model.retry(['job']);
     assert.ok(Request.calls[1].url.endsWith('cancel_report_jobs'));

@@ -6,4 +6,3 @@ export * from './local_report_activity_model';
 export * from './report_activity_controller';
 export * from './report_activity_model';
 export * from './report_activity_page';
-export * from './report_activity_status_tag';

@@ -1,8 +1,8 @@
 import * as Beam from 'beam';
 import { SortableTableHeaderCell } from '../../../components';
+import { ReportStatusTag } from '../report_status_tag';
 import { ActivityTable } from './activity_table';
 import { ReportActivityModel } from './report_activity_model';
-import { ReportActivityStatusTag } from './report_activity_status_tag';
 
 /** Stores report jobs locally for report activity and testing. */
 export class LocalReportActivityModel extends ReportActivityModel {
@@ -89,9 +89,9 @@ export class LocalReportActivityModel extends ReportActivityModel {
     this.ensureLoaded();
     for(const id of ids) {
       const entry = this.entries.get(id);
-      if(entry?.status === ReportActivityStatusTag.Status.FAILED) {
+      if(entry?.status === ReportStatusTag.Status.FAILED) {
         this.entries.set(id, {...entry,
-          status: ReportActivityStatusTag.Status.GENERATING,
+          status: ReportStatusTag.Status.GENERATING,
           dateModified: Beam.DateTime.fromJson(
             new Date().toISOString().replace(/[-:Z]/g, ''))});
       }
