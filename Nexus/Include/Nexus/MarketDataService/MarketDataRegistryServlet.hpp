@@ -477,7 +477,7 @@ namespace Nexus {
     if(!ticker) {
       return {};
     }
-    auto snapshot = m_registry->find_snapshot(ticker);
+    auto snapshot = m_registry->load_snapshot(ticker, *m_data_store);
     if(!snapshot) {
       return {};
     }

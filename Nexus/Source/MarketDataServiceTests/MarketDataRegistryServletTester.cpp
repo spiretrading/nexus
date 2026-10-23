@@ -132,6 +132,55 @@ namespace {
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
+  TEST_CASE("book_snapshot_after_restart") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    fixture.m_registry.add(TickerInfo(ticker, "TICKER A", "", 100));
+    auto timestamp = fixture.m_time_client.get_time();
+    auto sequence = Beam::Sequence::FIRST;
+    SUBCASE("without_history") {}
+    SUBCASE("with_history") {
+      auto previous = TickerBookQuote(BookQuote("MP1", false, TSX,
+        make_bid(Money::ONE, 1000000), timestamp - hours(24)), ticker);
+      sequence = to_sequence(previous->m_timestamp);
+      fixture.m_data_store.store(SequencedTickerBookQuote(previous, sequence));
+      sequence = increment(sequence);
+    }
+    auto snapshot = fixture.m_client->send_request<LoadTickerSnapshotService>(
+      ticker);
+    REQUIRE(snapshot.m_ticker == ticker);
+    REQUIRE(snapshot.m_asks.empty());
+    REQUIRE(snapshot.m_bids.empty());
+    REQUIRE(snapshot.m_book_quote_sequence == sequence);
+    auto quote = TickerBookQuote(BookQuote("MP1", false, TSX,
+      make_bid(Money::ONE, 100), timestamp), ticker);
+    fixture.m_servlet->publish(quote, 1);
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(snapshot.m_book_quote_sequence, Beam::Sequence::LAST);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result = fixture.m_client->send_request<QueryBookQuotesService>(query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.size() == 1);
+    REQUIRE(*result.m_snapshot.front() == *quote);
+    snapshot = fixture.m_client->send_request<LoadTickerSnapshotService>(
+      ticker);
+    REQUIRE(snapshot.m_bids.size() == 1);
+    REQUIRE(*snapshot.m_bids.front() == *quote);
+    REQUIRE(snapshot.m_book_quote_sequence ==
+      increment(result.m_snapshot.front().get_sequence()));
+    quote->m_timestamp += seconds(1);
+    fixture.m_servlet->publish(quote, 1);
+    auto message = std::dynamic_pointer_cast<
+      RecordMessage<BookQuoteMessage, TestServiceProtocolClient>>(
+        fixture.m_client->read_message());
+    REQUIRE(message);
+    auto& received = message->get_record().book_quote;
+    REQUIRE(received.get_sequence() >= snapshot.m_book_quote_sequence);
+    quote->m_quote.m_size = 200;
+    REQUIRE(*received == *quote);
+  }
+
   TEST_CASE("session_technicals_after_restart") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("A.TSX");

@@ -99,11 +99,13 @@ namespace Nexus {
         const Ticker& ticker, IsHistoricalDataStore auto& data_store);
 
       /**
-       * Returns a Ticker's real time snapshot.
+       * Loads a Ticker's real-time snapshot.
        * @param ticker The Ticker whose snapshot is to be returned.
+       * @param data_store Used to initialize the Ticker's data.
        * @return The real-time snapshot of the <i>ticker</i>.
        */
-      boost::optional<TickerSnapshot> find_snapshot(const Ticker& ticker) const;
+      boost::optional<TickerSnapshot> load_snapshot(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
 
       /**
        * Adds or updates a TickerInfo to this registry.
@@ -273,13 +275,13 @@ namespace Nexus {
     });
   }
 
-  inline boost::optional<TickerSnapshot>
-      MarketDataRegistry::find_snapshot(const Ticker& ticker) const {
-    auto entry = m_ticker_entries.find(get_primary_listing(ticker));
-    if(!entry || !(*entry)->is_available()) {
+  boost::optional<TickerSnapshot> MarketDataRegistry::load_snapshot(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
       return boost::none;
     }
-    return Beam::with(***entry, [&] (const auto& entry) {
+    return Beam::with(*entry, [&] (const auto& entry) {
       return entry.load_snapshot();
     });
   }
