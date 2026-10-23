@@ -255,45 +255,45 @@ export class DateRangeInput extends React.Component<Properties, State> {
         labelInline={labelInline}
         readOnly={readOnly} disabled={disabled} onChange={this.onSelect}/>
       <CustomDates id={`${identifier}-custom`} custom={custom}
-          horizontal={horizontal} inline={inline}
-          startId={`${identifier}-start`}
-          endId={`${identifier}-end`} errorId={errorId} label={label}
-          validation={validation} preview={this.state.value}
-          startLabel={startLabel} endLabel={endLabel} expression={expression}
-          start={(() => {
-            if(expression) {
-              return <DateExpressionInput key={`start-${this.state.revision}`}
-                id={`${identifier}-start`} aria-label={startLabel}
-                value={this.state.expressions.start}
-                aria-invalid={error(Target.START)} aria-describedby={errorId}
-                readOnly={readOnly} disabled={disabled || !custom}
-                onInput={this.onStartExpressionInput}
-                onChange={this.onStartExpressionChange}/>;
-            }
-            return <BoundDate key={`start-${this.state.revision}`}
-              id={`${identifier}-start`} label={startLabel}
-              value={this.state.inputValue.start} error={error(Target.START)}
-              errorId={errorId} readOnly={readOnly}
-              disabled={disabled || !custom}
-              onInput={this.onStartInput} onCommit={this.onCommit}/>;
-          })()}
-          end={(() => {
-            if(expression) {
-              return <DateExpressionInput key={`end-${this.state.revision}`}
-                id={`${identifier}-end`} aria-label={endLabel}
-                value={this.state.expressions.end}
-                aria-invalid={error(Target.END)} aria-describedby={errorId}
-                readOnly={readOnly} disabled={disabled || !custom}
-                onInput={this.onEndExpressionInput}
-                onChange={this.onEndExpressionChange}/>;
-            }
-            return <BoundDate key={`end-${this.state.revision}`}
-              id={`${identifier}-end`} label={endLabel}
-              value={this.state.inputValue.end} error={error(Target.END)}
-              errorId={errorId} readOnly={readOnly}
-              disabled={disabled || !custom}
-              onInput={this.onEndInput} onCommit={this.onCommit}/>;
-          })()}/>
+        horizontal={horizontal} inline={inline}
+        startId={`${identifier}-start`}
+        endId={`${identifier}-end`} errorId={errorId} label={label}
+        validation={validation} preview={this.state.value}
+        startLabel={startLabel} endLabel={endLabel} expression={expression}
+        start={(() => {
+          if(expression) {
+            return <DateExpressionInput key={`start-${this.state.revision}`}
+              id={`${identifier}-start`} aria-label={startLabel}
+              value={this.state.expressions.start}
+              aria-invalid={error(Target.START)} aria-describedby={errorId}
+              readOnly={readOnly} disabled={disabled || !custom}
+              onInput={this.onStartExpressionInput}
+              onChange={this.onStartExpressionChange}/>;
+          }
+          return <BoundDate key={`start-${this.state.revision}`}
+            id={`${identifier}-start`} label={startLabel}
+            value={this.state.inputValue.start} error={error(Target.START)}
+            errorId={errorId} readOnly={readOnly}
+            disabled={disabled || !custom}
+            onInput={this.onStartInput} onCommit={this.onCommit}/>;
+        })()}
+        end={(() => {
+          if(expression) {
+            return <DateExpressionInput key={`end-${this.state.revision}`}
+              id={`${identifier}-end`} aria-label={endLabel}
+              value={this.state.expressions.end}
+              aria-invalid={error(Target.END)} aria-describedby={errorId}
+              readOnly={readOnly} disabled={disabled || !custom}
+              onInput={this.onEndExpressionInput}
+              onChange={this.onEndExpressionChange}/>;
+          }
+          return <BoundDate key={`end-${this.state.revision}`}
+            id={`${identifier}-end`} label={endLabel}
+            value={this.state.inputValue.end} error={error(Target.END)}
+            errorId={errorId} readOnly={readOnly}
+            disabled={disabled || !custom}
+            onInput={this.onEndInput} onCommit={this.onCommit}/>;
+        })()}/>
     </div>;
   }
 
