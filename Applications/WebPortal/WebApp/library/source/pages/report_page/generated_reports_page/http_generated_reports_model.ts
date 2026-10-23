@@ -37,13 +37,25 @@ export class HttpGeneratedReportsModel extends GeneratedReportsModel {
       filteredCount: response.filtered_count,
       reports: (response.reports ?? []).map((report: any) =>
         ({id: report.id, type: report.type, parameters: [...report.parameters],
-          url: report.url,
-          dateCreated: Beam.DateTime.fromJson(report.date_created)}))};
+          url: report.url, status: report.status,
+          dateModified: Beam.DateTime.fromJson(report.date_modified)}))};
   }
 
   public async delete(ids: readonly string[]): Promise<void> {
     this.ensureLoaded();
     await Beam.post('/api/reporting_service/delete_reports', {ids: [...ids]});
+  }
+
+  public async cancel(ids: readonly string[]): Promise<void> {
+    this.ensureLoaded();
+    await Beam.post('/api/reporting_service/cancel_report_jobs',
+      {ids: [...ids]});
+  }
+
+  public async retry(ids: readonly string[]): Promise<void> {
+    this.ensureLoaded();
+    await Beam.post('/api/reporting_service/retry_report_jobs',
+      {ids: [...ids]});
   }
 
   public async share(ids: readonly string[],

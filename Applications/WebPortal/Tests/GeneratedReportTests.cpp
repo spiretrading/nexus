@@ -90,6 +90,47 @@ TEST_SUITE("GeneratedReport") {
       service.query(alice, GeneratedReportQuery()), std::runtime_error);
   }
 
+  TEST_CASE("job_status_and_modified_date") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto account = client.get_account();
+    auto jobs = std::vector<ReportJob>();
+    for(auto status : {ReportJob::Status::QUEUED, ReportJob::Status::RUNNING,
+        ReportJob::Status::FAILED, ReportJob::Status::COMPLETED,
+        ReportJob::Status::CANCELLED}) {
+      auto job = make_job(std::to_string(static_cast<int>(status)), account);
+      job.m_status = status;
+      job.m_modified = time_from_string("2026-10-06 14:00:00") +
+        seconds(static_cast<int>(status));
+      jobs.push_back(job);
+    }
+    auto query = GeneratedReportQuery();
+    query.m_start_date = date(2026, 10, 6);
+    query.m_end_date = query.m_start_date;
+    query.m_column = GeneratedReportQuery::Column::STATUS;
+    query.m_order = GeneratedReportQuery::Order::ASCENDING;
+    auto page = query_generated_reports(jobs, account, query, client);
+    REQUIRE(page.m_filtered_count == 4);
+    REQUIRE(page.m_reports[0].m_status == GeneratedReport::Status::GENERATING);
+    REQUIRE(page.m_reports[1].m_status == GeneratedReport::Status::GENERATING);
+    REQUIRE(page.m_reports[2].m_status == GeneratedReport::Status::FAILED);
+    REQUIRE(page.m_reports[3].m_status == GeneratedReport::Status::READY);
+    for(auto& report : page.m_reports) {
+      REQUIRE(report.m_date_modified.date() == date(2026, 10, 6));
+    }
+    query.m_order = GeneratedReportQuery::Order::DESCENDING;
+    page = query_generated_reports(jobs, account, query, client);
+    REQUIRE(page.m_reports.front().m_status == GeneratedReport::Status::READY);
+    query.m_column = GeneratedReportQuery::Column::DATE_MODIFIED;
+    query.m_order = GeneratedReportQuery::Order::ASCENDING;
+    page = query_generated_reports(jobs, account, query, client);
+    REQUIRE(page.m_reports.front().m_id == jobs.front().m_id);
+    query.m_end_date = date(2026, 10, 5);
+    query.m_start_date.reset();
+    REQUIRE(query_generated_reports(
+      jobs, account, query, client).m_filtered_count == 0);
+  }
+
   TEST_CASE("filters") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -101,7 +142,7 @@ TEST_SUITE("GeneratedReport") {
       query.m_query = text;
       auto page = query_generated_reports(jobs, account, query, client);
       REQUIRE(page.m_filtered_count == 1);
-      REQUIRE(page.m_reports.front().m_date_created == job.m_completed);
+      REQUIRE(page.m_reports.front().m_date_modified == job.m_completed);
     }
     query.m_query = "unmatched";
     auto page = query_generated_reports(jobs, account, query, client);
@@ -130,7 +171,7 @@ TEST_SUITE("GeneratedReport") {
       std::invalid_argument);
     query.m_end_date.reset();
     REQUIRE(query_generated_reports({}, account, query, client).m_is_empty);
-    jobs.front().m_status = ReportJob::Status::FAILED;
+    jobs.front().m_status = ReportJob::Status::CANCELLED;
     REQUIRE(query_generated_reports(jobs, account, query, client).m_is_empty);
   }
 
@@ -171,7 +212,7 @@ TEST_SUITE("GeneratedReport") {
     query.m_page_index = 0;
     for(auto column : {GeneratedReportQuery::Column::TYPE,
         GeneratedReportQuery::Column::PARAMETERS,
-        GeneratedReportQuery::Column::DATE_CREATED}) {
+        GeneratedReportQuery::Column::DATE_MODIFIED}) {
       query.m_column = column;
       query.m_order = GeneratedReportQuery::Order::ASCENDING;
       REQUIRE(query_generated_reports(
@@ -199,7 +240,7 @@ TEST_SUITE("GeneratedReport") {
     fallback.m_completed = not_a_date_time;
     auto jobs = std::vector{late, fallback, early};
     auto query = GeneratedReportQuery();
-    query.m_column = GeneratedReportQuery::Column::DATE_CREATED;
+    query.m_column = GeneratedReportQuery::Column::DATE_MODIFIED;
     query.m_order = GeneratedReportQuery::Order::ASCENDING;
     auto page = query_generated_reports(jobs, account, query, client);
     REQUIRE(page.m_reports.size() == 3);
@@ -212,7 +253,7 @@ TEST_SUITE("GeneratedReport") {
     REQUIRE(page.m_reports[1].m_id == "late");
     REQUIRE(page.m_reports[2].m_id == "early");
     for(auto& report : page.m_reports) {
-      REQUIRE(report.m_date_created.date() == early.m_completed.date());
+      REQUIRE(report.m_date_modified.date() == early.m_completed.date());
     }
   }
 
@@ -245,12 +286,12 @@ TEST_SUITE("GeneratedReport") {
     });
     for(auto column : {GeneratedReportQuery::Column::TYPE,
         GeneratedReportQuery::Column::PARAMETERS,
-        GeneratedReportQuery::Column::DATE_CREATED}) {
+        GeneratedReportQuery::Column::DATE_MODIFIED}) {
       for(auto order : {GeneratedReportQuery::Order::NONE,
           GeneratedReportQuery::Order::ASCENDING,
           GeneratedReportQuery::Order::DESCENDING}) {
         auto expected = by_completed;
-        if(column == GeneratedReportQuery::Column::DATE_CREATED &&
+        if(column == GeneratedReportQuery::Column::DATE_MODIFIED &&
             order == GeneratedReportQuery::Order::ASCENDING) {
           std::ranges::stable_sort(
             expected, std::less(), &ReportJob::m_completed);
@@ -328,7 +369,7 @@ TEST_SUITE("GeneratedReport") {
     REQUIRE(report.at("id") == job.m_id);
     REQUIRE(report.at("type") == "Example");
     REQUIRE(report.at("url") == "/reports/report%20%2F%3F");
-    REQUIRE(report.at("date_created") == "20261005T130000.123456");
+    REQUIRE(report.at("date_modified") == "20261005T130000.123456");
     REQUIRE(!report.get("definition"));
     REQUIRE(!report.get("arguments"));
     REQUIRE(!report.get("account"));
@@ -342,7 +383,8 @@ TEST_SUITE("GeneratedReport") {
       REQUIRE(received.m_type == value.m_type);
       REQUIRE(received.m_parameters == value.m_parameters);
       REQUIRE(to_string(received.m_url) == to_string(value.m_url));
-      REQUIRE(received.m_date_created == value.m_date_created);
+      REQUIRE(received.m_date_modified == value.m_date_modified);
+      REQUIRE(received.m_status == value.m_status);
     });
     auto& filters = get<JsonObject>(body["filters"]);
     filters["query"] = std::string("unmatched");
@@ -372,7 +414,8 @@ TEST_SUITE("GeneratedReport") {
         HttpStatusCode::BAD_REQUEST);
     }
     body["page_index"] = 0;
-    get<JsonObject>(body["sort"])["column"] = 3;
+    get<JsonObject>(body["sort"])["column"] =
+      static_cast<int>(GeneratedReportQuery::Column::DATE_MODIFIED) + 1;
     REQUIRE(load(servlet, *session, body).get_status_code() ==
       HttpStatusCode::BAD_REQUEST);
     get<JsonObject>(body["sort"])["column"] = 0;

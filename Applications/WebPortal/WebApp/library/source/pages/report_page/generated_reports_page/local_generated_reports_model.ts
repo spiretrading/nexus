@@ -2,7 +2,8 @@ import * as Beam from 'beam';
 import { AccountGroupQueryModel, SortableTableHeaderCell } from
   '../../../components';
 import { GeneratedReportsModel } from './generated_reports_model';
-import { GeneratedReportTable } from './generated_report_table';
+import { ReportStatusTag } from '../report_status_tag';
+import { ReportTable } from '../report_table';
 import { formatReportDate } from './report_date';
 
 /** Stores generated reports and records share and download requests locally. */
@@ -12,7 +13,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
    * @param reports - The initial generated reports, in default order.
    * @param recipientModel - The account and group lookup model.
    */
-  constructor(reports: readonly GeneratedReportTable.Report[],
+  constructor(reports: readonly ReportTable.Report[],
       recipientModel: AccountGroupQueryModel) {
     super();
     this.loaded = false;
@@ -28,7 +29,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
   }
 
   /** Returns copies of the generated reports in default order. */
-  public get reports(): readonly GeneratedReportTable.Report[] {
+  public get reports(): readonly ReportTable.Report[] {
     this.ensureLoaded();
     return Array.from(this.entries.values(), copy);
   }
@@ -61,24 +62,26 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
     const {query, dateRange} = submission.filters;
     const matches = Array.from(this.entries.values()).filter(report => {
       return (!dateRange.start ||
-          report.dateCreated.date.compare(dateRange.start) >= 0) &&
+          report.dateModified.date.compare(dateRange.start) >= 0) &&
         (!dateRange.end ||
-          report.dateCreated.date.compare(dateRange.end) <= 0) &&
+          report.dateModified.date.compare(dateRange.end) <= 0) &&
         [report.type, ...report.parameters,
-          formatReportDate(report.dateCreated.date)].
+          formatReportDate(report.dateModified.date)].
           some(text => text.toLowerCase().includes(query.toLowerCase()));
     });
     if(submission.sort.order !== SortableTableHeaderCell.SortOrder.NONE) {
       matches.sort((left, right) => {
         const result = (() => {
           switch(submission.sort.column) {
-            case GeneratedReportTable.Column.TYPE:
+            case ReportTable.Column.TYPE:
               return left.type.localeCompare(right.type);
-            case GeneratedReportTable.Column.PARAMETERS:
+            case ReportTable.Column.PARAMETERS:
               return left.parameters.join(' \u2022 ').localeCompare(
                 right.parameters.join(' \u2022 '));
-            case GeneratedReportTable.Column.DATE_CREATED:
-              return left.dateCreated.compare(right.dateCreated);
+            case ReportTable.Column.STATUS:
+              return left.status - right.status;
+            case ReportTable.Column.DATE_MODIFIED:
+              return left.dateModified.compare(right.dateModified);
           }
         })();
         if(submission.sort.order ===
@@ -102,6 +105,28 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
     }
   }
 
+  public async cancel(ids: readonly string[]): Promise<void> {
+    this.ensureLoaded();
+    for(const id of ids) {
+      const report = this.entries.get(id);
+      if(report && report.status !== ReportStatusTag.Status.READY) {
+        this.entries.delete(id);
+      }
+    }
+  }
+
+  public async retry(ids: readonly string[]): Promise<void> {
+    this.ensureLoaded();
+    for(const id of ids) {
+      const report = this.entries.get(id);
+      if(report?.status === ReportStatusTag.Status.FAILED) {
+        this.entries.set(id, {...report,
+          status: ReportStatusTag.Status.GENERATING,
+          dateModified: Beam.DateTime.now()});
+      }
+    }
+  }
+
   public async share(ids: readonly string[],
       recipients: readonly Beam.DirectoryEntry[]): Promise<void> {
     this.ensureLoaded();
@@ -120,7 +145,7 @@ export class LocalGeneratedReportsModel extends GeneratedReportsModel {
   }
 
   private loaded: boolean;
-  private entries: Map<string, GeneratedReportTable.Report>;
+  private entries: Map<string, ReportTable.Report>;
   private recipients: AccountGroupQueryModel;
   private shareRequests: LocalGeneratedReportsModel.Share[];
   private downloadRequests: string[][];
@@ -139,9 +164,9 @@ export namespace LocalGeneratedReportsModel {
   }
 }
 
-function copy(report: GeneratedReportTable.Report):
-    GeneratedReportTable.Report {
+function copy(report: ReportTable.Report):
+    ReportTable.Report {
   return {...report, parameters: [...report.parameters],
-    dateCreated: new Beam.DateTime(
-      report.dateCreated.date, report.dateCreated.timeOfDay)};
+    dateModified: new Beam.DateTime(
+      report.dateModified.date, report.dateModified.timeOfDay)};
 }

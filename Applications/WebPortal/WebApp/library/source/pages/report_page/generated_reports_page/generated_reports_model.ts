@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import { AccountGroupQueryModel, SortableTableHeaderCell } from
   '../../../components';
 import { DateRange } from '../../../models/date_range';
-import { GeneratedReportTable } from './generated_report_table';
+import { ReportTable } from '../report_table';
 
 /** Queries generated reports and performs actions on selected reports. */
 export abstract class GeneratedReportsModel {
@@ -19,6 +19,12 @@ export abstract class GeneratedReportsModel {
 
   /** Deletes the reports with the supplied identifiers. */
   public abstract delete(ids: readonly string[]): Promise<void>;
+
+  /** Cancels queued, generating, or failed report jobs. */
+  public abstract cancel(ids: readonly string[]): Promise<void>;
+
+  /** Retries failed report jobs. */
+  public abstract retry(ids: readonly string[]): Promise<void>;
 
   /** Shares the identified reports with the supplied accounts and groups. */
   public abstract share(ids: readonly string[],
@@ -52,7 +58,7 @@ export namespace GeneratedReportsModel {
     /** The trimmed search query. */
     query: string;
 
-    /** Inclusive bounds on creation dates; null bounds are unbounded. */
+    /** Inclusive bounds on last-modified dates; null bounds are unbounded. */
     dateRange: DateRange;
   }
 
@@ -60,7 +66,7 @@ export namespace GeneratedReportsModel {
   export interface Sort {
 
     /** The column to sort. */
-    column: GeneratedReportTable.Column;
+    column: ReportTable.Column;
 
     /** The sort direction, or NONE for the model's default ordering. */
     order: SortableTableHeaderCell.SortOrder;
@@ -85,13 +91,13 @@ export namespace GeneratedReportsModel {
     /** The request status. */
     status: ResponseStatus;
 
-    /** Whether there are no generated reports, irrespective of filters. */
+    /** Whether there are no visible report jobs, irrespective of filters. */
     isEmpty: boolean;
 
     /** The total number of matching reports across all pages. */
     filteredCount: number;
 
     /** Up to PAGE_SIZE reports for the requested page. */
-    reports: readonly GeneratedReportTable.Report[];
+    reports: readonly ReportTable.Report[];
   }
 }

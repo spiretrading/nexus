@@ -26,7 +26,7 @@ GeneratedReports Nexus::query_generated_reports(
     const GeneratedReportQuery& query, ServiceLocatorClient& client) {
   if(account.m_type != DirectoryEntry::Type::ACCOUNT ||
       query.m_column < GeneratedReportQuery::Column::TYPE ||
-      query.m_column > GeneratedReportQuery::Column::DATE_CREATED ||
+      query.m_column > GeneratedReportQuery::Column::DATE_MODIFIED ||
       query.m_order < GeneratedReportQuery::Order::NONE ||
       query.m_order > GeneratedReportQuery::Order::DESCENDING ||
       (query.m_start_date && query.m_start_date->is_special()) ||
@@ -40,31 +40,43 @@ GeneratedReports Nexus::query_generated_reports(
   auto result = GeneratedReports();
   auto entries = std::vector<std::pair<GeneratedReport, ptime>>();
   for(auto& job : jobs) {
-    if(!access.is_accessible(job)) {
+    auto is_owned = job.m_account == account &&
+      job.m_status != ReportJob::Status::CANCELLED;
+    if(!is_owned && !access.is_accessible(job)) {
       continue;
     }
     result.m_is_empty = false;
-    auto generated = [&] {
+    auto modified = [&] {
+      if(job.m_modified && !job.m_modified->is_special()) {
+        return *job.m_modified;
+      }
       if(!job.m_completed.is_special()) {
         return job.m_completed;
       }
       return job.m_created;
     }();
-    auto day = generated.date();
+    auto day = modified.date();
     if((query.m_start_date && day < *query.m_start_date) ||
         (query.m_end_date && day > *query.m_end_date)) {
       continue;
     }
     auto report = GeneratedReport(
       job.m_id, job.m_definition.m_name, format_report_parameters(job),
-      Uri("/reports/" + uri_encode(job.m_id)), generated);
+      Uri("/reports/" + uri_encode(job.m_id)), modified, [&] {
+        if(job.m_status == ReportJob::Status::COMPLETED) {
+          return GeneratedReport::Status::READY;
+        } else if(job.m_status == ReportJob::Status::FAILED) {
+          return GeneratedReport::Status::FAILED;
+        }
+        return GeneratedReport::Status::GENERATING;
+      }());
     auto matches = text.empty() || icontains(report.m_type, text) ||
       icontains(format_report_date(day), text) ||
       std::ranges::any_of(report.m_parameters, [&] (const auto& parameter) {
         return icontains(parameter, text);
       });
     if(matches) {
-      entries.emplace_back(std::move(report), generated);
+      entries.emplace_back(std::move(report), modified);
     }
   }
   result.m_filtered_count = entries.size();
@@ -95,6 +107,9 @@ GeneratedReports Nexus::query_generated_reports(
       return compare(first.m_type, second.m_type);
     } else if(query.m_column == GeneratedReportQuery::Column::PARAMETERS) {
       return compare(first.m_parameters, second.m_parameters);
+    }
+    if(query.m_column == GeneratedReportQuery::Column::STATUS) {
+      return compare(first.m_status, second.m_status);
     }
     return compare(left.second, right.second);
   });

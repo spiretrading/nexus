@@ -4,20 +4,20 @@ import * as Beam from 'beam';
 import { LocalAccountGroupQueryModel, SortableTableHeaderCell } from
   '../../source/components';
 import { DateRange } from '../../source/models/date_range';
-import { GeneratedReportsModel, GeneratedReportTable,
-  LocalGeneratedReportsModel } from
-  '../../source/pages/report_page/generated_reports_page';
+import { GeneratedReportsModel, ReportTable,
+  LocalGeneratedReportsModel, ReportStatusTag } from
+  '../../source/pages/report_page';
 
-function makeReports(count: number): GeneratedReportTable.Report[] {
+function makeReports(count: number): ReportTable.Report[] {
   return Array.from({length: count}, (_, index) => ({id: String(index + 1),
     type: 'Profit and Loss', parameters: [`Group ${index + 1}`, 'Canada'],
-    url: `/reports/${index + 1}`,
-    dateCreated: new Beam.DateTime(new Beam.Date(2024, 2, index % 29 + 1))}));
+    url: `/reports/${index + 1}`, status: ReportStatusTag.Status.READY,
+    dateModified: new Beam.DateTime(new Beam.Date(2024, 2, index % 29 + 1))}));
 }
 
 function submission(): GeneratedReportsModel.Submission {
   return {filters: {query: '', dateRange: new DateRange(null, null)},
-    sort: {column: GeneratedReportTable.Column.DATE_CREATED,
+    sort: {column: ReportTable.Column.DATE_MODIFIED,
       order: SortableTableHeaderCell.SortOrder.NONE}, pageIndex: 0};
 }
 
@@ -31,6 +31,8 @@ describe('LocalGeneratedReportsModel', () => {
     assert.throws(() => model.downloads);
     await assert.rejects(model.query(submission()));
     await assert.rejects(model.delete(['1']));
+    await assert.rejects(model.cancel(['1']));
+    await assert.rejects(model.retry(['1']));
     await assert.rejects(model.share(['1'], []));
     await assert.rejects(model.download(['1']));
     await model.load();
@@ -74,7 +76,7 @@ describe('LocalGeneratedReportsModel', () => {
 
   it('sorts_timestamps_and_filters_whole_days', async () => {
     const reports = makeReports(3).map((report, index) => ({...report,
-      dateCreated: Beam.DateTime.fromJson([
+      dateModified: Beam.DateTime.fromJson([
         '20261005T235959.125', '20261005T000001.125',
         '20261006T000000'][index])}));
     const model = new LocalGeneratedReportsModel(reports,
@@ -86,9 +88,9 @@ describe('LocalGeneratedReportsModel', () => {
     request.sort.order = SortableTableHeaderCell.SortOrder.ASCENDING;
     let response = await model.query(request);
     assert.deepEqual(response.reports.map(report => report.id), ['2', '1']);
-    assert.equal(response.reports[1].dateCreated.toJson(),
+    assert.equal(response.reports[1].dateModified.toJson(),
       '20261005T235959.125');
-    assert.equal(model.reports[0].dateCreated.toJson(), '20261005T235959.125');
+    assert.equal(model.reports[0].dateModified.toJson(), '20261005T235959.125');
     request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
     response = await model.query(request);
     assert.deepEqual(response.reports.map(report => report.id), ['1', '2']);
@@ -96,25 +98,51 @@ describe('LocalGeneratedReportsModel', () => {
     assert.equal((await model.query(request)).filteredCount, 2);
   });
 
+
+  it('sorts_status_and_retries_or_cancels_eligible_jobs', async () => {
+    const reports = makeReports(3);
+    reports[1] = {...reports[1], status: ReportStatusTag.Status.GENERATING};
+    reports[2] = {...reports[2], status: ReportStatusTag.Status.FAILED};
+    const model = new LocalGeneratedReportsModel(reports,
+      new LocalAccountGroupQueryModel([]));
+    await model.load();
+    const request = submission();
+    request.sort = {column: ReportTable.Column.STATUS,
+      order: SortableTableHeaderCell.SortOrder.ASCENDING};
+    assert.deepEqual((await model.query(request)).reports.map(report =>
+      report.id), ['2', '3', '1']);
+    request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
+    assert.deepEqual((await model.query(request)).reports.map(report =>
+      report.id), ['1', '3', '2']);
+    await model.retry(['1', '2', '3', 'unknown']);
+    assert.deepEqual(model.reports.map(report => report.status),
+      [ReportStatusTag.Status.READY, ReportStatusTag.Status.GENERATING,
+        ReportStatusTag.Status.GENERATING]);
+    assert.ok(model.reports[2].dateModified.compare(
+      reports[2].dateModified) > 0);
+    await model.cancel(['1', '2', '3', 'unknown']);
+    assert.deepEqual(model.reports.map(report => report.id), ['1']);
+  });
+
   it('sorts_and_preserves_snapshots', async () => {
     const reports = [
       {...makeReports(1)[0], id: '1', type: 'Zulu', parameters: ['A'],
-        dateCreated: new Beam.DateTime(new Beam.Date(2024, 2, 29))},
+        dateModified: new Beam.DateTime(new Beam.Date(2024, 2, 29))},
       {...makeReports(1)[0], id: '2', type: 'Alpha', parameters: ['Z'],
-        dateCreated: new Beam.DateTime(new Beam.Date(2024, 3, 1))}];
+        dateModified: new Beam.DateTime(new Beam.Date(2024, 3, 1))}];
     const model = new LocalGeneratedReportsModel(reports,
       new LocalAccountGroupQueryModel([]));
     reports[0].parameters[0] = 'mutated';
     await model.load();
     const request = submission();
-    request.sort = {column: GeneratedReportTable.Column.TYPE,
+    request.sort = {column: ReportTable.Column.TYPE,
       order: SortableTableHeaderCell.SortOrder.ASCENDING};
     assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.DESCENDING;
     assert.equal((await model.query(request)).reports[0].id, '1');
-    request.sort.column = GeneratedReportTable.Column.PARAMETERS;
+    request.sort.column = ReportTable.Column.PARAMETERS;
     assert.equal((await model.query(request)).reports[0].id, '2');
-    request.sort.column = GeneratedReportTable.Column.DATE_CREATED;
+    request.sort.column = ReportTable.Column.DATE_MODIFIED;
     assert.equal((await model.query(request)).reports[0].id, '2');
     request.sort.order = SortableTableHeaderCell.SortOrder.NONE;
     assert.equal((await model.query(request)).reports[0].id, '1');

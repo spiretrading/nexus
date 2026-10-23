@@ -1,14 +1,16 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { AccountGroupQueryModel, Button, EmptyMessage, ErrorMessage,
-  FilterInput, PageLayout, Pagination, SortableTableHeaderCell } from
+import { AccountGroupQueryModel, Button, ContextMenu, CountButton, EmptyMessage,
+  ErrorMessage, FilterInput, IconButton, PageLayout, Pagination,
+  SortableTableHeaderCell } from
   '../../../components';
 import { DateRange } from '../../../models/date_range';
+import { ReportStatusTag } from '../report_status_tag';
 import { ShareReportModal } from '../share_report_modal';
 import { DateFilter } from './date_filter';
 import { GeneratedReportsModel } from './generated_reports_model';
-import { GeneratedReportTable } from './generated_report_table';
+import { ReportTable } from '../report_table';
 
 interface Properties extends GeneratedReportsModel.Submission {
 
@@ -26,6 +28,12 @@ interface Properties extends GeneratedReportsModel.Submission {
 
   /** Deletes the identified reports. */
   onDelete?: (ids: readonly string[]) => void;
+
+  /** Cancels the eligible selected report jobs. */
+  onCancel?: (ids: readonly string[]) => void;
+
+  /** Retries the eligible selected failed report jobs. */
+  onRetry?: (ids: readonly string[]) => void;
 
   /** Shares reports with the selected accounts and groups. */
   onShare?: (ids: readonly string[],
@@ -58,9 +66,15 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const actions = {disabled: this.state.selected.size === 0,
-      onDelete: this.onDelete, onShare: this.onOpenShare,
-      onDownload: this.onDownload};
+    const readyCount = this.getSelected([ReportStatusTag.Status.READY]).length;
+    const failedCount = this.getSelected([
+      ReportStatusTag.Status.FAILED]).length;
+    const cancelCount = this.getSelected([ReportStatusTag.Status.GENERATING,
+      ReportStatusTag.Status.FAILED]).length;
+    const actions = {selectedCount: this.state.selected.size, readyCount,
+      failedCount, cancelCount, onDelete: this.onDelete,
+      onShare: this.onOpenShare, onDownload: this.onDownload,
+      onCancel: this.onCancel, onRetry: this.onRetry};
     return <>
       <PageLayout ref={this.layout}>
         <Main query={this.state.query} dateRange={this.props.filters.dateRange}
@@ -71,7 +85,7 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
           pageIndex={this.props.pageIndex} selected={this.state.selected}
           sort={this.props.sort} highlight={this.state.highlight}
           onSelectionChange={this.onSelectionChange} onSort={this.onSort}
-          onNavigate={this.onNavigate} onRetry={this.onRetry}/>
+          onNavigate={this.onNavigate} onReload={this.onReload}/>
       </PageLayout>
       {this.state.sharing && <ShareReportModal
         model={this.props.recipientModel} selected={this.recipients}
@@ -118,9 +132,17 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
     }
     window.clearTimeout(this.timer);
     this.timer = null;
+    const ids = new Set(this.props.response.reports.map(report => report.id));
     this.setState({response: this.props.response,
-      highlight: this.props.filters.query, selected: new Set(),
+      selected: new Set([...this.state.selected].filter(id => ids.has(id))),
+      highlight: this.props.filters.query,
       displayStatus: getDisplayStatus(this.props.response)});
+  }
+
+  private getSelected(statuses: readonly ReportStatusTag.Status[]): string[] {
+    return this.state.response.reports.filter(report =>
+      this.state.selected.has(report.id) && statuses.includes(report.status)).
+      map(report => report.id);
   }
 
   private submit(submission: GeneratedReportsModel.Submission): void {
@@ -139,7 +161,7 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
       sort: this.props.sort, pageIndex: 0});
   };
 
-  private onSort = (column: GeneratedReportTable.Column,
+  private onSort = (column: ReportTable.Column,
       order: SortableTableHeaderCell.SortOrder) => {
     this.submit({filters: this.props.filters, sort: {column, order},
       pageIndex: 0});
@@ -156,7 +178,7 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
       pageIndex});
   };
 
-  private onRetry = () => {
+  private onReload = () => {
     this.submit({filters: this.props.filters, sort: this.props.sort,
       pageIndex: this.props.pageIndex});
   };
@@ -166,16 +188,34 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
   };
 
   private onDelete = () => {
-    const ids = [...this.state.selected];
+    const ids = this.getSelected([ReportStatusTag.Status.READY]);
     this.setState({selected: new Set(), sharing: null});
     if(ids.length > 0) {
       this.props.onDelete?.(ids);
     }
   };
 
+  private onCancel = () => {
+    const ids = this.getSelected([ReportStatusTag.Status.GENERATING,
+      ReportStatusTag.Status.FAILED]);
+    this.setState({selected: new Set(), sharing: null});
+    if(ids.length > 0) {
+      this.props.onCancel?.(ids);
+    }
+  };
+
+  private onRetry = () => {
+    const ids = this.getSelected([ReportStatusTag.Status.FAILED]);
+    this.setState({selected: new Set(), sharing: null});
+    if(ids.length > 0) {
+      this.props.onRetry?.(ids);
+    }
+  };
+
   private onOpenShare = () => {
-    if(this.state.selected.size > 0) {
-      this.setState({sharing: [...this.state.selected]});
+    const ids = this.getSelected([ReportStatusTag.Status.READY]);
+    if(ids.length > 0) {
+      this.setState({sharing: ids});
     }
   };
 
@@ -192,8 +232,9 @@ export class GeneratedReportsPage extends React.Component<Properties, State> {
   };
 
   private onDownload = () => {
-    if(this.state.selected.size > 0) {
-      this.props.onDownload?.([...this.state.selected]);
+    const ids = this.getSelected([ReportStatusTag.Status.READY]);
+    if(ids.length > 0) {
+      this.props.onDownload?.(ids);
     }
   };
 
@@ -231,7 +272,12 @@ function getDisplayStatus(response: GeneratedReportsModel.Response):
 }
 
 interface ActionProperties {
-  disabled: boolean;
+  selectedCount: number;
+  readyCount: number;
+  failedCount: number;
+  cancelCount: number;
+  onCancel: () => void;
+  onRetry: () => void;
   onDelete: () => void;
   onShare: () => void;
   onDownload: () => void;
@@ -246,10 +292,10 @@ interface ContentProperties {
   highlight: string;
   actions: ActionProperties;
   onSelectionChange: (selected: ReadonlySet<string>) => void;
-  onSort: (column: GeneratedReportTable.Column,
+  onSort: (column: ReportTable.Column,
     order: SortableTableHeaderCell.SortOrder) => void;
   onNavigate: (pageIndex: number) => void;
-  onRetry: () => void;
+  onReload: () => void;
 }
 
 interface ToolbarProperties {
@@ -297,27 +343,102 @@ class Toolbar extends React.Component<ToolbarProperties> {
   };
 }
 
+function ActionButton(props: {label: string; count: number; total: number;
+    onClick: () => void}): JSX.Element {
+  const count = (() => {
+    if(props.count > 0 && props.count !== props.total) {
+      return props.count;
+    }
+    return null;
+  })();
+  return <CountButton label={props.label} count={count} type='button'
+    disabled={props.count === 0} onClick={props.onClick}
+    style={{flex: '1 1 0', minWidth: 0}}/>;
+}
+
 function ButtonGroup(props: ActionProperties): JSX.Element {
   return <div className={css(STYLES.buttons)}>
-    <Button type='button' label='Delete' variant={Button.Variant.SECONDARY}
-      disabled={props.disabled} onClick={props.onDelete}
-      style={{flex: '1 1 0', minWidth: 0}}/>
-    <Button type='button' label='Share' variant={Button.Variant.SECONDARY}
-      disabled={props.disabled} onClick={props.onShare}
-      style={{flex: '1 1 0', minWidth: 0}}/>
-    <Button type='button' label='Download' variant={Button.Variant.SECONDARY}
-      disabled={props.disabled} onClick={props.onDownload}
-      style={{flex: '1 1 0', minWidth: 0}}/>
+    <ActionButton label='Share' count={props.readyCount}
+      total={props.selectedCount} onClick={props.onShare}/>
+    <ActionButton label='Download' count={props.readyCount}
+      total={props.selectedCount} onClick={props.onDownload}/>
+    <ActionButton label='Retry' count={props.failedCount}
+      total={props.selectedCount} onClick={props.onRetry}/>
+    <ActionButton label='Cancel' count={props.cancelCount}
+      total={props.selectedCount} onClick={props.onCancel}/>
+    <ActionButton label='Delete' count={props.readyCount}
+      total={props.selectedCount} onClick={props.onDelete}/>
   </div>;
 }
 
+class MobileButtonGroup extends React.Component<ActionProperties> {
+  constructor(props: ActionProperties) {
+    super(props);
+    this.invoker = React.createRef();
+  }
+
+  public render(): JSX.Element {
+    const props = this.props;
+    if(props.readyCount === 0) {
+      return <div className={css(STYLES.mobileButtons)}>
+        {props.failedCount > 0 &&
+          <ActionButton label='Retry' count={props.failedCount}
+            total={props.selectedCount} onClick={props.onRetry}/>}
+        <ActionButton label='Cancel' count={props.cancelCount}
+          total={props.selectedCount} onClick={props.onCancel}/>
+      </div>;
+    }
+    const items = [
+      {value: 'retry', label: 'Retry', count: props.failedCount},
+      {value: 'cancel', label: 'Cancel', count: props.cancelCount},
+      {value: 'delete', label: 'Delete', count: props.readyCount}
+    ].filter(item => item.count > 0).map(item => ({value: item.value,
+      body: <ContextMenu.Item label={(() => {
+        if(item.count !== props.selectedCount) {
+          return `${item.label} (${item.count})`;
+        }
+        return item.label;
+      })()}/>}));
+    return <div className={css(STYLES.mobileButtons)}>
+      <ActionButton label='Share' count={props.readyCount}
+        total={props.selectedCount} onClick={props.onShare}/>
+      <ActionButton label='Download' count={props.readyCount}
+        total={props.selectedCount} onClick={props.onDownload}/>
+      <span className={css(STYLES.menuContainer)}>
+        <IconButton icon='resources/report_page/more.svg'
+          buttonRef={this.invoker} aria-label='Open selection menu'
+          {...{popovertarget: 'selection-menu'}}
+          style={{width: '34px', height: '34px',
+            anchorName: '--selection-menu-anchor'} as React.CSSProperties}/>
+        <ContextMenu id='selection-menu' items={items} invoker={this.invoker}
+          style={{position: 'fixed', margin: 0, inset: 'auto',
+            positionAnchor: '--selection-menu-anchor',
+            bottom: 'anchor(top)', right: 'anchor(right)'} as
+            React.CSSProperties} onSubmit={this.onSubmit}/>
+      </span>
+    </div>;
+  }
+
+  private onSubmit = (action: string) => {
+    if(action === 'retry') {
+      this.props.onRetry();
+    } else if(action === 'cancel') {
+      this.props.onCancel();
+    } else if(action === 'delete') {
+      this.props.onDelete();
+    }
+  };
+
+  private invoker: React.RefObject<HTMLButtonElement>;
+}
+
 function ActionSheet(props: ActionProperties): JSX.Element {
-  if(props.disabled) {
+  if(props.selectedCount === 0) {
     return null;
   }
-  return <section aria-label='Selected Report Actions'
+  return <section aria-label='Selected Report Job Actions'
       className={css(STYLES.actionSheet)}>
-    <ButtonGroup {...props}/>
+    <MobileButtonGroup {...props}/>
   </section>;
 }
 
@@ -326,7 +447,7 @@ function ReportContent(props: ContentProperties): JSX.Element {
       aria-busy={props.displayStatus === DisplayStatus.IN_PROGRESS}>
     {props.displayStatus === DisplayStatus.ERROR &&
       <ErrorMessage message='There was an error loading your reports.'
-        onRetry={props.onRetry}/>}
+        onRetry={props.onReload}/>}
     {props.displayStatus === DisplayStatus.EMPTY &&
       <EmptyMessage message='No reports. Click New Report to generate one.'/>}
     {props.displayStatus === DisplayStatus.NO_RESULTS &&
@@ -339,7 +460,7 @@ function ReportContent(props: ContentProperties): JSX.Element {
 
 function Reports(props: ContentProperties): JSX.Element {
   return <div className={css(STYLES.reports)}>
-    <GeneratedReportTable reports={props.response.reports}
+    <ReportTable reports={props.response.reports}
       selected={props.selected}
       className={css(STYLES.reportTable)}
       highlight={props.highlight} sortColumn={props.sort.column}
@@ -391,12 +512,14 @@ const STYLES = StyleSheet.create({
     minWidth: 0,
     gridColumn: 1,
     gridRow: 1,
+    '@media (width < 768px)': {padding: '8px 0'},
     '@media (768px <= width < 1036px)': {width: '246px'},
     '@media (min-width: 1036px)': {width: '406px'}
   },
   newReport: {
     gridColumn: 2,
-    gridRow: 1
+    gridRow: 1,
+    '@media (width < 768px)': {padding: '8px 0'}
   },
   dateFilter: {
     gridRow: 2,
@@ -418,13 +541,22 @@ const STYLES = StyleSheet.create({
   toolbarActions: {
     gridColumn: '1 / -1',
     gridRow: 3,
-    width: '316px',
+    width: '632px',
     marginTop: '18px',
     '@media (width < 768px)': {display: 'none'}
   },
-  buttons: {display: 'flex', gap: '8px', maxWidth: '424px', margin: '0 auto'},
+  buttons: {display: 'flex', gap: '8px', padding: '8px 0'},
+  mobileButtons: {display: 'flex', gap: '8px', maxWidth: '424px',
+    padding: '8px 0', margin: '0 auto'},
+  menuContainer: {
+    display: 'flex',
+    flex: '0 0 34px',
+    ':has(> [popover]:popover-open) > button': {
+      backgroundColor: '#F8F8F8', color: '#4B23A0'
+    }
+  },
   reports: {position: 'relative'},
-  reportTable: {'@media (min-width: 768px)': {maxWidth: '696px'}},
+  reportTable: {'@media (min-width: 768px)': {maxWidth: '796px'}},
   actionSheet: {
     position: 'fixed',
     bottom: 0,

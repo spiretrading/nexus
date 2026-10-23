@@ -10,7 +10,7 @@ import { ActivityTable, GeneratedReportsModel, HttpCreateReportModel,
   HttpEditScheduledReportModel, HttpGeneratedReportsModel,
   HttpReportActivityModel, HttpReportDetailModel, HttpReportModel,
   HttpScheduledReportsModel, ReportActivityModel, ReportStatusTag,
-  ReportFormTemplate, GeneratedReportTable } from
+  ReportFormTemplate, ReportTable } from
   '../../source/pages/report_page';
 
 interface Call {
@@ -197,13 +197,14 @@ describe('HTTP report models', () => {
         return {status: 200, body: {status: 1, is_empty: false,
           filtered_count: 1, reports: [{id: 'job', type: 'Example',
             parameters: ['USD'], url: '/reports/job',
-            date_created: '20261005T235959.125'}]}};
+            status: ReportStatusTag.Status.READY,
+            date_modified: '20261005T235959.125'}]}};
       }
       return {status: 200};
     };
     const response = await model.query({filters: {query: ' USD ',
       dateRange: new DateRange(null, new Beam.Date(2026, 10, 5))},
-      sort: {column: GeneratedReportTable.Column.TYPE,
+      sort: {column: ReportTable.Column.TYPE,
         order: SortableTableHeaderCell.SortOrder.ASCENDING}, pageIndex: 0});
     assert.deepEqual(Request.calls[0].body, {filters: {query: 'USD',
       start_date: null, end_date: '20261005'},
@@ -211,7 +212,7 @@ describe('HTTP report models', () => {
     assert.equal(response.status, GeneratedReportsModel.ResponseStatus.READY);
     assert.equal(response.filteredCount, 1);
     assert.equal(
-      response.reports[0].dateCreated.toJson(), '20261005T235959.125');
+      response.reports[0].dateModified.toJson(), '20261005T235959.125');
     const recipient = Beam.DirectoryEntry.makeAccount(2, 'Bob');
     await model.share(['job'], [recipient]);
     await model.delete(['job']);
@@ -219,6 +220,11 @@ describe('HTTP report models', () => {
       {ids: ['job'], recipients: [recipient.toJson()]});
     assert.ok(Request.calls[1].url.endsWith('share_reports'));
     assert.ok(Request.calls[2].url.endsWith('delete_reports'));
+    await model.cancel(['job']);
+    await model.retry(['job']);
+    assert.ok(Request.calls[3].url.endsWith('cancel_report_jobs'));
+    assert.ok(Request.calls[4].url.endsWith('retry_report_jobs'));
+    assert.equal(response.reports[0].status, ReportStatusTag.Status.READY);
   });
 
   it('maps_schedules_and_editable_values', async () => {

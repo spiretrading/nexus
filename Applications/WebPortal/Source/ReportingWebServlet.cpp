@@ -615,7 +615,7 @@ HttpResponse ReportingWebServlet::on_query_generated_reports(
     auto parameters = session->shuttle_parameters<Parameters>(request);
     query.m_column =
       GeneratedReportQuery::Column(read_index(parameters.m_sort.m_column,
-        static_cast<int>(GeneratedReportQuery::Column::DATE_CREATED)));
+        static_cast<int>(GeneratedReportQuery::Column::DATE_MODIFIED)));
     query.m_order =
       GeneratedReportQuery::Order(read_index(parameters.m_sort.m_order,
         static_cast<int>(GeneratedReportQuery::Order::DESCENDING)));

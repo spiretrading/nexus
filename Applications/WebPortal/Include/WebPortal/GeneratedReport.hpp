@@ -6,8 +6,21 @@
 
 namespace Nexus {
 
-  /** A completed report available for viewing. */
+  /** A visible report job and its current execution state. */
   struct GeneratedReport {
+
+    /** The displayed execution state. */
+    enum class Status {
+
+      /** Queued or currently running. */
+      GENERATING,
+
+      /** Execution failed. */
+      FAILED,
+
+      /** The generated report is available. */
+      READY
+    };
 
     /** The report identifier. */
     std::string m_id;
@@ -21,11 +34,14 @@ namespace Nexus {
     /** The link to the report detail page. */
     Beam::Uri m_url;
 
-    /** The UTC timestamp when the report finished generating. */
-    boost::posix_time::ptime m_date_created;
+    /** The UTC timestamp of the latest job update. */
+    boost::posix_time::ptime m_date_modified;
+
+    /** The displayed execution state. */
+    Status m_status = Status::READY;
   };
 
-  /** Selects one page of completed reports. */
+  /** Selects one page of visible report jobs. */
   struct GeneratedReportQuery {
 
     /** The maximum number of reports in a page. */
@@ -40,14 +56,17 @@ namespace Nexus {
       /** The displayed parameter values. */
       PARAMETERS,
 
-      /** The timestamp when the report finished generating. */
-      DATE_CREATED
+      /** The displayed execution state. */
+      STATUS,
+
+      /** The timestamp of the latest job update. */
+      DATE_MODIFIED
     };
 
     /** The direction in which reports are ordered. */
     enum class Order {
 
-      /** Most recently generated first. */
+      /** Most recently modified first. */
       NONE,
 
       /** Increasing column values. */
@@ -60,14 +79,14 @@ namespace Nexus {
     /** Text to match within the type, parameter values, or displayed date. */
     std::string m_query;
 
-    /** The inclusive first generation date, or no lower bound. */
+    /** The inclusive lower bound on the last-modified date, if any. */
     std::optional<boost::gregorian::date> m_start_date;
 
-    /** The inclusive last generation date, or no upper bound. */
+    /** The inclusive upper bound on the last-modified date, if any. */
     std::optional<boost::gregorian::date> m_end_date;
 
     /** The column to sort. */
-    Column m_column = Column::DATE_CREATED;
+    Column m_column = Column::DATE_MODIFIED;
 
     /** The requested ordering. */
     Order m_order = Order::NONE;
@@ -76,7 +95,7 @@ namespace Nexus {
     std::uint32_t m_page_index = 0;
   };
 
-  /** One page of completed reports and its filtered count. */
+  /** One page of visible report jobs and its filtered count. */
   struct GeneratedReports {
 
     /** Whether the account has no accessible reports before filtering. */
@@ -92,7 +111,10 @@ namespace Nexus {
   /** Formats a report date for text searches. */
   std::string format_report_date(boost::gregorian::date value);
 
-  /** Selects completed reports owned by or shared with an account. */
+  /**
+   * Selects owned report jobs and completed reports shared with an account.
+   * Cancelled jobs are excluded.
+   */
   GeneratedReports query_generated_reports(const std::vector<ReportJob>& jobs,
     const Beam::DirectoryEntry& account, const GeneratedReportQuery& query,
     Beam::ServiceLocatorClient& client);
@@ -108,7 +130,8 @@ namespace Beam {
       shuttle.shuttle("type", value.m_type);
       shuttle.shuttle("parameters", value.m_parameters);
       shuttle.shuttle("url", value.m_url);
-      shuttle.shuttle("date_created", value.m_date_created);
+      shuttle.shuttle("date_modified", value.m_date_modified);
+      shuttle.shuttle("status", value.m_status);
     }
   };
 }

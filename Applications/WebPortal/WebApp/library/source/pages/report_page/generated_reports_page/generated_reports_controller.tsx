@@ -5,7 +5,7 @@ import { AccountGroupQueryModel, SortableTableHeaderCell } from
 import { DateRange } from '../../../models/date_range';
 import { GeneratedReportsModel } from './generated_reports_model';
 import { GeneratedReportsPage } from './generated_reports_page';
-import { GeneratedReportTable } from './generated_report_table';
+import { ReportTable } from '../report_table';
 
 interface Properties {
 
@@ -38,8 +38,9 @@ export class GeneratedReportsController extends
     this.generation = 0;
     this.loadingModel = null;
     this.mutations = Promise.resolve();
-    this.deletionOrder = [];
-    this.pendingDeletions = 0;
+    this.removalOrder = [];
+    this.pendingActions = 0;
+    this.timer = null;
   }
 
   public render(): JSX.Element {
@@ -47,7 +48,8 @@ export class GeneratedReportsController extends
       {...this.state.submission} response={this.state.response}
       recipientModel={this.state.recipientModel} onSubmit={this.onSubmit}
       onNewReport={this.props.onNewReport} onDelete={this.onDelete}
-      onShare={this.onShare} onDownload={this.onDownload}/>;
+      onShare={this.onShare} onDownload={this.onDownload}
+      onCancel={this.onCancel} onRetry={this.onRetry}/>;
   }
 
   public componentDidMount(): void {
@@ -57,11 +59,12 @@ export class GeneratedReportsController extends
 
   public componentDidUpdate(previous: Properties): void {
     if(previous.model !== this.props.model) {
+      this.clearRefresh();
       ++this.generation;
       this.loadingModel = null;
       this.mutations = Promise.resolve();
-      this.deletionOrder = [];
-      this.pendingDeletions = 0;
+      this.removalOrder = [];
+      this.pendingActions = 0;
       this.setState({recipientModel: null,
         response: {status: GeneratedReportsModel.ResponseStatus.IN_PROGRESS,
           isEmpty: false, filteredCount: 0, reports: []}}, () =>
@@ -70,6 +73,7 @@ export class GeneratedReportsController extends
   }
 
   public componentWillUnmount(): void {
+    this.clearRefresh();
     this.mounted = false;
     ++this.generation;
     ++this.request;
@@ -91,6 +95,7 @@ export class GeneratedReportsController extends
 
   private async submit(submission: GeneratedReportsModel.Submission,
       background: boolean): Promise<void> {
+    this.clearRefresh();
     const request = ++this.request;
     const model = this.props.model;
     if(!background) {
@@ -112,6 +117,7 @@ export class GeneratedReportsController extends
           response.status === GeneratedReportsModel.ResponseStatus.ERROR) {
         this.props.onActionError?.(
           new Error('Generated reports request failed.'));
+        this.scheduleRefresh();
         return;
       }
       const lastPage = Math.max(0, Math.ceil(
@@ -122,10 +128,14 @@ export class GeneratedReportsController extends
         return;
       }
       this.setState({response});
+      if(response.status === GeneratedReportsModel.ResponseStatus.READY) {
+        this.scheduleRefresh();
+      }
     } catch(error) {
       if(this.isCurrent(request, model)) {
         if(background) {
           this.props.onActionError?.(error);
+          this.scheduleRefresh();
         } else {
           this.setState({response: {
             status: GeneratedReportsModel.ResponseStatus.ERROR,
@@ -138,6 +148,21 @@ export class GeneratedReportsController extends
   private isCurrent(request: number, model: GeneratedReportsModel): boolean {
     return this.mounted && request === this.request &&
       model === this.props.model;
+  }
+
+  private clearRefresh(): void {
+    if(this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
+  }
+
+  private scheduleRefresh(): void {
+    this.clearRefresh();
+    if(this.mounted && this.pendingActions === 0) {
+      const REFRESH_INTERVAL = 5000;
+      this.timer = window.setTimeout(this.onRefresh, REFRESH_INTERVAL);
+    }
   }
 
   private async execute(action:
@@ -154,22 +179,21 @@ export class GeneratedReportsController extends
     }
   }
 
-  private onSubmit = (submission: GeneratedReportsModel.Submission) => {
-    this.submit(submission, false);
-  };
-
-  private onDelete = (ids: readonly string[]) => {
+  private remove(ids: readonly string[], action:
+      (model: GeneratedReportsModel, ids: readonly string[]) => Promise<void>):
+      void {
     const selected = new Set(ids);
     const original = this.state.response;
     const removed = original.reports.filter(report => selected.has(report.id));
     if(removed.length === 0) {
       return;
     }
-    if(this.pendingDeletions === 0) {
-      this.deletionOrder = original.reports.map(report => report.id);
+    this.clearRefresh();
+    if(this.pendingActions === 0) {
+      this.removalOrder = original.reports.map(report => report.id);
     }
-    ++this.pendingDeletions;
-    const order = this.deletionOrder;
+    ++this.pendingActions;
+    const order = this.removalOrder;
     const model = this.props.model;
     const generation = this.generation;
     const submission = this.state.submission;
@@ -185,7 +209,7 @@ export class GeneratedReportsController extends
     this.mutations = this.mutations.then(async () => {
       try {
         await loading;
-        await model.delete(removed.map(report => report.id));
+        await action(model, removed.map(report => report.id));
       } catch(error) {
         if(this.mounted && generation === this.generation) {
           this.setState(state => {
@@ -218,8 +242,52 @@ export class GeneratedReportsController extends
     });
     this.mutations.then(() => {
       if(this.mounted && generation === this.generation) {
-        --this.pendingDeletions;
-        if(this.pendingDeletions === 0) {
+        --this.pendingActions;
+        if(this.pendingActions === 0) {
+          this.submit(this.state.submission, this.state.response.status ===
+            GeneratedReportsModel.ResponseStatus.READY);
+        }
+      }
+    });
+  }
+
+  private onSubmit = (submission: GeneratedReportsModel.Submission) => {
+    this.submit(submission, false);
+  };
+
+  private onDelete = (ids: readonly string[]) => {
+    this.remove(ids, (model, ids) => model.delete(ids));
+  };
+
+  private onCancel = (ids: readonly string[]) => {
+    this.remove(ids, (model, ids) => model.cancel(ids));
+  };
+
+  private onRetry = (ids: readonly string[]) => {
+    this.clearRefresh();
+    const model = this.props.model;
+    const generation = this.generation;
+    const loading = this.loadModel();
+    const selected = [...ids];
+    if(this.pendingActions === 0) {
+      this.removalOrder = this.state.response.reports.map(report => report.id);
+    }
+    ++this.request;
+    ++this.pendingActions;
+    this.mutations = this.mutations.then(async () => {
+      try {
+        await loading;
+        await model.retry(selected);
+      } catch(error) {
+        if(this.mounted && generation === this.generation) {
+          this.props.onActionError?.(error);
+        }
+      }
+    });
+    this.mutations.then(() => {
+      if(this.mounted && generation === this.generation) {
+        --this.pendingActions;
+        if(this.pendingActions === 0) {
           this.submit(this.state.submission, this.state.response.status ===
             GeneratedReportsModel.ResponseStatus.READY);
         }
@@ -236,17 +304,23 @@ export class GeneratedReportsController extends
     this.execute(model => model.download(ids));
   };
 
+  private onRefresh = () => {
+    this.timer = null;
+    this.submit(this.state.submission, true);
+  };
+
   private mounted: boolean;
   private request: number;
   private generation: number;
   private loadingModel: Promise<void>;
   private mutations: Promise<void>;
-  private deletionOrder: string[];
-  private pendingDeletions: number;
+  private removalOrder: string[];
+  private pendingActions: number;
+  private timer: number;
 }
 
 function makeSubmission(): GeneratedReportsModel.Submission {
   return {filters: {query: '', dateRange: new DateRange(null, null)},
-    sort: {column: GeneratedReportTable.Column.DATE_CREATED,
+    sort: {column: ReportTable.Column.DATE_MODIFIED,
       order: SortableTableHeaderCell.SortOrder.NONE}, pageIndex: 0};
 }

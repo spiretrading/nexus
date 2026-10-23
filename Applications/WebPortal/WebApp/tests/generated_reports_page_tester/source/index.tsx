@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { GeneratedReportsController, GeneratedReportsModel,
   LocalAccountGroupQueryModel, LocalGeneratedReportsModel,
-  GeneratedReportTable } from 'web_portal';
+  ReportStatusTag, ReportTable } from 'web_portal';
 
 class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
   public async query(submission: GeneratedReportsModel.Submission):
@@ -29,6 +29,21 @@ class DelayedGeneratedReportsModel extends LocalGeneratedReportsModel {
     }
     await super.delete(ids);
     console.log('Delete', ids);
+  }
+
+  public async cancel(ids: readonly string[]): Promise<void> {
+    const fail = settings.failDeletions;
+    await new Promise(resolve => window.setTimeout(resolve, settings.delay));
+    if(fail) {
+      throw new Error('Simulated cancellation failure.');
+    }
+    await super.cancel(ids);
+    console.log('Cancel', ids);
+  }
+
+  public async retry(ids: readonly string[]): Promise<void> {
+    await super.retry(ids);
+    console.log('Retry', ids);
   }
 
   public async share(ids: readonly string[],
@@ -63,7 +78,7 @@ class App extends React.Component<{}, State> {
         <label><input type='checkbox' onChange={this.onEmpty}/>
           Empty results</label>
         <label><input type='checkbox' onChange={this.onFailDeletions}/>
-          Fail deletions</label>
+          Fail deletions and cancellations</label>
       </div>
       <GeneratedReportsController key={this.state.revision} model={model}
         onNewReport={this.onNewReport}
@@ -110,7 +125,7 @@ class App extends React.Component<{}, State> {
   };
 }
 
-function makeReports(count: number): GeneratedReportTable.Report[] {
+function makeReports(count: number): ReportTable.Report[] {
   const today = new Date();
   return Array.from({length: count}, (_, index) => {
     const date = new Date(today.getFullYear(), today.getMonth(),
@@ -119,7 +134,9 @@ function makeReports(count: number): GeneratedReportTable.Report[] {
       type: ['Profit and Loss', 'Trading Volume'][index % 2],
       parameters: [`Alpha Group ${index + 1}`, 'Canada', 'Month to Date'],
       url: `/reports/${index + 1}`,
-      dateCreated: new Beam.DateTime(new Beam.Date(
+      status: [ReportStatusTag.Status.READY, ReportStatusTag.Status.GENERATING,
+        ReportStatusTag.Status.FAILED][index % 3],
+      dateModified: new Beam.DateTime(new Beam.Date(
         date.getFullYear(), date.getMonth() + 1, date.getDate()))};
   });
 }
