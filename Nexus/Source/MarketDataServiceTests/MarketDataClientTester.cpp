@@ -27,13 +27,29 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(load_operation);
     REQUIRE(load_operation->m_ticker == ticker);
     auto snapshot = TickerSnapshot(ticker);
+    SUBCASE("without_history") {}
+    SUBCASE("with_history") {
+      snapshot.m_book_quote_sequence = Beam::Sequence(11);
+    }
+    SUBCASE("unavailable") {
+      snapshot = TickerSnapshot();
+    }
     load_operation->m_result.set(snapshot);
     auto operation2 = operations->pop();
     auto query_operation = std::get_if<
       TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
     REQUIRE(query_operation);
     REQUIRE(query_operation->m_query.get_index() == ticker);
-    REQUIRE(query_operation->m_query.get_range() == Range::REAL_TIME);
+    if(snapshot.m_ticker) {
+      REQUIRE(query_operation->m_query.get_range().get_start() ==
+        snapshot.m_book_quote_sequence);
+      REQUIRE(query_operation->m_query.get_range().get_end() ==
+        Beam::Sequence::LAST);
+      REQUIRE(query_operation->m_query.get_snapshot_limit() ==
+        SnapshotLimit::UNLIMITED);
+    } else {
+      REQUIRE(query_operation->m_query.get_range() == Range::REAL_TIME);
+    }
     REQUIRE(query_operation->m_query.get_interruption_policy() ==
       InterruptionPolicy::BREAK_QUERY);
   }

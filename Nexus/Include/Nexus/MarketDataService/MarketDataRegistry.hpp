@@ -91,11 +91,21 @@ namespace Nexus {
         find_session_technicals(const Ticker& ticker) const;
 
       /**
-       * Returns a Ticker's real time snapshot.
+       * Loads a Ticker's session technicals.
+       * @param ticker The Ticker whose session technicals are to be returned.
+       * @param data_store Used to initialize the Ticker's data.
+       */
+      SequencedSessionTechnicals load_session_technicals(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
+
+      /**
+       * Loads a Ticker's real-time snapshot.
        * @param ticker The Ticker whose snapshot is to be returned.
+       * @param data_store Used to initialize the Ticker's data.
        * @return The real-time snapshot of the <i>ticker</i>.
        */
-      boost::optional<TickerSnapshot> find_snapshot(const Ticker& ticker) const;
+      boost::optional<TickerSnapshot> load_snapshot(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
 
       /**
        * Adds or updates a TickerInfo to this registry.
@@ -250,18 +260,28 @@ namespace Nexus {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return SequencedSessionTechnicals(entry.get_session_technicals(),
-        entry.get_time_and_sale().get_sequence());
+      return entry.get_session_technicals();
     });
   }
 
-  inline boost::optional<TickerSnapshot>
-      MarketDataRegistry::find_snapshot(const Ticker& ticker) const {
-    auto entry = m_ticker_entries.find(get_primary_listing(ticker));
-    if(!entry || !(*entry)->is_available()) {
+  SequencedSessionTechnicals MarketDataRegistry::load_session_technicals(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
+      return {};
+    }
+    return Beam::with(*entry, [&] (const auto& entry) {
+      return entry.get_session_technicals();
+    });
+  }
+
+  boost::optional<TickerSnapshot> MarketDataRegistry::load_snapshot(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
       return boost::none;
     }
-    return Beam::with(***entry, [&] (const auto& entry) {
+    return Beam::with(*entry, [&] (const auto& entry) {
       return entry.load_snapshot();
     });
   }
