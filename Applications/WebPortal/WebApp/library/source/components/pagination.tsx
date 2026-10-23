@@ -255,7 +255,7 @@ class PageLink extends React.Component<PageLinkProperties, PageLinkState> {
         <div className={css(STYLES.pageLinkBase)}
           style={{backgroundColor: baseBackground}}/>
         <span className={css(STYLES.pageLinkContent)}
-          style={{color: this.props.isCurrent ? '#FFFFFF' : '#333333'}}>
+            style={{color: this.props.isCurrent ? '#FFFFFF' : '#333333'}}>
           {this.props.index + 1}
         </span>
       </a>);

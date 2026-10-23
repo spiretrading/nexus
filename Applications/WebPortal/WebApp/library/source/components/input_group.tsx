@@ -56,7 +56,11 @@ export class InputGroup extends React.Component<Properties, State> {
       id: inputId,
       className: [child.props.className, visible && 'error'].
         filter(Boolean).join(' '),
-      style: {boxSizing: 'border-box', width: '100%', ...child.props.style},
+      style: {
+        boxSizing: 'border-box',
+        width: '100%',
+        ...child.props.style
+      },
       'aria-invalid': invalid,
       'aria-describedby': Array.from(describedBy).join(' ') || undefined,
       onChange: this.onChange
@@ -270,14 +274,18 @@ const STYLES = StyleSheet.create({
   fields: {
     display: 'grid',
     alignItems: 'flex-start',
-    '@container (width < 384px)': {gridTemplateColumns: 'minmax(0, 1fr)'},
+    '@container (width < 384px)': {
+      gridTemplateColumns: 'minmax(0, 1fr)'
+    },
     '@container (min-width: 384px)': {
       gridTemplateColumns: '130px 246px',
       columnGap: '8px'
     }
   },
   labelWrapper: {
-    '@container (width < 384px)': {marginBottom: '12px'},
+    '@container (width < 384px)': {
+      marginBottom: '12px'
+    },
     '@container (min-width: 384px)': {
       display: 'flex',
       alignItems: 'center',
@@ -285,16 +293,24 @@ const STYLES = StyleSheet.create({
     }
   },
   label: {
-    '@container (width < 384px)': {paddingInlineStart: '10px'},
-    '@container (min-width: 384px)': {paddingInlineStart: 0}
+    '@container (width < 384px)': {
+      paddingInlineStart: '10px'
+    },
+    '@container (min-width: 384px)': {
+      paddingInlineStart: 0
+    }
   },
-  input: {minWidth: 0},
+  input: {
+    minWidth: 0
+  },
   error: {
     overflow: 'hidden',
     transition: 'max-height 200ms ease-in-out'
   },
   errorContent: {
     paddingTop: '4px',
-    '@container (min-width: 384px)': {paddingLeft: '138px'}
+    '@container (min-width: 384px)': {
+      paddingLeft: '138px'
+    }
   }
 });

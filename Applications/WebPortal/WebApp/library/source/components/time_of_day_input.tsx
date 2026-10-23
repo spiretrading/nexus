@@ -59,7 +59,10 @@ export function TimeOfDayInput({id, className, style, value, readOnly, disabled,
   };
   return (
     <div {...rest} className={className}
-        style={{...STYLE.wrapper, ...style}}>
+        style={{
+          ...STYLE.wrapper,
+          ...style
+        }}>
       <DurationInput
         id={id}
         aria-invalid={rest['aria-invalid']}

@@ -39,7 +39,10 @@ export class GroupInfoPage extends React.Component<Properties> {
     })();
     return(
       <PageWrapper>
-        <div style={{...GroupInfoPage.STYLE.pageMargins, ...pageWidth}}>
+        <div style={{
+          ...GroupInfoPage.STYLE.pageMargins,
+          ...pageWidth
+        }}>
           <div style={GroupInfoPage.STYLE.header}>
             <span>Last Update:</span>
             {membersCount}

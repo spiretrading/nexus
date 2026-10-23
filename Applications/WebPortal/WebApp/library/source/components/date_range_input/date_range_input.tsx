@@ -628,10 +628,19 @@ class CustomDates extends
 
   public render(): JSX.Element {
     const props = this.props;
-    const bounds: React.CSSProperties = {display: 'flex', minWidth: 0};
-    const bound: React.CSSProperties = {display: 'grid', minWidth: 0};
-    const labelStyle: React.CSSProperties = {lineHeight: '16px',
-      alignSelf: 'start', boxSizing: 'border-box'};
+    const bounds: React.CSSProperties = {
+      display: 'flex',
+      minWidth: 0
+    };
+    const bound: React.CSSProperties = {
+      display: 'grid',
+      minWidth: 0
+    };
+    const labelStyle: React.CSSProperties = {
+      lineHeight: '16px',
+      alignSelf: 'start',
+      boxSizing: 'border-box'
+    };
     if(props.horizontal) {
       bounds.gap = '18px';
       bound.gridTemplateColumns = 'max-content 150px';
@@ -658,9 +667,12 @@ class CustomDates extends
       bound.gap = '12px';
       labelStyle.paddingInlineStart = '10px';
     }
-    const style: React.CSSProperties = {maxHeight: this.state.maximum,
-      minWidth: 0, overflow: 'clip',
-      transition: 'max-height 200ms ease-in-out'};
+    const style: React.CSSProperties = {
+      maxHeight: this.state.maximum,
+      minWidth: 0,
+      overflow: 'clip',
+      transition: 'max-height 200ms ease-in-out'
+    };
     if(props.horizontal) {
       style.flex = '0 0 auto';
       if(props.custom) {
@@ -736,8 +748,11 @@ class CustomDates extends
 function Error(props: {id: string; label: string; inline: boolean;
     validation: DateRangeValidation}): JSX.Element {
   const visible = props.validation.showError && !props.validation.valid;
-  const style: React.CSSProperties = {paddingTop: '4px',
-    color: '#E63F44', overflowWrap: 'anywhere'};
+  const style: React.CSSProperties = {
+    paddingTop: '4px',
+    color: '#E63F44',
+    overflowWrap: 'anywhere'
+  };
   if(props.inline) {
     style.paddingInlineStart = 'calc(58px + (100cqw - 246px) * (80 / 138))';
   }
@@ -853,9 +868,14 @@ interface SelectGroupProperties {
 }
 
 function SelectGroup(props: SelectGroupProperties): JSX.Element {
-  const style: React.CSSProperties = {minWidth: 0};
-  const selectStyle: React.CSSProperties = {width: '100%', minWidth: 0,
-    boxSizing: 'border-box'};
+  const style: React.CSSProperties = {
+    minWidth: 0
+  };
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box'
+  };
   if(props.horizontal) {
     style.flex = '0 0 auto';
   }
@@ -878,12 +898,15 @@ function SelectGroup(props: SelectGroupProperties): JSX.Element {
   }
   return <div style={style}>
     {props.label && <label htmlFor={props.id}
-        style={{lineHeight: '16px', paddingInlineStart: (() => {
-          if(props.labelInline) {
-            return 0;
-          }
-          return '10px';
-        })()}}>
+        style={{
+          lineHeight: '16px',
+          paddingInlineStart: (() => {
+            if(props.labelInline) {
+              return 0;
+            }
+            return '10px';
+          })()
+        }}>
       {props.label}
     </label>}
     <Select id={props.id} value={props.selection} style={selectStyle}
@@ -919,15 +942,27 @@ function findSelection(value: DateRange, options: readonly DateRangeOption[],
 const INLINE_COLUMNS =
   'calc(50px + (100cqw - 246px) * (80 / 138)) minmax(0, 1fr)';
 const STYLES = StyleSheet.create({
-  container: {containerType: 'inline-size', width: '100%',
-    fontSize: '14px', fontWeight: 400, color: '#333333'},
-  horizontal: {display: 'flex', alignItems: 'flex-start'}
+  container: {
+    containerType: 'inline-size',
+    width: '100%',
+    fontSize: '14px',
+    fontWeight: 400,
+    color: '#333333'
+  },
+  horizontal: {
+    display: 'flex',
+    alignItems: 'flex-start'
+  }
 });
 
 function ResolvedDateBlock(props: {inline: boolean; value: DateRange}):
     JSX.Element {
-  const style: React.CSSProperties = {paddingTop: '12px', fontSize: '0.75rem',
-    lineHeight: '14px', color: '#5D5E6D'};
+  const style: React.CSSProperties = {
+    paddingTop: '12px',
+    fontSize: '0.75rem',
+    lineHeight: '14px',
+    color: '#5D5E6D'
+  };
   if(props.inline) {
     style.paddingInlineStart = 'calc(58px + (100cqw - 246px) * (80 / 138))';
   }

@@ -25,7 +25,7 @@ export function SegmentedSpinner(props: Properties) {
   }
   return (
     <div className={css(STYLES.container)}
-      style={{width: `${size}px`, height: `${size}px`}}>
+        style={{width: `${size}px`, height: `${size}px`}}>
       {segments}
     </div>);
 }

@@ -135,7 +135,10 @@ export class ComboBox<T> extends React.Component<Properties<T>, State<T>> {
         aria-invalid={Boolean(error) || rest['aria-invalid']}
         data-pending={!error && (this.state.resolving ||
           this.state.query !== this.getText(this.props.value))}
-        value={this.state.query} style={{width: '100%', ...rest.style}}
+        value={this.state.query} style={{
+          width: '100%',
+          ...rest.style
+        }}
         onChange={this.onQuery} onKeyDown={this.onKeyDown}
         onBlur={this.onBlur}/>
       {expanded && <SuggestionsWindow anchor={this.input.current}
