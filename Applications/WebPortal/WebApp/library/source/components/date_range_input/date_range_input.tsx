@@ -114,30 +114,37 @@ export class DateRangeInput extends React.Component<Properties, State> {
         validation.target === Target.START_AND_END);
     return <div {...rest} className={[css(STYLES.container,
         horizontal && STYLES.horizontal), className].join(' ')}
-        style={{...rootStyle, ...style}}>
+        style={{
+          ...rootStyle,
+          ...style
+        }}>
       <SelectGroup id={`${identifier}-preset`} label={label}
         controls={`${identifier}-custom`} selection={this.state.selection}
         options={options} horizontal={horizontal} inline={inline}
         labelInline={labelInline}
         readOnly={readOnly} disabled={disabled} onChange={this.onSelect}/>
       <CustomDates id={`${identifier}-custom`} custom={custom}
-          horizontal={horizontal} inline={inline}
-          labelInline={labelInline}
-          hasLabel={Boolean(label)} startId={`${identifier}-start`}
-          endId={`${identifier}-end`} errorId={errorId} label={label}
-          validation={validation} onHeight={this.onHeight}
-          start={<BoundDate key={`start-${this.state.revision}`}
+        horizontal={horizontal} inline={inline}
+        labelInline={labelInline}
+        hasLabel={Boolean(label)} startId={`${identifier}-start`}
+        endId={`${identifier}-end`} errorId={errorId} label={label}
+        validation={validation} onHeight={this.onHeight}
+        start={
+          <BoundDate key={`start-${this.state.revision}`}
             id={`${identifier}-start`} label='Start date'
             value={this.state.inputValue.start} error={error(Target.START)}
             errorId={errorId} readOnly={readOnly}
             disabled={disabled || !custom}
-            onInput={this.onStartInput} onCommit={this.onCommit}/>}
-          end={<BoundDate key={`end-${this.state.revision}`}
+            onInput={this.onStartInput} onCommit={this.onCommit}/>
+        }
+        end={
+          <BoundDate key={`end-${this.state.revision}`}
             id={`${identifier}-end`} label='End date'
             value={this.state.inputValue.end} error={error(Target.END)}
             errorId={errorId} readOnly={readOnly}
             disabled={disabled || !custom}
-            onInput={this.onEndInput} onCommit={this.onCommit}/>}/>
+            onInput={this.onEndInput} onCommit={this.onCommit}/>
+        }/>
     </div>;
   }
 
@@ -295,7 +302,9 @@ class CustomDates extends
 
   public render(): JSX.Element {
     const props = this.props;
-    const rows: React.CSSProperties = {display: 'grid'};
+    const rows: React.CSSProperties = {
+      display: 'grid'
+    };
     let labelPadding = '10px';
     if(props.labelInline) {
       labelPadding = '0';
@@ -311,7 +320,9 @@ class CustomDates extends
       rows.alignItems = 'center';
       rows.columnGap = '8px';
       rows.gridTemplateColumns = 'max-content 150px max-content 150px';
-      endLabelStyle = {marginInlineStart: '10px'};
+      endLabelStyle = {
+        marginInlineStart: '10px'
+      };
     } else if(props.inline) {
       rows.gridTemplateColumns =
         'calc(50px + (100cqw - 246px) * (80 / 138)) minmax(0, 1fr)';
@@ -322,10 +333,14 @@ class CustomDates extends
       rows.gridTemplateColumns = 'minmax(0, 1fr)';
       rows.gap = '12px';
       rows.paddingTop = '18px';
-      endLabelStyle = {marginTop: '8px'};
+      endLabelStyle = {
+        marginTop: '8px'
+      };
     }
-    const style: React.CSSProperties = {maxHeight: this.state.maximum,
-      flex: '0 0 auto'};
+    const style: React.CSSProperties = {
+      maxHeight: this.state.maximum,
+      flex: '0 0 auto'
+    };
     if(!props.custom) {
       style.visibility = 'hidden';
       style.overflow = 'clip';
@@ -338,12 +353,19 @@ class CustomDates extends
       <div ref={this.content}>
         <div style={rows}>
           <label ref={this.label} htmlFor={props.startId}
-            style={{paddingInlineStart: labelPadding, boxSizing: 'border-box'}}>
+              style={{
+                paddingInlineStart: labelPadding,
+                boxSizing: 'border-box'
+              }}>
             Start
           </label>
           <div ref={this.start}>{props.start}</div>
-          <label htmlFor={props.endId} style={{paddingInlineStart: labelPadding,
-              boxSizing: 'border-box', ...endLabelStyle}}>
+          <label htmlFor={props.endId}
+              style={{
+                paddingInlineStart: labelPadding,
+                boxSizing: 'border-box',
+                ...endLabelStyle
+              }}>
             End
           </label>
           {props.end}
@@ -397,8 +419,11 @@ class CustomDates extends
 function Error(props: {id: string; label: string; inline: boolean;
     validation: DateRangeValidation}): JSX.Element {
   const visible = props.validation.showError && !props.validation.valid;
-  const style: React.CSSProperties = {paddingTop: '4px',
-    color: '#E63F44', overflowWrap: 'anywhere'};
+  const style: React.CSSProperties = {
+    paddingTop: '4px',
+    color: '#E63F44',
+    overflowWrap: 'anywhere'
+  };
   if(props.inline) {
     style.paddingInlineStart = 'calc(58px + (100cqw - 246px) * (80 / 138))';
   }
@@ -531,10 +556,18 @@ interface SelectGroupProperties {
 class SelectGroup extends React.Component<SelectGroupProperties> {
   public render(): JSX.Element {
     const props = this.props;
-    const style: React.CSSProperties = {flex: '1 1 0', minWidth: 0};
-    const selectStyle: React.CSSProperties = {width: '100%', minWidth: 0,
-      boxSizing: 'border-box'};
-    const labelStyle: React.CSSProperties = {paddingInlineStart: '10px'};
+    const style: React.CSSProperties = {
+      flex: '1 1 0',
+      minWidth: 0
+    };
+    const selectStyle: React.CSSProperties = {
+      width: '100%',
+      minWidth: 0,
+      boxSizing: 'border-box'
+    };
+    const labelStyle: React.CSSProperties = {
+      paddingInlineStart: '10px'
+    };
     if(props.labelInline) {
       labelStyle.paddingInlineStart = 0;
     }
@@ -567,7 +600,7 @@ class SelectGroup extends React.Component<SelectGroupProperties> {
           readOnly={props.readOnly} disabled={props.disabled}
           onChange={props.onChange}>
         {props.options.map(option => <option key={option.value}
-          value={option.value}>{option.label}</option>)}
+            value={option.value}>{option.label}</option>)}
         <option value='custom'>Custom</option>
       </Select>
     </div>;
@@ -581,7 +614,15 @@ function findSelection(value: DateRange, options: readonly DateRangeOption[]):
 }
 
 const STYLES = StyleSheet.create({
-  container: {containerType: 'inline-size', width: '100%',
-    font: '400 14px Roboto, system-ui, sans-serif', color: '#333333'},
-  horizontal: {display: 'flex', alignItems: 'flex-start', gap: '18px'}
+  container: {
+    containerType: 'inline-size',
+    width: '100%',
+    font: '400 14px Roboto, system-ui, sans-serif',
+    color: '#333333'
+  },
+  horizontal: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '18px'
+  }
 });

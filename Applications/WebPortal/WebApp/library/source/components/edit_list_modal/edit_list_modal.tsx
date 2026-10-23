@@ -472,19 +472,33 @@ const STYLES = StyleSheet.create({
     border: 0,
     background: 'transparent',
     cursor: 'pointer',
-    ':focus-visible': {outline: '2px solid #684BC7'}
+    ':focus-visible': {
+      outline: '2px solid #684BC7'
+    }
   },
-  content: {padding: '0 18px 18px'},
-  submission: {paddingTop: '30px'},
-  form: {borderBottom: '1px solid #E6E6E6', paddingBottom: '30px'},
-  search: {position: 'relative', marginBottom: '18px'},
+  content: {
+    padding: '0 18px 18px'
+  },
+  submission: {
+    paddingTop: '30px'
+  },
+  form: {
+    borderBottom: '1px solid #E6E6E6',
+    paddingBottom: '30px'
+  },
+  search: {
+    position: 'relative',
+    marginBottom: '18px'
+  },
   section: {
     boxSizing: 'border-box',
     height: '246px',
     overflowY: 'auto',
     border: '1px solid #C8C8C8'
   },
-  sectionReadonly: {height: '342px'},
+  sectionReadonly: {
+    height: '342px'
+  },
   listHeader: {
     position: 'sticky',
     top: 0,
@@ -492,8 +506,17 @@ const STYLES = StyleSheet.create({
     borderBottom: '1px solid #C8C8C8',
     padding: '12px 10px'
   },
-  heading: {margin: 0, color: '#4B23A0', fontSize: '0.875rem', fontWeight: 500},
-  items: {listStyle: 'none', padding: 0, margin: 0},
+  heading: {
+    margin: 0,
+    color: '#4B23A0',
+    fontSize: '0.875rem',
+    fontWeight: 500
+  },
+  items: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0
+  },
   item: {
     boxSizing: 'border-box',
     width: '100%',
@@ -509,9 +532,17 @@ const STYLES = StyleSheet.create({
     color: 'inherit',
     background: 'transparent',
     cursor: 'pointer',
-    ':hover': {background: '#F8F8F8'},
-    ':focus-visible': {outline: '2px solid #684BC7', outlineOffset: '-2px'},
-    ':is([aria-pressed="true"])': {background: '#684BC7', color: '#FFFFFF'}
+    ':hover': {
+      background: '#F8F8F8'
+    },
+    ':focus-visible': {
+      outline: '2px solid #684BC7',
+      outlineOffset: '-2px'
+    },
+    ':is([aria-pressed="true"])': {
+      background: '#684BC7',
+      color: '#FFFFFF'
+    }
   },
   actions: {
     display: 'flex',
@@ -527,12 +558,24 @@ const STYLES = StyleSheet.create({
     color: 'inherit',
     background: 'transparent',
     cursor: 'pointer',
-    ':disabled': {opacity: 0.4, cursor: 'default'},
-    ':focus-visible': {outline: '1px solid #684BC7', outlineOffset: '4px'}
+    ':disabled': {
+      opacity: 0.4,
+      cursor: 'default'
+    },
+    ':focus-visible': {
+      outline: '1px solid #684BC7',
+      outlineOffset: '4px'
+    }
   },
   actionLabel: {
     paddingLeft: '8px',
-    '@media (max-width: 767px)': {display: 'none'}
+    '@media (max-width: 767px)': {
+      display: 'none'
+    }
   },
-  error: {color: '#E63F44', overflowWrap: 'anywhere', marginBottom: 0}
+  error: {
+    color: '#E63F44',
+    overflowWrap: 'anywhere',
+    marginBottom: 0
+  }
 });
