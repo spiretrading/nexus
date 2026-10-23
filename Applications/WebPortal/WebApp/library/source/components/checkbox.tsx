@@ -26,11 +26,11 @@ export function Checkbox(props: Properties): JSX.Element {
   };
   return (
     <input type='checkbox'
-        ref={ref}
-        checked={props.checked}
-        disabled={props.disabled}
-        className={[css(STYLES.checkbox), props.className].join(' ')}
-        onChange={onChange}/>);
+      ref={ref}
+      checked={props.checked}
+      disabled={props.disabled}
+      className={[css(STYLES.checkbox), props.className].join(' ')}
+      onChange={onChange}/>);
 }
 
 const STYLES = StyleSheet.create({

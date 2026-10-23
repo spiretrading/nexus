@@ -45,10 +45,22 @@ const STYLES = StyleSheet.create({
     cursor: 'pointer',
     outline: 'none',
     textDecoration: 'none',
-    ':hover': {backgroundColor: '#4B23A0'},
-    ':focus-visible': {backgroundColor: '#4B23A0'},
-    ':active': {backgroundColor: '#4B23A0'},
-    ':is([inert])': {opacity: 0.4, cursor: 'not-allowed'}
+    ':hover': {
+      backgroundColor: '#4B23A0'
+    },
+    ':focus-visible': {
+      backgroundColor: '#4B23A0'
+    },
+    ':active': {
+      backgroundColor: '#4B23A0'
+    },
+    ':is([inert])': {
+      opacity: 0.4,
+      cursor: 'not-allowed'
+    }
   },
-  inert: {display: 'inline-block', cursor: 'not-allowed'}
+  inert: {
+    display: 'inline-block',
+    cursor: 'not-allowed'
+  }
 });

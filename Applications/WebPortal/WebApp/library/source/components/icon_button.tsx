@@ -15,7 +15,10 @@ export function IconButton(props: Properties): JSX.Element {
   return <button {...attributes} type={type}
       className={[css(STYLES.button), className].join(' ')}>
     <span aria-hidden className={css(STYLES.icon)}
-      style={{maskImage: mask, WebkitMaskImage: mask}}/>
+      style={{
+        maskImage: mask,
+        WebkitMaskImage: mask
+      }}/>
   </button>;
 }
 
@@ -36,8 +39,12 @@ const STYLES = StyleSheet.create({
       backgroundColor: '#F8F8F8',
       color: '#4B23A0'
     },
-    ':focus-visible': {borderColor: '#684BC7'},
-    ':disabled': {color: '#DBDBDB'}
+    ':focus-visible': {
+      borderColor: '#684BC7'
+    },
+    ':disabled': {
+      color: '#DBDBDB'
+    }
   },
   icon: {
     display: 'block',

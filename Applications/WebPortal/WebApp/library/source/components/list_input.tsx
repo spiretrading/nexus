@@ -67,7 +67,10 @@ export class ListInput<T> extends React.Component<Properties<T>, State> {
           aria-haspopup='dialog' aria-expanded={this.state.isOpen}
           className={[css(STYLES.input, !readOnly && STYLES.interactive),
             className].join(' ')}
-          style={{width: '100%', ...style}}
+          style={{
+            width: '100%',
+            ...style
+          }}
           onFocus={this.onFocus} onClick={this.onClick}/>
         {this.state.isOpen &&
           <Modal title={title} listHeading={listHeading}
