@@ -14,7 +14,12 @@ interface Properties {
 /** Displays a badge indicating a change value and its direction. */
 export function DiffBadge(props: Properties) {
   const {color, backgroundColor, sign} = getDirectionStyle(props.direction);
-  const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
+  const dynamicStyle = StyleSheet.create({
+    tag: {
+      color,
+      backgroundColor
+    }
+  });
   const hasSign = props.direction !== RequestsModel.Direction.NONE;
   const displayValue = hasSign && props.value.startsWith('-') ?
     props.value.substring(1) : props.value;

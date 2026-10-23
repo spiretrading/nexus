@@ -16,7 +16,11 @@ export function ComplianceRuleStatusTag(props: Properties) {
   const {label, color, backgroundColor, borderColor} =
     getStatusStyle(props.status);
   const dynamicStyle = StyleSheet.create({
-    tag: {color, backgroundColor, borderColor}
+    tag: {
+      color,
+      backgroundColor,
+      borderColor
+    }
   });
   return (
     <span className={css(STYLES.tag, dynamicStyle.tag)}>
