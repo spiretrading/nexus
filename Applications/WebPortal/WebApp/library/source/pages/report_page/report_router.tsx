@@ -86,7 +86,8 @@ function matchReport(path: string): {page: ReportController.Page; id?: string} {
   if(matchPath(path, {path: '/reports', exact: true})) {
     return {page: ReportController.Page.GENERATED};
   }
-  if(matchPath(path, {path: '/reports/edit', exact: true})) {
+  if(matchPath(path,
+      {path: ['/reports/edit', '/reports/activity'], exact: true})) {
     return null;
   }
   const edit = matchPath<{id: string}>(path,
@@ -109,7 +110,6 @@ function matchReport(path: string): {page: ReportController.Page; id?: string} {
 
 const PATHS = new Map([
   [ReportController.Page.GENERATED, '/reports/generated'],
-  [ReportController.Page.ACTIVITY, '/reports/activity'],
   [ReportController.Page.SCHEDULED, '/reports/schedules'],
   [ReportController.Page.CREATE, '/reports/new']
 ]);

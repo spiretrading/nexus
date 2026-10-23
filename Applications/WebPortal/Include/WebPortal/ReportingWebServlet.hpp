@@ -180,8 +180,6 @@ namespace Nexus {
         std::shared_ptr<WebPortalSession> session);
       Beam::HttpResponse on_load_report_definitions(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_query_report_activities(
-        const Beam::HttpRequest& request);
       Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
       Beam::HttpResponse on_cancel_report_jobs(
         const Beam::HttpRequest& request);

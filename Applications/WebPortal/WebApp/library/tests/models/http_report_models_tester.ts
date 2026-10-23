@@ -6,10 +6,10 @@ import { LocalAccountGroupQueryModel, SortableTableHeaderCell } from
   '../../source/components';
 import { DateRange, Interval, LocalTickerQueryModel, ScopeQueryModel } from
   '../../source/models';
-import { ActivityTable, GeneratedReportsModel, HttpCreateReportModel,
+import { GeneratedReportsModel, HttpCreateReportModel,
   HttpEditScheduledReportModel, HttpGeneratedReportsModel,
-  HttpReportActivityModel, HttpReportDetailModel, HttpReportModel,
-  HttpScheduledReportsModel, ReportActivityModel, ReportStatusTag,
+  HttpReportDetailModel, HttpReportModel,
+  HttpScheduledReportsModel, ReportStatusTag,
   ReportFormTemplate, ReportTable } from
   '../../source/pages/report_page';
 
@@ -92,7 +92,6 @@ describe('HTTP report models', () => {
     const [accounts, scopes] = lookups();
     const create = new HttpCreateReportModel(accounts, scopes);
     const edit = new HttpEditScheduledReportModel(accounts, scopes);
-    const activity = new HttpReportActivityModel();
     const generated = new HttpGeneratedReportsModel(accounts);
     const schedules = new HttpScheduledReportsModel();
     const details = new HttpReportDetailModel();
@@ -102,8 +101,8 @@ describe('HTTP report models', () => {
     await assert.rejects(create.submit(makeValue()), /not loaded/);
     await assert.rejects(edit.loadReport('id'), /not loaded/);
     await assert.rejects(edit.submit('id', makeValue()), /not loaded/);
-    await assert.rejects(activity.cancel(['id']), /not loaded/);
-    await assert.rejects(activity.retry(['id']), /not loaded/);
+    await assert.rejects(generated.cancel(['id']), /not loaded/);
+    await assert.rejects(generated.retry(['id']), /not loaded/);
     await assert.rejects(generated.delete(['id']), /not loaded/);
     await assert.rejects(generated.share(['id'], []), /not loaded/);
     await assert.rejects(generated.download(['id']), /not loaded/);
@@ -158,35 +157,6 @@ describe('HTTP report models', () => {
     Request.handler = () => ({status: 501, body: {error: 'Not implemented'}});
     await assert.rejects(model.submit(makeValue()), (error: any) =>
       error.code === 501 && error.message === 'Not implemented');
-  });
-
-  it('maps_activity_dates_and_actions', async () => {
-    const model = new HttpReportActivityModel();
-    await model.load();
-    Request.handler = call => {
-      if(call.url.endsWith('query_report_activities')) {
-        return {status: 200, body: {status: 1, is_empty: false, total_count: 51,
-          activities: [{id: 'job', type: 'Example', parameters: ['USD'],
-            status: 0, date_modified: '20261005T123456.125'}]}};
-      }
-      return {status: 200};
-    };
-    const response = await model.query({
-      sort: {column: ActivityTable.Column.DATE_MODIFIED,
-        order: SortableTableHeaderCell.SortOrder.DESCENDING}, pageIndex: 1});
-    assert.deepEqual(Request.calls[0].body,
-      {sort: {column: 3, order: 2}, page_index: 1});
-    assert.equal(response.status, ReportActivityModel.ResponseStatus.READY);
-    assert.equal(response.totalCount, 51);
-    assert.equal(
-      response.activities[0].dateModified.toJson(), '20261005T123456.125');
-    assert.equal(response.activities[0].status,
-      ReportStatusTag.Status.GENERATING);
-    await model.cancel(['job']);
-    await model.retry(['job']);
-    assert.ok(Request.calls[1].url.endsWith('cancel_report_jobs'));
-    assert.ok(Request.calls[2].url.endsWith('retry_report_jobs'));
-    assert.deepEqual(Request.calls[2].body, {ids: ['job']});
   });
 
   it('maps_generated_filters_results_and_mutations', async () => {

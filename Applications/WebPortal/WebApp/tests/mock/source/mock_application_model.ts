@@ -58,7 +58,6 @@ function makeReportModel(): WebPortal.ReportModel {
   return new WebPortal.CompositeReportModel(
     new WebPortal.LocalScheduledReportsModel([]),
     new WebPortal.LocalGeneratedReportsModel([], accounts),
-    new WebPortal.LocalReportActivityModel([]),
     new WebPortal.LocalCreateReportModel([], accounts, scopes),
     new WebPortal.LocalEditScheduledReportModel(
       [], accounts, scopes, new Map()),

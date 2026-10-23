@@ -16,7 +16,7 @@ import { CompositeReportModel, HttpReportModel, ReportController, ReportPage,
   ReportRouter } from '../../source/pages/report_page';
 
 function makeReports(): CompositeReportModel {
-  return new CompositeReportModel(null, null, null, null, null, null);
+  return new CompositeReportModel(null, null, null, null, null);
 }
 
 function makeLocal(reports: CompositeReportModel): LocalDashboardModel {
@@ -81,7 +81,6 @@ describe('Report routing', () => {
     const cases: [string, ReportController.Page, string?][] = [
       ['/reports', ReportController.Page.GENERATED],
       ['/reports/generated', ReportController.Page.GENERATED],
-      ['/reports/activity', ReportController.Page.ACTIVITY],
       ['/reports/schedules', ReportController.Page.SCHEDULED],
       ['/reports/new', ReportController.Page.CREATE],
       ['/reports/edit/job%20one', ReportController.Page.EDIT_SCHEDULED,
@@ -97,7 +96,8 @@ describe('Report routing', () => {
       assert.equal(child.props.basePath, '/reports');
       assert.equal(child.props.model, router.props.model);
     }
-    for(const path of ['/reports/edit', '/reports/edit/', '/reports/a/b']) {
+    for(const path of ['/reports/edit', '/reports/edit/', '/reports/a/b',
+        '/reports/activity', '/reports/activity/']) {
       assert.equal(makeRouter(path).router.render().type, PageNotFoundPage);
     }
   });
@@ -107,9 +107,9 @@ describe('Report routing', () => {
     const controller = router.render().props.children.props;
     controller.onNewReport();
     assert.equal(history.location.pathname, '/reports/new');
-    controller.onNavigate(ReportController.Page.ACTIVITY);
-    assert.equal(history.location.pathname, '/reports/activity');
-    controller.onNavigate(ReportController.Page.ACTIVITY);
+    controller.onNavigate(ReportController.Page.SCHEDULED);
+    assert.equal(history.location.pathname, '/reports/schedules');
+    controller.onNavigate(ReportController.Page.SCHEDULED);
     assert.equal(history.length, 3);
     history.goBack();
     assert.equal(router.render().props.children.props.page,
@@ -171,9 +171,12 @@ describe('Report routing', () => {
   it('uses_dashboard_urls_in_tabs_and_keeps_standalone_defaults', () => {
     const production = renderToStaticMarkup(React.createElement(ReportPage,
       {basePath: '/reports'}));
-    for(const path of ['generated', 'activity', 'schedules']) {
+    for(const path of ['generated', 'schedules']) {
       assert.ok(production.includes(`href="/reports/${path}"`));
     }
+    assert.equal((production.match(/<a /g) || []).length, 2);
+    assert.ok(production.includes('Reports'));
+    assert.ok(!production.includes('Activity'));
     const standalone = renderToStaticMarkup(React.createElement(ReportPage));
     assert.ok(standalone.includes('href="/generated"'));
     let navigations = 0;
@@ -197,7 +200,7 @@ describe('Report routing', () => {
     await model.load();
     assert.equal(model.reportModel, reports);
     assert.equal(reports.isLoaded, false);
-    const {router} = makeRouter('/reports/activity');
+    const {router} = makeRouter('/reports/schedules');
     const dashboard = new DashboardController({...router.props, model});
     Object.assign(dashboard.state, {isLoaded: true});
     const route = find(dashboard.render(), entry =>

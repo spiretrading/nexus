@@ -47,7 +47,6 @@ namespace {
         const DirectoryEntry&, const GeneratedReportQuery&);
       ReportDetail load_report(const DirectoryEntry&, const std::string&);
       ReportFile load_file(const DirectoryEntry&, const std::string&);
-      ReportActivities query(const DirectoryEntry&, const ReportActivityQuery&);
       std::optional<ReportJob> load_job(const std::string&);
       void store(const ReportJob& job);
       std::string submit(DirectoryEntry&&, ReportSubmission&&);

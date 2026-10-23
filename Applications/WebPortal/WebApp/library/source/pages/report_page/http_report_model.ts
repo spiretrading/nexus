@@ -5,7 +5,6 @@ import { CompositeReportModel } from './composite_report_model';
 import { HttpCreateReportModel } from './create_report_page';
 import { HttpEditScheduledReportModel } from './edit_scheduled_report_page';
 import { HttpGeneratedReportsModel } from './generated_reports_page';
-import { HttpReportActivityModel } from './report_activity_page';
 import { HttpReportDetailModel } from './report_detail_page';
 import { HttpScheduledReportsModel } from './scheduled_reports_page';
 
@@ -20,7 +19,7 @@ export class HttpReportModel extends CompositeReportModel {
       new HttpAccountGroupQueryModel(serviceClients.administrationClient);
     const scopes = new ScopeQueryModel(new HttpTickerQueryModel());
     super(new HttpScheduledReportsModel(),
-      new HttpGeneratedReportsModel(accounts), new HttpReportActivityModel(),
+      new HttpGeneratedReportsModel(accounts),
       new HttpCreateReportModel(accounts, scopes),
       new HttpEditScheduledReportModel(accounts, scopes),
       new HttpReportDetailModel());

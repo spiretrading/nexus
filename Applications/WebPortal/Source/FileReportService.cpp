@@ -189,12 +189,6 @@ ReportFile FileReportService::load_file(
     job->m_definition.m_output.m_media_type, std::move(content));
 }
 
-ReportActivities FileReportService::query(
-    const DirectoryEntry& account, const ReportActivityQuery& query) {
-  m_open_state.ensure_open();
-  return query_report_activities(load_jobs(), account, query);
-}
-
 std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
   return read_job(report_directory(id, m_jobs_directory));
 }

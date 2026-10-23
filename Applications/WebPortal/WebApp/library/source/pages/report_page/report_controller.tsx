@@ -7,8 +7,6 @@ import { EditScheduledReportController, EditScheduledReportModel } from
 import { GeneratedReportsController, GeneratedReportsModel,
   GeneratedReportsPage } from './generated_reports_page';
 import { ReportTable } from './report_table';
-import { ActivityTable, ReportActivityController, ReportActivityModel,
-  ReportActivityPage } from './report_activity_page';
 import { ReportModel } from './report_model';
 import { ReportPage } from './report_page';
 import { ReportDetailController, ReportDetailModel } from
@@ -50,7 +48,6 @@ interface State {
   model: ReportModel;
   scheduledReportsModel: ScheduledReportsModel;
   generatedReportsModel: GeneratedReportsModel;
-  reportActivityModel: ReportActivityModel;
   createReportModel: CreateReportModel;
   editScheduledReportModel: EditScheduledReportModel;
   reportDetailModel: ReportDetailModel;
@@ -65,7 +62,6 @@ export class ReportController extends React.Component<Properties, State> {
       model: props.model,
       scheduledReportsModel: null,
       generatedReportsModel: null,
-      reportActivityModel: null,
       createReportModel: null,
       editScheduledReportModel: null,
       reportDetailModel: null,
@@ -126,26 +122,6 @@ export class ReportController extends React.Component<Properties, State> {
       }
       return <PageLayout/>;
     }
-    if(page === ReportController.Page.ACTIVITY) {
-      if(this.state.model === this.props.model &&
-          this.state.reportActivityModel) {
-        return <ReportActivityController model={this.state.reportActivityModel}
-          onNewReport={this.props.onNewReport}
-          onActionError={this.props.onActionError}/>;
-      }
-      const status = (() => {
-        if(this.state.model === this.props.model && this.state.status ===
-            ScheduledReportsModel.ResponseStatus.ERROR) {
-          return ReportActivityModel.ResponseStatus.ERROR;
-        }
-        return ReportActivityModel.ResponseStatus.IN_PROGRESS;
-      })();
-      return <ReportActivityPage
-        sort={{column: ActivityTable.Column.DATE_MODIFIED,
-          order: SortableTableHeaderCell.SortOrder.NONE}} pageIndex={0}
-        response={{status, isEmpty: false, totalCount: 0, activities: []}}
-        onSubmit={this.onRetry} onNewReport={this.props.onNewReport}/>;
-    }
     if(page === ReportController.Page.GENERATED) {
       if(this.state.model === this.props.model &&
           this.state.generatedReportsModel) {
@@ -192,7 +168,6 @@ export class ReportController extends React.Component<Properties, State> {
     const generation = ++this.generation;
     this.setState({model, scheduledReportsModel: null,
       generatedReportsModel: null,
-      reportActivityModel: null,
       createReportModel: null,
       editScheduledReportModel: null,
       reportDetailModel: null,
@@ -202,7 +177,6 @@ export class ReportController extends React.Component<Properties, State> {
       if(this.mounted && generation === this.generation) {
         this.setState({scheduledReportsModel: model.scheduledReportsModel,
           generatedReportsModel: model.generatedReportsModel,
-          reportActivityModel: model.reportActivityModel,
           createReportModel: model.createReportModel,
           editScheduledReportModel: model.editScheduledReportModel,
           reportDetailModel: model.reportDetailModel,
@@ -225,8 +199,6 @@ export class ReportController extends React.Component<Properties, State> {
       switch(tab) {
         case ReportPage.Tab.GENERATED:
           return ReportController.Page.GENERATED;
-        case ReportPage.Tab.ACTIVITY:
-          return ReportController.Page.ACTIVITY;
         case ReportPage.Tab.SCHEDULES:
           return ReportController.Page.SCHEDULED;
       }
@@ -259,14 +231,11 @@ export namespace ReportController {
   /** The implemented reporting subpages. */
   export enum Page {
 
-    /** Previously generated reports. */
+    /** Reports being generated, failed, or ready to download. */
     GENERATED,
 
     /** Reports scheduled for future generation. */
     SCHEDULED,
-
-    /** Report jobs being generated or awaiting retry. */
-    ACTIVITY,
 
     /** Generate a report or create a schedule. */
     CREATE,
@@ -281,8 +250,6 @@ export namespace ReportController {
 
 function getCurrentTab(page: ReportController.Page): ReportPage.Tab {
   switch(page) {
-    case ReportController.Page.ACTIVITY:
-      return ReportPage.Tab.ACTIVITY;
     case ReportController.Page.SCHEDULED:
     case ReportController.Page.EDIT_SCHEDULED:
       return ReportPage.Tab.SCHEDULES;

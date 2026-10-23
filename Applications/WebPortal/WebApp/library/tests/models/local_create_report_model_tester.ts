@@ -4,8 +4,8 @@ import * as Beam from 'beam';
 import { LocalAccountGroupQueryModel } from '../../source/components';
 import { Interval, LocalTickerQueryModel, ScopeQueryModel } from
   '../../source/models';
-import { LocalCreateReportModel, LocalReportActivityModel,
-  LocalScheduledReportsModel, ReportStatusTag, ReportDefinition,
+import { LocalCreateReportModel,
+  LocalScheduledReportsModel, ReportDefinition,
   ReportFormTemplate } from '../../source/pages/report_page';
 
 function definition(): ReportDefinition {
@@ -70,17 +70,7 @@ describe('LocalCreateReportModel', () => {
     assert.equal(storedAccounts[0].id, Beam.DirectoryEntry.STAR_DIRECTORY.id);
   });
 
-  it('inserts_created_entries', async () => {
-    const activity = {type: 'Report', parameters: ['*'],
-      status: ReportStatusTag.Status.GENERATING,
-      dateModified: new Beam.DateTime(new Beam.Date(2026, 10, 2))};
-    const activities = new LocalReportActivityModel([{...activity, id: '1'}]);
-    assert.throws(() => activities.add(activity));
-    await activities.load();
-    assert.equal(activities.add(activity), '2');
-    activity.parameters.push('mutated');
-    assert.deepEqual(activities.activities.map(entry => entry.id), ['2', '1']);
-    assert.deepEqual(activities.activities[0].parameters, ['*']);
+  it('inserts_created_schedules', async () => {
     const schedule = {type: 'Report',
       parameters: [{label: 'Scope', value: '*'}],
       repeats: true, runDate: {value: '2099-01-02', label: 'Jan 02, 2099'}};

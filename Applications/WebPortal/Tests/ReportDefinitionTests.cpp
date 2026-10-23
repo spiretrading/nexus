@@ -42,11 +42,6 @@ namespace {
         throw std::runtime_error("Unexpected file query.");
       }
 
-      ReportActivities query(
-          const DirectoryEntry&, const ReportActivityQuery&) {
-        throw std::runtime_error("Unexpected activity query.");
-      }
-
       std::optional<ReportJob> load_job(const std::string&) {
         throw std::runtime_error("Unexpected job lookup.");
       }

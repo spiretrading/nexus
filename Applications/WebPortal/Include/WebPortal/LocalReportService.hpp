@@ -66,8 +66,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const std::string& id);
       ReportFile load_file(
         const Beam::DirectoryEntry& account, const std::string& id);
-      ReportActivities query(const Beam::DirectoryEntry& account,
-        const ReportActivityQuery& query);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       std::string submit(const Beam::DirectoryEntry& account,
@@ -231,13 +229,6 @@ namespace Nexus {
     }();
     return ReportFile(make_report_filename(*job),
       job->m_definition.m_output.m_media_type, std::move(output));
-  }
-
-  template<IsReportExecutor E>
-  ReportActivities LocalReportService<E>::query(
-      const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
-    m_open_state.ensure_open();
-    return query_report_activities(load_jobs(), account, query);
   }
 
   template<IsReportExecutor E>

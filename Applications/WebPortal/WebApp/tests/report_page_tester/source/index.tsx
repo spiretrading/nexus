@@ -7,8 +7,6 @@ class App extends React.Component<RouteComponentProps> {
   public render(): JSX.Element {
     const current = (() => {
       switch(this.props.location.pathname) {
-        case '/activity':
-          return ReportPage.Tab.ACTIVITY;
         case '/schedules':
           return ReportPage.Tab.SCHEDULES;
         default:
@@ -31,7 +29,6 @@ class App extends React.Component<RouteComponentProps> {
 
 const PATHS: Record<ReportPage.Tab, string> = {
   [ReportPage.Tab.GENERATED]: '/generated',
-  [ReportPage.Tab.ACTIVITY]: '/activity',
   [ReportPage.Tab.SCHEDULES]: '/schedules'
 };
 ReactDOM.render(<HashRouter>

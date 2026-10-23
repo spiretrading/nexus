@@ -3,7 +3,6 @@
 #include <stop_token>
 #include <Beam/IO/Connection.hpp>
 #include "WebPortal/GeneratedReport.hpp"
-#include "WebPortal/ReportActivity.hpp"
 #include "WebPortal/ReportDetail.hpp"
 #include "WebPortal/ReportFile.hpp"
 #include "WebPortal/ReportSubmission.hpp"
@@ -23,9 +22,6 @@ namespace Nexus {
         std::declval<const std::string&>()) } -> std::same_as<ReportDetail>;
     { service.load_file(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::string&>()) } -> std::same_as<ReportFile>;
-    { service.query(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const ReportActivityQuery&>()) } ->
-          std::same_as<ReportActivities>;
     { service.load_job(std::declval<const std::string&>()) } ->
         std::same_as<std::optional<ReportJob>>;
     { service.store(std::declval<const ReportJob&>()) } -> std::same_as<void>;
@@ -115,10 +111,6 @@ namespace Nexus {
       ReportFile load_file(
         const Beam::DirectoryEntry& account, const std::string& id);
 
-      /** Loads one page of pending and failed jobs submitted by an account. */
-      ReportActivities query(const Beam::DirectoryEntry& account,
-        const ReportActivityQuery& query);
-
       /** Loads stored job metadata, or nullopt if the job is absent. */
       std::optional<ReportJob> load_job(const std::string& id);
 
@@ -142,8 +134,8 @@ namespace Nexus {
         const std::vector<Beam::DirectoryEntry>& recipients);
 
       /**
-       * Cancels jobs submitted by an account, removing them from activity.
-       * Completed and already cancelled jobs are unchanged.
+       * Cancels jobs submitted by an account, removing them from report
+       * listings. Completed and already cancelled jobs are unchanged.
        * @param account The submitting account.
        * @param ids The job identifiers to cancel.
        * @throws ReportNotFoundException If any job is absent or owned by
@@ -230,8 +222,6 @@ namespace Nexus {
             const Beam::DirectoryEntry& account, const std::string& id) = 0;
           virtual ReportFile load_file(
             const Beam::DirectoryEntry& account, const std::string& id) = 0;
-          virtual ReportActivities query(const Beam::DirectoryEntry& account,
-            const ReportActivityQuery& query) = 0;
           virtual std::optional<ReportJob> load_job(const std::string& id) = 0;
           virtual void store(const ReportJob& job) = 0;
           virtual std::string submit(const Beam::DirectoryEntry& account,
@@ -278,8 +268,6 @@ namespace Nexus {
             const std::string& id) override;
           ReportFile load_file(const Beam::DirectoryEntry& account,
             const std::string& id) override;
-          ReportActivities query(const Beam::DirectoryEntry& account,
-            const ReportActivityQuery& query) override;
           std::optional<ReportJob> load_job(const std::string& id) override;
           void store(const ReportJob& job) override;
           std::string submit(const Beam::DirectoryEntry& account,
@@ -378,11 +366,6 @@ namespace Nexus {
   inline ReportFile ReportService::load_file(
       const Beam::DirectoryEntry& account, const std::string& id) {
     return m_service->load_file(account, id);
-  }
-
-  inline ReportActivities ReportService::query(
-      const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
-    return m_service->query(account, query);
   }
 
   inline std::optional<ReportJob> ReportService::load_job(
@@ -490,12 +473,6 @@ namespace Nexus {
   ReportFile ReportService::WrappedReportService<S>::load_file(
       const Beam::DirectoryEntry& account, const std::string& id) {
     return m_service->load_file(account, id);
-  }
-
-  template<typename S>
-  ReportActivities ReportService::WrappedReportService<S>::query(
-      const Beam::DirectoryEntry& account, const ReportActivityQuery& query) {
-    return m_service->query(account, query);
   }
 
   template<typename S>

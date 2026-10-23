@@ -66,8 +66,10 @@ TEST_SUITE("ReportCancellation") {
     REQUIRE(local.load_job("other")->m_status == ReportJob::Status::FAILED);
     REQUIRE(
       local.load_job("completed")->m_status == ReportJob::Status::COMPLETED);
-    REQUIRE(local.query(
-      client.get_account(), ReportActivityQuery()).m_total_count == 0);
+    auto reports = local.query(client.get_account(), GeneratedReportQuery());
+    REQUIRE(reports.m_filtered_count == 1);
+    REQUIRE(reports.m_reports.size() == 1);
+    REQUIRE(reports.m_reports.front().m_id == "completed");
     REQUIRE(cancel(servlet, *session,
       R"({"ids":["mine"]})").get_status_code() == HttpStatusCode::OK);
     REQUIRE(cancel(servlet, *session, R"({"ids":[]})").get_status_code() ==

@@ -43,8 +43,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const std::string& id);
       ReportFile load_file(
         const Beam::DirectoryEntry& account, const std::string& id);
-      ReportActivities query(
-        const Beam::DirectoryEntry& account, const ReportActivityQuery& query);
       std::optional<ReportJob> load_job(const std::string& id);
       void store(const ReportJob& job);
       std::string submit(const Beam::DirectoryEntry& account,

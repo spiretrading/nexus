@@ -2,6 +2,7 @@
 #include <Beam/Json/JsonParser.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Money.hpp"
 #include "WebPortal/ReportJob.hpp"
 
 using namespace Beam;
@@ -42,6 +43,39 @@ TEST_SUITE("ReportJob") {
     receiver.shuttle(received);
     REQUIRE(parse<JsonValue>(to_json(received)) == expected);
     REQUIRE(!received.m_parameters.get("stale"));
+  }
+
+  TEST_CASE("parameter_display") {
+    auto job = ReportJob();
+    job.m_definition.m_parameters = {
+      {"account", "Account", "DirectoryEntry", true},
+      {"accounts", "Accounts", "DirectoryEntryList", true},
+      {"scope", "Scope", "Scope", true},
+      {"currency", "Currency", "Currency", true},
+      {"money", "Money", "Money", true},
+      {"integer", "Integer", "Integer", true},
+      {"decimal", "Decimal", "Decimal", true},
+      {"date", "Date", "Date", true},
+      {"time", "Time", "Time", true},
+      {"timestamp", "Timestamp", "DateTime", true},
+      {"range", "Range", "DateRange", true},
+      {"optional", "Optional", "Integer", false}};
+    job.m_parameters = get<JsonObject>(parse<JsonValue>(R"({
+      "account": {"type":0,"id":1,"name":"Alice"},
+      "accounts": [{"type":0,"id":1,"name":"Alice"},
+        {"type":1,"id":2,"name":"Group"}],
+      "scope": {"name":"","is_global":true,"countries":[],
+        "venues":[],"tickers":[]},
+      "currency":840,"integer":0,"decimal":1.25,
+      "date":"20261005","time":"12:30:00",
+      "timestamp":"20261005T123000",
+      "range":{"start":"20261001","end":"20261005"},"optional":null
+    })"));
+    job.m_parameters["money"] = parse<JsonValue>(to_json(parse_money("12.34")));
+    REQUIRE(format_report_parameters(job) == std::vector<std::string>({
+      "Alice", "Alice, Group", "*", "USD", "12.34", "0", "1.25",
+      "2026-10-05", "12:30:00", "2026-10-05T12:30:00",
+      "2026-10-01 - 2026-10-05"}));
   }
 
   TEST_CASE("status_output") {

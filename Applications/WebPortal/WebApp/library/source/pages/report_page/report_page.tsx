@@ -37,11 +37,8 @@ export namespace ReportPage {
   /** The reporting sections shown in the navigation menu. */
   export enum Tab {
 
-    /** Completed reports available to view and download. */
+    /** Reports being generated, failed, or ready to download. */
     GENERATED,
-
-    /** Reports being generated or awaiting retry. */
-    ACTIVITY,
 
     /** Reports scheduled to run in the future. */
     SCHEDULES
@@ -137,10 +134,8 @@ class ResponsiveTab extends React.Component<TabProperties,
 }
 
 const TABS: readonly TabDefinition[] = [
-  {tab: ReportPage.Tab.GENERATED, label: 'Generated', href: '/generated',
-    icon: 'resources/report_page/generated-icon.svg'},
-  {tab: ReportPage.Tab.ACTIVITY, label: 'Activity', href: '/activity',
-    icon: 'resources/report_page/activity-icon.svg'},
+  {tab: ReportPage.Tab.GENERATED, label: 'Reports', href: '/generated',
+    icon: 'resources/report_page/reports-icon.svg'},
   {tab: ReportPage.Tab.SCHEDULES, label: 'Schedules', href: '/schedules',
     icon: 'resources/report_page/scheduled-icon.svg'}
 ];
@@ -151,10 +146,11 @@ const STYLES = StyleSheet.create({
     borderBottom: '1px solid #E6E6E6', backgroundColor: '#FFFFFF',
     '@media (width < 768px)': {paddingLeft: '11px'},
     '@media (min-width: 768px)': {paddingLeft: '3px'}},
-  nav: {display: 'flex', flexDirection: 'column', alignItems: 'flex-start'},
+  nav: {display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+    paddingTop: '8px', paddingBottom: '8px'},
   menu: {display: 'flex', justifyContent: 'space-between', listStyle: 'none',
     margin: 0, padding: 0,
-    '@media (width < 768px)': {width: 'clamp(114px, 36%, 146px)'},
+    '@media (width < 768px)': {width: 'clamp(76px, 24%, 92px)'},
     '@media (min-width: 768px)': {width: 'fit-content'}},
   item: {display: 'flex', flex: '0 0 auto'},
   content: {display: 'flex', flexDirection: 'column', flex: '1 1 auto',

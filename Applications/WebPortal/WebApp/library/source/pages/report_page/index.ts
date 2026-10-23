@@ -7,7 +7,6 @@ export * from './parameters_date_range_input';
 export * from './parameters_date_range_options';
 export * from './recurrence';
 export * from './recurrence_input';
-export * from './report_activity_page';
 export * from './report_controller';
 export * from './report_definition';
 export * from './report_detail_page';
