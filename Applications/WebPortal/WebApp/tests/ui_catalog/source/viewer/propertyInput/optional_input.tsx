@@ -47,7 +47,8 @@ export function OptionalInput<T>(PropertyInput: typeof React.Component) {
     }
 
     public componentDidUpdate(prevProps: Properties<T>) {
-      if(this.props.value !== prevProps.value && !this.state.isUndefined) {
+      if(!Object.is(this.props.value, prevProps.value) &&
+          !this.state.isUndefined) {
         this.setState({localValue: this.props.value});
       }
     }
