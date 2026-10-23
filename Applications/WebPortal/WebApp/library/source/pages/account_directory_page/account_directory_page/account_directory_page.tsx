@@ -162,7 +162,10 @@ export class AccountDirectoryPage extends React.Component<Properties> {
               </div>
               <FilterBar value={this.props.filter} 
                 onChange={this.props.onFilterChange}/>
-              <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
+              <div style={{
+                ...buttonBoxStyle,
+                ...horizontalButtonVisibility
+              }}>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
                 <button className={css(buttonStyle)}
                     onClick={this.props.onNewAccountClick}>
