@@ -375,7 +375,8 @@ namespace Beam {
   };
 
   template<>
-  constexpr auto is_structure<Nexus::OrdinalDayOfMonthDateRule::Day> = false;
+  inline constexpr auto is_structure<Nexus::OrdinalDayOfMonthDateRule::Day> =
+    false;
 
   template<>
   struct Send<Nexus::OrdinalDayOfMonthDateRule::Day> {
