@@ -40,7 +40,7 @@ interface Properties {
   onNewReport?: () => void;
 
   /** Called to navigate after creating, scheduling, or editing a report. */
-  onNavigate?: (page: ReportController.Page) => void;
+  onNavigate?: (page: ReportController.Page, id?: string) => void;
 
   /** Called when a report action fails. */
   onActionError?: (error: unknown) => void;
@@ -234,11 +234,11 @@ export class ReportController extends React.Component<Properties, State> {
     this.props.onNavigate?.(page);
   };
 
-  private onCreated = (scheduled: boolean) => {
+  private onCreated = (scheduled: boolean, id: string) => {
     if(scheduled) {
       this.props.onNavigate?.(ReportController.Page.SCHEDULED);
     } else {
-      this.props.onNavigate?.(ReportController.Page.ACTIVITY);
+      this.props.onNavigate?.(ReportController.Page.DETAIL, id);
     }
   };
 

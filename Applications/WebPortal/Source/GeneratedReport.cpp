@@ -40,9 +40,7 @@ GeneratedReports Nexus::query_generated_reports(
   auto result = GeneratedReports();
   auto entries = std::vector<std::pair<GeneratedReport, ptime>>();
   for(auto& job : jobs) {
-    auto is_owned = job.m_account == account &&
-      job.m_status != ReportJob::Status::CANCELLED;
-    if(!is_owned && !access.is_accessible(job)) {
+    if(!access.is_visible(job)) {
       continue;
     }
     result.m_is_empty = false;

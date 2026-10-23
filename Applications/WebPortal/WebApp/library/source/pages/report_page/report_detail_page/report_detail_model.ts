@@ -10,6 +10,19 @@ export abstract class ReportDetailModel {
 
 export namespace ReportDetailModel {
 
+  /** The state of the report content. */
+  export enum Status {
+
+    /** The report job is queued or running. */
+    IN_PROGRESS,
+
+    /** Report generation failed. */
+    FAILED,
+
+    /** The report is ready to view or download. */
+    READY
+  }
+
   /** A report parameter and its display value. */
   export interface Parameter {
 
@@ -20,7 +33,7 @@ export namespace ReportDetailModel {
     value: string;
   }
 
-  /** A generated report available for viewing or downloading. */
+  /** A report job and any available content. */
   export interface Report {
 
     /** The report's unique identifier. */
@@ -32,7 +45,10 @@ export namespace ReportDetailModel {
     /** The report parameters in display order. */
     parameters: readonly Parameter[];
 
-    /** The download URL. Its lifetime is managed by the provider. */
+    /** The state of the report content. */
+    status: Status;
+
+    /** The download URL, empty until ready. Managed by the provider. */
     filePath: string;
 
     /** Optional text content for a viewer. Omitted for download-only files. */

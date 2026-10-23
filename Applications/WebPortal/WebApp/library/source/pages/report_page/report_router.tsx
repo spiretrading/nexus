@@ -42,7 +42,11 @@ export class ReportRouter extends React.Component<Properties> {
     this.navigate('/reports/new');
   };
 
-  private onNavigate = (page: ReportController.Page) => {
+  private onNavigate = (page: ReportController.Page, id?: string) => {
+    if(page === ReportController.Page.DETAIL && id) {
+      this.navigate(`/reports/${encodeURIComponent(id)}`);
+      return;
+    }
     const path = PATHS.get(page);
     if(path) {
       this.navigate(path);

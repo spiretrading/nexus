@@ -8,7 +8,7 @@ class Clock {
   public next = 0;
 
   public setTimeout = (callback: () => void, delay: number): number => {
-    assert.equal(delay, 500);
+    assert.ok(delay === 500 || delay === 1000);
     const id = ++this.next;
     this.tasks.set(id, callback);
     return id;
@@ -44,7 +44,8 @@ class Model extends ReportDetailModel {
 }
 
 function makeReport(id: string): ReportDetailModel.Report {
-  return {id, title: `Report ${id}`, parameters: [], filePath: `/report/${id}`};
+  return {id, title: `Report ${id}`, parameters: [],
+    status: ReportDetailModel.Status.READY, filePath: `/report/${id}`};
 }
 
 function synchronousState(component: any): void {
@@ -118,6 +119,66 @@ describe('ReportDetailController', () => {
     await flush();
     assert.equal(controller.state.status, ReportDetailPage.Status.READY);
     assert.equal(clock.tasks.size, 0);
+  });
+
+  it('polls_pending_jobs_until_ready_without_resetting_placeholder',
+      async () => {
+    controller.componentDidMount();
+    await flush();
+    model.requests[0].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.IN_PROGRESS, filePath: ''});
+    await flush();
+    assert.equal(controller.state.status, null);
+    assert.equal(clock.tasks.size, 2);
+    const [placeholderId, placeholder] = clock.tasks.entries().next().value;
+    clock.tasks.delete(placeholderId);
+    placeholder();
+    assert.equal(controller.state.status, ReportDetailPage.Status.IN_PROGRESS);
+    clock.fire();
+    await flush();
+    assert.equal(model.requests.length, 2);
+    assert.equal(clock.tasks.size, 0);
+    model.requests[1].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.IN_PROGRESS, filePath: ''});
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.IN_PROGRESS);
+    clock.fire();
+    await flush();
+    model.requests[2].resolve(makeReport('1'));
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.READY);
+    assert.equal(clock.tasks.size, 0);
+  });
+
+  it('failed_job_stops_polling_and_retry_reloads', async () => {
+    controller.componentDidMount();
+    await flush();
+    model.requests[0].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.FAILED, filePath: ''});
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.ERROR);
+    assert.equal(clock.tasks.size, 0);
+    controller.render().props.onRetry();
+    await flush();
+    model.requests[1].resolve(makeReport('1'));
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.READY);
+  });
+
+  it('leaving_pending_report_cancels_polling', async () => {
+    controller.componentDidMount();
+    await flush();
+    model.requests[0].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.IN_PROGRESS, filePath: ''});
+    await flush();
+    const callbacks = [...clock.tasks.values()];
+    controller.componentWillUnmount();
+    assert.equal(clock.tasks.size, 0);
+    for(const callback of callbacks) {
+      callback();
+    }
+    await flush();
+    assert.equal(model.requests.length, 1);
   });
 
   it('ignores_previous_report_and_timer', async () => {

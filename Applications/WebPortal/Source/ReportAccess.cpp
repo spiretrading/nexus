@@ -9,6 +9,14 @@ ReportAccess::ReportAccess(
   : m_account(account),
     m_client(std::move(client)) {}
 
+bool ReportAccess::is_visible(const ReportJob& job) {
+  if(m_account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    return false;
+  }
+  return (job.m_account == m_account &&
+    job.m_status != ReportJob::Status::CANCELLED) || is_accessible(job);
+}
+
 bool ReportAccess::is_accessible(const ReportJob& job) {
   if(m_account.m_type != DirectoryEntry::Type::ACCOUNT ||
       job.m_status != ReportJob::Status::COMPLETED) {

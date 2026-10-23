@@ -5,7 +5,7 @@
 
 namespace Nexus {
 
-  /** Checks access to completed reports using current group memberships. */
+  /** Checks report visibility and access using current group memberships. */
   class ReportAccess {
     public:
 
@@ -17,7 +17,10 @@ namespace Nexus {
       ReportAccess(const Beam::DirectoryEntry& account,
         Beam::ServiceLocatorClient client);
 
-      /** Tests whether a report is owned by or shared with the account. */
+      /** Tests whether the account can view the job's metadata and status. */
+      bool is_visible(const ReportJob& job);
+
+      /** Tests whether the account can access a completed report's file. */
       bool is_accessible(const ReportJob& job);
 
     private:

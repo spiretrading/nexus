@@ -16,7 +16,7 @@ export class HttpReportDetailModel extends ReportDetailModel {
     this.ensureLoaded();
     const response = await Beam.post(
       '/api/reporting_service/load_report', {id});
-    return {id: response.id, title: response.title,
+    return {id: response.id, title: response.title, status: response.status,
       parameters: response.parameters.map((parameter: any) =>
         ({label: parameter.label, value: parameter.value})),
       filePath: response.file_path, content: response.content};

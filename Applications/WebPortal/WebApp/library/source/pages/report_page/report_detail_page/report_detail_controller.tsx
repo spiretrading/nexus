@@ -34,6 +34,7 @@ export class ReportDetailController extends React.Component<Properties, State> {
     this.generation = 0;
     this.loading = false;
     this.timer = null;
+    this.refreshTimer = null;
   }
 
   public render(): JSX.Element {
@@ -45,7 +46,8 @@ export class ReportDetailController extends React.Component<Properties, State> {
     return <ReportDetailPage title={report?.title ?? ''}
       parameters={report?.parameters ?? []} filePath={report?.filePath}
       status={this.state.status} onRetry={this.onRetry}
-      content={report && this.props.renderContent?.(report)}/>;
+      content={this.state.status === ReportDetailPage.Status.READY &&
+        report && this.props.renderContent?.(report)}/>;
   }
 
   public componentDidMount(): void {
@@ -63,6 +65,7 @@ export class ReportDetailController extends React.Component<Properties, State> {
     this.mounted = false;
     ++this.generation;
     window.clearTimeout(this.timer);
+    window.clearTimeout(this.refreshTimer);
   }
 
   private async load(): Promise<void> {
@@ -71,6 +74,7 @@ export class ReportDetailController extends React.Component<Properties, State> {
     const generation = ++this.generation;
     this.loading = true;
     window.clearTimeout(this.timer);
+    window.clearTimeout(this.refreshTimer);
     const status = (() => {
       if(this.state.model === model && this.state.id === id) {
         return this.state.status;
@@ -89,9 +93,39 @@ export class ReportDetailController extends React.Component<Properties, State> {
       if(!this.mounted || generation !== this.generation) {
         return;
       }
-      const report = await model.loadReport(id);
+      await this.query(model, id, generation);
+    } catch(error) {
       if(this.mounted && generation === this.generation) {
+        this.loading = false;
+        window.clearTimeout(this.timer);
+        this.timer = null;
+        this.setState({status: ReportDetailPage.Status.ERROR});
+        this.props.onError?.(error);
+      }
+    }
+  }
+
+  private async query(model: ReportDetailModel, id: string,
+      generation: number): Promise<void> {
+    let pending = false;
+    try {
+      const report = await model.loadReport(id);
+      if(!this.mounted || generation !== this.generation) {
+        return;
+      }
+      if(report.status === ReportDetailModel.Status.IN_PROGRESS) {
+        pending = true;
+        const REFRESH_INTERVAL = 1000;
+        this.refreshTimer = window.setTimeout(() => {
+          this.refreshTimer = null;
+          if(this.mounted && generation === this.generation) {
+            this.query(model, id, generation);
+          }
+        }, REFRESH_INTERVAL);
+      } else if(report.status === ReportDetailModel.Status.READY) {
         this.setState({report, status: ReportDetailPage.Status.READY});
+      } else {
+        this.setState({report: null, status: ReportDetailPage.Status.ERROR});
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
@@ -99,7 +133,7 @@ export class ReportDetailController extends React.Component<Properties, State> {
         this.props.onError?.(error);
       }
     } finally {
-      if(this.mounted && generation === this.generation) {
+      if(!pending && this.mounted && generation === this.generation) {
         this.loading = false;
         window.clearTimeout(this.timer);
         this.timer = null;
@@ -117,4 +151,5 @@ export class ReportDetailController extends React.Component<Properties, State> {
   private generation: number;
   private loading: boolean;
   private timer: number;
+  private refreshTimer: number;
 }

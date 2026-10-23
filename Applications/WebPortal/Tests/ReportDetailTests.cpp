@@ -81,6 +81,7 @@ TEST_SUITE("ReportDetail") {
     REQUIRE(text.find("private") == std::string::npos);
     auto report = from_json<ReportDetail>(text);
     REQUIRE(report.m_id == job.m_id);
+    REQUIRE(report.m_status == ReportDetail::Status::READY);
     REQUIRE(report.m_title == "Saved Title");
     REQUIRE(report.m_parameters.size() == 3);
     REQUIRE(report.m_parameters[0].m_label == "Saved Count");
@@ -135,14 +136,42 @@ TEST_SUITE("ReportDetail") {
     job.m_recipients = {alice};
     local.store(job);
     REQUIRE(service.load_report(alice, job.m_id).m_id == job.m_id);
-    for(auto status : {ReportJob::Status::QUEUED, ReportJob::Status::RUNNING,
+    for(auto status : {ReportJob::Status::STAGED, ReportJob::Status::QUEUED,
+        ReportJob::Status::RUNNING,
         ReportJob::Status::FAILED, ReportJob::Status::CANCELLED}) {
       job.m_status = status;
       local.store(job);
       REQUIRE_THROWS_AS(
         service.load_report(alice, job.m_id), ReportNotFoundException);
-      REQUIRE_THROWS_AS(
-        service.load_report(bob, job.m_id), ReportNotFoundException);
+      session->set_account(alice);
+      REQUIRE(load(servlet, *session, R"({"id":"report /?"})").
+        get_status_code() == HttpStatusCode::NOT_FOUND);
+      session->set_account(bob);
+      if(status == ReportJob::Status::CANCELLED) {
+        REQUIRE_THROWS_AS(
+          service.load_report(bob, job.m_id), ReportNotFoundException);
+        REQUIRE(load(servlet, *session, R"({"id":"report /?"})").
+          get_status_code() == HttpStatusCode::NOT_FOUND);
+      } else {
+        auto details = service.load_report(bob, job.m_id);
+        auto expected = [&] {
+          if(status == ReportJob::Status::FAILED) {
+            return ReportDetail::Status::FAILED;
+          }
+          return ReportDetail::Status::IN_PROGRESS;
+        }();
+        REQUIRE(details.m_status == expected);
+        REQUIRE(to_string(details.m_file_path).empty());
+        auto response = load(servlet, *session, R"({"id":"report /?"})");
+        REQUIRE(response.get_status_code() == HttpStatusCode::OK);
+        auto received = from_json<ReportDetail>(to_string(response.get_body()));
+        REQUIRE(received.m_status == expected);
+        REQUIRE(to_string(received.m_file_path).empty());
+        REQUIRE(to_string(response.get_body()).find("private") ==
+          std::string::npos);
+      }
+      REQUIRE_THROWS_AS(service.load_file(bob, job.m_id),
+        ReportNotFoundException);
     }
     job.m_status = ReportJob::Status::COMPLETED;
     job.m_recipients = {DirectoryEntry::STAR_DIRECTORY};

@@ -16,6 +16,12 @@ export class LocalReportDetailModel extends ReportDetailModel {
     return this.loaded;
   }
 
+  /** Stores the latest state and content of a report job. */
+  public store(report: ReportDetailModel.Report): void {
+    this.ensureLoaded();
+    this.entries.set(report.id, copyReport(report));
+  }
+
   /** Removes a generated report from the local model. */
   public delete(id: string): void {
     this.ensureLoaded();

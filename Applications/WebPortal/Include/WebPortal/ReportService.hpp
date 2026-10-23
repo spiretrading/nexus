@@ -95,12 +95,12 @@ namespace Nexus {
       std::vector<ReportDefinition> load_definitions(
         const Beam::DirectoryEntry& account);
 
-      /** Loads one page of completed reports accessible to an account. */
+      /** Loads one page of report jobs visible to an account. */
       GeneratedReports query(
         const Beam::DirectoryEntry& account, const GeneratedReportQuery& query);
 
       /**
-       * Loads a completed report's saved metadata for an owner or recipient.
+       * Loads visible job metadata and status for an owner or recipient.
        * @throws ReportNotFoundException If the report is unavailable.
        */
       ReportDetail load_report(

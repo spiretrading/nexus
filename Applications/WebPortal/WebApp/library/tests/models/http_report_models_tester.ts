@@ -284,10 +284,11 @@ describe('HTTP report models', () => {
     await model.load();
     Request.handler = () => ({status: 200, body: {id: 'job', title: 'Example',
       parameters: [{label: 'Currency', value: 'USD'}],
-      file_path: '/api/reporting_service/download_report?id=job',
+      status: 2, file_path: '/api/reporting_service/download_report?id=job',
       content: 'a,b'}});
     const report = await model.loadReport('job');
     assert.equal(report.content, 'a,b');
+    assert.equal(report.status, 2);
     assert.equal(report.filePath,
       '/api/reporting_service/download_report?id=job');
     assert.deepEqual(Request.calls[0].body, {id: 'job'});

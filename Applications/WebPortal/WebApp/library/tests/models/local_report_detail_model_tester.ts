@@ -6,7 +6,8 @@ import { LocalReportDetailModel, ReportDetailModel } from
 function report(): ReportDetailModel.Report {
   return {id: '1', title: 'Profit and Loss',
     parameters: [{label: 'Account / Group', value: 'Alpha Group'}],
-    filePath: '/reports/1.csv', content: 'Ticker,Profit\nABX.TSX,100\n'};
+    status: ReportDetailModel.Status.READY, filePath: '/reports/1.csv',
+    content: 'Ticker,Profit\nABX.TSX,100\n'};
 }
 
 describe('LocalReportDetailModel', () => {
@@ -14,6 +15,7 @@ describe('LocalReportDetailModel', () => {
     const model = new LocalReportDetailModel([report()]);
     await assert.rejects(model.loadReport('1'));
     assert.throws(() => model.delete('1'));
+    assert.throws(() => model.store(report()));
     await model.load();
     assert.deepEqual(await model.loadReport('1'), report());
     await assert.rejects(model.loadReport('missing'));
@@ -21,10 +23,25 @@ describe('LocalReportDetailModel', () => {
     await assert.rejects(model.loadReport('1'));
   });
 
+  it('stores_job_status_changes_as_snapshots', async () => {
+    const model = new LocalReportDetailModel([]);
+    await model.load();
+    const pending: ReportDetailModel.Report = {...report(),
+      status: ReportDetailModel.Status.IN_PROGRESS,
+      filePath: '', content: null};
+    model.store(pending);
+    pending.title = 'Changed';
+    assert.equal((await model.loadReport('1')).title, 'Profit and Loss');
+    assert.equal((await model.loadReport('1')).status,
+      ReportDetailModel.Status.IN_PROGRESS);
+    model.store(report());
+    assert.deepEqual(await model.loadReport('1'), report());
+  });
+
   it('isolates_metadata_and_preserves_optional_content', async () => {
     const original = report();
     const binary: ReportDetailModel.Report = {...report(), id: '2',
-      filePath: '/reports/2.zip',
+      status: ReportDetailModel.Status.READY, filePath: '/reports/2.zip',
       content: null};
     const model = new LocalReportDetailModel([original, binary]);
     original.parameters[0].value = 'Changed';

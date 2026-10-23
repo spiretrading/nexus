@@ -206,7 +206,7 @@ namespace Nexus {
     m_open_state.ensure_open();
     auto job = load_job(id);
     auto access = ReportAccess(account, m_client);
-    if(!job || !access.is_accessible(*job)) {
+    if(!job || !access.is_visible(*job)) {
       throw ReportNotFoundException();
     }
     return make_report_detail(*job);

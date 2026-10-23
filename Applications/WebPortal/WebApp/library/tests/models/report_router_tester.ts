@@ -124,6 +124,21 @@ describe('Report routing', () => {
     assert.equal(history.location.pathname, '/reports/schedules');
   });
 
+  it('opens_created_report_and_preserves_back_navigation', () => {
+    const {router, history} = makeRouter('/reports/new');
+    const controller = new ReportController({model: makeReports(),
+      onNavigate: router.render().props.children.props.onNavigate});
+    (controller as any).onCreated(false, 'job /?');
+    assert.equal(history.location.pathname, '/reports/job %2F%3F');
+    assert.equal(router.render().props.children.props.reportId, 'job /?');
+    assert.equal(router.render().props.children.props.page,
+      ReportController.Page.DETAIL);
+    history.goBack();
+    assert.equal(history.location.pathname, '/reports/new');
+    (controller as any).onCreated(true, 'schedule');
+    assert.equal(history.location.pathname, '/reports/schedules');
+  });
+
   it('routes_report_links_and_preserves_native_link_actions', () => {
     const {router, history} = makeRouter('/reports');
     const onClick = router.render().props.onClick;

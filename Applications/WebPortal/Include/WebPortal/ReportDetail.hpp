@@ -5,8 +5,21 @@
 
 namespace Nexus {
 
-  /** The public details of a completed report. */
+  /** The public details and execution state of a report job. */
   struct ReportDetail {
+
+    /** The state of the report content. */
+    enum class Status {
+
+      /** The job is queued or running. */
+      IN_PROGRESS,
+
+      /** The job failed to generate a report. */
+      FAILED,
+
+      /** The generated report is available. */
+      READY
+    };
 
     /** A labeled parameter value. */
     struct Parameter {
@@ -27,8 +40,11 @@ namespace Nexus {
     /** The configured parameter values in definition order. */
     std::vector<Parameter> m_parameters;
 
-    /** The authenticated URL from which to download the generated file. */
+    /** The authenticated download URL, empty until the report is ready. */
     Beam::Uri m_file_path;
+
+    /** The state of the report content. */
+    Status m_status = Status::READY;
   };
 
   /** Formats configured parameter labels and values in definition order. */
@@ -59,6 +75,7 @@ namespace Beam {
       shuttle.shuttle("title", value.m_title);
       shuttle.shuttle("parameters", value.m_parameters);
       shuttle.shuttle("file_path", value.m_file_path);
+      shuttle.shuttle("status", value.m_status);
     }
   };
 }
