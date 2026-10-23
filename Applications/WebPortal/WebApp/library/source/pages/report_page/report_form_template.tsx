@@ -619,16 +619,22 @@ class Collapse extends React.Component<{open: boolean; spacing?: boolean},
     })();
     return <div {...attributes} aria-hidden={!this.props.open}
         onTransitionEnd={this.onTransitionEnd}
-        style={{maxHeight: height, overflow: 'clip',
+        style={{
+          maxHeight: height,
+          overflow: 'clip',
           visibility: this.props.open && 'visible' || 'hidden',
-          transition}}>
-      <div ref={this.content} style={{display: 'flow-root',
-          paddingBottom: (() => {
-            if(this.props.spacing === false) {
-              return 0;
-            }
-            return '30px';
-          })()}}>
+          transition
+        }}>
+      <div ref={this.content}
+          style={{
+            display: 'flow-root',
+            paddingBottom: (() => {
+              if(this.props.spacing === false) {
+                return 0;
+              }
+              return '30px';
+            })()
+          }}>
         {this.props.children}
       </div>
     </div>;
@@ -683,37 +689,101 @@ const TIME_PARAMETER = new ReportParameterDefinition(
 const SCHEDULE_PARAMETER = new ReportParameterDefinition(
   '$schedule', 'Date & Time', 'DateTime', true);
 const STYLES = StyleSheet.create({
-  container: {containerType: 'inline-size', width: '100%'},
-  form: {backgroundColor: '#FFFFFF', color: '#333333',
-    fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem',
-    fontWeight: 400},
-  heading: {fontSize: '1.125rem', fontWeight: 500, margin: '0 0 30px'},
-  fieldset: {boxSizing: 'border-box', minWidth: 0, margin: '0 0 30px',
-    padding: '30px 0 0', border: 0, borderTop: '1px solid #E6E6E6'},
-  typeFieldset: {borderTop: 'none', paddingTop: 0,
-    maxWidth: '100%'},
-  legend: {float: 'left', width: '100%', boxSizing: 'border-box',
-    padding: 0, marginBottom: '20px', color: '#4B23A0', fontWeight: 500},
-  parameters: {clear: 'both', display: 'flex', flexDirection: 'column',
+  container: {
+    containerType: 'inline-size',
+    width: '100%'
+  },
+  form: {
+    backgroundColor: '#FFFFFF',
+    color: '#333333',
+    fontFamily: 'Roboto, system-ui, sans-serif',
+    fontSize: '0.875rem',
+    fontWeight: 400
+  },
+  heading: {
+    fontSize: '1.125rem',
+    fontWeight: 500,
+    margin: '0 0 30px'
+  },
+  fieldset: {
+    boxSizing: 'border-box',
+    minWidth: 0,
+    margin: '0 0 30px',
+    padding: '30px 0 0',
+    border: 0,
+    borderTop: '1px solid #E6E6E6'
+  },
+  typeFieldset: {
+    borderTop: 'none',
+    paddingTop: 0,
+    maxWidth: '100%'
+  },
+  legend: {
+    float: 'left',
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: 0,
+    marginBottom: '20px',
+    color: '#4B23A0',
+    fontWeight: 500
+  },
+  parameters: {
+    clear: 'both',
+    display: 'flex',
+    flexDirection: 'column',
     gap: '20px',
-    '@container (min-width: 384px)': {gap: '10px'}},
-  run: {marginBottom: 0},
+    '@container (min-width: 384px)': {
+      gap: '10px'
+    }
+  },
+  run: {
+    marginBottom: 0
+  },
   runLegend: {
-    '@container (min-width: 384px)': {width: '130px',
-      marginBottom: 0, marginRight: '8px', lineHeight: '20px'}
+    '@container (min-width: 384px)': {
+      width: '130px',
+      marginBottom: 0,
+      marginRight: '8px',
+      lineHeight: '20px'
+    }
   },
-  runOptions: {display: 'flex', gap: '18px',
-    '@container (width < 384px)': {flexDirection: 'column',
-      paddingLeft: '10px', clear: 'both'},
-    '@container (min-width: 384px)': {marginLeft: '138px'}},
-  schedule: {marginBottom: 0},
-  submit: {backgroundColor: '#FFFFFF', borderTop: '1px solid #E6E6E6',
-    paddingTop: '30px', display: 'flex', justifyContent: 'center'},
+  runOptions: {
+    display: 'flex',
+    gap: '18px',
+    '@container (width < 384px)': {
+      flexDirection: 'column',
+      paddingLeft: '10px',
+      clear: 'both'
+    },
+    '@container (min-width: 384px)': {
+      marginLeft: '138px'
+    }
+  },
+  schedule: {
+    marginBottom: 0
+  },
+  submit: {
+    backgroundColor: '#FFFFFF',
+    borderTop: '1px solid #E6E6E6',
+    paddingTop: '30px',
+    display: 'flex',
+    justifyContent: 'center'
+  },
   submitButton: {
-    '@container (width < 384px)': {width: '100%'},
-    '@container (min-width: 384px)': {width: '246px'}
+    '@container (width < 384px)': {
+      width: '100%'
+    },
+    '@container (min-width: 384px)': {
+      width: '246px'
+    }
   },
-  errorBlock: {paddingTop: '18px'},
-  errorMessage: {display: 'block', color: '#E63F44', textAlign: 'center',
-    overflowWrap: 'anywhere'}
+  errorBlock: {
+    paddingTop: '18px'
+  },
+  errorMessage: {
+    display: 'block',
+    color: '#E63F44',
+    textAlign: 'center',
+    overflowWrap: 'anywhere'
+  }
 });

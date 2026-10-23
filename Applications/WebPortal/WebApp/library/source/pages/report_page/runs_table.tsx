@@ -77,10 +77,22 @@ const STYLES = StyleSheet.create({
     textAlign: 'left',
     tableLayout: 'fixed'
   },
-  header: {backgroundColor: '#F8F8F8'},
-  heading: {color: '#5D5E6D', fontWeight: 500},
-  row: {backgroundColor: '#FFFFFF', ':hover': {backgroundColor: '#F8F8F8'}},
-  cell: {padding: 0},
+  header: {
+    backgroundColor: '#F8F8F8'
+  },
+  heading: {
+    color: '#5D5E6D',
+    fontWeight: 500
+  },
+  row: {
+    backgroundColor: '#FFFFFF',
+    ':hover': {
+      backgroundColor: '#F8F8F8'
+    }
+  },
+  cell: {
+    padding: 0
+  },
   content: {
     boxSizing: 'border-box',
     minHeight: '40px',

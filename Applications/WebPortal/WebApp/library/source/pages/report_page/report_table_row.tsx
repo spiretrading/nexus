@@ -140,9 +140,15 @@ const STYLES = StyleSheet.create({
     '@container (424px < width)': {
       border: 'none',
       borderRadius: 0,
-      ':hover': {backgroundColor: '#F8F8F8'},
-      ':is([aria-selected="true"])': {backgroundColor: '#E2E0FF'},
-      ':is([aria-selected="true"]):hover': {backgroundColor: '#E2E0FF'}
+      ':hover': {
+        backgroundColor: '#F8F8F8'
+      },
+      ':is([aria-selected="true"])': {
+        backgroundColor: '#E2E0FF'
+      },
+      ':is([aria-selected="true"]):hover': {
+        backgroundColor: '#E2E0FF'
+      }
     }
   },
   selected: {
@@ -171,7 +177,9 @@ const STYLES = StyleSheet.create({
       gridColumn: 2,
       padding: '12px 20px 12px 10px'
     },
-    '@container (424px < width)': {padding: '12px 20px'}
+    '@container (424px < width)': {
+      padding: '12px 20px'
+    }
   },
   type: {
     '@container (width <= 424px)': {
@@ -186,18 +194,31 @@ const STYLES = StyleSheet.create({
     }
   },
   status: {
-    '@container (424px < width)': {padding: '9px 10px'}
+    '@container (424px < width)': {
+      padding: '9px 10px'
+    }
   },
-  statusContent: {alignItems: 'center'},
+  statusContent: {
+    alignItems: 'center'
+  },
   content: {
     display: 'flex',
-    '@container (width <= 424px)': {gap: '8px'}
+    '@container (width <= 424px)': {
+      gap: '8px'
+    }
   },
   label: {
-    '@container (width <= 424px)': {flex: '0 0 40%'},
-    '@container (424px < width)': {display: 'none'}
+    '@container (width <= 424px)': {
+      flex: '0 0 40%'
+    },
+    '@container (424px < width)': {
+      display: 'none'
+    }
   },
-  value: {minWidth: 0, flex: '1 1 0'},
+  value: {
+    minWidth: 0,
+    flex: '1 1 0'
+  },
   hidden: {
     position: 'absolute',
     width: '1px',

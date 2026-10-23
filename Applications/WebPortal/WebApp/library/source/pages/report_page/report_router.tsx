@@ -21,9 +21,14 @@ export class ReportRouter extends React.Component<Properties> {
     if(!route) {
       return <PageNotFoundPage displaySize={this.props.displaySize}/>;
     }
-    return <div onClick={this.onClick} style={{display: 'flex',
-        flexDirection: 'column', flex: '1 1 auto', minHeight: 0,
-        overflow: 'hidden'}}>
+    return <div onClick={this.onClick}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '1 1 auto',
+          minHeight: 0,
+          overflow: 'hidden'
+        }}>
       <ReportController model={this.props.model} page={route.page}
         reportId={route.id} scheduleId={route.id} basePath='/reports'
         onNewReport={this.onNewReport} onNavigate={this.onNavigate}

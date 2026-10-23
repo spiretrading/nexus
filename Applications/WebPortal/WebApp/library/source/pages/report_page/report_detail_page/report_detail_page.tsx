@@ -83,7 +83,11 @@ function Header(props: Properties): JSX.Element {
   if(props.status === ReportDetailPage.Status.IN_PROGRESS) {
     return <header>
       <div className={css(STYLES.titleRow)} style={{height: '34px'}}>
-        <Skeleton style={{width: '140px', height: '22px'}}/>
+        <Skeleton
+          style={{
+            width: '140px',
+            height: '22px'
+          }}/>
       </div>
       <MetadataPlaceholder/>
     </header>;
@@ -104,8 +108,16 @@ function MetadataPlaceholder(): JSX.Element {
   return <div aria-hidden className={css(STYLES.metadataPlaceholder)}>
     {Array.from({length: ROW_COUNT}, (_, index) =>
       <React.Fragment key={index}>
-        <Skeleton style={{width: '80px', height: '16px'}}/>
-        <Skeleton style={{width: '80px', height: '16px'}}/>
+        <Skeleton
+          style={{
+            width: '80px',
+            height: '16px'
+          }}/>
+        <Skeleton
+          style={{
+            width: '80px',
+            height: '16px'
+          }}/>
       </React.Fragment>)}
   </div>;
 }
@@ -137,34 +149,102 @@ function Download(props: {filePath: string; disabled: boolean}): JSX.Element {
 }
 
 const STYLES = StyleSheet.create({
-  main: {position: 'relative', flex: '1 0 auto', boxSizing: 'border-box',
-    display: 'flex', flexDirection: 'column', minWidth: 0,
-    fontFamily: 'Roboto, system-ui, sans-serif', fontWeight: 400,
-    fontSize: '0.875rem', color: '#333333',
-    '@media (width < 768px)': {padding: '18px 18px 122px'},
-    '@media (min-width: 768px)': {padding: '18px 18px 40px'}},
-  titleRow: {display: 'flex', alignItems: 'center', marginBottom: '30px'},
-  reportContent: {display: 'flex', flexDirection: 'column', flex: '1 0 auto',
-    minWidth: 0},
-  heading: {fontSize: '1.125rem', fontWeight: 500, margin: 0, minWidth: 0,
-    overflowWrap: 'anywhere'},
-  download: {marginLeft: 'auto', flexShrink: 0, width: '140px',
-    '@media (width < 768px)': {display: 'none'}},
-  downloadButton: {display: 'grid', width: '100%', maxWidth: '424px'},
-  metadataPlaceholder: {display: 'grid', gridTemplateColumns: '80px 80px',
-    columnGap: '58px', rowGap: '8px', width: 'fit-content'},
-  parameters: {display: 'grid',
+  main: {
+    position: 'relative',
+    flex: '1 0 auto',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+    fontFamily: 'Roboto, system-ui, sans-serif',
+    fontWeight: 400,
+    fontSize: '0.875rem',
+    color: '#333333',
+    '@media (width < 768px)': {
+      padding: '18px 18px 122px'
+    },
+    '@media (min-width: 768px)': {
+      padding: '18px 18px 40px'
+    }
+  },
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '30px'
+  },
+  reportContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 0 auto',
+    minWidth: 0
+  },
+  heading: {
+    fontSize: '1.125rem',
+    fontWeight: 500,
+    margin: 0,
+    minWidth: 0,
+    overflowWrap: 'anywhere'
+  },
+  download: {
+    marginLeft: 'auto',
+    flexShrink: 0,
+    width: '140px',
+    '@media (width < 768px)': {
+      display: 'none'
+    }
+  },
+  downloadButton: {
+    display: 'grid',
+    width: '100%',
+    maxWidth: '424px'
+  },
+  metadataPlaceholder: {
+    display: 'grid',
+    gridTemplateColumns: '80px 80px',
+    columnGap: '58px',
+    rowGap: '8px',
+    width: 'fit-content'
+  },
+  parameters: {
+    display: 'grid',
     gridTemplateColumns: '120px minmax(0, max-content)',
-    columnGap: '18px', rowGap: '8px', margin: 0, width: 'fit-content',
-    maxWidth: '100%', alignItems: 'flex-start'},
-  label: {margin: 0, overflowWrap: 'anywhere'},
-  value: {margin: 0, minWidth: 0, overflowWrap: 'anywhere'},
-  content: {flex: '1 0 auto', minWidth: 0, marginTop: '30px',
-    overflowX: 'auto'},
-  actionSheet: {position: 'fixed', bottom: 0, left: 0, width: '100%',
+    columnGap: '18px',
+    rowGap: '8px',
+    margin: 0,
+    width: 'fit-content',
+    maxWidth: '100%',
+    alignItems: 'flex-start'
+  },
+  label: {
+    margin: 0,
+    overflowWrap: 'anywhere'
+  },
+  value: {
+    margin: 0,
+    minWidth: 0,
+    overflowWrap: 'anywhere'
+  },
+  content: {
+    flex: '1 0 auto',
+    minWidth: 0,
+    marginTop: '30px',
+    overflowX: 'auto'
+  },
+  actionSheet: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    width: '100%',
     justifyContent: 'center',
-    boxSizing: 'border-box', padding: '18px 18px 30px',
-    backgroundColor: '#FFFFFF', boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
-    '@media (width < 768px)': {display: 'flex'},
-    '@media (min-width: 768px)': {display: 'none'}}
+    boxSizing: 'border-box',
+    padding: '18px 18px 30px',
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
+    '@media (width < 768px)': {
+      display: 'flex'
+    },
+    '@media (min-width: 768px)': {
+      display: 'none'
+    }
+  }
 });

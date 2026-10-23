@@ -226,11 +226,19 @@ export class RecurrenceInput extends React.Component<Properties, State> {
 }
 
 const STYLES = StyleSheet.create({
-  container: {containerType: 'inline-size', width: '100%', minWidth: 0},
+  container: {
+    containerType: 'inline-size',
+    width: '100%',
+    minWidth: 0
+  },
   content: {
     display: 'flex',
     flexDirection: 'column',
-    '@container (width < 384px)': {gap: '20px'},
-    '@container (min-width: 384px)': {gap: '10px'}
+    '@container (width < 384px)': {
+      gap: '20px'
+    },
+    '@container (min-width: 384px)': {
+      gap: '10px'
+    }
   }
 });

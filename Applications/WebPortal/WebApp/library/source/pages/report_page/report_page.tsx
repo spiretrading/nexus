@@ -140,18 +140,56 @@ const TABS: readonly TabDefinition[] = [
     icon: 'resources/report_page/scheduled-icon.svg'}
 ];
 const STYLES = StyleSheet.create({
-  page: {display: 'flex', flexDirection: 'column', flex: '1 1 auto',
-    minHeight: 0, width: '100%', height: '100%', overflow: 'hidden'},
-  header: {flex: '0 0 auto', boxSizing: 'border-box', paddingRight: '18px',
-    borderBottom: '1px solid #E6E6E6', backgroundColor: '#FFFFFF',
-    '@media (width < 768px)': {paddingLeft: '11px'},
-    '@media (min-width: 768px)': {paddingLeft: '3px'}},
-  nav: {display: 'flex', flexDirection: 'column', alignItems: 'flex-start'},
-  menu: {display: 'flex', justifyContent: 'space-between', listStyle: 'none',
-    margin: 0, padding: 0,
-    '@media (width < 768px)': {width: 'clamp(76px, 24%, 92px)'},
-    '@media (min-width: 768px)': {width: 'fit-content'}},
-  item: {display: 'flex', flex: '0 0 auto'},
-  content: {display: 'flex', flexDirection: 'column', flex: '1 1 auto',
-    minHeight: 0, minWidth: 0, overflow: 'hidden'}
+  page: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto',
+    minHeight: 0,
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden'
+  },
+  header: {
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+    paddingRight: '18px',
+    borderBottom: '1px solid #E6E6E6',
+    backgroundColor: '#FFFFFF',
+    '@media (width < 768px)': {
+      paddingLeft: '11px'
+    },
+    '@media (min-width: 768px)': {
+      paddingLeft: '3px'
+    }
+  },
+  nav: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start'
+  },
+  menu: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    '@media (width < 768px)': {
+      width: 'clamp(76px, 24%, 92px)'
+    },
+    '@media (min-width: 768px)': {
+      width: 'fit-content'
+    }
+  },
+  item: {
+    display: 'flex',
+    flex: '0 0 auto'
+  },
+  content: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto',
+    minHeight: 0,
+    minWidth: 0,
+    overflow: 'hidden'
+  }
 });

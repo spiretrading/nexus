@@ -115,8 +115,11 @@ function Header(props: HeaderProperties): JSX.Element {
       <IconButton icon='resources/report_page/more.svg'
         buttonRef={props.invoker} aria-label='Open widget menu'
         {...{popovertarget: menuId}}
-        style={{width: '24px', height: '24px', anchorName: anchor} as
-          React.CSSProperties}/>
+        style={{
+          width: '24px',
+          height: '24px',
+          anchorName: anchor
+        } as React.CSSProperties}/>
       <ScheduledReportItemContextMenu id={menuId} invoker={props.invoker}
         className={css(STYLES.menu)}
         style={{positionAnchor: anchor} as React.CSSProperties}
@@ -160,8 +163,12 @@ const STYLES = StyleSheet.create({
     fontWeight: 400,
     fontSize: '0.875rem',
     color: '#333333',
-    ':hover': {backgroundColor: '#F8F8F8'},
-    ':has(> a:focus-visible)': {borderColor: '#684BC7'}
+    ':hover': {
+      backgroundColor: '#F8F8F8'
+    },
+    ':has(> a:focus-visible)': {
+      borderColor: '#684BC7'
+    }
   },
   link: {
     position: 'absolute',
@@ -212,7 +219,9 @@ const STYLES = StyleSheet.create({
     }
   },
   parameter: {
-    '@container (width < 768px)': {display: 'contents'},
+    '@container (width < 768px)': {
+      display: 'contents'
+    },
     '@container (min-width: 768px)': {
       display: 'grid',
       gridTemplateColumns: '136px',
@@ -221,6 +230,13 @@ const STYLES = StyleSheet.create({
       flex: '0 0 136px'
     }
   },
-  label: {fontWeight: 500, color: '#5D5E6D', overflowWrap: 'anywhere'},
-  value: {margin: 0, overflowWrap: 'anywhere'}
+  label: {
+    fontWeight: 500,
+    color: '#5D5E6D',
+    overflowWrap: 'anywhere'
+  },
+  value: {
+    margin: 0,
+    overflowWrap: 'anywhere'
+  }
 });

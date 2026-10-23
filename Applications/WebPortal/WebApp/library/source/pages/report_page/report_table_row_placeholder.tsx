@@ -29,7 +29,12 @@ function Selected(): JSX.Element {
 
 function TypeCell(): JSX.Element {
   return <td className={css(STYLES.cell, STYLES.type)}>
-    <Skeleton style={{width: '50%', maxWidth: '140px', height: '16px'}}/>
+    <Skeleton
+      style={{
+        width: '50%',
+        maxWidth: '140px',
+        height: '16px'
+      }}/>
   </td>;
 }
 
@@ -37,7 +42,11 @@ function Cell(): JSX.Element {
   return <td className={css(STYLES.cell)}>
     <div className={css(STYLES.content)}>
       <Skeleton className={css(STYLES.label)}
-        style={{width: '40%', height: '16px', flexShrink: 0}}/>
+        style={{
+          width: '40%',
+          height: '16px',
+          flexShrink: 0
+        }}/>
       <Skeleton className={css(STYLES.value)} style={{height: '16px'}}/>
     </div>
   </td>;
@@ -47,8 +56,17 @@ function StatusCell(): JSX.Element {
   return <td className={css(STYLES.cell, STYLES.status)}>
     <div className={css(STYLES.content)}>
       <Skeleton className={css(STYLES.label)}
-        style={{width: '40%', height: '16px', flexShrink: 0}}/>
-      <Skeleton style={{width: '80px', height: '22px', flexShrink: 0}}/>
+        style={{
+          width: '40%',
+          height: '16px',
+          flexShrink: 0
+        }}/>
+      <Skeleton
+        style={{
+          width: '80px',
+          height: '22px',
+          flexShrink: 0
+        }}/>
     </div>
   </td>;
 }
@@ -91,26 +109,42 @@ const STYLES = StyleSheet.create({
       gridColumn: 2,
       padding: '12px 20px 12px 10px'
     },
-    '@container (424px < width)': {padding: '12px 20px'}
+    '@container (424px < width)': {
+      padding: '12px 20px'
+    }
   },
   type: {
-    '@container (width <= 424px)': {backgroundColor: '#F8F8F8'},
-    '@container (424px < width)': {backgroundColor: 'transparent'}
+    '@container (width <= 424px)': {
+      backgroundColor: '#F8F8F8'
+    },
+    '@container (424px < width)': {
+      backgroundColor: 'transparent'
+    }
   },
   status: {
-    '@container (424px < width)': {padding: '9px 10px'}
+    '@container (424px < width)': {
+      padding: '9px 10px'
+    }
   },
   content: {
     display: 'flex',
     alignItems: 'center',
-    '@container (width <= 424px)': {gap: '8px'}
+    '@container (width <= 424px)': {
+      gap: '8px'
+    }
   },
   label: {
-    '@container (424px < width)': {display: 'none'}
+    '@container (424px < width)': {
+      display: 'none'
+    }
   },
   value: {
     flexShrink: 0,
-    '@container (width <= 424px)': {width: '40%'},
-    '@container (424px < width)': {width: '60%'}
+    '@container (width <= 424px)': {
+      width: '40%'
+    },
+    '@container (424px < width)': {
+      width: '60%'
+    }
   }
 });

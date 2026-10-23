@@ -313,8 +313,12 @@ const STYLES = StyleSheet.create({
     fontFamily: 'Roboto, system-ui, sans-serif',
     fontWeight: 400,
     color: '#333333',
-    '@media (width < 768px)': {padding: '18px 0 122px'},
-    '@media (min-width: 768px)': {padding: '18px 0 40px'}
+    '@media (width < 768px)': {
+      padding: '18px 0 122px'
+    },
+    '@media (min-width: 768px)': {
+      padding: '18px 0 40px'
+    }
   },
   toolbar: {
     boxSizing: 'border-box',
@@ -326,18 +330,30 @@ const STYLES = StyleSheet.create({
   },
   query: {
     minWidth: 0,
-    '@media (width < 768px)': {flex: '1 1 0'},
-    '@media (min-width: 768px)': {flex: '0 0 406px'}
+    '@media (width < 768px)': {
+      flex: '1 1 0'
+    },
+    '@media (min-width: 768px)': {
+      flex: '0 0 406px'
+    }
   },
   toolbarSpace: {
     minWidth: '18px',
-    '@media (width < 768px)': {flex: '0 0 18px'},
-    '@media (min-width: 768px)': {flex: '1 1 18px'}
+    '@media (width < 768px)': {
+      flex: '0 0 18px'
+    },
+    '@media (min-width: 768px)': {
+      flex: '1 1 18px'
+    }
   },
   newReport: {
     whiteSpace: 'nowrap',
-    '@media (width < 768px)': {flex: '0 0 auto'},
-    '@media (min-width: 768px)': {flex: '0 0 140px'}
+    '@media (width < 768px)': {
+      flex: '0 0 auto'
+    },
+    '@media (min-width: 768px)': {
+      flex: '0 0 140px'
+    }
   },
   list: {
     margin: 0,
@@ -346,8 +362,15 @@ const STYLES = StyleSheet.create({
     containerType: 'inline-size'
   },
   schedule: {
-    ':last-child > div > div': {borderBottomColor: 'transparent'}
+    ':last-child > div > div': {
+      borderBottomColor: 'transparent'
+    }
   },
-  fallback: {backgroundColor: '#FFFFFF', padding: '0 18px'},
-  pagination: {padding: '30px 18px 0'}
+  fallback: {
+    backgroundColor: '#FFFFFF',
+    padding: '0 18px'
+  },
+  pagination: {
+    padding: '30px 18px 0'
+  }
 });

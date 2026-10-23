@@ -321,7 +321,10 @@ class Toolbar extends React.Component<ToolbarProperties> {
       <div className={css(STYLES.query)}>
         <FilterInput placeholder='Filter reports' aria-label='Filter reports'
           value={this.props.query} onChange={this.props.onQueryChange}
-          style={{width: '100%', minWidth: 0}}/>
+          style={{
+            width: '100%',
+            minWidth: 0
+          }}/>
       </div>
       <div className={css(STYLES.newReport)}>
         <Button label='New Report' type='button'
@@ -353,7 +356,10 @@ function ActionButton(props: {label: string; count: number; total: number;
   })();
   return <CountButton label={props.label} count={count} type='button'
     disabled={props.count === 0} onClick={props.onClick}
-    style={{flex: '1 1 0', minWidth: 0}}/>;
+    style={{
+      flex: '1 1 0',
+      minWidth: 0
+    }}/>
 }
 
 function ButtonGroup(props: ActionProperties): JSX.Element {
@@ -408,13 +414,21 @@ class MobileButtonGroup extends React.Component<ActionProperties> {
         <IconButton icon='resources/report_page/more.svg'
           buttonRef={this.invoker} aria-label='Open selection menu'
           {...{popovertarget: 'selection-menu'}}
-          style={{width: '34px', height: '34px',
-            anchorName: '--selection-menu-anchor'} as React.CSSProperties}/>
+          style={{
+            width: '34px',
+            height: '34px',
+            anchorName: '--selection-menu-anchor'
+          } as React.CSSProperties}/>
         <ContextMenu id='selection-menu' items={items} invoker={this.invoker}
-          style={{position: 'fixed', margin: 0, inset: 'auto',
+          style={{
+            position: 'fixed',
+            margin: 0,
+            inset: 'auto',
             positionAnchor: '--selection-menu-anchor',
-            bottom: 'anchor(top)', right: 'anchor(right)'} as
-            React.CSSProperties} onSubmit={this.onSubmit}/>
+            bottom: 'anchor(top)',
+            right: 'anchor(right)'
+          } as React.CSSProperties}
+          onSubmit={this.onSubmit}/>
       </span>
     </div>;
   }
@@ -492,8 +506,12 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     fontWeight: 400,
     color: '#333333',
-    '@media (width < 768px)': {padding: '18px 18px 122px'},
-    '@media (min-width: 768px)': {padding: '18px 18px 40px'}
+    '@media (width < 768px)': {
+      padding: '18px 18px 122px'
+    },
+    '@media (min-width: 768px)': {
+      padding: '18px 18px 40px'
+    }
   },
   toolbar: {
     display: 'grid',
@@ -512,22 +530,35 @@ const STYLES = StyleSheet.create({
     minWidth: 0,
     gridColumn: 1,
     gridRow: 1,
-    '@media (width < 768px)': {padding: '8px 0'},
-    '@media (768px <= width < 1036px)': {width: '246px'},
-    '@media (min-width: 1036px)': {width: '406px'}
+    '@media (width < 768px)': {
+      padding: '8px 0'
+    },
+    '@media (768px <= width < 1036px)': {
+      width: '246px'
+    },
+    '@media (min-width: 1036px)': {
+      width: '406px'
+    }
   },
   newReport: {
     gridColumn: 2,
     gridRow: 1,
-    '@media (width < 768px)': {padding: '8px 0'}
+    '@media (width < 768px)': {
+      padding: '8px 0'
+    }
   },
   dateFilter: {
     gridRow: 2,
     minHeight: '34px',
     marginTop: '12px',
     minWidth: 0,
-    '@media (width < 768px)': {gridColumn: '1 / -1'},
-    '@media (768px <= width < 1036px)': {gridColumn: 1, width: '246px'},
+    '@media (width < 768px)': {
+      gridColumn: '1 / -1'
+    },
+    '@media (768px <= width < 1036px)': {
+      gridColumn: 1,
+      width: '246px'
+    },
     '@media (min-width: 1036px)': {
       gridColumn: 1,
       width: 'fit-content'
@@ -535,7 +566,10 @@ const STYLES = StyleSheet.create({
   },
   dateFilterInput: {
     '@media (min-width: 1036px)': {
-      ':is(div)': {width: 'max-content', containerType: 'normal'}
+      ':is(div)': {
+        width: 'max-content',
+        containerType: 'normal'
+      }
     }
   },
   toolbarActions: {
@@ -543,20 +577,38 @@ const STYLES = StyleSheet.create({
     gridRow: 3,
     width: '632px',
     marginTop: '18px',
-    '@media (width < 768px)': {display: 'none'}
+    '@media (width < 768px)': {
+      display: 'none'
+    }
   },
-  buttons: {display: 'flex', gap: '8px', padding: '8px 0'},
-  mobileButtons: {display: 'flex', gap: '8px', maxWidth: '424px',
-    padding: '8px 0', margin: '0 auto'},
+  buttons: {
+    display: 'flex',
+    gap: '8px',
+    padding: '8px 0'
+  },
+  mobileButtons: {
+    display: 'flex',
+    gap: '8px',
+    maxWidth: '424px',
+    padding: '8px 0',
+    margin: '0 auto'
+  },
   menuContainer: {
     display: 'flex',
     flex: '0 0 34px',
     ':has(> [popover]:popover-open) > button': {
-      backgroundColor: '#F8F8F8', color: '#4B23A0'
+      backgroundColor: '#F8F8F8',
+      color: '#4B23A0'
     }
   },
-  reports: {position: 'relative'},
-  reportTable: {'@media (min-width: 768px)': {maxWidth: '796px'}},
+  reports: {
+    position: 'relative'
+  },
+  reportTable: {
+    '@media (min-width: 768px)': {
+      maxWidth: '796px'
+    }
+  },
   actionSheet: {
     position: 'fixed',
     bottom: 0,
@@ -567,6 +619,8 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
     zIndex: 1,
-    '@media (min-width: 768px)': {display: 'none'}
+    '@media (min-width: 768px)': {
+      display: 'none'
+    }
   }
 });

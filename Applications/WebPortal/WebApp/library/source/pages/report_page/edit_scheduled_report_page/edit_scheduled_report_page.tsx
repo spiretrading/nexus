@@ -23,7 +23,11 @@ function Main(props: Properties): JSX.Element {
 }
 
 const STYLES = StyleSheet.create({
-  main: {boxSizing: 'border-box', padding: '18px 18px 40px',
-    fontFamily: 'Roboto, system-ui, sans-serif', fontWeight: 400,
-    color: '#333333'}
+  main: {
+    boxSizing: 'border-box',
+    padding: '18px 18px 40px',
+    fontFamily: 'Roboto, system-ui, sans-serif',
+    fontWeight: 400,
+    color: '#333333'
+  }
 });

@@ -233,7 +233,10 @@ function areReportsEqual(left: readonly ReportTable.Report[],
 }
 
 const STYLES = StyleSheet.create({
-  container: {containerType: 'inline-size', width: '100%'},
+  container: {
+    containerType: 'inline-size',
+    width: '100%'
+  },
   table: {
     boxSizing: 'border-box',
     width: '100%',
@@ -244,15 +247,25 @@ const STYLES = StyleSheet.create({
     color: '#333333',
     fontSize: '0.875rem',
     fontFamily: 'Roboto, system-ui, sans-serif',
-    '@container (width <= 424px)': {display: 'block'},
+    '@container (width <= 424px)': {
+      display: 'block'
+    },
     '@container (424px < width)': {
       borderRadius: '1px',
       border: '1px solid #E6E6E6'
     }
   },
-  wide: {'@container (width <= 424px)': {display: 'none'}},
-  head: {backgroundColor: '#F8F8F8'},
-  headerCell: {overflowWrap: 'anywhere'},
+  wide: {
+    '@container (width <= 424px)': {
+      display: 'none'
+    }
+  },
+  head: {
+    backgroundColor: '#F8F8F8'
+  },
+  headerCell: {
+    overflowWrap: 'anywhere'
+  },
   selection: {
     boxSizing: 'border-box',
     padding: '10px 10px 10px 18px',

@@ -55,7 +55,11 @@ export class ParametersDateRangeInput extends
       return DateRangeInput.LabelPosition.ABOVE;
     })();
     return <div ref={this.element}
-        style={{width: '100%', minWidth: 0, ...style}}>
+        style={{
+          width: '100%',
+          minWidth: 0,
+          ...style
+        }}>
       <DateRangeInput {...properties} label={label} referenceDate={reference}
         options={this.options} labelPosition={labelPosition}
         customType={customType} customLabel={customLabel}

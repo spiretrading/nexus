@@ -20,11 +20,20 @@ export function ScheduledReportItemPlaceholder(
 
 function Header(): JSX.Element {
   return <div className={css(STYLES.header)}>
-    <Skeleton style={{width: '140px', height: '16px', flexShrink: 0}}/>
+    <Skeleton
+      style={{
+        width: '140px',
+        height: '16px',
+        flexShrink: 0
+      }}/>
     <div className={css(STYLES.headerSpace)}/>
     <IconButton icon='resources/report_page/more.svg' disabled
       aria-label='Open widget menu'
-      style={{width: '24px', height: '24px', flexShrink: 0}}/>
+      style={{
+        width: '24px',
+        height: '24px',
+        flexShrink: 0
+      }}/>
   </div>;
 }
 
@@ -32,8 +41,16 @@ function Parameters(): JSX.Element {
   return <div className={css(STYLES.parameters)}>
     {Array.from({length: 3}, (_, index) =>
       <div key={index} className={css(STYLES.parameter)}>
-        <Skeleton style={{width: '80px', height: '16px'}}/>
-        <Skeleton style={{width: '80px', height: '16px'}}/>
+        <Skeleton
+          style={{
+            width: '80px',
+            height: '16px'
+          }}/>
+        <Skeleton
+          style={{
+            width: '80px',
+            height: '16px'
+          }}/>
       </div>)}
   </div>;
 }
@@ -42,7 +59,12 @@ function DatePlaceholder(): JSX.Element {
   return <div className={css(STYLES.date)}>
     <img src='resources/report_page/calendar.svg' alt='' width='12' height='12'
       className={css(STYLES.calendar)}/>
-    <Skeleton style={{width: '200px', height: '16px', flexShrink: 0}}/>
+    <Skeleton
+      style={{
+        width: '200px',
+        height: '16px',
+        flexShrink: 0
+      }}/>
   </div>;
 }
 
@@ -63,7 +85,10 @@ const STYLES = StyleSheet.create({
     alignItems: 'center',
     marginBottom: '4px'
   },
-  headerSpace: {flex: '1 1 0', marginRight: '18px'},
+  headerSpace: {
+    flex: '1 1 0',
+    marginRight: '18px'
+  },
   parameters: {
     display: 'grid',
     rowGap: '2px',
@@ -78,7 +103,9 @@ const STYLES = StyleSheet.create({
     }
   },
   parameter: {
-    '@container (width < 768px)': {display: 'contents'},
+    '@container (width < 768px)': {
+      display: 'contents'
+    },
     '@container (min-width: 768px)': {
       display: 'grid',
       rowGap: '2px'
@@ -89,5 +116,7 @@ const STYLES = StyleSheet.create({
     alignItems: 'center',
     gap: '4px'
   },
-  calendar: {flex: '0 0 12px'}
+  calendar: {
+    flex: '0 0 12px'
+  }
 });

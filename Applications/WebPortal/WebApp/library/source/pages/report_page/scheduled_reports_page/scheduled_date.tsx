@@ -130,5 +130,7 @@ const STYLES = StyleSheet.create({
     color: '#5D5E6D',
     fontSize: '0.875rem'
   },
-  calendar: {flex: '0 0 12px'}
+  calendar: {
+    flex: '0 0 12px'
+  }
 });

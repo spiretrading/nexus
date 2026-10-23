@@ -307,8 +307,13 @@ class DateTimeField extends React.Component<DateTimeProperties,
 
   public render(): JSX.Element {
     const {value, style, id, onChange, ...attributes} = this.props;
-    return <div {...attributes} style={{display: 'flex',
-        flexDirection: 'column', gap: '10px', ...style}}>
+    return <div {...attributes}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          ...style
+        }}>
       <DateInput key={`date-${this.state.revision}`} id={id}
         value={this.state.date}
         aria-invalid={attributes['aria-invalid']}
