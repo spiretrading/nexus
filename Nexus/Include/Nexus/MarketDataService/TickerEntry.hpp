@@ -47,7 +47,7 @@ namespace Nexus {
       void set_ticker(const Ticker& ticker);
 
       /** Returns the session technicals. */
-      const SessionTechnicals& get_session_technicals() const;
+      const SequencedSessionTechnicals& get_session_technicals() const;
 
       /**
        * Returns the Ticker's current snapshot.
@@ -116,7 +116,7 @@ namespace Nexus {
       Beam::Sequence m_next_book_quote_sequence;
       Beam::Sequencer m_time_and_sale_sequencer;
       Beam::Sequencer m_ticker_status_sequencer;
-      SessionTechnicals m_session_technicals;
+      SequencedSessionTechnicals m_session_technicals;
       std::string m_market_center;
       Money m_next_close;
       boost::posix_time::ptime m_session_reset_time;
@@ -197,13 +197,15 @@ namespace Nexus {
         m_time_and_sale_sequencer(
           initial_sequences.m_next_time_and_sale_sequence),
         m_ticker_status_sequencer(
-          initial_sequences.m_next_ticker_status_sequence) {
+          initial_sequences.m_next_ticker_status_sequence),
+        m_session_technicals(SessionTechnicals(), Beam::decrement(
+          initial_sequences.m_next_time_and_sale_sequence)) {
     m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
     if(close != Money::ZERO) {
-      m_session_technicals.m_previous_close = close;
+      m_session_technicals->m_previous_close = close;
     }
   }
 
@@ -215,7 +217,8 @@ namespace Nexus {
     m_ticker = ticker;
   }
 
-  inline const SessionTechnicals& TickerEntry::get_session_technicals() const {
+  inline const SequencedSessionTechnicals&
+      TickerEntry::get_session_technicals() const {
     return m_session_technicals;
   }
 
@@ -266,9 +269,9 @@ namespace Nexus {
     }
     if(bbo_quote.m_timestamp >= m_session_reset_time) {
       auto close = m_next_close;
-      m_session_technicals = SessionTechnicals();
+      *m_session_technicals = SessionTechnicals();
       if(close != Money::ZERO) {
-        m_session_technicals.m_previous_close = close;
+        m_session_technicals->m_previous_close = close;
       }
       auto delta = bbo_quote.m_timestamp.date() - m_session_reset_time.date();
       m_session_reset_time += delta;
@@ -327,13 +330,14 @@ namespace Nexus {
 
   inline boost::optional<SequencedTickerTimeAndSale>
       TickerEntry::publish(const TimeAndSale& time_and_sale, int source_id) {
-    update(m_session_technicals, time_and_sale, m_market_center);
+    update(*m_session_technicals, time_and_sale, m_market_center);
     if(time_and_sale.m_market_center == m_market_center) {
       m_next_close = time_and_sale.m_price;
     }
     auto value =
       m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_ticker);
     m_time_and_sale = value;
+    m_session_technicals.get_sequence() = value.get_sequence();
     return value;
   }
 

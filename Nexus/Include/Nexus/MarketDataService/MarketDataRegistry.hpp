@@ -91,6 +91,14 @@ namespace Nexus {
         find_session_technicals(const Ticker& ticker) const;
 
       /**
+       * Loads a Ticker's session technicals.
+       * @param ticker The Ticker whose session technicals are to be returned.
+       * @param data_store Used to initialize the Ticker's data.
+       */
+      SequencedSessionTechnicals load_session_technicals(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
+
+      /**
        * Returns a Ticker's real time snapshot.
        * @param ticker The Ticker whose snapshot is to be returned.
        * @return The real-time snapshot of the <i>ticker</i>.
@@ -250,8 +258,18 @@ namespace Nexus {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return SequencedSessionTechnicals(entry.get_session_technicals(),
-        entry.get_time_and_sale().get_sequence());
+      return entry.get_session_technicals();
+    });
+  }
+
+  SequencedSessionTechnicals MarketDataRegistry::load_session_technicals(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
+      return {};
+    }
+    return Beam::with(*entry, [&] (const auto& entry) {
+      return entry.get_session_technicals();
     });
   }
 

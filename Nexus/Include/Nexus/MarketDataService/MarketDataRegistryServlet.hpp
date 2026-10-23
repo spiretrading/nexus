@@ -511,10 +511,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   SequencedSessionTechnicals MarketDataRegistryServlet<C, R, D, A>::
       on_load_session_technicals(ServiceProtocolClient& client, Ticker ticker) {
-    if(auto technicals = m_registry->find_session_technicals(ticker)) {
-      return *technicals;
-    }
-    return {};
+    return m_registry->load_session_technicals(ticker, *m_data_store);
   }
 
   template<typename C, typename R, typename D, typename A> requires

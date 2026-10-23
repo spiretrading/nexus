@@ -132,6 +132,68 @@ namespace {
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
+  TEST_CASE("session_technicals_after_restart") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    fixture.m_registry.add(TickerInfo(ticker, "TICKER A", "", 100));
+    auto timestamp = fixture.m_time_client.get_time();
+    auto previous = TimeAndSale(timestamp - hours(24), Money::ONE, 1000000,
+      TimeAndSale::Condition(), "TSE", "", "");
+    auto sequence = to_sequence(previous.m_timestamp);
+    SUBCASE("without_entry") {
+      fixture.m_data_store.store(
+        SequencedTickerTimeAndSale(TickerTimeAndSale(previous, ticker),
+          sequence));
+    }
+    SUBCASE("without_trade") {
+      fixture.m_data_store.store(
+        SequencedTickerTimeAndSale(TickerTimeAndSale(previous, ticker),
+          sequence));
+      fixture.m_servlet->publish(TickerBboQuote(
+        BboQuote(make_bid(Money::ONE, 100),
+          make_ask(Money::ONE + Money::CENT, 100), timestamp), ticker), 1);
+    }
+    SUBCASE("without_history") {
+      sequence = Beam::Sequence::FIRST;
+    }
+    auto snapshot = fixture.m_client->send_request<
+      LoadSessionTechnicalsService>(ticker);
+    REQUIRE(snapshot->m_volume == 0);
+    REQUIRE(snapshot.get_sequence() == sequence);
+    auto trade = TickerTimeAndSale(TimeAndSale(timestamp, Money::ONE, 100,
+      TimeAndSale::Condition(), "TSE", "", ""), ticker);
+    fixture.m_servlet->publish(trade, 1);
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(increment(snapshot.get_sequence()), Beam::Sequence::LAST);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result = fixture.m_client->send_request<QueryTimeAndSalesService>(
+      query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.size() == 1);
+    REQUIRE(*result.m_snapshot.front() == *trade);
+    auto technicals = *snapshot;
+    update(technicals, *result.m_snapshot.front(), "TSE");
+    REQUIRE(technicals.m_volume == 100);
+    snapshot = fixture.m_client->send_request<LoadSessionTechnicalsService>(
+      ticker);
+    REQUIRE(snapshot->m_volume == technicals.m_volume);
+    REQUIRE(
+      snapshot.get_sequence() == result.m_snapshot.front().get_sequence());
+    trade->m_timestamp += seconds(1);
+    trade->m_size = 200;
+    fixture.m_servlet->publish(trade, 1);
+    auto message = std::dynamic_pointer_cast<
+      RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(
+        fixture.m_client->read_message());
+    REQUIRE(message);
+    auto& received = message->get_record().time_and_sale;
+    REQUIRE(*received == *trade);
+    REQUIRE(received.get_sequence() > snapshot.get_sequence());
+    update(technicals, *received, "TSE");
+    REQUIRE(technicals.m_volume == 300);
+  }
+
   TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("A.TSX");
