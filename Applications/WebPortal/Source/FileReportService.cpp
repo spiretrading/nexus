@@ -433,15 +433,18 @@ std::vector<ReportDefinition> FileReportService::load_definitions() {
 
 std::optional<ReportJob> FileReportService::read_job(
     const std::filesystem::path& path) {
-  auto text = read_metadata(path);
-  if(!text) {
-    return std::nullopt;
-  }
-  auto job = from_json<ReportJob>(*text);
-  if(report_directory(job.m_id, m_jobs_directory) != path) {
-    throw std::runtime_error("Report job directory does not match its id.");
-  }
-  return job;
+  return try_or_nest([&] () -> std::optional<ReportJob> {
+    auto text = read_metadata(path);
+    if(!text) {
+      return std::nullopt;
+    }
+    auto job = from_json<ReportJob>(*text);
+    if(report_directory(job.m_id, m_jobs_directory) != path) {
+      throw std::runtime_error("Report job directory does not match its id.");
+    }
+    return job;
+  }, std::runtime_error("Failed to load saved report " +
+    (path / "metadata.json").string() + '.'));
 }
 
 void FileReportService::recover() {
@@ -464,14 +467,17 @@ void FileReportService::recover() {
 
 std::optional<ReportSchedule> FileReportService::read_schedule(
     const std::filesystem::path& path) {
-  auto text = read_metadata(path);
-  if(!text) {
-    return std::nullopt;
-  }
-  auto schedule = from_json<ReportSchedule>(*text);
-  if(report_directory(schedule.m_id, m_jobs_directory / "schedules") != path) {
-    throw std::runtime_error(
-      "Report schedule directory does not match its id.");
-  }
-  return schedule;
+  return try_or_nest([&] () -> std::optional<ReportSchedule> {
+    auto text = read_metadata(path);
+    if(!text) {
+      return std::nullopt;
+    }
+    auto schedule = from_json<ReportSchedule>(*text);
+    if(report_directory(schedule.m_id, m_jobs_directory / "schedules") != path) {
+      throw std::runtime_error(
+        "Report schedule directory does not match its id.");
+    }
+    return schedule;
+  }, std::runtime_error("Failed to load saved report schedule " +
+    (path / "metadata.json").string() + '.'));
 }

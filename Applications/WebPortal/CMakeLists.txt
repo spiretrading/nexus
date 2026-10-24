@@ -19,6 +19,8 @@ if(UNIX)
 endif()
 add_library(WebPortalLibrary STATIC ${header_files} ${source_files})
 beam_configure_target(WebPortalLibrary DEPENDENCIES ${web_portal_dependencies})
+set_target_properties(WebPortalLibrary PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Libraries/$<CONFIG>")
 target_link_libraries(WebPortalLibrary PUBLIC BeamRoutines)
 target_compile_definitions(WebPortalLibrary PUBLIC YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)

@@ -1,7 +1,10 @@
+#include <fstream>
 #include <future>
+#include <Beam/Serialization/SerializationException.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/scope/scope_exit.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/FileReportService.hpp"
@@ -57,4 +60,39 @@ TEST_SUITE("ReportFile") {
       "example_2026-10-05_3.bin"}));
   }
 
+  TEST_CASE("metadata_error_context") {
+    auto directory = std::filesystem::temp_directory_path() /
+      boost::uuids::to_string(boost::uuids::random_generator()());
+    auto cleanup = boost::scope::scope_exit([&] {
+      std::filesystem::remove_all(directory);
+    });
+    auto path = directory;
+    SUBCASE("job") {}
+    SUBCASE("schedule") {
+      path /= "schedules";
+    }
+    path /= boost::uuids::to_string(boost::uuids::random_generator()());
+    std::filesystem::create_directories(path);
+    path /= "metadata.json";
+    {
+      auto stream = std::ofstream(path);
+      stream << "{}";
+    }
+    auto environment = ServiceLocatorTestEnvironment();
+    auto result = try_call([&] {
+      auto service = FileReportService(directory / "definitions", directory,
+        environment.get_root(), TimeClient(std::in_place_type<LocalTimeClient>),
+        1, Timer(std::in_place_type<TriggerTimer>),
+        Timer(std::in_place_type<TriggerTimer>));
+    });
+    REQUIRE(result.is_exception());
+    REQUIRE_THROWS_WITH_AS(result.get(), doctest::Contains(path.string().c_str()),
+      std::runtime_error);
+    try {
+      result.get();
+    } catch(const std::runtime_error& error) {
+      REQUIRE_THROWS_WITH_AS(std::rethrow_if_nested(error),
+        doctest::Contains("\"id\""), SerializationException);
+    }
+  }
 }
