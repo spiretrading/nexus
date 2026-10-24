@@ -62,6 +62,9 @@ export class BeamDurationInput extends React.Component<Properties, State> {
   }
 
   private static format(duration: Beam.Duration): string {
+    if(duration == null) {
+      return '';
+    }
     const time = duration.split();
     const hours = String(time.hours).padStart(2, '0');
     const minutes = String(time.minutes).padStart(2, '0');

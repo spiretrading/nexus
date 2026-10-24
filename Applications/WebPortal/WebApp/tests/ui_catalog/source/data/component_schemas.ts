@@ -6,10 +6,13 @@ import * as WebPortal from 'web_portal';
 import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDirectoryEntryInput, BeamDurationInput,
   BeamTimeOfDayInput, BooleanInput, ColorInput, CountryInput, CurrencyInput,
-  CSSInput, DateInput, DateRangeValueInput, EnumInput, IntervalValueInput,
+  CSSInput, DateExpressionValueInput, DateInput, DateRangeValueInput,
+  DayOfMonthValueInput, EnumInput,
+  IntervalValueInput,
   NumberInput,
-  NumberSliderInput, MoneyInput,
-  ReadonlyInput, ScopeValueInput, TextInput, TickerValueInput } from
+  NumberSliderInput, MoneyInput, OptionalInput,
+  ReadonlyInput, RecurrenceValueInput, ScopeValueInput, TextInput,
+  TickerValueInput } from
   '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
@@ -17,7 +20,17 @@ import { DateRangeInputExample } from './date_range_input_example';
 import { ListInputExample } from './list_input_example';
 import { InputGroupExample } from './input_group_example';
 import { RadioButtonExample } from './radio_button_example';
+import { ReportFormTemplateExample } from './report_form_template_example';
+import { ReportTableExample } from './report_table_example';
+import { ReportTableRowExample } from './report_table_row_example';
+import { ReportTableRowPlaceholderExample } from
+  './report_table_row_placeholder_example';
+import { ScheduledReportItemExample, ScheduledReportParameterInput } from
+  './scheduled_report_item_example';
+import { ScheduledReportItemContextMenuExample } from
+  './scheduled_report_item_context_menu_example';
 import { ScopeInputExample } from './scope_input_example';
+import { ShareReportModalExample } from './share_report_modal_example';
 import { TickerInputExample } from './ticker_input_example';
 import {ComponentSchema, ComponentSection, PropertySchema, SignalSchema} from
   './schemas';
@@ -54,6 +67,15 @@ const buttonLink =
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
     WebPortal.ButtonLink);
+
+const COUNT_BUTTON =
+  new ComponentSchema('CountButton',
+    [new PropertySchema('label', 'Download', TextInput),
+      new PropertySchema('count', 3, OptionalInput(NumberInput)),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.CountButton);
 
 const burgerButton =
   new ComponentSchema('BurgerButton',
@@ -223,6 +245,46 @@ const dateInput =
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
+
+const DAY_OF_WEEK_SELECT =
+  new ComponentSchema('DayOfWeekSelect',
+    [new PropertySchema('value', WebPortal.Weekday.MONDAY,
+        EnumInput(WebPortal.Weekday)),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.DayOfWeekSelect);
+
+const DATE_EXPRESSION_INPUT =
+  new ComponentSchema('DateExpressionInput',
+    [new PropertySchema('value', {
+        mode: WebPortal.DateExpression.Mode.FIXED, date: Beam.Date.today()},
+      DateExpressionValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onInput', 'value'),
+      new SignalSchema('onChange', 'value')],
+    WebPortal.DateExpressionInput, 282);
+
+const DAY_OF_MONTH_INPUT =
+  new ComponentSchema('DayOfMonthInput',
+    [new PropertySchema('value', new WebPortal.DayOfMonth(
+        WebPortal.DayOfMonth.Position.FIRST, WebPortal.Weekday.MONDAY),
+      DayOfMonthValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onInput', 'value'),
+      new SignalSchema('onChange', 'value')],
+    WebPortal.DayOfMonthInput, 282);
+
+const MONTH_SELECT =
+  new ComponentSchema('MonthSelect',
+    [new PropertySchema('value', Beam.Date.Month.JANUARY,
+        EnumInput(Beam.Date.Month)),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.MonthSelect);
 
 const disclosure =
   new ComponentSchema('Disclosure',
@@ -428,10 +490,14 @@ const dateRangeInput =
   new ComponentSchema('DateRangeInput',
     [new PropertySchema('value', (() => {
         const today = Beam.Date.today();
-        return new WebPortal.DateRange(
-          new Beam.Date(today.year, today.month, 1), today);
+        return new WebPortal.DateRange(today, today);
       })(), DateRangeValueInput),
       new PropertySchema('label', 'Date range', TextInput),
+      new PropertySchema('customType', WebPortal.DateRangeInput.CustomType.FIXED,
+        EnumInput(WebPortal.DateRangeInput.CustomType)),
+      new PropertySchema('startLabel', 'Start', TextInput),
+      new PropertySchema('endLabel', 'End', TextInput),
+      new PropertySchema('referenceDate', Beam.Date.today(), BeamDateInput),
       new PropertySchema('orientation',
         WebPortal.DateRangeInput.Orientation.VERTICAL,
         EnumInput(WebPortal.DateRangeInput.Orientation)),
@@ -441,7 +507,8 @@ const dateRangeInput =
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
-      new SignalSchema('onValidationChange', 'validation')],
+      new SignalSchema('onValidationChange', 'validation'),
+      new SignalSchema('onRulesChange', 'rules')],
     DateRangeInputExample, 284);
 
 const decimalInput =
@@ -1250,7 +1317,7 @@ const sortableTableHeaderCell =
     [new SignalSchema('onSort', 'sortOrder')],
     (props: any) => React.createElement('table', {
         style: {borderCollapse: 'collapse', width: '100%',
-          fontFamily: 'Roboto, system-ui, sans-serif', fontSize: '0.875rem'}},
+          fontSize: '0.875rem'}},
       React.createElement('thead', null,
         React.createElement('tr', null,
           React.createElement(WebPortal.SortableTableHeaderCell, props)))),
@@ -1285,24 +1352,215 @@ const inputGroup =
     [new SignalSchema('onChange', ''), new SignalSchema('onValidate', '')],
     InputGroupExample, 284);
 
+const dateFilter =
+  new ComponentSchema('DateFilter',
+    [new PropertySchema('value', new WebPortal.DateRange(null, null),
+        DateRangeValueInput),
+      new PropertySchema('label', '', TextInput),
+      new PropertySchema('today', Beam.Date.today(), BeamDateInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    WebPortal.DateFilter, 284);
+
+const parametersDateRangeInput =
+  new ComponentSchema('ParametersDateRangeInput',
+    [new PropertySchema('value', (() => {
+        const today = Beam.Date.today();
+        return new WebPortal.DateRange(today, today);
+      })(), DateRangeValueInput),
+      new PropertySchema('today', Beam.Date.today(), BeamDateInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onValidationChange', 'validation')],
+    WebPortal.ParametersDateRangeInput, 284);
+
+const RECURRENCE_INPUT = new ComponentSchema('RecurrenceInput',
+  [new PropertySchema('value',
+      new WebPortal.Recurrence(new WebPortal.Interval(1,
+        WebPortal.Interval.Unit.DAY), null), RecurrenceValueInput),
+    new PropertySchema('readOnly', false, BooleanInput),
+    new PropertySchema('disabled', false, BooleanInput)],
+  [new SignalSchema('onChange', 'value'),
+    new SignalSchema('onValidationChange', 'validation')],
+  WebPortal.RecurrenceInput, 284);
+
+const RUNS_TABLE = new ComponentSchema('RunsTable',
+  [new PropertySchema('runs', [
+      new Beam.DateTime(new Beam.Date(2026, 10, 21),
+        Beam.Duration.HOUR.multiply(9).add(Beam.Duration.MINUTE.multiply(30))),
+      new Beam.DateTime(new Beam.Date(2026, 10, 22), Beam.Duration.ZERO),
+      new Beam.DateTime(new Beam.Date(2026, 10, 23),
+        Beam.Duration.HOUR.multiply(12))],
+    ArrayInput(new PropertySchema('run',
+      new Beam.DateTime(Beam.Date.today(), Beam.Duration.HOUR.multiply(9)),
+      BeamDateTimeInput)))], [], WebPortal.RunsTable, 284);
+
+const REPORT_STATUS_TAG =
+  new ComponentSchema('ReportStatusTag',
+    [new PropertySchema('status',
+        WebPortal.ReportStatusTag.Status.READY,
+        EnumInput(WebPortal.ReportStatusTag.Status)),
+      new PropertySchema('style', {}, CSSInput)],
+    [],
+    WebPortal.ReportStatusTag);
+
+const reportFormTemplate =
+  new ComponentSchema('ReportFormTemplate',
+    [new PropertySchema('title', 'Create Report', TextInput),
+      new PropertySchema('mode', WebPortal.ReportFormTemplate.Mode.CREATE,
+        EnumInput(WebPortal.ReportFormTemplate.Mode)),
+      new PropertySchema('showRuntime', true, BooleanInput),
+      new PropertySchema('errorMessage', '', TextInput)],
+    [new SignalSchema('onSubmit', '')], ReportFormTemplateExample, 560);
+
+const REPORT_TABLE =
+  new ComponentSchema('ReportTable',
+    [new PropertySchema('reportCount', 3, NumberInput),
+      new PropertySchema('loading', false, BooleanInput),
+      new PropertySchema('selected', [],
+        ArrayInput(new PropertySchema('id', '1', TextInput))),
+      new PropertySchema('sortColumn', WebPortal.ReportTable.Column.TYPE,
+        EnumInput(WebPortal.ReportTable.Column)),
+      new PropertySchema('sortOrder',
+        WebPortal.SortableTableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.SortableTableHeaderCell.SortOrder))],
+    [new SignalSchema('onSelectionChange', 'selected'),
+      new SignalSchema('onSort', '', [
+        {parameterName: 'column', propertyName: 'sortColumn'},
+        {parameterName: 'order', propertyName: 'sortOrder'}]),
+      new SignalSchema('onNavigate', '')],
+    ReportTableExample, 796);
+
+const REPORT_TABLE_ROW =
+  new ComponentSchema('ReportTableRow',
+    [new PropertySchema('id', '42', TextInput),
+      new PropertySchema('type', 'Profit and Loss', TextInput),
+      new PropertySchema('parameters', ['Canada', 'Alpha Group', 'Month to Date'],
+        ArrayInput(new PropertySchema('parameter', 'Value', TextInput))),
+      new PropertySchema('url', '/reports/42', TextInput),
+      new PropertySchema('status', WebPortal.ReportStatusTag.Status.READY,
+        EnumInput(WebPortal.ReportStatusTag.Status)),
+      new PropertySchema('dateModified', Beam.DateTime.now(), BeamDateTimeInput),
+      new PropertySchema('selected', false, BooleanInput)],
+    [new SignalSchema('onSelect', '', [
+        {parameterName: 'id', propertyName: ''},
+        {parameterName: 'selected', propertyName: 'selected'}]),
+      new SignalSchema('onNavigate', '')],
+    ReportTableRowExample, 796);
+
+const reportTableRowPlaceholder =
+  new ComponentSchema('ReportTableRowPlaceholder', [], [],
+    ReportTableRowPlaceholderExample, 796);
+
+const reportTypeSelect =
+  new ComponentSchema('ReportTypeSelect',
+    [new PropertySchema('reportTypes',
+        ['Profit and Loss', 'Entitlement Activity', 'Trading Volume'],
+        ArrayInput(new PropertySchema('reportType', 'New report', TextInput))),
+      new PropertySchema('value', 'Profit and Loss', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('aria-label', 'Report type', TextInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.ReportTypeSelect);
+
+const scheduledDate =
+  new ComponentSchema('ScheduledDate',
+    [new PropertySchema('date', (() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(),
+          today.getDate() + 17);
+      })(), DateInput),
+      new PropertySchema('today', new Date(), DateInput),
+      new PropertySchema('repeats', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ScheduledDate, {
+      ...props,
+      date: {
+        value: `${String(props.date.getFullYear()).padStart(4, '0')}-` +
+          `${String(props.date.getMonth() + 1).padStart(2, '0')}-` +
+          String(props.date.getDate()).padStart(2, '0'),
+        label: props.date.toLocaleDateString('en-US', {
+          month: 'short', day: '2-digit', year: 'numeric'
+        })
+      }
+    }));
+
+const scheduledReportItem =
+  new ComponentSchema('ScheduledReportItem',
+    [new PropertySchema('id', '42', TextInput),
+      new PropertySchema('type', 'Profit and Loss', TextInput),
+      new PropertySchema('parameters', [
+        {label: 'Account / Group', value: 'Alpha Group'},
+        {label: 'Scope', value: 'Canada'},
+        {label: 'Date Range', value: 'Month to Date'}
+      ], ArrayInput(new PropertySchema('parameter',
+        {label: 'Parameter', value: 'Value'}, ScheduledReportParameterInput))),
+      new PropertySchema('repeats', false, BooleanInput),
+      new PropertySchema('runDate', (() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(),
+          today.getDate() + 17);
+      })(), DateInput)],
+    [new SignalSchema('onRun', ''), new SignalSchema('onDuplicate', ''),
+      new SignalSchema('onDelete', ''), new SignalSchema('onNavigate', '')],
+    ScheduledReportItemExample, 320);
+
+const scheduledReportItemContextMenu =
+  new ComponentSchema('ScheduledReportItemContextMenu',
+    [new PropertySchema('lastSubmitted', '', (props: any) =>
+        React.createElement('output', null, props.value)),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onSubmit', 'lastSubmitted')],
+    ScheduledReportItemContextMenuExample);
+
+const scheduledReportItemPlaceholder =
+  new ComponentSchema('ScheduledReportItemPlaceholder',
+    [new PropertySchema('style', {}, CSSInput)],
+    [],
+    WebPortal.ScheduledReportItemPlaceholder, 320);
+
+const shareReportModal =
+  new ComponentSchema('ShareReportModal',
+    [new PropertySchema('selected', [Beam.DirectoryEntry.makeAccount(1, 'Alice')],
+        ArrayInput(new PropertySchema('recipient',
+          Beam.DirectoryEntry.makeAccount(1, 'Alice'),
+          BeamDirectoryEntryInput))),
+      new PropertySchema('lookupDelay', 300, NumberInput)],
+    [new SignalSchema('onSubmit', 'selected'), new SignalSchema('onClose', '')],
+    ShareReportModalExample);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, buttonLink, burgerButton, checkbox,
-    contextMenu, dateInput, dateTimeInput, decimalInput, disclosure,
+    contextMenu, COUNT_BUTTON, dateInput, dateTimeInput, decimalInput, disclosure,
     durationInput, expandButton, filterChip, filterInput, hLine, iconButton,
     iconLabelButton, input, integerField, intervalInput, labeledCheckbox, link,
     listInput, modal, navigationHeader, navigationTab, pagination, radioButton,
     segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
     sortableTableHeaderCell, timeOfDayInput]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
-    currencySelect, dateRangeInput, emptyMessage, errorMessage,
-    inputErrorMessage, inputGroup, moneyInput, pageLayout, relativeDate,
-    roleIcon, rolePanel, scopeInput, tickerInput]),
+    currencySelect, DATE_EXPRESSION_INPUT, dateRangeInput, DAY_OF_MONTH_INPUT,
+    DAY_OF_WEEK_SELECT,
+    emptyMessage, errorMessage,
+    inputErrorMessage, inputGroup, moneyInput, MONTH_SELECT, pageLayout,
+    relativeDate, roleIcon, rolePanel, scopeInput, tickerInput]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator]),
+  new ComponentSection('Report Page', [dateFilter, parametersDateRangeInput,
+    RECURRENCE_INPUT,
+    REPORT_STATUS_TAG, reportFormTemplate, REPORT_TABLE, REPORT_TABLE_ROW,
+    reportTableRowPlaceholder, reportTypeSelect, RUNS_TABLE, scheduledDate,
+    scheduledReportItem, scheduledReportItemContextMenu,
+    scheduledReportItemPlaceholder, shareReportModal]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,

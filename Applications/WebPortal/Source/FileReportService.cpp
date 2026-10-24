@@ -1,0 +1,483 @@
+#include "WebPortal/FileReportService.hpp"
+#include <algorithm>
+#include <fstream>
+#include <iterator>
+#include <limits>
+#include <regex>
+#include <system_error>
+#include <unordered_set>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Utilities/Expect.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/process/process.hpp>
+#include <boost/process/stdio.hpp>
+#include "ReportProcessGroup.hpp"
+#include "WebPortal/ReportAccess.hpp"
+
+using namespace Beam;
+using namespace boost;
+using namespace boost::asio;
+using namespace boost::posix_time;
+using namespace boost::process;
+using namespace Nexus;
+
+namespace {
+  std::filesystem::path report_directory(
+      const std::string& id, const std::filesystem::path& directory) {
+    static const auto PATTERN = std::regex(
+      "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+    if(!std::regex_match(id, PATTERN)) {
+      throw std::invalid_argument("Invalid report job identifier.");
+    }
+    return directory / id;
+  }
+
+  std::filesystem::path output_path(
+      const ReportJob& job, const std::filesystem::path& directory) {
+    static const auto PATTERN = std::regex("[A-Za-z0-9][A-Za-z0-9._-]*");
+    auto& extension = job.m_definition.m_output.m_extension;
+    if(!std::regex_match(extension, PATTERN)) {
+      throw std::runtime_error("Invalid report output extension.");
+    }
+    return report_directory(job.m_id, directory) / ("output." + extension);
+  }
+
+  void write_metadata(
+      const std::filesystem::path& path, const std::string& text) {
+    auto temporary = path / "metadata.json.tmp";
+    auto stream = std::ofstream();
+    stream.exceptions(std::ios::failbit | std::ios::badbit);
+    stream.open(temporary, std::ios::binary | std::ios::trunc);
+    stream << text;
+    stream.close();
+#ifdef _WIN32
+    if(std::filesystem::exists(path / "metadata.json")) {
+      if(!ReplaceFileW((path / "metadata.json").c_str(), temporary.c_str(),
+          nullptr, 0, nullptr, nullptr)) {
+        throw std::system_error(GetLastError(), std::system_category());
+      }
+      return;
+    }
+#endif
+    std::filesystem::rename(temporary, path / "metadata.json");
+  }
+}
+
+FileReportService::FileReportService(
+    std::filesystem::path definitions_directory,
+    std::filesystem::path jobs_directory, ServiceLocatorClient client,
+    TimeClient time_client, std::size_t max_concurrency, Timer timer,
+    Timer retry_timer)
+    : m_definitions_directory(std::filesystem::absolute(definitions_directory)),
+      m_jobs_directory(std::filesystem::absolute(jobs_directory)),
+      m_client(std::move(client)),
+      m_time_client(std::move(time_client)) {
+  try {
+    recover();
+    m_jobs.emplace(
+      Ref(*this), m_time_client, max_concurrency, std::move(retry_timer));
+    m_schedules.emplace(
+      Ref(*this), Ref(*m_jobs), m_client, m_time_client, std::move(timer));
+  } catch(const std::exception&) {
+    m_open_state.close();
+    throw;
+  }
+}
+
+FileReportService::~FileReportService() {
+  close();
+}
+
+std::vector<ReportJob> FileReportService::load_jobs() {
+  auto jobs = std::vector<ReportJob>();
+  if(!std::filesystem::exists(m_jobs_directory)) {
+    return jobs;
+  }
+  for(auto& entry : std::filesystem::directory_iterator(m_jobs_directory)) {
+    if(!entry.is_directory()) {
+      continue;
+    }
+    if(auto job = read_job(entry.path())) {
+      jobs.push_back(std::move(*job));
+    }
+  }
+  return jobs;
+}
+
+std::vector<ReportSchedule> FileReportService::load_schedules() {
+  auto directory = m_jobs_directory / "schedules";
+  auto schedules = std::vector<ReportSchedule>();
+  if(!std::filesystem::exists(directory)) {
+    return schedules;
+  }
+  for(auto& entry : std::filesystem::directory_iterator(directory)) {
+    if(!entry.is_directory()) {
+      continue;
+    }
+    if(auto schedule = read_schedule(entry.path())) {
+      schedules.push_back(std::move(*schedule));
+    }
+  }
+  return schedules;
+}
+
+void FileReportService::remove_schedule(const std::string& id) {
+  m_open_state.ensure_open();
+  remove_directory(id, "schedules");
+}
+
+std::vector<ReportDefinition> FileReportService::load_definitions(
+    const DirectoryEntry& account) {
+  m_open_state.ensure_open();
+  return filter_report_definitions(load_definitions(), account, m_client);
+}
+
+GeneratedReports FileReportService::query(
+    const DirectoryEntry& account, const GeneratedReportQuery& query) {
+  m_open_state.ensure_open();
+  return query_generated_reports(load_jobs(), account, query, m_client);
+}
+
+ReportDetail FileReportService::load_report(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto job = load_job(id);
+  auto access = ReportAccess(account, m_client);
+  if(!job || !access.is_visible(*job)) {
+    throw ReportNotFoundException();
+  }
+  return make_report_detail(*job);
+}
+
+ReportFile FileReportService::load_file(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto job = load_job(id);
+  auto access = ReportAccess(account, m_client);
+  if(!job || !access.is_accessible(*job)) {
+    throw ReportNotFoundException();
+  }
+  auto output = output_path(*job, m_jobs_directory);
+  auto expected =
+    std::filesystem::canonical(m_jobs_directory) / id / output.filename();
+  auto error = std::error_code();
+  auto path = std::filesystem::canonical(output, error);
+  if(error || path != expected || !std::filesystem::is_regular_file(path)) {
+    throw ReportNotFoundException();
+  }
+  auto stream = std::ifstream(path, std::ios::binary | std::ios::ate);
+  if(!stream) {
+    throw std::runtime_error("Unable to open report output.");
+  }
+  auto size = static_cast<std::streamoff>(stream.tellg());
+  if(size < 0 || static_cast<std::uintmax_t>(size) >
+      std::numeric_limits<std::size_t>::max() || size >
+      std::numeric_limits<std::streamsize>::max()) {
+    throw std::runtime_error("Invalid report output size.");
+  }
+  auto content = SharedBuffer();
+  content.grow(static_cast<std::size_t>(size));
+  stream.exceptions(std::ios::failbit | std::ios::badbit);
+  stream.seekg(0);
+  if(size != 0) {
+    stream.read(content.get_mutable_data(), static_cast<std::streamsize>(size));
+  }
+  return ReportFile(make_report_filename(*job),
+    job->m_definition.m_output.m_media_type, std::move(content));
+}
+
+std::optional<ReportJob> FileReportService::load_job(const std::string& id) {
+  return read_job(report_directory(id, m_jobs_directory));
+}
+
+void FileReportService::store(const ReportJob& job) {
+  auto path = report_directory(job.m_id, m_jobs_directory);
+  auto snapshot = job;
+  snapshot.m_filename.clear();
+  auto lock = std::lock_guard(m_mutex);
+  auto i = m_filenames.find(job.m_id);
+  if(i != m_filenames.end()) {
+    snapshot.m_filename = i->second;
+  } else if(job.m_is_prepared && !job.m_created.is_special()) {
+    auto filenames = std::vector<std::string>();
+    for(auto& [id, filename] : m_filenames) {
+      filenames.push_back(filename);
+    }
+    auto name = make_report_filename(snapshot, filenames).u8string();
+    snapshot.m_filename.assign(name.begin(), name.end());
+  }
+  auto text = to_json(snapshot);
+  std::filesystem::create_directories(path);
+  write_metadata(path, text);
+  if(!snapshot.m_filename.empty()) {
+    m_filenames.insert_or_assign(job.m_id, std::move(snapshot.m_filename));
+  }
+}
+
+std::string FileReportService::submit(const DirectoryEntry& account,
+    const ReportSubmission& submission) {
+  m_open_state.ensure_open();
+  return m_jobs->submit(prepare_report_job(
+    load_definitions(), account, submission, m_client, convert_report_time(
+      m_time_client.get_time(), "UTC", submission.m_time_zone)));
+}
+
+void FileReportService::share(const DirectoryEntry& account,
+    const std::vector<std::string>& ids,
+    const std::vector<DirectoryEntry>& recipients) {
+  m_open_state.ensure_open();
+  m_jobs->share(
+    account, ids, prepare_report_recipients(recipients, account, m_client));
+}
+
+void FileReportService::cancel(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->cancel(account, ids);
+}
+
+void FileReportService::retry(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->retry(account, ids, [&] (auto& jobs) {
+    prepare_report_retries(jobs, load_definitions(account), m_client);
+  });
+}
+
+int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
+  auto output = output_path(job, m_jobs_directory);
+  if(stop.stop_requested()) {
+    throw std::runtime_error("Report execution stopped.");
+  }
+  auto diagnostics = output.parent_path() / "diagnostics.txt";
+  for(auto& file : {output, diagnostics}) {
+    auto stream = std::ofstream();
+    stream.exceptions(std::ios::failbit | std::ios::badbit);
+    stream.open(file, std::ios::binary | std::ios::trunc);
+    stream.close();
+  }
+  auto context = io_context();
+  auto group = ProcessGroup();
+  auto launcher = default_process_launcher();
+#ifdef _WIN32
+  launcher.creation_flags |= CREATE_SUSPENDED;
+#endif
+  auto child = launcher(context.get_executor(), job.m_definition.m_command,
+    job.m_arguments, process_stdio(
+      nullptr, filesystem::path(output.native()),
+      filesystem::path(diagnostics.native()))
+#ifdef _WIN32
+    , boost::process::windows::show_window_hide
+#else
+    , group
+#endif
+  );
+#ifdef _WIN32
+  group.attach(child);
+#endif
+  auto result = -1;
+  auto error = system::error_code();
+  child.async_wait([&] (auto code, auto exit_code) {
+    error = code;
+    result = exit_code;
+  });
+  auto cancel = std::stop_callback(stop, [&] {
+    post(context, [&] {
+      group.terminate();
+    });
+  });
+  context.run();
+  if(stop.stop_requested()) {
+    throw std::runtime_error("Report execution stopped.");
+  }
+  if(error) {
+    throw system::system_error(error);
+  }
+  return result;
+}
+
+void FileReportService::remove(
+    const DirectoryEntry& account, const std::vector<std::string>& ids) {
+  m_open_state.ensure_open();
+  m_jobs->remove(account, ids);
+}
+
+void FileReportService::remove(const std::string& id) {
+  remove_directory(id, std::filesystem::path());
+}
+
+ScheduledReports FileReportService::query(
+    const DirectoryEntry& account, const ScheduledReportQuery& query) {
+  m_open_state.ensure_open();
+  return query_scheduled_reports(load_schedules(), account, query);
+}
+
+ReportSchedule FileReportService::load_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  auto schedule =
+    read_schedule(report_directory(id, m_jobs_directory / "schedules"));
+  if(!schedule || schedule->m_account != account ||
+      account.m_type != DirectoryEntry::Type::ACCOUNT) {
+    throw ReportNotFoundException();
+  }
+  return std::move(*schedule);
+}
+
+void FileReportService::store(const ReportSchedule& schedule) {
+  m_open_state.ensure_open();
+  auto path = report_directory(schedule.m_id, m_jobs_directory / "schedules");
+  auto text = to_json(schedule);
+  auto lock = std::lock_guard(m_mutex);
+  std::filesystem::create_directories(path);
+  write_metadata(path, text);
+}
+
+std::string FileReportService::submit(
+    const DirectoryEntry& account, const ReportScheduleSubmission& submission) {
+  m_open_state.ensure_open();
+  return m_schedules->submit(account, submission);
+}
+
+void FileReportService::update_schedule(const DirectoryEntry& account,
+    const std::string& id, const ReportScheduleSubmission& submission) {
+  m_open_state.ensure_open();
+  m_schedules->update(account, id, submission);
+}
+
+void FileReportService::remove_schedule(
+    const DirectoryEntry& account, const std::string& id) {
+  m_open_state.ensure_open();
+  m_schedules->remove(account, id);
+}
+
+void FileReportService::close() {
+  if(m_open_state.set_closing()) {
+    return;
+  }
+  m_schedules->close();
+  m_jobs->close();
+  m_open_state.close();
+}
+
+std::optional<std::string> FileReportService::read_metadata(
+    const std::filesystem::path& directory) {
+  auto lock = std::lock_guard(m_mutex);
+  auto path = directory / "metadata.json";
+  if(!std::filesystem::exists(path)) {
+    return std::nullopt;
+  }
+  auto stream = std::ifstream(path, std::ios::binary);
+  stream.exceptions(std::ios::badbit);
+  if(!stream) {
+    throw std::runtime_error("Unable to read report metadata.");
+  }
+  return std::string(std::istreambuf_iterator<char>(stream), {});
+}
+
+void FileReportService::remove_directory(
+    const std::string& id, const std::filesystem::path& subdirectory) {
+  auto path = report_directory(id, m_jobs_directory / subdirectory);
+  auto lock = std::lock_guard(m_mutex);
+  auto root = std::filesystem::canonical(m_jobs_directory) / subdirectory;
+  auto status = std::filesystem::symlink_status(path);
+  if(!std::filesystem::is_directory(status)) {
+    throw ReportNotFoundException();
+  }
+  auto resolved = std::filesystem::canonical(path);
+  if(resolved != root / id) {
+    throw ReportNotFoundException();
+  }
+  std::filesystem::remove_all(resolved);
+  if(subdirectory.empty()) {
+    m_filenames.erase(id);
+  }
+}
+
+std::vector<ReportDefinition> FileReportService::load_definitions() {
+  if(!std::filesystem::exists(m_definitions_directory)) {
+    return {};
+  }
+  auto files = std::vector<std::filesystem::path>();
+  for(auto& entry :
+      std::filesystem::directory_iterator(m_definitions_directory)) {
+    auto extension = entry.path().extension();
+    if(entry.is_regular_file() &&
+        (extension == ".yml" || extension == ".yaml")) {
+      files.push_back(entry.path());
+    }
+  }
+  std::ranges::sort(files);
+  auto definitions = std::vector<ReportDefinition>();
+  auto identifiers = std::unordered_set<std::string>();
+  for(auto& file : files) {
+    auto definition = try_or_nest([&] {
+      auto stream = std::ifstream(file);
+      if(!stream) {
+        throw std::runtime_error("Unable to open report definition.");
+      }
+      return load_report_definition(stream);
+    }, std::runtime_error(
+      "Failed to load report definition: " + file.string()));
+    if(!identifiers.insert(definition.m_id).second) {
+      throw std::runtime_error("Duplicate report identifier: " +
+        definition.m_id + " in " + file.string());
+    }
+    definitions.push_back(std::move(definition));
+  }
+  return definitions;
+}
+
+std::optional<ReportJob> FileReportService::read_job(
+    const std::filesystem::path& path) {
+  return try_or_nest([&] () -> std::optional<ReportJob> {
+    auto text = read_metadata(path);
+    if(!text) {
+      return std::nullopt;
+    }
+    auto job = from_json<ReportJob>(*text);
+    if(report_directory(job.m_id, m_jobs_directory) != path) {
+      throw std::runtime_error("Report job directory does not match its id.");
+    }
+    return job;
+  }, std::runtime_error("Failed to load saved report " +
+    (path / "metadata.json").string() + '.'));
+}
+
+void FileReportService::recover() {
+  auto jobs = load_jobs();
+  for(auto& job : jobs) {
+    if(!job.m_filename.empty()) {
+      m_filenames.emplace(job.m_id, job.m_filename);
+    }
+  }
+  for(auto& job : jobs) {
+    if(job.m_status == ReportJob::Status::RUNNING) {
+      job.m_status = ReportJob::Status::FAILED;
+      job.m_error = "Server stopped before report completion.";
+      job.m_completed = m_time_client.get_time();
+      job.m_modified = job.m_completed;
+      store(job);
+    }
+  }
+}
+
+std::optional<ReportSchedule> FileReportService::read_schedule(
+    const std::filesystem::path& path) {
+  return try_or_nest([&] () -> std::optional<ReportSchedule> {
+    auto text = read_metadata(path);
+    if(!text) {
+      return std::nullopt;
+    }
+    auto schedule = from_json<ReportSchedule>(*text);
+    if(report_directory(schedule.m_id, m_jobs_directory / "schedules") != path) {
+      throw std::runtime_error(
+        "Report schedule directory does not match its id.");
+    }
+    return schedule;
+  }, std::runtime_error("Failed to load saved report schedule " +
+    (path / "metadata.json").string() + '.'));
+}

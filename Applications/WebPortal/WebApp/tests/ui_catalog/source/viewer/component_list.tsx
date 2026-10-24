@@ -88,7 +88,6 @@ export class ComponentList extends React.Component<Properties, State> {
     header: {
       fontSize: '20px',
       fontWeight: 700,
-      fontFamily: 'Roboto',
       color: '#FFFFFF',
       flexGrow: 0,
       flexShrink: 0,
@@ -97,7 +96,6 @@ export class ComponentList extends React.Component<Properties, State> {
     sectionHeader: {
       width: '100%',
       padding: '11px 20px',
-      fontFamily: 'Roboto',
       fontSize: '12px',
       fontWeight: 700,
       color: '#C7BAFF',
@@ -125,7 +123,6 @@ export class ComponentList extends React.Component<Properties, State> {
       width: '100%',
       height: '40px',
       padding: '11px 20px 11px 32px',
-      fontFamily: 'Roboto',
       fontSize: '14px',
       color: '#FFFFFF',
       backgroundColor: 'transparent',

@@ -86,12 +86,8 @@ const DirectoryEntry& RiskWebServlet::find_trading_group(
   for(auto& group : groups) {
     auto trading_group =
       m_clients.get_administration_client().load_trading_group(group);
-    if(std::find(trading_group.get_managers().begin(),
-        trading_group.get_managers().end(), trader) !=
-        trading_group.get_managers().end() ||
-        std::find(trading_group.get_traders().begin(),
-          trading_group.get_traders().end(), trader) !=
-          trading_group.get_traders().end()) {
+    if(std::ranges::contains(trading_group.get_managers(), trader) ||
+        std::ranges::contains(trading_group.get_traders(), trader)) {
       m_trader_groups.insert(std::make_pair(trader, trading_group.get_entry()));
       return find_trading_group(trader);
     }

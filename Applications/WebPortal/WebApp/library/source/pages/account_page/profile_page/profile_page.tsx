@@ -455,10 +455,16 @@ export class ProfilePage extends React.Component<Properties, State> {
                   readonly={this.props.readonly}
                   onInput={this.onCommentChange}/>
                 <Dali.Padding size={commentFooterPaddingSize}/>
-                <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
+                <div style={{
+                  ...commentBoxStyle,
+                  ...commentBoxButtonStyle
+                }}>
                   <div style={ProfilePage.STYLE.filler}/>
-                  <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                      {profileSubmitStatus}
+                  <div style={{
+                    ...commentBoxStyle,
+                    ...statusMessageInline
+                  }}>
+                    {profileSubmitStatus}
                     <div style={ProfilePage.STYLE.buttonPadding}/>
                   </div>
                   <SubmitButton label='Save Changes'

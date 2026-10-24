@@ -1,4 +1,6 @@
 import * as Beam from 'beam';
+import { DateExpression } from './date_expression';
+import { DateRule } from './date_rule';
 
 /** A calendar date range. Null bounds represent unspecified dates. */
 export class DateRange {
@@ -9,10 +11,19 @@ export class DateRange {
   /** The last date, or null for an unspecified end. */
   public readonly end: Beam.Date;
 
-  /** Constructs a range with the given bounds. */
-  constructor(start: Beam.Date, end: Beam.Date) {
+  /** The rules defining these dates, or undefined for fixed bounds. */
+  public readonly rules: DateRangeRules;
+
+  /** The custom expressions, when edited with DateExpressionInput. */
+  public readonly expressions: DateRangeExpressions;
+
+  /** Constructs a range with resolved dates and optional relative values. */
+  constructor(start: Beam.Date, end: Beam.Date, rules?: DateRangeRules,
+      expressions?: DateRangeExpressions) {
     this.start = start;
     this.end = end;
+    this.rules = rules;
+    this.expressions = expressions;
   }
 }
 
@@ -31,13 +42,17 @@ export class DateRangeOption {
   /** The preset's end date, or null for an unspecified end. */
   public readonly endDate: Beam.Date;
 
-  /** Constructs a preset with its identifier, label, and date bounds. */
+  /** The rules underlying the preset, or undefined for fixed bounds. */
+  public readonly rules: DateRangeRules;
+
+  /** Constructs a preset with date bounds and optional relative rules. */
   constructor(value: string, label: string, startDate: Beam.Date,
-      endDate: Beam.Date) {
+      endDate: Beam.Date, rules?: DateRangeRules) {
     this.value = value;
     this.label = label;
     this.startDate = startDate;
     this.endDate = endDate;
+    this.rules = rules;
   }
 }
 
@@ -46,4 +61,36 @@ export function isDateRangeEqual(first: DateRange, second: DateRange): boolean {
   const equals = (a: Beam.Date, b: Beam.Date) =>
     a === b || a != null && b != null && a.equals(b);
   return equals(first.start, second.start) && equals(first.end, second.end);
+}
+
+/** The independent rules defining the start and end of a custom range. */
+export class DateRangeRules {
+
+  /** The rule for the inclusive first date. */
+  public readonly start: DateRule;
+
+  /** The rule for the inclusive last date. */
+  public readonly end: DateRule;
+
+  /** Constructs a custom range from its two date rules. */
+  constructor(start: DateRule, end: DateRule) {
+    this.start = start;
+    this.end = end;
+  }
+}
+
+/** The expressions defining the inclusive bounds of a custom range. */
+export class DateRangeExpressions {
+
+  /** The expression for the first date. */
+  public readonly start: DateExpression;
+
+  /** The expression for the last date. */
+  public readonly end: DateExpression;
+
+  /** Constructs a range from its two expressions. */
+  constructor(start: DateExpression, end: DateExpression) {
+    this.start = start;
+    this.end = end;
+  }
 }

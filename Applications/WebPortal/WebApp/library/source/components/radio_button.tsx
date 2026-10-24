@@ -44,7 +44,10 @@ function Label(props: LabelProperties): JSX.Element {
 }
 
 const STYLES = StyleSheet.create({
-  container: {display: 'inline-flex', alignItems: 'center'},
+  container: {
+    display: 'inline-flex',
+    alignItems: 'center'
+  },
   input: {
     appearance: 'none',
     boxSizing: 'border-box',
@@ -54,14 +57,28 @@ const STYLES = StyleSheet.create({
     border: '2px solid #C8C8C8',
     transition: 'border 60ms ease-out',
     cursor: 'pointer',
-    ':checked': {border: '4px solid #684BC7'},
-    ':disabled': {cursor: 'not-allowed', opacity: 0.4},
-    ':disabled + label': {color: '#C8C8C8', cursor: 'not-allowed'},
+    ':checked': {
+      border: '4px solid #684BC7'
+    },
+    ':disabled': {
+      cursor: 'not-allowed',
+      opacity: 0.4
+    },
+    ':disabled + label': {
+      color: '#C8C8C8',
+      cursor: 'not-allowed'
+    },
     '@media (width < 768px)': {
-      width: '20px', height: '20px', margin: 0, borderRadius: '10px'
+      width: '20px',
+      height: '20px',
+      margin: 0,
+      borderRadius: '10px'
     },
     '@media (min-width: 768px)': {
-      width: '16px', height: '16px', margin: '2px', borderRadius: '8px'
+      width: '16px',
+      height: '16px',
+      margin: '2px',
+      borderRadius: '8px'
     }
   },
   label: {

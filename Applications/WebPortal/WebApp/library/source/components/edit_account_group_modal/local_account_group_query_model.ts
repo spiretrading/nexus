@@ -12,6 +12,9 @@ export class LocalAccountGroupQueryModel extends AccountGroupQueryModel {
 
   public async submit(prefix: string): Promise<readonly Beam.DirectoryEntry[]> {
     const query = prefix.trim().toLocaleLowerCase();
+    if(query === '*') {
+      return [Beam.DirectoryEntry.STAR_DIRECTORY];
+    }
     if(!query) {
       return [];
     }

@@ -45,8 +45,10 @@ export function ProfitAndLossItem(props: Properties) {
         {props.code}
       </h2>
       <span className={css(STYLES.totalPnl)}
-        style={{color: isNegative ? '#E63F44' : '#36BB55',
-          ...(isOpen && {fontWeight: 500})}}>
+          style={{
+            color: isNegative ? '#E63F44' : '#36BB55',
+            ...(isOpen && {fontWeight: 500})
+          }}>
         {pnlText}
       </span>
     </div>);

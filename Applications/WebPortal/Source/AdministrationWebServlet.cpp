@@ -1,4 +1,5 @@
 #include "WebPortal/AdministrationWebServlet.hpp"
+#include <algorithm>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -426,12 +427,8 @@ HttpResponse AdministrationWebServlet::on_store_account_roles(
   for(auto& group : groups) {
     auto trading_group =
       clients.get_administration_client().load_trading_group(group);
-    if(std::find(trading_group.get_managers().begin(),
-        trading_group.get_managers().end(), params.m_account) !=
-          trading_group.get_managers().end() ||
-        std::find(trading_group.get_traders().begin(),
-          trading_group.get_traders().end(), params.m_account) !=
-            trading_group.get_traders().end()) {
+    if(std::ranges::contains(trading_group.get_managers(), params.m_account) ||
+        std::ranges::contains(trading_group.get_traders(), params.m_account)) {
       member_group = trading_group;
       break;
     }

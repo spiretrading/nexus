@@ -79,9 +79,20 @@ export class TickerParameterList extends React.Component<Properties> {
 }
 
 const STYLES = StyleSheet.create({
-  list: {display: 'flex', flexDirection: 'column', gap: '8px'},
-  row: {display: 'flex', alignItems: 'center', gap: '8px'},
-  field: {flex: 1, minWidth: 0},
+  list: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  row: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  field: {
+    flex: 1,
+    minWidth: 0
+  },
   remove: {
     border: 0,
     padding: 0,

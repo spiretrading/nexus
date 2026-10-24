@@ -5,6 +5,7 @@ import { AccountDirectoryModel, ComplianceModel, LocalAccountModel,
 import { LocalNotificationsModel } from
   '../notifications_page/local_notifications_model';
 import { NotificationsModel } from '../notifications_page/notifications_model';
+import { ReportModel } from '../report_page/report_model';
 import { RequestsModel } from '../requests_page/requests_model';
 import { DashboardModel } from './dashboard_model';
 
@@ -21,6 +22,7 @@ export class LocalDashboardModel extends DashboardModel {
    * @param venueDatabase - The venue database to use.
    * @param accountDirectoryModel - The AccountDirectoryModel to return.
    * @param requestsModel - The RequestsModel to return.
+   * @param reportModel - The reporting model to return.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
       entitlementDatabase: Nexus.EntitlementDatabase,
@@ -28,7 +30,8 @@ export class LocalDashboardModel extends DashboardModel {
       currencyDatabase: Nexus.CurrencyDatabase,
       venueDatabase: Nexus.VenueDatabase,
       accountDirectoryModel: AccountDirectoryModel,
-      requestsModel: RequestsModel, notifications: Nexus.Notification[] = []) {
+      requestsModel: RequestsModel, reportModel: ReportModel,
+      notifications: Nexus.Notification[] = []) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
@@ -39,6 +42,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
     this._requestsModel = requestsModel;
+    this._reportModel = reportModel;
     this._notificationsModel = new LocalNotificationsModel(notifications);
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, LocalAccountModel>();
   }
@@ -93,6 +97,11 @@ export class LocalDashboardModel extends DashboardModel {
     return this._notificationsModel;
   }
 
+  public get reportModel(): ReportModel {
+    this.ensureLoaded();
+    return this._reportModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     this.ensureLoaded();
     let model = this.accountModels.get(account);
@@ -141,5 +150,6 @@ export class LocalDashboardModel extends DashboardModel {
   private _accountDirectoryModel: AccountDirectoryModel;
   private _requestsModel: RequestsModel;
   private _notificationsModel: NotificationsModel;
+  private _reportModel: ReportModel;
   private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }
