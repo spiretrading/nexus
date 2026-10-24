@@ -1,6 +1,7 @@
 #ifndef NEXUS_REPORTING_WEB_SERVLET_HPP
 #define NEXUS_REPORTING_WEB_SERVLET_HPP
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -21,6 +22,7 @@
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
+#include "WebPortal/ReportService.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -116,11 +118,13 @@ namespace Nexus {
     public:
 
       /**
-       * Constructs a ReportingWebServlet.
-       * @param sessions The available web sessions.
+       * Constructs a ReportingWebServlet with a report service.
+       * @param sessions - The available web sessions.
+       * @param reports - The service providing definitions and execution.
        */
-      explicit ReportingWebServlet(
-        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
+      ReportingWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
+        ReportService reports);
 
       ~ReportingWebServlet();
 
@@ -161,6 +165,7 @@ namespace Nexus {
       std::unordered_map<int, std::shared_ptr<GroupReports>> m_groups;
       Beam::OpenState m_open_state;
       Beam::RoutineHandlerGroup m_routines;
+      ReportService m_reports;
 
       ReportingWebServlet(const ReportingWebServlet&) = delete;
       ReportingWebServlet& operator=(const ReportingWebServlet&) = delete;
@@ -173,6 +178,30 @@ namespace Nexus {
         std::shared_ptr<WebPortalSession> session);
       void generate_group_reports(std::shared_ptr<GroupReports> group,
         std::shared_ptr<WebPortalSession> session);
+      Beam::HttpResponse on_load_report_definitions(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_submit_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_cancel_report_jobs(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_retry_report_jobs(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_query_generated_reports(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_download_report(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_share_reports(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_reports(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_query_scheduled_reports(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_scheduled_report(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_update_scheduled_report(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_duplicate_scheduled_report(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_run_scheduled_report(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_scheduled_report(
+        const Beam::HttpRequest& request);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(

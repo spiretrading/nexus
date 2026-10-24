@@ -103,7 +103,10 @@ export class InputGroup extends React.Component<Properties, State> {
     return result;
   };
 
-  private onInput = () => {
+  private onInput = (event: React.FormEvent<HTMLDivElement>) => {
+    if((event.target as HTMLElement).tagName === 'SELECT') {
+      return;
+    }
     this.requestValidation();
   };
 

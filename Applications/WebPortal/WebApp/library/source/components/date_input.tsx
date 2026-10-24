@@ -186,7 +186,7 @@ const STYLES = StyleSheet.create({
     }
   },
   separator: {
-    width: '0.45rem',
+    width: '0.45em',
     textAlign: 'center',
     userSelect: 'none'
   }
@@ -199,7 +199,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1.45rem'
+    width: '1.45em'
   },
   monthInput: {
     backgroundColor: 'transparent',
@@ -207,7 +207,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1.8rem'
+    width: '1.8em'
   },
   yearInput: {
     backgroundColor: 'transparent',
@@ -215,6 +215,6 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '2.6rem'
+    width: '2.6em'
   }
 };

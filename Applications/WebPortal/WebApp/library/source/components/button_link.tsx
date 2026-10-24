@@ -32,6 +32,8 @@ const STYLES = StyleSheet.create({
   link: {
     display: 'inline-flex',
     alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
     boxSizing: 'border-box',
     height: '34px',
     backgroundColor: '#684BC7',

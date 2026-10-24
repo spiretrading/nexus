@@ -39,8 +39,8 @@ export class IntervalInput extends React.Component<Properties> {
           inputMode='numeric' aria-label='Interval count'
           readOnly={readOnly} disabled={disabled} required={required}
           style={{
-            width: '64px',
-            flex: '0 0 64px'
+            width: 'clamp(50px, calc(100cqw - 150px), 96px)',
+            flex: '0 0 auto'
           }}
           onChange={this.onCountChange}/>
         <Select value={value.unit} aria-label='Interval unit'
@@ -74,6 +74,7 @@ export class IntervalInput extends React.Component<Properties> {
 
 const STYLES = StyleSheet.create({
   container: {
+    containerType: 'inline-size',
     display: 'flex',
     gap: '10px',
     width: '100%'

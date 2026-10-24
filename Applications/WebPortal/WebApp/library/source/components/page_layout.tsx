@@ -3,9 +3,15 @@ import * as React from 'react';
 
 /** Lays out its children centered horizontally with responsive widths. */
 export class PageLayout extends React.Component<{}> {
+
+  /** Scrolls the page content to the top. */
+  public scrollToTop(): void {
+    this.containerRef.current?.scrollTo(0, 0);
+  }
+
   public render(): JSX.Element {
     return (
-      <div className={css(PageLayout.STYLES.outer)}>
+      <div ref={this.containerRef} className={css(PageLayout.STYLES.outer)}>
         <div className={css(PageLayout.STYLES.inner)}>
           {this.props.children}
         </div>
@@ -35,4 +41,5 @@ export class PageLayout extends React.Component<{}> {
       }
     }
   });
+  private containerRef = React.createRef<HTMLDivElement>();
 }

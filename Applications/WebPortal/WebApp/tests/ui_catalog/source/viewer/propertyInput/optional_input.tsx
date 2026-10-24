@@ -47,7 +47,8 @@ export function OptionalInput<T>(PropertyInput: typeof React.Component) {
     }
 
     public componentDidUpdate(prevProps: Properties<T>) {
-      if(this.props.value !== prevProps.value && !this.state.isUndefined) {
+      if(!Object.is(this.props.value, prevProps.value) &&
+          !this.state.isUndefined) {
         this.setState({localValue: this.props.value});
       }
     }
@@ -81,7 +82,6 @@ export function OptionalInput<T>(PropertyInput: typeof React.Component) {
         justifyContent: 'space-between',
         fontSize: '14px',
         fontWeight: 400,
-        fontFamily: 'Roboto',
         color: '#000000',
         paddingBottom: '5px'
       } as React.CSSProperties,

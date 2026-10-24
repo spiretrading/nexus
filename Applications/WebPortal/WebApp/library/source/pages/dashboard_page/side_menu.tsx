@@ -31,6 +31,9 @@ export class SideMenu extends React.Component<Properties> {
           icon='resources/dashboard/menu-icons/request-history.svg'
           label='Request History' href='/request_history'
           onClick={() => this.props.onClick(SideMenu.Item.REQUEST_HISTORY)}/>
+        <SideMenuButton icon='resources/dashboard/menu-icons/reports.svg'
+          label='Reports' href='/reports'
+          onClick={() => this.props.onClick(SideMenu.Item.REPORTS)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/sign-out.svg'
           label='Sign Out'
           onClick={() => this.props.onClick(SideMenu.Item.SIGN_OUT)}/>
@@ -65,6 +68,9 @@ export namespace SideMenu {
 
     /** The request history item. */
     REQUEST_HISTORY,
+
+    /** The reports item. */
+    REPORTS,
 
     /** The sign out item. */
     SIGN_OUT

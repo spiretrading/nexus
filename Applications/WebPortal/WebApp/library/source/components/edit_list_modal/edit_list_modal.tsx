@@ -32,6 +32,15 @@ interface Properties<T> {
   /** The prompt displayed in the item search. */
   placeholder?: string;
 
+  /** The submission button's text. Defaults to "Submit". */
+  submitLabel?: string;
+
+  /** Replaces the default requirement that the selection has changed.
+   * @param selected - The current working selection.
+   * @return Whether submission is allowed once pending additions finish.
+   */
+  canSubmit?: (selected: readonly T[]) => boolean;
+
   /** Called with the edited selection when Submit is pressed. */
   onSubmit?: (selected: T[]) => void;
 
@@ -66,6 +75,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     };
     this.dialog = React.createRef<HTMLDialogElement>();
     this.input = React.createRef<ComboBox<T>>();
+    this.list = React.createRef<ItemsList<T>>();
     this.upload = React.createRef<HTMLInputElement>();
     this.reader = null;
     this.sourceModel = null;
@@ -76,6 +86,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 
   public componentDidMount(): void {
     this.dialog.current.showModal();
+    this.input.current?.focus();
   }
 
   public componentDidUpdate(previous: Properties<T>, state: State<T>): void {
@@ -112,9 +123,6 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
       }
       return this.props.title;
     })();
-    const changed = this.state.selected.length !==
-      this.state.submission.length || this.state.selected.some((item, i) =>
-        !this.equals(item, this.state.submission[i]));
     return (
       <dialog ref={this.dialog} className={css(STYLES.dialog)}
           aria-labelledby={`${this.identifier}-title`}
@@ -128,7 +136,8 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
         </header>
         <Content readOnly={this.props.readOnly}
             onClose={this.onClose} onSubmit={this.onSubmit}
-            disabled={!changed || this.state.importing || this.state.adding}>
+            submitLabel={this.props.submitLabel ?? 'Submit'}
+            disabled={!this.canSubmit()}>
           <Form readOnly={this.props.readOnly}>
             {!this.props.readOnly &&
               <div className={css(STYLES.search)}>
@@ -143,9 +152,10 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
               </div>}
             <Section readOnly={this.props.readOnly}
                 heading={this.props.listHeading}>
-              <ItemsList items={this.state.selected}
+              <ItemsList ref={this.list} items={this.state.selected}
                 getLabel={this.props.getLabel} readOnly={this.props.readOnly}
-                selection={this.state.removal} onSelect={this.onSelect}/>
+                selection={this.state.removal} onSelect={this.onSelect}
+                onRemove={this.onRemoveItem}/>
             </Section>
             {!this.props.readOnly &&
               <Actions removal={this.state.removal}
@@ -163,6 +173,18 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
           </Form>
         </Content>
       </dialog>);
+  }
+
+  private canSubmit(): boolean {
+    if(this.props.readOnly || this.state.importing || this.state.adding) {
+      return false;
+    }
+    if(this.props.canSubmit) {
+      return this.props.canSubmit(this.state.selected);
+    }
+    return this.state.selected.length !== this.state.submission.length ||
+      this.state.selected.some((item, i) =>
+        !this.equals(item, this.state.submission[i]));
   }
 
   private equals(first: T, second: T): boolean {
@@ -192,6 +214,18 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
     }
   }
 
+  private remove(index: number): void {
+    if(this.props.readOnly || index < 0 ||
+        index >= this.state.selected.length) {
+      return;
+    }
+    this.setState(state => {
+      const selected = state.selected.filter((_, i) => i !== index);
+      return {selected, removal: Math.min(index, selected.length - 1),
+        error: ''};
+    }, () => this.list.current?.focus(this.state.removal));
+  }
+
   private onCancel = (event: React.SyntheticEvent) => {
     if(event.target !== event.currentTarget) {
       return;
@@ -217,7 +251,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   };
 
   private onSubmit = () => {
-    if(this.state.adding || this.state.importing) {
+    if(!this.canSubmit()) {
       return;
     }
     this.setState({submission: this.state.selected.slice()});
@@ -246,10 +280,11 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   };
 
   private onRemove = () => {
-    this.setState(state => ({
-      selected: state.selected.filter((_, i) => i !== state.removal),
-      removal: -1, error: ''
-    }));
+    this.remove(this.state.removal);
+  };
+
+  private onRemoveItem = (index: number) => {
+    this.remove(index);
   };
 
   private onUpload = () => {
@@ -308,6 +343,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
   private static nextIdentifier = 0;
   private dialog: React.RefObject<HTMLDialogElement>;
   private input: React.RefObject<ComboBox<T>>;
+  private list: React.RefObject<ItemsList<T>>;
   private upload: React.RefObject<HTMLInputElement>;
   private reader: FileReader;
   private sourceModel: QueryModel<T>;
@@ -319,6 +355,7 @@ export class EditListModal<T> extends React.Component<Properties<T>, State<T>> {
 interface ContentProperties {
   readOnly: boolean;
   disabled: boolean;
+  submitLabel: string;
   onClose: () => void;
   onSubmit: () => void;
   children: React.ReactNode;
@@ -335,7 +372,8 @@ class Content extends React.Component<ContentProperties> {
               return <Button label='OK' style={{width: '100%'}}
                 onClick={this.props.onClose}/>;
             }
-            return <Button label='Submit' style={{width: '100%'}}
+            return <Button label={this.props.submitLabel}
+              style={{width: '100%'}}
               disabled={this.props.disabled} onClick={this.props.onSubmit}/>;
           })()}
         </div>
@@ -370,12 +408,27 @@ interface ItemsListProperties<T> {
   readOnly: boolean;
   selection: number;
   onSelect: (index: number) => void;
+  onRemove: (index: number) => void;
 }
 
 class ItemsList<T> extends React.Component<ItemsListProperties<T>> {
+  constructor(props: ItemsListProperties<T>) {
+    super(props);
+    this.element = React.createRef<HTMLUListElement>();
+  }
+
+  public focus(index: number): void {
+    const item = this.element.current?.querySelectorAll('button')[index];
+    if(item) {
+      item.focus();
+    } else {
+      this.element.current?.focus();
+    }
+  }
+
   public render(): JSX.Element {
     return (
-      <ul className={css(STYLES.items)}>
+      <ul ref={this.element} tabIndex={-1} className={css(STYLES.items)}>
         {this.props.items.map((item, i) =>
           <li key={i}>
             {(() => {
@@ -384,16 +437,42 @@ class ItemsList<T> extends React.Component<ItemsListProperties<T>> {
                   {this.props.getLabel(item)}
                 </div>;
               }
-              return <button type='button'
+              return <button type='button' tabIndex={(() => {
+                    if(i === Math.max(0, this.props.selection)) {
+                      return 0;
+                    }
+                    return -1;
+                  })()}
                   aria-pressed={this.props.selection === i}
                   className={css(STYLES.item, STYLES.itemButton)}
-                  onClick={() => this.props.onSelect(i)}>
+                  onFocus={() => this.props.onSelect(i)}
+                  onClick={() => this.props.onSelect(i)}
+                  onKeyDown={event => this.onKeyDown(event, i)}>
                 {this.props.getLabel(item)}
               </button>;
             })()}
           </li>)}
       </ul>);
   }
+
+  private onKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>,
+      index: number) => {
+    if(this.props.readOnly || event.nativeEvent.isComposing) {
+      return;
+    }
+    if(event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.focus(Math.max(0, index - 1));
+    } else if(event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.focus(Math.min(this.props.items.length - 1, index + 1));
+    } else if(event.key === 'Delete') {
+      event.preventDefault();
+      this.props.onRemove(index);
+    }
+  };
+
+  private element: React.RefObject<HTMLUListElement>;
 }
 
 interface ActionsProperties {

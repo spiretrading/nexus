@@ -208,7 +208,8 @@ const STYLE: Record<string, React.CSSProperties> = {
   },
   done: {
     padding: '18px',
-    font: '400 14px Roboto'
+    fontWeight: 400,
+    fontSize: '14px'
   }
 };
 

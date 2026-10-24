@@ -7,7 +7,7 @@ import { ListInput } from './list_input';
 interface Properties extends Omit<React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'defaultValue' | 'onChange'> {
 
-  /** The selected accounts and groups displayed in the input. */
+  /** The selected accounts and groups. */
   value: readonly Beam.DirectoryEntry[];
 
   /** The model used to look up accounts and groups. */
@@ -17,7 +17,7 @@ interface Properties extends Omit<React.InputHTMLAttributes<HTMLInputElement>,
   onChange?: (value: Beam.DirectoryEntry[]) => void;
 }
 
-/** Displays selected accounts and groups and opens their editor on focus. */
+/** Displays selected accounts and groups with a modal editor. */
 export class AccountGroupListInput extends React.Component<Properties> {
   public render(): JSX.Element {
     return <ListInput {...this.props}

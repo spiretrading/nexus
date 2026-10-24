@@ -59,12 +59,10 @@ export class Stage extends React.Component<Properties> {
       paddingBottom: '30px',
       fontSize: '20px',
       fontWeight: 700,
-      fontFamily: 'Roboto',
       color: '#000000'
     } as React.CSSProperties,
     componentWrapper: {
       alignSelf: 'flex-start',
-      fontFamily: "'Roboto', system-ui, sans-serif",
       fontWeight: 400,
       color: '#333333'
     } as React.CSSProperties,

@@ -61,6 +61,7 @@ export class NavigationTab extends React.Component<Properties, State> {
     };
     return (
       <a className={tabClassName} href={this.props.href}
+          aria-label={this.props.label}
           aria-current={this.props.isCurrent ? 'page' : 'false'}
           onClick={this.onClick}
           onFocus={this.onFocus}
@@ -95,6 +96,10 @@ export class NavigationTab extends React.Component<Properties, State> {
   }
 
   private onClick = (event: React.MouseEvent) => {
+    if(event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey ||
+        event.altKey) {
+      return;
+    }
     event.preventDefault();
     this.props.onClick?.();
   }
