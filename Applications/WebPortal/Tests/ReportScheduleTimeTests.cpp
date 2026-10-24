@@ -189,7 +189,8 @@ TEST_SUITE("ReportScheduleTime") {
     auto start = serialized.find(",\"time_zone\":");
     REQUIRE(start != std::string::npos);
     serialized.erase(start, serialized.size() - start - 1);
-    REQUIRE_THROWS_AS(from_json<ReportSchedule>(serialized), std::out_of_range);
+    REQUIRE_THROWS_AS(
+      from_json<ReportSchedule>(serialized), SerializationException);
     schedule.m_repeat_interval->m_count = 0;
     REQUIRE_THROWS_AS(next_report_run(schedule,
       time_from_string("2026-10-06 00:00:00")), std::invalid_argument);
