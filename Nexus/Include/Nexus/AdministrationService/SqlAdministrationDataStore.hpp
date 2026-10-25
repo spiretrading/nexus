@@ -7,7 +7,6 @@
 #include <utility>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
@@ -36,7 +35,7 @@ namespace Nexus {
 
       /** The function used to load DirectoryEntries. */
       using DirectoryEntrySource = Beam::KeyValueCache<
-        unsigned int, Beam::DirectoryEntry, Beam::Mutex>::Source;
+        unsigned int, Beam::DirectoryEntry>::Source;
 
       /**
        * Constructs an SqlAdministrationDataStore.
@@ -121,9 +120,9 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
-      Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry, Beam::Mutex>
+      Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry>
         m_directory_entries;
       Beam::OpenState m_open_state;
 

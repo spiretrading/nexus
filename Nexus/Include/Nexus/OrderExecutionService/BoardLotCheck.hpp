@@ -7,7 +7,6 @@
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/optional/optional.hpp>
@@ -53,8 +52,8 @@ namespace Nexus {
         ClosingEntry();
       };
       Beam::local_ptr_t<C> m_market_data_client;
-      Beam::SynchronizedUnorderedMap<
-        Ticker, Beam::Sync<ClosingEntry, Beam::Mutex>> m_closing_entries;
+      Beam::SynchronizedUnorderedMap<Ticker, Beam::Sync<ClosingEntry>>
+        m_closing_entries;
       Beam::SynchronizedUnorderedMap<
         Ticker, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       std::vector<Beam::RoutineHandler> m_query_routines;

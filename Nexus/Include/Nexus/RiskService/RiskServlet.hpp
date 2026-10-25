@@ -109,10 +109,9 @@ namespace Nexus {
         std::vector<Beam::DirectoryEntry>>> m_account_publisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
-      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, Beam::DirectoryEntry,
-        Beam::Mutex> m_account_to_group;
-      Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Mutex>
-        m_portfolio_subscribers;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, Beam::DirectoryEntry>
+        m_account_to_group;
+      Beam::SynchronizedVector<ServiceProtocolClient*> m_portfolio_subscribers;
       Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 

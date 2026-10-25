@@ -111,7 +111,7 @@ namespace Nexus {
       SyncAccountToSubscribers m_risk_parameters_subscribers;
       SyncRiskStateEntries m_risk_state_entries;
       Beam::SynchronizedUnorderedMap<
-        Beam::DirectoryEntry, std::vector<ServiceProtocolClient*>, Beam::Mutex>
+        Beam::DirectoryEntry, std::vector<ServiceProtocolClient*>>
           m_notification_subscribers;
       std::atomic_int m_last_modification_request_id;
       std::atomic_int m_last_message_id;

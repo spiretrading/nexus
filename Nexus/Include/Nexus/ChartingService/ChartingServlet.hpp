@@ -7,7 +7,6 @@
 #include <Beam/Queries/IndexedExpressionSubscriptions.hpp>
 #include <Beam/Queries/ExpressionSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Casts.hpp>
 #include <Beam/Utilities/Instantiate.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
@@ -70,8 +69,7 @@ namespace Details {
         Beam::IndexedExpressionSubscriptions<
           typename MarketDataType::Value, QueryVariant, typename Query::Index,
           ServiceProtocolClient> m_queries;
-        Beam::SynchronizedUnorderedSet<Ticker, Beam::Mutex>
-          m_real_time_subscriptions;
+        Beam::SynchronizedUnorderedSet<Ticker> m_real_time_subscriptions;
       };
       Beam::local_ptr_t<M> m_market_data_client;
       CachedHistoricalDataStore<ClientHistoricalDataStore<MarketDataClient*>>
