@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_JOB_SERVICE_HPP
 #include <algorithm>
 #include <concepts>
+#include <condition_variable>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -13,8 +14,6 @@
 #include <utility>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/ThreadPool.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
@@ -113,14 +112,14 @@ namespace Nexus {
       Beam::local_ptr_t<TimeClient> m_time_client;
       Beam::Timer m_timer;
       std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_ticks;
-      mutable Beam::Mutex m_retry_mutex;
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_retry_mutex;
+      mutable std::mutex m_mutex;
       bool m_is_closed;
       std::unordered_map<std::string, std::shared_ptr<Job>> m_pending;
       std::unordered_map<std::string, ReportJob> m_results;
       std::unordered_map<unsigned int, std::deque<std::shared_ptr<Job>>> m_jobs;
       std::deque<unsigned int> m_accounts;
-      Beam::ConditionVariable m_is_available;
+      std::condition_variable m_is_available;
       Beam::RoutineHandlerGroup m_routines;
       Beam::RoutineHandler m_retry_routine;
 
