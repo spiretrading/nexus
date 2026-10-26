@@ -246,7 +246,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_last_window = window;
   }
 
-  std::shared_ptr<TimeAndSalesModel> model_builder(const Ticker&) {
+  std::shared_ptr<TimeAndSalesModel> model_builder(
+      const Ticker&, const std::shared_ptr<ReplaySession>&) {
     auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());

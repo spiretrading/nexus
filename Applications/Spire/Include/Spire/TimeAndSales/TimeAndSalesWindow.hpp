@@ -3,6 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Playback/ReplaySession.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
@@ -21,12 +22,15 @@ namespace Spire {
 
       /**
        * The type of function used to build a TimeAndSalesModel based on
-       * the ticker.
+       * the ticker and the ReplaySession the window plays back.
        * @param ticker The ticker that the window is representing.
+       * @param session The ReplaySession the window plays back, null if the
+       *        window displays time and sales in real time.
        * @return A TimeAndSalesModel.
        */
       using ModelBuilder = std::function<
-        std::shared_ptr<TimeAndSalesModel>(const Nexus::Ticker& ticker)>;
+        std::shared_ptr<TimeAndSalesModel>(const Nexus::Ticker& ticker,
+          const std::shared_ptr<ReplaySession>& session)>;
 
       /**
        * Constructs a TimeAndSalesWindow.
@@ -74,17 +78,23 @@ namespace Spire {
       std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>>
         m_properties_proxy;
       PropertyHubMember m_member;
+      std::shared_ptr<ReplaySessionModel> m_session;
       Nexus::Ticker m_ticker;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
+      bool m_is_update_pending;
       TransitionView* m_transition_view;
       TickerView* m_ticker_view;
+      boost::signals2::scoped_connection m_session_connection;
 
+      void update_model();
+      void schedule_update();
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();
       void on_end_loading();
       void on_current(const Nexus::Ticker& ticker);
+      void on_session(const std::shared_ptr<ReplaySession>& session);
   };
 }
 

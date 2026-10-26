@@ -33,6 +33,7 @@
 
 namespace Spire {
   class PropertyHubMember;
+  class ReplayAttachmentMap;
 
   /** The type of model used to store the list of recently closed windows. */
   using RecentlyClosedWindowListModel =
@@ -224,6 +225,13 @@ namespace Spire {
       const TimeAndSalesWindow::ModelBuilder&
         GetTimeAndSalesModelBuilder() const;
 
+      /**
+       * Returns the ReplayAttachmentMap recording the ReplaySession each
+       * PropertyHub is attached to.
+       */
+      const std::shared_ptr<ReplayAttachmentMap>&
+        GetReplayAttachmentMap() const;
+
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
         GetDefaultPortfolioViewerProperties() const;
@@ -273,6 +281,7 @@ namespace Spire {
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;
       TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
+      std::shared_ptr<ReplayAttachmentMap> m_replay_attachment_map;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       AdditionalTagDatabase m_additionalTagDatabase;
