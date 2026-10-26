@@ -1,7 +1,26 @@
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include <QObject>
+#include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 
+using namespace Nexus;
 using namespace Spire;
+
+BboIndicator Spire::get_bbo_indicator(
+    const BboQuote& bbo, const TimeAndSale& time_and_sale) {
+  if(bbo.m_ask.m_price == Money::ZERO) {
+    return BboIndicator::UNKNOWN;
+  } else if(time_and_sale.m_price == bbo.m_bid.m_price) {
+    return BboIndicator::AT_BID;
+  } else if(time_and_sale.m_price < bbo.m_bid.m_price) {
+    return BboIndicator::BELOW_BID;
+  } else if(time_and_sale.m_price == bbo.m_ask.m_price) {
+    return BboIndicator::AT_ASK;
+  } else if(time_and_sale.m_price > bbo.m_ask.m_price) {
+    return BboIndicator::ABOVE_ASK;
+  }
+  return BboIndicator::INSIDE;
+}
 
 const QString& Spire::to_text(BboIndicator indicator) {
   if(indicator == BboIndicator::ABOVE_ASK) {
