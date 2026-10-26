@@ -22,7 +22,7 @@ FOR /F "skip=1" %%H IN ('
 IF NOT DEFINED LUA_HASH EXIT /B 1
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "73b3620057dbf781cdfe58deb5a854c639e11cff" 1 ^
+  "45cdac1099f81860f11b6ba2b83184d3c70b61dd" 1 ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
