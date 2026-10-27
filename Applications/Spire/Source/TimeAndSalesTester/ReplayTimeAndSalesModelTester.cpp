@@ -3,7 +3,8 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
 #include <QApplication>
-#include <QElapsedTimer>
+#include <QEventLoop>
+#include <QTimer>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Playback/ReplaySession.hpp"
@@ -135,22 +136,20 @@ namespace {
 
   template<typename F>
   void wait_until(F&& predicate) {
-    auto timer = QElapsedTimer();
-    timer.start();
+    auto timer = QTimer();
+    timer.setSingleShot(true);
+    timer.start(static_cast<int>(WAIT_LIMIT.total_milliseconds()));
     while(!predicate()) {
-      REQUIRE(timer.elapsed() < WAIT_LIMIT.total_milliseconds());
-      QApplication::processEvents(QEventLoop::AllEvents, 10);
-      QCoreApplication::sendPostedEvents();
+      REQUIRE(timer.isActive());
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
   }
 
   void wait_for(time_duration duration) {
-    auto timer = QElapsedTimer();
-    timer.start();
-    while(timer.elapsed() < duration.total_milliseconds()) {
-      QApplication::processEvents(QEventLoop::AllEvents, 10);
-      QCoreApplication::sendPostedEvents();
-    }
+    auto loop = QEventLoop();
+    QTimer::singleShot(static_cast<int>(duration.total_milliseconds()), &loop,
+      &QEventLoop::quit);
+    loop.exec();
   }
 }
 
@@ -346,18 +345,26 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
-  TEST_CASE("seeking_forward_replaces_with_the_page_before_the_position") {
+  TEST_CASE("seeking_forward_merges_the_page_before_the_position") {
     run_test([] {
       auto fixture = Fixture(seconds(5));
       fixture.store({seconds(1), seconds(2), seconds(100)});
       auto model = fixture.make_model();
       wait(model->load_older(10));
+      auto operations = std::deque<TimeAndSalesModel::Operation>();
+      auto connection = scoped_connection(model->connect_operation_signal(
+        [&] (const auto& operation) {
+          operations.push_back(operation);
+        }));
       fixture.set_position(seconds(110));
       wait_until([&] {
         return model->get_size() == 3;
       });
       REQUIRE(get_offsets(*model) ==
         std::vector<time_duration>{seconds(1), seconds(2), seconds(100)});
+      for(auto& operation : operations) {
+        REQUIRE(!std::get_if<TimeAndSalesModel::RemoveOperation>(&operation));
+      }
     });
   }
 
@@ -463,6 +470,35 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
+  TEST_CASE("reading_near_the_present_is_throttled") {
+    run_test([] {
+      auto fixture = Fixture(hours(1) - seconds(1));
+      fixture.store({hours(1) - milliseconds(500)});
+      auto count = std::make_shared<std::atomic_int>(0);
+      auto model = fixture.make_model(count);
+      fixture.m_session->play();
+      REQUIRE(fixture.m_session->get_state()->get() ==
+        PlaybackState::REPLAYING);
+      fixture.set_position(hours(1) - milliseconds(500));
+      wait_until([&] {
+        return model->get_size() == 1;
+      });
+      auto queries = count->load();
+      for(auto i = 1; i <= 4; ++i) {
+        fixture.m_time_client.set(BASE + hours(1) + milliseconds(50 * i));
+        fixture.set_position(
+          hours(1) - milliseconds(500) + milliseconds(50 * i));
+      }
+      wait_for(milliseconds(100));
+      REQUIRE(*count == queries);
+      fixture.m_time_client.set(BASE + hours(1) + milliseconds(250));
+      fixture.set_position(hours(1) - milliseconds(250));
+      wait_until([&] {
+        return *count == queries + 1;
+      });
+    });
+  }
+
   TEST_CASE("replaying_reads_again_after_half_the_read_ahead_is_used") {
     run_test([] {
       auto fixture = Fixture(seconds(0));
@@ -491,6 +527,64 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       wait_until([&] {
         return *count == queries + 1;
       });
+    });
+  }
+
+  TEST_CASE("raising_the_speed_reads_further_ahead") {
+    run_test([] {
+      auto fixture = Fixture(seconds(0));
+      auto offsets = std::vector<time_duration>();
+      for(auto i = 1; i <= 400; ++i) {
+        offsets.push_back(seconds(i));
+      }
+      fixture.store(offsets);
+      auto count = std::make_shared<std::atomic_int>(0);
+      auto model = fixture.make_model(count);
+      fixture.m_session->play();
+      fixture.set_position(seconds(1));
+      wait_until([&] {
+        return model->get_size() == 1;
+      });
+      auto queries = count->load();
+      fixture.m_session->get_speed()->set(Decimal(10));
+      wait_until([&] {
+        return *count == queries + 1;
+      });
+      for(auto i = 1; i <= 3; ++i) {
+        fixture.set_position(seconds(1 + 10 * i));
+      }
+      wait_until([&] {
+        return model->get_size() == 31;
+      });
+      for(auto i = 4; i <= 15; ++i) {
+        fixture.set_position(seconds(1 + 10 * i));
+      }
+      REQUIRE(model->get_size() == 151);
+      REQUIRE(*count == queries + 1);
+    });
+  }
+
+  TEST_CASE("a_higher_speed_raises_the_jump_threshold") {
+    run_test([] {
+      auto fixture = Fixture(seconds(0));
+      auto offsets = std::vector<time_duration>();
+      for(auto i = 1; i <= 60; ++i) {
+        offsets.push_back(seconds(i));
+      }
+      fixture.store(offsets);
+      auto count = std::make_shared<std::atomic_int>(0);
+      auto model = fixture.make_model(count);
+      fixture.m_session->get_speed()->set(Decimal(10));
+      fixture.m_session->play();
+      fixture.set_position(seconds(1));
+      wait_until([&] {
+        return model->get_size() == 1;
+      });
+      auto queries = count->load();
+      fixture.set_position(seconds(16));
+      REQUIRE(model->get_size() == 16);
+      wait_for(milliseconds(200));
+      REQUIRE(*count == queries);
     });
   }
 
