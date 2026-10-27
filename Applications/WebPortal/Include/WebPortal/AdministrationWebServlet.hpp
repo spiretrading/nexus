@@ -1,9 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
+#include <condition_variable>
 #include <Beam/IO/OpenState.hpp>
-#include "Nexus/AdministrationService/Notification.hpp"
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
@@ -15,6 +13,7 @@
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/WebSessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 #include "WebPortal/WebSocketServerConnection.hpp"
 
@@ -60,8 +59,8 @@ namespace Nexus {
     private:
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
       WebSocketServerConnection m_websocket_server;
-      Beam::Mutex m_websocket_session_mutex;
-      Beam::ConditionVariable m_websocket_session_condition;
+      std::mutex m_websocket_session_mutex;
+      std::condition_variable m_websocket_session_condition;
       std::shared_ptr<WebPortalSession> m_pending_websocket_session;
       WebServiceProtocolServer m_protocol_server;
       Beam::RoutineTaskQueue m_tasks;

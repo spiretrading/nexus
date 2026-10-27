@@ -36,7 +36,7 @@ namespace Nexus {
 
       /** The function used to load DirectoryEntries. */
       using AccountSource = Beam::KeyValueCache<
-        unsigned int, Beam::DirectoryEntry, Beam::Mutex>::Source;
+        unsigned int, Beam::DirectoryEntry>::Source;
 
       /**
        * Constructs an SqlOrderExecutionDataStore.
@@ -85,8 +85,7 @@ namespace Nexus {
       using IsLiveDataStore = Beam::SqlDataStore<
         Connection, Viper::Row<OrderInfo>, Viper::Row<Beam::DirectoryEntry>,
         Translator<IsLive>>;
-      Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry, Beam::Mutex>
-        m_account_entries;
+      Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry> m_account_entries;
       Beam::DatabaseConnectionPool<Connection> m_reader_pool;
       Beam::DatabaseConnectionPool<Connection> m_writer_pool;
       DataStore<Viper::Row<OrderInfo>, Viper::Row<Beam::DirectoryEntry>>

@@ -1,7 +1,7 @@
 #ifndef SPIRE_SERVICE_ACCOUNT_QUERY_MODEL_HPP
 #define SPIRE_SERVICE_ACCOUNT_QUERY_MODEL_HPP
+#include <mutex>
 #include <unordered_map>
-#include <Beam/Threading/Mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -31,7 +31,7 @@ namespace Spire {
 
     private:
       Nexus::AdministrationClient m_administration_client;
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<QString, AccountListItem::Account> m_cache;
   };
 }

@@ -5,7 +5,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
@@ -99,8 +98,8 @@ namespace Nexus {
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
       OrderId m_next_order_id;
-      Beam::SynchronizedUnorderedMap<Ticker,
-        std::unique_ptr<TickerOrderSimulator>, Beam::Mutex> m_simulators;
+      Beam::SynchronizedUnorderedMap<
+        Ticker, std::unique_ptr<TickerOrderSimulator>> m_simulators;
       Beam::OpenState m_open_state;
 
       PassiveSimulationOrderExecutionDriver(

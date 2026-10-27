@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <thread>
 #include <type_traits>
 #include <vector>
@@ -15,7 +16,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -95,8 +95,8 @@ namespace Nexus {
       using TickerSubscriptions =
         Beam::IndexedSubscriptions<T, Ticker, ServiceProtocolClient>;
       template<typename Index>
-      using RealTimeSubscriptionMap = Beam::SynchronizedUnorderedMap<
-        Index, Beam::CallOnce<Beam::Mutex>>;
+      using RealTimeSubscriptionMap =
+        Beam::SynchronizedUnorderedMap<Index, std::once_flag>;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
       TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
@@ -366,7 +366,7 @@ namespace Nexus {
         Beam::Range::TOTAL, std::move(filter));
       try {
         auto& subscription = real_time_subscriptions.get(query.get_index());
-        subscription.call([&] {
+        std::call_once(subscription, [&] {
           auto& query_entry = get_real_time_query_entry(query.get_index());
           auto initial_value_queue =
             std::make_shared<Beam::Queue<MarketDataType>>();

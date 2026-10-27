@@ -1,6 +1,7 @@
 #ifndef NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #define NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #include <algorithm>
+#include <condition_variable>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -10,7 +11,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/ServiceLocator/ServiceUpdate.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -93,7 +93,7 @@ namespace Nexus {
     private:
       Beam::Sync<ScopeMap<std::shared_ptr<MarketDataClient>>>
         m_market_data_clients;
-      Beam::ConditionVariable m_available;
+      std::condition_variable_any m_available;
       std::exception_ptr m_discovery_exception;
       ScopeParser m_scope_parser;
       ClientBuilder m_client_builder;
