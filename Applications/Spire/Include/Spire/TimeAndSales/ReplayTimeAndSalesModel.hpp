@@ -1,8 +1,6 @@
 #ifndef SPIRE_REPLAY_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_REPLAY_TIME_AND_SALES_MODEL_HPP
 #include <deque>
-#include <memory>
-#include <vector>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <QTimer>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"

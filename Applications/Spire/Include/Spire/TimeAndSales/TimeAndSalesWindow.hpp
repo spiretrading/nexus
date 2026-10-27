@@ -82,9 +82,9 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
-      bool m_is_update_pending;
       TransitionView* m_transition_view;
       TickerView* m_ticker_view;
+      bool m_is_update_pending;
       boost::signals2::scoped_connection m_session_connection;
 
       void update_model();

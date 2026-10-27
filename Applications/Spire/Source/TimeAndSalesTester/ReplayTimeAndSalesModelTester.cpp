@@ -20,6 +20,7 @@ using namespace Spire;
 namespace {
   const auto BASE = time_from_string("2024-06-01 10:00:00");
   const auto TICKER = Ticker("ABX", Venue("TSX"));
+  const auto WAIT_LIMIT = seconds(5);
 
   TimeAndSale make_time_and_sale(time_duration offset) {
     return TimeAndSale(BASE + offset, Money::ONE, 100,
@@ -134,8 +135,11 @@ namespace {
 
   template<typename F>
   void wait_until(F&& predicate) {
+    auto timer = QElapsedTimer();
+    timer.start();
     while(!predicate()) {
-      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+      REQUIRE(timer.elapsed() < WAIT_LIMIT.total_milliseconds());
+      QApplication::processEvents(QEventLoop::AllEvents, 10);
       QCoreApplication::sendPostedEvents();
     }
   }
@@ -367,7 +371,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
-  TEST_CASE("real_time_continues_from_the_back_and_pausing_hides_later_trades") {
+  TEST_CASE("real_time_appends_from_the_back_and_pausing_hides_later_trades") {
     run_test([] {
       auto fixture = Fixture(hours(1));
       fixture.m_environment.publish(TICKER, make_time_and_sale(seconds(1)));
@@ -504,5 +508,4 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       REQUIRE(model->get(1).m_indicator == BboIndicator::INSIDE);
     });
   }
-
 }

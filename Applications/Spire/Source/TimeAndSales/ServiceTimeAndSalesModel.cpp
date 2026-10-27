@@ -39,7 +39,7 @@ QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
     }
     load_bbo_indicators(client, ticker, result, none);
     return result;
-  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
+  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
     try {
       auto& snapshot = result.get();
       auto end = [&] {

@@ -1,6 +1,5 @@
 #ifndef SPIRE_LOAD_TIME_AND_SALES_HPP
 #define SPIRE_LOAD_TIME_AND_SALES_HPP
-#include <vector>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
