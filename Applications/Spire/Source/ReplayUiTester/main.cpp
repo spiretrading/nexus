@@ -193,7 +193,6 @@ struct ReplayUiTester : QWidget {
   int m_book_view_count;
   scoped_connection m_attachment_map_connection;
   scoped_connection m_roster_connection;
-  scoped_connection m_large_burst_connection;
 
   ReplayUiTester()
       : m_start(second_clock::universal_time() - HISTORY),
@@ -224,18 +223,11 @@ struct ReplayUiTester : QWidget {
       m_event_log->append(tr("  %1  %2: %3").
         arg(Spire::to_text(special.m_profile.m_ticker)).
         arg(special.m_label).
-        arg(DemoMarketDataFeed::describe(special.m_profile)));
+        arg(m_market_data_feed.describe(special.m_profile)));
     }
     m_event_log->append(tr("  All other tickers: %1").arg(
-      DemoMarketDataFeed::describe(DemoMarketDataFeed::Profile(Ticker(),
+      m_market_data_feed.describe(DemoMarketDataFeed::Profile(Ticker(),
         DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
-    for(auto& burst : m_market_data_feed.get_next_large_bursts()) {
-      m_event_log->append(tr("%1: Next burst of %2 trades at %3.").
-        arg(Spire::to_text(burst.m_ticker)).arg(burst.m_size).
-        arg(Spire::to_text(burst.m_timestamp)));
-    }
-    m_large_burst_connection = m_market_data_feed.connect_large_burst_signal(
-      std::bind_front(&ReplayUiTester::on_large_burst, this));
     auto open_replay_button = make_label_button(tr("Open Replay Window"));
     open_replay_button->connect_click_signal(
       std::bind_front(&ReplayUiTester::open_replay_window, this));
@@ -399,15 +391,6 @@ struct ReplayUiTester : QWidget {
     m_event_log->append(tr("%1 Timeline: %2, Duration: %3").
       arg(replay.m_name).arg(Spire::to_text(timeline.m_start)).
       arg(Spire::to_text(timeline.m_duration)));
-  }
-
-  void on_large_burst(const DemoMarketDataFeed::Burst& burst,
-      const DemoMarketDataFeed::Burst& next) {
-    m_event_log->append(
-      tr("%1: Burst of %2 trades at %3. Next burst of %4 trades at %5.").
-        arg(Spire::to_text(burst.m_ticker)).arg(burst.m_size).
-        arg(Spire::to_text(burst.m_timestamp)).arg(next.m_size).
-        arg(Spire::to_text(next.m_timestamp)));
   }
 
   void on_attachment_map_update(const std::shared_ptr<PropertyHub>& hub,

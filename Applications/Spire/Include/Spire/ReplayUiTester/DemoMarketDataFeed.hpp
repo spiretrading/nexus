@@ -67,34 +67,6 @@ namespace Spire {
         boost::posix_time::time_duration m_interval;
       };
 
-      /** Describes a burst of time and sales sharing a single timestamp. */
-      struct Burst {
-
-        /** The ticker whose time and sales make up the burst. */
-        Nexus::Ticker m_ticker;
-
-        /** The timestamp shared by the burst's time and sales. */
-        boost::posix_time::ptime m_timestamp;
-
-        /** The number of time and sales in the burst. */
-        int m_size;
-      };
-
-      /**
-       * Signals a large burst was published in real time.
-       * @param burst The burst that was published.
-       * @param next The next large burst of the same ticker.
-       */
-      using LargeBurstSignal =
-        Signal<void (const Burst& burst, const Burst& next)>;
-
-      /**
-       * Returns a plain language description of the time and sales generated
-       * for a Profile.
-       * @param profile The Profile to describe.
-       */
-      static QString describe(const Profile& profile);
-
       /**
        * Constructs a DemoMarketDataFeed.
        * @param environment The environment to generate the market data into.
@@ -105,14 +77,11 @@ namespace Spire {
         std::vector<Profile> profiles, boost::posix_time::ptime start);
 
       /**
-       * Returns the next large burst of each ticker whose Profile has the
-       * LARGE_BURST pattern.
+       * Returns a plain language description of the time and sales generated
+       * for a Profile.
+       * @param profile The Profile to describe.
        */
-      std::vector<Burst> get_next_large_bursts() const;
-
-      /** Connects a slot to the LargeBurstSignal. */
-      boost::signals2::connection connect_large_burst_signal(
-        const LargeBurstSignal::slot_type& slot) const;
+      QString describe(const Profile& profile) const;
 
     private:
       struct Generator {
@@ -123,7 +92,6 @@ namespace Spire {
         int m_burst;
         boost::posix_time::ptime m_timestamp;
       };
-      mutable LargeBurstSignal m_large_burst_signal;
       Nexus::TestEnvironment* m_environment;
       boost::posix_time::ptime m_start;
       std::vector<Generator> m_generators;
@@ -132,7 +100,6 @@ namespace Spire {
       DemoMarketDataFeed(const DemoMarketDataFeed&) = delete;
       DemoMarketDataFeed& operator =(const DemoMarketDataFeed&) = delete;
       void advance(Generator& generator) const;
-      Burst find_next_burst(const Generator& generator) const;
       void store(Generator& generator, boost::posix_time::ptime end);
       void on_timeout();
   };

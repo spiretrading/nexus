@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -119,7 +118,7 @@ DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
   m_timer.start(TIMER_INTERVAL);
 }
 
-QString DemoMarketDataFeed::describe(const Profile& profile) {
+QString DemoMarketDataFeed::describe(const Profile& profile) const {
   if(profile.m_interval <= seconds(0)) {
     return QObject::tr("No trades.");
   }
@@ -139,8 +138,9 @@ QString DemoMarketDataFeed::describe(const Profile& profile) {
         arg(to_duration_text(profile.m_interval * BURST_ODDS));
   } else if(profile.m_pattern == Pattern::LARGE_BURST) {
     return QObject::tr("%1, with a burst of %2 trades at the exact same time "
-      "every %3.").arg(rate).arg(LARGE_BURST_SIZE).
-        arg(to_duration_text(LARGE_BURST_PERIOD));
+      "every %3, the first at %4.").arg(rate).arg(LARGE_BURST_SIZE).
+        arg(to_duration_text(LARGE_BURST_PERIOD)).
+        arg(to_text(m_start + LARGE_BURST_PERIOD));
   } else if(profile.m_pattern == Pattern::GAP) {
     return QObject::tr("%1 for %2, then no trades for %3, repeating.").
       arg(rate).arg(to_duration_text(GAP_ACTIVE)).
@@ -150,22 +150,6 @@ QString DemoMarketDataFeed::describe(const Profile& profile) {
       arg(to_duration_text(LATE_START_DELAY)).arg(rate);
   }
   return QObject::tr("%1.").arg(rate);
-}
-
-std::vector<DemoMarketDataFeed::Burst>
-    DemoMarketDataFeed::get_next_large_bursts() const {
-  auto bursts = std::vector<Burst>();
-  for(auto& generator : m_generators) {
-    if(generator.m_profile.m_pattern == Pattern::LARGE_BURST) {
-      bursts.push_back(find_next_burst(generator));
-    }
-  }
-  return bursts;
-}
-
-connection DemoMarketDataFeed::connect_large_burst_signal(
-    const LargeBurstSignal::slot_type& slot) const {
-  return m_large_burst_signal.connect(slot);
 }
 
 void DemoMarketDataFeed::advance(Generator& generator) const {
@@ -200,18 +184,6 @@ void DemoMarketDataFeed::advance(Generator& generator) const {
   }
 }
 
-DemoMarketDataFeed::Burst DemoMarketDataFeed::find_next_burst(
-    const Generator& generator) const {
-  auto next = generator;
-  while(true) {
-    auto is_idle = next.m_burst == 0;
-    advance(next);
-    if(is_idle && next.m_burst != 0) {
-      return Burst(next.m_profile.m_ticker, next.m_timestamp, next.m_burst + 1);
-    }
-  }
-}
-
 void DemoMarketDataFeed::store(Generator& generator, ptime end) {
   auto time_and_sales = std::vector<SequencedTickerTimeAndSale>();
   auto bbo_quotes = std::vector<SequencedTickerBboQuote>();
@@ -239,12 +211,7 @@ void DemoMarketDataFeed::on_timeout() {
   auto now = microsec_clock::universal_time();
   for(auto& generator : m_generators) {
     auto& ticker = generator.m_profile.m_ticker;
-    auto burst = optional<Burst>();
     while(generator.m_timestamp <= now) {
-      if(generator.m_profile.m_pattern == Pattern::LARGE_BURST &&
-          generator.m_burst == LARGE_BURST_SIZE - 1) {
-        burst = Burst(ticker, generator.m_timestamp, LARGE_BURST_SIZE);
-      }
       if(has_bbo_quote(generator.m_next)) {
         m_environment->publish(ticker, make_bbo_quote(generator.m_seed,
           generator.m_next, generator.m_price, generator.m_timestamp));
@@ -252,9 +219,6 @@ void DemoMarketDataFeed::on_timeout() {
       m_environment->publish(ticker, make_time_and_sale(generator.m_seed,
         generator.m_next, generator.m_price, generator.m_timestamp));
       advance(generator);
-    }
-    if(burst) {
-      m_large_burst_signal(*burst, find_next_burst(generator));
     }
   }
 }
