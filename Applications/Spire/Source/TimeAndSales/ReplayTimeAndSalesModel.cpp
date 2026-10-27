@@ -75,8 +75,7 @@ ReplayTimeAndSalesModel::ReplayTimeAndSalesModel(Ticker ticker,
       m_read_generation(0),
       m_older_generation(0),
       m_is_reading(false),
-      m_is_seeking(false),
-      m_is_seek_querying(false) {
+      m_seek_state(SeekState::NONE) {
   m_seek_timer.setSingleShot(true);
   m_seek_timer.setInterval(SEEK_INTERVAL_MS);
   QObject::connect(&m_seek_timer, &QTimer::timeout,
@@ -233,7 +232,7 @@ bool ReplayTimeAndSalesModel::merge(std::vector<Type>& entries) {
 }
 
 void ReplayTimeAndSalesModel::publish() {
-  if(m_is_seeking) {
+  if(m_seek_state != SeekState::NONE) {
     return;
   }
   m_transaction.transact([&] {
@@ -246,7 +245,7 @@ void ReplayTimeAndSalesModel::publish() {
 }
 
 void ReplayTimeAndSalesModel::read() {
-  if(m_is_reading || m_is_seeking || m_live_handler) {
+  if(m_is_reading || m_seek_state != SeekState::NONE || m_live_handler) {
     return;
   }
   auto state = m_session->get_state()->get();
@@ -308,7 +307,9 @@ void ReplayTimeAndSalesModel::read() {
 void ReplayTimeAndSalesModel::seek() {
   ++m_read_generation;
   m_is_reading = false;
-  m_is_seeking = true;
+  if(m_seek_state == SeekState::NONE) {
+    m_seek_state = SeekState::PENDING;
+  }
   m_buffer.clear();
   m_bbo = none;
   stop_live();
@@ -319,7 +320,7 @@ void ReplayTimeAndSalesModel::seek() {
 }
 
 void ReplayTimeAndSalesModel::request_seek() {
-  if(m_is_seek_querying || m_seek_timer.isActive()) {
+  if(m_seek_state == SeekState::QUERYING || m_seek_timer.isActive()) {
     return;
   }
   query_seek();
@@ -336,13 +337,13 @@ void ReplayTimeAndSalesModel::query_seek() {
       }
     });
     if(get_size() < size && get_size() >= m_page_size) {
-      m_is_seeking = false;
+      m_seek_state = SeekState::NONE;
       m_read_end = m_position;
       read();
       return;
     }
   }
-  m_is_seek_querying = true;
+  m_seek_state = SeekState::QUERYING;
   auto generation = m_read_generation;
   auto position = m_position;
   m_seek_promise = QtPromise([=, client = m_client, ticker = m_ticker,
@@ -368,7 +369,7 @@ void ReplayTimeAndSalesModel::query_seek() {
 }
 
 void ReplayTimeAndSalesModel::reconcile() {
-  if(m_is_seeking) {
+  if(m_seek_state != SeekState::NONE) {
     return;
   }
   if(m_session->get_state()->get() == PlaybackState::REAL_TIME) {
@@ -459,14 +460,12 @@ void ReplayTimeAndSalesModel::on_read(int generation, ptime end,
 void ReplayTimeAndSalesModel::on_seek(int generation, ptime position,
     optional<std::vector<Type>> entries, optional<SequencedBboQuote> bbo,
     optional<Beam::Sequence> anchor) {
-  m_is_seek_querying = false;
   if(generation != m_read_generation) {
-    if(m_is_seeking) {
-      request_seek();
-    }
+    m_seek_state = SeekState::PENDING;
+    request_seek();
     return;
   }
-  m_is_seeking = false;
+  m_seek_state = SeekState::NONE;
   if(entries) {
     if(!merge(*entries)) {
       replace(std::move(*entries));
@@ -482,7 +481,7 @@ void ReplayTimeAndSalesModel::on_seek(int generation, ptime position,
 }
 
 void ReplayTimeAndSalesModel::on_seek_timeout() {
-  if(m_is_seeking && !m_is_seek_querying) {
+  if(m_seek_state == SeekState::PENDING) {
     query_seek();
   }
 }

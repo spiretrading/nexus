@@ -43,6 +43,11 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
+      enum class SeekState {
+        NONE,
+        PENDING,
+        QUERYING
+      };
       Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_client;
       std::shared_ptr<ReplaySession> m_session;
@@ -60,8 +65,7 @@ namespace Spire {
       int m_read_generation;
       int m_older_generation;
       bool m_is_reading;
-      bool m_is_seeking;
-      bool m_is_seek_querying;
+      SeekState m_seek_state;
       QTimer m_seek_timer;
       QtPromise<void> m_read_promise;
       QtPromise<void> m_seek_promise;
