@@ -271,6 +271,36 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
+  TEST_CASE("seeking_back_within_the_list_does_not_query") {
+    run_test([] {
+      auto fixture = Fixture(seconds(30));
+      auto offsets = std::vector<time_duration>();
+      for(auto i = 1; i <= 40; ++i) {
+        offsets.push_back(seconds(i));
+      }
+      fixture.store(offsets);
+      auto count = std::make_shared<std::atomic_int>(0);
+      auto model = fixture.make_model(count);
+      wait(model->load_older(10));
+      wait(model->load_older(10));
+      REQUIRE(model->get_size() == 20);
+      auto queries = count->load();
+      fixture.set_position(seconds(25));
+      REQUIRE(model->get_size() == 15);
+      REQUIRE(get_offsets(*model).back() == seconds(25));
+      wait_for(milliseconds(200));
+      REQUIRE(*count == queries);
+      fixture.m_session->play();
+      REQUIRE(fixture.m_session->get_state()->get() ==
+        PlaybackState::REPLAYING);
+      fixture.set_position(seconds(26));
+      wait_until([&] {
+        return model->get_size() == 16;
+      });
+      REQUIRE(get_offsets(*model).back() == seconds(26));
+    });
+  }
+
   TEST_CASE("seeking_before_the_front_replaces") {
     run_test([] {
       auto fixture = Fixture(seconds(102));

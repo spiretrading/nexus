@@ -339,7 +339,6 @@ void ReplayTimeAndSalesModel::query_seek() {
     if(get_size() < size && get_size() >= m_page_size) {
       m_seek_state = SeekState::NONE;
       m_read_end = m_position;
-      read();
       return;
     }
   }
