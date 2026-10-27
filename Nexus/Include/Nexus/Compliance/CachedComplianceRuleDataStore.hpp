@@ -1,9 +1,9 @@
 #ifndef NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
+#include <mutex>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
 
@@ -41,7 +41,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::local_ptr_t<D> m_data_store;
       LocalComplianceRuleDataStore m_cache;
       Beam::OpenState m_open_state;

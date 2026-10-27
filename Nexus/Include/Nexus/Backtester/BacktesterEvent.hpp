@@ -1,8 +1,7 @@
 #ifndef NEXUS_BACKTESTER_EVENT_HPP
 #define NEXUS_BACKTESTER_EVENT_HPP
+#include <condition_variable>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
 
 namespace Nexus {
 
@@ -36,9 +35,9 @@ namespace Nexus {
 
     private:
       friend class BacktesterEventHandler;
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       bool m_is_complete;
-      Beam::ConditionVariable m_is_complete_condition;
+      std::condition_variable m_is_complete_condition;
       boost::posix_time::ptime m_timestamp;
 
       BacktesterEvent(const BacktesterEvent&) = delete;

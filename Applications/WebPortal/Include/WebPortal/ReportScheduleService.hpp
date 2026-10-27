@@ -1,5 +1,6 @@
 #ifndef NEXUS_REPORT_SCHEDULE_SERVICE_HPP
 #define NEXUS_REPORT_SCHEDULE_SERVICE_HPP
+#include <mutex>
 #include <tuple>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -67,7 +68,7 @@ namespace Details {
       boost::posix_time::ptime m_recovery_time;
       Beam::Timer m_timer;
       std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_ticks;
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::OpenState m_open_state;
       Beam::RoutineHandler m_routine;
       std::deque<std::string> m_ready;

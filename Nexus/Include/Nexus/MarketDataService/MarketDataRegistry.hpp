@@ -9,7 +9,6 @@
 #include <variant>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -177,15 +176,15 @@ namespace Nexus {
     private:
       using PrimaryListingKey = Details::PrimaryListingKey;
       template<typename> friend struct std::hash;
-      using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
-      using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
+      using SyncVenueEntry = Beam::Sync<VenueEntry>;
+      using SyncTickerEntry = Beam::Sync<TickerEntry>;
       Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
       Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
         m_primary_listings;
-      Beam::SynchronizedUnorderedMap<Venue, std::shared_ptr<
-        Beam::Remote<SyncVenueEntry, Beam::Mutex>>> m_venue_entries;
-      Beam::SynchronizedUnorderedMap<Ticker, std::shared_ptr<Beam::Remote<
-        SyncTickerEntry, Beam::Mutex>>> m_ticker_entries;
+      Beam::SynchronizedUnorderedMap<
+        Venue, std::shared_ptr<Beam::Remote<SyncVenueEntry>>> m_venue_entries;
+      Beam::SynchronizedUnorderedMap<Ticker,
+        std::shared_ptr<Beam::Remote<SyncTickerEntry>>> m_ticker_entries;
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
@@ -397,8 +396,8 @@ namespace Nexus {
   }
 
   inline void MarketDataRegistry::clear(int source_id) {
-    auto entries = std::vector<
-      std::shared_ptr<Beam::Remote<SyncTickerEntry, Beam::Mutex>>>();
+    auto entries =
+      std::vector<std::shared_ptr<Beam::Remote<SyncTickerEntry>>>();
     m_ticker_entries.with([&] (auto& ticker_entries) {
       for(auto& entry : ticker_entries | std::views::values) {
         entries.push_back(entry);
@@ -419,10 +418,9 @@ namespace Nexus {
       return boost::none;
     }
     auto entry = m_venue_entries.get_or_insert(venue, [&] {
-      return std::make_shared<Beam::Remote<SyncVenueEntry, Beam::Mutex>>(
-        [&] (auto& entry) {
-          entry.emplace(venue, load_initial_sequences(data_store, venue));
-        });
+      return std::make_shared<Beam::Remote<SyncVenueEntry>>([&] (auto& entry) {
+        entry.emplace(venue, load_initial_sequences(data_store, venue));
+      });
     });
     return **entry;
   }
@@ -435,16 +433,15 @@ namespace Nexus {
       return boost::none;
     }
     auto entry = m_ticker_entries.get_or_insert(sanitized_ticker, [&] {
-      return std::make_shared<
-        Beam::Remote<SyncTickerEntry, Beam::Mutex>>([&] (auto& entry) {
-          auto initial_sequences =
-            load_initial_sequences(data_store, sanitized_ticker);
-          auto& market_center =
-            VENUES.from(sanitized_ticker.get_venue()).m_market_center;
-          auto close = Details::load_close_price(
-            sanitized_ticker, market_center, data_store);
-          entry.emplace(sanitized_ticker, close, initial_sequences);
-        });
+      return std::make_shared<Beam::Remote<SyncTickerEntry>>([&] (auto& entry) {
+        auto initial_sequences =
+          load_initial_sequences(data_store, sanitized_ticker);
+        auto& market_center =
+          VENUES.from(sanitized_ticker.get_venue()).m_market_center;
+        auto close = Details::load_close_price(
+          sanitized_ticker, market_center, data_store);
+        entry.emplace(sanitized_ticker, close, initial_sequences);
+      });
     });
     return **entry;
   }
