@@ -60,7 +60,10 @@ namespace Spire {
         /** How the ticker's time and sales are spaced in time. */
         Pattern m_pattern;
 
-        /** The time between consecutive time and sales. */
+        /**
+         * The time between consecutive time and sales, a non-positive
+         * interval generates no market data.
+         */
         boost::posix_time::time_duration m_interval;
       };
 
@@ -129,7 +132,6 @@ namespace Spire {
       DemoMarketDataFeed(const DemoMarketDataFeed&) = delete;
       DemoMarketDataFeed& operator =(const DemoMarketDataFeed&) = delete;
       void advance(Generator& generator) const;
-      bool advance_into_burst(Generator& generator) const;
       Burst find_next_burst(const Generator& generator) const;
       void store(Generator& generator, boost::posix_time::ptime end);
       void on_timeout();

@@ -100,6 +100,9 @@ DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
       m_start(start) {
   auto now = microsec_clock::universal_time();
   for(auto& profile : profiles) {
+    if(profile.m_interval <= seconds(0)) {
+      continue;
+    }
     auto seed = static_cast<quint32>(qHash(to_text(profile.m_ticker)));
     auto timestamp = [&] {
       if(profile.m_pattern == Pattern::LATE_START) {
@@ -107,8 +110,8 @@ DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
       }
       return m_start;
     }();
-    m_generators.push_back(Generator{std::move(profile), seed,
-      100 * (10 + static_cast<int>(seed % 90)), 0, 0, timestamp});
+    m_generators.push_back(Generator(std::move(profile), seed,
+      100 * (10 + static_cast<int>(seed % 90)), 0, 0, timestamp));
     store(m_generators.back(), now);
   }
   QObject::connect(&m_timer, &QTimer::timeout,
@@ -117,14 +120,17 @@ DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
 }
 
 QString DemoMarketDataFeed::describe(const Profile& profile) {
+  if(profile.m_interval <= seconds(0)) {
+    return QObject::tr("No trades.");
+  }
   auto rate = [&] {
-    auto interval = profile.m_interval.total_milliseconds();
-    if(interval < 1000) {
-      return QObject::tr("%1 trades per second").arg(1000.0 / interval);
-    } else if(interval == 1000) {
+    auto interval = profile.m_interval.total_microseconds();
+    if(interval < 1000000) {
+      return QObject::tr("%1 trades per second").arg(1000000.0 / interval);
+    } else if(interval == 1000000) {
       return QObject::tr("1 trade per second");
     }
-    return QObject::tr("1 trade every %1 seconds").arg(interval / 1000.0);
+    return QObject::tr("1 trade every %1 seconds").arg(interval / 1000000.0);
   }();
   if(profile.m_pattern == Pattern::BURST) {
     return QObject::tr("%1, with a burst of %2 to %3 trades at the exact same "
@@ -194,17 +200,16 @@ void DemoMarketDataFeed::advance(Generator& generator) const {
   }
 }
 
-bool DemoMarketDataFeed::advance_into_burst(Generator& generator) const {
-  auto is_idle = generator.m_burst == 0;
-  advance(generator);
-  return is_idle && generator.m_burst != 0;
-}
-
 DemoMarketDataFeed::Burst DemoMarketDataFeed::find_next_burst(
     const Generator& generator) const {
   auto next = generator;
-  while(!advance_into_burst(next)) {}
-  return Burst{next.m_profile.m_ticker, next.m_timestamp, next.m_burst + 1};
+  while(true) {
+    auto is_idle = next.m_burst == 0;
+    advance(next);
+    if(is_idle && next.m_burst != 0) {
+      return Burst(next.m_profile.m_ticker, next.m_timestamp, next.m_burst + 1);
+    }
+  }
 }
 
 void DemoMarketDataFeed::store(Generator& generator, ptime end) {
@@ -238,7 +243,7 @@ void DemoMarketDataFeed::on_timeout() {
     while(generator.m_timestamp <= now) {
       if(generator.m_profile.m_pattern == Pattern::LARGE_BURST &&
           generator.m_burst == LARGE_BURST_SIZE - 1) {
-        burst = Burst{ticker, generator.m_timestamp, LARGE_BURST_SIZE};
+        burst = Burst(ticker, generator.m_timestamp, LARGE_BURST_SIZE);
       }
       if(has_bbo_quote(generator.m_next)) {
         m_environment->publish(ticker, make_bbo_quote(generator.m_seed,

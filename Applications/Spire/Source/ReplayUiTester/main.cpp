@@ -113,19 +113,20 @@ namespace {
 
   const auto& get_special_profiles() {
     using Pattern = DemoMarketDataFeed::Pattern;
+    using Profile = DemoMarketDataFeed::Profile;
     static const auto profiles = std::vector<SpecialProfile>{
-      {{parse_ticker("TD.TSX"), Pattern::FIXED, milliseconds(50)},
-        QObject::tr("High volume")},
-      {{parse_ticker("MFC.TSX"), Pattern::FIXED, seconds(10)},
-        QObject::tr("Low volume")},
-      {{parse_ticker("MRU.TSX"), Pattern::BURST, TIME_AND_SALE_INTERVAL},
-        QObject::tr("Bursts")},
-      {{parse_ticker("ARE.TSX"), Pattern::LARGE_BURST, TIME_AND_SALE_INTERVAL},
-        QObject::tr("Large bursts")},
-      {{parse_ticker("MX.TSX"), Pattern::GAP, TIME_AND_SALE_INTERVAL},
-        QObject::tr("Quiet periods")},
-      {{parse_ticker("MG.TSX"), Pattern::LATE_START, TIME_AND_SALE_INTERVAL},
-        QObject::tr("Late open")}};
+      SpecialProfile(Profile(parse_ticker("TD.TSX"), Pattern::FIXED,
+        milliseconds(50)), QObject::tr("High volume")),
+      SpecialProfile(Profile(parse_ticker("MFC.TSX"), Pattern::FIXED,
+        seconds(10)), QObject::tr("Low volume")),
+      SpecialProfile(Profile(parse_ticker("MRU.TSX"), Pattern::BURST,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Bursts")),
+      SpecialProfile(Profile(parse_ticker("ARE.TSX"), Pattern::LARGE_BURST,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Large bursts")),
+      SpecialProfile(Profile(parse_ticker("MX.TSX"), Pattern::GAP,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Quiet periods")),
+      SpecialProfile(Profile(parse_ticker("MG.TSX"), Pattern::LATE_START,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Late open"))};
     return profiles;
   }
 
@@ -137,8 +138,8 @@ namespace {
           return special.m_profile.m_ticker == info.m_ticker;
         });
       if(special == get_special_profiles().end()) {
-        profiles.push_back(DemoMarketDataFeed::Profile{info.m_ticker,
-          DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL});
+        profiles.push_back(DemoMarketDataFeed::Profile(info.m_ticker,
+          DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL));
       } else {
         profiles.push_back(special->m_profile);
       }
@@ -226,8 +227,8 @@ struct ReplayUiTester : QWidget {
         arg(DemoMarketDataFeed::describe(special.m_profile)));
     }
     m_event_log->append(tr("  All other tickers: %1").arg(
-      DemoMarketDataFeed::describe(DemoMarketDataFeed::Profile{Ticker(),
-        DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL})));
+      DemoMarketDataFeed::describe(DemoMarketDataFeed::Profile(Ticker(),
+        DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
     for(auto& burst : m_market_data_feed.get_next_large_bursts()) {
       m_event_log->append(tr("%1: Next burst of %2 trades at %3.").
         arg(Spire::to_text(burst.m_ticker)).arg(burst.m_size).
