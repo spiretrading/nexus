@@ -269,6 +269,10 @@ void ReplayTimeAndSalesModel::read() {
     if(m_read_end >= target || std::ssize(m_buffer) >= get_low_water()) {
       return;
     }
+    if(state == PlaybackState::REPLAYING &&
+        m_read_end - m_position >= get_read_ahead() / 2) {
+      return;
+    }
     if(target == now) {
       m_last_read_time = now;
     }

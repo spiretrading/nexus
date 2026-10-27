@@ -433,6 +433,37 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
+  TEST_CASE("replaying_reads_again_after_half_the_read_ahead_is_used") {
+    run_test([] {
+      auto fixture = Fixture(seconds(0));
+      auto offsets = std::vector<time_duration>();
+      for(auto i = 1; i <= 60; ++i) {
+        offsets.push_back(seconds(i));
+      }
+      fixture.store(offsets);
+      auto count = std::make_shared<std::atomic_int>(0);
+      auto model = fixture.make_model(count);
+      fixture.m_session->play();
+      REQUIRE(fixture.m_session->get_state()->get() ==
+        PlaybackState::REPLAYING);
+      fixture.set_position(seconds(1));
+      wait_until([&] {
+        return model->get_size() == 1;
+      });
+      auto queries = count->load();
+      for(auto position = seconds(1) + milliseconds(100);
+          position <= seconds(15); position += milliseconds(100)) {
+        fixture.set_position(position);
+      }
+      REQUIRE(model->get_size() == 15);
+      REQUIRE(*count == queries);
+      fixture.set_position(seconds(15) + milliseconds(100));
+      wait_until([&] {
+        return *count == queries + 1;
+      });
+    });
+  }
+
   TEST_CASE("load_older_excludes_time_and_sales_after_a_seek_back") {
     run_test([] {
       auto fixture = Fixture(seconds(10));
