@@ -33,15 +33,20 @@ namespace Spire {
       QTimer m_timer;
       bool m_is_loading;
       bool m_is_full_reload;
+      bool m_is_fill_enabled;
+      int m_load_index;
       int m_last_position;
 
       void update_position(const QSize& size);
       void update_loading_panel();
       void display();
+      void load_page();
+      void fill();
       void on_horizontal_position(int position);
       void on_vertical_position(int position);
       void on_begin_loading();
       void on_end_loading();
+      void on_operation(const TableModel::Operation& operation);
       void on_timeout();
   };
 }

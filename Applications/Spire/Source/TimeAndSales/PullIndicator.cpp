@@ -22,6 +22,8 @@ PullIndicator::PullIndicator(TableView& table_view)
       m_timer(this),
       m_is_loading(false),
       m_is_full_reload(false),
+      m_is_fill_enabled(true),
+      m_load_index(0),
       m_last_position(0) {
   m_spinner = new QMovie(":/Icons/spinner.gif");
   m_spinner->setScaledSize(scale(16, 16));
@@ -71,6 +73,8 @@ PullIndicator::PullIndicator(TableView& table_view)
     std::bind_front(&PullIndicator::on_begin_loading, this));
   table->connect_end_loading_signal(
     std::bind_front(&PullIndicator::on_end_loading, this));
+  table->connect_operation_signal(
+    std::bind_front(&PullIndicator::on_operation, this));
   m_table_view->get_body().installEventFilter(this);
   hide();
   m_timer.setSingleShot(true);
@@ -91,6 +95,10 @@ bool PullIndicator::eventFilter(QObject* watched, QEvent* event) {
       update_loading_panel();
       if(isVisible()) {
         update_position(m_table_view->get_body().sizeHint());
+      }
+      auto& resize_event = *static_cast<QResizeEvent*>(event);
+      if(resize_event.size().height() > resize_event.oldSize().height()) {
+        fill();
       }
     }
   } else if(event->type() == QEvent::Resize && isVisible()) {
@@ -142,12 +150,30 @@ void PullIndicator::on_vertical_position(int position) {
   } else if(position > m_last_position &&
       scroll_bar.get_range().m_end - position <
         scroll_bar.get_page_size() / 2) {
-    auto table = std::static_pointer_cast<TimeAndSalesTableModel>(
-      m_table_view->get_table());
-    table->load_history(scroll_box.height() /
-      m_table_view->get_body().estimate_scroll_line_height());
+    load_page();
   }
   m_last_position = position;
+}
+
+void PullIndicator::load_page() {
+  auto table = std::static_pointer_cast<TimeAndSalesTableModel>(
+    m_table_view->get_table());
+  table->load_history(m_table_view->get_scroll_box().height() /
+    m_table_view->get_body().estimate_scroll_line_height());
+}
+
+void PullIndicator::fill() {
+  if(!m_is_fill_enabled || m_is_loading ||
+      m_table_view->get_table()->get_row_size() == 0) {
+    return;
+  }
+  auto& scroll_box = m_table_view->get_scroll_box();
+  auto remaining = m_table_view->get_body().sizeHint().height() -
+    scroll_box.get_vertical_scroll_bar().get_position() - scroll_box.height();
+  if(remaining >= scroll_box.height() / 2) {
+    return;
+  }
+  load_page();
 }
 
 void PullIndicator::on_begin_loading() {
@@ -155,7 +181,9 @@ void PullIndicator::on_begin_loading() {
     return;
   }
   m_is_loading = true;
-  m_is_full_reload = m_table_view->get_table()->get_row_size() == 0;
+  m_is_fill_enabled = false;
+  m_load_index = m_table_view->get_table()->get_row_size();
+  m_is_full_reload = m_load_index == 0;
   const auto PULL_DELAY_TIMEOUT_MS = 1000;
   m_timer.start(PULL_DELAY_TIMEOUT_MS);
 }
@@ -167,6 +195,28 @@ void PullIndicator::on_end_loading() {
   m_timer.stop();
   hide();
   m_loading_panel->hide();
+  if(m_is_fill_enabled) {
+    QTimer::singleShot(0, this, [this] {
+      fill();
+    });
+  }
+}
+
+void PullIndicator::on_operation(const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      if(operation.m_index < m_load_index) {
+        ++m_load_index;
+      } else if(m_is_loading) {
+        m_is_fill_enabled = true;
+      }
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      m_is_fill_enabled = true;
+      if(operation.m_index < m_load_index) {
+        --m_load_index;
+      }
+    });
 }
 
 void PullIndicator::on_timeout() {

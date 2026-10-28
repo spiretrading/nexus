@@ -56,10 +56,14 @@ const std::shared_ptr<TimeAndSalesModel>&
 
 void TimeAndSalesTableModel::set_model(
     std::shared_ptr<TimeAndSalesModel> model) {
+  auto is_loading = m_is_loading;
   m_promise.disconnect();
   m_is_loading = false;
   m_model = std::move(model);
   m_source->set_source(m_model);
+  if(is_loading) {
+    m_end_loading_signal();
+  }
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
