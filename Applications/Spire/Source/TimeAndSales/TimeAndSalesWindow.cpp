@@ -4,7 +4,9 @@
 #include <QIcon>
 #include <QScreen>
 #include <QStandardPaths>
+#include <QTimer>
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
@@ -53,9 +55,12 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_member(m_user_profile->GetPropertyHubMembers(), *this,
         ":/Icons/time-sales.svg", std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
+      m_session(make_attached_session_model(
+        m_member, m_user_profile->GetReplayAttachmentMap())),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
-      m_table_view(nullptr) {
+      m_table_view(nullptr),
+      m_is_update_pending(false) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
@@ -68,6 +73,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     new TickerView(std::move(tickers), ticker, *m_transition_view);
   ticker->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
+  m_session_connection = m_session->connect_update_signal(
+    std::bind_front(&TimeAndSalesWindow::on_session, this));
   m_ticker_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);
   set_body(m_ticker_view);
@@ -87,6 +94,34 @@ const std::shared_ptr<TickerModel>& TimeAndSalesWindow::get_current() const {
 std::unique_ptr<LegacyUI::WindowSettings>
     TimeAndSalesWindow::GetWindowSettings() const {
   return std::make_unique<TimeAndSalesWindowSettings>(*this);
+}
+
+void TimeAndSalesWindow::update_model() {
+  m_table_model->set_model(m_model_builder(m_ticker, m_session->get()));
+  m_transition_view->set_status(TransitionView::Status::LOADING);
+  m_table_model->load_history(m_ticker_view->height() /
+    estimate_row_height(m_properties_proxy->get().get_font()));
+}
+
+void TimeAndSalesWindow::schedule_update() {
+  if(!m_table_view) {
+    m_table_view =
+      make_time_and_sales_table_view(m_table_model, m_properties_proxy);
+    m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_transition_view->set_body(*m_table_view);
+  }
+  m_table_model->set_model(std::make_shared<NoneTimeAndSalesModel>());
+  m_transition_view->set_status(TransitionView::Status::LOADING);
+  if(m_is_update_pending) {
+    return;
+  }
+  m_is_update_pending = true;
+  QTimer::singleShot(0, this, [=] {
+    m_is_update_pending = false;
+    if(m_ticker) {
+      update_model();
+    }
+  });
 }
 
 void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
@@ -153,14 +188,12 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
-  m_table_model->set_model(m_model_builder(ticker));
-  if(!m_table_view) {
-    m_table_view =
-      make_time_and_sales_table_view(m_table_model, m_properties_proxy);
-    m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    m_transition_view->set_body(*m_table_view);
+  schedule_update();
+}
+
+void TimeAndSalesWindow::on_session(
+    const std::shared_ptr<ReplaySession>& session) {
+  if(m_ticker) {
+    schedule_update();
   }
-  m_transition_view->set_status(TransitionView::Status::LOADING);
-  m_table_model->load_history(m_ticker_view->height() /
-    estimate_row_height(m_properties_proxy->get().get_font()));
 }
