@@ -123,6 +123,56 @@ TEST_SUITE("AndSelector") {
     });
   }
 
+  TEST_CASE("select_right_before_left") {
+    run_test([] {
+      auto w1 = QWidget();
+      auto w2 = new QWidget(&w1);
+      match(*w2, Bar());
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(AndSelector(Foo(), ChildSelector(+Any(), Bar())),
+        find_stylist(w1), [&] (const auto& additions, const auto& removals) {
+          updates.push_back({additions, removals});
+        });
+      REQUIRE(updates.empty());
+      match(w1, Foo());
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+      }
+      unmatch(*w2, Bar());
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.empty());
+        REQUIRE(matches.m_removals.size() == 1);
+        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+      }
+      match(*w2, Bar());
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.size() == 1);
+        REQUIRE(matches.m_removals.empty());
+        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+      }
+      unmatch(w1, Foo());
+      REQUIRE(updates.size() == 1);
+      {
+        auto matches = updates.front();
+        updates.pop_front();
+        REQUIRE(matches.m_additions.empty());
+        REQUIRE(matches.m_removals.size() == 1);
+        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+      }
+    });
+  }
+
   TEST_CASE("select_initialization") {
     run_test([] {
       auto w1 = QWidget();
