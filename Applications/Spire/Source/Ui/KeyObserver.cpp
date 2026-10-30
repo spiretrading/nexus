@@ -8,7 +8,7 @@ using namespace Spire;
 
 struct KeyObserver::EventFilter : QObject {
   struct Child {
-    std::unique_ptr<KeyObserver> m_observer;
+    std::shared_ptr<EventFilter> m_filter;
     scoped_connection m_connection;
   };
   mutable FilteredKeyPressSignal m_key_press_signal;
@@ -41,12 +41,12 @@ struct KeyObserver::EventFilter : QObject {
   }
 
   void add(QWidget& child) {
-    auto observer = std::make_unique<KeyObserver>(child);
-    auto connection = observer->connect_filtered_key_press_signal(
+    auto filter = find_extension<EventFilter>(child);
+    auto connection = filter->m_key_press_signal.connect(
       [=] (auto& target, auto& event) {
         return m_key_press_signal(target, event).value_or(false);
       });
-    auto child_entry = Child(std::move(observer), std::move(connection));
+    auto child_entry = Child(std::move(filter), std::move(connection));
     m_children.insert(std::pair(&child, std::move(child_entry)));
   }
 };

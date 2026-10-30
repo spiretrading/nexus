@@ -16,7 +16,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
   mutable PositionSignal m_position_signal;
   QPointer<QWidget> m_widget;
   QPoint m_position;
-  std::unique_ptr<GlobalPositionObserver> m_parent_observer;
+  std::shared_ptr<EventFilter> m_parent_filter;
   scoped_connection m_parent_position_connection;
 
   EventFilter(QWidget& widget)
@@ -39,12 +39,11 @@ struct GlobalPositionObserver::EventFilter : QObject {
   void observe_parent() {
     m_parent_position_connection.disconnect();
     if(m_widget->parentWidget()) {
-      m_parent_observer =
-        std::make_unique<GlobalPositionObserver>(*m_widget->parentWidget());
-      m_parent_position_connection = m_parent_observer->connect_position_signal(
+      m_parent_filter = find_extension<EventFilter>(*m_widget->parentWidget());
+      m_parent_position_connection = m_parent_filter->m_position_signal.connect(
         std::bind_front(&EventFilter::on_position, this));
     } else {
-      m_parent_observer = nullptr;
+      m_parent_filter = nullptr;
     }
   }
 
@@ -60,7 +59,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
 
   void on_widget_destroyed() {
     m_parent_position_connection.disconnect();
-    m_parent_observer = nullptr;
+    m_parent_filter = nullptr;
   }
 
   void on_position(const QPoint& position) {

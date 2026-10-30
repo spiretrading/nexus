@@ -24,7 +24,7 @@ namespace {
 
 struct MouseObserver::EventFilter : QObject {
   struct Child {
-    std::unique_ptr<MouseObserver> m_observer;
+    std::shared_ptr<EventFilter> m_filter;
     scoped_connection m_connection;
   };
   using FilteredMouseSignal = boost::signals2::signal<
@@ -67,12 +67,12 @@ struct MouseObserver::EventFilter : QObject {
     if(i != m_children.end()) {
       return;
     }
-    auto observer = std::make_unique<MouseObserver>(child);
-    auto connection = observer->connect_filtered_mouse_signal(
+    auto filter = find_extension<EventFilter>(child);
+    auto connection = filter->m_mouse_signal.connect(
       [=] (auto& target, auto& event) {
         return m_mouse_signal(target, event);
       });
-    auto child_entry = Child(std::move(observer), std::move(connection));
+    auto child_entry = Child(std::move(filter), std::move(connection));
     m_children.insert(i, std::pair(&child, std::move(child_entry)));
   }
 };
