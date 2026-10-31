@@ -20,3 +20,7 @@ namespace {
 
 UiTestFixture::UiTestFixture()
   : m_application(m_count, prepare_application(m_count)) {}
+
+UiTestFixture::~UiTestFixture() {
+  QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}

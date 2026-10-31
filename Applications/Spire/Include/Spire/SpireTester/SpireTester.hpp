@@ -20,6 +20,8 @@ namespace Spire::Tests {
       /** Constructs a UiTestFixture. */
       UiTestFixture();
 
+      ~UiTestFixture();
+
     private:
       int m_count;
       QApplication m_application;
