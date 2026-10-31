@@ -80,8 +80,15 @@ def backup(index, start, end, loader, destination):
   utc_end = localized_end.astimezone(pytz.utc)
   query = beam.Query()
   query.index = index
-  query.snapshot_limit = beam.SnapshotLimit.from_head(10000)
+  query.snapshot_limit = beam.SnapshotLimit.from_tail(1)
   query.set_range(utc_start, utc_end)
+  values = loader(query)
+  if not values:
+    return
+  end_sequence = values[-1].sequence
+  del values
+  query.snapshot_limit = beam.SnapshotLimit.from_head(100000)
+  query.set_range(utc_start, end_sequence)
   while True:
     values = loader(query)
     if not values:
@@ -92,9 +99,9 @@ def backup(index, start, end, loader, destination):
     destination.store(values)
     sequence = values[-1].sequence
     del values
-    if sequence == beam.Sequence.LAST:
+    if sequence == end_sequence:
       return
-    query.set_range(beam.increment(sequence), utc_end)
+    query.set_range(beam.increment(sequence), end_sequence)
 
 def backup_spawn(index, start, end, source, destination):
   backup(index, start, end, source.load_bbo_quotes, destination)
