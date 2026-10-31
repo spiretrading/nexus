@@ -11,26 +11,18 @@ using namespace Spire;
 struct EnabledObserver::EventFilter : QObject {
   mutable EnabledSignal m_enabled_signal;
   QPointer<QWidget> m_widget;
-  optional<EnabledObserver> m_parent_observer;
   bool m_is_enabled;
 
   EventFilter(QWidget& widget)
-      : m_widget(&widget) {
-    m_is_enabled = m_widget->isEnabled();
-    if(auto parent = m_widget->parentWidget()) {
-      set_parent(*parent);
-    }
+      : m_widget(&widget),
+        m_is_enabled(widget.isEnabled()) {
     m_widget->installEventFilter(this);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::EnabledChange) {
+    if(event->type() == QEvent::EnabledChange ||
+        event->type() == QEvent::ParentChange) {
       update();
-    } else if(event->type() == QEvent::ParentChange) {
-      m_parent_observer = none;
-      if(auto parent = m_widget->parentWidget()) {
-        set_parent(*parent);
-      }
     }
     return QObject::eventFilter(watched, event);
   }
@@ -44,19 +36,6 @@ struct EnabledObserver::EventFilter : QObject {
       m_enabled_signal(true);
     } else {
       m_enabled_signal(false);
-    }
-  }
-
-  void set_parent(QWidget& parent) {
-    m_parent_observer.emplace(parent);
-    m_parent_observer->connect_enabled_signal(
-      std::bind_front(&EventFilter::on_parent_enabled, this));
-    update();
-  }
-
-  void on_parent_enabled(bool is_enabled) {
-    if(m_widget) {
-      update();
     }
   }
 };
