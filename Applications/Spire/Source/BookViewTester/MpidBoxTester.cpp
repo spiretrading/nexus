@@ -29,39 +29,33 @@ namespace {
 }
 
 TEST_SUITE("MpidBox") {
-  TEST_CASE("settled_highlight_survives_unrelated_update") {
-    run_test([] {
-      auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
-      auto box = make_box(entry);
-      REQUIRE(is_match(box, SettledRow()));
-      REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
-      auto order = make_order(OrderStatus::FILLED, 5);
-      order.m_status = OrderStatus::PENDING_CANCEL;
-      entry->set(order);
-      REQUIRE(is_match(box, SettledRow()));
-      REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
-    });
+  UI_TEST_CASE("settled_highlight_survives_unrelated_update") {
+    auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
+    auto box = make_box(entry);
+    REQUIRE(is_match(box, SettledRow()));
+    REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
+    auto order = make_order(OrderStatus::FILLED, 5);
+    order.m_status = OrderStatus::PENDING_CANCEL;
+    entry->set(order);
+    REQUIRE(is_match(box, SettledRow()));
+    REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
   }
 
-  TEST_CASE("new_transition_replays_highlight") {
-    run_test([] {
-      auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
-      auto box = make_box(entry);
-      REQUIRE(is_match(box, SettledRow()));
-      entry->set(make_order(OrderStatus::FILLED, 7));
-      REQUIRE(!is_match(box, SettledRow()));
-      REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
-    });
+  UI_TEST_CASE("new_transition_replays_highlight") {
+    auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
+    auto box = make_box(entry);
+    REQUIRE(is_match(box, SettledRow()));
+    entry->set(make_order(OrderStatus::FILLED, 7));
+    REQUIRE(!is_match(box, SettledRow()));
+    REQUIRE(is_match(box, UserOrderRow(OrderStatus::FILLED)));
   }
 
-  TEST_CASE("expired_highlight_is_cleared") {
-    run_test([] {
-      auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
-      auto box = make_box(entry);
-      REQUIRE(is_match(box, SettledRow()));
-      entry->set(make_order(OrderStatus::NONE, 0));
-      REQUIRE(!is_match(box, SettledRow()));
-      REQUIRE(!is_match(box, UserOrderRow(OrderStatus::FILLED)));
-    });
+  UI_TEST_CASE("expired_highlight_is_cleared") {
+    auto entry = make_entry(make_order(OrderStatus::FILLED, 5));
+    auto box = make_box(entry);
+    REQUIRE(is_match(box, SettledRow()));
+    entry->set(make_order(OrderStatus::NONE, 0));
+    REQUIRE(!is_match(box, SettledRow()));
+    REQUIRE(!is_match(box, UserOrderRow(OrderStatus::FILLED)));
   }
 }

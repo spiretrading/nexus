@@ -68,127 +68,119 @@ TEST_SUITE("AndSelector") {
     REQUIRE(AndSelector(Bar(), Foo()) != AndSelector(Foo(), Foo()));
   }
 
-  TEST_CASE("select") {
-    run_test([] {
-      auto w1 = QWidget();
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(AndSelector(Foo(), Bar()), find_stylist(w1),
-        [&] (const auto& additions, const auto& removals) {
-          updates.push_back({additions, removals});
-        });
-      REQUIRE(updates.empty());
-      match(w1, Foo());
-      REQUIRE(updates.empty());
-      unmatch(w1, Foo());
-      REQUIRE(updates.empty());
-      match(w1, Bar());
-      REQUIRE(updates.empty());
-      match(w1, Foo());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.size() == 1);
-        REQUIRE(matches.m_removals.empty());
-        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
-      }
-      match(w1, Bar());
-      REQUIRE(updates.empty());
-      unmatch(w1, Foo());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.empty());
-        REQUIRE(matches.m_removals.size() == 1);
-        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
-      }
-      unmatch(w1, Bar());
-      REQUIRE(updates.empty());
-    });
-  }
-
-  TEST_CASE("disconnect_during_update") {
-    run_test([] {
-      auto parent = QWidget();
-      auto child = new QWidget(&parent);
-      auto style = StyleSheet();
-      style.get(ChildSelector(Any(),
-        AndSelector(DisconnectingSelector(), Bar()))).
-        set(ColorProperty(QColor(255, 0, 0)));
-      set_style(parent, style);
-      match(*child, Foo());
-      match(*child, Bar());
-      unmatch(*child, Foo());
-    });
-  }
-
-  TEST_CASE("select_right_before_left") {
-    run_test([] {
-      auto w1 = QWidget();
-      auto w2 = new QWidget(&w1);
-      match(*w2, Bar());
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(AndSelector(Foo(), ChildSelector(+Any(), Bar())),
-        find_stylist(w1), [&] (const auto& additions, const auto& removals) {
-          updates.push_back({additions, removals});
-        });
-      REQUIRE(updates.empty());
-      match(w1, Foo());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.size() == 1);
-        REQUIRE(matches.m_removals.empty());
-        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
-      }
-      unmatch(*w2, Bar());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.empty());
-        REQUIRE(matches.m_removals.size() == 1);
-        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
-      }
-      match(*w2, Bar());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.size() == 1);
-        REQUIRE(matches.m_removals.empty());
-        REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
-      }
-      unmatch(w1, Foo());
-      REQUIRE(updates.size() == 1);
-      {
-        auto matches = updates.front();
-        updates.pop_front();
-        REQUIRE(matches.m_additions.empty());
-        REQUIRE(matches.m_removals.size() == 1);
-        REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
-      }
-    });
-  }
-
-  TEST_CASE("select_initialization") {
-    run_test([] {
-      auto w1 = QWidget();
-      match(w1, Foo());
-      match(w1, Bar());
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(AndSelector(Foo(), Bar()), find_stylist(w1),
-        [&] (const auto& additions, const auto& removals) {
-          updates.push_back({additions, removals});
-        });
-      REQUIRE(updates.size() == 1);
+  UI_TEST_CASE("select") {
+    auto w1 = QWidget();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(AndSelector(Foo(), Bar()), find_stylist(w1),
+      [&] (const auto& additions, const auto& removals) {
+        updates.push_back({additions, removals});
+      });
+    REQUIRE(updates.empty());
+    match(w1, Foo());
+    REQUIRE(updates.empty());
+    unmatch(w1, Foo());
+    REQUIRE(updates.empty());
+    match(w1, Bar());
+    REQUIRE(updates.empty());
+    match(w1, Foo());
+    REQUIRE(updates.size() == 1);
+    {
       auto matches = updates.front();
       updates.pop_front();
       REQUIRE(matches.m_additions.size() == 1);
       REQUIRE(matches.m_removals.empty());
       REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
-    });
+    }
+    match(w1, Bar());
+    REQUIRE(updates.empty());
+    unmatch(w1, Foo());
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.empty());
+      REQUIRE(matches.m_removals.size() == 1);
+      REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+    }
+    unmatch(w1, Bar());
+    REQUIRE(updates.empty());
+  }
+
+  UI_TEST_CASE("disconnect_during_update") {
+    auto parent = QWidget();
+    auto child = new QWidget(&parent);
+    auto style = StyleSheet();
+    style.get(ChildSelector(Any(),
+      AndSelector(DisconnectingSelector(), Bar()))).
+      set(ColorProperty(QColor(255, 0, 0)));
+    set_style(parent, style);
+    match(*child, Foo());
+    match(*child, Bar());
+    unmatch(*child, Foo());
+  }
+
+  UI_TEST_CASE("select_right_before_left") {
+    auto w1 = QWidget();
+    auto w2 = new QWidget(&w1);
+    match(*w2, Bar());
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(AndSelector(Foo(), ChildSelector(+Any(), Bar())),
+      find_stylist(w1), [&] (const auto& additions, const auto& removals) {
+        updates.push_back({additions, removals});
+      });
+    REQUIRE(updates.empty());
+    match(w1, Foo());
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.size() == 1);
+      REQUIRE(matches.m_removals.empty());
+      REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+    }
+    unmatch(*w2, Bar());
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.empty());
+      REQUIRE(matches.m_removals.size() == 1);
+      REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+    }
+    match(*w2, Bar());
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.size() == 1);
+      REQUIRE(matches.m_removals.empty());
+      REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+    }
+    unmatch(w1, Foo());
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.empty());
+      REQUIRE(matches.m_removals.size() == 1);
+      REQUIRE(matches.m_removals.contains(&find_stylist(w1)));
+    }
+  }
+
+  UI_TEST_CASE("select_initialization") {
+    auto w1 = QWidget();
+    match(w1, Foo());
+    match(w1, Bar());
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(AndSelector(Foo(), Bar()), find_stylist(w1),
+      [&] (const auto& additions, const auto& removals) {
+        updates.push_back({additions, removals});
+      });
+    REQUIRE(updates.size() == 1);
+    auto matches = updates.front();
+    updates.pop_front();
+    REQUIRE(matches.m_additions.size() == 1);
+    REQUIRE(matches.m_removals.empty());
+    REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
   }
 }

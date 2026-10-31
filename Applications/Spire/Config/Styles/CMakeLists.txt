@@ -18,7 +18,8 @@ target_link_libraries(StylesTester BeamRoutines)
 target_compile_definitions(StylesTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(StylesTester Styles Library Resources
+target_link_libraries(StylesTester SpireTesterLibrary Styles Library
+  Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -33,6 +34,8 @@ target_link_libraries(StylesTester Styles Library Resources
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(StylesTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}

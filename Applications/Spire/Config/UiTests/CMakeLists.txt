@@ -7,7 +7,7 @@ beam_configure_target(UiTests)
 target_link_libraries(UiTests BeamRoutines)
 target_compile_definitions(UiTests PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(UiTests Styles Library Resources
+target_link_libraries(UiTests SpireTesterLibrary Styles Library Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}

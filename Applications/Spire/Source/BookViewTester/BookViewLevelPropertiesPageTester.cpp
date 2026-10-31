@@ -37,66 +37,60 @@ namespace {
 }
 
 TEST_SUITE("BookViewLevelPropertiesPage") {
-  TEST_CASE("restore_two_level_gradient") {
-    run_test([] {
-      auto current = make_current(FillType::GRADIENT);
-      auto properties = current->get();
-      properties.m_color_scheme.resize(2);
-      current->set(properties);
-      auto page = BookViewLevelPropertiesPage(current);
-      auto initial = current->get();
-      auto color_boxes = find_color_boxes(page);
-      REQUIRE(color_boxes.size() == 2);
-      color_boxes.back()->get_current()->set(QColor(0xFF0000));
-      page.flush();
-      REQUIRE(current->get().m_color_scheme.back() == QColor(0xFF0000));
-      current->set(initial);
-      color_boxes = find_color_boxes(page);
-      REQUIRE(color_boxes.size() == 2);
-      REQUIRE(current->get().m_color_scheme == initial.m_color_scheme);
-      REQUIRE(color_boxes.front()->get_current()->get() ==
-        initial.m_color_scheme.front());
-      REQUIRE(color_boxes.back()->get_current()->get() ==
-        initial.m_color_scheme.back());
-      color_boxes.front()->get_current()->set(QColor(0x00FF00));
-      page.flush();
-      REQUIRE(
-        current->get().m_color_scheme.back() == initial.m_color_scheme.back());
-    });
+  UI_TEST_CASE("restore_two_level_gradient") {
+    auto current = make_current(FillType::GRADIENT);
+    auto properties = current->get();
+    properties.m_color_scheme.resize(2);
+    current->set(properties);
+    auto page = BookViewLevelPropertiesPage(current);
+    auto initial = current->get();
+    auto color_boxes = find_color_boxes(page);
+    REQUIRE(color_boxes.size() == 2);
+    color_boxes.back()->get_current()->set(QColor(0xFF0000));
+    page.flush();
+    REQUIRE(current->get().m_color_scheme.back() == QColor(0xFF0000));
+    current->set(initial);
+    color_boxes = find_color_boxes(page);
+    REQUIRE(color_boxes.size() == 2);
+    REQUIRE(current->get().m_color_scheme == initial.m_color_scheme);
+    REQUIRE(color_boxes.front()->get_current()->get() ==
+      initial.m_color_scheme.front());
+    REQUIRE(color_boxes.back()->get_current()->get() ==
+      initial.m_color_scheme.back());
+    color_boxes.front()->get_current()->set(QColor(0x00FF00));
+    page.flush();
+    REQUIRE(
+      current->get().m_color_scheme.back() == initial.m_color_scheme.back());
   }
 
-  TEST_CASE("pending_gradient_update_does_not_overwrite_solid_colors") {
-    run_test([] {
-      auto current = make_current(FillType::GRADIENT);
-      auto page = BookViewLevelPropertiesPage(current);
-      auto color_boxes = find_color_boxes(page);
-      REQUIRE(color_boxes.size() == 2);
-      color_boxes.front()->get_current()->set(QColor(0xFF0000));
-      REQUIRE(current->get().m_color_scheme[0] == QColor(0xFF0000));
-      auto properties = current->get();
-      properties.m_fill_type = FillType::SOLID;
-      current->set(properties);
-      auto scheme = current->get().m_color_scheme;
-      wait();
-      REQUIRE(current->get().m_color_scheme == scheme);
-    });
+  UI_TEST_CASE("pending_gradient_update_does_not_overwrite_solid_colors") {
+    auto current = make_current(FillType::GRADIENT);
+    auto page = BookViewLevelPropertiesPage(current);
+    auto color_boxes = find_color_boxes(page);
+    REQUIRE(color_boxes.size() == 2);
+    color_boxes.front()->get_current()->set(QColor(0xFF0000));
+    REQUIRE(current->get().m_color_scheme[0] == QColor(0xFF0000));
+    auto properties = current->get();
+    properties.m_fill_type = FillType::SOLID;
+    current->set(properties);
+    auto scheme = current->get().m_color_scheme;
+    wait();
+    REQUIRE(current->get().m_color_scheme == scheme);
   }
 
-  TEST_CASE("flush_applies_a_pending_gradient_update") {
-    run_test([] {
-      auto current = make_current(FillType::GRADIENT);
-      auto page = BookViewLevelPropertiesPage(current);
-      auto initial = current->get().m_color_scheme;
-      auto color_boxes = find_color_boxes(page);
-      REQUIRE(color_boxes.size() == 2);
-      color_boxes.front()->get_current()->set(QColor(0xFF0000));
-      REQUIRE(current->get().m_color_scheme[1] == initial[1]);
-      page.flush();
-      auto scheme = current->get().m_color_scheme;
-      REQUIRE(scheme[0] == QColor(0xFF0000));
-      REQUIRE(scheme[1] != initial[1]);
-      wait();
-      REQUIRE(current->get().m_color_scheme == scheme);
-    });
+  UI_TEST_CASE("flush_applies_a_pending_gradient_update") {
+    auto current = make_current(FillType::GRADIENT);
+    auto page = BookViewLevelPropertiesPage(current);
+    auto initial = current->get().m_color_scheme;
+    auto color_boxes = find_color_boxes(page);
+    REQUIRE(color_boxes.size() == 2);
+    color_boxes.front()->get_current()->set(QColor(0xFF0000));
+    REQUIRE(current->get().m_color_scheme[1] == initial[1]);
+    page.flush();
+    auto scheme = current->get().m_color_scheme;
+    REQUIRE(scheme[0] == QColor(0xFF0000));
+    REQUIRE(scheme[1] != initial[1]);
+    wait();
+    REQUIRE(current->get().m_color_scheme == scheme);
   }
 }

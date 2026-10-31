@@ -81,85 +81,77 @@ TEST_SUITE("TimeAndSalesTableModel") {
     require_rows(model, 2);
   }
 
-  TEST_CASE("load_history") {
-    run_test([] {
-      auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
-      time_and_sales->publish(make_entry(4));
-      time_and_sales->publish(make_entry(5));
-      auto model = TimeAndSalesTableModel(time_and_sales);
-      auto begin_count = 0;
-      model.connect_begin_loading_signal([&] {
-        ++begin_count;
-      });
-      auto [future, promise] = make_future<void>();
-      auto end = std::make_shared<QtFuture<void>>(std::move(future));
-      model.connect_end_loading_signal([=] {
-        end->resolve();
-      });
-      model.load_history(3);
-      REQUIRE(begin_count == 1);
-      REQUIRE(time_and_sales->get_requests().size() == 1);
-      auto request = time_and_sales->pop_request();
-      REQUIRE(request.m_max_count == 3);
-      request.m_result.resolve(make_entries(1, 3));
-      wait(std::move(promise));
-      REQUIRE(model.get_row_size() == 5);
-      require_rows(model, 5);
+  UI_TEST_CASE("load_history") {
+    auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
+    time_and_sales->publish(make_entry(4));
+    time_and_sales->publish(make_entry(5));
+    auto model = TimeAndSalesTableModel(time_and_sales);
+    auto begin_count = 0;
+    model.connect_begin_loading_signal([&] {
+      ++begin_count;
     });
+    auto [future, promise] = make_future<void>();
+    auto end = std::make_shared<QtFuture<void>>(std::move(future));
+    model.connect_end_loading_signal([=] {
+      end->resolve();
+    });
+    model.load_history(3);
+    REQUIRE(begin_count == 1);
+    REQUIRE(time_and_sales->get_requests().size() == 1);
+    auto request = time_and_sales->pop_request();
+    REQUIRE(request.m_max_count == 3);
+    request.m_result.resolve(make_entries(1, 3));
+    wait(std::move(promise));
+    REQUIRE(model.get_row_size() == 5);
+    require_rows(model, 5);
   }
 
-  TEST_CASE("successive_load_history") {
-    run_test([] {
-      auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
-      auto model = TimeAndSalesTableModel(time_and_sales);
-      load_history(model, *time_and_sales, make_entries(3, 4));
-      REQUIRE(model.get_row_size() == 2);
-      require_rows(model, 4);
-      load_history(model, *time_and_sales, make_entries(1, 2));
-      REQUIRE(model.get_row_size() == 4);
-      require_rows(model, 4);
-    });
+  UI_TEST_CASE("successive_load_history") {
+    auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
+    auto model = TimeAndSalesTableModel(time_and_sales);
+    load_history(model, *time_and_sales, make_entries(3, 4));
+    REQUIRE(model.get_row_size() == 2);
+    require_rows(model, 4);
+    load_history(model, *time_and_sales, make_entries(1, 2));
+    REQUIRE(model.get_row_size() == 4);
+    require_rows(model, 4);
   }
 
-  TEST_CASE("publish_after_load_history") {
-    run_test([] {
-      auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
-      auto model = TimeAndSalesTableModel(time_and_sales);
-      load_history(model, *time_and_sales, make_entries(1, 3));
-      REQUIRE(model.get_row_size() == 3);
-      time_and_sales->publish(make_entry(4));
-      REQUIRE(model.get_row_size() == 4);
-      require_rows(model, 4);
-      time_and_sales->publish(make_entry(5));
-      REQUIRE(model.get_row_size() == 5);
-      require_rows(model, 5);
-    });
+  UI_TEST_CASE("publish_after_load_history") {
+    auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
+    auto model = TimeAndSalesTableModel(time_and_sales);
+    load_history(model, *time_and_sales, make_entries(1, 3));
+    REQUIRE(model.get_row_size() == 3);
+    time_and_sales->publish(make_entry(4));
+    REQUIRE(model.get_row_size() == 4);
+    require_rows(model, 4);
+    time_and_sales->publish(make_entry(5));
+    REQUIRE(model.get_row_size() == 5);
+    require_rows(model, 5);
   }
 
-  TEST_CASE("load_history_while_loading") {
-    run_test([] {
-      auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
-      auto model = TimeAndSalesTableModel(time_and_sales);
-      auto begin_count = 0;
-      model.connect_begin_loading_signal([&] {
-        ++begin_count;
-      });
-      auto [future, promise] = make_future<void>();
-      auto end = std::make_shared<QtFuture<void>>(std::move(future));
-      model.connect_end_loading_signal([=] {
-        end->resolve();
-      });
-      model.load_history(2);
-      model.load_history(2);
-      REQUIRE(begin_count == 1);
-      REQUIRE(time_and_sales->get_requests().size() == 1);
-      time_and_sales->pop_request().m_result.resolve(make_entries(1, 2));
-      wait(std::move(promise));
-      REQUIRE(model.get_row_size() == 2);
-      model.load_history(2);
-      REQUIRE(begin_count == 2);
-      REQUIRE(time_and_sales->get_requests().size() == 1);
+  UI_TEST_CASE("load_history_while_loading") {
+    auto time_and_sales = std::make_shared<TestTimeAndSalesModel>();
+    auto model = TimeAndSalesTableModel(time_and_sales);
+    auto begin_count = 0;
+    model.connect_begin_loading_signal([&] {
+      ++begin_count;
     });
+    auto [future, promise] = make_future<void>();
+    auto end = std::make_shared<QtFuture<void>>(std::move(future));
+    model.connect_end_loading_signal([=] {
+      end->resolve();
+    });
+    model.load_history(2);
+    model.load_history(2);
+    REQUIRE(begin_count == 1);
+    REQUIRE(time_and_sales->get_requests().size() == 1);
+    time_and_sales->pop_request().m_result.resolve(make_entries(1, 2));
+    wait(std::move(promise));
+    REQUIRE(model.get_row_size() == 2);
+    model.load_history(2);
+    REQUIRE(begin_count == 2);
+    REQUIRE(time_and_sales->get_requests().size() == 1);
   }
 
   TEST_CASE("set_model") {
@@ -200,36 +192,32 @@ TEST_SUITE("TimeAndSalesTableModel") {
     require_rows(model, 9);
   }
 
-  TEST_CASE("load_history_after_set_model") {
-    run_test([] {
-      auto first = std::make_shared<TestTimeAndSalesModel>();
-      auto model = TimeAndSalesTableModel(first);
-      load_history(model, *first, make_entries(1, 2));
-      REQUIRE(model.get_row_size() == 2);
-      auto second = std::make_shared<TestTimeAndSalesModel>();
-      second->publish(make_entry(9));
-      model.set_model(second);
-      REQUIRE(model.get_row_size() == 1);
-      load_history(model, *second, make_entries(7, 8));
-      REQUIRE(first->get_requests().empty());
-      REQUIRE(model.get_row_size() == 3);
-      require_rows(model, 9);
-    });
+  UI_TEST_CASE("load_history_after_set_model") {
+    auto first = std::make_shared<TestTimeAndSalesModel>();
+    auto model = TimeAndSalesTableModel(first);
+    load_history(model, *first, make_entries(1, 2));
+    REQUIRE(model.get_row_size() == 2);
+    auto second = std::make_shared<TestTimeAndSalesModel>();
+    second->publish(make_entry(9));
+    model.set_model(second);
+    REQUIRE(model.get_row_size() == 1);
+    load_history(model, *second, make_entries(7, 8));
+    REQUIRE(first->get_requests().empty());
+    REQUIRE(model.get_row_size() == 3);
+    require_rows(model, 9);
   }
 
-  TEST_CASE("set_model_while_loading") {
-    run_test([] {
-      auto first = std::make_shared<TestTimeAndSalesModel>();
-      auto model = TimeAndSalesTableModel(first);
-      model.load_history(2);
-      REQUIRE(first->get_requests().size() == 1);
-      auto second = std::make_shared<TestTimeAndSalesModel>();
-      model.set_model(second);
-      first->pop_request().m_result.resolve(make_entries(1, 2));
-      load_history(model, *second, make_entries(7, 8));
-      REQUIRE(model.get_row_size() == 2);
-      require_rows(model, 8);
-    });
+  UI_TEST_CASE("set_model_while_loading") {
+    auto first = std::make_shared<TestTimeAndSalesModel>();
+    auto model = TimeAndSalesTableModel(first);
+    model.load_history(2);
+    REQUIRE(first->get_requests().size() == 1);
+    auto second = std::make_shared<TestTimeAndSalesModel>();
+    model.set_model(second);
+    first->pop_request().m_result.resolve(make_entries(1, 2));
+    load_history(model, *second, make_entries(7, 8));
+    REQUIRE(model.get_row_size() == 2);
+    require_rows(model, 8);
   }
 
   TEST_CASE("bbo_indicator") {

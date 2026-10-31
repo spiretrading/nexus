@@ -90,7 +90,7 @@ file(GLOB header_files ../../Include/Spire/TimeAndSalesTester/*.hpp)
 file(GLOB source_files ../../Source/TimeAndSalesTester/*.cpp)
 add_executable(TimeAndSalesTester ${header_files} ${source_files})
 beam_configure_target(TimeAndSalesTester)
-target_link_libraries(TimeAndSalesTester BeamRoutines)
+target_link_libraries(TimeAndSalesTester BeamRoutines SpireTesterLibrary)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(TimeAndSalesTester Async Dashboard Charting
   PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog BookView
@@ -112,6 +112,8 @@ target_link_libraries(TimeAndSalesTester Async Dashboard Charting
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(TimeAndSalesTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}

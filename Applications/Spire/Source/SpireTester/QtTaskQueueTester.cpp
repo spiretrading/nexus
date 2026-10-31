@@ -7,20 +7,18 @@ using namespace Beam;
 using namespace Spire;
 
 TEST_SUITE("QtTaskQueue") {
-  TEST_CASE("push") {
-    run_test([] {
-      auto tasks = QtTaskQueue();
-      auto values = std::deque<int>();
-      auto slot = tasks.get_slot<int>([&] (auto value) {
-        values.push_back(value);
-      });
-      slot.push(123);
-      QApplication::processEvents();
-      REQUIRE(values.size() == 1);
-      REQUIRE(values.front() == 123);
-      values.pop_front();
-      tasks.close();
-      REQUIRE_THROWS(slot.push(11));
+  UI_TEST_CASE("push") {
+    auto tasks = QtTaskQueue();
+    auto values = std::deque<int>();
+    auto slot = tasks.get_slot<int>([&] (auto value) {
+      values.push_back(value);
     });
+    slot.push(123);
+    QApplication::processEvents();
+    REQUIRE(values.size() == 1);
+    REQUIRE(values.front() == 123);
+    values.pop_front();
+    tasks.close();
+    REQUIRE_THROWS(slot.push(11));
   }
 }

@@ -1,34 +1,29 @@
 #ifndef SPIRE_TESTER_HPP
 #define SPIRE_TESTER_HPP
-#include <utility>
+#include <doctest/doctest.h>
 #include <QApplication>
-#include <QTimer>
-#include <QtPlugin>
 
-#ifdef _MSC_VER
-  Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
-#elif __linux__
-  Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)
-#endif
+/**
+ * Defines a test case that runs within a UiTestFixture.
+ * @param name The name of the test case.
+ */
+#define UI_TEST_CASE(name) TEST_CASE_FIXTURE(Spire::Tests::UiTestFixture, name)
 
-namespace Spire {
-  class TestChartModel;
+namespace Spire::Tests {
 
   /**
-   * Runs a unit test that use QtPromises.
-   * @param test The unit test to run.
+   * Provides a QApplication that uses the offscreen platform at a fixed DPI.
    */
-  template<typename T>
-  void run_test(T&& test) {
-    auto argc = 0;
-    auto app = QApplication(argc, nullptr);
-    QTimer::singleShot(0,
-      [&] {
-        std::forward<T>(test)();
-        app.exit();
-      });
-    app.exec();
-  }
+  class UiTestFixture {
+    public:
+
+      /** Constructs a UiTestFixture. */
+      UiTestFixture();
+
+    private:
+      int m_count;
+      QApplication m_application;
+  };
 }
 
 #endif

@@ -1,14 +1,20 @@
 find_package(Qt5Widgets REQUIRED)
+set(library_source_files ${SPIRE_SOURCE_PATH}/SpireTester/SpireTester.cpp)
+add_library(SpireTesterLibrary ${library_source_files})
+beam_configure_target(SpireTesterLibrary)
+set_target_properties(SpireTesterLibrary PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
+  "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_tester)
 file(GLOB_RECURSE header_files ../../Include/Spire/SpireTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/SpireTester/*.cpp)
+list(FILTER source_files EXCLUDE REGEX "/SpireTester/SpireTester\\.cpp$")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(SpireTester ${header_files} ${source_files})
 beam_configure_target(SpireTester)
 target_link_libraries(SpireTester BeamRoutines)
 target_compile_definitions(SpireTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(SpireTester Async KeyBindings LegacyUI Styles Library
-  Resources
+target_link_libraries(SpireTester SpireTesterLibrary Async KeyBindings LegacyUI
+  Styles Library Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -23,6 +29,8 @@ target_link_libraries(SpireTester Async KeyBindings LegacyUI Styles Library
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(SpireTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
