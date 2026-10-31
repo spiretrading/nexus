@@ -269,7 +269,7 @@ void AnyTagComboBox::push_combo_box() {
     submit();
   } else {
     auto drop_down_window = find_drop_down_window();
-    if(drop_down_window && !drop_down_window->isVisible()) {
+    if(!drop_down_window || !drop_down_window->isVisible()) {
       m_tag_box->get_current()->set("");
     }
   }
