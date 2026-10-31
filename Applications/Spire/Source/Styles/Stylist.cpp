@@ -102,8 +102,8 @@ struct Stylist::StyleEventFilter : QObject {
 
 Stylist::~Stylist() {
   unmatch_all();
-  if(m_auxiliary_signals) {
-    m_auxiliary_signals->m_delete_signal();
+  if(m_auxiliary_signals && m_auxiliary_signals->m_delete_signal) {
+    (*m_auxiliary_signals->m_delete_signal)();
   }
   if(m_animations) {
     get_animation_timer().disconnect(m_animations->m_animation_connection);
@@ -279,11 +279,12 @@ void Stylist::link(Stylist& target) {
     target.m_backlinks = std::make_unique<std::vector<Stylist*>>();
   }
   target.m_backlinks->push_back(this);
-  if(m_auxiliary_signals) {
-    m_auxiliary_signals->m_link_signal(target);
+  if(m_auxiliary_signals && m_auxiliary_signals->m_link_signal) {
+    (*m_auxiliary_signals->m_link_signal)(target);
   }
-  if(target.m_auxiliary_signals) {
-    target.m_auxiliary_signals->m_backlink_signal(*this);
+  if(target.m_auxiliary_signals &&
+      target.m_auxiliary_signals->m_backlink_signal) {
+    (*target.m_auxiliary_signals->m_backlink_signal)(*this);
   }
 }
 
@@ -307,24 +308,14 @@ const std::unordered_set<Selector>& Stylist::get_matches() const {
 }
 
 void Stylist::match(const Selector& selector) {
-  if(m_matches.insert(selector).second) {
-    if(m_match_signals) {
-      auto signal = m_match_signals->find(selector);
-      if(signal != m_match_signals->end()) {
-        signal->second(true);
-      }
-    }
+  if(m_matches.insert(selector).second && m_match_signal) {
+    (*m_match_signal)(selector, true);
   }
 }
 
 void Stylist::unmatch(const Selector& selector) {
-  if(m_match_signals) {
-    auto signal = m_match_signals->find(selector);
-    if(m_matches.erase(selector) > 0 && signal != m_match_signals->end()) {
-      signal->second(false);
-    }
-  } else {
-    m_matches.erase(selector);
+  if(m_matches.erase(selector) > 0 && m_match_signal) {
+    (*m_match_signal)(selector, false);
   }
 }
 
@@ -336,30 +327,51 @@ void Stylist::unmatch_all() {
 
 connection Stylist::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
-  return m_style_signal.connect(slot);
+  if(!m_style_signal) {
+    m_style_signal.emplace();
+  }
+  return m_style_signal->connect(slot);
 }
 
 connection Stylist::connect_link_signal(
     const LinkSignal::slot_type& slot) const {
-  return get_auxiliary_signals().m_link_signal.connect(slot);
+  auto& signals = get_auxiliary_signals();
+  if(!signals.m_link_signal) {
+    signals.m_link_signal.emplace();
+  }
+  return signals.m_link_signal->connect(slot);
 }
 
 connection Stylist::connect_backlink_signal(
     const BacklinkSignal::slot_type& slot) const {
-  return get_auxiliary_signals().m_backlink_signal.connect(slot);
+  auto& signals = get_auxiliary_signals();
+  if(!signals.m_backlink_signal) {
+    signals.m_backlink_signal.emplace();
+  }
+  return signals.m_backlink_signal->connect(slot);
 }
 
 connection Stylist::connect_match_signal(
     const Selector& selector, const MatchSignal::slot_type& slot) const {
-  if(!m_match_signals) {
-    m_match_signals = std::make_unique<MatchSignalMap>();
+  if(!m_match_signal) {
+    m_match_signal = std::make_unique<SelectorMatchSignal>();
   }
-  return (*m_match_signals)[selector].connect(slot);
+  return m_match_signal->connect(SelectorMatchSignal::slot_type(
+    [selector, function = slot.slot_function()] (
+        const Selector& match, bool is_match) {
+      if(match == selector) {
+        function(is_match);
+      }
+    }).track(slot));
 }
 
 connection Stylist::connect_delete_signal(
     const DeleteSignal::slot_type& slot) const {
-  return get_auxiliary_signals().m_delete_signal.connect(slot);
+  auto& signals = get_auxiliary_signals();
+  if(!signals.m_delete_signal) {
+    signals.m_delete_signal.emplace();
+  }
+  return signals.m_delete_signal->connect(slot);
 }
 
 Stylist::AuxiliarySignals& Stylist::get_auxiliary_signals() const {
@@ -583,7 +595,9 @@ void Stylist::apply() {
       m_animations.reset();
     }
   }
-  m_style_signal();
+  if(m_style_signal) {
+    (*m_style_signal)();
+  }
   if(m_pseudo_element) {
     return;
   }

@@ -211,11 +211,12 @@ namespace Spire::Styles {
         void animate() override;
       };
       struct AuxiliarySignals {
-        LinkSignal m_link_signal;
-        BacklinkSignal m_backlink_signal;
-        DeleteSignal m_delete_signal;
+        boost::optional<LinkSignal> m_link_signal;
+        boost::optional<BacklinkSignal> m_backlink_signal;
+        boost::optional<DeleteSignal> m_delete_signal;
       };
-      using MatchSignalMap = std::unordered_map<Selector, MatchSignal>;
+      using SelectorMatchSignal =
+        Signal<void (const Selector& selector, bool is_match)>;
       using EvaluatorMap = std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>>;
       struct Animations {
@@ -237,7 +238,7 @@ namespace Spire::Styles {
         RevertExpression<T> expression, const Stylist& stylist);
       AuxiliarySignals& get_auxiliary_signals() const;
       Animations& get_animations();
-      mutable StyleSignal m_style_signal;
+      mutable boost::optional<StyleSignal> m_style_signal;
       mutable std::unique_ptr<AuxiliarySignals> m_auxiliary_signals;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
@@ -249,7 +250,7 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
       std::unordered_set<Selector> m_matches;
-      mutable std::unique_ptr<MatchSignalMap> m_match_signals;
+      mutable std::unique_ptr<SelectorMatchSignal> m_match_signal;
       std::unique_ptr<std::vector<Stylist*>> m_links;
       std::unique_ptr<std::vector<Stylist*>> m_backlinks;
       std::unique_ptr<Animations> m_animations;
