@@ -82,6 +82,7 @@ namespace Spire {
       QWidget* m_drop_down_window;
       bool m_is_modified;
       boost::signals2::scoped_connection m_list_connection;
+      boost::signals2::scoped_connection m_submit_connection;
 
       void install_text_proxy_event_filter();
       void push_combo_box();
