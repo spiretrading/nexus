@@ -314,8 +314,9 @@ void Stylist::match(const Selector& selector) {
 }
 
 void Stylist::unmatch(const Selector& selector) {
-  if(m_matches.erase(selector) > 0 && m_match_signal) {
-    (*m_match_signal)(selector, false);
+  auto match = m_matches.extract(selector);
+  if(match && m_match_signal) {
+    (*m_match_signal)(match.value(), false);
   }
 }
 
