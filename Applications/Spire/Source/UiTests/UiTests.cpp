@@ -37,3 +37,15 @@ void Spire::Tests::release_key(QWidget& widget, Qt::Key key,
     QKeyEvent(QEvent::KeyRelease, key, modifiers, QString(), is_auto_repeat);
   QApplication::sendEvent(&widget, &event);
 }
+
+void Spire::Tests::type_text(QWidget& widget, const QString& text) {
+  for(auto character : text) {
+    auto key = static_cast<Qt::Key>(character.toUpper().unicode());
+    auto press =
+      QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, QString(character));
+    QApplication::sendEvent(&widget, &press);
+    auto release =
+      QKeyEvent(QEvent::KeyRelease, key, Qt::NoModifier, QString(character));
+    QApplication::sendEvent(&widget, &release);
+  }
+}

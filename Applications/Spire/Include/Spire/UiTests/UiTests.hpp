@@ -3,6 +3,7 @@
 #include <utility>
 #include <QApplication>
 #include <QPoint>
+#include <QString>
 
 class QWidget;
 
@@ -65,6 +66,13 @@ namespace Spire::Tests {
   void release_key(QWidget& widget, Qt::Key key,
     Qt::KeyboardModifiers modifiers = Qt::NoModifier,
     bool is_auto_repeat = false);
+
+  /**
+   * Sends the key presses and releases that type text into a widget.
+   * @param widget The widget to type into.
+   * @param text The text to type.
+   */
+  void type_text(QWidget& widget, const QString& text);
 }
 
 #endif
