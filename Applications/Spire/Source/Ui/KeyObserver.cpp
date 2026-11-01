@@ -1,20 +1,29 @@
 #include "Spire/Ui/KeyObserver.hpp"
-#include "Spire/Spire/ExtensionCache.hpp"
+#include <algorithm>
+#include <vector>
+#include <QPointer>
 #include <QWidget>
+#include "Spire/Spire/ExtensionCache.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
 struct KeyObserver::EventFilter : QObject {
-  struct Child {
-    std::shared_ptr<EventFilter> m_filter;
-    scoped_connection m_connection;
+  struct Slot {
+    KeyObserver* m_observer;
+    EventFilter* m_parent;
   };
-  mutable FilteredKeyPressSignal m_key_press_signal;
-  std::unordered_map<QObject*, Child> m_children;
+  struct Child {
+    QObject* m_child;
+    std::shared_ptr<EventFilter> m_filter;
+  };
+  std::vector<Slot> m_slots;
+  std::vector<Child> m_children;
+  int m_depth;
 
-  EventFilter(QWidget& widget) {
+  EventFilter(QWidget& widget)
+      : m_depth(0) {
     widget.installEventFilter(this);
     for(auto child : widget.children()) {
       if(child && child->isWidgetType()) {
@@ -23,40 +32,99 @@ struct KeyObserver::EventFilter : QObject {
     }
   }
 
+  ~EventFilter() {
+    for(auto& child : m_children) {
+      child.m_filter->remove_slot(nullptr, this);
+    }
+  }
+
+  void add_slot(KeyObserver* observer, EventFilter* parent) {
+    m_slots.push_back(Slot(observer, parent));
+  }
+
+  void remove_slot(KeyObserver* observer, EventFilter* parent) {
+    auto i = std::ranges::find_if(m_slots, [&] (const auto& slot) {
+      return slot.m_observer == observer && slot.m_parent == parent;
+    });
+    if(i == m_slots.end()) {
+      return;
+    }
+    if(m_depth == 0) {
+      m_slots.erase(i);
+    } else {
+      *i = Slot(nullptr, nullptr);
+    }
+  }
+
+  optional<bool> invoke(QWidget& target, QKeyEvent& event) {
+    auto self = QPointer(this);
+    auto result = optional<bool>();
+    auto size = m_slots.size();
+    ++m_depth;
+    for(auto i = std::size_t(0); i != size; ++i) {
+      auto slot = m_slots[i];
+      if(slot.m_observer) {
+        result =
+          slot.m_observer->m_key_press_signal(target, event).value_or(false);
+      } else if(slot.m_parent) {
+        result = slot.m_parent->invoke(target, event).value_or(false);
+      }
+      if(!self) {
+        return result;
+      }
+    }
+    --m_depth;
+    if(m_depth == 0) {
+      std::erase_if(m_slots, [] (const auto& slot) {
+        return !slot.m_observer && !slot.m_parent;
+      });
+    }
+    return result;
+  }
+
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::KeyPress) {
-      auto filter = m_key_press_signal(*static_cast<QWidget*>(watched),
+      return invoke(*static_cast<QWidget*>(watched),
         *static_cast<QKeyEvent*>(event)).value_or(false);
-      return filter;
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
       if(child.isWidgetType()) {
         add(static_cast<QWidget&>(child));
       }
     } else if(event->type() == QEvent::ChildRemoved) {
-      auto& child_event = static_cast<QChildEvent&>(*event);
-      m_children.erase(child_event.child());
+      remove(*static_cast<QChildEvent&>(*event).child());
     }
     return QObject::eventFilter(watched, event);
   }
 
   void add(QWidget& child) {
+    if(std::ranges::find(m_children, &child, &Child::m_child) !=
+        m_children.end()) {
+      return;
+    }
     auto filter = find_extension<EventFilter>(child);
-    auto connection = filter->m_key_press_signal.connect(
-      [=] (auto& target, auto& event) {
-        return m_key_press_signal(target, event).value_or(false);
-      });
-    auto child_entry = Child(std::move(filter), std::move(connection));
-    m_children.insert(std::pair(&child, std::move(child_entry)));
+    filter->add_slot(nullptr, this);
+    m_children.push_back(Child(&child, std::move(filter)));
+  }
+
+  void remove(QObject& child) {
+    auto i = std::ranges::find(m_children, &child, &Child::m_child);
+    if(i == m_children.end()) {
+      return;
+    }
+    auto filter = std::move(i->m_filter);
+    m_children.erase(i);
+    filter->remove_slot(nullptr, this);
   }
 };
 
-KeyObserver::KeyObserver(QWidget& widget) {
-  m_filter = find_extension<EventFilter>(widget);
-  m_filter_connection = m_filter->m_key_press_signal.connect(
-    [=] (auto& target, auto& event) {
-      return m_key_press_signal(target, event).value_or(false);
-    });
+KeyObserver::KeyObserver(QWidget& widget)
+    : m_filter(find_extension<EventFilter>(widget)) {
+  m_filter->add_slot(this, nullptr);
+}
+
+KeyObserver::~KeyObserver() {
+  m_filter->remove_slot(this, nullptr);
 }
 
 connection KeyObserver::connect_filtered_key_press_signal(

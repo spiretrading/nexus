@@ -1,4 +1,5 @@
 #include <deque>
+#include <memory>
 #include <utility>
 #include <doctest/doctest.h>
 #include <QMouseEvent>
@@ -106,5 +107,37 @@ TEST_SUITE("MouseObserver") {
     child->setParent(&window);
     press_mouse(*child, Qt::LeftButton);
     REQUIRE(targets.empty());
+  }
+
+  UI_TEST_CASE("observers_changed_during_mouse_event") {
+    auto window = QWidget();
+    auto parent = new QWidget(&window);
+    auto first_observer = MouseObserver(*parent);
+    auto second_observer = std::make_unique<MouseObserver>(*parent);
+    auto third_observer = std::unique_ptr<MouseObserver>();
+    auto calls = std::deque<int>();
+    first_observer.connect_mouse_signal([&] (auto&, auto&) {
+      calls.push_back(1);
+      second_observer = nullptr;
+      if(!third_observer) {
+        third_observer = std::make_unique<MouseObserver>(*parent);
+        third_observer->connect_mouse_signal([&] (auto&, auto&) {
+          calls.push_back(3);
+        });
+      }
+    });
+    second_observer->connect_mouse_signal([&] (auto&, auto&) {
+      calls.push_back(2);
+    });
+    press_mouse(*parent, Qt::LeftButton);
+    REQUIRE(calls.size() == 1);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    press_mouse(*parent, Qt::LeftButton);
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
   }
 }

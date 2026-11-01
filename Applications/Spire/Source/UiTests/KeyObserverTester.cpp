@@ -1,4 +1,5 @@
 #include <deque>
+#include <memory>
 #include <doctest/doctest.h>
 #include <QKeyEvent>
 #include <QWidget>
@@ -107,5 +108,37 @@ TEST_SUITE("KeyObserver") {
     child->setParent(&window);
     press_key(*child, Qt::Key_A);
     REQUIRE(targets.empty());
+  }
+
+  UI_TEST_CASE("observers_changed_during_key_press") {
+    auto window = QWidget();
+    auto parent = new QWidget(&window);
+    auto first_observer = KeyObserver(*parent);
+    auto second_observer = std::make_unique<KeyObserver>(*parent);
+    auto third_observer = std::unique_ptr<KeyObserver>();
+    auto calls = std::deque<int>();
+    first_observer.connect_key_press_signal([&] (auto&, auto&) {
+      calls.push_back(1);
+      second_observer = nullptr;
+      if(!third_observer) {
+        third_observer = std::make_unique<KeyObserver>(*parent);
+        third_observer->connect_key_press_signal([&] (auto&, auto&) {
+          calls.push_back(3);
+        });
+      }
+    });
+    second_observer->connect_key_press_signal([&] (auto&, auto&) {
+      calls.push_back(2);
+    });
+    press_key(*parent, Qt::Key_A);
+    REQUIRE(calls.size() == 1);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    press_key(*parent, Qt::Key_A);
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
   }
 }
