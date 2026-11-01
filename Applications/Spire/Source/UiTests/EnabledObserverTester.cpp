@@ -1,4 +1,5 @@
 #include <deque>
+#include <memory>
 #include <utility>
 #include <doctest/doctest.h>
 #include <QWidget>
@@ -118,5 +119,36 @@ TEST_SUITE("EnabledObserver") {
     updates.pop_front();
     REQUIRE(updates.front() == std::pair(parent, true));
     updates.pop_front();
+  }
+
+  UI_TEST_CASE("observers_changed_during_enabled_change") {
+    auto window = QWidget();
+    auto first_observer = EnabledObserver(window);
+    auto second_observer = std::make_unique<EnabledObserver>(window);
+    auto third_observer = std::unique_ptr<EnabledObserver>();
+    auto calls = std::deque<int>();
+    first_observer.connect_enabled_signal([&] (auto) {
+      calls.push_back(1);
+      second_observer = nullptr;
+      if(!third_observer) {
+        third_observer = std::make_unique<EnabledObserver>(window);
+        third_observer->connect_enabled_signal([&] (auto) {
+          calls.push_back(3);
+        });
+      }
+    });
+    second_observer->connect_enabled_signal([&] (auto) {
+      calls.push_back(2);
+    });
+    window.setEnabled(false);
+    REQUIRE(calls.size() == 1);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    window.setEnabled(true);
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
   }
 }

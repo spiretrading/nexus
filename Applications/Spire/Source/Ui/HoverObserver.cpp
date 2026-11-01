@@ -1,4 +1,5 @@
 #include "Spire/Ui/HoverObserver.hpp"
+#include <algorithm>
 #include <unordered_map>
 #include <vector>
 #include <QApplication>
@@ -37,7 +38,8 @@ struct HoverObserver::EventFilter : QObject {
     Descendant(const QObject* parent)
       : m_parent(parent) {}
   };
-  mutable StateSignal m_state_signal;
+  std::vector<HoverObserver*> m_observers;
+  int m_depth;
   bool m_block_signal;
   QPointer<QWidget> m_widget;
   State m_state;
@@ -46,8 +48,9 @@ struct HoverObserver::EventFilter : QObject {
   QTimer m_hover_timer;
 
   EventFilter(QWidget& widget)
-      : m_widget(&widget),
+      : m_depth(0),
         m_block_signal(false),
+        m_widget(&widget),
         m_state(State::NONE),
         m_hover_timer(this) {
     widget.connect(
@@ -107,7 +110,41 @@ struct HoverObserver::EventFilter : QObject {
       m_hover_timer.start();
     }
     if(!m_block_signal) {
-      m_state_signal(state);
+      signal_state(state);
+    }
+  }
+
+  void add(HoverObserver& observer) {
+    m_observers.push_back(&observer);
+  }
+
+  void remove(HoverObserver& observer) {
+    auto i = std::ranges::find(m_observers, &observer);
+    if(i == m_observers.end()) {
+      return;
+    }
+    if(m_depth == 0) {
+      m_observers.erase(i);
+    } else {
+      *i = nullptr;
+    }
+  }
+
+  void signal_state(State state) {
+    auto self = QPointer(this);
+    auto size = m_observers.size();
+    ++m_depth;
+    for(auto i = std::size_t(0); i != size; ++i) {
+      if(auto observer = m_observers[i]) {
+        observer->m_state_signal(state);
+      }
+      if(!self) {
+        return;
+      }
+    }
+    --m_depth;
+    if(m_depth == 0) {
+      std::erase(m_observers, nullptr);
     }
   }
 
@@ -242,9 +279,13 @@ struct HoverObserver::EventFilter : QObject {
   }
 };
 
-HoverObserver::HoverObserver(QWidget& widget) {
-  m_filter = find_extension<EventFilter>(widget);
-  m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
+HoverObserver::HoverObserver(QWidget& widget)
+    : m_filter(find_extension<EventFilter>(widget)) {
+  m_filter->add(*this);
+}
+
+HoverObserver::~HoverObserver() {
+  m_filter->remove(*this);
 }
 
 HoverObserver::State HoverObserver::get_state() const {

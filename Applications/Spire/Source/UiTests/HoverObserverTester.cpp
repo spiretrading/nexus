@@ -142,4 +142,36 @@ TEST_SUITE("HoverObserver") {
     QApplication::processEvents();
     REQUIRE(observer.get_state() == State::NONE);
   }
+
+  UI_TEST_CASE("observers_changed_during_hover") {
+    auto tree = make_tree();
+    move_cursor(*tree.m_window, QPoint(150, 150));
+    auto first_observer = HoverObserver(*tree.m_parent);
+    auto second_observer = std::make_unique<HoverObserver>(*tree.m_parent);
+    auto third_observer = std::unique_ptr<HoverObserver>();
+    auto calls = std::deque<int>();
+    first_observer.connect_state_signal([&] (auto) {
+      calls.push_back(1);
+      second_observer = nullptr;
+      if(!third_observer) {
+        third_observer = std::make_unique<HoverObserver>(*tree.m_parent);
+        third_observer->connect_state_signal([&] (auto) {
+          calls.push_back(3);
+        });
+      }
+    });
+    second_observer->connect_state_signal([&] (auto) {
+      calls.push_back(2);
+    });
+    move_cursor(*tree.m_parent, QPoint(5, 5));
+    REQUIRE(calls.size() == 1);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    move_cursor(*tree.m_window, QPoint(150, 150));
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
+  }
 }
