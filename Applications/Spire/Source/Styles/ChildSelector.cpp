@@ -1,13 +1,11 @@
 #include "Spire/Styles/ChildSelector.hpp"
 #include <algorithm>
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
-using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -26,15 +24,17 @@ namespace {
     struct ChildEntry {
       const QObject* m_child;
       const Stylist* m_stylist;
+      scoped_connection m_delete_connection;
 
-      ChildEntry(const QObject& child, const Stylist& stylist)
+      ChildEntry(const QObject& child, const Stylist& stylist,
+        connection delete_connection)
         : m_child(&child),
-          m_stylist(&stylist) {}
+          m_stylist(&stylist),
+          m_delete_connection(std::move(delete_connection)) {}
     };
     SelectionUpdateSignal m_on_update;
     std::vector<ChildEntry> m_children_stylists;
     scoped_connection m_link_connection;
-    ConnectionGroup m_delete_connections;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -93,10 +93,9 @@ namespace {
       if(i != m_children_stylists.end()) {
         return false;
       }
-      auto connection = stylist.connect_delete_signal(
-        std::bind_front(&ChildObserver::remove, this, std::ref(child)));
-      m_delete_connections.add(&child, connection);
-      m_children_stylists.emplace_back(child, stylist);
+      m_children_stylists.emplace_back(child, stylist,
+        stylist.connect_delete_signal(
+          std::bind_front(&ChildObserver::remove, this, std::ref(child))));
       return true;
     }
 
@@ -106,7 +105,6 @@ namespace {
       if(i == m_children_stylists.end()) {
         return;
       }
-      m_delete_connections.disconnect(&child);
       auto stylist = i->m_stylist;
       m_children_stylists.erase(i);
       m_on_update({}, {stylist});
