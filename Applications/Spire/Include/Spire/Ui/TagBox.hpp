@@ -100,6 +100,7 @@ namespace Spire {
       GlobalPositionObserver m_input_box_position_observer;
       boost::optional<Styles::Overflow> m_list_view_overflow;
       QString m_placeholder;
+      QString m_tip;
       bool m_is_read_only;
       QMargins m_input_box_border;
       QMargins m_input_box_padding;
@@ -123,6 +124,8 @@ namespace Spire {
       void update_placeholder();
       void update_scroll_bar_end_range(ScrollBar& scroll_bar, int& end_range);
       void update_tags_read_only();
+      bool is_tip_visible();
+      void initialize_info_tip();
       void update_tip();
       void update_tooltip();
       void update_overflow();
