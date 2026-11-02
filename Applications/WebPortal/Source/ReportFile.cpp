@@ -73,7 +73,7 @@ namespace {
       }
     }
     return sanitize(expand_report_template(job.m_definition, parameters,
-      job.m_definition.m_output.m_filename));
+      job.m_definition.m_output.m_filename, job.m_account));
   }
 }
 

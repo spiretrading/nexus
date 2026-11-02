@@ -5,6 +5,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <boost/process/environment.hpp>
 #include <boost/scope/scope_exit.hpp>
 #include <doctest/doctest.h>
 #include "WebPortal/FileReportService.hpp"
@@ -15,6 +16,51 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 TEST_SUITE("ReportFile") {
+  TEST_CASE("command_paths") {
+    auto directory = std::filesystem::temp_directory_path() /
+      boost::uuids::to_string(boost::uuids::random_generator()());
+    auto cleanup = boost::scope::scope_exit([&] {
+      std::filesystem::remove_all(directory);
+    });
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto service = FileReportService(directory / "definitions", directory,
+      client, TimeClient(std::in_place_type<LocalTimeClient>), 1,
+      Timer(std::in_place_type<TriggerTimer>),
+      Timer(std::in_place_type<TriggerTimer>));
+#ifdef _WIN32
+    auto command = std::string("cmd.exe");
+    auto arguments =
+      std::vector<std::string>({"/d", "/c", "echo report-command"});
+#else
+    auto command = std::string("sh");
+    auto arguments =
+      std::vector<std::string>({"-c", "printf 'report-command\\n'"});
+#endif
+    auto executable = std::filesystem::path(
+      boost::process::environment::find_executable(command).native());
+    REQUIRE(!executable.empty());
+    auto relative = std::filesystem::relative(
+      executable, std::filesystem::current_path());
+    REQUIRE(!relative.is_absolute());
+    for(auto& path : {command, relative.string()}) {
+      auto definition = ReportDefinition("example", "Example", {}, {}, {},
+        path, {}, ReportOutputDefinition("text/plain", "txt"));
+      auto job = ReportJob({}, client.get_account(), {}, definition, {},
+        arguments, time_from_string("2026-11-02 12:00:00"));
+      job.m_id = boost::uuids::to_string(boost::uuids::random_generator()());
+      service.store(job);
+      REQUIRE(service.execute(job, std::stop_token()) == 0);
+      auto output = std::ifstream(directory / job.m_id / "output.txt");
+      auto line = std::string();
+      std::getline(output, line);
+      REQUIRE(line == "report-command");
+      job.m_definition.m_command = "nonexistent-report-" + job.m_id;
+      REQUIRE_THROWS_AS(service.execute(job, std::stop_token()),
+        std::runtime_error);
+    }
+  }
+
   TEST_CASE("filename_recovery") {
     auto directory = std::filesystem::temp_directory_path() /
       boost::uuids::to_string(boost::uuids::random_generator()());

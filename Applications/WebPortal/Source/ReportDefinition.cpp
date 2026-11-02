@@ -109,6 +109,9 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
   for(auto entry : parameters) {
     auto parameter = ReportParameterDefinition();
     parameter.m_name = parse_name(entry, "name");
+    if(parameter.m_name == "submitter") {
+      throw std::runtime_error("Reserved report parameter name: submitter");
+    }
     if(!names.insert(parameter.m_name).second) {
       throw std::runtime_error(
         "Duplicate report parameter: " + parameter.m_name);
