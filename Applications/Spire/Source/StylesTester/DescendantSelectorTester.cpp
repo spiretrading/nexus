@@ -107,4 +107,21 @@ TEST_SUITE("DescendantSelector") {
       delete token;
     }
   }
+
+  UI_TEST_CASE("deleted_descendant") {
+    auto root = QWidget();
+    auto connection = select(DescendantSelector(Any(), Any()),
+      find_stylist(root), [] (auto&&, auto&&) {});
+    for(auto i = 0; i != 100; ++i) {
+      auto child = new QWidget(&root);
+      delete child;
+      auto widget = new QWidget();
+      auto is_deleted = false;
+      find_stylist(*widget).connect_delete_signal([&] {
+        is_deleted = true;
+      });
+      delete widget;
+      REQUIRE(is_deleted);
+    }
+  }
 }
