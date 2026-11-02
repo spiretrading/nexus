@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <flat_set>
+#include <functional>
 #include <memory>
 #include <type_traits>
 #include <unordered_set>
@@ -61,6 +62,30 @@ namespace Spire::Styles {
 
       /** Signals that this Stylist is being deleted. */
       using DeleteSignal = Signal<void ()>;
+
+      /**
+       * The type of function called when a link is added to another stylist.
+       * @param stylist The stylist being linked to.
+       */
+      using LinkListener = std::function<void (const Stylist& stylist)>;
+
+      /**
+       * The type of function called when a backlink is added to another
+       * stylist.
+       * @param stylist The stylist being backlinked to.
+       */
+      using BacklinkListener = std::function<void (const Stylist& stylist)>;
+
+      /**
+       * The type of function called when a Selector is matched or unmatched.
+       * @param is_match <code>true</code> iff the Selector matches.
+       */
+      using MatchListener = std::function<void (bool is_match)>;
+
+      /** The type of function called when this Stylist is being deleted. */
+      using DeleteListener = std::function<void ()>;
+
+      class ListenerConnection;
 
       ~Stylist();
 
@@ -179,8 +204,23 @@ namespace Spire::Styles {
       boost::signals2::connection connect_delete_signal(
         const DeleteSignal::slot_type& slot) const;
 
+      /** Adds a listener called when a link is added from this Stylist. */
+      ListenerConnection add_link_listener(LinkListener listener) const;
+
+      /** Adds a listener called when a backlink is added to this Stylist. */
+      ListenerConnection add_backlink_listener(
+        BacklinkListener listener) const;
+
+      /** Adds a listener called when a Selector is matched or unmatched. */
+      ListenerConnection add_match_listener(
+        const Selector& selector, MatchListener listener) const;
+
+      /** Adds a listener called when this Stylist is being deleted. */
+      ListenerConnection add_delete_listener(DeleteListener listener) const;
+
     private:
       struct StyleEventFilter;
+      struct Listeners;
       struct RuleEntry {
         std::shared_ptr<const Block> m_block;
         std::uint64_t m_priority;
@@ -237,9 +277,11 @@ namespace Spire::Styles {
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
       AuxiliarySignals& get_auxiliary_signals() const;
+      Listeners& get_listeners() const;
       Animations& get_animations();
       mutable boost::optional<StyleSignal> m_style_signal;
       mutable std::unique_ptr<AuxiliarySignals> m_auxiliary_signals;
+      mutable std::shared_ptr<Listeners> m_listeners;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       std::shared_ptr<StyleSheet> m_style;
@@ -283,6 +325,37 @@ namespace Spire::Styles {
       void on_selection_update(RuleEntry& rule,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals);
+  };
+
+  /** Stores a scoped connection to a listener of a Stylist. */
+  class Stylist::ListenerConnection {
+    public:
+
+      /** Constructs a disconnected ListenerConnection. */
+      ListenerConnection() noexcept;
+
+      ListenerConnection(const ListenerConnection&) = delete;
+      ListenerConnection(ListenerConnection&& connection) noexcept;
+
+      ~ListenerConnection();
+
+      /** Returns <code>true</code> iff the listener is connected. */
+      bool is_connected() const;
+
+      /** Disconnects the listener. */
+      void disconnect();
+
+      ListenerConnection& operator =(const ListenerConnection&) = delete;
+      ListenerConnection& operator =(
+        ListenerConnection&& connection) noexcept;
+
+    private:
+      friend class Stylist;
+      std::weak_ptr<Listeners> m_listeners;
+      std::uint64_t m_id;
+
+      ListenerConnection(
+        std::weak_ptr<Listeners> listeners, std::uint64_t id) noexcept;
   };
 
   /** Returns the Stylist associated with a widget. */

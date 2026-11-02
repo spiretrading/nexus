@@ -50,6 +50,20 @@ TEST_SUITE("ParentSelector") {
     require_selection(updates, graph, {"B"}, {});
   }
 
+  UI_TEST_CASE("backlink") {
+    auto child = QWidget();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(ParentSelector(Any(), Foo()),
+      find_stylist(child), [&] (auto&& additions, auto&& removals) {
+        updates.push_back({std::move(additions), std::move(removals)});
+      });
+    REQUIRE(updates.empty());
+    auto root = QWidget();
+    match(root, Foo());
+    link(root, child);
+    require_selection(updates, {&root}, {});
+  }
+
   UI_TEST_CASE("parent_chain") {
     auto child = QWidget();
     auto updates = std::deque<SelectionUpdate>();

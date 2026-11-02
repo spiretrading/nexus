@@ -100,10 +100,100 @@ struct Stylist::StyleEventFilter : QObject {
   }
 };
 
+struct Stylist::Listeners {
+  template<typename F>
+  struct Entry {
+    std::uint64_t m_id;
+    F m_listener;
+  };
+  struct MatchEntry {
+    std::uint64_t m_id;
+    Selector m_selector;
+    MatchListener m_listener;
+  };
+  template<typename E>
+  struct List {
+    std::vector<E> m_entries;
+    int m_depth;
+
+    List()
+      : m_depth(0) {}
+  };
+  std::uint64_t m_next_id;
+  List<Entry<LinkListener>> m_link_listeners;
+  List<Entry<BacklinkListener>> m_backlink_listeners;
+  List<MatchEntry> m_match_listeners;
+  List<Entry<DeleteListener>> m_delete_listeners;
+
+  Listeners()
+    : m_next_id(1) {}
+
+  template<typename E, typename... Args>
+  std::uint64_t add(List<E>& list, Args&&... args) {
+    auto id = m_next_id;
+    ++m_next_id;
+    list.m_entries.emplace_back(id, std::forward<Args>(args)...);
+    return id;
+  }
+
+  template<typename E>
+  bool remove(List<E>& list, std::uint64_t id) {
+    auto i = std::ranges::find(list.m_entries, id, &E::m_id);
+    if(i == list.m_entries.end()) {
+      return false;
+    }
+    if(list.m_depth == 0) {
+      list.m_entries.erase(i);
+    } else {
+      i->m_id = 0;
+    }
+    return true;
+  }
+
+  void remove(std::uint64_t id) {
+    if(!remove(m_link_listeners, id) && !remove(m_backlink_listeners, id) &&
+        !remove(m_match_listeners, id)) {
+      remove(m_delete_listeners, id);
+    }
+  }
+
+  template<typename E, typename F>
+  void invoke(List<E>& list, const F& f) {
+    auto size = list.m_entries.size();
+    ++list.m_depth;
+    for(auto i = std::size_t(0); i != size; ++i) {
+      if(list.m_entries[i].m_id != 0) {
+        auto entry = list.m_entries[i];
+        f(entry);
+      }
+    }
+    --list.m_depth;
+    if(list.m_depth == 0) {
+      std::erase_if(list.m_entries, [] (const auto& entry) {
+        return entry.m_id == 0;
+      });
+    }
+  }
+
+  void invoke_match(const Selector& selector, bool is_match) {
+    invoke(m_match_listeners, [&] (const auto& entry) {
+      if(entry.m_selector == selector) {
+        entry.m_listener(is_match);
+      }
+    });
+  }
+};
+
 Stylist::~Stylist() {
   unmatch_all();
   if(m_auxiliary_signals && m_auxiliary_signals->m_delete_signal) {
     (*m_auxiliary_signals->m_delete_signal)();
+  }
+  if(m_listeners) {
+    m_listeners->invoke(m_listeners->m_delete_listeners,
+      [] (const auto& entry) {
+        entry.m_listener();
+      });
   }
   if(m_animations) {
     get_animation_timer().disconnect(m_animations->m_animation_connection);
@@ -282,9 +372,22 @@ void Stylist::link(Stylist& target) {
   if(m_auxiliary_signals && m_auxiliary_signals->m_link_signal) {
     (*m_auxiliary_signals->m_link_signal)(target);
   }
+  if(m_listeners) {
+    auto listeners = m_listeners;
+    listeners->invoke(listeners->m_link_listeners, [&] (const auto& entry) {
+      entry.m_listener(target);
+    });
+  }
   if(target.m_auxiliary_signals &&
       target.m_auxiliary_signals->m_backlink_signal) {
     (*target.m_auxiliary_signals->m_backlink_signal)(*this);
+  }
+  if(target.m_listeners) {
+    auto listeners = target.m_listeners;
+    listeners->invoke(listeners->m_backlink_listeners,
+      [&] (const auto& entry) {
+        entry.m_listener(*this);
+      });
   }
 }
 
@@ -308,15 +411,29 @@ const std::unordered_set<Selector>& Stylist::get_matches() const {
 }
 
 void Stylist::match(const Selector& selector) {
-  if(m_matches.insert(selector).second && m_match_signal) {
+  if(!m_matches.insert(selector).second) {
+    return;
+  }
+  if(m_match_signal) {
     (*m_match_signal)(selector, true);
+  }
+  if(m_listeners) {
+    auto listeners = m_listeners;
+    listeners->invoke_match(selector, true);
   }
 }
 
 void Stylist::unmatch(const Selector& selector) {
   auto match = m_matches.extract(selector);
-  if(match && m_match_signal) {
+  if(!match) {
+    return;
+  }
+  if(m_match_signal) {
     (*m_match_signal)(match.value(), false);
+  }
+  if(m_listeners) {
+    auto listeners = m_listeners;
+    listeners->invoke_match(match.value(), false);
   }
 }
 
@@ -375,11 +492,46 @@ connection Stylist::connect_delete_signal(
   return signals.m_delete_signal->connect(slot);
 }
 
+Stylist::ListenerConnection Stylist::add_link_listener(
+    LinkListener listener) const {
+  auto& listeners = get_listeners();
+  return ListenerConnection(m_listeners,
+    listeners.add(listeners.m_link_listeners, std::move(listener)));
+}
+
+Stylist::ListenerConnection Stylist::add_backlink_listener(
+    BacklinkListener listener) const {
+  auto& listeners = get_listeners();
+  return ListenerConnection(m_listeners,
+    listeners.add(listeners.m_backlink_listeners, std::move(listener)));
+}
+
+Stylist::ListenerConnection Stylist::add_match_listener(
+    const Selector& selector, MatchListener listener) const {
+  auto& listeners = get_listeners();
+  return ListenerConnection(m_listeners,
+    listeners.add(listeners.m_match_listeners, selector, std::move(listener)));
+}
+
+Stylist::ListenerConnection Stylist::add_delete_listener(
+    DeleteListener listener) const {
+  auto& listeners = get_listeners();
+  return ListenerConnection(m_listeners,
+    listeners.add(listeners.m_delete_listeners, std::move(listener)));
+}
+
 Stylist::AuxiliarySignals& Stylist::get_auxiliary_signals() const {
   if(!m_auxiliary_signals) {
     m_auxiliary_signals = std::make_unique<AuxiliarySignals>();
   }
   return *m_auxiliary_signals;
+}
+
+Stylist::Listeners& Stylist::get_listeners() const {
+  if(!m_listeners) {
+    m_listeners = std::make_shared<Listeners>();
+  }
+  return *m_listeners;
 }
 
 Stylist::Animations::Animations()
@@ -683,6 +835,42 @@ void Stylist::on_selection_update(
     stylist->apply_proxies();
   }
 }
+
+Stylist::ListenerConnection::ListenerConnection() noexcept
+  : m_id(0) {}
+
+Stylist::ListenerConnection::ListenerConnection(
+  ListenerConnection&& connection) noexcept
+  : m_listeners(std::move(connection.m_listeners)),
+    m_id(connection.m_id) {}
+
+Stylist::ListenerConnection::~ListenerConnection() {
+  disconnect();
+}
+
+bool Stylist::ListenerConnection::is_connected() const {
+  return !m_listeners.expired();
+}
+
+void Stylist::ListenerConnection::disconnect() {
+  if(auto listeners = m_listeners.lock()) {
+    listeners->remove(m_id);
+  }
+  m_listeners.reset();
+}
+
+Stylist::ListenerConnection& Stylist::ListenerConnection::operator =(
+    ListenerConnection&& connection) noexcept {
+  disconnect();
+  m_listeners = std::move(connection.m_listeners);
+  m_id = connection.m_id;
+  return *this;
+}
+
+Stylist::ListenerConnection::ListenerConnection(
+  std::weak_ptr<Listeners> listeners, std::uint64_t id) noexcept
+  : m_listeners(std::move(listeners)),
+    m_id(id) {}
 
 const Stylist& Spire::Styles::find_stylist(const QWidget& widget) {
   return find_stylist(const_cast<QWidget&>(widget));

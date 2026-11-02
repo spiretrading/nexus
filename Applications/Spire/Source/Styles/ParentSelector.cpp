@@ -8,7 +8,6 @@
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -33,7 +32,7 @@ namespace {
     const Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     std::vector<ParentEntry> m_parent_stylists;
-    scoped_connection m_backlink_connection;
+    Stylist::ListenerConnection m_backlink_connection;
 
     ParentObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -45,7 +44,7 @@ namespace {
           parents.insert(link);
         }
       }
-      m_backlink_connection = m_stylist->connect_backlink_signal(
+      m_backlink_connection = m_stylist->add_backlink_listener(
         std::bind_front(&ParentObserver::on_backlink, this));
       m_stylist->get_widget().installEventFilter(this);
       update_parent(std::move(parents), {});

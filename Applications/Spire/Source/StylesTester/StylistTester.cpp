@@ -246,4 +246,164 @@ TEST_SUITE("Stylist") {
     delete widget;
     REQUIRE(is_deleted);
   }
+
+  UI_TEST_CASE("link_listeners") {
+    auto root = QWidget();
+    auto target = QWidget();
+    auto other = QWidget();
+    auto links = std::deque<const Stylist*>();
+    auto link_connection =
+      find_stylist(root).add_link_listener([&] (const auto& stylist) {
+        links.push_back(&stylist);
+      });
+    auto backlinks = std::deque<const Stylist*>();
+    auto backlink_connection =
+      find_stylist(target).add_backlink_listener([&] (const auto& stylist) {
+        backlinks.push_back(&stylist);
+      });
+    link(root, target);
+    REQUIRE(links.size() == 1);
+    REQUIRE(links.front() == &find_stylist(target));
+    links.pop_front();
+    REQUIRE(backlinks.size() == 1);
+    REQUIRE(backlinks.front() == &find_stylist(root));
+    backlinks.pop_front();
+    link(other, target);
+    REQUIRE(links.empty());
+    REQUIRE(backlinks.size() == 1);
+    REQUIRE(backlinks.front() == &find_stylist(other));
+    backlinks.pop_front();
+    link_connection.disconnect();
+    REQUIRE(!link_connection.is_connected());
+    link(root, other);
+    REQUIRE(links.empty());
+    REQUIRE(backlinks.empty());
+  }
+
+  UI_TEST_CASE("listeners_changed_during_link") {
+    auto root = QWidget();
+    auto first = QWidget();
+    auto second = QWidget();
+    auto& stylist = find_stylist(root);
+    auto calls = std::deque<int>();
+    auto second_connection = Stylist::ListenerConnection();
+    auto third_connection = Stylist::ListenerConnection();
+    auto first_connection = stylist.add_link_listener([&] (const auto&) {
+      calls.push_back(1);
+      second_connection.disconnect();
+      if(!third_connection.is_connected()) {
+        third_connection = stylist.add_link_listener([&] (const auto&) {
+          calls.push_back(3);
+        });
+      }
+    });
+    second_connection = stylist.add_link_listener([&] (const auto&) {
+      calls.push_back(2);
+    });
+    link(root, first);
+    REQUIRE(calls.size() == 1);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    link(root, second);
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
+  }
+
+  UI_TEST_CASE("delete_listener") {
+    auto widget = new QWidget();
+    auto is_deleted = false;
+    auto connection = find_stylist(*widget).add_delete_listener([&] {
+      is_deleted = true;
+    });
+    auto link_connection =
+      find_stylist(*widget).add_link_listener([] (const auto&) {});
+    REQUIRE(connection.is_connected());
+    REQUIRE(!is_deleted);
+    delete widget;
+    REQUIRE(is_deleted);
+    REQUIRE(!connection.is_connected());
+    REQUIRE(!link_connection.is_connected());
+    link_connection.disconnect();
+  }
+
+  UI_TEST_CASE("match_listeners") {
+    auto widget = QWidget();
+    auto& stylist = find_stylist(widget);
+    auto foo_updates = std::deque<bool>();
+    auto foo_connection =
+      stylist.add_match_listener(Foo(), [&] (auto is_match) {
+        foo_updates.push_back(is_match);
+      });
+    auto bar_updates = std::deque<bool>();
+    auto bar_connection =
+      stylist.add_match_listener(Bar(), [&] (auto is_match) {
+        bar_updates.push_back(is_match);
+      });
+    match(widget, Foo());
+    REQUIRE(foo_updates.size() == 1);
+    REQUIRE(foo_updates.front());
+    foo_updates.pop_front();
+    REQUIRE(bar_updates.empty());
+    match(widget, Foo());
+    REQUIRE(foo_updates.empty());
+    match(widget, Bar());
+    REQUIRE(foo_updates.empty());
+    REQUIRE(bar_updates.size() == 1);
+    REQUIRE(bar_updates.front());
+    bar_updates.pop_front();
+    unmatch(widget, Foo());
+    REQUIRE(foo_updates.size() == 1);
+    REQUIRE(!foo_updates.front());
+    foo_updates.pop_front();
+    REQUIRE(bar_updates.empty());
+    unmatch(widget, Foo());
+    REQUIRE(foo_updates.empty());
+    foo_connection.disconnect();
+    match(widget, Foo());
+    REQUIRE(foo_updates.empty());
+    unmatch_all(widget);
+    REQUIRE(foo_updates.empty());
+    REQUIRE(bar_updates.size() == 1);
+    REQUIRE(!bar_updates.front());
+    bar_updates.pop_front();
+  }
+
+  UI_TEST_CASE("match_listeners_changed_during_match") {
+    auto widget = QWidget();
+    auto& stylist = find_stylist(widget);
+    auto calls = std::deque<int>();
+    auto second_connection = Stylist::ListenerConnection();
+    auto third_connection = Stylist::ListenerConnection();
+    auto bar_connection = stylist.add_match_listener(Bar(), [&] (auto) {
+      calls.push_back(4);
+    });
+    auto first_connection = stylist.add_match_listener(Foo(), [&] (auto) {
+      calls.push_back(1);
+      second_connection.disconnect();
+      if(!third_connection.is_connected()) {
+        third_connection = stylist.add_match_listener(Foo(), [&] (auto) {
+          calls.push_back(3);
+        });
+      }
+      match(widget, Bar());
+    });
+    second_connection = stylist.add_match_listener(Foo(), [&] (auto) {
+      calls.push_back(2);
+    });
+    match(widget, Foo());
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 4);
+    calls.pop_front();
+    unmatch(widget, Foo());
+    REQUIRE(calls.size() == 2);
+    REQUIRE(calls.front() == 1);
+    calls.pop_front();
+    REQUIRE(calls.front() == 3);
+    calls.pop_front();
+  }
 }

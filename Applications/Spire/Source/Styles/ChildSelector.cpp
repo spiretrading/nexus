@@ -7,7 +7,6 @@
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -24,17 +23,17 @@ namespace {
     struct ChildEntry {
       const QObject* m_child;
       const Stylist* m_stylist;
-      scoped_connection m_delete_connection;
+      Stylist::ListenerConnection m_delete_connection;
 
       ChildEntry(const QObject& child, const Stylist& stylist,
-        connection delete_connection)
+        Stylist::ListenerConnection delete_connection)
         : m_child(&child),
           m_stylist(&stylist),
           m_delete_connection(std::move(delete_connection)) {}
     };
     SelectionUpdateSignal m_on_update;
     std::vector<ChildEntry> m_children_stylists;
-    scoped_connection m_link_connection;
+    Stylist::ListenerConnection m_link_connection;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -53,7 +52,7 @@ namespace {
           children.insert(link);
         }
       }
-      m_link_connection = stylist.connect_link_signal(
+      m_link_connection = stylist.add_link_listener(
         std::bind_front(&ChildObserver::on_link, this));
       for_each_proxy(stylist, [&] (auto& proxy) {
         if(add(proxy)) {
@@ -94,7 +93,7 @@ namespace {
         return false;
       }
       m_children_stylists.emplace_back(child, stylist,
-        stylist.connect_delete_signal(
+        stylist.add_delete_listener(
           std::bind_front(&ChildObserver::remove, this, std::ref(child))));
       return true;
     }

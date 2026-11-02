@@ -1,5 +1,6 @@
 #include <deque>
 #include <doctest/doctest.h>
+#include <QApplication>
 #include "Spire/Styles/IsASelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/StylesTester/StylesTester.hpp"
@@ -89,5 +90,18 @@ TEST_SUITE("IsASelector") {
       REQUIRE(matches.m_removals.empty());
       REQUIRE(matches.m_additions.contains(&find_stylist(b)));
     }
+  }
+
+  UI_TEST_CASE("delete_before_test") {
+    auto a = new A();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection =
+      select(IsASelector(std::in_place_type<B>), find_stylist(*a),
+        [&] (const auto& additions, const auto& removals) {
+          updates.push_back({additions, removals});
+        });
+    delete a;
+    QApplication::processEvents();
+    REQUIRE(updates.empty());
   }
 }

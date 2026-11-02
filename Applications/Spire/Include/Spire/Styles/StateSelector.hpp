@@ -4,7 +4,6 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include <boost/signals2/connection.hpp>
 #include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
@@ -74,7 +73,7 @@ namespace Spire::Styles {
     struct Executor {
       const Stylist* m_base;
       SelectionUpdateSignal m_on_update;
-      boost::signals2::scoped_connection m_connection;
+      Stylist::ListenerConnection m_connection;
 
       Executor(const Stylist& base, const SelectionUpdateSignal& on_update)
         : m_base(&base),
@@ -101,7 +100,7 @@ namespace Spire::Styles {
       }
     }();
     auto executor = std::make_unique<Executor>(base, on_update);
-    executor->m_connection = base.connect_match_signal(
+    executor->m_connection = base.add_match_listener(
       state, std::bind_front(&Executor::on_match, executor.get()));
     if(base.is_match(state)) {
       on_update({&base}, {});

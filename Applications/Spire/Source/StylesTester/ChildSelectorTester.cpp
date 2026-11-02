@@ -89,6 +89,22 @@ TEST_SUITE("ChildSelector") {
     REQUIRE(update.m_removals.empty());
   }
 
+  UI_TEST_CASE("link") {
+    auto parent = QWidget();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(ChildSelector(Any(), Foo()),
+      find_stylist(parent), [&] (auto&& additions, auto&& removals) {
+        updates.push_back({std::move(additions), std::move(removals)});
+      });
+    auto target = new QWidget();
+    match(*target, Foo());
+    link(parent, *target);
+    require_selection(updates, {target}, {});
+    auto target_stylist = &find_stylist(*target);
+    delete target;
+    require_selection(updates, {}, {target_stylist});
+  }
+
   UI_TEST_CASE("flip_compound_child") {
     auto parent = QWidget();
     auto updates_a = std::deque<SelectionUpdate>();
