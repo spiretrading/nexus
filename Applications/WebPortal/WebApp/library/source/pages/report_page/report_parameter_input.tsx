@@ -3,7 +3,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountGroupListInput, AccountGroupQueryModel, ComboBox, DateInput,
   DecimalInput, InputErrorMessage, InputGroup, IntegerInput,
-  MoneyInput, ScopeInput, Select, TimeOfDayInput } from '../../components';
+  MoneyInput, ScopeInput, Select, TimeOfDayInput, YearMonthInput } from
+  '../../components';
 import { DateRange, DateRangeValidation, QueryModel,
   ValidationError } from '../../models';
 import { ParametersDateRangeInput } from './parameters_date_range_input';
@@ -105,6 +106,9 @@ export class ReportParameterInput extends React.Component<Properties, State> {
           model={accountModel} onChange={this.onChange}/>;
       case 'Date':
         return <DateInput value={value as Beam.Date} onChange={this.onChange}/>;
+      case 'YearMonth':
+        return <YearMonthInput value={value as Beam.Date}
+          onChange={this.onChange}/>;
       case 'DateTime':
         return <DateTimeField value={value as Beam.DateTime}
           onChange={this.onChange}/>;
@@ -160,7 +164,7 @@ export class ReportParameterInput extends React.Component<Properties, State> {
       }
       return;
     }
-    if(!['Date', 'Time', 'DateTime', 'Integer', 'Decimal', 'Money'].
+    if(!['Date', 'YearMonth', 'Time', 'DateTime', 'Integer', 'Decimal', 'Money'].
         includes(type)) {
       return;
     }
@@ -184,6 +188,8 @@ export class ReportParameterInput extends React.Component<Properties, State> {
       value = values[0];
     } else if(type === 'Money') {
       value = Nexus.Money.parse(parts[0]);
+    } else if(type === 'YearMonth') {
+      value = new Beam.Date(values[0], values[1], 1);
     } else {
       let time: Beam.Duration = null;
       if(type !== 'Date') {
@@ -372,6 +378,8 @@ function getValueLabel(type: string): string {
     return 'country, venue, or ticker';
   } else if(type === 'DateTime') {
     return 'date and time';
+  } else if(type === 'YearMonth') {
+    return 'year and month';
   }
   return 'value';
 }

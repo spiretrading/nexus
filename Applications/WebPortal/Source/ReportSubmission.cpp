@@ -158,6 +158,9 @@ namespace {
       return static_cast<int>(static_cast<std::uint16_t>(currency));
     } else if(type == "Date") {
       return read_date(value);
+    } else if(type == "YearMonth") {
+      auto month = from_undelimited_string(get<std::string>(read_date(value)));
+      return to_iso_string(date(month.year(), month.month(), 1));
     } else if(type == "Time") {
       return to_simple_string(read_time(read_string(value)));
     } else if(type == "DateTime") {

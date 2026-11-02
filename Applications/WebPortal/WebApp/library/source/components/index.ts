@@ -58,3 +58,4 @@ export * from './segmented_control';
 export * from './suggestions_window';
 export * from './ticker_input';
 export * from './time_of_day_input';
+export * from './year_month_input';

@@ -26,6 +26,18 @@ export function parseReportParameterValue(type: string, value: any):
           parseDateRule(value.rules.end)));
     case 'Date':
       return parseDate(value);
+    case 'YearMonth': {
+      const PATTERN = /^(?:[0-9]{8}|[0-9]{4}-[0-9]{2}-[0-9]{2})$/;
+      if(typeof value !== 'string' || !PATTERN.test(value) ||
+          value.length !== 8 && value.length !== 10) {
+        throw new Error('Invalid year and month date.');
+      }
+      const date = parseDate(value);
+      if(!isValidDate(date) || date.year < 1400) {
+        throw new Error('Invalid year and month date.');
+      }
+      return new Beam.Date(date.year, date.month, 1);
+    }
     case 'DateTime':
       if(/^\d{4}-\d{2}-\d{2}T/.test(value)) {
         return Beam.DateTime.fromJson(value.replace(/[-:]/g, ''));
@@ -119,6 +131,13 @@ export function validateReportParameter(definition: ReportParameterDefinition,
     }
     case 'Date':
       if(!isValidDate(value as Beam.Date)) {
+        return ValidationError.FORMAT;
+      }
+      break;
+    case 'YearMonth':
+      if(!(value instanceof Beam.Date) || !isValidDate(value) ||
+          value.year < 1400 ||
+          value.day !== 1) {
         return ValidationError.FORMAT;
       }
       break;
