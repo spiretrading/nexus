@@ -1,8 +1,12 @@
 #include "Spire/BookView/MpidBox.hpp"
+#include <algorithm>
+#include <QPointer>
 #include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -38,6 +42,44 @@ namespace {
   }
 }
 
+struct MpidBox::RowStates {
+  struct State {
+    Selector m_selector;
+    int m_count;
+  };
+  QPointer<QWidget> m_row;
+  std::vector<State> m_states;
+
+  explicit RowStates(QWidget& row)
+    : m_row(&row) {}
+
+  void add(const Selector& selector) {
+    auto i = std::ranges::find(m_states, selector, &State::m_selector);
+    if(i != m_states.end()) {
+      ++i->m_count;
+      return;
+    }
+    m_states.emplace_back(selector, 1);
+    if(m_row) {
+      match(*m_row, selector);
+    }
+  }
+
+  void remove(const Selector& selector) {
+    auto i = std::ranges::find(m_states, selector, &State::m_selector);
+    if(i == m_states.end()) {
+      return;
+    }
+    --i->m_count;
+    if(i->m_count == 0) {
+      m_states.erase(i);
+      if(m_row) {
+        unmatch(*m_row, selector);
+      }
+    }
+  }
+};
+
 MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     std::shared_ptr<ValueModel<int>> level,
     std::shared_ptr<ValueModel<bool>> is_top_mpid)
@@ -68,6 +110,14 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     std::bind_front(&MpidBox::on_is_top_mpid, this));
 }
 
+MpidBox::~MpidBox() {
+  if(m_row) {
+    for(auto& state : m_states) {
+      m_row->remove(state);
+    }
+  }
+}
+
 const std::shared_ptr<BookEntryModel>& MpidBox::get_current() const {
   return m_current;
 }
@@ -84,35 +134,100 @@ void MpidBox::reset() {
   m_is_reset = true;
 }
 
+bool MpidBox::event(QEvent* event) {
+  if(event->type() == QEvent::ParentChange) {
+    update_row();
+  }
+  return QWidget::event(event);
+}
+
+void MpidBox::match_state(const Selector& selector) {
+  if(std::ranges::find(m_states, selector) != m_states.end()) {
+    return;
+  }
+  m_states.push_back(selector);
+  match(*this, selector);
+  if(m_row) {
+    m_row->add(selector);
+  }
+}
+
+void MpidBox::unmatch_state(const Selector& selector) {
+  auto i = std::ranges::find(m_states, selector);
+  if(i == m_states.end()) {
+    return;
+  }
+  m_states.erase(i);
+  unmatch(*this, selector);
+  if(m_row) {
+    m_row->remove(selector);
+  }
+}
+
+void MpidBox::update_row() {
+  auto row = [&] () -> QWidget* {
+    auto item = parentWidget();
+    if(!item) {
+      return nullptr;
+    }
+    auto row = item->parentWidget();
+    if(!row || !is_match(*row, Row())) {
+      return nullptr;
+    }
+    return row;
+  }();
+  auto previous_row = [&] () -> QWidget* {
+    if(m_row) {
+      return m_row->m_row;
+    }
+    return nullptr;
+  }();
+  if(row == previous_row) {
+    return;
+  }
+  if(m_row) {
+    for(auto& state : m_states) {
+      m_row->remove(state);
+    }
+    m_row = nullptr;
+  }
+  if(row) {
+    m_row = find_extension<RowStates>(*row);
+    for(auto& state : m_states) {
+      m_row->add(state);
+    }
+  }
+}
+
 void MpidBox::update_row_state(int type_index) {
   if(type_index == m_current_type_index) {
     return;
   }
   if(m_current_type_index) {
     if(*m_current_type_index == BOOK_QUOTE_TYPE_INDEX) {
-      unmatch(*this, PriceLevelRow(m_current_level));
+      unmatch_state(PriceLevelRow(m_current_level));
     } else if(*m_current_type_index == USER_ORDER_TYPE_INDEX) {
-      unmatch(*this, UserOrderRow(OrderStatus::NONE));
+      unmatch_state(UserOrderRow(OrderStatus::NONE));
       if(m_current_status != OrderStatus::NONE) {
-        unmatch(*this, UserOrderRow(m_current_status));
+        unmatch_state(UserOrderRow(m_current_status));
         m_current_status = OrderStatus::NONE;
       }
       if(m_is_settled) {
-        unmatch(*this, SettledRow());
+        unmatch_state(SettledRow());
         m_is_settled = false;
       }
       m_current_transition = 0;
     } else if(*m_current_type_index == PREVIEW_TYPE_INDEX) {
-      unmatch(*this, PreviewRow());
+      unmatch_state(PreviewRow());
     }
   }
   m_current_type_index = type_index;
   if(type_index == BOOK_QUOTE_TYPE_INDEX) {
-    match(*this, PriceLevelRow(m_current_level));
+    match_state(PriceLevelRow(m_current_level));
   } else if(type_index == USER_ORDER_TYPE_INDEX) {
-    match(*this, UserOrderRow(OrderStatus::NONE));
+    match_state(UserOrderRow(OrderStatus::NONE));
   } else if(type_index == PREVIEW_TYPE_INDEX) {
-    match(*this, PreviewRow());
+    match_state(PreviewRow());
   }
 }
 
@@ -120,15 +235,15 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
   if(auto quote = std::get_if<BookQuote>(&entry)) {
     if(quote->m_venue != m_current_venue) {
       if(m_current_venue) {
-        unmatch(*this, VenueRow(m_current_venue));
+        unmatch_state(VenueRow(m_current_venue));
       }
       m_current_venue = quote->m_venue;
       if(m_current_venue) {
-        match(*this, VenueRow(m_current_venue));
+        match_state(VenueRow(m_current_venue));
       }
     }
   } else if(m_current_venue) {
-    unmatch(*this, VenueRow(m_current_venue));
+    unmatch_state(VenueRow(m_current_venue));
     m_current_venue = Venue();
   }
 }
@@ -159,19 +274,19 @@ void MpidBox::update_status(const BookEntry& entry) {
     return;
   }
   if(m_current_status != OrderStatus::NONE) {
-    unmatch(*this, UserOrderRow(m_current_status));
+    unmatch_state(UserOrderRow(m_current_status));
   }
   if(m_is_settled) {
-    unmatch(*this, SettledRow());
+    unmatch_state(SettledRow());
   }
   m_current_status = status;
   m_current_transition = transition;
   m_is_settled = is_settled;
   if(m_is_settled) {
-    match(*this, SettledRow());
+    match_state(SettledRow());
   }
   if(m_current_status != OrderStatus::NONE) {
-    match(*this, UserOrderRow(m_current_status));
+    match_state(UserOrderRow(m_current_status));
   }
 }
 
@@ -186,16 +301,16 @@ void MpidBox::on_level(int level) {
     return;
   }
   if(m_current_type_index == BOOK_QUOTE_TYPE_INDEX) {
-    unmatch(*this, PriceLevelRow(m_current_level));
-    match(*this, PriceLevelRow(level));
+    unmatch_state(PriceLevelRow(m_current_level));
+    match_state(PriceLevelRow(level));
   }
   m_current_level = level;
 }
 
 void MpidBox::on_is_top_mpid(bool is_top) {
   if(is_top) {
-    match(*this, TopVenueRow());
+    match_state(TopVenueRow());
   } else {
-    unmatch(*this, TopVenueRow());
+    unmatch_state(TopVenueRow());
   }
 }

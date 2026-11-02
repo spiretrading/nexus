@@ -1,6 +1,8 @@
 #ifndef SPIRE_MPID_BOX_HPP
 #define SPIRE_MPID_BOX_HPP
 #include <cstdint>
+#include <memory>
+#include <vector>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
@@ -30,7 +32,8 @@ namespace Styles {
 
   /**
    * Displays an MPID in a TableView. The MpidBox can also be used to style the
-   * row in a TableView based on the style state that is matched.
+   * row in a TableView based on the style state that is matched, which is
+   * also matched by the row containing the MpidBox.
    */
   class MpidBox : public QWidget {
     public:
@@ -46,6 +49,8 @@ namespace Styles {
         std::shared_ptr<ValueModel<int>> level,
         std::shared_ptr<ValueModel<bool>> is_top_mpid);
 
+      ~MpidBox() override;
+
       /** Returns the displayed MPID. */
       const std::shared_ptr<BookEntryModel>& get_current() const;
 
@@ -58,7 +63,11 @@ namespace Styles {
       /** Prepares this MpidBox to display a different entry. */
       void reset();
 
+    protected:
+      bool event(QEvent* event) override;
+
     private:
+      struct RowStates;
       std::shared_ptr<BookEntryModel> m_current;
       std::shared_ptr<ValueModel<int>> m_level;
       std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
@@ -72,7 +81,12 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_is_top_mpid_connection;
+      std::vector<Styles::Selector> m_states;
+      std::shared_ptr<RowStates> m_row;
 
+      void match_state(const Styles::Selector& selector);
+      void unmatch_state(const Styles::Selector& selector);
+      void update_row();
       void update_row_state(int type_index);
       void update_venue_state(const BookEntry& entry);
       void update_status(const BookEntry& entry);

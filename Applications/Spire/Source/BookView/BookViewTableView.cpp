@@ -183,7 +183,7 @@ namespace {
   };
 
   auto make_row_selector(Selector selector) {
-    return Any() > (+Row() > (Any() > selector));
+    return Any() > selector;
   }
 
   auto make_item_selector(Selector selector) {
