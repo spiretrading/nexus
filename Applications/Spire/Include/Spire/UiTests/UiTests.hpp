@@ -1,27 +1,12 @@
 #ifndef SPIRE_UI_TESTS_HPP
 #define SPIRE_UI_TESTS_HPP
-#include <utility>
-#include <QApplication>
 #include <QPoint>
+#include <QString>
+#include "Spire/SpireTester/SpireTester.hpp"
 
 class QWidget;
 
 namespace Spire::Tests {
-
-  /**
-   * Runs a unit test within a QApplication that uses the offscreen platform.
-   * @param test The unit test to run.
-   */
-  template<typename T>
-  void run_ui_test(T&& test) {
-    char name[] = "UiTests";
-    char platform_option[] = "-platform";
-    char platform[] = "offscreen";
-    char* arguments[] = {name, platform_option, platform, nullptr};
-    auto count = 3;
-    auto application = QApplication(count, arguments);
-    std::forward<T>(test)();
-  }
 
   /**
    * Moves the mouse cursor to a position within a widget.
@@ -65,6 +50,13 @@ namespace Spire::Tests {
   void release_key(QWidget& widget, Qt::Key key,
     Qt::KeyboardModifiers modifiers = Qt::NoModifier,
     bool is_auto_repeat = false);
+
+  /**
+   * Sends the key presses and releases that type text into a widget.
+   * @param widget The widget to type into.
+   * @param text The text to type.
+   */
+  void type_text(QWidget& widget, const QString& text);
 }
 
 #endif

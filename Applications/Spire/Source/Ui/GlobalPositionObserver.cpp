@@ -1,4 +1,6 @@
 #include "Spire/Ui/GlobalPositionObserver.hpp"
+#include <algorithm>
+#include <vector>
 #include <QEvent>
 #include <QPointer>
 #include "Spire/Spire/ExtensionCache.hpp"
@@ -13,14 +15,19 @@ namespace {
 }
 
 struct GlobalPositionObserver::EventFilter : QObject {
-  mutable PositionSignal m_position_signal;
+  struct Slot {
+    GlobalPositionObserver* m_observer;
+    EventFilter* m_child;
+  };
+  std::vector<Slot> m_slots;
+  int m_depth;
   QPointer<QWidget> m_widget;
   QPoint m_position;
-  std::unique_ptr<GlobalPositionObserver> m_parent_observer;
-  scoped_connection m_parent_position_connection;
+  std::shared_ptr<EventFilter> m_parent_filter;
 
   EventFilter(QWidget& widget)
-      : m_widget(&widget),
+      : m_depth(0),
+        m_widget(&widget),
         m_position(::get_position(*m_widget)) {
     m_widget->installEventFilter(this);
     connect(
@@ -28,23 +35,66 @@ struct GlobalPositionObserver::EventFilter : QObject {
     observe_parent();
   }
 
+  ~EventFilter() {
+    if(m_parent_filter) {
+      m_parent_filter->remove_slot(nullptr, this);
+    }
+  }
+
+  void add_slot(GlobalPositionObserver* observer, EventFilter* child) {
+    m_slots.push_back(Slot(observer, child));
+  }
+
+  void remove_slot(GlobalPositionObserver* observer, EventFilter* child) {
+    auto i = std::ranges::find_if(m_slots, [&] (const auto& slot) {
+      return slot.m_observer == observer && slot.m_child == child;
+    });
+    if(i == m_slots.end()) {
+      return;
+    }
+    if(m_depth == 0) {
+      m_slots.erase(i);
+    } else {
+      *i = Slot(nullptr, nullptr);
+    }
+  }
+
   void set_position(QPoint position) {
     if(position == m_position) {
       return;
     }
     m_position = position;
-    m_position_signal(position);
+    auto self = QPointer(this);
+    auto size = m_slots.size();
+    ++m_depth;
+    for(auto i = std::size_t(0); i != size; ++i) {
+      auto slot = m_slots[i];
+      if(slot.m_observer) {
+        slot.m_observer->m_position_signal(position);
+      } else if(slot.m_child) {
+        slot.m_child->on_position(position);
+      }
+      if(!self) {
+        return;
+      }
+    }
+    --m_depth;
+    if(m_depth == 0) {
+      std::erase_if(m_slots, [] (const auto& slot) {
+        return !slot.m_observer && !slot.m_child;
+      });
+    }
   }
 
   void observe_parent() {
-    m_parent_position_connection.disconnect();
+    if(m_parent_filter) {
+      m_parent_filter->remove_slot(nullptr, this);
+    }
     if(m_widget->parentWidget()) {
-      m_parent_observer =
-        std::make_unique<GlobalPositionObserver>(*m_widget->parentWidget());
-      m_parent_position_connection = m_parent_observer->connect_position_signal(
-        std::bind_front(&EventFilter::on_position, this));
+      m_parent_filter = find_extension<EventFilter>(*m_widget->parentWidget());
+      m_parent_filter->add_slot(nullptr, this);
     } else {
-      m_parent_observer = nullptr;
+      m_parent_filter = nullptr;
     }
   }
 
@@ -59,8 +109,10 @@ struct GlobalPositionObserver::EventFilter : QObject {
   }
 
   void on_widget_destroyed() {
-    m_parent_position_connection.disconnect();
-    m_parent_observer = nullptr;
+    if(m_parent_filter) {
+      m_parent_filter->remove_slot(nullptr, this);
+      m_parent_filter = nullptr;
+    }
   }
 
   void on_position(const QPoint& position) {
@@ -70,10 +122,13 @@ struct GlobalPositionObserver::EventFilter : QObject {
   }
 };
 
-GlobalPositionObserver::GlobalPositionObserver(QWidget& widget) {
-  m_filter = find_extension<EventFilter>(widget);
-  m_position_connection =
-    m_filter->m_position_signal.connect(m_position_signal);
+GlobalPositionObserver::GlobalPositionObserver(QWidget& widget)
+    : m_filter(find_extension<EventFilter>(widget)) {
+  m_filter->add_slot(this, nullptr);
+}
+
+GlobalPositionObserver::~GlobalPositionObserver() {
+  m_filter->remove_slot(this, nullptr);
 }
 
 QPoint GlobalPositionObserver::get_position() const {

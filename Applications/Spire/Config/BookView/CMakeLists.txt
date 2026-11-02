@@ -95,7 +95,7 @@ file(GLOB_RECURSE header_files ../../Include/Spire/BookViewTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/BookViewTester/*.cpp)
 add_executable(BookViewTester ${header_files} ${source_files})
 beam_configure_target(BookViewTester)
-target_link_libraries(BookViewTester BeamRoutines)
+target_link_libraries(BookViewTester BeamRoutines SpireTesterLibrary)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(BookViewTester Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer KeyBindings Blotter Catalog BookView Library Resources
@@ -117,6 +117,8 @@ target_link_libraries(BookViewTester Async Dashboard Charting PortfolioViewer
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(BookViewTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}

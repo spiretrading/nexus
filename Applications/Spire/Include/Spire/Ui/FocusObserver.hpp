@@ -47,6 +47,8 @@ namespace Spire {
        */
       explicit FocusObserver(const QWidget& widget);
 
+      ~FocusObserver();
+
       /** Returns the current state. */
       State get_state() const;
 
@@ -57,17 +59,19 @@ namespace Spire {
     private:
       struct ApplicationFocusFilter;
       struct FocusEventFilter;
-      mutable StateSignal m_state_signal;
       std::shared_ptr<FocusEventFilter> m_filter;
-      boost::signals2::scoped_connection m_filter_connection;
+      int m_group;
+
+      FocusObserver(const FocusObserver&) = delete;
+      FocusObserver& operator =(const FocusObserver&) = delete;
   };
 
   /** Returns the current focus state of a widget. */
   FocusObserver::State find_focus_state(const QWidget& widget);
 
   /**
-   * Tests if a state is a superset of another.
-   * @return <code>true</code> iff <i>left</i> is a superset of <i>right</i>.
+   * Tests if two states have any flag in common.
+   * @return <code>true</code> iff <i>left</i> and <i>right</i> share a flag.
    */
   bool is_set(FocusObserver::State left, FocusObserver::State right);
 
