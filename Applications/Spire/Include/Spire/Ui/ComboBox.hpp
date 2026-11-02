@@ -111,6 +111,9 @@ namespace Spire {
         make_text_wrapper_model(std::shared_ptr<AnyValueModel> current);
       void update_focus_proxy();
       void initialize_deferred_data() const;
+      bool is_pop_up_visible() const;
+      void initialize_pop_ups() const;
+      void hide_pop_ups();
       void update_completion();
       void revert_to(const QString& query, bool autocomplete);
       void revert_current();

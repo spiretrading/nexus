@@ -94,6 +94,9 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   connect(body, &QObject::destroyed, this, [=] {
     deleteLater();
   });
+  if(is_hovered()) {
+    m_show_timer.start();
+  }
 }
 
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {

@@ -39,15 +39,21 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
         : m_stylist(&stylist),
           m_flags(0) {}
     };
+    Selector m_right_selector;
+    const Stylist* m_base;
     std::vector<Entry> m_selection;
     SelectionUpdateSignal m_on_update;
     SelectConnection m_left;
     SelectConnection m_right;
+    bool m_has_right;
     bool m_is_initialized;
 
     Executor(const AndSelector& selector, const Stylist& base,
         const SelectionUpdateSignal& on_update)
-        : m_is_initialized(false) {
+        : m_right_selector(selector.get_right()),
+          m_base(&base),
+          m_has_right(false),
+          m_is_initialized(false) {
       m_left = select(selector.get_left(), base,
         std::bind_front(&Executor::on_update, this, LEFT_FLAG));
       if(!m_left.is_connected() && m_selection.empty()) {
@@ -57,8 +63,9 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       m_on_update = [&] (auto&& initial, auto&&) {
         additions = std::move(initial);
       };
-      m_right = select(selector.get_right(), base,
-        std::bind_front(&Executor::on_update, this, RIGHT_FLAG));
+      if(!m_selection.empty()) {
+        connect_right();
+      }
       m_on_update = on_update;
       m_is_initialized = true;
       if(!additions.empty()) {
@@ -66,13 +73,20 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       }
     }
 
+    void connect_right() {
+      m_has_right = true;
+      auto is_initialized = std::exchange(m_is_initialized, false);
+      m_right = select(m_right_selector, *m_base,
+        std::bind_front(&Executor::on_update, this, RIGHT_FLAG));
+      m_is_initialized = is_initialized;
+    }
+
     bool is_connected() const {
       return m_left.is_connected() || m_right.is_connected();
     }
 
     int& find_or_add(const Stylist& stylist) {
-      auto i = std::ranges::find(
-        m_selection, &stylist, &Entry::m_stylist);
+      auto i = std::ranges::find(m_selection, &stylist, &Entry::m_stylist);
       if(i != m_selection.end()) {
         return i->m_flags;
       }
@@ -98,6 +112,7 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
 
     void on_update(int flag, std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
+      auto has_additions = !additions.empty();
       std::erase_if(additions, [&] (const auto& addition) {
         auto& selection = find_or_add(*addition);
         selection |= flag;
@@ -111,8 +126,14 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       if(!additions.empty() || !removals.empty()) {
         m_on_update(std::move(additions), std::move(removals));
       }
+      if(flag == LEFT_FLAG && has_additions && !m_has_right &&
+          m_is_initialized) {
+        connect_right();
+      }
       test_connection(m_left, m_right, LEFT_FLAG);
-      test_connection(m_right, m_left, RIGHT_FLAG);
+      if(m_has_right) {
+        test_connection(m_right, m_left, RIGHT_FLAG);
+      }
     }
   };
   return SelectConnection(

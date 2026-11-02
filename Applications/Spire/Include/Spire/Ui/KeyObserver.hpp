@@ -34,6 +34,8 @@ namespace Spire {
        */
       explicit KeyObserver(QWidget& widget);
 
+      ~KeyObserver();
+
       /** Connects a slot to the key press signal. */
       boost::signals2::connection connect_filtered_key_press_signal(
         const FilteredKeyPressSignal::slot_type& slot) const;
@@ -46,7 +48,6 @@ namespace Spire {
       struct EventFilter;
       mutable FilteredKeyPressSignal m_key_press_signal;
       std::shared_ptr<EventFilter> m_filter;
-      boost::signals2::scoped_connection m_filter_connection;
   };
 }
 

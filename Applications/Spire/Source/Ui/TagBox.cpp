@@ -229,6 +229,8 @@ AnyTagBox::AnyTagBox(std::shared_ptr<AnyListModel> tags,
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(tags))),
       m_input_box(input_box),
+      m_text_area_box(nullptr),
+      m_info_tip(nullptr),
       m_input_focus_proxy(nullptr),
       m_focus_observer(*this),
       m_input_box_position_observer(*input_box),
@@ -276,14 +278,6 @@ AnyTagBox::AnyTagBox(std::shared_ptr<AnyListModel> tags,
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_outline)));
   m_style_connection = connect_style_signal(*this,
     std::bind_front(&AnyTagBox::on_style, this));
-  m_text_area_box = new TextAreaBox("");
-  m_text_area_box->set_read_only(true);
-  m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
-    std::bind_front(&AnyTagBox::on_text_area_style, this));
-  update_style(*m_text_area_box, [] (auto& style) {
-    style = TEXT_AREA_BOX_STYLE(style);
-  });
-  m_info_tip = new InfoTip(m_text_area_box, this);
   update_tip();
   on_style();
   on_list_view_style();
@@ -408,6 +402,12 @@ bool AnyTagBox::eventFilter(QObject* watched, QEvent* event) {
 bool AnyTagBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
+  } else if(event->type() == QEvent::Enter && !m_info_tip &&
+      is_tip_visible()) {
+    initialize_info_tip();
+    update_tooltip();
+  } else if(event->type() == QEvent::ToolTip && !m_info_tip) {
+    return true;
   }
   return QWidget::event(event);
 }
@@ -550,17 +550,7 @@ void AnyTagBox::update_tags_read_only() {
   }
 }
 
-void AnyTagBox::update_tip() {
-  static auto split_string = QString(" ") + QChar(0x2022) + " ";
-  auto tip = QString();
-  for(auto i = 0; i < get_tags()->get_size(); ++i) {
-    tip = tip % to_text(get_tags()->get(i)) % split_string;
-  }
-  tip.remove(tip.length() - split_string.length(), split_string.length());
-  m_text_area_box->get_current()->set(tip);
-}
-
-void AnyTagBox::update_tooltip() {
+bool AnyTagBox::is_tip_visible() {
   auto is_tag_overflow = [&] {
     if(m_list_view_overflow == Styles::Overflow::NONE) {
       auto scroll_bar_width = [&] {
@@ -593,8 +583,38 @@ void AnyTagBox::update_tooltip() {
     }
     return false;
   }();
-  if(isEnabled() && is_tag_overflow &&
-      !m_text_area_box->get_current()->get().isEmpty()) {
+  return isEnabled() && is_tag_overflow && !m_tip.isEmpty();
+}
+
+void AnyTagBox::initialize_info_tip() {
+  m_text_area_box = new TextAreaBox(m_tip);
+  m_text_area_box->set_read_only(true);
+  m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
+    std::bind_front(&AnyTagBox::on_text_area_style, this));
+  update_style(*m_text_area_box, [] (auto& style) {
+    style = TEXT_AREA_BOX_STYLE(style);
+  });
+  m_info_tip = new InfoTip(m_text_area_box, this);
+}
+
+void AnyTagBox::update_tip() {
+  static auto split_string = QString(" ") + QChar(0x2022) + " ";
+  auto tip = QString();
+  for(auto i = 0; i < get_tags()->get_size(); ++i) {
+    tip = tip % to_text(get_tags()->get(i)) % split_string;
+  }
+  tip.remove(tip.length() - split_string.length(), split_string.length());
+  m_tip = std::move(tip);
+  if(m_text_area_box) {
+    m_text_area_box->get_current()->set(m_tip);
+  }
+}
+
+void AnyTagBox::update_tooltip() {
+  if(!m_info_tip) {
+    return;
+  }
+  if(is_tip_visible()) {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, false);
     invalidate_descendant_layouts(*m_info_tip);
     m_info_tip->adjustSize();

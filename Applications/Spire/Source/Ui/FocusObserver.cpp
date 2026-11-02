@@ -5,6 +5,7 @@
 #include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Spire/Utility.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -19,60 +20,31 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
     return instance;
   }
 
-  struct Entry {
-    bool m_is_removed;
-    FocusEventFilter* m_filter;
-  };
-  std::vector<std::unique_ptr<Entry>> m_entries;
-  std::unordered_map<FocusEventFilter*, Entry*> m_filter_to_entry;
+  std::vector<FocusEventFilter*> m_filters;
+  int m_signal_depth;
 
-  ApplicationFocusFilter() {
+  ApplicationFocusFilter()
+      : m_signal_depth(0) {
     qApp->installEventFilter(this);
     connect(qApp, &QApplication::focusChanged, this,
       &ApplicationFocusFilter::on_focus_changed);
   }
 
-  void add(FocusEventFilter& filter) {
-    m_entries.push_back(std::make_unique<Entry>(false, &filter));
-    m_filter_to_entry.insert(std::pair(&filter, m_entries.back().get()));
-  }
-
-  void remove(FocusEventFilter& filter) {
-    auto i = m_filter_to_entry.find(&filter);
-    if(i == m_filter_to_entry.end()) {
-      return;
-    }
-    i->second->m_is_removed = true;
-    m_filter_to_entry.erase(i);
-  }
-
-  bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
-      m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
-        [&] (auto& entry) {
-          if(entry->m_is_removed) {
-            return true;
-          }
-          if(is_ancestor(
-              entry->m_filter->m_widget, static_cast<QWidget*>(watched))) {
-            entry->m_filter->m_focus_reason =
-              static_cast<QFocusEvent*>(event)->reason();
-          }
-          return false;
-        }), m_entries.end());
-    }
-    return QObject::eventFilter(watched, event);
-  }
-
+  void add(FocusEventFilter& filter);
+  void remove(FocusEventFilter& filter);
+  void compact();
+  bool eventFilter(QObject* watched, QEvent* event) override;
   void on_focus_changed(QWidget* old, QWidget* now);
 };
 
 struct FocusObserver::FocusEventFilter {
-  mutable StateSignal m_state_signal;
+  mutable optional<StateSignal> m_state_signal;
   const QWidget* m_widget;
   Qt::FocusReason m_focus_reason;
   State m_state;
   State m_old_state;
+  int m_next_group;
+  std::size_t m_index;
   std::shared_ptr<ApplicationFocusFilter> m_application_focus_filter;
 
   FocusEventFilter(const QWidget& widget)
@@ -80,6 +52,8 @@ struct FocusObserver::FocusEventFilter {
         m_focus_reason(Qt::MouseFocusReason),
         m_state(find_focus_state(*m_widget)),
         m_old_state(m_state),
+        m_next_group(0),
+        m_index(0),
         m_application_focus_filter(ApplicationFocusFilter::get_instance()) {
     m_application_focus_filter->add(*this);
   }
@@ -88,10 +62,58 @@ struct FocusObserver::FocusEventFilter {
     m_application_focus_filter->remove(*this);
   }
 
-  connection connect_state_signal(const StateSignal::slot_type& slot) const {
-    return m_state_signal.connect(slot);
+  connection connect_state_signal(
+      int group, const StateSignal::slot_type& slot) const {
+    if(!m_state_signal) {
+      m_state_signal.emplace();
+    }
+    return m_state_signal->connect(group, slot);
+  }
+
+  void disconnect(int group) {
+    if(m_state_signal) {
+      m_state_signal->disconnect(group);
+    }
   }
 };
+
+void FocusObserver::ApplicationFocusFilter::add(FocusEventFilter& filter) {
+  filter.m_index = m_filters.size();
+  m_filters.push_back(&filter);
+}
+
+void FocusObserver::ApplicationFocusFilter::remove(FocusEventFilter& filter) {
+  m_filters[filter.m_index] = nullptr;
+}
+
+void FocusObserver::ApplicationFocusFilter::compact() {
+  if(m_signal_depth != 0) {
+    return;
+  }
+  auto size = std::size_t(0);
+  for(auto filter : m_filters) {
+    if(filter) {
+      filter->m_index = size;
+      m_filters[size] = filter;
+      ++size;
+    }
+  }
+  m_filters.resize(size);
+}
+
+bool FocusObserver::ApplicationFocusFilter::eventFilter(
+    QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
+    compact();
+    for(auto filter : m_filters) {
+      if(filter &&
+          is_ancestor(filter->m_widget, static_cast<QWidget*>(watched))) {
+        filter->m_focus_reason = static_cast<QFocusEvent*>(event)->reason();
+      }
+    }
+  }
+  return QObject::eventFilter(watched, event);
+}
 
 void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     QWidget* old, QWidget* now) {
@@ -101,62 +123,63 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
       previous_widget_focus_visible != widget_focus_visible) {
     previous_widget_focus_visible = widget_focus_visible;
   }
-  auto signaling_entries = std::vector<Entry*>();
-  std::erase_if(m_entries, [&] (const auto& entry) {
-    if(entry->m_is_removed) {
-      return true;
+  compact();
+  auto signaling_filters = std::vector<std::size_t>();
+  for(auto i = std::size_t(0); i != m_filters.size(); ++i) {
+    auto filter = m_filters[i];
+    if(!filter) {
+      continue;
     }
-    auto state = entry->m_filter->m_state;
-    if(entry->m_filter->m_widget == now) {
-      entry->m_filter->m_state = State::FOCUS;
-      switch(entry->m_filter->m_focus_reason) {
-        case Qt::TabFocusReason:
-        case Qt::BacktabFocusReason:
-        case Qt::ShortcutFocusReason:
-          entry->m_filter->m_state = State::FOCUS_VISIBLE;
+    auto state = filter->m_state;
+    if(filter->m_widget == now) {
+      filter->m_state = State::FOCUS;
+      auto reason = filter->m_focus_reason;
+      if(reason == Qt::TabFocusReason || reason == Qt::BacktabFocusReason ||
+          reason == Qt::ShortcutFocusReason) {
+        filter->m_state = State::FOCUS_VISIBLE;
+        widget_focus_visible = {now, true};
+      } else if(reason == Qt::ActiveWindowFocusReason ||
+          reason == Qt::PopupFocusReason) {
+        if(filter->m_old_state == State::FOCUS_VISIBLE) {
+          filter->m_state = State::FOCUS_VISIBLE;
           widget_focus_visible = {now, true};
-          break;
-        case Qt::ActiveWindowFocusReason:
-        case Qt::PopupFocusReason:
-          if(entry->m_filter->m_old_state == State::FOCUS_VISIBLE) {
-            entry->m_filter->m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = {now, true};
-          }
-          break;
-        case Qt::OtherFocusReason:
-          if(previous_widget_focus_visible.first == old &&
-              previous_widget_focus_visible.second) {
-            entry->m_filter->m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = {now, true};
-          }
-          break;
-        default:
-          widget_focus_visible = {now, false};
-          break;
+        }
+      } else if(reason == Qt::OtherFocusReason) {
+        if(previous_widget_focus_visible.first == old &&
+            previous_widget_focus_visible.second) {
+          filter->m_state = State::FOCUS_VISIBLE;
+          widget_focus_visible = {now, true};
+        }
+      } else {
+        widget_focus_visible = {now, false};
       }
-    } else if(is_ancestor(entry->m_filter->m_widget, now)) {
-      entry->m_filter->m_state = State::FOCUS_IN;
-    } else if(entry->m_filter->m_widget == old ||
-        is_ancestor(entry->m_filter->m_widget, old)) {
-      entry->m_filter->m_state = State::NONE;
+    } else if(is_ancestor(filter->m_widget, now)) {
+      filter->m_state = State::FOCUS_IN;
+    } else if(filter->m_widget == old || is_ancestor(filter->m_widget, old)) {
+      filter->m_state = State::NONE;
     }
-    if(state != entry->m_filter->m_state) {
-      entry->m_filter->m_old_state = state;
-      signaling_entries.push_back(entry.get());
-    }
-    return false;
-  });
-  for(auto& signaling_entry : signaling_entries) {
-    if(m_filter_to_entry.contains(signaling_entry->m_filter)) {
-      signaling_entry->m_filter->m_state_signal(
-        signaling_entry->m_filter->m_state);
+    if(state != filter->m_state) {
+      filter->m_old_state = state;
+      signaling_filters.push_back(i);
     }
   }
+  ++m_signal_depth;
+  for(auto i : signaling_filters) {
+    if(auto filter = m_filters[i]) {
+      if(filter->m_state_signal) {
+        (*filter->m_state_signal)(filter->m_state);
+      }
+    }
+  }
+  --m_signal_depth;
 }
 
-FocusObserver::FocusObserver(const QWidget& widget) {
-  m_filter = find_extension<FocusEventFilter>(widget);
-  m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
+FocusObserver::FocusObserver(const QWidget& widget)
+  : m_filter(find_extension<FocusEventFilter>(widget)),
+    m_group(m_filter->m_next_group++) {}
+
+FocusObserver::~FocusObserver() {
+  m_filter->disconnect(m_group);
 }
 
 FocusObserver::State FocusObserver::get_state() const {
@@ -165,7 +188,7 @@ FocusObserver::State FocusObserver::get_state() const {
 
 connection FocusObserver::connect_state_signal(
     const StateSignal::slot_type& slot) const {
-  return m_state_signal.connect(slot);
+  return m_filter->connect_state_signal(m_group, slot);
 }
 
 FocusObserver::State Spire::find_focus_state(const QWidget& widget) {
@@ -186,7 +209,8 @@ bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {
     FocusObserver::State::NONE;
 }
 
-std::ostream& Spire::operator <<(std::ostream& out, FocusObserver::State state) {
+std::ostream& Spire::operator <<(
+    std::ostream& out, FocusObserver::State state) {
   return out << std::format(out.getloc(), "{}", state);
 }
 
