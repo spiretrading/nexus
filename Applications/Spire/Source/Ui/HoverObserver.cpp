@@ -1,6 +1,6 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include <algorithm>
-#include <unordered_map>
+#include <functional>
 #include <vector>
 #include <QApplication>
 #include <QChildEvent>
@@ -32,11 +32,8 @@ namespace {
 
 struct HoverObserver::EventFilter : QObject {
   struct Descendant {
+    const QObject* m_object;
     const QObject* m_parent;
-    std::vector<const QObject*> m_children;
-
-    Descendant(const QObject* parent)
-      : m_parent(parent) {}
   };
   std::vector<HoverObserver*> m_observers;
   int m_depth;
@@ -44,7 +41,7 @@ struct HoverObserver::EventFilter : QObject {
   QPointer<QWidget> m_widget;
   State m_state;
   std::unique_ptr<GlobalPositionObserver> m_position_observer;
-  std::unordered_map<const QObject*, Descendant> m_descendants;
+  std::vector<Descendant> m_descendants;
   QTimer m_hover_timer;
 
   EventFilter(QWidget& widget)
@@ -69,11 +66,13 @@ struct HoverObserver::EventFilter : QObject {
     m_position_observer->connect_position_signal(
       std::bind_front(&EventFilter::on_position, this));
     set_state(::get_state(*m_widget, m_position_observer->get_position()));
+    auto descendants = std::vector<Descendant>();
     for(auto child : m_widget->children()) {
       if(child && child->isWidgetType()) {
-        add(static_cast<QWidget&>(*child), *m_widget);
+        collect(static_cast<QWidget&>(*child), *m_widget, descendants);
       }
     }
+    insert(std::move(descendants));
     connect(
       qApp, &QApplication::focusChanged, this, &EventFilter::on_focus_changed);
   }
@@ -84,7 +83,7 @@ struct HoverObserver::EventFilter : QObject {
       if(m_widget) {
         for(auto child : m_widget->children()) {
           if(child && child->isWidgetType()) {
-            remove(*child);
+            release(*child);
           }
         }
       }
@@ -206,56 +205,92 @@ struct HoverObserver::EventFilter : QObject {
     }
   }
 
+  std::vector<Descendant>::iterator find(const QObject& object) {
+    auto i = std::ranges::lower_bound(
+      m_descendants, &object, std::less(), &Descendant::m_object);
+    if(i == m_descendants.end() || i->m_object != &object) {
+      return m_descendants.end();
+    }
+    return i;
+  }
+
   bool add(QWidget& child, const QObject& parent) {
-    if(!m_descendants.try_emplace(&child, &parent).second) {
+    auto descendants = std::vector<Descendant>();
+    collect(child, parent, descendants);
+    if(descendants.empty()) {
       return false;
     }
-    auto i = m_descendants.find(&parent);
-    if(i != m_descendants.end()) {
-      i->second.m_children.push_back(&child);
+    insert(std::move(descendants));
+    return true;
+  }
+
+  void collect(QWidget& child, const QObject& parent,
+      std::vector<Descendant>& descendants) {
+    if(find(child) != m_descendants.end()) {
+      return;
     }
+    descendants.push_back(Descendant(&child, &parent));
     child.installEventFilter(this);
     for(auto descendant : child.children()) {
       if(descendant && descendant->isWidgetType()) {
-        add(static_cast<QWidget&>(*descendant), child);
+        collect(static_cast<QWidget&>(*descendant), child, descendants);
       }
     }
-    return true;
+  }
+
+  void insert(std::vector<Descendant> descendants) {
+    std::ranges::sort(descendants, std::less(), &Descendant::m_object);
+    auto size = m_descendants.size();
+    m_descendants.insert(
+      m_descendants.end(), descendants.begin(), descendants.end());
+    std::ranges::inplace_merge(m_descendants, m_descendants.begin() + size,
+      std::less(), &Descendant::m_object);
   }
 
   bool remove(QObject& child) {
-    auto i = m_descendants.find(&child);
-    if(i == m_descendants.end()) {
+    if(find(child) == m_descendants.end()) {
       return false;
     }
-    auto parent = m_descendants.find(i->second.m_parent);
-    if(parent != m_descendants.end()) {
-      std::erase(parent->second.m_children, &child);
-    }
-    auto children = std::move(i->second.m_children);
-    m_descendants.erase(i);
-    child.removeEventFilter(this);
-    for(auto descendant : child.children()) {
-      if(descendant && descendant->isWidgetType()) {
-        remove(*descendant);
-      }
-    }
-    for(auto descendant : children) {
-      forget(descendant);
-    }
+    release(child);
+    forget();
     return true;
   }
 
-  void forget(const QObject* descendant) {
-    auto i = m_descendants.find(descendant);
+  void release(QObject& child) {
+    auto i = find(child);
     if(i == m_descendants.end()) {
       return;
     }
-    auto children = std::move(i->second.m_children);
-    m_descendants.erase(i);
-    for(auto child : children) {
-      forget(child);
+    i->m_parent = nullptr;
+    child.removeEventFilter(this);
+    for(auto descendant : child.children()) {
+      if(descendant && descendant->isWidgetType()) {
+        release(*descendant);
+      }
     }
+  }
+
+  void forget() {
+    auto parents = std::vector<const QObject*>();
+    for(const auto& descendant : m_descendants) {
+      if(!descendant.m_parent) {
+        parents.push_back(descendant.m_object);
+      }
+    }
+    while(!parents.empty()) {
+      auto children = std::vector<const QObject*>();
+      for(auto& descendant : m_descendants) {
+        if(descendant.m_parent &&
+            std::ranges::binary_search(parents, descendant.m_parent)) {
+          descendant.m_parent = nullptr;
+          children.push_back(descendant.m_object);
+        }
+      }
+      parents = std::move(children);
+    }
+    std::erase_if(m_descendants, [] (const auto& descendant) {
+      return !descendant.m_parent;
+    });
   }
 
   void on_position(const QPoint& position) {

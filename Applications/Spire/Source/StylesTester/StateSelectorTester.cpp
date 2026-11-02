@@ -65,4 +65,29 @@ TEST_SUITE("StateSelector") {
     REQUIRE(matches.m_removals.empty());
     REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
   }
+
+  UI_TEST_CASE("select_data") {
+    auto w1 = QWidget();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(Baz(1), find_stylist(w1),
+      [&] (const auto& additions, const auto& removals) {
+        updates.push_back({additions, removals});
+      });
+    match(w1, Baz(0));
+    REQUIRE(updates.empty());
+    match(w1, Baz(1));
+    REQUIRE(updates.size() == 1);
+    {
+      auto matches = updates.front();
+      updates.pop_front();
+      REQUIRE(matches.m_additions.size() == 1);
+      REQUIRE(matches.m_removals.empty());
+      REQUIRE(matches.m_additions.contains(&find_stylist(w1)));
+    }
+    unmatch(w1, Baz(0));
+    REQUIRE(updates.empty());
+    connection.disconnect();
+    unmatch(w1, Baz(1));
+    REQUIRE(updates.empty());
+  }
 }
