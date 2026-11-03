@@ -31,6 +31,8 @@ class Model extends ReportDetailModel {
     resolve: (report: ReportDetailModel.Report) => void;
     reject: (error: Error) => void}[] = [];
   public loading = Promise.resolve();
+  public retries: {id: string; resolve: () => void;
+    reject: (error: Error) => void}[] = [];
 
   public async load(): Promise<void> {
     await this.loading;
@@ -39,6 +41,12 @@ class Model extends ReportDetailModel {
   public loadReport(id: string): Promise<ReportDetailModel.Report> {
     return new Promise((resolve, reject) => {
       this.requests.push({id, resolve, reject});
+    });
+  }
+
+  public retry(id: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.retries.push({id, resolve, reject});
     });
   }
 }
@@ -112,6 +120,7 @@ describe('ReportDetailController', () => {
     controller.render().props.onRetry();
     await flush();
     assert.equal(model.requests.length, 2);
+    assert.equal(model.retries.length, 0);
     assert.equal(controller.state.status, ReportDetailPage.Status.ERROR);
     clock.fire();
     assert.equal(controller.state.status, ReportDetailPage.Status.IN_PROGRESS);
@@ -150,7 +159,7 @@ describe('ReportDetailController', () => {
     assert.equal(clock.tasks.size, 0);
   });
 
-  it('failed_job_stops_polling_and_retry_reloads', async () => {
+  it('failed_job_retry_queues_generation_then_polls', async () => {
     controller.componentDidMount();
     await flush();
     model.requests[0].resolve({...makeReport('1'),
@@ -159,10 +168,62 @@ describe('ReportDetailController', () => {
     assert.equal(controller.state.status, ReportDetailPage.Status.ERROR);
     assert.equal(clock.tasks.size, 0);
     controller.render().props.onRetry();
+    controller.render().props.onRetry();
+    assert.equal(controller.state.status, ReportDetailPage.Status.IN_PROGRESS);
+    assert.deepEqual(model.retries.map(request => request.id), ['1']);
+    assert.equal(model.requests.length, 1);
+    model.retries[0].resolve();
+    await flush();
+    model.requests[1].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.IN_PROGRESS, filePath: ''});
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.IN_PROGRESS);
+    clock.fire();
+    await flush();
+    model.requests[2].resolve(makeReport('1'));
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.READY);
+    assert.equal(clock.tasks.size, 0);
+  });
+
+  it('retry_failure_can_be_retried_again', async () => {
+    controller.componentDidMount();
+    await flush();
+    model.requests[0].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.FAILED, filePath: ''});
+    await flush();
+    controller.render().props.onRetry();
+    const error = new Error('Retry unavailable');
+    model.retries[0].reject(error);
+    await flush();
+    assert.equal(controller.state.status, ReportDetailPage.Status.ERROR);
+    assert.deepEqual(errors, [error]);
+    controller.render().props.onRetry();
+    assert.equal(model.retries.length, 2);
+    model.retries[1].resolve();
     await flush();
     model.requests[1].resolve(makeReport('1'));
     await flush();
     assert.equal(controller.state.status, ReportDetailPage.Status.READY);
+  });
+
+  it('navigation_ignores_pending_retry_completion', async () => {
+    controller.componentDidMount();
+    await flush();
+    model.requests[0].resolve({...makeReport('1'),
+      status: ReportDetailModel.Status.FAILED, filePath: ''});
+    await flush();
+    controller.render().props.onRetry();
+    const previous = controller.props;
+    (controller as any).props = {...previous, id: '2'};
+    controller.componentDidUpdate(previous);
+    await flush();
+    model.requests[1].resolve(makeReport('2'));
+    model.retries[0].resolve();
+    await flush();
+    assert.equal(controller.state.report.id, '2');
+    assert.deepEqual(model.requests.map(request => request.id), ['1', '2']);
+    assert.equal(clock.tasks.size, 0);
   });
 
   it('leaving_pending_report_cancels_polling', async () => {

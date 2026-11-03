@@ -164,10 +164,10 @@ const FIELD_STYLE: React.CSSProperties = {
 const STYLE: Record<string, React.CSSProperties> = {
   year: {
     ...FIELD_STYLE,
-    width: '4.5ch'
+    width: '3em'
   },
   month: {
     ...FIELD_STYLE,
-    width: '2.5ch'
+    width: '2em'
   }
 };

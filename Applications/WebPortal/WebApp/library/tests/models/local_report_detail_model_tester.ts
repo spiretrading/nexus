@@ -14,6 +14,7 @@ describe('LocalReportDetailModel', () => {
   it('requires_load_and_existing_report', async () => {
     const model = new LocalReportDetailModel([report()]);
     await assert.rejects(model.loadReport('1'));
+    await assert.rejects(model.retry('1'));
     assert.throws(() => model.delete('1'));
     assert.throws(() => model.store(report()));
     await model.load();
@@ -36,6 +37,27 @@ describe('LocalReportDetailModel', () => {
       ReportDetailModel.Status.IN_PROGRESS);
     model.store(report());
     assert.deepEqual(await model.loadReport('1'), report());
+  });
+
+  it('retries_only_failed_jobs_and_clears_old_content', async () => {
+    const ready = report();
+    const failed = {...report(), id: 'failed',
+      status: ReportDetailModel.Status.FAILED};
+    const model = new LocalReportDetailModel([ready, failed]);
+    await model.load();
+    await model.retry('failed');
+    const pending = await model.loadReport('failed');
+    assert.equal(pending.status, ReportDetailModel.Status.IN_PROGRESS);
+    assert.equal(pending.filePath, '');
+    assert.equal(pending.content, null);
+    await model.retry('failed');
+    assert.deepEqual(await model.loadReport('failed'), pending);
+    await model.retry('1');
+    assert.deepEqual(await model.loadReport('1'), ready);
+    await assert.rejects(model.retry('missing'));
+    model.store({...failed, status: ReportDetailModel.Status.READY});
+    assert.equal((await model.loadReport('failed')).status,
+      ReportDetailModel.Status.READY);
   });
 
   it('isolates_metadata_and_preserves_optional_content', async () => {

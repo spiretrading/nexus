@@ -125,7 +125,7 @@ export class ReportDetailController extends React.Component<Properties, State> {
       } else if(report.status === ReportDetailModel.Status.READY) {
         this.setState({report, status: ReportDetailPage.Status.READY});
       } else {
-        this.setState({report: null, status: ReportDetailPage.Status.ERROR});
+        this.setState({report, status: ReportDetailPage.Status.ERROR});
       }
     } catch(error) {
       if(this.mounted && generation === this.generation) {
@@ -141,8 +141,37 @@ export class ReportDetailController extends React.Component<Properties, State> {
     }
   }
 
+  private async retry(): Promise<void> {
+    const model = this.props.model;
+    const id = this.props.id;
+    const generation = ++this.generation;
+    this.loading = true;
+    window.clearTimeout(this.timer);
+    window.clearTimeout(this.refreshTimer);
+    this.setState({status: ReportDetailPage.Status.IN_PROGRESS});
+    try {
+      await model.retry(id);
+      if(!this.mounted || generation !== this.generation) {
+        return;
+      }
+      this.setState({report: null});
+      await this.query(model, id, generation);
+    } catch(error) {
+      if(this.mounted && generation === this.generation) {
+        this.loading = false;
+        this.setState({status: ReportDetailPage.Status.ERROR});
+        this.props.onError?.(error);
+      }
+    }
+  }
+
   private onRetry = () => {
-    if(!this.loading) {
+    if(this.loading) {
+      return;
+    }
+    if(this.state.report?.status === ReportDetailModel.Status.FAILED) {
+      this.retry();
+    } else {
       this.load();
     }
   };
