@@ -44,7 +44,7 @@ interface State {
 export class ReportParameterInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.state = {draftError: ValidationError.NONE};
+    this.state = {draftError: null};
     this.element = React.createRef();
     this.mounted = false;
     this.emptyRange = new DateRange(null, null);
@@ -61,9 +61,10 @@ export class ReportParameterInput extends React.Component<Properties, State> {
         style={{maxWidth: '384px'}}
         onValidationChange={this.onRangeValidation}/>;
     }
-    const error = this.state.draftError || this.props.error ||
-      validateReportParameter(definition, value);
-    return <div ref={this.element} onInput={this.onInput} onBlur={this.onBlur}>
+    const error = this.props.error || (this.state.draftError ??
+      validateReportParameter(definition, value));
+    return <div ref={this.element} onInput={this.onInput} onBlur={this.onBlur}
+        onKeyUp={this.onKeyUp}>
       <InputGroup label={definition.label}
           validation={{valid: error === ValidationError.NONE, error}}
           errorMessage={<InputErrorMessage label={definition.label}
@@ -79,7 +80,8 @@ export class ReportParameterInput extends React.Component<Properties, State> {
 
   public componentDidUpdate(previous: Properties): void {
     if(previous.value !== this.props.value) {
-      this.setError(ValidationError.NONE);
+      this.setError(validateReportParameter(
+        this.props.definition, this.props.value));
       if(this.element.current?.contains(document.activeElement)) {
         this.onInput();
       }
@@ -246,8 +248,14 @@ export class ReportParameterInput extends React.Component<Properties, State> {
   };
 
   private onChange = (value: ReportParameterValue) => {
-    this.setError(ValidationError.NONE);
+    this.setError(validateReportParameter(this.props.definition, value));
     this.props.onChange(value ?? null);
+  };
+
+  private onKeyUp = (event: React.KeyboardEvent) => {
+    if(event.key === 'Escape') {
+      this.onInput();
+    }
   };
 
   private onCurrencyChange = (value: string) => {
