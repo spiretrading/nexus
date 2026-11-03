@@ -9,7 +9,6 @@
 #include <variant>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Remote.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -91,11 +90,21 @@ namespace Nexus {
         find_session_technicals(const Ticker& ticker) const;
 
       /**
-       * Returns a Ticker's real time snapshot.
+       * Loads a Ticker's session technicals.
+       * @param ticker The Ticker whose session technicals are to be returned.
+       * @param data_store Used to initialize the Ticker's data.
+       */
+      SequencedSessionTechnicals load_session_technicals(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
+
+      /**
+       * Loads a Ticker's real-time snapshot.
        * @param ticker The Ticker whose snapshot is to be returned.
+       * @param data_store Used to initialize the Ticker's data.
        * @return The real-time snapshot of the <i>ticker</i>.
        */
-      boost::optional<TickerSnapshot> find_snapshot(const Ticker& ticker) const;
+      boost::optional<TickerSnapshot> load_snapshot(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
 
       /**
        * Adds or updates a TickerInfo to this registry.
@@ -167,15 +176,15 @@ namespace Nexus {
     private:
       using PrimaryListingKey = Details::PrimaryListingKey;
       template<typename> friend struct std::hash;
-      using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
-      using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
+      using SyncVenueEntry = Beam::Sync<VenueEntry>;
+      using SyncTickerEntry = Beam::Sync<TickerEntry>;
       Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
       Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
         m_primary_listings;
-      Beam::SynchronizedUnorderedMap<Venue, std::shared_ptr<
-        Beam::Remote<SyncVenueEntry, Beam::Mutex>>> m_venue_entries;
-      Beam::SynchronizedUnorderedMap<Ticker, std::shared_ptr<Beam::Remote<
-        SyncTickerEntry, Beam::Mutex>>> m_ticker_entries;
+      Beam::SynchronizedUnorderedMap<
+        Venue, std::shared_ptr<Beam::Remote<SyncVenueEntry>>> m_venue_entries;
+      Beam::SynchronizedUnorderedMap<Ticker,
+        std::shared_ptr<Beam::Remote<SyncTickerEntry>>> m_ticker_entries;
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
@@ -250,18 +259,28 @@ namespace Nexus {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return SequencedSessionTechnicals(entry.get_session_technicals(),
-        entry.get_time_and_sale().get_sequence());
+      return entry.get_session_technicals();
     });
   }
 
-  inline boost::optional<TickerSnapshot>
-      MarketDataRegistry::find_snapshot(const Ticker& ticker) const {
-    auto entry = m_ticker_entries.find(get_primary_listing(ticker));
-    if(!entry || !(*entry)->is_available()) {
+  SequencedSessionTechnicals MarketDataRegistry::load_session_technicals(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
+      return {};
+    }
+    return Beam::with(*entry, [&] (const auto& entry) {
+      return entry.get_session_technicals();
+    });
+  }
+
+  boost::optional<TickerSnapshot> MarketDataRegistry::load_snapshot(
+      const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto entry = load(ticker, data_store);
+    if(!entry) {
       return boost::none;
     }
-    return Beam::with(***entry, [&] (const auto& entry) {
+    return Beam::with(*entry, [&] (const auto& entry) {
       return entry.load_snapshot();
     });
   }
@@ -377,8 +396,8 @@ namespace Nexus {
   }
 
   inline void MarketDataRegistry::clear(int source_id) {
-    auto entries = std::vector<
-      std::shared_ptr<Beam::Remote<SyncTickerEntry, Beam::Mutex>>>();
+    auto entries =
+      std::vector<std::shared_ptr<Beam::Remote<SyncTickerEntry>>>();
     m_ticker_entries.with([&] (auto& ticker_entries) {
       for(auto& entry : ticker_entries | std::views::values) {
         entries.push_back(entry);
@@ -399,10 +418,9 @@ namespace Nexus {
       return boost::none;
     }
     auto entry = m_venue_entries.get_or_insert(venue, [&] {
-      return std::make_shared<Beam::Remote<SyncVenueEntry, Beam::Mutex>>(
-        [&] (auto& entry) {
-          entry.emplace(venue, load_initial_sequences(data_store, venue));
-        });
+      return std::make_shared<Beam::Remote<SyncVenueEntry>>([&] (auto& entry) {
+        entry.emplace(venue, load_initial_sequences(data_store, venue));
+      });
     });
     return **entry;
   }
@@ -415,16 +433,15 @@ namespace Nexus {
       return boost::none;
     }
     auto entry = m_ticker_entries.get_or_insert(sanitized_ticker, [&] {
-      return std::make_shared<
-        Beam::Remote<SyncTickerEntry, Beam::Mutex>>([&] (auto& entry) {
-          auto initial_sequences =
-            load_initial_sequences(data_store, sanitized_ticker);
-          auto& market_center =
-            VENUES.from(sanitized_ticker.get_venue()).m_market_center;
-          auto close = Details::load_close_price(
-            sanitized_ticker, market_center, data_store);
-          entry.emplace(sanitized_ticker, close, initial_sequences);
-        });
+      return std::make_shared<Beam::Remote<SyncTickerEntry>>([&] (auto& entry) {
+        auto initial_sequences =
+          load_initial_sequences(data_store, sanitized_ticker);
+        auto& market_center =
+          VENUES.from(sanitized_ticker.get_venue()).m_market_center;
+        auto close = Details::load_close_price(
+          sanitized_ticker, market_center, data_store);
+        entry.emplace(sanitized_ticker, close, initial_sequences);
+      });
     });
     return **entry;
   }

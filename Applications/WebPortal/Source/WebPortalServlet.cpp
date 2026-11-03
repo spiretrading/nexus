@@ -1,29 +1,35 @@
 #include "WebPortal/WebPortalServlet.hpp"
 #include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
+#include "WebPortal/FileReportService.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-WebPortalServlet::WebPortalServlet(
+WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
   ServiceLocatorWebServlet::ClientsBuilder clients_builder,
   ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
-  Clients clients)
-  : m_file_store("web_app"),
+  Clients clients, std::size_t report_concurrency)
+  : m_file_store(std::move(web_app_directory)),
     m_service_locator_servlet(Ref(m_sessions), std::move(clients_builder),
       std::move(session_clients_builder)),
     m_definitions_servlet(Ref(m_sessions)),
     m_administration_servlet(Ref(m_sessions)),
     m_market_data_servlet(Ref(m_sessions)),
     m_compliance_servlet(Ref(m_sessions)),
-    m_reporting_servlet(Ref(m_sessions)),
+    m_reporting_servlet(Ref(m_sessions), ReportService(
+      std::in_place_type<FileReportService>, "report_definitions", "reports",
+      clients.get_service_locator_client(), clients.get_time_client(),
+      report_concurrency, Timer(std::in_place_type<LiveTimer>, seconds(1)),
+      Timer(std::in_place_type<LiveTimer>, seconds(1)))),
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {

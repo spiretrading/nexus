@@ -8,7 +8,6 @@
 #include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/Streamable.hpp>
@@ -130,8 +129,8 @@ namespace Nexus {
         std::shared_ptr<RiskParameterPublisher>> m_risk_parameter_publishers;
       Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
         std::shared_ptr<RiskStatePublisher>> m_risk_state_publishers;
-      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, NotificationEntry,
-        Beam::Mutex> m_notification_entries;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, NotificationEntry>
+        m_notification_entries;
       Beam::RoutineTaskQueue m_tasks;
 
       ServiceAdministrationClient(const ServiceAdministrationClient&) = delete;

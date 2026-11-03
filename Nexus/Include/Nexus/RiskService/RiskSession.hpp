@@ -4,7 +4,6 @@
 #include <unordered_set>
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/thread/mutex.hpp>
 
 namespace Nexus {
 
@@ -34,7 +33,7 @@ namespace Nexus {
       void add_all();
 
     private:
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       bool m_has_all_subscriptions;
       std::unordered_set<Beam::DirectoryEntry> m_subscriptions;
   };
@@ -43,7 +42,7 @@ namespace Nexus {
     : m_has_all_subscriptions(false) {}
 
   inline RiskSession::RiskSession(const RiskSession& session) {
-    auto lock = boost::lock_guard(session.m_mutex);
+    auto lock = std::lock_guard(session.m_mutex);
     m_has_all_subscriptions = session.m_has_all_subscriptions;
     m_subscriptions = session.m_subscriptions;
   }
@@ -56,12 +55,12 @@ namespace Nexus {
 
   inline void RiskSession::add(
       const Beam::DirectoryEntry& group) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_subscriptions.insert(group);
   }
 
   inline void RiskSession::add_all() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_has_all_subscriptions = true;
   }
 }

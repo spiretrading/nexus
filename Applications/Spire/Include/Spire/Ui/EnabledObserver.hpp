@@ -23,6 +23,8 @@ namespace Spire {
        */
       explicit EnabledObserver(QWidget& widget);
 
+      ~EnabledObserver();
+
       /** Connects a slot to the enabled signal. */
       boost::signals2::connection connect_enabled_signal(
         const EnabledSignal::slot_type& slot) const;
@@ -31,7 +33,6 @@ namespace Spire {
       struct EventFilter;
       mutable EnabledSignal m_enabled_signal;
       std::shared_ptr<EventFilter> m_filter;
-      boost::signals2::scoped_connection m_filter_connection;
   };
 }
 

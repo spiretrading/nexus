@@ -1,15 +1,12 @@
 #include "Spire/Styles/ChildSelector.hpp"
 #include <algorithm>
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
-using namespace Beam;
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -26,15 +23,17 @@ namespace {
     struct ChildEntry {
       const QObject* m_child;
       const Stylist* m_stylist;
+      Stylist::ListenerConnection m_delete_connection;
 
-      ChildEntry(const QObject& child, const Stylist& stylist)
+      ChildEntry(const QObject& child, const Stylist& stylist,
+        Stylist::ListenerConnection delete_connection)
         : m_child(&child),
-          m_stylist(&stylist) {}
+          m_stylist(&stylist),
+          m_delete_connection(std::move(delete_connection)) {}
     };
     SelectionUpdateSignal m_on_update;
     std::vector<ChildEntry> m_children_stylists;
-    scoped_connection m_link_connection;
-    ConnectionGroup m_delete_connections;
+    Stylist::ListenerConnection m_link_connection;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -53,7 +52,7 @@ namespace {
           children.insert(link);
         }
       }
-      m_link_connection = stylist.connect_link_signal(
+      m_link_connection = stylist.add_link_listener(
         std::bind_front(&ChildObserver::on_link, this));
       for_each_proxy(stylist, [&] (auto& proxy) {
         if(add(proxy)) {
@@ -93,10 +92,9 @@ namespace {
       if(i != m_children_stylists.end()) {
         return false;
       }
-      auto connection = stylist.connect_delete_signal(
-        std::bind_front(&ChildObserver::remove, this, std::ref(child)));
-      m_delete_connections.add(&child, connection);
-      m_children_stylists.emplace_back(child, stylist);
+      m_children_stylists.emplace_back(child, stylist,
+        stylist.add_delete_listener(
+          std::bind_front(&ChildObserver::remove, this, std::ref(child))));
       return true;
     }
 
@@ -106,7 +104,6 @@ namespace {
       if(i == m_children_stylists.end()) {
         return;
       }
-      m_delete_connections.disconnect(&child);
       auto stylist = i->m_stylist;
       m_children_stylists.erase(i);
       m_on_update({}, {stylist});

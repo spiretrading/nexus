@@ -11,7 +11,6 @@
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -191,7 +190,7 @@ namespace Details {
       std::map<Listing, Quantity> m_listings;
       std::map<Level, Quantity> m_levels;
       BboQuote m_bbo;
-      Beam::Mutex m_mutex;
+      std::mutex m_mutex;
 
       TickerOrderSimulator(const TickerOrderSimulator&) = delete;
       TickerOrderSimulator& operator =(const TickerOrderSimulator&) = delete;

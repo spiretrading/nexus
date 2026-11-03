@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <thread>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
@@ -94,7 +96,8 @@ int main(int argc, const char** argv) {
     auto client_timeout =
       extract<time_duration>(config, "connection_timeout", milliseconds(500));
     auto min_connections = static_cast<std::size_t>(
-      extract<int>(config, "min_connections", thread::hardware_concurrency()));
+      extract<int>(config, "min_connections",
+        std::max(1u, std::thread::hardware_concurrency())));
     auto max_connections = static_cast<std::size_t>(
       extract<int>(config, "max_connections", 10 * min_connections));
     auto base_registry_servlet = BaseMarketDataRelayServlet(client_timeout,

@@ -2,6 +2,7 @@
 #define NEXUS_COMPLIANCE_RULE_SET_HPP
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
@@ -9,8 +10,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
-#include <Beam/Threading/CallOnce.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/ReportMessage.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
@@ -97,11 +96,11 @@ namespace Nexus {
         std::unique_ptr<ComplianceRule> m_rule;
       };
       struct Entry {
-        Beam::Mutex m_mutex;
+        std::mutex m_mutex;
         std::vector<Beam::DirectoryEntry> m_parents;
         std::vector<std::shared_ptr<Rule>> m_rules;
         std::vector<std::shared_ptr<Order>> m_orders;
-        Beam::CallOnce<Beam::Mutex> m_initializer;
+        std::once_flag m_initializer;
       };
       Beam::local_ptr_t<C> m_compliance_client;
       Beam::local_ptr_t<S> m_service_locator_client;
@@ -140,7 +139,7 @@ namespace Nexus {
     auto exception = std::exception_ptr();
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(order);
       for(auto& rule : entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
@@ -162,7 +161,7 @@ namespace Nexus {
     }
     for(auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.push_back(order);
       if(exception) {
         continue;
@@ -198,7 +197,7 @@ namespace Nexus {
       const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       for(auto& rule : entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
         if(rule_entry->get_state() == ComplianceRuleEntry::State::DISABLED) {
@@ -218,7 +217,7 @@ namespace Nexus {
     }
     for(auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       for(auto& rule : parent_entry->m_rules) {
         auto rule_entry = rule->m_entry.load();
         if(rule_entry->get_state() == ComplianceRuleEntry::State::DISABLED) {
@@ -244,7 +243,7 @@ namespace Nexus {
   void ComplianceRuleSet<C, S>::add(const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(order);
       for(auto& rule : entry->m_rules) {
         rule->m_rule->add(order);
@@ -252,7 +251,7 @@ namespace Nexus {
     }
     for(const auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.push_back(order);
       for(auto& rule : parent_entry->m_rules) {
         rule->m_rule->add(order);
@@ -268,7 +267,7 @@ namespace Nexus {
       const std::vector<std::shared_ptr<Order>>& orders) {
     auto entry = load(account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.insert(
         entry->m_orders.end(), orders.begin(), orders.end());
       for(auto& rule : entry->m_rules) {
@@ -277,7 +276,7 @@ namespace Nexus {
     }
     for(const auto& parent : entry->m_parents) {
       auto parent_entry = load(parent);
-      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      auto lock = std::lock_guard(parent_entry->m_mutex);
       parent_entry->m_orders.insert(
         parent_entry->m_orders.end(), orders.begin(), orders.end());
       for(auto& rule : parent_entry->m_rules) {
@@ -294,9 +293,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& directory_entry) {
     auto entry = m_entries.get_or_insert(
       directory_entry, boost::factory<std::shared_ptr<Entry>>());
-    entry->m_initializer.call([&] {
-      auto discovered_parents =
-        std::unordered_set<Beam::DirectoryEntry>();
+    std::call_once(entry->m_initializer, [&] {
+      auto discovered_parents = std::unordered_set<Beam::DirectoryEntry>();
       auto queue = std::deque<Beam::DirectoryEntry>();
       queue.push_back(directory_entry);
       while(!queue.empty()) {
@@ -332,7 +330,7 @@ namespace Nexus {
       Beam::IsServiceLocatorClient<Beam::dereference_t<S>>
   void ComplianceRuleSet<C, S>::update(
       const ComplianceRuleEntry& updated_entry, Entry& entry) {
-    auto lock = boost::lock_guard(entry.m_mutex);
+    auto lock = std::lock_guard(entry.m_mutex);
     entry.m_rules.erase(
       std::remove_if(entry.m_rules.begin(), entry.m_rules.end(),
         [&] (const auto& rule) {

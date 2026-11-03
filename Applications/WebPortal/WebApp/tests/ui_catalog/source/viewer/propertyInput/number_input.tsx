@@ -3,21 +3,26 @@ import * as React from 'react';
 interface Properties {
 
   /** The value of the field. */
-  value?: string;
+  value?: number;
 
   /** The callback to update the value. */
-  update?: (newValue: any) => void;
+  update?: (newValue: number) => void;
 }
 
 /** A number input field for positive numbers. */
 export class NumberInput extends React.Component<Properties> {
   public render(): JSX.Element {
-    return <input type="number" value={this.props.value}
+    return <input type="number" value={this.props.value ?? ''}
       onChange={this.onChange} onWheel={this.onWheel}/>;
   }
 
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.update(event.target.valueAsNumber);
+    const value = event.target.valueAsNumber;
+    if(Number.isFinite(value)) {
+      this.props.update?.(value);
+    } else {
+      this.props.update?.(null);
+    }
   }
 
   private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {

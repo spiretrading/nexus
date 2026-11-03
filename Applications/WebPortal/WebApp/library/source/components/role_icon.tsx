@@ -81,7 +81,10 @@ export class RoleIcon extends React.Component<Properties, State> {
       (this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown);
     return (
       <div ref={this.iconRef}
-          style={{...iconWrapper, ...iconStyle}}
+          style={{
+            ...iconWrapper,
+            ...iconStyle
+          }}
           onClick={this.onClick}
           onTouchStart={this.onTouch}
           onMouseEnter={this.showTooltipMouse}

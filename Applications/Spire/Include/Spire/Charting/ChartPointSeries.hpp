@@ -1,6 +1,5 @@
 #ifndef SPIRE_CHARTPOINTSERIES_HPP
 #define SPIRE_CHARTPOINTSERIES_HPP
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Charting/Charting.hpp"
@@ -11,7 +10,7 @@ namespace Spire {
       \brief Interface for a function or procedure that produces a series of
              ChartPoints.
    */
-  class ChartPointSeries : private boost::noncopyable {
+  class ChartPointSeries {
     public:
 
       //! Signals a new ChartPoint was added to this series.
@@ -42,6 +41,10 @@ namespace Spire {
 
       //! Constructs a ChartPointSeries.
       ChartPointSeries();
+
+    private:
+      ChartPointSeries(const ChartPointSeries&) = delete;
+      ChartPointSeries& operator =(const ChartPointSeries&) = delete;
   };
 }
 

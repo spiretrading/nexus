@@ -1,7 +1,9 @@
 #ifndef SPIRE_STATE_SELECTOR_HPP
 #define SPIRE_STATE_SELECTOR_HPP
+#include <functional>
+#include <memory>
+#include <type_traits>
 #include <utility>
-#include <boost/signals2/connection.hpp>
 #include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
@@ -69,27 +71,41 @@ namespace Spire::Styles {
   SelectConnection select(const StateSelector<T, G>& selector,
       const Stylist& base, const SelectionUpdateSignal& on_update) {
     struct Executor {
-      boost::signals2::scoped_connection m_connection;
+      const Stylist* m_base;
+      SelectionUpdateSignal m_on_update;
+      Stylist::ListenerConnection m_connection;
 
-      Executor(boost::signals2::scoped_connection connection)
-        : m_connection(std::move(connection)) {}
+      Executor(const Stylist& base, const SelectionUpdateSignal& on_update)
+        : m_base(&base),
+          m_on_update(on_update) {}
 
       bool is_connected() const {
         return true;
       }
-    };
-    auto connection = boost::signals2::scoped_connection(
-      base.connect_match_signal(selector, [=, &base] (auto is_match) {
+
+      void on_match(bool is_match) {
         if(is_match) {
-          on_update({&base}, {});
+          m_on_update({m_base}, {});
         } else {
-          on_update({}, {&base});
+          m_on_update({}, {m_base});
         }
-      }));
-    if(base.is_match(selector)) {
+      }
+    };
+    auto state = [&] {
+      if constexpr(std::is_void_v<T>) {
+        static const auto STATE = Selector(selector);
+        return STATE;
+      } else {
+        return Selector(selector);
+      }
+    }();
+    auto executor = std::make_unique<Executor>(base, on_update);
+    executor->m_connection = base.add_match_listener(
+      state, std::bind_front(&Executor::on_match, executor.get()));
+    if(base.is_match(state)) {
       on_update({&base}, {});
     }
-    return SelectConnection(std::make_unique<Executor>(std::move(connection)));
+    return SelectConnection(std::move(executor));
   }
 
   SelectConnection select(const Disabled& selector, const Stylist& base,

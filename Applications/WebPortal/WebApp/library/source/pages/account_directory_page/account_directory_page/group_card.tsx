@@ -130,7 +130,10 @@ export class GroupCard extends React.Component<Properties, State> {
     }
     return (
       <VBoxLayout width='100%'>
-        <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
+        <div style={{
+          ...GroupCard.STYLE.header,
+          ...headerMouseOverStyle
+        }}>
           {dropDownButton}
           <div style={headerTextStyle}
               onMouseEnter={this.onGroupMouseEnter}

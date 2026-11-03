@@ -8,7 +8,6 @@
 #include <variant>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
@@ -21,7 +20,7 @@ namespace Nexus {
 
 namespace Details {
   using BacktesterMarketDataServiceHandle =
-    std::shared_ptr<Beam::Sync<BacktesterMarketDataService*, Beam::Mutex>>;
+    std::shared_ptr<Beam::Sync<BacktesterMarketDataService*>>;
 }
 
   /** Provides historical market data to the backtester. */
@@ -223,8 +222,7 @@ namespace Details {
       : m_event_handler(event_handler.get()),
         m_market_data_environment(market_data_environment.get()),
         m_market_data_client(std::move(market_data_client)) {
-    m_self = std::make_shared<
-      Beam::Sync<BacktesterMarketDataService*, Beam::Mutex>>(this);
+    m_self = std::make_shared<Beam::Sync<BacktesterMarketDataService*>>(this);
   }
 
   inline BacktesterMarketDataService::~BacktesterMarketDataService() {

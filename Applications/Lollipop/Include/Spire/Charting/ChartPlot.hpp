@@ -1,6 +1,5 @@
 #ifndef SPIRE_CHARTPLOT_HPP
 #define SPIRE_CHARTPLOT_HPP
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Charting/Charting.hpp"
@@ -11,7 +10,7 @@ namespace Spire {
       \brief Represents a single plot (which may consist of multiple points) on
              a chart.
    */
-  class ChartPlot : private boost::noncopyable {
+  class ChartPlot {
     public:
 
       //! Signals an update to this plot.
@@ -31,6 +30,10 @@ namespace Spire {
 
       //! Constructs a ChartPlot.
       ChartPlot();
+
+    private:
+      ChartPlot(const ChartPlot&) = delete;
+      ChartPlot& operator =(const ChartPlot&) = delete;
   };
 }
 

@@ -4,7 +4,6 @@
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
-#include <boost/noncopyable.hpp>
 #include <QKeyEvent>
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -18,7 +17,7 @@ namespace Spire {
       \brief Stores the necessary state to display an CondensedCanvasWidget for
              an Order CanvasNode within a widget.
    */
-  class OrderTaskView : private boost::noncopyable {
+  class OrderTaskView {
     public:
 
       //! Specifies the type of slot used to display a CondensedCanvasWidget.
@@ -75,6 +74,8 @@ namespace Spire {
       RemoveWidgetSlot m_removeWidgetSlot;
       Beam::TaskQueue m_slotHandler;
 
+      OrderTaskView(const OrderTaskView&) = delete;
+      OrderTaskView& operator =(const OrderTaskView&) = delete;
       void RemoveTaskEntry();
       void ExecuteTask(const CanvasNode& node);
       std::unique_ptr<CanvasNode> InitializeTaskNode(

@@ -16,44 +16,40 @@ TEST_SUITE("SiblingSelector") {
     REQUIRE(SiblingSelector(Bar(), Foo()) != SiblingSelector(Foo(), Foo()));
   }
 
-  TEST_CASE("selection") {
-    run_test([] {
-      auto graph = make_graph();
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(SiblingSelector(Foo(), Bar()),
-        find_stylist(*graph["C"]), [&] (auto&& additions, auto&& removals) {
-          updates.push_back({std::move(additions), std::move(removals)});
-        });
-      REQUIRE(updates.empty());
-      match(*graph["C"], Foo());
-      REQUIRE(updates.empty());
-      match(*graph["D"], Bar());
-      require_selection(updates, graph, {"D"}, {});
-      auto sibling = QWidget();
-      graph["Z"] = &sibling;
-      sibling.setParent(graph["B"]);
-      REQUIRE(updates.empty());
-      match(sibling, Bar());
-      require_selection(updates, graph, {"Z"}, {});
-      match(*graph["G"], Bar());
-      match(*graph["H"], Bar());
-      REQUIRE(updates.empty());
-      graph["C"]->setParent(graph["D"]);
-      require_selection(updates, graph, {"G", "H"}, {"D", "Z"});
-      graph["C"]->setParent(nullptr);
-      require_selection(updates, graph, {}, {"G", "H"});
-    });
+  UI_TEST_CASE("selection") {
+    auto graph = make_graph();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(SiblingSelector(Foo(), Bar()),
+      find_stylist(*graph["C"]), [&] (auto&& additions, auto&& removals) {
+        updates.push_back({std::move(additions), std::move(removals)});
+      });
+    REQUIRE(updates.empty());
+    match(*graph["C"], Foo());
+    REQUIRE(updates.empty());
+    match(*graph["D"], Bar());
+    require_selection(updates, graph, {"D"}, {});
+    auto sibling = QWidget();
+    graph["Z"] = &sibling;
+    sibling.setParent(graph["B"]);
+    REQUIRE(updates.empty());
+    match(sibling, Bar());
+    require_selection(updates, graph, {"Z"}, {});
+    match(*graph["G"], Bar());
+    match(*graph["H"], Bar());
+    REQUIRE(updates.empty());
+    graph["C"]->setParent(graph["D"]);
+    require_selection(updates, graph, {"G", "H"}, {"D", "Z"});
+    graph["C"]->setParent(nullptr);
+    require_selection(updates, graph, {}, {"G", "H"});
   }
 
-  TEST_CASE("initial_selection") {
-    run_test([] {
-      auto graph = make_graph();
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection = select(SiblingSelector(Any(), Any()),
-        find_stylist(*graph["C"]), [&] (auto&& additions, auto&& removals) {
-          updates.push_back({std::move(additions), std::move(removals)});
-        });
-      require_selection(updates, graph, {"D"}, {});
-    });
+  UI_TEST_CASE("initial_selection") {
+    auto graph = make_graph();
+    auto updates = std::deque<SelectionUpdate>();
+    auto connection = select(SiblingSelector(Any(), Any()),
+      find_stylist(*graph["C"]), [&] (auto&& additions, auto&& removals) {
+        updates.push_back({std::move(additions), std::move(removals)});
+      });
+    require_selection(updates, graph, {"D"}, {});
   }
 }

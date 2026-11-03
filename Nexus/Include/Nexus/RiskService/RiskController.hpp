@@ -2,6 +2,7 @@
 #define NEXUS_RISK_CONTROLLER_HPP
 #include <memory>
 #include <format>
+#include <mutex>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -9,7 +10,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
@@ -99,7 +99,7 @@ namespace Nexus {
         get_portfolio_publisher() const;
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::DirectoryEntry m_account;
       Beam::local_ptr_t<A> m_administration_client;
       Beam::local_ptr_t<O> m_order_execution_client;

@@ -386,8 +386,11 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
     const suggestions = this.props.suggestedGroups.map((group, index) => {
       if(group === this.props.suggestedGroups[this.props.currentIndex]) {
         return (
-          <li style={{...SuggestionBox.STYLE.entry,
-                ...textStyle, ...SuggestionBox.STYLE.selected}}
+          <li style={{
+                ...SuggestionBox.STYLE.entry,
+                ...textStyle,
+                ...SuggestionBox.STYLE.selected
+              }}
               onMouseDown={this.props.onAddGroup}
               key={group.id}
               ref={this.currentEntryRef}>
@@ -395,7 +398,10 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
           </li>);
       } else {
         return (
-          <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
+          <li style={{
+                ...SuggestionBox.STYLE.entry,
+                ...textStyle
+              }}
               onMouseMove={() => this.props.onChangeIndex(index)}
               key={group.id}>
             {group.name}

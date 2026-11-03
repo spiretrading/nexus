@@ -8,7 +8,6 @@
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <boost/any.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
 #include <QTimer>
@@ -44,7 +43,7 @@ namespace Spire {
       static constexpr unsigned int STANDARD_COLUMN_COUNT = 4;
 
       /** Stores a CanvasObserver for an executing Task. */
-      struct ObserverEntry : private boost::noncopyable {
+      struct ObserverEntry {
 
         /** The name of the monitor. */
         std::string m_name;
@@ -62,6 +61,10 @@ namespace Spire {
          */
         ObserverEntry(std::string name,
           std::unique_ptr<CanvasObserver> observer);
+
+        private:
+          ObserverEntry(const ObserverEntry&) = delete;
+          ObserverEntry& operator =(const ObserverEntry&) = delete;
       };
 
       /** Stores information about a single Task entry. */

@@ -1,6 +1,7 @@
 #ifndef NEXUS_REPLAY_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_REPLAY_MARKET_DATA_FEED_CLIENT_HPP
 #include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -8,8 +9,6 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -80,9 +79,9 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       boost::posix_time::ptime m_open_time;
       TimerBuilder m_timer_builder;
-      Beam::Mutex m_pending_mutex;
+      std::mutex m_pending_mutex;
       std::size_t m_pending_load_count;
-      Beam::ConditionVariable m_is_pending_load;
+      std::condition_variable m_is_pending_load;
       Beam::OpenState m_open_state;
       Beam::RoutineHandlerGroup m_routines;
 
@@ -185,7 +184,9 @@ namespace Nexus {
       if(m_pending_load_count == 0) {
         m_is_pending_load.notify_all();
       } else {
-        m_is_pending_load.wait(lock);
+        m_is_pending_load.wait(lock, [&] {
+          return m_pending_load_count == 0;
+        });
       }
     }
     auto current_time = m_time_client->get_time();

@@ -1,39 +1,29 @@
 #include "Spire/Ui/MouseObserver.hpp"
-#include "Spire/Spire/ExtensionCache.hpp"
+#include <algorithm>
+#include <vector>
+#include <QPointer>
 #include <QWidget>
+#include "Spire/Spire/ExtensionCache.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  struct MouseCombiner {
-    using result_type = bool;
-
-    template<typename Iterator>
-    result_type operator()(Iterator first, Iterator last) const {
-      for(auto i = first; i != last; ++i) {
-        if(*i) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
-}
-
 struct MouseObserver::EventFilter : QObject {
-  struct Child {
-    std::unique_ptr<MouseObserver> m_observer;
-    scoped_connection m_connection;
+  struct Slot {
+    MouseObserver* m_observer;
+    EventFilter* m_parent;
   };
-  using FilteredMouseSignal = boost::signals2::signal<
-    bool (QWidget& target, QMouseEvent& event), MouseCombiner>;
+  struct Child {
+    QObject* m_child;
+    std::shared_ptr<EventFilter> m_filter;
+  };
+  std::vector<Slot> m_slots;
+  std::vector<Child> m_children;
+  int m_depth;
 
-  mutable FilteredMouseSignal m_mouse_signal;
-  std::unordered_map<QObject*, Child> m_children;
-
-  EventFilter(QWidget& widget) {
+  EventFilter(QWidget& widget)
+      : m_depth(0) {
     widget.installEventFilter(this);
     for(auto child : widget.children()) {
       if(child && child->isWidgetType()) {
@@ -42,13 +32,62 @@ struct MouseObserver::EventFilter : QObject {
     }
   }
 
+  ~EventFilter() {
+    for(auto& child : m_children) {
+      child.m_filter->remove_slot(nullptr, this);
+    }
+  }
+
+  void add_slot(MouseObserver* observer, EventFilter* parent) {
+    m_slots.push_back(Slot(observer, parent));
+  }
+
+  void remove_slot(MouseObserver* observer, EventFilter* parent) {
+    auto i = std::ranges::find_if(m_slots, [&] (const auto& slot) {
+      return slot.m_observer == observer && slot.m_parent == parent;
+    });
+    if(i == m_slots.end()) {
+      return;
+    }
+    if(m_depth == 0) {
+      m_slots.erase(i);
+    } else {
+      *i = Slot(nullptr, nullptr);
+    }
+  }
+
+  bool invoke(QWidget& target, QMouseEvent& event) {
+    auto self = QPointer(this);
+    auto is_filtered = false;
+    auto size = m_slots.size();
+    ++m_depth;
+    for(auto i = std::size_t(0); i != size && !is_filtered; ++i) {
+      auto slot = m_slots[i];
+      if(slot.m_observer) {
+        is_filtered =
+          slot.m_observer->m_mouse_signal(target, event).value_or(false);
+      } else if(slot.m_parent) {
+        is_filtered = slot.m_parent->invoke(target, event);
+      }
+      if(!self) {
+        return is_filtered;
+      }
+    }
+    --m_depth;
+    if(m_depth == 0) {
+      std::erase_if(m_slots, [] (const auto& slot) {
+        return !slot.m_observer && !slot.m_parent;
+      });
+    }
+    return is_filtered;
+  }
+
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::MouseButtonDblClick ||
         event->type() == QEvent::MouseButtonPress ||
         event->type() == QEvent::MouseButtonRelease) {
-      auto filter = m_mouse_signal(*static_cast<QWidget*>(watched),
+      return invoke(*static_cast<QWidget*>(watched),
         *static_cast<QMouseEvent*>(event));
-      return filter;
     } else if(event->type() == QEvent::ChildAdded ||
         event->type() == QEvent::ChildPolished) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
@@ -56,33 +95,39 @@ struct MouseObserver::EventFilter : QObject {
         add(static_cast<QWidget&>(child));
       }
     } else if(event->type() == QEvent::ChildRemoved) {
-      auto& child_event = static_cast<QChildEvent&>(*event);
-      m_children.erase(child_event.child());
+      remove(*static_cast<QChildEvent&>(*event).child());
     }
     return QObject::eventFilter(watched, event);
   }
 
   void add(QWidget& child) {
-    auto i = m_children.find(&child);
-    if(i != m_children.end()) {
+    if(std::ranges::find(m_children, &child, &Child::m_child) !=
+        m_children.end()) {
       return;
     }
-    auto observer = std::make_unique<MouseObserver>(child);
-    auto connection = observer->connect_filtered_mouse_signal(
-      [=] (auto& target, auto& event) {
-        return m_mouse_signal(target, event);
-      });
-    auto child_entry = Child(std::move(observer), std::move(connection));
-    m_children.insert(i, std::pair(&child, std::move(child_entry)));
+    auto filter = find_extension<EventFilter>(child);
+    filter->add_slot(nullptr, this);
+    m_children.push_back(Child(&child, std::move(filter)));
+  }
+
+  void remove(QObject& child) {
+    auto i = std::ranges::find(m_children, &child, &Child::m_child);
+    if(i == m_children.end()) {
+      return;
+    }
+    auto filter = std::move(i->m_filter);
+    m_children.erase(i);
+    filter->remove_slot(nullptr, this);
   }
 };
 
-MouseObserver::MouseObserver(QWidget& widget) {
-  m_filter = find_extension<EventFilter>(widget);
-  m_filter_connection = m_filter->m_mouse_signal.connect(
-    [=] (auto& target, auto& event) {
-      return m_mouse_signal(target, event).value_or(false);
-    });
+MouseObserver::MouseObserver(QWidget& widget)
+    : m_filter(find_extension<EventFilter>(widget)) {
+  m_filter->add_slot(this, nullptr);
+}
+
+MouseObserver::~MouseObserver() {
+  m_filter->remove_slot(this, nullptr);
 }
 
 connection MouseObserver::connect_filtered_mouse_signal(

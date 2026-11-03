@@ -23,7 +23,7 @@ interface Properties extends
   onChange?: (value: Nexus.Scope) => void;
 }
 
-/** Displays a scope and opens its editor on focus. */
+/** Displays a scope with a modal editor. */
 export class ScopeInput extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);

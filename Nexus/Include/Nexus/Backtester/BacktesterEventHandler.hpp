@@ -1,15 +1,14 @@
 #ifndef NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #define NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #include <algorithm>
+#include <condition_variable>
 #include <deque>
 #include <functional>
 #include <memory>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/LockRelease.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
@@ -87,7 +86,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       boost::posix_time::ptime m_start_time;
       boost::posix_time::ptime m_end_time;
       Beam::Tests::TimeServiceTestEnvironment m_time_environment;
@@ -100,9 +99,9 @@ namespace Nexus {
       std::shared_ptr<BacktesterEvent> m_stepped_event;
       std::function<bool ()> m_idle_task;
       bool m_is_idle_task_pending;
-      Beam::ConditionVariable m_event_available_condition;
-      Beam::ConditionVariable m_active_processed_condition;
-      Beam::ConditionVariable m_suspend_condition;
+      std::condition_variable m_event_available_condition;
+      std::condition_variable m_active_processed_condition;
+      std::condition_variable m_suspend_condition;
       Beam::RoutineHandler m_event_loop_routine;
       Beam::OpenState m_open_state;
 

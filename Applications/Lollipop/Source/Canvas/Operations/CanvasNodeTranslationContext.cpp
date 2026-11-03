@@ -57,7 +57,7 @@ SequencePublisher<std::shared_ptr<Order>>&
 
 void CanvasNodeTranslationContext::Add(
     Ref<const CanvasNode> node, const Translation& translation) {
-  auto lock = lock_guard(m_mutex);
+  auto lock = std::lock_guard(m_mutex);
   m_translations.insert(std::make_pair(node.get(), translation));
   if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);
@@ -66,7 +66,7 @@ void CanvasNodeTranslationContext::Add(
 
 optional<Translation> CanvasNodeTranslationContext::FindTranslation(
     const CanvasNode& node) const {
-  auto lock = lock_guard(m_mutex);
+  auto lock = std::lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
     if(!m_parent) {
@@ -79,7 +79,7 @@ optional<Translation> CanvasNodeTranslationContext::FindTranslation(
 
 optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
     const CanvasNode& node) const {
-  auto lock = lock_guard(m_mutex);
+  auto lock = std::lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
     auto subTranslationIterator = m_subTranslations.find(&node);
@@ -96,7 +96,7 @@ optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
 
 void CanvasNodeTranslationContext::AddSubtranslation(
     Beam::Ref<const CanvasNode> node, const Translation& translation) {
-  auto lock = lock_guard(m_mutex);
+  auto lock = std::lock_guard(m_mutex);
   m_subTranslations.insert(std::pair(node.get(), translation));
   if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);

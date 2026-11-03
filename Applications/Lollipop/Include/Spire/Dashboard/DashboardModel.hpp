@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <boost/noncopyable.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardRow.hpp"
@@ -13,7 +12,7 @@ namespace Spire {
   /*! \class DashboardModel
       \brief Represents a table of DashboardCells.
    */
-  class DashboardModel : private boost::noncopyable {
+  class DashboardModel {
     public:
 
       //! Signals a row was added to this model.
@@ -95,6 +94,9 @@ namespace Spire {
       std::vector<std::unique_ptr<DashboardRow>> m_rows;
       mutable RowAddedSignal m_rowAddedSignal;
       mutable RowRemovedSignal m_rowRemovedSignal;
+
+      DashboardModel(const DashboardModel&) = delete;
+      DashboardModel& operator =(const DashboardModel&) = delete;
   };
 }
 

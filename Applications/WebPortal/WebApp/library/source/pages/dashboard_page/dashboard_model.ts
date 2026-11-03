@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountModel, GroupModel } from '..';
 import { NotificationsModel } from '../notifications_page/notifications_model';
+import { ReportModel } from '../report_page/report_model';
 import { RequestsModel } from '../requests_page/requests_model';
 
 /** Base class for the model used by the DashboardPage. */
@@ -33,6 +34,9 @@ export abstract class DashboardModel {
 
   /** Returns the NotificationsModel. */
   public abstract get notificationsModel(): NotificationsModel;
+
+  /** Returns the model for reporting subpages. */
+  public abstract get reportModel(): ReportModel;
 
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;

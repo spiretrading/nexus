@@ -1,6 +1,5 @@
+#include <condition_variable>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Backtester/ActiveBacktesterEvent.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
@@ -18,8 +17,8 @@ TEST_SUITE("BacktesterTimer") {
     auto timer = BacktesterTimer(seconds(1), Ref(event_handler));
     auto routines = RoutineTaskQueue();
     auto expected_timestamp = start_time + seconds(1);
-    auto query_complete_mutex = Mutex();
-    auto test_complete_condition = ConditionVariable();
+    auto query_complete_mutex = std::mutex();
+    auto test_complete_condition = std::condition_variable();
     auto test_succeeded = optional<bool>();
     timer.get_publisher().monitor(
       routines.get_slot<Timer::Result>([&] (auto result) {
@@ -46,8 +45,8 @@ TEST_SUITE("BacktesterTimer") {
     auto timer_b = BacktesterTimer(seconds(2), Ref(event_handler));
     auto routines = RoutineTaskQueue();
     auto expected_timestamp = start_time + seconds(1);
-    auto query_complete_mutex = Mutex();
-    auto test_complete_condition = ConditionVariable();
+    auto query_complete_mutex = std::mutex();
+    auto test_complete_condition = std::condition_variable();
     auto test_succeeded = optional<bool>();
     timer_a.get_publisher().monitor(
       routines.get_slot<Timer::Result>([&] (Timer::Result result) {

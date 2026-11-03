@@ -11,6 +11,9 @@ export class HttpAccountGroupQueryModel extends AccountGroupQueryModel {
 
   public async submit(prefix: string):
       Promise<readonly Beam.DirectoryEntry[]> {
+    if(prefix.trim() === '*') {
+      return [Beam.DirectoryEntry.STAR_DIRECTORY];
+    }
     if(!prefix.trim()) {
       return [];
     }

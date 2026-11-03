@@ -1,13 +1,12 @@
 #ifndef NEXUS_EXCHANGE_RATE_TABLE_HPP
 #define NEXUS_EXCHANGE_RATE_TABLE_HPP
+#include <mutex>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/CurrencyPair.hpp"
@@ -66,7 +65,7 @@ namespace Nexus {
 
     private:
       friend struct Beam::Shuttle<ExchangeRateTable>;
-      mutable boost::mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<CurrencyPair, ExchangeRate> m_direct_rates;
       mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
   };
@@ -79,7 +78,7 @@ namespace Nexus {
   }
 
   inline ExchangeRateTable::ExchangeRateTable(const ExchangeRateTable& table) {
-    auto lock = boost::lock_guard(table.m_mutex);
+    auto lock = std::lock_guard(table.m_mutex);
     m_direct_rates = table.m_direct_rates;
     m_derived_rates = table.m_derived_rates;
   }
@@ -87,7 +86,7 @@ namespace Nexus {
   inline boost::optional<ExchangeRate>
       ExchangeRateTable::find(CurrencyPair pair) const {
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       auto i = m_direct_rates.find(pair);
       if(i != m_direct_rates.end()) {
         return i->second;
@@ -102,7 +101,7 @@ namespace Nexus {
     }
     auto rates = std::unordered_map<CurrencyPair, ExchangeRate>();
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       rates = m_direct_rates;
     }
     auto visited = std::unordered_set<CurrencyId>();
@@ -115,7 +114,7 @@ namespace Nexus {
       if(currency == pair.m_counter) {
         auto derived_rate = ExchangeRate(pair, cumulative_rate);
         {
-          auto lock = boost::lock_guard(m_mutex);
+          auto lock = std::lock_guard(m_mutex);
           m_derived_rates.insert(std::pair(pair, derived_rate));
         }
         return derived_rate;
@@ -153,7 +152,7 @@ namespace Nexus {
   }
 
   inline void ExchangeRateTable::add(const ExchangeRate& rate) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_direct_rates[rate.m_pair] = rate;
     auto inverse = invert(rate);
     m_direct_rates[inverse.m_pair] = inverse;
@@ -167,7 +166,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(S& shuttle, Nexus::ExchangeRateTable& value,
         unsigned int version) const {
-      auto lock = boost::lock_guard(value.m_mutex);
+      auto lock = std::lock_guard(value.m_mutex);
       shuttle.shuttle("direct_rates", value.m_direct_rates);
       if constexpr(IsReceiver<S>) {
         value.m_derived_rates.clear();

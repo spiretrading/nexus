@@ -1,7 +1,6 @@
 #ifndef SPIRE_DASHBOARDSELECTIONMODEL_HPP
 #define SPIRE_DASHBOARDSELECTIONMODEL_HPP
 #include <vector>
-#include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
@@ -11,7 +10,7 @@ namespace Spire {
   /*! \class DashboardSelectionModel
       \brief Represents the selected items in a DashboardModel.
    */
-  class DashboardSelectionModel : private boost::noncopyable {
+  class DashboardSelectionModel {
     public:
 
       //! Signals a change in the selected rows.
@@ -82,6 +81,10 @@ namespace Spire {
       boost::optional<int> m_activeRow;
       mutable SelectedRowsUpdatedSignal m_selectedRowsUpdatedSignal;
       mutable ActiveRowUpdatedSignal m_activeRowUpdatedSignal;
+
+      DashboardSelectionModel(const DashboardSelectionModel&) = delete;
+      DashboardSelectionModel& operator =(
+        const DashboardSelectionModel&) = delete;
   };
 }
 

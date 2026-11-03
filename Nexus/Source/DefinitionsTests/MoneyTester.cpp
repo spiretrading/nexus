@@ -1,3 +1,4 @@
+#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
@@ -77,6 +78,27 @@ TEST_SUITE("Money") {
     REQUIRE(to_string(3 * Money::CENT + Money::CENT / 2) == "0.035");
   }
 
+  TEST_CASE("large_value_output") {
+    REQUIRE(to_string(from_json<Money>("1e25")) ==
+      "10000000000000000000.00");
+    REQUIRE(to_string(from_json<Money>("-1E+25")) ==
+      "-10000000000000000000.00");
+    REQUIRE(to_string(from_json<Money>("10000000000000000000000000")) ==
+      "10000000000000000000.00");
+    REQUIRE(to_string(from_json<Money>("-10000000000000000000000000")) ==
+      "-10000000000000000000.00");
+    REQUIRE(to_string(Money(Quantity::from_representation(1e31))) ==
+      "9999999999999998758486016.00");
+    auto maximum =
+      Quantity::from_representation(std::numeric_limits<double>::max());
+    REQUIRE(to_string(Money(maximum)) == to_string(maximum) + ".00");
+    auto output = std::ostringstream();
+    output << std::showpoint << std::scientific;
+    output.precision(3);
+    output << Money(Quantity(1e19)) << ' ' << 1.0;
+    REQUIRE(output.str() == "10000000000000000000.00 1.000e+00");
+  }
+
   TEST_CASE("from_string") {
     REQUIRE(try_parse_money("0") == Money::ZERO);
     REQUIRE(try_parse_money("-0") == Money::ZERO);
@@ -135,6 +157,16 @@ TEST_SUITE("Money") {
     REQUIRE(try_parse_money("-.11") == -(11 * Money::CENT));
     REQUIRE(try_parse_money("-.12") == -(12 * Money::CENT));
     REQUIRE(try_parse_money("0.00000100") == (Money::ONE / 1000000));
+  }
+
+  TEST_CASE("parse_overflow") {
+    for(auto& value : {"9223372036854775808", "-9223372036854775808",
+        "0.9223372036854775808", "-0.9223372036854775808"}) {
+      REQUIRE(!try_parse_money(value));
+      REQUIRE_THROWS_AS(parse_money(value), std::invalid_argument);
+    }
+    REQUIRE(static_cast<Quantity>(
+      parse_money("0.0000001")).get_representation() == doctest::Approx(0.1));
   }
 
   TEST_CASE("floor_to") {

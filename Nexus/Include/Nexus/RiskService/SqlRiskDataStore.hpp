@@ -1,8 +1,8 @@
 #ifndef NEXUS_SQL_RISK_DATA_STORE_HPP
 #define NEXUS_SQL_RISK_DATA_STORE_HPP
 #include <memory>
+#include <mutex>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <boost/iterator/function_output_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <Viper/Viper.hpp>
@@ -36,7 +36,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::OpenState m_open_state;
 

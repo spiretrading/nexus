@@ -91,7 +91,10 @@ export class AddressField extends React.Component<Properties, State> {
         disabled={this.props.readonly}
         className={css(AddressField.EXTRA_STYLE.effects)}
         value={this.state.displayValue}
-        style={{...containerStyle, ...heightOverride}}
+        style={{
+          ...containerStyle,
+          ...heightOverride
+        }}
         onBlur={this.onBlur}
         onFocus={this.onFocus}
         onChange={this.onChange}/>);

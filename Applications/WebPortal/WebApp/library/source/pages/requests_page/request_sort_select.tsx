@@ -20,7 +20,10 @@ export function RequestSortSelect(
   };
   return (
     <Select {...rest} value={value.toString()}
-        style={{...STYLE.select, ...rest.style}}
+        style={{
+          ...STYLE.select,
+          ...rest.style
+        }}
         onChange={onSelectChange}>
       <option value={RequestsModel.SortField.LAST_UPDATED}>
         Last Updated

@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -19,7 +18,7 @@ namespace Spire {
   /*! \class CancelOnFillController
       \brief Implements the cancel on fill interactions property.
    */
-  class CancelOnFillController : private boost::noncopyable {
+  class CancelOnFillController {
     public:
 
       //! Constructs a CancelOnFillController.
@@ -54,6 +53,9 @@ namespace Spire {
         m_tickerToOrderEntryList;
       std::optional<Beam::RoutineTaskQueue> m_slotHandler;
 
+      CancelOnFillController(const CancelOnFillController&) = delete;
+      CancelOnFillController& operator =(
+        const CancelOnFillController&) = delete;
       void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
       void OnExecutionReport(std::weak_ptr<OrderEntry> weakOrderEntry,
         const Nexus::ExecutionReport& report);

@@ -2,7 +2,6 @@
 #define SPIRE_CANVASNODEBUILDER_HPP
 #include <memory>
 #include <string>
-#include <boost/noncopyable.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasPath.hpp"
@@ -12,7 +11,7 @@ namespace Spire {
   /*! \class CanvasNodeBuilder
       \brief Constructs a new CanvasNode from an existing CanvasNode.
    */
-  class CanvasNodeBuilder : private boost::noncopyable {
+  class CanvasNodeBuilder {
     public:
 
       //! Constructs a CanvasNodeBuilder from an existing CanvasNode.
@@ -85,6 +84,8 @@ namespace Spire {
     private:
       std::unique_ptr<CanvasNode> m_node;
 
+      CanvasNodeBuilder(const CanvasNodeBuilder&) = delete;
+      CanvasNodeBuilder& operator =(const CanvasNodeBuilder&) = delete;
       void Commit(const CanvasNode& node,
         std::unique_ptr<CanvasNode> replacement);
   };

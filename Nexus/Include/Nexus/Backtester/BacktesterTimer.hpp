@@ -2,7 +2,6 @@
 #define NEXUS_BACKTESTER_TIMER_HPP
 #include <memory>
 #include <Beam/Queues/QueueWriterPublisher.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
@@ -12,8 +11,7 @@ namespace Nexus {
   class TimerBacktesterEvent;
 
 namespace Details {
-  using BacktesterTimerHandle =
-    std::shared_ptr<Beam::Sync<BacktesterTimer*, Beam::Mutex>>;
+  using BacktesterTimerHandle = std::shared_ptr<Beam::Sync<BacktesterTimer*>>;
 }
 
   /** Implements a Timer used by the backtester. */
@@ -77,7 +75,7 @@ namespace Details {
       Beam::Ref<BacktesterEventHandler> event_handler)
       : m_interval(interval),
         m_event_handler(event_handler.get()) {
-    m_self = std::make_shared<Beam::Sync<BacktesterTimer*, Beam::Mutex>>(this);
+    m_self = std::make_shared<Beam::Sync<BacktesterTimer*>>(this);
   }
 
   inline BacktesterTimer::~BacktesterTimer() {

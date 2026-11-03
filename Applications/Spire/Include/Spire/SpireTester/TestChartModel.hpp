@@ -1,9 +1,9 @@
 #ifndef SPIRE_TEST_CHART_MODEL_HPP
 #define SPIRE_TEST_CHART_MODEL_HPP
+#include <condition_variable>
 #include <deque>
 #include <memory>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
+#include <mutex>
 #include "Spire/Charting/ChartModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
@@ -48,13 +48,13 @@ namespace Spire {
 
         private:
           friend class TestChartModel;
-          mutable Beam::Threading::Mutex m_mutex;
+          mutable std::mutex m_mutex;
           Scalar m_first;
           Scalar m_last;
           Beam::Queries::SnapshotLimit m_limit;
           bool m_is_loaded;
           std::vector<Candlestick> m_result;
-          Beam::Threading::ConditionVariable m_load_condition;
+          std::condition_variable m_load_condition;
       };
 
       //! Constructs a TestChartModel.
@@ -78,8 +78,8 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
-      Beam::Threading::Mutex m_mutex;
-      Beam::Threading::ConditionVariable m_load_condition;
+      std::mutex m_mutex;
+      std::condition_variable m_load_condition;
       mutable CandlestickSignal m_candlestick_signal;
       Scalar::Type m_x_axis_type;
       Scalar::Type m_y_axis_type;

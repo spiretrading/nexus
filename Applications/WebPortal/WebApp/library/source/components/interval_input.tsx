@@ -38,13 +38,20 @@ export class IntervalInput extends React.Component<Properties> {
           aria-describedby={rest['aria-describedby']}
           inputMode='numeric' aria-label='Interval count'
           readOnly={readOnly} disabled={disabled} required={required}
-          style={{width: '64px', flex: '0 0 64px'}}
+          style={{
+            width: 'clamp(50px, calc(100cqw - 150px), 96px)',
+            flex: '0 0 auto'
+          }}
           onChange={this.onCountChange}/>
         <Select value={value.unit} aria-label='Interval unit'
             aria-invalid={rest['aria-invalid']}
             aria-describedby={rest['aria-describedby']}
             readOnly={readOnly} disabled={disabled}
-            style={{flex: '1 1 0', minWidth: 0, boxSizing: 'border-box'}}
+            style={{
+              flex: '1 1 0',
+              minWidth: 0,
+              boxSizing: 'border-box'
+            }}
             onChange={this.onUnitChange}>
           {['Day', 'Week', 'Month', 'Year'].map((label, unit) => {
             if(value.count !== 1) {
@@ -66,5 +73,10 @@ export class IntervalInput extends React.Component<Properties> {
 }
 
 const STYLES = StyleSheet.create({
-  container: {display: 'flex', gap: '10px', width: '100%'}
+  container: {
+    containerType: 'inline-size',
+    display: 'flex',
+    gap: '10px',
+    width: '100%'
+  }
 });

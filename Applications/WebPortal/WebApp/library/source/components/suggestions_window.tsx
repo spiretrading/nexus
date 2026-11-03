@@ -118,7 +118,9 @@ const STYLES = StyleSheet.create({
     boxShadow: '0 2px 6px rgb(0 0 0 / 40%)',
     font: '400 14px Roboto',
     transition: 'opacity 200ms ease-in',
-    '@starting-style': {opacity: 0}
+    '@starting-style': {
+      opacity: 0
+    }
   },
   list: {
     height: '100%',
@@ -136,8 +138,11 @@ const STYLES = StyleSheet.create({
     textOverflow: 'ellipsis',
     cursor: 'pointer',
     ':is([aria-selected="true"])': {
-      background: '#684BC7', color: '#FFFFFF'
+      background: '#684BC7',
+      color: '#FFFFFF'
     }
   },
-  message: {padding: '9px 10px'}
+  message: {
+    padding: '9px 10px'
+  }
 });

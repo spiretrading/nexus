@@ -127,8 +127,10 @@ export class CreateGroupModal extends React.Component<Properties, State> {
               ref={this._inputRef}
               value={this.state.groupName}
               placeholder={CreateGroupModal.PLACEHOLDER}
-              style={{...CreateGroupModal.STYLE.textInputOverride,
-                ...(message ? CreateGroupModal.ERROR_STYLE : undefined)}}
+              style={{
+                ...CreateGroupModal.STYLE.textInputOverride,
+                ...(message ? CreateGroupModal.ERROR_STYLE : undefined)
+              }}
               onChange={this.onInputChange}
               onKeyDown={this.onKeyDown}/>
             <div style={CreateGroupModal.STYLE.inputFiller}/>
@@ -261,13 +263,25 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     'resources/account_directory_page/create_group_modal/close.svg';
   private static readonly PLACEHOLDER = 'Type here';
   private static readonly MODAL_SMALL_DIMENSIONS =
-    {width: '282px', height: '184px'};
+    {
+      width: '282px',
+      height: '184px'
+    };
   private static readonly MODAL_LARGE_DIMENSIONS =
-    {width: '550px', height: '120px'};
+    {
+      width: '550px',
+      height: '120px'
+    };
   private static readonly MODAL_SMALL_DIMENSIONS_ERROR =
-    {width: '282px', height: '236px'};
+    {
+      width: '282px',
+      height: '236px'
+    };
   private static readonly MODAL_LARGE_DIMENSIONS_ERROR =
-    {width: '550px', height: '172px'};
+    {
+      width: '550px',
+      height: '172px'
+    };
 }
 
 export namespace CreateGroupModal {
@@ -342,9 +356,11 @@ class Modal extends React.Component<ModalProperties> {
                   onClick={this.outOfBoundsClick}>
                 <div style={Modal.STYLE.topFiller}
                   onClick={this.props.onClose}/>
-                <div style={{...Modal.STYLE.modal,
-                    width: this.props.width,
-                    height: this.props.height}}>
+                <div style={{
+                      ...Modal.STYLE.modal,
+                      width: this.props.width,
+                      height: this.props.height
+                    }}>
                   {this.props.children}
                 </div>
                 <div style={Modal.STYLE.bottomFiller}

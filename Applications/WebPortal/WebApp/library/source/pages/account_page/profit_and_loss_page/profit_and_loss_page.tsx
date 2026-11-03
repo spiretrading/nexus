@@ -238,8 +238,11 @@ function CustomDates(props: {
   }, [props.isOpen]);
   return (
     <div ref={wrapperRef} id='custom-dates'
-        style={{overflow: 'hidden', transition: 'max-height 200ms ease-in-out',
-          maxHeight: props.isOpen ? undefined : '0px'}}>
+        style={{
+          overflow: 'hidden',
+          transition: 'max-height 200ms ease-in-out',
+          maxHeight: props.isOpen ? undefined : '0px'
+        }}>
       <div ref={contentRef} className={css(STYLES.customDates)}>
         <DateInputs
           startDate={props.startDate}

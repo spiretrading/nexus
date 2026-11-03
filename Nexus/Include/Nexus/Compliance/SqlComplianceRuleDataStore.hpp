@@ -1,8 +1,8 @@
 #ifndef NEXUS_SQL_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_SQL_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <memory>
+#include <mutex>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStoreException.hpp"
@@ -42,7 +42,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::OpenState m_open_state;
   };

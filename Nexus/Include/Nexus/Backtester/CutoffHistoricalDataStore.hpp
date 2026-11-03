@@ -1,9 +1,9 @@
 #ifndef BACKTESTER_CUTOFF_HISTORICAL_DATA_STORE_HPP
 #define BACKTESTER_CUTOFF_HISTORICAL_DATA_STORE_HPP
+#include <mutex>
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
@@ -56,7 +56,7 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::local_ptr_t<D> m_data_store;
       boost::posix_time::ptime m_cutoff;
       std::unordered_map<Venue, Beam::Sequence> m_order_imbalance_cutoffs;

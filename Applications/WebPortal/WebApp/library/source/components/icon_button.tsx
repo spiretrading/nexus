@@ -6,16 +6,22 @@ interface Properties extends
 
   /** The path or URL of the SVG icon to display. */
   icon: string;
+
+  /** A reference to the underlying button element. */
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }
 
 /** An icon-only button. Supply an accessible name using aria-label. */
 export function IconButton(props: Properties): JSX.Element {
-  const {icon, className, type = 'button', ...attributes} = props;
+  const {icon, buttonRef, className, type = 'button', ...attributes} = props;
   const mask = `url(${JSON.stringify(icon)})`;
-  return <button {...attributes} type={type}
+  return <button {...attributes} ref={buttonRef} type={type}
       className={[css(STYLES.button), className].join(' ')}>
     <span aria-hidden className={css(STYLES.icon)}
-      style={{maskImage: mask, WebkitMaskImage: mask}}/>
+      style={{
+        maskImage: mask,
+        WebkitMaskImage: mask
+      }}/>
   </button>;
 }
 
@@ -29,15 +35,23 @@ const STYLES = StyleSheet.create({
     height: '20px',
     padding: '2px',
     border: '1px solid transparent',
+    borderRadius: '1px',
     backgroundColor: 'transparent',
     color: '#684BC7',
+    cursor: 'pointer',
     outline: 'none',
     ':hover': {
       backgroundColor: '#F8F8F8',
       color: '#4B23A0'
     },
-    ':focus-visible': {borderColor: '#684BC7'},
-    ':disabled': {color: '#DBDBDB'}
+    ':focus-visible': {
+      borderColor: '#684BC7'
+    },
+    ':disabled': {
+      color: '#DBDBDB',
+      cursor: 'not-allowed',
+      opacity: 0.4
+    }
   },
   icon: {
     display: 'block',

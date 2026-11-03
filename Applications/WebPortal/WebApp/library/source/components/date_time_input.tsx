@@ -43,7 +43,10 @@ export function DateTimeInput(props: Properties): JSX.Element {
     }
   };
   return (
-    <div {...attributes} style={{...STYLE, ...style}}>
+    <div {...attributes} style={{
+      ...STYLE,
+      ...style
+    }}>
       <DateInput
         id={id}
         aria-invalid={attributes['aria-invalid']}

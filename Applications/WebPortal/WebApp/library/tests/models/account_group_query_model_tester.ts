@@ -5,8 +5,34 @@ import { describe, it } from 'node:test';
 import { HttpAccountGroupQueryModel, LocalAccountGroupQueryModel } from
   '../../source/components/edit_account_group_modal';
 import { QueryModel } from '../../source/models/query_model';
+import { ValidationError } from '../../source/models/validation_error';
+import { ReportParameterDefinition, reportParameterValueToJson,
+  validateReportParameter } from '../../source/pages/report_page';
 
 describe('AccountGroupQueryModel', () => {
+  it('global_directory', async () => {
+    const star = Beam.DirectoryEntry.STAR_DIRECTORY;
+    const local = new LocalAccountGroupQueryModel([]);
+    assert.deepEqual(await local.submit(' * '), [star]);
+    assert.equal(await local.parse('*'), star);
+    const client = {
+      searchAccounts: async () => {
+        throw new Error('Global directory must not require a lookup.');
+      }
+    } as unknown as Nexus.AdministrationClient;
+    const http = new HttpAccountGroupQueryModel(client);
+    assert.deepEqual(await http.submit('*'), [star]);
+    assert.equal(await http.parse(' * '), star);
+    assert.deepEqual(star.toJson(), {
+      type: Beam.DirectoryEntry.Type.DIRECTORY, id: 0, name: '*'
+    });
+    assert.ok(Beam.DirectoryEntry.fromJson(star.toJson()).equals(star));
+    assert.equal(validateReportParameter(new ReportParameterDefinition(
+      'accounts', 'Accounts', 'DirectoryEntryList', true), [star]),
+      ValidationError.NONE);
+    assert.deepEqual(reportParameterValueToJson([star]), [star.toJson()]);
+  });
+
   it('names_and_prefixes', async () => {
     const account = Beam.DirectoryEntry.makeAccount(1, 'Alice');
     const group = Beam.DirectoryEntry.makeDirectory(2, 'Alpha');

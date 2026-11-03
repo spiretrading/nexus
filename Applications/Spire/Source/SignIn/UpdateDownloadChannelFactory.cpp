@@ -1,11 +1,11 @@
 #include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
+#include <chrono>
 #include <boost/optional/optional.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/WebServices/TcpSocketChannelFactory.hpp>
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::chrono;
 using namespace boost::posix_time;
 using namespace Spire;
 
@@ -16,8 +16,8 @@ namespace {
     std::size_t m_download_size;
     Reader* m_reader;
     std::size_t m_total_read_bytes;
-    optional<steady_clock::time_point> m_start_time;
-    steady_clock::time_point m_last_read_time;
+    optional<std::chrono::steady_clock::time_point> m_start_time;
+    std::chrono::steady_clock::time_point m_last_read_time;
     std::size_t m_last_block;
 
     explicit ProgressReader(std::shared_ptr<ProgressModel> download_progress,
@@ -43,24 +43,24 @@ namespace {
       const auto BLOCK_SIZE = 1024 * 1024;
       m_total_read_bytes += size;
       if(!m_start_time) {
-        m_last_read_time = steady_clock::now();
+        m_last_read_time = std::chrono::steady_clock::now();
         m_start_time = m_last_read_time;
       }
-      auto last_duration = steady_clock::now() - m_last_read_time;
+      auto last_duration = std::chrono::steady_clock::now() - m_last_read_time;
       if(m_total_read_bytes - m_last_block > BLOCK_SIZE &&
-          last_duration >= chrono::seconds(3)) {
+          last_duration >= std::chrono::seconds(3)) {
         auto progress = std::min<std::size_t>(99, std::max<std::size_t>(
           1, (100 * m_total_read_bytes) / m_download_size));
-        auto elapsed_time = steady_clock::now() - *m_start_time;
+        auto elapsed_time = std::chrono::steady_clock::now() - *m_start_time;
         auto total_time =
           elapsed_time / (static_cast<double>(progress) / 100.0);
-        auto remaining_time =
-          posix_time::milliseconds(duration_cast<chrono::milliseconds>(
+        auto remaining_time = posix_time::milliseconds(
+          std::chrono::duration_cast<std::chrono::milliseconds>(
             total_time - elapsed_time).count());
         m_time_left->set(remaining_time);
         m_download_progress->set(progress);
         m_last_block = m_total_read_bytes;
-        m_last_read_time = steady_clock::now();
+        m_last_read_time = std::chrono::steady_clock::now();
       }
       return size;
     }

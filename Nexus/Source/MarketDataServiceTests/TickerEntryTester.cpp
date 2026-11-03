@@ -190,9 +190,12 @@ TEST_SUITE("TickerEntry") {
 
   TEST_CASE("session_technicals") {
     auto initial_sequences = TickerEntry::InitialSequences();
+    initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence(123);
     auto ticker = parse_ticker("TST.TSX");
     auto entry = TickerEntry(ticker, Money::ONE, initial_sequences);
-    auto& technicals1 = entry.get_session_technicals();
+    REQUIRE(
+      entry.get_session_technicals().get_sequence() == Beam::Sequence(122));
+    auto& technicals1 = *entry.get_session_technicals();
     REQUIRE(technicals1.m_previous_close == Money::ONE);
     REQUIRE(!technicals1.m_open);
     REQUIRE(!technicals1.m_high);
@@ -205,7 +208,7 @@ TEST_SUITE("TickerEntry") {
       Money::ONE + 5 * Money::CENT, 100, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts1, 1);
-    auto& technicals2 = entry.get_session_technicals();
+    auto& technicals2 = *entry.get_session_technicals();
     REQUIRE(technicals2.m_previous_close == Money::ONE);
     REQUIRE(technicals2.m_open == Money::ONE + 5 * Money::CENT);
     REQUIRE(technicals2.m_high == Money::ONE + 5 * Money::CENT);
@@ -215,7 +218,7 @@ TEST_SUITE("TickerEntry") {
       Money::ONE + 10 * Money::CENT, 200, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts2, 1);
-    auto& technicals3 = entry.get_session_technicals();
+    auto& technicals3 = *entry.get_session_technicals();
     REQUIRE(technicals3.m_high == Money::ONE + 10 * Money::CENT);
     REQUIRE(technicals3.m_low == Money::ONE + 5 * Money::CENT);
     REQUIRE(technicals3.m_volume == 300);
@@ -223,7 +226,7 @@ TEST_SUITE("TickerEntry") {
       Money::ONE + 7 * Money::CENT, 50, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts3, 1);
-    auto& technicals4 = entry.get_session_technicals();
+    auto& technicals4 = *entry.get_session_technicals();
     REQUIRE(technicals4.m_high == Money::ONE + 10 * Money::CENT);
     REQUIRE(technicals4.m_low == Money::ONE + 5 * Money::CENT);
     REQUIRE(technicals4.m_volume == 350);
@@ -231,26 +234,29 @@ TEST_SUITE("TickerEntry") {
       Money::ONE + 2 * Money::CENT, 150, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts4, 1);
-    auto& technicals5 = entry.get_session_technicals();
+    auto& technicals5 = *entry.get_session_technicals();
     REQUIRE(technicals5.m_open == Money::ONE + 5 * Money::CENT);
     REQUIRE(technicals5.m_low == Money::ONE + 2 * Money::CENT);
     REQUIRE(technicals5.m_volume == 500);
+    auto sequence = entry.get_time_and_sale().get_sequence();
+    REQUIRE(entry.get_session_technicals().get_sequence() == sequence);
     entry.publish(BboQuote(make_bid(Money::ONE, 100),
       make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-12 09:30:00")), 1);
-    auto& technicals6 = entry.get_session_technicals();
+    auto& technicals6 = *entry.get_session_technicals();
     REQUIRE(technicals6.m_previous_close == Money::ONE + 2 * Money::CENT);
     REQUIRE(!technicals6.m_open);
     REQUIRE(!technicals6.m_high);
     REQUIRE(!technicals6.m_low);
     REQUIRE(technicals6.m_volume == 0);
+    REQUIRE(entry.get_session_technicals().get_sequence() == sequence);
   }
 
   TEST_CASE("session_technicals_with_zero_close") {
     auto initial_sequences = TickerEntry::InitialSequences();
     auto ticker = parse_ticker("TST.TSX");
     auto entry = TickerEntry(ticker, Money::ZERO, initial_sequences);
-    auto& technicals1 = entry.get_session_technicals();
+    auto& technicals1 = *entry.get_session_technicals();
     REQUIRE(!technicals1.m_previous_close);
     REQUIRE(technicals1.m_volume == 0);
     entry.publish(BboQuote(make_bid(5 * Money::ONE, 100),
@@ -259,7 +265,7 @@ TEST_SUITE("TickerEntry") {
     auto ts1 = TimeAndSale(time_from_string("2024-07-11 09:30:01"),
       5 * Money::ONE, 100, TimeAndSale::Condition(), "TSE", "", "");
     entry.publish(ts1, 1);
-    auto& technicals2 = entry.get_session_technicals();
+    auto& technicals2 = *entry.get_session_technicals();
     REQUIRE(technicals2.m_open == 5 * Money::ONE);
     REQUIRE(technicals2.m_high == 5 * Money::ONE);
     REQUIRE(technicals2.m_low == 5 * Money::ONE);
@@ -267,7 +273,7 @@ TEST_SUITE("TickerEntry") {
     auto ts2 = TimeAndSale(time_from_string("2024-07-11 09:30:02"),
       4 * Money::ONE, 200, TimeAndSale::Condition(), "TSE", "", "");
     entry.publish(ts2, 1);
-    auto& technicals3 = entry.get_session_technicals();
+    auto& technicals3 = *entry.get_session_technicals();
     REQUIRE(technicals3.m_open == 5 * Money::ONE);
     REQUIRE(technicals3.m_high == 5 * Money::ONE);
     REQUIRE(technicals3.m_low == 4 * Money::ONE);
@@ -287,7 +293,7 @@ TEST_SUITE("TickerEntry") {
     entry.publish(BboQuote(make_bid(Money::ONE, 100),
       make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-12 09:30:00")), 1);
-    auto& technicals = entry.get_session_technicals();
+    auto& technicals = *entry.get_session_technicals();
     auto ts2 = TimeAndSale(time_from_string("2024-07-12 09:30:01"),
       3 * Money::ONE, 200, TimeAndSale::Condition(), "TSE", "", "");
     entry.publish(ts2, 1);

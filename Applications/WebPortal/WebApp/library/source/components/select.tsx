@@ -25,12 +25,12 @@ export function Select({readOnly, disabled, onChange, className, children,
   };
   return (
     <select
-      {...rest}
-      disabled={readOnly || disabled}
-      className={[css(STYLES.select,
-        disabled && STYLES.selectDisabled,
-        readOnly && STYLES.selectReadonly), className].join(' ')}
-      onChange={readOnly || disabled ? undefined : onSelectChange}>
+        {...rest}
+        disabled={readOnly || disabled}
+        className={[css(STYLES.select,
+          disabled && STYLES.selectDisabled,
+          readOnly && STYLES.selectReadonly), className].join(' ')}
+        onChange={readOnly || disabled ? undefined : onSelectChange}>
       {children}
     </select>);
 }

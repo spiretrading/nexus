@@ -1,15 +1,30 @@
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DateRange, DateRangeInput, DateRangeOption, DateRangeValidation } from
-  'web_portal';
+import { DateRange, DateRangeInput, DateRangeRules, DateRangeValidation,
+  makeParametersDateRangeOptions } from 'web_portal';
 
 interface Properties {
 
   /** The committed range. */
   value: DateRange;
 
+  /** The reference date used by the presets and custom rules. */
+  referenceDate: Beam.Date;
+
+  /** Reports the custom rule configuration. */
+  onRulesChange?: (rules: DateRangeRules) => void;
+
   /** The label above or beside the selector. */
   label: string;
+
+  /** The custom date editor type. */
+  customType: DateRangeInput.CustomType;
+
+  /** The custom start label. */
+  startLabel: string;
+
+  /** The custom end label. */
+  endLabel: string;
 
   /** The arrangement of the controls. */
   orientation: DateRangeInput.Orientation;
@@ -35,20 +50,11 @@ interface Properties {
 
 /** Demonstrates caller-supplied presets and custom date validation. */
 export class DateRangeInputExample extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-    const today = Beam.Date.today();
-    this.options = [
-      new DateRangeOption('month-to-date', 'Month to Date',
-        new Beam.Date(today.year, today.month, 1), today),
-      new DateRangeOption('previous-month', 'Previous Month',
-        Beam.Date.fromDate(new Date(today.year, today.month - 2, 1)),
-        Beam.Date.fromDate(new Date(today.year, today.month - 1, 0)))];
-  }
-
   public render(): JSX.Element {
-    return <DateRangeInput {...this.props} options={this.options}/>;
+    const today = this.props.referenceDate ?? Beam.Date.today();
+    const options = makeParametersDateRangeOptions(today);
+    const {startLabel, endLabel, ...properties} = this.props;
+    return <DateRangeInput {...properties} options={options}
+      customLabel={{start: startLabel, end: endLabel}}/>;
   }
-
-  private options: DateRangeOption[];
 }

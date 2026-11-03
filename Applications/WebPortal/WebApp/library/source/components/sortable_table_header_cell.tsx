@@ -38,7 +38,10 @@ export class SortableTableHeaderCell extends
     return <th {...attributes} scope={this.props.scope ?? 'col'}
         aria-sort={getAriaSort(sortOrder)}
         className={[css(STYLES.cell), className].join(' ')}
-        style={{textAlign, ...style}}>
+        style={{
+          textAlign,
+          ...style
+        }}>
       <SortButton sortOrder={sortOrder} showIndicator={showIndicator}
           isEnd={(style?.textAlign ?? textAlign) === 'end'}
           disabled={disabled} onClick={this.onClick}
@@ -161,26 +164,36 @@ const STYLES = StyleSheet.create({
     padding: '12px 20px',
     paddingInlineEnd: '9px',
     cursor: 'pointer',
-    ':not(:disabled):hover': {backgroundColor: '#E6E6E6'},
+    ':not(:disabled):hover': {
+      backgroundColor: '#E6E6E6'
+    },
     ':focus-visible': {
       outline: '1px solid #684BC7',
       outlineOffset: '-1px'
     },
-    ':disabled': {cursor: 'default'}
+    ':disabled': {
+      cursor: 'default'
+    }
   },
-  buttonEnd: {justifyContent: 'flex-end'},
+  buttonEnd: {
+    justifyContent: 'flex-end'
+  },
   indicator: {
     display: 'flex',
     alignItems: 'center',
     alignSelf: 'stretch',
     flex: '0 0 auto'
   },
-  indicatorHidden: {visibility: 'hidden'},
+  indicatorHidden: {
+    visibility: 'hidden'
+  },
   icon: {
     boxSizing: 'content-box',
     paddingInlineStart: '4px',
     flex: '0 0 auto',
     fill: '#A4A5B1'
   },
-  iconSorted: {fill: '#7D7E90'}
+  iconSorted: {
+    fill: '#7D7E90'
+  }
 });

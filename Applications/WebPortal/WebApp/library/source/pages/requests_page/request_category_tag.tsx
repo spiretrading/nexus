@@ -12,7 +12,10 @@ interface Properties {
 export function RequestCategoryTag(props: Properties) {
   const {label, color, backgroundColor} = getCategoryStyle(props.category);
   const dynamicStyle = StyleSheet.create({
-    tag: {color, backgroundColor}
+    tag: {
+      color,
+      backgroundColor
+    }
   });
   return (
     <span className={css(STYLES.tag, dynamicStyle.tag)}>

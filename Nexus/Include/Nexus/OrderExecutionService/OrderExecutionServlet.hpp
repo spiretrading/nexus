@@ -9,7 +9,6 @@
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
@@ -106,8 +105,7 @@ namespace Nexus {
         InventorySnapshotModel m_model;
         boost::posix_time::ptime m_timestamp;
       };
-      using SyncSnapshotCheckpoint =
-        Beam::Sync<SnapshotCheckpoint, Beam::Mutex>;
+      using SyncSnapshotCheckpoint = Beam::Sync<SnapshotCheckpoint>;
       using SyncShortingModel = Beam::Sync<ShortingModel>;
       static inline const auto SNAPSHOT_INTERVAL = boost::posix_time::hours(5);
       Beam::local_ptr_t<T> m_time_client;

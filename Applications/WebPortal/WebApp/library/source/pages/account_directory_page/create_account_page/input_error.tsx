@@ -45,7 +45,10 @@ export class InputError extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={{...InputError.STYLE.container, maxHeight: maxHeight}}>
+      <div style={{
+        ...InputError.STYLE.container,
+        maxHeight: maxHeight
+      }}>
         <div ref={this._content} style={InputError.STYLE.content}>
           <div style={InputError.STYLE.topPadding}/>
           <div style={InputError.STYLE.row}>

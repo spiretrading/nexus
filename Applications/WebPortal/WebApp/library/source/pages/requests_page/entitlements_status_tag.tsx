@@ -11,7 +11,12 @@ interface Properties {
 /** Displays a colored tag indicating an entitlement's status. */
 export function EntitlementsStatusTag(props: Properties) {
   const {label, color, backgroundColor} = getStatusStyle(props.status);
-  const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
+  const dynamicStyle = StyleSheet.create({
+    tag: {
+      color,
+      backgroundColor
+    }
+  });
   return (
     <span className={css(STYLES.tag, dynamicStyle.tag)}>
       {label}

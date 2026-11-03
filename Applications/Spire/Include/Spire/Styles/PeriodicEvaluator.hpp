@@ -1,7 +1,7 @@
 #ifndef SPIRE_PERIODIC_EVALUATOR_HPP
 #define SPIRE_PERIODIC_EVALUATOR_HPP
+#include <chrono>
 #include <utility>
-#include <boost/chrono/system_clocks.hpp>
 #include <QTimer>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/Evaluator.hpp"
@@ -48,7 +48,7 @@ namespace Spire::Styles {
       Evaluator<Type> m_evaluator;
       Evaluation<Type> m_evaluation;
       QTimer m_timer;
-      boost::chrono::steady_clock::time_point m_start_time;
+      std::chrono::steady_clock::time_point m_start_time;
 
       void on_timeout();
   };
@@ -67,7 +67,7 @@ namespace Spire::Styles {
     m_timer.setInterval(DEFAULT_EVALUATION_DURATION.total_milliseconds());
     connect(&m_timer, &QTimer::timeout, this,
       std::bind_front(&PeriodicEvaluator::on_timeout, this));
-    m_start_time = boost::chrono::steady_clock::now();
+    m_start_time = std::chrono::steady_clock::now();
     m_timer.start();
   }
 
@@ -91,8 +91,8 @@ namespace Spire::Styles {
   template<typename T>
   void PeriodicEvaluator<T>::on_timeout() {
     auto duration = boost::posix_time::milliseconds(
-      boost::chrono::duration_cast<boost::chrono::milliseconds>(
-        boost::chrono::steady_clock::now() - m_start_time).count());
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - m_start_time).count());
     m_evaluation.m_next_frame -= duration;
     if(m_evaluation.m_next_frame > boost::posix_time::seconds(0)) {
       return;

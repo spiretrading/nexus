@@ -127,7 +127,10 @@ export class PhotoField extends React.Component<Properties, {}> {
       <div style={PhotoField.STYLE.wrapper}>
         <div style={boxStyle}>
           <img src={imageSrc}
-            style={{...imageStyle, ...imageScaling}}/>
+            style={{
+              ...imageStyle,
+              ...imageScaling
+            }}/>
           <div style={cameraIconWrapper}
               onClick={this.props.onToggleUploader}>
             <img src={'resources/account_page/profile_page/photo_field/' +
@@ -379,7 +382,10 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <div style={imageBoxStyle}>
               <img src={imageSrc}
-                style={{...imageStyle, ...imageScaling}}/>
+                style={{
+                  ...imageStyle,
+                  ...imageScaling
+                }}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}

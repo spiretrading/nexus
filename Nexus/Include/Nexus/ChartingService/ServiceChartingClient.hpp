@@ -1,5 +1,6 @@
 #ifndef NEXUS_SERVICE_CHARTING_CLIENT_HPP
 #define NEXUS_SERVICE_CHARTING_CLIENT_HPP
+#include <atomic>
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/ConnectException.hpp>
@@ -10,7 +11,6 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Utilities/Expect.hpp>
-#include <boost/atomic/atomic.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
@@ -53,7 +53,7 @@ namespace Nexus {
         typename ServiceProtocolClientBuilder::Client;
       using TickerChartingPublisher =
         Beam::SequencedValuePublisher<TickerChartingQuery, QueryVariant>;
-      boost::atomic_int m_next_query_id;
+      std::atomic_int m_next_query_id;
       Beam::SynchronizedUnorderedMap<
         int, std::shared_ptr<TickerChartingPublisher>>
           m_ticker_charting_publishers;
