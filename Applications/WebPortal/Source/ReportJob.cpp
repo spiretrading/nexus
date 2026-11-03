@@ -36,6 +36,9 @@ namespace {
     } else if(type == "Date") {
       return to_iso_extended_string(
         from_undelimited_string(get<std::string>(value)));
+    } else if(type == "YearMonth") {
+      return to_iso_extended_string(
+        from_undelimited_string(get<std::string>(value))).substr(0, 7);
     } else if(type == "DateTime") {
       return to_iso_extended_string(from_iso_string(get<std::string>(value)));
     } else if(type == "DateRange") {

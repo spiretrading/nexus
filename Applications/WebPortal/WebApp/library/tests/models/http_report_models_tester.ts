@@ -251,6 +251,7 @@ describe('HTTP report models', () => {
 
   it('maps_detail_content_and_download_url', async () => {
     const model = new HttpReportDetailModel();
+    await assert.rejects(model.retry('job'), /not loaded/);
     await model.load();
     Request.handler = () => ({status: 200, body: {id: 'job', title: 'Example',
       parameters: [{label: 'Currency', value: 'USD'}],
@@ -262,6 +263,9 @@ describe('HTTP report models', () => {
     assert.equal(report.filePath,
       '/api/reporting_service/download_report?id=job');
     assert.deepEqual(Request.calls[0].body, {id: 'job'});
+    await model.retry('job');
+    assert.ok(Request.calls[1].url.endsWith('/retry_report_jobs'));
+    assert.deepEqual(Request.calls[1].body, {ids: ['job']});
   });
 
   it('composes_models_without_loading_unimplemented_routes', async () => {

@@ -22,6 +22,11 @@ export class HttpReportDetailModel extends ReportDetailModel {
       filePath: response.file_path, content: response.content};
   }
 
+  public async retry(id: string): Promise<void> {
+    this.ensureLoaded();
+    await Beam.post('/api/reporting_service/retry_report_jobs', {ids: [id]});
+  }
+
   private ensureLoaded(): void {
     if(!this.loaded) {
       throw new Error('Model not loaded.');

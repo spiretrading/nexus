@@ -27,3 +27,4 @@ export * from './scope_value_input';
 export * from './ticker_value_input';
 export * from './style_declaration_value_input';
 export * from './text_input';
+export * from './year_month_value_input';

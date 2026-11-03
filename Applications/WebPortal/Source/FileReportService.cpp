@@ -12,6 +12,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/process/environment.hpp>
 #include <boost/process/process.hpp>
 #include <boost/process/stdio.hpp>
 #include "ReportProcessGroup.hpp"
@@ -265,7 +266,15 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
 #ifdef _WIN32
   launcher.creation_flags |= CREATE_SUSPENDED;
 #endif
-  auto child = launcher(context.get_executor(), job.m_definition.m_command,
+  auto executable = filesystem::path(job.m_definition.m_command);
+  if(!executable.has_parent_path()) {
+    executable = environment::find_executable(executable);
+    if(executable.empty()) {
+      throw std::runtime_error(
+        "Report command not found in PATH: " + job.m_definition.m_command);
+    }
+  }
+  auto child = launcher(context.get_executor(), executable,
     job.m_arguments, process_stdio(
       nullptr, filesystem::path(output.native()),
       filesystem::path(diagnostics.native()))

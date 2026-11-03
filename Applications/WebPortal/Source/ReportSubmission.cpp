@@ -158,6 +158,9 @@ namespace {
       return static_cast<int>(static_cast<std::uint16_t>(currency));
     } else if(type == "Date") {
       return read_date(value);
+    } else if(type == "YearMonth") {
+      auto month = from_undelimited_string(get<std::string>(read_date(value)));
+      return to_iso_string(date(month.year(), month.month(), 1));
     } else if(type == "Time") {
       return to_simple_string(read_time(read_string(value)));
     } else if(type == "DateTime") {
@@ -327,10 +330,10 @@ namespace {
     }();
     auto parameters =
       prepare_report_parameters(definition, input, owner, client);
-    auto arguments = make_report_arguments(definition, parameters);
+    auto arguments = make_report_arguments(definition, parameters, owner);
     if(!definition.m_output.m_filename.empty()) {
       expand_report_template(
-        definition, parameters, definition.m_output.m_filename);
+        definition, parameters, definition.m_output.m_filename, owner);
     }
     auto recipients =
       prepare_report_recipients(submission.m_recipients, owner, client);
@@ -598,16 +601,23 @@ DirectoryEntry Nexus::resolve_report_entry(const JsonValue& value,
 
 std::vector<std::string> Nexus::make_report_arguments(
     const ReportDefinition& definition, const JsonObject& parameters) {
+  return make_report_arguments(definition, parameters, DirectoryEntry());
+}
+
+std::vector<std::string> Nexus::make_report_arguments(
+    const ReportDefinition& definition, const JsonObject& parameters,
+    const DirectoryEntry& submitter) {
   auto result = std::vector<std::string>();
   for(auto& argument : definition.m_arguments) {
     if(auto text = std::get_if<std::string>(&argument)) {
-      result.push_back(expand_report_template(definition, parameters, *text));
+      result.push_back(
+        expand_report_template(definition, parameters, *text, submitter));
     } else {
       auto& group = std::get<OptionalReportArguments>(argument);
       if(resolve(definition, parameters, group.m_if_present)) {
         for(auto& text : group.m_arguments) {
           result.push_back(
-            expand_report_template(definition, parameters, text));
+            expand_report_template(definition, parameters, text, submitter));
         }
       }
     }
@@ -617,6 +627,13 @@ std::vector<std::string> Nexus::make_report_arguments(
 
 std::string Nexus::expand_report_template(const ReportDefinition& definition,
     const JsonObject& parameters, const std::string& argument) {
+  return expand_report_template(
+    definition, parameters, argument, DirectoryEntry());
+}
+
+std::string Nexus::expand_report_template(const ReportDefinition& definition,
+    const JsonObject& parameters, const std::string& argument,
+    const DirectoryEntry& submitter) {
   auto result = std::string();
   for(auto i = std::size_t(0); i < argument.size();) {
     if(argument[i] == '{') {
@@ -625,7 +642,23 @@ std::string Nexus::expand_report_template(const ReportDefinition& definition,
         throw std::runtime_error("Unclosed report argument placeholder.");
       }
       auto path = argument.substr(i + 1, end - i - 1);
-      auto value = resolve(definition, parameters, path);
+      auto context = JsonValue();
+      auto value = static_cast<const JsonValue*>(nullptr);
+      if(path == "submitter" || path.starts_with("submitter.")) {
+        if(submitter.m_type != DirectoryEntry::Type::ACCOUNT) {
+          throw std::invalid_argument("Missing report submitting account.");
+        }
+        if(path == "submitter.id") {
+          context = static_cast<std::int64_t>(submitter.m_id);
+        } else if(path == "submitter.name") {
+          context = submitter.m_name;
+        } else {
+          throw std::invalid_argument("Unknown report submitter field: " + path);
+        }
+        value = &context;
+      } else {
+        value = resolve(definition, parameters, path);
+      }
       if(!value) {
         throw std::invalid_argument("Missing report argument: " + path);
       }

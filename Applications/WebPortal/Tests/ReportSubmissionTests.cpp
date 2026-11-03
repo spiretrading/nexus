@@ -68,6 +68,54 @@ output: {media_type: text/csv, extension: csv}
 }
 
 TEST_SUITE("ReportSubmission") {
+  TEST_CASE("trusted_submitter_arguments") {
+    auto environment = ServiceLocatorTestEnvironment();
+    auto& client = environment.get_root();
+    auto owner = client.make_account(
+      "Alice", "", DirectoryEntry::make_directory(0));
+    auto definition = make_definition();
+    definition.m_arguments = {"--account", "{submitter.id}",
+      "{submitter.name}", "{account.id}"};
+    definition.m_output.m_filename = "statement_{submitter.name}";
+    auto parameters = make_parameters(owner);
+    parameters.set("submitter", parse<JsonValue>(R"({"id":1,"name":"root"})"));
+    auto claimed = owner;
+    claimed.m_name = "root";
+    auto submission = ReportSubmission("example", parameters, {});
+    auto job = prepare_report_job({definition}, claimed, submission, client);
+    auto expected = std::vector<std::string>({"--account",
+      std::to_string(owner.m_id), "Alice", std::to_string(owner.m_id)});
+    REQUIRE(job.m_arguments == expected);
+    REQUIRE(!job.m_parameters.get("submitter"));
+    REQUIRE(make_report_filename(job) == "statement_Alice.csv");
+    REQUIRE_THROWS_AS(make_report_arguments(definition, parameters),
+      std::invalid_argument);
+    for(auto& field : {"{submitter}", "{submitter.password}",
+        "{submitter.id.more}"}) {
+      REQUIRE_THROWS_AS(expand_report_template(
+        definition, parameters, field, owner), std::invalid_argument);
+    }
+    auto now = time_from_string("2026-11-02 12:00:00");
+    auto scheduled = ReportScheduleSubmission(submission, now + hours(1),
+      std::nullopt, "UTC");
+    auto schedule = prepare_report_schedule(
+      {definition}, owner, scheduled, client, now);
+    auto occurrence = prepare_report_job({definition}, schedule.m_account,
+      ReportSubmission(schedule.m_definition.m_id, schedule.m_parameters, {}),
+      client, scheduled.m_start_time);
+    REQUIRE(occurrence.m_arguments == expected);
+    auto yaml = YAML::Load(R"(
+id: invalid
+name: Invalid
+access: ['*']
+parameters: [{name: submitter, label: Owner, type: Integer}]
+command: echo
+arguments: ['{submitter}']
+output: {media_type: text/plain, extension: txt}
+)");
+    REQUIRE_THROWS_AS(parse_report_definition(yaml), std::runtime_error);
+  }
+
   TEST_CASE("schedule_inputs") {
     auto expected = time_from_string("2026-10-07 12:30:45.123456");
     REQUIRE(parse_report_datetime("20261007T123045.123456") == expected);

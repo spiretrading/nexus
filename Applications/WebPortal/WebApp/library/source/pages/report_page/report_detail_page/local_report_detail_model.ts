@@ -41,6 +41,19 @@ export class LocalReportDetailModel extends ReportDetailModel {
     return copyReport(report);
   }
 
+  public async retry(id: string): Promise<void> {
+    this.ensureLoaded();
+    const report = this.entries.get(id);
+    if(!report) {
+      throw new Error(`Report not found: ${id}`);
+    }
+    if(report.status === ReportDetailModel.Status.FAILED) {
+      this.entries.set(id, {...report,
+        status: ReportDetailModel.Status.IN_PROGRESS,
+        filePath: '', content: null});
+    }
+  }
+
   private ensureLoaded(): void {
     if(!this.loaded) {
       throw new Error('Model not loaded.');

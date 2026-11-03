@@ -109,6 +109,9 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
   for(auto entry : parameters) {
     auto parameter = ReportParameterDefinition();
     parameter.m_name = parse_name(entry, "name");
+    if(parameter.m_name == "submitter") {
+      throw std::runtime_error("Reserved report parameter name: submitter");
+    }
     if(!names.insert(parameter.m_name).second) {
       throw std::runtime_error(
         "Duplicate report parameter: " + parameter.m_name);
@@ -117,7 +120,8 @@ ReportDefinition Nexus::parse_report_definition(const YAML::Node& node) {
     parameter.m_type = parse_name(entry, "type");
     static constexpr auto TYPES = std::to_array<std::string_view>({
       "DirectoryEntry", "DirectoryEntryList", "Scope", "DateRange", "Date",
-      "DateTime", "Time", "Decimal", "Integer", "Money", "Currency"});
+      "DateTime", "YearMonth", "Time", "Decimal", "Integer", "Money",
+      "Currency"});
     if(!std::ranges::contains(TYPES, parameter.m_type)) {
       throw std::runtime_error(
         "Unsupported report parameter type: " + parameter.m_type);
