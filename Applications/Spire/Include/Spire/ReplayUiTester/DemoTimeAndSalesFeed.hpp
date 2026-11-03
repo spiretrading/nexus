@@ -1,5 +1,5 @@
-#ifndef SPIRE_DEMO_MARKET_DATA_FEED_HPP
-#define SPIRE_DEMO_MARKET_DATA_FEED_HPP
+#ifndef SPIRE_DEMO_TIME_AND_SALES_FEED_HPP
+#define SPIRE_DEMO_TIME_AND_SALES_FEED_HPP
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <QTimer>
@@ -8,11 +8,12 @@
 namespace Spire {
 
   /**
-   * Generates deterministic market data for a set of tickers into a
-   * TestEnvironment. History up to the present is stored during construction,
-   * and subsequent market data is published as it becomes due.
+   * Generates deterministic time and sales for a set of tickers into a
+   * TestEnvironment, along with the BBO quotes used to classify them.
+   * History up to the present is stored during construction, and subsequent
+   * time and sales are published as they become due.
    */
-  class DemoMarketDataFeed {
+  class DemoTimeAndSalesFeed {
     public:
 
       /** Specifies how a ticker's time and sales are spaced in time. */
@@ -47,10 +48,10 @@ namespace Spire {
         LATE_START
       };
 
-      /** Specifies the market data generated for a ticker. */
+      /** Specifies the time and sales generated for a ticker. */
       struct Profile {
 
-        /** The ticker to generate market data for. */
+        /** The ticker to generate time and sales for. */
         Nexus::Ticker m_ticker;
 
         /** How the ticker's time and sales are spaced in time. */
@@ -58,18 +59,19 @@ namespace Spire {
 
         /**
          * The time between consecutive time and sales. A non-positive
-         * interval generates no market data.
+         * interval generates no time and sales.
          */
         boost::posix_time::time_duration m_interval;
       };
 
       /**
-       * Constructs a DemoMarketDataFeed.
-       * @param environment The environment to generate the market data into.
-       * @param profiles The market data to generate for each ticker.
-       * @param start The time market data begins.
+       * Constructs a DemoTimeAndSalesFeed.
+       * @param environment The environment to generate the time and sales
+       *        into.
+       * @param profiles The time and sales to generate for each ticker.
+       * @param start The time the time and sales begin.
        */
-      DemoMarketDataFeed(Beam::Ref<Nexus::TestEnvironment> environment,
+      DemoTimeAndSalesFeed(Beam::Ref<Nexus::TestEnvironment> environment,
         std::vector<Profile> profiles, boost::posix_time::ptime start);
 
       /**
@@ -93,8 +95,8 @@ namespace Spire {
       std::vector<Generator> m_generators;
       QTimer m_timer;
 
-      DemoMarketDataFeed(const DemoMarketDataFeed&) = delete;
-      DemoMarketDataFeed& operator =(const DemoMarketDataFeed&) = delete;
+      DemoTimeAndSalesFeed(const DemoTimeAndSalesFeed&) = delete;
+      DemoTimeAndSalesFeed& operator =(const DemoTimeAndSalesFeed&) = delete;
       void advance(Generator& generator) const;
       void store(Generator& generator, boost::posix_time::ptime end);
       void on_timeout();

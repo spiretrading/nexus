@@ -11,7 +11,7 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
-#include "Spire/ReplayUiTester/DemoMarketDataFeed.hpp"
+#include "Spire/ReplayUiTester/DemoTimeAndSalesFeed.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
@@ -107,13 +107,13 @@ namespace {
   }
 
   struct SpecialProfile {
-    DemoMarketDataFeed::Profile m_profile;
+    DemoTimeAndSalesFeed::Profile m_profile;
     QString m_label;
   };
 
   const auto& get_special_profiles() {
-    using Pattern = DemoMarketDataFeed::Pattern;
-    using Profile = DemoMarketDataFeed::Profile;
+    using Pattern = DemoTimeAndSalesFeed::Pattern;
+    using Profile = DemoTimeAndSalesFeed::Profile;
     static const auto profiles = std::vector<SpecialProfile>{
       SpecialProfile(Profile(parse_ticker("TD.TSX"), Pattern::FIXED,
         milliseconds(50)), QObject::tr("High volume")),
@@ -132,15 +132,15 @@ namespace {
 
   auto get_profiles() {
     auto& specials = get_special_profiles();
-    auto profiles = std::vector<DemoMarketDataFeed::Profile>();
+    auto profiles = std::vector<DemoTimeAndSalesFeed::Profile>();
     for(auto& info : get_ticker_infos()) {
       auto special = std::find_if(specials.begin(), specials.end(),
         [&] (const auto& profile) {
           return profile.m_profile.m_ticker == info.m_ticker;
         });
       if(special == specials.end()) {
-        profiles.push_back(DemoMarketDataFeed::Profile(info.m_ticker,
-          DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL));
+        profiles.push_back(DemoTimeAndSalesFeed::Profile(info.m_ticker,
+          DemoTimeAndSalesFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL));
       } else {
         profiles.push_back(special->m_profile);
       }
@@ -177,7 +177,7 @@ struct ReplayUiTester : QWidget {
 
   ptime m_start;
   TestEnvironment m_environment;
-  DemoMarketDataFeed m_market_data_feed;
+  DemoTimeAndSalesFeed m_time_and_sales_feed;
   Clients m_clients;
   UserProfile m_user_profile;
   std::shared_ptr<TickerInfoQueryModel> m_tickers;
@@ -197,7 +197,7 @@ struct ReplayUiTester : QWidget {
 
   ReplayUiTester()
       : m_start(second_clock::universal_time() - HISTORY),
-        m_market_data_feed(Ref(m_environment), get_profiles(), m_start),
+        m_time_and_sales_feed(Ref(m_environment), get_profiles(), m_start),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_user_profile("", false, false, {}, {},
           get_default_additional_tag_database(), {}, {}, {}, m_clients),
@@ -219,16 +219,16 @@ struct ReplayUiTester : QWidget {
     m_event_log = new QTextEdit();
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
-    m_event_log->append(tr("Market data for testing:"));
+    m_event_log->append(tr("Time and sales for testing:"));
     for(auto& special : get_special_profiles()) {
       m_event_log->append(tr("  %1  %2: %3").
         arg(Spire::to_text(special.m_profile.m_ticker)).
         arg(special.m_label).
-        arg(m_market_data_feed.describe(special.m_profile)));
+        arg(m_time_and_sales_feed.describe(special.m_profile)));
     }
     m_event_log->append(tr("  All other tickers: %1").arg(
-      m_market_data_feed.describe(DemoMarketDataFeed::Profile(Ticker(),
-        DemoMarketDataFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
+      m_time_and_sales_feed.describe(DemoTimeAndSalesFeed::Profile(Ticker(),
+        DemoTimeAndSalesFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
     auto open_replay_button = make_label_button(tr("Open Replay Window"));
     open_replay_button->connect_click_signal(
       std::bind_front(&ReplayUiTester::open_replay_window, this));

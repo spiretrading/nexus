@@ -1,4 +1,4 @@
-#include "Spire/ReplayUiTester/DemoMarketDataFeed.hpp"
+#include "Spire/ReplayUiTester/DemoTimeAndSalesFeed.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
@@ -92,7 +92,7 @@ namespace {
   }
 }
 
-DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
+DemoTimeAndSalesFeed::DemoTimeAndSalesFeed(Ref<TestEnvironment> environment,
     std::vector<Profile> profiles, ptime start)
     : m_environment(environment.get()),
       m_start(start) {
@@ -113,11 +113,11 @@ DemoMarketDataFeed::DemoMarketDataFeed(Ref<TestEnvironment> environment,
     store(m_generators.back(), now);
   }
   QObject::connect(&m_timer, &QTimer::timeout,
-    std::bind_front(&DemoMarketDataFeed::on_timeout, this));
+    std::bind_front(&DemoTimeAndSalesFeed::on_timeout, this));
   m_timer.start(TIMER_INTERVAL);
 }
 
-QString DemoMarketDataFeed::describe(const Profile& profile) const {
+QString DemoTimeAndSalesFeed::describe(const Profile& profile) const {
   if(profile.m_interval <= seconds(0)) {
     return QObject::tr("No trades.");
   }
@@ -152,7 +152,7 @@ QString DemoMarketDataFeed::describe(const Profile& profile) const {
   return QObject::tr("%1.").arg(rate);
 }
 
-void DemoMarketDataFeed::advance(Generator& generator) const {
+void DemoTimeAndSalesFeed::advance(Generator& generator) const {
   ++generator.m_index;
   if(generator.m_burst != 0) {
     --generator.m_burst;
@@ -184,7 +184,7 @@ void DemoMarketDataFeed::advance(Generator& generator) const {
   }
 }
 
-void DemoMarketDataFeed::store(Generator& generator, ptime end) {
+void DemoTimeAndSalesFeed::store(Generator& generator, ptime end) {
   auto time_and_sales = std::vector<SequencedTickerTimeAndSale>();
   auto bbo_quotes = std::vector<SequencedTickerBboQuote>();
   auto& ticker = generator.m_profile.m_ticker;
@@ -207,7 +207,7 @@ void DemoMarketDataFeed::store(Generator& generator, ptime end) {
   data_store.store(time_and_sales);
 }
 
-void DemoMarketDataFeed::on_timeout() {
+void DemoTimeAndSalesFeed::on_timeout() {
   auto now = microsec_clock::universal_time();
   for(auto& generator : m_generators) {
     auto& ticker = generator.m_profile.m_ticker;
