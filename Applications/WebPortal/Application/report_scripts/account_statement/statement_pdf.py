@@ -119,10 +119,14 @@ def write_statement(output, key, statement, company):
       rounded_fees[i] = amount
   for (description, currency, fee), amount in zip(
       statement['items'], rounded_fees):
+    if amount == 0:
+      continue
     amounts.append([paragraph(description, body), paragraph(currency, body),
       paragraph(format_fee(amount), right)])
   first_total = len(amounts)
   for currency, total in statement['totals'].items():
+    if total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) == 0:
+      continue
     amounts.append([paragraph('Total charges', bold),
       paragraph(currency, bold), paragraph(format_fee(total), total_style)])
   charges = Table(amounts, colWidths=[306, 80, 130], repeatRows=1,
@@ -131,13 +135,16 @@ def write_statement(output, key, statement, company):
     ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EDF1F5')),
     ('LINEBELOW', (0, 0), (-1, 0), 0.5, colors.HexColor('#CAD3DD')),
-    ('LINEABOVE', (0, first_total), (-1, first_total), 0.7, ink),
     ('LEFTPADDING', (0, 0), (-1, -1), 10),
     ('RIGHTPADDING', (0, 0), (-1, -1), 10),
     ('TOPPADDING', (0, 0), (-1, -1), 10),
     ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
     ('NOSPLIT', (0, first_total - 1), (-1, -1))]))
-  story.append(charges)
+  if first_total < len(amounts):
+    charges.setStyle(TableStyle([
+      ('LINEABOVE', (0, first_total), (-1, first_total), 0.7, ink)]))
+  if len(amounts) > 1:
+    story.append(charges)
 
   def footer(canvas, document):
     canvas.saveState()
