@@ -20,7 +20,7 @@ namespace {
   const auto MARKETS = std::vector<std::string>{"XNYS", "TSE", "CHD", "CHI"};
   const auto MPIDS = std::vector<std::string>{"NBFI", "CIBC", "PFSS", "RBCD"};
 
-  auto to_money(int cents) {
+  auto cents_to_money(int cents) {
     return cents * Money::CENT;
   }
 
@@ -46,7 +46,8 @@ namespace {
 
   TimeAndSale make_time_and_sale(
       QRandomGenerator& random, int price, ptime timestamp) {
-    return TimeAndSale(timestamp, to_money(price + random.bounded(-50, 51)),
+    return TimeAndSale(timestamp,
+      cents_to_money(price + random.bounded(-50, 51)),
       100 * random.bounded(1, 20),
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
       MARKETS[random.bounded(static_cast<int>(MARKETS.size()))],
@@ -58,8 +59,8 @@ namespace {
       QRandomGenerator& random, int price, ptime timestamp) {
     auto bid = price + random.bounded(-40, 21);
     auto ask = bid + random.bounded(1, 30);
-    return BboQuote(make_bid(to_money(bid), 100 * random.bounded(1, 20)),
-      make_ask(to_money(ask), 100 * random.bounded(1, 20)),
+    return BboQuote(make_bid(cents_to_money(bid), 100 * random.bounded(1, 20)),
+      make_ask(cents_to_money(ask), 100 * random.bounded(1, 20)),
       timestamp - milliseconds(1));
   }
 }
