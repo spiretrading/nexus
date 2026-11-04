@@ -77,12 +77,11 @@ namespace {
     auto is_member = [&] (auto member) {
       return member->get_hub()->get() == hub;
     };
-    auto count = std::count_if(roster.begin(), roster.end(), is_member);
+    auto count = std::ranges::count_if(roster, is_member);
     auto ticker = hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get();
     auto name = [&] {
       if(count == 1) {
-        return (*std::find_if(roster.begin(), roster.end(), is_member))->
-          get_name();
+        return (*std::ranges::find_if(roster, is_member))->get_name();
       }
       auto label = [&] {
         if(ticker) {
@@ -116,7 +115,7 @@ namespace {
   const auto& get_special_profiles() {
     using Pattern = DemoTimeAndSalesFeed::Pattern;
     using Profile = DemoTimeAndSalesFeed::Profile;
-    static const auto profiles = std::vector<SpecialProfile>{
+    static const auto profiles = std::vector{
       SpecialProfile(Profile(parse_ticker("TD.TSX"), Pattern::FIXED,
         milliseconds(50)), QObject::tr("High volume")),
       SpecialProfile(Profile(parse_ticker("MFC.TSX"), Pattern::FIXED,
@@ -136,8 +135,8 @@ namespace {
     auto& specials = get_special_profiles();
     auto profiles = std::vector<DemoTimeAndSalesFeed::Profile>();
     for(auto& info : get_ticker_infos()) {
-      auto special = std::find_if(specials.begin(), specials.end(),
-        [&] (const auto& profile) {
+      auto special =
+        std::ranges::find_if(specials, [&] (const auto& profile) {
           return profile.m_profile.m_ticker == info.m_ticker;
         });
       if(special == specials.end()) {
