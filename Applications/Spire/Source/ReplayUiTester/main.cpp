@@ -1,6 +1,8 @@
 #include <vector>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <QApplication>
 #include <QTextEdit>
+#include <QTimer>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -11,7 +13,7 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
-#include "Spire/ReplayUiTester/GeneratedTimeAndSalesModel.hpp"
+#include "Spire/ReplayUiTester/DemoTimeAndSalesFeed.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
@@ -33,18 +35,8 @@ namespace {
   const auto WINDOW_GAP = 30;
   const auto HISTORY = hours(4);
   const auto TIMELINE_DURATION = hours(8);
-  const auto TIME_AND_SALE_PERIOD = seconds(1);
-
-  class UtcTimeClient {
-    public:
-      UtcTimeClient() = default;
-
-      ptime get_time() {
-        return microsec_clock::universal_time();
-      }
-
-      void close() {}
-  };
+  const auto TIME_AND_SALE_INTERVAL = seconds(1);
+  const auto FEED_UPDATE_INTERVAL = milliseconds(100);
 
   const auto& get_ticker_infos() {
     static const auto infos = [] {
@@ -75,12 +67,11 @@ namespace {
     auto is_member = [&] (auto member) {
       return member->get_hub()->get() == hub;
     };
-    auto count = std::count_if(roster.begin(), roster.end(), is_member);
+    auto count = std::ranges::count_if(roster, is_member);
     auto ticker = hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get();
     auto name = [&] {
       if(count == 1) {
-        return (*std::find_if(roster.begin(), roster.end(), is_member))->
-          get_name();
+        return (*std::ranges::find_if(roster, is_member))->get_name();
       }
       auto label = [&] {
         if(ticker) {
@@ -104,6 +95,48 @@ namespace {
       return QObject::tr("Replaying");
     }
     return QObject::tr("Real Time");
+  }
+
+  struct SpecialProfile {
+    DemoTimeAndSalesFeed::Profile m_profile;
+    QString m_label;
+  };
+
+  const auto& get_special_profiles() {
+    using Pattern = DemoTimeAndSalesFeed::Pattern;
+    using Profile = DemoTimeAndSalesFeed::Profile;
+    static const auto profiles = std::vector{
+      SpecialProfile(Profile(parse_ticker("TD.TSX"), Pattern::FIXED,
+        milliseconds(50)), QObject::tr("High volume")),
+      SpecialProfile(Profile(parse_ticker("MFC.TSX"), Pattern::FIXED,
+        seconds(10)), QObject::tr("Low volume")),
+      SpecialProfile(Profile(parse_ticker("MRU.TSX"), Pattern::BURST,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Bursts")),
+      SpecialProfile(Profile(parse_ticker("ARE.TSX"), Pattern::LARGE_BURST,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Large bursts")),
+      SpecialProfile(Profile(parse_ticker("MX.TSX"), Pattern::GAP,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Quiet periods")),
+      SpecialProfile(Profile(parse_ticker("MG.TSX"), Pattern::LATE_START,
+        TIME_AND_SALE_INTERVAL), QObject::tr("Late open"))};
+    return profiles;
+  }
+
+  auto get_profiles() {
+    auto& specials = get_special_profiles();
+    auto profiles = std::vector<DemoTimeAndSalesFeed::Profile>();
+    for(auto& info : get_ticker_infos()) {
+      auto special =
+        std::ranges::find_if(specials, [&] (const auto& profile) {
+          return profile.m_profile.m_ticker == info.m_ticker;
+        });
+      if(special == specials.end()) {
+        profiles.push_back(DemoTimeAndSalesFeed::Profile(info.m_ticker,
+          DemoTimeAndSalesFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL));
+      } else {
+        profiles.push_back(special->m_profile);
+      }
+    }
+    return profiles;
   }
 
   auto populate_tickers() {
@@ -134,7 +167,10 @@ struct ReplayUiTester : QWidget {
   };
 
   ptime m_start;
+  TimeClient m_time_client;
   TestEnvironment m_environment;
+  DemoTimeAndSalesFeed m_time_and_sales_feed;
+  QTimer m_feed_timer;
   Clients m_clients;
   UserProfile m_user_profile;
   std::shared_ptr<TickerInfoQueryModel> m_tickers;
@@ -154,6 +190,9 @@ struct ReplayUiTester : QWidget {
 
   ReplayUiTester()
       : m_start(second_clock::universal_time() - HISTORY),
+        m_time_client(LocalTimeClient()),
+        m_time_and_sales_feed(Ref(m_environment), get_profiles(), m_start,
+          m_time_client),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_user_profile("", false, false, {}, {},
           get_default_additional_tag_database(), {}, {}, {}, m_clients),
@@ -175,6 +214,20 @@ struct ReplayUiTester : QWidget {
     m_event_log = new QTextEdit();
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
+    m_event_log->append(tr("Time and sales for testing:"));
+    for(auto& special : get_special_profiles()) {
+      m_event_log->append(tr("  %1  %2: %3").
+        arg(Spire::to_text(special.m_profile.m_ticker)).
+        arg(special.m_label).
+        arg(m_time_and_sales_feed.describe(special.m_profile)));
+    }
+    m_event_log->append(tr("  All other tickers: %1").arg(
+      m_time_and_sales_feed.describe(DemoTimeAndSalesFeed::Profile(Ticker(),
+        DemoTimeAndSalesFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
+    connect(&m_feed_timer, &QTimer::timeout,
+      std::bind_front(&DemoTimeAndSalesFeed::update, &m_time_and_sales_feed));
+    m_feed_timer.start(
+      static_cast<int>(FEED_UPDATE_INTERVAL.total_milliseconds()));
     auto open_replay_button = make_label_button(tr("Open Replay Window"));
     open_replay_button->connect_click_signal(
       std::bind_front(&ReplayUiTester::open_replay_window, this));
@@ -216,12 +269,6 @@ struct ReplayUiTester : QWidget {
     QWidget::closeEvent(event);
   }
 
-  std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Ticker& ticker) {
-    return std::make_shared<GeneratedTimeAndSalesModel>(
-      ticker, m_start, TIME_AND_SALE_PERIOD);
-  }
-
   ReplayWindow* open_replay_window() {
     ++m_replay_count;
     auto entry = std::make_unique<Replay>();
@@ -229,7 +276,7 @@ struct ReplayUiTester : QWidget {
     replay->m_name = tr("Replay %1").arg(m_replay_count);
     replay->m_session = std::make_shared<ReplaySession>(
       Timeline(m_start, TIMELINE_DURATION), time_duration(0, 0, 0),
-      Decimal(1), TimeClient(UtcTimeClient()));
+      Decimal(1), m_time_client);
     replay->m_attachments =
       make_attached_hub_list(m_attachment_map, replay->m_session);
     auto& session = *replay->m_session;
@@ -273,8 +320,7 @@ struct ReplayUiTester : QWidget {
 
   void open_time_and_sales_window() {
     auto window = new TimeAndSalesWindow(Ref(m_user_profile), m_tickers,
-      m_time_and_sales_factory,
-      std::bind_front(&ReplayUiTester::time_and_sales_model_builder, this));
+      m_time_and_sales_factory, m_user_profile.GetTimeAndSalesModelBuilder());
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->show();
     auto offset = scale(WINDOW_GAP * m_time_and_sale_count,
