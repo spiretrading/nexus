@@ -2,6 +2,7 @@
 #define SPIRE_DEMO_TIME_AND_SALES_FEED_HPP
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
+#include <QRandomGenerator>
 #include <QTimer>
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
@@ -84,7 +85,7 @@ namespace Spire {
     private:
       struct Generator {
         Profile m_profile;
-        quint32 m_seed;
+        QRandomGenerator m_random;
         int m_price;
         int m_index;
         int m_burst;
