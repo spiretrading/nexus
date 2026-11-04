@@ -1,6 +1,7 @@
 #include <vector>
 #include <QApplication>
 #include <QTextEdit>
+#include <QTimer>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -34,6 +35,7 @@ namespace {
   const auto HISTORY = hours(4);
   const auto TIMELINE_DURATION = hours(8);
   const auto TIME_AND_SALE_INTERVAL = seconds(1);
+  const auto FEED_UPDATE_INTERVAL = milliseconds(100);
 
   class UtcTimeClient {
     public:
@@ -179,6 +181,7 @@ struct ReplayUiTester : QWidget {
   TimeClient m_time_client;
   TestEnvironment m_environment;
   DemoTimeAndSalesFeed m_time_and_sales_feed;
+  QTimer m_feed_timer;
   Clients m_clients;
   UserProfile m_user_profile;
   std::shared_ptr<TickerInfoQueryModel> m_tickers;
@@ -232,6 +235,10 @@ struct ReplayUiTester : QWidget {
     m_event_log->append(tr("  All other tickers: %1").arg(
       m_time_and_sales_feed.describe(DemoTimeAndSalesFeed::Profile(Ticker(),
         DemoTimeAndSalesFeed::Pattern::FIXED, TIME_AND_SALE_INTERVAL))));
+    connect(&m_feed_timer, &QTimer::timeout,
+      std::bind_front(&DemoTimeAndSalesFeed::update, &m_time_and_sales_feed));
+    m_feed_timer.start(
+      static_cast<int>(FEED_UPDATE_INTERVAL.total_milliseconds()));
     auto open_replay_button = make_label_button(tr("Open Replay Window"));
     open_replay_button->connect_click_signal(
       std::bind_front(&ReplayUiTester::open_replay_window, this));

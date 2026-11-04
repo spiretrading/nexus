@@ -3,7 +3,7 @@
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <QRandomGenerator>
-#include <QTimer>
+#include <QString>
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 namespace Spire {
@@ -12,7 +12,7 @@ namespace Spire {
    * Generates deterministic time and sales for a set of tickers into a
    * TestEnvironment, along with the BBO quotes used to classify them.
    * History up to the present is stored during construction, and subsequent
-   * time and sales are published as they become due.
+   * time and sales are published by update as they become due.
    */
   class DemoTimeAndSalesFeed {
     public:
@@ -84,6 +84,12 @@ namespace Spire {
        */
       QString describe(const Profile& profile) const;
 
+      /**
+       * Publishes the time and sales, along with their BBO quotes, that have
+       * become due up to the present.
+       */
+      void update();
+
     private:
       struct Generator {
         Profile m_profile;
@@ -97,13 +103,11 @@ namespace Spire {
       boost::posix_time::ptime m_start;
       Beam::TimeClient m_time_client;
       std::vector<Generator> m_generators;
-      QTimer m_timer;
 
       DemoTimeAndSalesFeed(const DemoTimeAndSalesFeed&) = delete;
       DemoTimeAndSalesFeed& operator =(const DemoTimeAndSalesFeed&) = delete;
       void advance(Generator& generator) const;
       void store(Generator& generator, boost::posix_time::ptime end);
-      void on_timeout();
   };
 }
 

@@ -1,4 +1,5 @@
 #include "Spire/ReplayUiTester/DemoTimeAndSalesFeed.hpp"
+#include <QObject>
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
@@ -8,7 +9,6 @@ using namespace Spire;
 
 namespace {
   const auto BBO_INTERVAL = 5;
-  const auto TIMER_INTERVAL = milliseconds(100);
   const auto BURST_ODDS = 50;
   const auto MIN_BURST_SIZE = 10;
   const auto MAX_BURST_SIZE = 50;
@@ -86,9 +86,6 @@ DemoTimeAndSalesFeed::DemoTimeAndSalesFeed(Ref<TestEnvironment> environment,
       100 * (10 + static_cast<int>(seed % 90)), 0, 0, timestamp));
     store(m_generators.back(), now);
   }
-  QObject::connect(&m_timer, &QTimer::timeout,
-    std::bind_front(&DemoTimeAndSalesFeed::on_timeout, this));
-  m_timer.start(static_cast<int>(TIMER_INTERVAL.total_milliseconds()));
 }
 
 QString DemoTimeAndSalesFeed::describe(const Profile& profile) const {
@@ -179,7 +176,7 @@ void DemoTimeAndSalesFeed::store(Generator& generator, ptime end) {
   data_store.store(time_and_sales);
 }
 
-void DemoTimeAndSalesFeed::on_timeout() {
+void DemoTimeAndSalesFeed::update() {
   auto now = m_time_client.get_time();
   for(auto& generator : m_generators) {
     auto& ticker = generator.m_profile.m_ticker;
