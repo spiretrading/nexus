@@ -356,13 +356,13 @@ connection SignInController::connect_signed_in_signal(
 
 void SignInController::on_sign_in(const std::string& username,
     const std::string& password, Track track, const std::string& server) {
-  auto address = [&] {
+  auto& entry = [&] () -> const ServerEntry& {
     if(server.empty() && !m_servers.empty()) {
-      return m_servers.front().m_address;
+      return m_servers.front();
     }
     for(auto& entry : m_servers) {
       if(entry.m_name == server) {
-        return entry.m_address;
+        return entry;
       }
     }
     throw SignInException("Server not found.");
@@ -389,24 +389,25 @@ void SignInController::on_sign_in(const std::string& username,
     try {
       future.resolve([&] () -> optional<Clients> {
         if(run_update->test(index(track))) {
-          if(!launch_update(address, track, username, password)) {
+          if(!launch_update(entry.m_address, track, username, password)) {
             throw SignInException("Unable to launch the selected track.");
           }
           return none;
         } else {
           auto version = load_version(track, current_version);
-          auto latest_build = load_latest_build(address, track, version);
+          auto latest_build =
+            load_latest_build(entry.m_address, track, version);
           if(latest_build != version) {
             run_update->set(index(track));
             m_sign_in_window->set_state(SignInWindow::State::UPDATING);
-            if(!update_build(address, track, username, password, latest_build,
-                channel_factory, download_progress, installation_progress,
-                time_left)) {
+            if(!update_build(entry.m_address, track, username, password,
+                latest_build, channel_factory, download_progress,
+                installation_progress, time_left)) {
               *is_update_failed = true;
             }
             return none;
           } else if(track != Track::CURRENT) {
-            if(!launch_update(address, track, username, password)) {
+            if(!launch_update(entry.m_address, track, username, password)) {
               throw SignInException("Unable to launch the selected track.");
             }
             return none;
@@ -415,7 +416,8 @@ void SignInController::on_sign_in(const std::string& username,
         if(channel_factory.is_closed()) {
           return none;
         }
-        return clients_factory(username, password, address);
+        return clients_factory(
+          username, password, entry.m_address, entry.m_encryption);
       }());
     } catch(...) {
       future.resolve(std::current_exception());

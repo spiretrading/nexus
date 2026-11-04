@@ -27,6 +27,9 @@ namespace Spire::UI {
 
         /** The server's address. */
         Beam::IpAddress m_address;
+
+        /** The ServiceLocator server trust configuration. */
+        Beam::AesGcmClientConfig m_encryption;
       };
 
       /**
