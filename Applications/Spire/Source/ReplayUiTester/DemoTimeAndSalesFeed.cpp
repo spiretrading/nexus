@@ -66,10 +66,11 @@ namespace {
 }
 
 DemoTimeAndSalesFeed::DemoTimeAndSalesFeed(Ref<TestEnvironment> environment,
-    std::vector<Profile> profiles, ptime start)
+    std::vector<Profile> profiles, ptime start, TimeClient time_client)
     : m_environment(environment.get()),
-      m_start(start) {
-  auto now = microsec_clock::universal_time();
+      m_start(start),
+      m_time_client(std::move(time_client)) {
+  auto now = m_time_client.get_time();
   for(auto& profile : profiles) {
     if(profile.m_interval <= seconds(0)) {
       continue;
@@ -179,7 +180,7 @@ void DemoTimeAndSalesFeed::store(Generator& generator, ptime end) {
 }
 
 void DemoTimeAndSalesFeed::on_timeout() {
-  auto now = microsec_clock::universal_time();
+  auto now = m_time_client.get_time();
   for(auto& generator : m_generators) {
     auto& ticker = generator.m_profile.m_ticker;
     while(generator.m_timestamp <= now) {

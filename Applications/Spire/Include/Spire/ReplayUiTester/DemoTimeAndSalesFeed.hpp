@@ -71,9 +71,11 @@ namespace Spire {
        *        into.
        * @param profiles The time and sales to generate for each ticker.
        * @param start The time the time and sales begin.
+       * @param time_client The time client telling the present.
        */
       DemoTimeAndSalesFeed(Beam::Ref<Nexus::TestEnvironment> environment,
-        std::vector<Profile> profiles, boost::posix_time::ptime start);
+        std::vector<Profile> profiles, boost::posix_time::ptime start,
+        Beam::TimeClient time_client);
 
       /**
        * Returns a plain language description of the time and sales generated
@@ -93,6 +95,7 @@ namespace Spire {
       };
       Nexus::TestEnvironment* m_environment;
       boost::posix_time::ptime m_start;
+      Beam::TimeClient m_time_client;
       std::vector<Generator> m_generators;
       QTimer m_timer;
 

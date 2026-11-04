@@ -176,6 +176,7 @@ struct ReplayUiTester : QWidget {
   };
 
   ptime m_start;
+  TimeClient m_time_client;
   TestEnvironment m_environment;
   DemoTimeAndSalesFeed m_time_and_sales_feed;
   Clients m_clients;
@@ -197,7 +198,9 @@ struct ReplayUiTester : QWidget {
 
   ReplayUiTester()
       : m_start(second_clock::universal_time() - HISTORY),
-        m_time_and_sales_feed(Ref(m_environment), get_profiles(), m_start),
+        m_time_client(UtcTimeClient()),
+        m_time_and_sales_feed(Ref(m_environment), get_profiles(), m_start,
+          m_time_client),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_user_profile("", false, false, {}, {},
           get_default_additional_tag_database(), {}, {}, {}, m_clients),
@@ -277,7 +280,7 @@ struct ReplayUiTester : QWidget {
     replay->m_name = tr("Replay %1").arg(m_replay_count);
     replay->m_session = std::make_shared<ReplaySession>(
       Timeline(m_start, TIMELINE_DURATION), time_duration(0, 0, 0),
-      Decimal(1), TimeClient(UtcTimeClient()));
+      Decimal(1), m_time_client);
     replay->m_attachments =
       make_attached_hub_list(m_attachment_map, replay->m_session);
     auto& session = *replay->m_session;
