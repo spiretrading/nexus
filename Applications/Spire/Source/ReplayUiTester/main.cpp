@@ -1,4 +1,5 @@
 #include <vector>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <QApplication>
 #include <QTextEdit>
 #include <QTimer>
@@ -36,17 +37,6 @@ namespace {
   const auto TIMELINE_DURATION = hours(8);
   const auto TIME_AND_SALE_INTERVAL = seconds(1);
   const auto FEED_UPDATE_INTERVAL = milliseconds(100);
-
-  class UtcTimeClient {
-    public:
-      UtcTimeClient() = default;
-
-      ptime get_time() {
-        return microsec_clock::universal_time();
-      }
-
-      void close() {}
-  };
 
   const auto& get_ticker_infos() {
     static const auto infos = [] {
@@ -200,7 +190,7 @@ struct ReplayUiTester : QWidget {
 
   ReplayUiTester()
       : m_start(second_clock::universal_time() - HISTORY),
-        m_time_client(UtcTimeClient()),
+        m_time_client(LocalTimeClient()),
         m_time_and_sales_feed(Ref(m_environment), get_profiles(), m_start,
           m_time_client),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),

@@ -26,15 +26,13 @@ namespace {
 
   QString to_duration_text(time_duration duration) {
     auto total = duration.total_seconds();
-    if(total % 3600 == 0) {
-      if(total == 3600) {
-        return QObject::tr("1 hour");
-      }
+    if(total == 3600) {
+      return QObject::tr("1 hour");
+    } else if(total % 3600 == 0) {
       return QObject::tr("%1 hours").arg(total / 3600);
+    } else if(total == 60) {
+      return QObject::tr("1 minute");
     } else if(total % 60 == 0) {
-      if(total == 60) {
-        return QObject::tr("1 minute");
-      }
       return QObject::tr("%1 minutes").arg(total / 60);
     }
     return QObject::tr("%1 seconds").arg(total);
