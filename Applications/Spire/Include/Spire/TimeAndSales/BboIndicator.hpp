@@ -2,6 +2,11 @@
 #define SPIRE_BBO_INDICATOR_HPP
 #include <QString>
 
+namespace Nexus {
+  struct BboQuote;
+  struct TimeAndSale;
+}
+
 namespace Spire {
 
   /** An indicator that relates the price to the bbo. */
@@ -28,6 +33,14 @@ namespace Spire {
 
   /* The number of bbo indicators. */
   static const auto BBO_INDICATOR_COUNT = 6;
+
+  /**
+   * Returns the BboIndicator of a time and sale relative to a BBO quote.
+   * @param bbo The BBO quote to compare against.
+   * @param time_and_sale The time and sale to classify.
+   */
+  BboIndicator get_bbo_indicator(
+    const Nexus::BboQuote& bbo, const Nexus::TimeAndSale& time_and_sale);
 
   /** Returns the text representation of a BboIndicator. */
   const QString& to_text(BboIndicator indicator);
