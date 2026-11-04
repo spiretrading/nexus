@@ -39,8 +39,10 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
+  encryption = beam.AesGcmClientConfig(section['public_key'])
   service_locator_client = beam.connect(
-    beam.ApplicationServiceLocatorClient, username, password, address)
+    beam.ApplicationServiceLocatorClient, username, password, address,
+    encryption)
   administration_client = beam.connect(
     nexus.ApplicationAdministrationClient, service_locator_client)
   for account in service_locator_client.load_all_accounts():

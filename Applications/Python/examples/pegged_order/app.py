@@ -114,13 +114,14 @@ def main():
     address = parse_ip_address(section['address'])
     username = section['username']
     password = section['password']
+    encryption = beam.AesGcmClientConfig(section['public_key'])
     if not isinstance(username, str) or not isinstance(password, str):
       raise TypeError()
   except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
-    parser.error('service_locator must specify an address, username, and '
-      'password as strings')
+    parser.error('service_locator must specify an address, username, '
+      'password, and public key as strings')
   try:
-    clients = nexus.ServiceClients(username, password, address)
+    clients = nexus.ServiceClients(username, password, address, encryption)
   except beam.ConnectException as error:
     sys.stderr.write(f'Could not connect to {address} as {username}: '
       f'{error}\n')

@@ -94,14 +94,16 @@ def load_config(path):
     address = config.get('service_locator')
   if not isinstance(address, str) or not address or \
       not isinstance(config.get('username'), str) or \
-      not isinstance(config.get('password'), str):
+      not isinstance(config.get('password'), str) or \
+      not isinstance(config.get('public_key'), str):
     raise ValueError('Statement configuration requires a service locator '
-      'address, username and password.')
+      'address, username, password and public key.')
   host, separator, port = address.rpartition(':')
   if not separator:
     host, port = address, '0'
   return (config['username'], config['password'],
-    beam.IpAddress(host, int(port)), company)
+    beam.IpAddress(host, int(port)),
+    beam.AesGcmClientConfig(config['public_key']), company)
 
 
 def load_fees(account, start, end, clients):
@@ -170,8 +172,8 @@ def make_statement(account, identity, month, fees):
 
 
 def generate(account_id, month, config_path):
-  username, password, address, company = load_config(config_path)
-  clients = nexus.ServiceClients(username, password, address)
+  username, password, address, encryption, company = load_config(config_path)
+  clients = nexus.ServiceClients(username, password, address, encryption)
   try:
     account = clients.service_locator_client.load_directory_entry(account_id)
     if account.type != beam.DirectoryEntry.Type.ACCOUNT:

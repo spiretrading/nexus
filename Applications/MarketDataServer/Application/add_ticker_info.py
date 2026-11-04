@@ -44,8 +44,9 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_locator_client = \
-    beam.ApplicationServiceLocatorClient(username, password, address)
+  encryption = beam.AesGcmClientConfig(section['public_key'])
+  service_locator_client = beam.ApplicationServiceLocatorClient(
+    username, password, address, encryption)
   feed_client = nexus.ApplicationMarketDataFeedClient(service_locator_client)
   ticker_info = nexus.TickerInfo()
   ticker_info.ticker = nexus.parse_ticker('%s' % args.symbol)

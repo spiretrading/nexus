@@ -2,4 +2,5 @@
 service_locator: $service_locator_address
 username: risk_service
 password: $admin_password
+public_key: $service_locator_public_key
 ...

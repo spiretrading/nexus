@@ -67,7 +67,8 @@ int main(int argc, const char** argv) {
     auto clients = connect<ServiceClients>(
       service_locator_client_config.m_username,
       service_locator_client_config.m_password,
-      service_locator_client_config.m_address);
+      service_locator_client_config.m_address,
+      service_locator_client_config.m_encryption);
     load_definitions(clients.get_definitions_client());
     try_or_nest([&] {
       auto url = extract<std::string>(
@@ -79,12 +80,14 @@ int main(int argc, const char** argv) {
     auto clients_builder =
       [&] (const std::string& username, const std::string& password) {
         return Clients(std::in_place_type<ServiceClients>, username, password,
-          service_locator_client_config.m_address);
+          service_locator_client_config.m_address,
+          service_locator_client_config.m_encryption);
       };
     auto session_clients_builder =
       [&] (const std::string& session_id, unsigned int key) {
         return Clients(std::in_place_type<ServiceClients>, session_id, key,
-          service_locator_client_config.m_address);
+          service_locator_client_config.m_address,
+          service_locator_client_config.m_encryption);
       };
     auto server = WebPortalServletContainer(
       init(service_config.m_web_app_directory, std::move(clients_builder),
