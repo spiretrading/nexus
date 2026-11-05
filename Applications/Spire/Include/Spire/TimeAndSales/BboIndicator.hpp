@@ -1,11 +1,8 @@
 #ifndef SPIRE_BBO_INDICATOR_HPP
 #define SPIRE_BBO_INDICATOR_HPP
 #include <QString>
-
-namespace Nexus {
-  struct BboQuote;
-  struct TimeAndSale;
-}
+#include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 
 namespace Spire {
 

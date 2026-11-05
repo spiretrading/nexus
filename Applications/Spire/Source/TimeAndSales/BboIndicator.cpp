@@ -1,7 +1,5 @@
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include <QObject>
-#include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/TimeAndSale.hpp"
 
 using namespace Nexus;
 using namespace Spire;
