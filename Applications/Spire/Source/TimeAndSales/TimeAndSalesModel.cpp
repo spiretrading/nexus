@@ -1,4 +1,4 @@
-#include "Spire/TimeAndSales/LoadTimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -33,16 +33,17 @@ std::vector<SequencedTimeAndSale> Spire::load_time_and_sales(
   return load<SequencedTimeAndSale>(client, ticker, range, limit);
 }
 
-optional<SequencedBboQuote> Spire::load_bbo_indicators(
+BboIndicatorsLoadResult Spire::load_bbo_indicators(
     MarketDataClient& client, const Ticker& ticker,
-    std::vector<TimeAndSalesModel::Type>& entries,
+    const std::vector<SequencedTimeAndSale>& time_and_sales,
     optional<SequencedBboQuote> initial_bbo) {
+  auto indicators = std::vector<BboIndicator>();
   auto bbo = std::move(initial_bbo);
-  if(entries.empty()) {
-    return bbo;
+  if(time_and_sales.empty()) {
+    return BboIndicatorsLoadResult(std::move(indicators), std::move(bbo));
   }
-  auto first = entries.front().m_time_and_sale->m_timestamp;
-  auto last = entries.back().m_time_and_sale->m_timestamp;
+  auto first = time_and_sales.front()->m_timestamp;
+  auto last = time_and_sales.back()->m_timestamp;
   if(!bbo || (*bbo)->m_timestamp > first) {
     bbo = none;
     auto head = load<SequencedBboQuote>(client, ticker,
@@ -60,8 +61,8 @@ optional<SequencedBboQuote> Spire::load_bbo_indicators(
   auto quotes = load<SequencedBboQuote>(client, ticker,
     Range(get_start(), last), SnapshotLimit::from_head(BBO_PAGE_SIZE));
   auto index = std::size_t(0);
-  for(auto& entry : entries) {
-    auto& timestamp = entry.m_time_and_sale->m_timestamp;
+  for(auto& time_and_sale : time_and_sales) {
+    auto& timestamp = time_and_sale->m_timestamp;
     while(true) {
       while(index < quotes.size() &&
           quotes[index]->m_timestamp <= timestamp) {
@@ -86,7 +87,7 @@ optional<SequencedBboQuote> Spire::load_bbo_indicators(
       }
       return BboQuote();
     }();
-    entry.m_indicator = get_bbo_indicator(current, *entry.m_time_and_sale);
+    indicators.push_back(get_bbo_indicator(current, *time_and_sale));
   }
-  return bbo;
+  return BboIndicatorsLoadResult(std::move(indicators), std::move(bbo));
 }

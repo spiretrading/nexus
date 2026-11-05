@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
-#include "Spire/TimeAndSales/LoadTimeAndSales.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -31,13 +30,16 @@ QtPromise<void> ServiceTimeAndSalesModel::load_older(int max_count) {
     return decrement(get(0).m_time_and_sale.get_sequence());
   }();
   return QtPromise([=, ticker = m_ticker, client = m_client] () mutable {
+    auto time_and_sales = load_time_and_sales(client, ticker,
+      Range(Beam::Sequence::FIRST, sequence),
+      SnapshotLimit::from_tail(max_count));
+    auto indicators =
+      load_bbo_indicators(client, ticker, time_and_sales, none).m_indicators;
     auto result = std::vector<Type>();
-    for(auto& time_and_sale : load_time_and_sales(client, ticker,
-        Range(Beam::Sequence::FIRST, sequence),
-        SnapshotLimit::from_tail(max_count))) {
-      result.push_back(Type(std::move(time_and_sale), BboIndicator::UNKNOWN));
+    result.reserve(time_and_sales.size());
+    for(auto i = std::size_t(0); i != time_and_sales.size(); ++i) {
+      result.push_back(Type(std::move(time_and_sales[i]), indicators[i]));
     }
-    load_bbo_indicators(client, ticker, result, none);
     return result;
   }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
     try {
