@@ -88,9 +88,11 @@ def main():
   address = parse_ip_address(config['service_locator'])
   username = config['username']
   password = config['password']
+  encryption = beam.AesGcmClientConfig(config['public_key'])
   start_date = beam.to_utc_time(args.start)
   end_date = beam.to_utc_time(args.end)
-  service_clients = nexus.ServiceClients(username, password, address)
+  service_clients = nexus.ServiceClients(
+    username, password, address, encryption)
   nexus.load_definitions(service_clients.definitions_client)
   fee_table = load_fee_table(config)
   for account in \

@@ -119,7 +119,7 @@ void LoginDialog::OnPasswordTextChanged(const QString& text) {
 void LoginDialog::OnLoginButtonClicked() {
   m_ui->m_resultLabel->clear();
   m_ui->m_resultLabel->repaint();
-  auto address = m_servers[m_ui->m_serverComboBox->currentIndex()].m_address;
+  auto server = m_servers[m_ui->m_serverComboBox->currentIndex()];
   auto username = GetUsername();
   auto password = GetPassword();
   m_ui->m_usernameInput->setEnabled(false);
@@ -129,7 +129,7 @@ void LoginDialog::OnLoginButtonClicked() {
   m_state = State::LOADING;
   m_loginPromise = QtPromise([=] {
     return std::make_unique<ApplicationServiceLocatorClient>(
-      username, password, address);
+      username, password, server.m_address, server.m_encryption);
   }, LaunchPolicy::ASYNC).then([=] (auto&& serviceLocatorClient) {
     m_ui->m_usernameInput->setEnabled(true);
     m_ui->m_passwordInput->setEnabled(true);

@@ -5,9 +5,13 @@ NODE_X64_HASH="2f2c0da162318f0de47665410c7c8c2ed3d36c8f3105de4bbc61176c70a7cbf2"
 NODE_ARM64_HASH="5f4ddab610c1ab2016b3c227cebdbf6d9495161487e4739c7b90090595f465f7"
 ARCH="$(uname -m)"
 ROOT_DIRECTORY="$(pwd)"
+key_directory="Applications/ServiceLocator/Application"
+public_key="$key_directory/service_locator_public.pem"
+private_key="$key_directory/service_locator_private.pem"
 
 function print_usage() {
   echo "Usage: install.sh -p [-u] [-m] [-o] [-i] [-h]"
+  echo "                  [--public_key FILE] [--private_key FILE]"
   echo "  -p: The password to create or use for Spire services."
   echo "  -u: The MySQL username to create or use (default is spireadmin)."
   echo "  -m: The MySQL password to create or use."
@@ -17,6 +21,11 @@ function print_usage() {
   echo "      installation. By default it's set to the Spire password."
   echo "  -i: The global network interface to bind to."
   echo "      The default value is ($local_interface)."
+  echo "  --public_key: The ServiceLocator public key PEM file."
+  echo "      Default: service_locator_public.pem in its application folder."
+  echo "  --private_key: The ServiceLocator private key PEM file."
+  echo "      Default: service_locator_private.pem in its application folder."
+  echo "      Missing keys are generated automatically."
 }
 
 function verify_archive() {
@@ -70,7 +79,7 @@ function install_dependencies() {
   if [ "$is_root" -eq 1 ]; then
     apt-get update -qq
     apt-get install -y -qq automake build-essential cmake curl git libtool \
-      mysql-server parallel perl python3 python3-pip unzip
+      mysql-server openssl parallel perl python3 python3-pip unzip
     if ! command -v yq &> /dev/null; then
       local yq_arch="$ARCH"
       if [ "$yq_arch" == "x86_64" ]; then
@@ -84,6 +93,32 @@ function install_dependencies() {
     fi
     check_and_install_node
   fi
+}
+
+function generate_service_locator_keys() {
+  sudo -u "$username" bash -c '
+    set -e
+    umask 077
+    private_key="$1"
+    public_key="$2"
+    if [ "$private_key" == "$public_key" ]; then
+      echo "Private and public key paths must differ."
+      exit 1
+    fi
+    if [ ! -e "$private_key" ]; then
+      if [ -e "$public_key" ]; then
+        echo "ServiceLocator private key is missing: $private_key"
+        exit 1
+      fi
+      mkdir -p -- "$(dirname -- "$private_key")"
+      openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 \
+        -out "$private_key"
+    fi
+    if [ ! -e "$public_key" ]; then
+      mkdir -p -- "$(dirname -- "$public_key")"
+      openssl pkey -in "$private_key" -pubout -out "$public_key"
+    fi
+  ' bash "$private_key" "$public_key"
 }
 
 function wait_for_service_locator() {
@@ -100,7 +135,8 @@ function wait_for_service_locator() {
 
 function admin_client_login() {
   sudo -u "$username" python3 setup.py --address="$local_interface:20000" \
-    --username="$1" --password="$2" > /dev/null || return $?
+    --username="$1" --password="$2" --public_key="$public_key" \
+    > /dev/null || return $?
   sudo -u "$username" ./AdminClient <<< "exit" > /dev/null 2>&1
 }
 
@@ -119,7 +155,7 @@ local_interface=$(echo -n `ip addr | \
   grep -E -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
   grep -E -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
   head -1`)
-while getopts "u:m:p:o:i:h" opt; do
+while getopts "u:m:p:o:i:h-:" opt; do
   case ${opt} in
     p)
       spire_password="$OPTARG"
@@ -139,6 +175,37 @@ while getopts "u:m:p:o:i:h" opt; do
     h)
       print_usage
       exit 0
+      ;;
+    -)
+      case "$OPTARG" in
+        public_key|private_key)
+          if [ "$OPTIND" -gt "$#" ]; then
+            echo "Missing argument --$OPTARG."
+            exit 1
+          fi
+          key_path="${!OPTIND}"
+          OPTIND=$((OPTIND + 1))
+          ;;
+        public_key=*|private_key=*)
+          key_path="${OPTARG#*=}"
+          ;;
+        *)
+          print_usage
+          exit 1
+          ;;
+      esac
+      if [ "$key_path" == "" ]; then
+        echo "Missing argument --${OPTARG%%=*}."
+        exit 1
+      fi
+      case "${OPTARG%%=*}" in
+        public_key)
+          public_key="$key_path"
+          ;;
+        private_key)
+          private_key="$key_path"
+          ;;
+      esac
       ;;
     \? )
       print_usage
@@ -175,6 +242,8 @@ fi
 if [ "$global_interface" == "" ]; then
   global_interface="$local_interface"
 fi
+public_key=$(realpath -m -- "$public_key")
+private_key=$(realpath -m -- "$private_key")
 install_dependencies
 sudo -u "$username" ./build.sh || { echo "Build failed."; exit 1; }
 database_username="${mysql_username//\'/\'\'}"
@@ -192,10 +261,17 @@ if [ "$is_root" -eq 1 ]; then
   mysql --binary-mode -uroot <<< "$mysql_input"
 fi
 pushd Applications
+sudo -u "$username" python3 -c '
+from pathlib import Path
+from setup import setup_beam
+setup_beam(Path.cwd(), Path.cwd().parent / "Nexus/Dependencies")
+'
+generate_service_locator_keys
 sudo -u "$username" python3 setup.py --local="$local_interface" \
   --world="$global_interface" --address="$local_interface:20000" \
   --password="$spire_password" --mysql_username="$mysql_username" \
-  --mysql_password="$mysql_password"
+  --mysql_password="$mysql_password" --public_key="$public_key" \
+  --private_key="$private_key"
 sudo -u "$username" ./install_python.sh
 pushd ServiceLocator/Application
 service_locator_status=0
@@ -264,6 +340,7 @@ if ! admin_client_login "root" "" && \
 fi
 sudo -u "$username" ./AdminClient <<< "$admin_input"
 sudo -u "$username" python3 setup.py --address="$local_interface:20000" \
-  --username="administration_service" --password="$spire_password"
+  --username="administration_service" --password="$spire_password" \
+  --public_key="$public_key"
 popd
 popd
