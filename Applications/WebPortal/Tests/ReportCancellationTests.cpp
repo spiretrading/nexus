@@ -2,6 +2,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -27,7 +28,10 @@ TEST_SUITE("ReportCancellation") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &local);

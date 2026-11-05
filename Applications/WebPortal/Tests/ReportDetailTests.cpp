@@ -2,9 +2,11 @@
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -16,6 +18,16 @@ using namespace Nexus;
 using namespace Nexus::Tests;
 
 namespace {
+  class NotificationTimer : public TriggerTimer {
+    public:
+      Queue<bool> m_starts;
+
+      void start() {
+        TriggerTimer::start();
+        m_starts.push(true);
+      }
+  };
+
   ReportJob make_job(const DirectoryEntry& account) {
     auto definition = ReportDefinition("example", "Saved Title", {}, {"*"},
       {{"count", "Saved Count", "Integer", true},
@@ -43,6 +55,57 @@ namespace {
 }
 
 TEST_SUITE("ReportDetail") {
+  TEST_CASE("fetch_suppresses_notification") {
+    for(auto is_loaded : {false, true}) {
+      auto environment = ServiceLocatorTestEnvironment();
+      auto& client = environment.get_root();
+      auto bob =
+        client.make_account("Bob", "", DirectoryEntry::make_directory(0));
+      auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+      auto timer = NotificationTimer();
+      auto operations = std::make_shared<TestAdministrationClient::Queue>();
+      auto administration = TestAdministrationClient(operations);
+      auto definition =
+        ReportDefinition("example", "Example", {}, {"*"}, {}, "report");
+      auto local = LocalReportService({definition}, client,
+        [] (const auto&, auto) { return 0; }, &time, 1,
+        Timer(std::in_place_type<TriggerTimer>),
+        Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+        seconds(5));
+      auto submission = ReportSubmission();
+      submission.m_report_type = definition.m_id;
+      submission.m_time_zone = "UTC";
+      submission.m_recipients = {bob};
+      auto id = local.submit(client.get_account(), submission);
+      timer.m_starts.pop();
+      REQUIRE(local.query(
+        client.get_account(), GeneratedReportQuery()).m_reports.size() == 1);
+      REQUIRE(local.load_report(bob, id).m_id == id);
+      auto sessions = WebSessionStore<WebPortalSession>();
+      auto session = sessions.create();
+      session->set_account(client.get_account());
+      auto servlet = ReportingWebServlet(Ref(sessions), &local);
+      if(is_loaded) {
+        REQUIRE(load(
+          servlet, *session, "{\"id\":\"" + id + "\"}").get_status_code() ==
+          HttpStatusCode::OK);
+        id = local.submit(client.get_account(), submission);
+        timer.m_starts.pop();
+      }
+      time.set(time.get_time() + seconds(5));
+      timer.trigger();
+      auto operation = operations->pop();
+      auto& notification =
+        std::get<TestAdministrationClient::SendNotificationOperation>(
+          *operation);
+      notification.m_result.set(Notification());
+      REQUIRE(notification.m_data ==
+        make_report_notification(*local.load_job(id)).m_data);
+      local.close();
+      REQUIRE(!operations->try_pop());
+    }
+  }
+
   TEST_CASE("endpoint_and_saved_metadata") {
     auto environment = ServiceLocatorTestEnvironment();
     auto& client = environment.get_root();
@@ -50,7 +113,10 @@ TEST_SUITE("ReportDetail") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     local.store(job);
     auto definition = job.m_definition;
@@ -114,7 +180,10 @@ TEST_SUITE("ReportDetail") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     auto job = make_job(bob);
     job.m_recipients = {group};

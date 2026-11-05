@@ -5,6 +5,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -51,7 +52,10 @@ TEST_SUITE("ReportRetry") {
       },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(job);
     auto other = job;
     other.m_id = "other";
@@ -116,7 +120,10 @@ TEST_SUITE("ReportRetry") {
       {job.m_definition}, client, [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(job);
     auto restricted = job;
     restricted.m_id = "restricted";
@@ -163,7 +170,10 @@ TEST_SUITE("ReportRetry") {
       {job.m_definition}, client, [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(job);
     REQUIRE_NOTHROW(validate_report_retries({job}, {job.m_definition}, client));
     client.store(alice, bob, Permissions());
