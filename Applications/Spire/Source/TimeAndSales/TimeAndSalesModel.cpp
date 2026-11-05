@@ -18,11 +18,7 @@ namespace {
     auto queue = std::make_shared<Queue<T>>();
     client.query(query, queue);
     auto result = std::vector<T>();
-    try {
-      while(true) {
-        result.push_back(queue->pop());
-      }
-    } catch(const PipeBrokenException&) {}
+    flush(queue, std::back_inserter(result));
     return result;
   }
 }
