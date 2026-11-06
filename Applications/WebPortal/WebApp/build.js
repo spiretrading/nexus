@@ -418,11 +418,18 @@ async function resources() {
           name + '.LICENSE.txt'), root);
     }
   }
-  if(manifest.config?.text) {
-    for(const name of ['json', 'text']) {
-      viewers[name + '_report_viewer/viewer'] =
-        path.join(portal, 'resources', name + '_report_viewer/viewer.js');
+  if(manifest.config?.json) {
+    viewers['json_report_viewer/viewer'] =
+      path.join(portal, 'resources/json_report_viewer/viewer.js');
+    for(const name of ['vanilla-jsoneditor', 'lossless-json']) {
+      copyOutput(path.join(root, 'node_modules', name, 'LICENSE.md'),
+        path.join(root, 'application/resources/json_report_viewer',
+          name + '.LICENSE.txt'), root);
     }
+  }
+  if(manifest.config?.text) {
+    viewers['text_report_viewer/viewer'] =
+      path.join(portal, 'resources/text_report_viewer/viewer.js');
   }
   if(Object.keys(viewers).length !== 0) {
     const webpack = require(path.join(root, 'node_modules/webpack'));

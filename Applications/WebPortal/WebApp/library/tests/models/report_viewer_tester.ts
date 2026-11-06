@@ -330,9 +330,17 @@ describe('ReportViewer', () => {
         assert.equal(resources.length, resourceCount);
         viewers[2].resolve();
         await new Promise(resolve => setImmediate(resolve));
-        component.componentWillUnmount();
-        assert.ok(viewers[2].disposed);
         viewers[2].onError();
+        await new Promise(resolve => setImmediate(resolve));
+        assert.ok(component.state.failed);
+        assert.ok(viewers[2].disposed);
+        component.onRetry();
+        await new Promise(resolve => setImmediate(resolve));
+        viewers[3].resolve();
+        await new Promise(resolve => setImmediate(resolve));
+        component.componentWillUnmount();
+        assert.ok(viewers[3].disposed);
+        viewers[3].onError();
         assert.ok(!component.state.failed);
       } finally {
         component.componentWillUnmount();

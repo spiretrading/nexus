@@ -54,6 +54,7 @@ class App extends React.Component<{}, State> {
           <option value='19'>Missing Markdown</option>
           <option value='20'>Missing JSON</option>
           <option value='21'>Missing text</option>
+          <option value='22'>Large JSON</option>
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
@@ -196,6 +197,19 @@ function makeDetails(): ReportDetailModel.Report[] {
     reports.push({id, title, mediaType, filePath: 'missing-report.' + extension,
       status: ReportDetailModel.Status.READY, parameters: [], content: null});
   }
+  const transactions = Array.from({length: 10000}, (_, index) => ({
+    id: String(9007199254740993n + BigInt(index)),
+    account: `Account ${index % 100}`,
+    ticker: 'ABC.TSX',
+    quantity: index % 1000,
+    settled: index % 2 === 0
+  }));
+  const filePath = URL.createObjectURL(new Blob([
+    JSON.stringify({transactions})], {type: 'application/json'}));
+  downloads.push(filePath);
+  reports.push({id: '22', title: 'Large JSON', filePath,
+    mediaType: 'application/json', status: ReportDetailModel.Status.READY,
+    parameters: [], content: null});
   return reports;
 }
 
