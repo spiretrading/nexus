@@ -37,5 +37,5 @@ ReportDetail Nexus::make_report_detail(const ReportJob& job) {
   }();
   return ReportDetail(job.m_id, job.m_definition.m_name,
     format_report_parameters(job.m_definition, job.m_parameters),
-    std::move(file), status);
+    job.m_definition.m_output.m_media_type, std::move(file), status);
 }

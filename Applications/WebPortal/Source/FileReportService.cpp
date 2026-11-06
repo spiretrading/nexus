@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -71,22 +72,26 @@ FileReportService::FileReportService(
     std::filesystem::path definitions_directory,
     std::filesystem::path jobs_directory, ServiceLocatorClient client,
     TimeClient time_client, std::size_t max_concurrency, Timer timer,
-    Timer retry_timer)
+    Timer retry_timer, AdministrationClient administration_client,
+    Timer notification_timer, time_duration notification_delay)
+BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_definitions_directory(std::filesystem::absolute(definitions_directory)),
       m_jobs_directory(std::filesystem::absolute(jobs_directory)),
       m_client(std::move(client)),
-      m_time_client(std::move(time_client)) {
+      m_time_client(std::move(time_client)),
+      m_jobs(Ref(*this), m_time_client, max_concurrency,
+        std::move(retry_timer), std::move(administration_client),
+        std::move(notification_timer), notification_delay) {
   try {
     recover();
-    m_jobs.emplace(
-      Ref(*this), m_time_client, max_concurrency, std::move(retry_timer));
     m_schedules.emplace(
-      Ref(*this), Ref(*m_jobs), m_client, m_time_client, std::move(timer));
+      Ref(*this), Ref(m_jobs), m_client, m_time_client, std::move(timer));
   } catch(const std::exception&) {
     m_open_state.close();
     throw;
   }
 }
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 FileReportService::~FileReportService() {
   close();
@@ -150,7 +155,9 @@ ReportDetail FileReportService::load_report(
   if(!job || !access.is_visible(*job)) {
     throw ReportNotFoundException();
   }
-  return make_report_detail(*job);
+  auto report = make_report_detail(*job);
+  m_jobs.mark_loaded(account, *job);
+  return report;
 }
 
 ReportFile FileReportService::load_file(
@@ -221,7 +228,7 @@ void FileReportService::store(const ReportJob& job) {
 std::string FileReportService::submit(const DirectoryEntry& account,
     const ReportSubmission& submission) {
   m_open_state.ensure_open();
-  return m_jobs->submit(prepare_report_job(
+  return m_jobs.submit(prepare_report_job(
     load_definitions(), account, submission, m_client, convert_report_time(
       m_time_client.get_time(), "UTC", submission.m_time_zone)));
 }
@@ -230,20 +237,20 @@ void FileReportService::share(const DirectoryEntry& account,
     const std::vector<std::string>& ids,
     const std::vector<DirectoryEntry>& recipients) {
   m_open_state.ensure_open();
-  m_jobs->share(
+  m_jobs.share(
     account, ids, prepare_report_recipients(recipients, account, m_client));
 }
 
 void FileReportService::cancel(
     const DirectoryEntry& account, const std::vector<std::string>& ids) {
   m_open_state.ensure_open();
-  m_jobs->cancel(account, ids);
+  m_jobs.cancel(account, ids);
 }
 
 void FileReportService::retry(
     const DirectoryEntry& account, const std::vector<std::string>& ids) {
   m_open_state.ensure_open();
-  m_jobs->retry(account, ids, [&] (auto& jobs) {
+  m_jobs.retry(account, ids, [&] (auto& jobs) {
     prepare_report_retries(jobs, load_definitions(account), m_client);
   });
 }
@@ -311,7 +318,7 @@ int FileReportService::execute(const ReportJob& job, std::stop_token stop) {
 void FileReportService::remove(
     const DirectoryEntry& account, const std::vector<std::string>& ids) {
   m_open_state.ensure_open();
-  m_jobs->remove(account, ids);
+  m_jobs.remove(account, ids);
 }
 
 void FileReportService::remove(const std::string& id) {
@@ -368,7 +375,7 @@ void FileReportService::close() {
     return;
   }
   m_schedules->close();
-  m_jobs->close();
+  m_jobs.close();
   m_open_state.close();
 }
 
@@ -465,11 +472,7 @@ void FileReportService::recover() {
   }
   for(auto& job : jobs) {
     if(job.m_status == ReportJob::Status::RUNNING) {
-      job.m_status = ReportJob::Status::FAILED;
-      job.m_error = "Server stopped before report completion.";
-      job.m_completed = m_time_client.get_time();
-      job.m_modified = job.m_completed;
-      store(job);
+      m_jobs.resume(job.m_id);
     }
   }
 }

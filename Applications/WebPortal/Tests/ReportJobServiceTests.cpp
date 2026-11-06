@@ -5,11 +5,13 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/ReportJobService.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   template<typename S, typename E>
@@ -51,6 +53,32 @@ namespace {
       }
   };
 
+  class NotificationTimer : public TriggerTimer {
+    public:
+      Queue<bool> m_starts;
+
+      void start() {
+        TriggerTimer::start();
+        m_starts.push(true);
+      }
+  };
+
+  class NotificationTimeClient : public FixedTimeClient {
+    public:
+      std::atomic_bool m_is_failing;
+
+      explicit NotificationTimeClient(ptime time)
+        : FixedTimeClient(time),
+          m_is_failing(false) {}
+
+      ptime get_time() {
+        if(m_is_failing) {
+          throw std::runtime_error("Injected clock failure.");
+        }
+        return FixedTimeClient::get_time();
+      }
+  };
+
   class LvalueValidator {
     public:
       void operator ()(std::vector<ReportJob>& jobs) & {
@@ -82,6 +110,328 @@ namespace {
 }
 
 TEST_SUITE("ReportJobService") {
+  TEST_CASE("notification_deadline") {
+    for(auto exit_code : {0, 1}) {
+      auto backend = Backend(
+        [] (const auto&) {}, [=] (const auto&, auto) { return exit_code; });
+      auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+      auto timer = NotificationTimer();
+      auto operations = std::make_shared<TestAdministrationClient::Queue>();
+      auto administration = TestAdministrationClient(operations);
+      auto service = ReportJobService(Ref(backend), &time, 1,
+        Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+        seconds(5));
+      auto id = service.submit(make_job());
+      timer.m_starts.pop();
+      auto result = *backend.load_job(id);
+      time.set(time.get_time() + seconds(4));
+      timer.trigger();
+      timer.m_starts.pop();
+      REQUIRE(!operations->try_pop());
+      time.set(time.get_time() + seconds(1));
+      timer.trigger();
+      auto operation = operations->pop();
+      auto& notification =
+        std::get<TestAdministrationClient::SendNotificationOperation>(
+          *operation);
+      notification.m_result.set(Notification());
+      REQUIRE(notification.m_account == result.m_account);
+      REQUIRE(notification.m_category == Notification::Category::REPORT);
+      REQUIRE(notification.m_data == make_report_notification(result).m_data);
+      REQUIRE(notification.m_description ==
+        make_report_notification(result).m_description);
+      timer.trigger();
+      service.close();
+      REQUIRE(!operations->try_pop());
+      REQUIRE(backend.load_job(id)->m_status == result.m_status);
+    }
+  }
+
+  TEST_CASE("notification_suppression") {
+    for(auto exit_code : {0, 1}) {
+      auto backend = Backend(
+        [] (const auto&) {}, [=] (const auto&, auto) { return exit_code; });
+      auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+      auto timer = NotificationTimer();
+      auto operations = std::make_shared<TestAdministrationClient::Queue>();
+      auto administration = TestAdministrationClient(operations);
+      auto service = ReportJobService(Ref(backend), &time, 1,
+        Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+        seconds(5));
+      auto id = service.submit(make_job());
+      timer.m_starts.pop();
+      auto result = *backend.load_job(id);
+      service.mark_loaded(result.m_account, result);
+      auto other = service.submit(make_job());
+      timer.m_starts.pop();
+      auto other_result = *backend.load_job(other);
+      service.mark_loaded(DirectoryEntry::make_account(2, "bob"), other_result);
+      other_result.m_status = ReportJob::Status::RUNNING;
+      service.mark_loaded(other_result.m_account, other_result);
+      time.set(time.get_time() + seconds(5));
+      timer.trigger();
+      auto operation = operations->pop();
+      auto& notification =
+        std::get<TestAdministrationClient::SendNotificationOperation>(
+          *operation);
+      notification.m_result.set(Notification());
+      REQUIRE(notification.m_data ==
+        make_report_notification(*backend.load_job(other)).m_data);
+      service.close();
+      REQUIRE(!operations->try_pop());
+    }
+  }
+
+  TEST_CASE("notification_retry") {
+    auto backend =
+      Backend([] (const auto&) {}, [] (const auto&, auto) { return 1; });
+    auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto timer = NotificationTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+      seconds(5));
+    auto id = service.submit(make_job());
+    timer.m_starts.pop();
+    auto first = *backend.load_job(id);
+    service.retry(first.m_account, {id}, [] (auto&) {});
+    timer.m_starts.pop();
+    auto second = *backend.load_job(id);
+    REQUIRE(second.m_completed > first.m_completed);
+    service.mark_loaded(first.m_account, first);
+    time.set(time.get_time() + seconds(5));
+    timer.trigger();
+    auto operation = operations->pop();
+    auto& notification =
+      std::get<TestAdministrationClient::SendNotificationOperation>(*operation);
+    notification.m_result.set(Notification());
+    REQUIRE(notification.m_data == make_report_notification(second).m_data);
+    service.close();
+    REQUIRE(!operations->try_pop());
+  }
+
+  TEST_CASE("notification_removal") {
+    for(auto exit_code : {0, 1}) {
+      auto backend = Backend(
+        [] (const auto&) {}, [=] (const auto&, auto) { return exit_code; });
+      auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+      auto timer = NotificationTimer();
+      auto operations = std::make_shared<TestAdministrationClient::Queue>();
+      auto administration = TestAdministrationClient(operations);
+      auto service = ReportJobService(Ref(backend), &time, 1,
+        Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+        seconds(5));
+      auto id = service.submit(make_job());
+      timer.m_starts.pop();
+      auto result = *backend.load_job(id);
+      if(exit_code == 0) {
+        service.remove(result.m_account, {id});
+      } else {
+        service.cancel(result.m_account, {id});
+      }
+      auto other = service.submit(make_job());
+      timer.m_starts.pop();
+      time.set(time.get_time() + seconds(5));
+      timer.trigger();
+      auto operation = operations->pop();
+      auto& notification =
+        std::get<TestAdministrationClient::SendNotificationOperation>(
+          *operation);
+      notification.m_result.set(Notification());
+      REQUIRE(notification.m_data ==
+        make_report_notification(*backend.load_job(other)).m_data);
+      service.close();
+      REQUIRE(!operations->try_pop());
+    }
+  }
+
+  TEST_CASE("notification_failure") {
+    auto backend =
+      Backend([] (const auto&) {}, [] (const auto&, auto) { return 0; });
+    auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto timer = NotificationTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+      seconds(5));
+    auto id = service.submit(make_job());
+    timer.m_starts.pop();
+    time.set(time.get_time() + seconds(5));
+    timer.trigger();
+    auto failure = operations->pop();
+    std::get<TestAdministrationClient::SendNotificationOperation>(*failure).
+      m_result.set(std::make_exception_ptr(
+        std::runtime_error("Injected notification failure.")));
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::COMPLETED);
+    auto other = service.submit(make_job());
+    timer.m_starts.pop();
+    time.set(time.get_time() + seconds(5));
+    timer.trigger();
+    auto operation = operations->pop();
+    auto& notification =
+      std::get<TestAdministrationClient::SendNotificationOperation>(*operation);
+    notification.m_result.set(Notification());
+    REQUIRE(notification.m_data ==
+      make_report_notification(*backend.load_job(other)).m_data);
+    service.close();
+    REQUIRE(!operations->try_pop());
+  }
+
+  TEST_CASE("notification_recovery") {
+    for(auto status : {ReportJob::Status::STAGED, ReportJob::Status::RUNNING}) {
+      auto backend =
+        Backend([] (const auto&) {}, [] (const auto&, auto) { return 0; });
+      auto job = make_job();
+      job.m_id = "recovered";
+      job.m_status = status;
+      job.m_is_prepared = false;
+      job.m_error = "Validation failed.";
+      backend.store(job);
+      auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+      auto timer = NotificationTimer();
+      auto operations = std::make_shared<TestAdministrationClient::Queue>();
+      auto administration = TestAdministrationClient(operations);
+      auto service = ReportJobService(Ref(backend), &time, 1,
+        Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+        seconds(5));
+      service.resume(job.m_id);
+      timer.m_starts.pop();
+      auto result = *backend.load_job(job.m_id);
+      REQUIRE(result.m_status == ReportJob::Status::FAILED);
+      time.set(time.get_time() + seconds(5));
+      timer.trigger();
+      auto operation = operations->pop();
+      auto& notification =
+        std::get<TestAdministrationClient::SendNotificationOperation>(
+          *operation);
+      notification.m_result.set(Notification());
+      REQUIRE(notification.m_data == make_report_notification(result).m_data);
+      service.close();
+    }
+  }
+
+  TEST_CASE("notification_after_store_retry") {
+    auto is_failing = std::atomic_bool(true);
+    auto stores = Queue<bool>();
+    auto backend = Backend([&] (const auto& job) {
+      if(job.m_status == ReportJob::Status::COMPLETED) {
+        auto failed = is_failing.load();
+        stores.push(failed);
+        if(failed) {
+          throw std::runtime_error("Injected storage failure.");
+        }
+      }
+    }, [] (const auto&, auto) { return 0; });
+    auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto timer = NotificationTimer();
+    auto retry_timer = TriggerTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1, &retry_timer,
+      &administration, &timer, seconds(5));
+    auto id = service.submit(make_job());
+    REQUIRE(stores.pop());
+    time.set(time.get_time() + seconds(10));
+    is_failing = false;
+    retry_timer.trigger();
+    REQUIRE(!stores.pop());
+    timer.m_starts.pop();
+    time.set(time.get_time() + seconds(4));
+    timer.trigger();
+    timer.m_starts.pop();
+    REQUIRE(!operations->try_pop());
+    time.set(time.get_time() + seconds(1));
+    timer.trigger();
+    auto operation = operations->pop();
+    auto& notification =
+      std::get<TestAdministrationClient::SendNotificationOperation>(*operation);
+    notification.m_result.set(Notification());
+    REQUIRE(notification.m_data ==
+      make_report_notification(*backend.load_job(id)).m_data);
+    service.close();
+  }
+
+  TEST_CASE("notification_clock_failure") {
+    auto backend =
+      Backend([] (const auto&) {}, [] (const auto&, auto) { return 0; });
+    auto time = NotificationTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto timer = NotificationTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+      seconds(5));
+    auto id = service.submit(make_job());
+    timer.m_starts.pop();
+    time.set(time.get_time() + seconds(5));
+    time.m_is_failing = true;
+    timer.trigger();
+    timer.m_starts.pop();
+    REQUIRE(!operations->try_pop());
+    time.m_is_failing = false;
+    timer.trigger();
+    auto operation = operations->pop();
+    auto& notification =
+      std::get<TestAdministrationClient::SendNotificationOperation>(*operation);
+    notification.m_result.set(Notification());
+    REQUIRE(notification.m_data ==
+      make_report_notification(*backend.load_job(id)).m_data);
+    service.close();
+  }
+
+  TEST_CASE("completion_clock_failure") {
+    auto time = NotificationTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto backend = Backend([] (const auto&) {},
+      [&] (const auto&, auto) {
+        time.m_is_failing = true;
+        return 0;
+      });
+    auto timer = NotificationTimer();
+    auto retry_timer = NotificationTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1, &retry_timer,
+      &administration, &timer, seconds(5));
+    auto id = service.submit(make_job());
+    retry_timer.m_starts.pop();
+    REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
+    REQUIRE(!operations->try_pop());
+    time.m_is_failing = false;
+    retry_timer.trigger();
+    timer.m_starts.pop();
+    auto result = *backend.load_job(id);
+    REQUIRE(result.m_status == ReportJob::Status::COMPLETED);
+    REQUIRE(result.m_completed == time.get_time());
+    time.set(time.get_time() + seconds(5));
+    timer.trigger();
+    auto operation = operations->pop();
+    auto& notification =
+      std::get<TestAdministrationClient::SendNotificationOperation>(*operation);
+    notification.m_result.set(Notification());
+    REQUIRE(notification.m_data == make_report_notification(result).m_data);
+    service.close();
+  }
+
+  TEST_CASE("notification_shutdown") {
+    auto backend =
+      Backend([] (const auto&) {}, [] (const auto&, auto) { return 0; });
+    auto time = FixedTimeClient(time_from_string("2026-11-05 12:00:00"));
+    auto timer = NotificationTimer();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto administration = TestAdministrationClient(operations);
+    auto service = ReportJobService(Ref(backend), &time, 1,
+      Timer(std::in_place_type<TriggerTimer>), &administration, &timer,
+      seconds(5));
+    service.submit(make_job());
+    timer.m_starts.pop();
+    service.close();
+    time.set(time.get_time() + seconds(5));
+    timer.trigger();
+    REQUIRE(!operations->try_pop());
+  }
+
   TEST_CASE("batch_job_loading") {
     auto stores = 0;
     auto backend = Backend([&] (const auto&) {
@@ -95,7 +445,10 @@ TEST_SUITE("ReportJobService") {
     }
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto& pool = ThreadPool::get();
     pool.wait_until_idle();
     auto count = pool.get_queued_count();
@@ -131,7 +484,10 @@ TEST_SUITE("ReportJobService") {
     backend.m_jobs.emplace(job.m_id, job);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto id = service.submit(make_job());
     REQUIRE(completed.pop() == id);
     auto& pool = ThreadPool::get();
@@ -161,7 +517,10 @@ TEST_SUITE("ReportJobService") {
     backend.m_jobs.emplace(job.m_id, job);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     static_assert(AcceptsValidator<decltype(service), LvalueValidator>);
     static_assert(!AcceptsValidator<decltype(service), RvalueValidator>);
     service.retry(job.m_account, {job.m_id}, LvalueValidator());
@@ -185,7 +544,10 @@ TEST_SUITE("ReportJobService") {
     backend.store(job);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto entered = std::binary_semaphore(0);
     auto release = std::binary_semaphore(0);
     auto retry_error = std::exception_ptr();
@@ -245,7 +607,10 @@ TEST_SUITE("ReportJobService") {
     backend.store(job);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto entered = std::binary_semaphore(0);
     auto release = std::binary_semaphore(0);
     auto retry_error = std::exception_ptr();
@@ -311,7 +676,10 @@ TEST_SUITE("ReportJobService") {
     backend.store(second);
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     REQUIRE_THROWS_AS(service.retry(first.m_account,
       {first.m_id, second.m_id}, [] (auto& jobs) {
         jobs[0].m_arguments.push_back("uncommitted");
@@ -346,7 +714,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto routine = RoutineHandler(spawn([&] {
       try {
         auto id = service.submit(make_job());
@@ -376,7 +747,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(!id.empty());
@@ -414,7 +788,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto first = service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -443,7 +820,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     REQUIRE_THROWS_AS(service.submit(make_job()), std::runtime_error);
     service.close();
     REQUIRE(calls == 0);
@@ -472,7 +852,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = TriggerTimer();
-    auto service = ReportJobService(Ref(backend), &time, 1, &timer);
+    auto service = ReportJobService(Ref(backend), &time, 1, &timer,
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto id = service.submit(make_job());
     auto first = attempts.pop();
     REQUIRE(backend.load_job(id)->m_status == ReportJob::Status::RUNNING);
@@ -518,7 +901,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto id = service.submit(make_job());
     attempts.pop();
     service.close();
@@ -545,7 +931,10 @@ TEST_SUITE("ReportJobService") {
     }, [] (const auto&, auto) { return 0; });
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto id = service.submit(job);
     attempts.pop();
@@ -588,7 +977,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(attempts.pop().m_status == ReportJob::Status::FAILED);
@@ -612,7 +1004,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     service.submit(make_job());
     REQUIRE(states.pop().m_status == ReportJob::Status::QUEUED);
     REQUIRE(states.pop().m_status == ReportJob::Status::RUNNING);
@@ -637,7 +1032,10 @@ TEST_SUITE("ReportJobService") {
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -675,7 +1073,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -705,7 +1106,10 @@ TEST_SUITE("ReportJobService") {
     backend.store(completed);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     for(auto& id : {"other", "missing"}) {
       REQUIRE_THROWS_AS(
         service.cancel(job.m_account, {"failed", id}), ReportNotFoundException);
@@ -747,7 +1151,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto id = service.submit(job);
     REQUIRE(started.pop() == id);
@@ -785,7 +1192,10 @@ TEST_SUITE("ReportJobService") {
     });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     auto first = service.submit(job);
     REQUIRE(started.pop() == first);
@@ -834,7 +1244,10 @@ TEST_SUITE("ReportJobService") {
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:02:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto blocker = service.submit(make_job());
     REQUIRE(started.pop().m_id == blocker);
     service.retry(job.m_account, {job.m_id, job.m_id}, [] (const auto&) {});
@@ -888,7 +1301,10 @@ TEST_SUITE("ReportJobService") {
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     REQUIRE_THROWS_AS(
       service.retry(job.m_account, {job.m_id}, [] (const auto&) {}),
       std::runtime_error);
@@ -916,7 +1332,10 @@ TEST_SUITE("ReportJobService") {
     backend.m_jobs.emplace(job.m_id, job);
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
     REQUIRE(started.pop() == job.m_id);
     service.retry(job.m_account, {job.m_id}, [] (const auto&) {});
@@ -954,7 +1373,10 @@ TEST_SUITE("ReportJobService") {
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, 2,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job();
     job.m_arguments = {"0"};
     service.submit(job);
@@ -998,7 +1420,10 @@ TEST_SUITE("ReportJobService") {
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     auto service = ReportJobService(Ref(backend), &time_client, CONCURRENCY,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     for(auto i = 0; i != CONCURRENCY; ++i) {
       auto job = make_job();
       job.m_account = DirectoryEntry::make_account(i + 1);
@@ -1025,10 +1450,16 @@ TEST_SUITE("ReportJobService") {
       });
     auto time_client = FixedTimeClient(time_from_string("2026-10-05 12:00:00"));
     REQUIRE_THROWS_AS((ReportJobService(Ref(backend), &time_client, 0,
-      Timer(std::in_place_type<TriggerTimer>))),
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5))),
       std::invalid_argument);
     auto service = ReportJobService(Ref(backend), &time_client, 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto alice = make_job();
     auto first = service.submit(alice);
     REQUIRE(started.pop() == first);

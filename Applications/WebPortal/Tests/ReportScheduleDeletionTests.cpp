@@ -4,6 +4,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -44,7 +45,10 @@ TEST_SUITE("ReportScheduleDeletion") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     auto schedule = make_schedule(client.get_account());
     schedule.m_recipients = {group, recipient};
@@ -123,7 +127,10 @@ TEST_SUITE("ReportScheduleDeletion") {
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(schedule);
     auto parameters = JsonObject();
     parameters["count"] = 2;
