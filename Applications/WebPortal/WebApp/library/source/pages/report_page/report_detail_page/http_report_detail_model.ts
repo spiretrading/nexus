@@ -19,7 +19,8 @@ export class HttpReportDetailModel extends ReportDetailModel {
     return {id: response.id, title: response.title, status: response.status,
       parameters: response.parameters.map((parameter: any) =>
         ({label: parameter.label, value: parameter.value})),
-      filePath: response.file_path, content: response.content};
+      mediaType: response.media_type, filePath: response.file_path,
+      content: response.content};
   }
 
   public async retry(id: string): Promise<void> {

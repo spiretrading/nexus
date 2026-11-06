@@ -87,7 +87,7 @@ function makeDetails(): ReportDetailModel.Report[] {
       })();
       const filePath = URL.createObjectURL(file);
       downloads.push(filePath);
-      return {id: String(index + 1), title, filePath,
+      return {id: String(index + 1), title, filePath, mediaType: file.type,
         status: ReportDetailModel.Status.READY,
         parameters: [
           {label: 'Account / Group', value: `Alpha Group ${index + 1}`},

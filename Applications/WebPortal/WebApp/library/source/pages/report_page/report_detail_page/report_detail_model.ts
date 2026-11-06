@@ -48,6 +48,9 @@ export namespace ReportDetailModel {
     /** The report parameters in display order. */
     parameters: readonly Parameter[];
 
+    /** The output MIME type saved with the report job. */
+    mediaType: string;
+
     /** The state of the report content. */
     status: Status;
 

@@ -122,6 +122,7 @@ TEST_SUITE("ReportDetail") {
     auto definition = job.m_definition;
     definition.m_name = "New Title";
     definition.m_parameters[0].m_label = "New Count";
+    definition.m_output.m_media_type = "application/pdf";
     local.set_definitions({definition});
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
@@ -149,6 +150,7 @@ TEST_SUITE("ReportDetail") {
     REQUIRE(report.m_id == job.m_id);
     REQUIRE(report.m_status == ReportDetail::Status::READY);
     REQUIRE(report.m_title == "Saved Title");
+    REQUIRE(report.m_media_type == "text/csv");
     REQUIRE(report.m_parameters.size() == 3);
     REQUIRE(report.m_parameters[0].m_label == "Saved Count");
     REQUIRE(report.m_parameters[0].m_value == "0");
@@ -230,11 +232,13 @@ TEST_SUITE("ReportDetail") {
           return ReportDetail::Status::IN_PROGRESS;
         }();
         REQUIRE(details.m_status == expected);
+        REQUIRE(details.m_media_type == "text/csv");
         REQUIRE(to_string(details.m_file_path).empty());
         auto response = load(servlet, *session, R"({"id":"report /?"})");
         REQUIRE(response.get_status_code() == HttpStatusCode::OK);
         auto received = from_json<ReportDetail>(to_string(response.get_body()));
         REQUIRE(received.m_status == expected);
+        REQUIRE(received.m_media_type == "text/csv");
         REQUIRE(to_string(received.m_file_path).empty());
         REQUIRE(to_string(response.get_body()).find("private") ==
           std::string::npos);
