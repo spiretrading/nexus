@@ -401,7 +401,7 @@ void ReplayTimeAndSalesModel::start_live() {
   m_is_reading = false;
   publish(ptime(pos_infin));
   m_live_handler = std::make_unique<EventHandler>();
-  auto bbo_query = make_real_time_query(m_ticker);
+  auto bbo_query = make_current_query(m_ticker);
   bbo_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(bbo_query, m_live_handler->get_slot<SequencedBboQuote>(
     std::bind_front(&ReplayTimeAndSalesModel::on_bbo, this)));
