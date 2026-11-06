@@ -18,7 +18,9 @@ using namespace Spire;
 
 namespace {
   const auto BASE = time_from_string("2024-06-01 10:00:00");
-  const auto TICKER = Ticker("ABX", Venue("TSX"));
+  const auto NOW = time_from_string("2024-06-01 11:00:00");
+  const auto NOW_OFFSET = NOW - BASE;
+  const auto TICKER = parse_ticker("ABX.TSX");
   const auto WAIT_LIMIT = seconds(5);
 
   TimeAndSale make_time_and_sale(time_duration offset) {
@@ -78,9 +80,9 @@ namespace {
     int m_bbo_sequence;
 
     Fixture(time_duration position, time_duration start = seconds(0))
-      : m_environment(BASE + hours(1)),
+      : m_environment(NOW),
         m_clients(Ref(m_environment)),
-        m_time_client(BASE + hours(1)),
+        m_time_client(NOW),
         m_session(std::make_shared<ReplaySession>(
           Timeline(BASE + start, hours(2)), position - start, Decimal(1),
           TimeClient(&m_time_client))),
@@ -132,8 +134,7 @@ namespace {
     return offsets;
   }
 
-  template<typename F>
-  void wait_until(F&& predicate) {
+  void wait_until(auto&& predicate) {
     auto timer = QTimer();
     timer.setSingleShot(true);
     timer.start(static_cast<int>(WAIT_LIMIT.total_milliseconds()));
@@ -153,7 +154,7 @@ namespace {
 
 TEST_SUITE("ReplayTimeAndSalesModel") {
   UI_TEST_CASE("load_older_ends_at_the_position") {
-    auto fixture = Fixture(seconds(2) + milliseconds(500));
+    auto fixture = Fixture(duration_from_string("00:00:02.500"));
     fixture.store({seconds(1), seconds(2), seconds(3)});
     auto model = fixture.make_model();
     REQUIRE(model->get_size() == 0);
@@ -175,7 +176,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
   }
 
   UI_TEST_CASE("load_older_stops_at_the_timeline_start") {
-    auto fixture = Fixture(seconds(10), seconds(1) + milliseconds(500));
+    auto fixture = Fixture(seconds(10), duration_from_string("00:00:01.500"));
     fixture.store({seconds(1), seconds(2), seconds(3)});
     auto model = fixture.make_model();
     wait(model->load_older(10));
@@ -192,7 +193,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       [&] (const auto& operation) {
         operations.push_back(operation);
       }));
-    fixture.set_position(seconds(1) + milliseconds(500));
+    fixture.set_position(duration_from_string("00:00:01.500"));
     wait_until([&] {
       return model->get_size() == 1;
     });
@@ -224,7 +225,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       [&] (const auto& operation) {
         operations.push_back(operation);
       }));
-    fixture.set_position(seconds(1) + milliseconds(500));
+    fixture.set_position(duration_from_string("00:00:01.500"));
     REQUIRE(get_offsets(*model) == std::vector<time_duration>{seconds(1)});
     auto removals = 0;
     for(auto& operation : operations) {
@@ -354,7 +355,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     wait(model->load_older(10));
     REQUIRE(model->get_size() == 3);
     fixture.m_session->get_timeline()->set(
-      Timeline(BASE + seconds(1) + milliseconds(500), hours(2)));
+      Timeline(BASE + duration_from_string("00:00:01.500"), hours(2)));
     REQUIRE(get_offsets(*model) ==
       std::vector<time_duration>{seconds(2), seconds(3)});
     wait(model->load_older(10));
@@ -385,7 +386,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
 
   UI_TEST_CASE(
       "real_time_appends_from_the_back_and_pausing_hides_later_trades") {
-    auto fixture = Fixture(hours(1));
+    auto fixture = Fixture(NOW_OFFSET);
     fixture.m_environment.publish(TICKER, make_time_and_sale(seconds(1)));
     fixture.m_environment.publish(TICKER, make_time_and_sale(seconds(2)));
     auto model = fixture.make_model();
@@ -395,76 +396,79 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REAL_TIME);
     fixture.m_environment.publish(
-      TICKER, make_time_and_sale(hours(1) - milliseconds(500)));
+      TICKER, make_time_and_sale(duration_from_string("00:59:59.500")));
     wait_until([&] {
       return model->get_size() == 2;
     });
     fixture.m_environment.publish(
-      TICKER, make_time_and_sale(hours(1) + milliseconds(500)));
+      TICKER, make_time_and_sale(duration_from_string("01:00:00.500")));
     wait_until([&] {
       return model->get_size() == 3;
     });
     fixture.m_session->pause();
-    REQUIRE(get_offsets(*model) ==
-      std::vector<time_duration>{seconds(2), hours(1) - milliseconds(500)});
-    fixture.m_time_client.set(BASE + hours(1) + seconds(1));
-    fixture.set_position(hours(1) + seconds(1));
     REQUIRE(get_offsets(*model) == std::vector<time_duration>{
-      seconds(2), hours(1) - milliseconds(500), hours(1) + milliseconds(500)});
+      seconds(2), duration_from_string("00:59:59.500")});
+    fixture.m_time_client.set(NOW + duration_from_string("00:00:01"));
+    fixture.set_position(duration_from_string("01:00:01"));
+    REQUIRE(get_offsets(*model) == std::vector<time_duration>{seconds(2),
+      duration_from_string("00:59:59.500"),
+      duration_from_string("01:00:00.500")});
     wait(model->load_older(10));
     REQUIRE(get_offsets(*model) == std::vector<time_duration>{seconds(1),
-      seconds(2), hours(1) - milliseconds(500), hours(1) + milliseconds(500)});
+      seconds(2), duration_from_string("00:59:59.500"),
+      duration_from_string("01:00:00.500")});
   }
 
   UI_TEST_CASE("reading_near_the_present_waits_for_new_data") {
-    auto fixture = Fixture(hours(1) - seconds(1));
-    fixture.store({hours(1) - milliseconds(500)});
+    auto fixture = Fixture(duration_from_string("00:59:59"));
+    fixture.store({duration_from_string("00:59:59.500")});
     auto count = std::make_shared<std::atomic_int>(0);
     auto model = fixture.make_model(count);
     fixture.m_session->play();
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REPLAYING);
-    fixture.set_position(hours(1) - milliseconds(500));
+    fixture.set_position(duration_from_string("00:59:59.500"));
     wait_until([&] {
       return model->get_size() == 1;
     });
     REQUIRE(*count <= 2);
     auto queries = count->load();
-    fixture.m_time_client.set(BASE + hours(1) + seconds(1));
-    fixture.store({hours(1) + milliseconds(500)});
-    fixture.set_position(hours(1) + milliseconds(500));
+    fixture.m_time_client.set(NOW + duration_from_string("00:00:01"));
+    fixture.store({duration_from_string("01:00:00.500")});
+    fixture.set_position(duration_from_string("01:00:00.500"));
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REPLAYING);
     wait_until([&] {
       return model->get_size() == 2;
     });
     REQUIRE(get_offsets(*model) == std::vector<time_duration>{
-      hours(1) - milliseconds(500), hours(1) + milliseconds(500)});
+      duration_from_string("00:59:59.500"),
+      duration_from_string("01:00:00.500")});
     REQUIRE(*count == queries + 1);
   }
 
   UI_TEST_CASE("reading_near_the_present_is_throttled") {
-    auto fixture = Fixture(hours(1) - seconds(1));
-    fixture.store({hours(1) - milliseconds(500)});
+    auto fixture = Fixture(duration_from_string("00:59:59"));
+    fixture.store({duration_from_string("00:59:59.500")});
     auto count = std::make_shared<std::atomic_int>(0);
     auto model = fixture.make_model(count);
     fixture.m_session->play();
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REPLAYING);
-    fixture.set_position(hours(1) - milliseconds(500));
+    fixture.set_position(duration_from_string("00:59:59.500"));
     wait_until([&] {
       return model->get_size() == 1;
     });
     auto queries = count->load();
     for(auto i = 1; i <= 4; ++i) {
-      fixture.m_time_client.set(BASE + hours(1) + milliseconds(100 * i));
+      fixture.m_time_client.set(NOW + milliseconds(100 * i));
       fixture.set_position(
-        hours(1) - milliseconds(500) + milliseconds(100 * i));
+        duration_from_string("00:59:59.500") + milliseconds(100 * i));
     }
     wait_for(milliseconds(100));
     REQUIRE(*count == queries);
-    fixture.m_time_client.set(BASE + hours(1) + milliseconds(500));
-    fixture.set_position(hours(1));
+    fixture.m_time_client.set(NOW + duration_from_string("00:00:00.500"));
+    fixture.set_position(NOW_OFFSET);
     wait_until([&] {
       return *count == queries + 1;
     });
@@ -487,13 +491,13 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       return model->get_size() == 1;
     });
     auto queries = count->load();
-    for(auto position = seconds(1) + milliseconds(100);
+    for(auto position = duration_from_string("00:00:01.100");
         position <= seconds(15); position += milliseconds(100)) {
       fixture.set_position(position);
     }
     REQUIRE(model->get_size() == 15);
     REQUIRE(*count == queries);
-    fixture.set_position(seconds(15) + milliseconds(100));
+    fixture.set_position(duration_from_string("00:00:15.100"));
     wait_until([&] {
       return *count == queries + 1;
     });
@@ -579,40 +583,40 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
   }
 
   UI_TEST_CASE("late_time_and_sales_are_read_when_the_list_is_empty") {
-    auto fixture = Fixture(hours(1) - seconds(1));
+    auto fixture = Fixture(duration_from_string("00:59:59"));
     auto model = fixture.make_model();
     fixture.m_session->play();
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REPLAYING);
     wait_for(milliseconds(100));
     REQUIRE(model->get_size() == 0);
-    fixture.store({hours(1) - milliseconds(500)});
-    fixture.m_time_client.set(BASE + hours(1) + seconds(1));
-    fixture.set_position(hours(1));
+    fixture.store({duration_from_string("00:59:59.500")});
+    fixture.m_time_client.set(NOW + duration_from_string("00:00:01"));
+    fixture.set_position(NOW_OFFSET);
     wait_until([&] {
       return model->get_size() == 1;
     });
     REQUIRE(get_offsets(*model) ==
-      std::vector<time_duration>{hours(1) - milliseconds(500)});
+      std::vector<time_duration>{duration_from_string("00:59:59.500")});
   }
 
   UI_TEST_CASE("catching_up_to_real_time_classifies_by_the_bbo_at_each_trade") {
-    auto fixture = Fixture(hours(1) - seconds(1));
-    fixture.store_bbo(hours(1) - seconds(10), Money::ONE - Money::CENT,
-      Money::ONE + Money::CENT);
-    fixture.store({hours(1) - milliseconds(800)});
+    auto fixture = Fixture(duration_from_string("00:59:59"));
+    fixture.store_bbo(duration_from_string("00:59:50"),
+      Money::ONE - Money::CENT, Money::ONE + Money::CENT);
+    fixture.store({duration_from_string("00:59:59.200")});
     auto model = fixture.make_model();
     fixture.m_session->play();
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REPLAYING);
-    fixture.set_position(hours(1) - milliseconds(700));
+    fixture.set_position(duration_from_string("00:59:59.300"));
     wait_until([&] {
       return model->get_size() == 1;
     });
-    fixture.store({hours(1) - milliseconds(500)});
-    fixture.store_bbo(hours(1) - milliseconds(200), Money::ONE,
+    fixture.store({duration_from_string("00:59:59.500")});
+    fixture.store_bbo(duration_from_string("00:59:59.800"), Money::ONE,
       Money::ONE + 2 * Money::CENT);
-    fixture.set_position(hours(1));
+    fixture.set_position(NOW_OFFSET);
     REQUIRE(fixture.m_session->get_state()->get() ==
       PlaybackState::REAL_TIME);
     wait_until([&] {

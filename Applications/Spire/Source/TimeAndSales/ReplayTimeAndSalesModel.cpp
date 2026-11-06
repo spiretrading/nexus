@@ -434,7 +434,7 @@ void ReplayTimeAndSalesModel::on_read(int generation, ptime end,
   m_bbo = std::move(bbo);
   if(std::ssize(*entries) == READ_SIZE) {
     m_read_end =
-      entries->back().m_time_and_sale->m_timestamp - microseconds(1);
+      entries->back().m_time_and_sale->m_timestamp - time_duration::unit();
     m_last_present_read_time = ptime(neg_infin);
   } else {
     m_read_end = std::max(m_read_end, end);
