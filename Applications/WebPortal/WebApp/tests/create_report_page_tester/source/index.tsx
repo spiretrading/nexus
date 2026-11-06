@@ -28,6 +28,7 @@ class DemoCreateReportModel extends LocalCreateReportModel {
       downloads.push(filePath);
       await details.load();
       details.add({id, title: definition.name, filePath, content,
+        mediaType: 'application/json',
         status: ReportDetailModel.Status.IN_PROGRESS,
         parameters: definition.parameters.map(parameter => ({
           label: parameter.label,

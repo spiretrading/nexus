@@ -40,6 +40,9 @@ namespace Nexus {
     /** The configured parameter values in definition order. */
     std::vector<Parameter> m_parameters;
 
+    /** The output MIME type saved with the report job. */
+    std::string m_media_type;
+
     /** The authenticated download URL, empty until the report is ready. */
     Beam::Uri m_file_path;
 
@@ -74,6 +77,7 @@ namespace Beam {
       shuttle.shuttle("id", value.m_id);
       shuttle.shuttle("title", value.m_title);
       shuttle.shuttle("parameters", value.m_parameters);
+      shuttle.shuttle("media_type", value.m_media_type);
       shuttle.shuttle("file_path", value.m_file_path);
       shuttle.shuttle("status", value.m_status);
     }

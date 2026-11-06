@@ -53,6 +53,7 @@ class Model extends ReportDetailModel {
 
 function makeReport(id: string): ReportDetailModel.Report {
   return {id, title: `Report ${id}`, parameters: [],
+    mediaType: 'application/pdf',
     status: ReportDetailModel.Status.READY, filePath: `/report/${id}`};
 }
 

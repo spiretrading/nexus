@@ -5,6 +5,7 @@ import { LocalReportDetailModel, ReportDetailModel } from
 
 function report(): ReportDetailModel.Report {
   return {id: '1', title: 'Profit and Loss',
+    mediaType: 'text/csv',
     parameters: [{label: 'Account / Group', value: 'Alpha Group'}],
     status: ReportDetailModel.Status.READY, filePath: '/reports/1.csv',
     content: 'Ticker,Profit\nABX.TSX,100\n'};
@@ -50,6 +51,7 @@ describe('LocalReportDetailModel', () => {
     assert.equal(pending.status, ReportDetailModel.Status.IN_PROGRESS);
     assert.equal(pending.filePath, '');
     assert.equal(pending.content, null);
+    assert.equal(pending.mediaType, 'text/csv');
     await model.retry('failed');
     assert.deepEqual(await model.loadReport('failed'), pending);
     await model.retry('1');
@@ -64,15 +66,17 @@ describe('LocalReportDetailModel', () => {
     const original = report();
     const binary: ReportDetailModel.Report = {...report(), id: '2',
       status: ReportDetailModel.Status.READY, filePath: '/reports/2.zip',
-      content: null};
+      mediaType: 'application/zip', content: null};
     const model = new LocalReportDetailModel([original, binary]);
     original.parameters[0].value = 'Changed';
     original.title = 'Changed';
+    original.mediaType = 'application/pdf';
     await model.load();
     const loaded = await model.loadReport('1');
     assert.deepEqual(loaded, report());
     loaded.parameters[0].label = 'Changed';
     loaded.filePath = '/changed';
+    loaded.mediaType = 'application/pdf';
     assert.deepEqual(await model.loadReport('1'), report());
     assert.deepEqual(await model.loadReport('2'), binary);
   });
