@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { LocalReportDetailModel, ReportDetailController,
-  ReportDetailModel } from 'web_portal';
+  ReportDetailModel, ReportViewer } from 'web_portal';
 
 class DemoReportDetailModel extends LocalReportDetailModel {
   public async loadReport(id: string): Promise<ReportDetailModel.Report> {
@@ -35,6 +35,9 @@ class App extends React.Component<{}, State> {
           <option value='1'>Profit and Loss</option>
           <option value='2'>Trading Volume</option>
           <option value='3'>Binary download</option>
+          <option value='4'>Sample PDF</option>
+          <option value='5'>Missing PDF</option>
+          <option value='6'>Invalid PDF</option>
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
@@ -74,7 +77,7 @@ class App extends React.Component<{}, State> {
 }
 
 function makeDetails(): ReportDetailModel.Report[] {
-  return ['Profit and Loss', 'Trading Volume', 'Binary download'].
+  const reports = ['Profit and Loss', 'Trading Volume', 'Binary download'].
     map((title, index) => {
       const content = `Report,Account,Scope,Period\n` +
         `${title},Alpha Group ${index + 1},Canada,Month to Date\n`;
@@ -100,15 +103,23 @@ function makeDetails(): ReportDetailModel.Report[] {
           return null;
         })()};
     });
+  const invalid = URL.createObjectURL(new Blob(['Not a PDF.'],
+    {type: 'application/pdf'}));
+  downloads.push(invalid);
+  for(const [id, title, filePath] of [
+      ['4', 'Sample PDF',
+        'resources/pdfjs/web/compressed.tracemonkey-pldi-09.pdf'],
+      ['5', 'Missing PDF', 'missing-report.pdf'],
+      ['6', 'Invalid PDF', invalid]]) {
+    reports.push({id, title, filePath, mediaType: 'application/pdf',
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  return reports;
 }
 
 function renderReportContent(report: ReportDetailModel.Report):
     React.ReactNode {
-  if(report.content == null) {
-    return null;
-  }
-  return <pre style={{margin: 0, whiteSpace: 'pre-wrap',
-    overflowWrap: 'anywhere'}}>{report.content}</pre>;
+  return <ReportViewer report={report}/>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
