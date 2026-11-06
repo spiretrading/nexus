@@ -12,14 +12,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const auto READ_AHEAD = seconds(30);
   const auto READ_SIZE = 1000;
-  const auto LOW_WATER = 200;
-  const auto MAX_LOW_WATER = 5000;
-  const auto JUMP_THRESHOLD = seconds(2);
-  const auto MIN_PRESENT_READ_INTERVAL = milliseconds(500);
   const auto DEFAULT_PAGE_SIZE = 50;
-  const auto SEEK_INTERVAL_MS = 100;
 
   struct Chunk {
     std::vector<TimeAndSalesModel::Type> m_entries;
@@ -77,6 +71,7 @@ ReplayTimeAndSalesModel::ReplayTimeAndSalesModel(Ticker ticker,
       m_older_generation(0),
       m_is_reading(false),
       m_seek_state(SeekState::NONE) {
+  static const auto SEEK_INTERVAL_MS = 100;
   m_seek_timer.setSingleShot(true);
   m_seek_timer.setInterval(SEEK_INTERVAL_MS);
   QObject::connect(&m_seek_timer, &QTimer::timeout,
@@ -156,14 +151,18 @@ Range::Point ReplayTimeAndSalesModel::get_cursor() const {
 }
 
 time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
+  static const auto READ_AHEAD = seconds(30);
   return scale_duration(READ_AHEAD, get_speed_factor(*m_session));
 }
 
 time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
+  static const auto JUMP_THRESHOLD = seconds(2);
   return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
 }
 
 int ReplayTimeAndSalesModel::get_low_water() const {
+  static const auto LOW_WATER = 200;
+  static const auto MAX_LOW_WATER = 5000;
   return std::min<Decimal>(Decimal(MAX_LOW_WATER),
     Decimal(LOW_WATER) * get_speed_factor(*m_session)).convert_to<int>();
 }
@@ -262,6 +261,7 @@ void ReplayTimeAndSalesModel::unpublish(ptime end) {
 }
 
 void ReplayTimeAndSalesModel::read() {
+  static const auto MIN_PRESENT_READ_INTERVAL = milliseconds(500);
   if(m_is_reading || m_seek_state != SeekState::NONE || m_live_handler) {
     return;
   }
