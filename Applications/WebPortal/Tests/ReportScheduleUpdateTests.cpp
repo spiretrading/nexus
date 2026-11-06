@@ -3,6 +3,7 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -72,7 +73,10 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto local = LocalReportService({schedule.m_definition}, client,
       [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(schedule);
     auto service = ReportService(&local);
     auto submission = make_submission(schedule);
@@ -129,7 +133,10 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(schedule);
     auto submission = make_submission(schedule);
     submission.m_start_time = time_from_string("2026-01-31 10:00:00");
@@ -178,7 +185,10 @@ TEST_SUITE("ReportScheduleUpdate") {
     auto local = LocalReportService({schedule.m_definition}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(schedule);
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();

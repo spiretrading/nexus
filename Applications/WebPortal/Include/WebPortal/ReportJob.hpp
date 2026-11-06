@@ -2,6 +2,7 @@
 #define NEXUS_REPORT_JOB_HPP
 #include <ostream>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "WebPortal/ReportDefinition.hpp"
 
 namespace Nexus {
@@ -88,6 +89,15 @@ namespace Nexus {
 
   /** Formats configured parameter values in definition order for display. */
   std::vector<std::string> format_report_parameters(const ReportJob& job);
+
+  /**
+   * Prepares a report notification for the submitting account.
+   * @param job The completed or failed report job.
+   * @return An unread notification with an empty id and unset timestamp for
+   *         Administration Service to assign when sending its content.
+   * @throws std::invalid_argument If the job is neither completed nor failed.
+   */
+  Notification make_report_notification(const ReportJob& job);
 
   inline std::ostream& operator <<(
       std::ostream& out, ReportJob::Status status) {
