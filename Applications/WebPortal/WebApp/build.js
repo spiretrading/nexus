@@ -409,6 +409,21 @@ async function resources() {
           name + '.LICENSE.txt'), root);
     }
   }
+  if(manifest.config?.markdown) {
+    viewers['markdown_report_viewer/viewer'] =
+      path.join(portal, 'resources/markdown_report_viewer/viewer.js');
+    for(const name of ['dompurify', 'marked']) {
+      copyOutput(path.join(root, 'node_modules', name, 'LICENSE'),
+        path.join(root, 'application/resources/markdown_report_viewer',
+          name + '.LICENSE.txt'), root);
+    }
+  }
+  if(manifest.config?.text) {
+    for(const name of ['json', 'text']) {
+      viewers[name + '_report_viewer/viewer'] =
+        path.join(portal, 'resources', name + '_report_viewer/viewer.js');
+    }
+  }
   if(Object.keys(viewers).length !== 0) {
     const webpack = require(path.join(root, 'node_modules/webpack'));
     await new Promise((resolve, reject) => {

@@ -44,6 +44,16 @@ class App extends React.Component<{}, State> {
           <option value='9'>Empty CSV</option>
           <option value='10'>Invalid CSV</option>
           <option value='11'>Missing CSV</option>
+          <option value='12'>Markdown report</option>
+          <option value='13'>JSON report</option>
+          <option value='14'>Plain text report</option>
+          <option value='15'>Invalid JSON</option>
+          <option value='16'>Empty text</option>
+          <option value='17'>Empty Markdown</option>
+          <option value='18'>JSON scalar</option>
+          <option value='19'>Missing Markdown</option>
+          <option value='20'>Missing JSON</option>
+          <option value='21'>Missing text</option>
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
@@ -144,6 +154,48 @@ function makeDetails(): ReportDetailModel.Report[] {
   reports.push({id: '11', title: 'Missing CSV', filePath: 'missing-report.csv',
     mediaType: 'text/csv', status: ReportDetailModel.Status.READY,
     parameters: [], content: null});
+  for(const [id, title, mediaType, content] of [
+      ['12', 'Markdown report', 'text/markdown',
+        '# Account summary\n\nTrading results for **Alpha Group**.\n\n' +
+        '| Ticker | Quantity | Profit |\n| --- | ---: | ---: |\n' +
+        '| ABC.TSX | 100 | $125.50 |\n| XYZ.TSX | 25 | -$30.00 |\n\n' +
+        '## Notes\n\n- Values are in CAD.\n- Includes ~~pending~~ ' +
+        '*completed* trades.\n\n- [x] Reconciled\n- [ ] Reviewed\n\n' +
+        '> Prepared for the account owner.\n\n' +
+        '```json\n{"account": "Alpha Group", "trades": 125}\n```\n\n' +
+        '[Spire](https://spiretrading.com)\n\n' +
+        '<script>alert("script")</script>\n' +
+        '<span style="position:fixed;inset:0" onclick="alert(1)">' +
+        'This text is safe.</span>\n\n[Unsafe link](javascript:alert(1))'],
+      ['13', 'JSON report', 'application/json',
+        '{"account":"Alpha Group","id":900719925474099312345,' +
+        '"amount":123.4567890123456789,"negativeZero":-0,' +
+        '"trades":[{"ticker":"ABC.TSX","quantity":100},' +
+        '{"ticker":"XYZ.TSX","quantity":25}],"complete":true,' +
+        '"error":null,"empty":{},"notes":"<img src=x onerror=alert(1)>"}'],
+      ['14', 'Plain text report', 'text/plain',
+        'Account statement\n\nAccount\tAlpha Group\n' +
+        'Ticker      Quantity      Profit\n' +
+        'ABC.TSX          100      125.50\n' +
+        'XYZ.TSX           25      -30.00\n\n' +
+        '<b>This is literal text.</b>\nUnicode: caf\u00e9 \u65e5\u672c\n'],
+      ['15', 'Invalid JSON', 'application/json', '{"account":'],
+      ['16', 'Empty text', 'text/plain', ''],
+      ['17', 'Empty Markdown', 'text/markdown', ''],
+      ['18', 'JSON scalar', 'application/json', 'null']]) {
+    const filePath =
+      URL.createObjectURL(new Blob([content], {type: mediaType}));
+    downloads.push(filePath);
+    reports.push({id, title, filePath, mediaType,
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  for(const [id, title, mediaType, extension] of [
+      ['19', 'Missing Markdown', 'text/markdown', 'md'],
+      ['20', 'Missing JSON', 'application/json', 'json'],
+      ['21', 'Missing text', 'text/plain', 'txt']]) {
+    reports.push({id, title, mediaType, filePath: 'missing-report.' + extension,
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
   return reports;
 }
 

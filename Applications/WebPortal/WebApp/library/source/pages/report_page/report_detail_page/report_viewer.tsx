@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { CsvReportViewer } from './csv_report_viewer';
+import { JsonReportViewer } from './json_report_viewer';
+import { MarkdownReportViewer } from './markdown_report_viewer';
 import { PdfReportViewer } from './pdf_report_viewer';
 import { ReportDetailModel } from './report_detail_model';
+import * as ViewerRuntime from './report_viewer_runtime_loader';
+import { TextReportViewer } from './text_report_viewer';
 
 interface Properties {
 
@@ -22,10 +26,24 @@ export function ReportViewer(props: Properties): JSX.Element {
   if(mediaType === 'text/csv') {
     return <CsvReportViewer filePath={report.filePath} title={report.title}/>;
   }
+  if(mediaType === 'text/markdown') {
+    return <MarkdownReportViewer filePath={report.filePath}
+      title={report.title}/>;
+  }
+  if(mediaType === 'application/json' ||
+      /^application\/[a-z0-9!#$&^_.+-]+\+json$/.test(mediaType)) {
+    return <JsonReportViewer filePath={report.filePath} title={report.title}/>;
+  }
+  if(mediaType === 'text/plain') {
+    return <TextReportViewer filePath={report.filePath} title={report.title}/>;
+  }
   return null;
 }
 
 export namespace ReportViewer {
+
+  /** Loads and caches a viewer's script, stylesheets, and runtime. */
+  export import RuntimeLoader = ViewerRuntime.ReportViewerRuntimeLoader;
 
   /** A mounted report viewer. */
   export interface Instance {
