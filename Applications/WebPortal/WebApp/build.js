@@ -374,6 +374,7 @@ async function resources() {
     path.join(root, 'application/index.html'), root);
   const manifest =
     JSON.parse(fs.readFileSync(path.join(source, 'package.json')));
+  const viewers = {};
   if(manifest.config?.pdfjs) {
     const distribution = path.join(root, 'node_modules/pdfjs-dist');
     const files = ['LICENSE', 'build/pdf.worker.mjs', 'web/pdf_viewer.css'].
@@ -393,17 +394,30 @@ async function resources() {
         }
       }
     }
+    viewers['report_viewer/viewer'] =
+      path.join(portal, 'resources/report_viewer/viewer.js');
+    viewers['report_viewer/worker'] =
+      path.join(distribution, 'build/pdf.worker.mjs');
+  }
+  if(manifest.config?.csv) {
+    viewers['csv_report_viewer/viewer'] =
+      path.join(portal, 'resources/csv_report_viewer/viewer.js');
+    for(const [name, license] of [['ag-grid-community', 'LICENSE.txt'],
+        ['ag-stack', 'LICENSE.txt'], ['papaparse', 'LICENSE']]) {
+      copyOutput(path.join(root, 'node_modules', name, license),
+        path.join(root, 'application/resources/csv_report_viewer',
+          name + '.LICENSE.txt'), root);
+    }
+  }
+  if(Object.keys(viewers).length !== 0) {
     const webpack = require(path.join(root, 'node_modules/webpack'));
     await new Promise((resolve, reject) => {
       webpack({
         mode: 'production',
         devtool: false,
-        entry: {
-          viewer: path.join(portal, 'resources/report_viewer/viewer.js'),
-          worker: path.join(distribution, 'build/pdf.worker.mjs')
-        },
+        entry: viewers,
         output: {
-          path: path.join(root, 'application/resources/report_viewer'),
+          path: path.join(root, 'application/resources'),
           filename: '[name].js'
         },
         resolve: {
@@ -419,7 +433,7 @@ async function resources() {
         }
         console.log(stats.toString({colors: false}));
         if(stats.hasErrors()) {
-          reject(new Error('Failed to build the PDF report viewer.'));
+          reject(new Error('Failed to build the report viewers.'));
           return;
         }
         resolve();

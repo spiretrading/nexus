@@ -39,6 +39,11 @@ class App extends React.Component<{}, State> {
           <option value='4'>Sample PDF</option>
           <option value='5'>Missing PDF</option>
           <option value='6'>Invalid PDF</option>
+          <option value='7'>Quoted CSV</option>
+          <option value='8'>Large CSV</option>
+          <option value='9'>Empty CSV</option>
+          <option value='10'>Invalid CSV</option>
+          <option value='11'>Missing CSV</option>
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
@@ -117,6 +122,28 @@ function makeDetails(): ReportDetailModel.Report[] {
     reports.push({id, title, filePath, mediaType: 'application/pdf',
       status: ReportDetailModel.Status.READY, parameters: [], content: null});
   }
+  const large = ['Trade,Account,Ticker,Quantity,Price,Amount'];
+  for(let i = 1; i <= 50000; ++i) {
+    large.push(`${i},Account ${i % 100},ABC.TSX,${i % 1000},12.50,` +
+      `${(i % 1000 * 12.5).toFixed(2)}`);
+  }
+  for(const [id, title, content] of [
+      ['7', 'Quoted CSV', '\uFEFFName,Amount,Account,Notes,Value,Value,\r\n' +
+        'Zulu,10,0007,"Comma, inside",first,second,\r\n' +
+        'Alpha,2.5,0008,"Two\r\nlines",third,fourth,\r\n' +
+        'Beta,-3,0009,"A ""quoted"" value",fifth,sixth,\r\n' +
+        '<img src=x onerror=alert(1)>,,0010,=1+1,seventh,eighth,'],
+      ['8', 'Large CSV', large.join('\n')],
+      ['9', 'Empty CSV', ''],
+      ['10', 'Invalid CSV', 'Name,Value\n"Unclosed,1']]) {
+    const filePath = URL.createObjectURL(new Blob([content], {type: 'text/csv'}));
+    downloads.push(filePath);
+    reports.push({id, title, filePath, mediaType: 'text/csv',
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  reports.push({id: '11', title: 'Missing CSV', filePath: 'missing-report.csv',
+    mediaType: 'text/csv', status: ReportDetailModel.Status.READY,
+    parameters: [], content: null});
   return reports;
 }
 

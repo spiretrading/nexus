@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { ReportViewer } from './report_viewer';
 import { ErrorMessage } from '../../../components/error_message';
 
 interface Properties {
@@ -12,15 +13,6 @@ interface Properties {
 
 interface State {
   failed: boolean;
-}
-
-interface Viewer {
-  ready: Promise<void>;
-  dispose(): void;
-}
-
-interface ViewerRuntime {
-  create(container: HTMLElement, file: string, onError: () => void): Viewer;
 }
 
 /** Displays PDF pages using a separately loaded PDF.js renderer. */
@@ -76,6 +68,45 @@ export class PdfReportViewer extends React.Component<Properties, State> {
     this.viewer?.dispose();
   }
 
+  private static loadRuntime(): Promise<ReportViewer.Runtime> {
+    if(!PdfReportViewer.runtimePromise) {
+      const styles = ['resources/pdfjs/web/pdf_viewer.css',
+        'resources/report_viewer/viewer.css'].map(source => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = source;
+        return link;
+      });
+      const script = document.createElement('script');
+      script.src = 'resources/report_viewer/viewer.js?attempt=' +
+        PdfReportViewer.runtimeAttempt;
+      ++PdfReportViewer.runtimeAttempt;
+      const elements = [...styles, script];
+      PdfReportViewer.runtimePromise = Promise.all(elements.map(element =>
+        new Promise<void>((resolve, reject) => {
+          element.onload = () => resolve();
+          element.onerror = () =>
+            reject(new Error('Unable to load PDF viewer.'));
+          document.head.appendChild(element);
+        }))).then(() => {
+          const runtime = (window as Window & {
+            spirePdfViewerReady?: Promise<ReportViewer.Runtime>;
+          }).spirePdfViewerReady;
+          if(!runtime) {
+            throw new Error('Unable to initialize PDF viewer.');
+          }
+          return runtime;
+        }).catch(error => {
+          for(const element of elements) {
+            element.remove();
+          }
+          PdfReportViewer.runtimePromise = null;
+          throw error;
+        });
+    }
+    return PdfReportViewer.runtimePromise;
+  }
+
   private load(): void {
     const generation = ++this.generation;
     this.viewer?.dispose();
@@ -96,7 +127,7 @@ export class PdfReportViewer extends React.Component<Properties, State> {
     };
     try {
       const file = new URL(this.props.filePath, document.baseURI).href;
-      const runtime = await loadRuntime();
+      const runtime = await PdfReportViewer.loadRuntime();
       if(generation !== this.generation) {
         return;
       }
@@ -111,46 +142,9 @@ export class PdfReportViewer extends React.Component<Properties, State> {
     this.load();
   };
 
+  private static runtimePromise: Promise<ReportViewer.Runtime>;
+  private static runtimeAttempt = 0;
   private container: React.RefObject<HTMLDivElement>;
-  private viewer: Viewer;
+  private viewer: ReportViewer.Instance;
   private generation: number;
 }
-
-function loadRuntime(): Promise<ViewerRuntime> {
-  if(!runtimePromise) {
-    const styles = ['resources/pdfjs/web/pdf_viewer.css',
-      'resources/report_viewer/viewer.css'].map(source => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = source;
-      return link;
-    });
-    const script = document.createElement('script');
-    script.src = 'resources/report_viewer/viewer.js?attempt=' + runtimeAttempt++;
-    const elements = [...styles, script];
-    runtimePromise = Promise.all(elements.map(element =>
-      new Promise<void>((resolve, reject) => {
-        element.onload = () => resolve();
-        element.onerror = () => reject(new Error('Unable to load PDF viewer.'));
-        document.head.appendChild(element);
-      }))).then(() => {
-        const runtime = (window as Window & {
-          spirePdfViewerReady?: Promise<ViewerRuntime>;
-        }).spirePdfViewerReady;
-        if(!runtime) {
-          throw new Error('Unable to initialize PDF viewer.');
-        }
-        return runtime;
-      }).catch(error => {
-        for(const element of elements) {
-          element.remove();
-        }
-        runtimePromise = null;
-        throw error;
-      });
-  }
-  return runtimePromise;
-}
-
-let runtimePromise: Promise<ViewerRuntime>;
-let runtimeAttempt = 0;
