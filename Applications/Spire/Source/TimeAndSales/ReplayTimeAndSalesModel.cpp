@@ -107,7 +107,7 @@ QtPromise<void> ReplayTimeAndSalesModel::load_older(int max_count) {
       range = Range(get_start(), end)] () mutable {
     return read_chunk(client, ticker, range,
       SnapshotLimit::from_tail(max_count), none).m_entries;
-  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
     auto entries = optional<std::vector<Type>>();
     try {
       entries = std::move(result).get();
@@ -307,7 +307,7 @@ void ReplayTimeAndSalesModel::read() {
       SnapshotLimit::from_head(READ_SIZE), bbo);
     chunk.m_next_sequence = next_sequence;
     return chunk;
-  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
     auto chunk = optional<Chunk>();
     try {
       chunk = std::move(result).get();
@@ -365,7 +365,7 @@ void ReplayTimeAndSalesModel::query_seek() {
       chunk.m_next_sequence = load_next_sequence(client, ticker, position);
     }
     return chunk;
-  }, LaunchPolicy::ASYNC).then([=] (auto&& result) {
+  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
     auto chunk = optional<Chunk>();
     try {
       chunk = std::move(result).get();
