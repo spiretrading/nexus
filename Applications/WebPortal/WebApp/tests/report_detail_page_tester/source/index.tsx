@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { LocalReportDetailModel, ReportDetailController,
   ReportDetailModel, ReportViewer } from 'web_portal';
+import SAMPLE_REPORT from './sample_report.pdf';
 
 class DemoReportDetailModel extends LocalReportDetailModel {
   public async loadReport(id: string): Promise<ReportDetailModel.Report> {
@@ -105,10 +106,12 @@ function makeDetails(): ReportDetailModel.Report[] {
     });
   const invalid = URL.createObjectURL(new Blob(['Not a PDF.'],
     {type: 'application/pdf'}));
-  downloads.push(invalid);
+  const sample = URL.createObjectURL(new Blob([
+    Uint8Array.from(atob(SAMPLE_REPORT.split(',')[1]),
+      character => character.charCodeAt(0))], {type: 'application/pdf'}));
+  downloads.push(invalid, sample);
   for(const [id, title, filePath] of [
-      ['4', 'Sample PDF',
-        'resources/pdfjs/web/compressed.tracemonkey-pldi-09.pdf'],
+      ['4', 'Sample PDF', sample],
       ['5', 'Missing PDF', 'missing-report.pdf'],
       ['6', 'Invalid PDF', invalid]]) {
     reports.push({id, title, filePath, mediaType: 'application/pdf',

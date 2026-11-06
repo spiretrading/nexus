@@ -1,7 +1,6 @@
 const { spawnSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 
 const root = fs.realpathSync(process.cwd());
@@ -363,7 +362,7 @@ function copyOutput(from, to, directory) {
   fs.copyFileSync(from, to);
 }
 
-function resources() {
+async function resources() {
   const directory = path.join(portal, 'resources');
   for(const filename of collect(directory)) {
     if(fs.statSync(filename).isFile()) {
@@ -376,21 +375,56 @@ function resources() {
   const manifest =
     JSON.parse(fs.readFileSync(path.join(source, 'package.json')));
   if(manifest.config?.pdfjs) {
-    const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'web-portal-pdfjs-'));
-    try {
-      run(process.execPath, [
-        path.join(portal, 'pdfjs.js'),
-        path.join(state.dependenciesDirectory, 'cache_files/pdfjs'), staging
-      ], root, process.env);
-      for(const filename of collect(staging)) {
-        if(fs.statSync(filename).isFile() && !filename.endsWith('.map')) {
-          copyOutput(filename, path.join(root, 'application/resources/pdfjs',
-            path.relative(staging, filename)), root);
+    const distribution = path.join(root, 'node_modules/pdfjs-dist');
+    const files = ['LICENSE', 'build/pdf.worker.mjs', 'web/pdf_viewer.css'].
+      map(filename => path.join(distribution, filename));
+    for(const directory of ['cmaps', 'iccs', 'standard_fonts', 'wasm',
+        'web/images']) {
+      files.push(...collect(path.join(distribution, directory)));
+    }
+    for(const filename of files) {
+      if(fs.statSync(filename).isFile() && !filename.endsWith('.map')) {
+        const relative = path.relative(distribution, filename);
+        const output = path.join(root, 'application/resources/pdfjs', relative);
+        copyOutput(filename, output, root);
+        if(relative == path.join('web', 'pdf_viewer.css')) {
+          fs.writeFileSync(output, fs.readFileSync(output, 'utf8').
+            replaceAll(':root', '.spire-pdf-report'));
         }
       }
-    } finally {
-      fs.rmSync(staging, { recursive: true, force: true });
     }
+    const webpack = require(path.join(root, 'node_modules/webpack'));
+    await new Promise((resolve, reject) => {
+      webpack({
+        mode: 'production',
+        devtool: false,
+        entry: {
+          viewer: path.join(portal, 'resources/report_viewer/viewer.js'),
+          worker: path.join(distribution, 'build/pdf.worker.mjs')
+        },
+        output: {
+          path: path.join(root, 'application/resources/report_viewer'),
+          filename: '[name].js'
+        },
+        resolve: {
+          modules: [path.join(root, 'node_modules')]
+        },
+        performance: {
+          hints: false
+        }
+      }, (error, stats) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        console.log(stats.toString({colors: false}));
+        if(stats.hasErrors()) {
+          reject(new Error('Failed to build the PDF report viewer.'));
+          return;
+        }
+        resolve();
+      });
+    });
   }
 }
 
@@ -459,7 +493,7 @@ function deploy() {
   save();
 }
 
-function build() {
+async function build() {
   configure();
   const dependencies = buildDependencies();
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json')));
@@ -494,9 +528,6 @@ function build() {
   inputs.push(...dependencies.map(directory =>
     path.join(directory, '.build_state.json')));
   if(project == 'application') {
-    if(manifest.config?.pdfjs) {
-      inputs.push(path.join(portal, 'pdfjs.js'));
-    }
     inputs.push(...collect(path.join(portal, 'resources')));
   }
   let current = hash(inputs);
@@ -527,7 +558,7 @@ function build() {
       }
       run(process.execPath, ['node_modules/webpack/bin/webpack.js'], root,
         { ...process.env, PROD_ENV: production });
-      resources();
+      await resources();
     } else {
       npm(['run', 'build']);
     }
@@ -627,7 +658,7 @@ function orchestrate() {
   }
 }
 
-function main() {
+async function main() {
   if(!['portal', 'library', 'application', 'tests', 'dali'].includes(project) ||
       !['build', 'configure', 'setup'].includes(command)) {
     throw new Error('Invalid project or command.');
@@ -680,13 +711,11 @@ function main() {
   } else if(action == 'clean' || action == 'reset') {
     clean();
   } else {
-    build();
+    await build();
   }
 }
 
-try {
-  main();
-} catch(error) {
+main().catch(error => {
   console.error(error.message);
   process.exitCode = 1;
-}
+});

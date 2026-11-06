@@ -31,35 +31,88 @@ describe('ReportViewer', () => {
     assert.equal(ReportViewer({report: {...report, filePath: ''}}), null);
   });
 
-  it('resolves report URLs against the host and encodes the viewer query',
-      () => {
-    const original = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  it('loads on demand and ignores failures from replaced reports', async () => {
+    const originalDocument =
+      Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const resources: any[] = [];
+    const viewers: any[] = [];
+    const runtime = {
+      create(container: unknown, file: string, onError: () => void) {
+        let resolve: () => void;
+        let reject: (error: Error) => void;
+        const ready = new Promise<void>((accept, fail) => {
+          resolve = accept;
+          reject = fail;
+        });
+        const viewer = {file, container, ready, resolve, reject, onError,
+          disposed: false, dispose() {this.disposed = true;}};
+        viewers.push(viewer);
+        return viewer;
+      }
+    };
     Object.defineProperty(globalThis, 'document', {configurable: true,
-      value: {baseURI: 'https://portal.example/'}});
+      value: {
+        baseURI: 'https://portal.example/',
+        createElement: () => ({remove() {}}),
+        head: {appendChild(element: any) {
+          resources.push(element);
+          queueMicrotask(() => element.onload());
+        }}
+      }});
+    Object.defineProperty(globalThis, 'window', {configurable: true,
+      value: {spirePdfViewerReady: Promise.resolve(runtime)}});
+    const component = new PdfReportViewer({filePath: 'api/report?id=1&name=a',
+      title: report.title}) as any;
+    component.container.current = {};
+    component.setState = (state: {failed: boolean}, callback?: () => void) => {
+      component.state = {...component.state, ...state};
+      callback?.();
+    };
     try {
-      const filePath = 'api/report?id=a&name=Monthly%20Statement.pdf#page=2';
-      const frame = new PdfReportViewer({filePath, title: report.title}).
-        render().props.children;
-      const source = new URL(frame.props.src, document.baseURI);
-      assert.equal(source.pathname, '/resources/pdfjs/web/viewer.html');
-      const expected = 'https://portal.example/' + filePath;
-      assert.equal(source.searchParams.get('file'), expected);
-      assert.equal(source.hash, '');
-      assert.equal(frame.key, expected + ':0');
-      assert.equal(frame.props.title, report.title);
-      const blob = 'blob:https://portal.example/report';
-      const next = new PdfReportViewer({filePath: blob, title: report.title}).
-        render().props.children;
-      assert.equal(new URL(next.props.src, document.baseURI).
-        searchParams.get('file'), blob);
-      assert.notEqual(next.key, frame.key);
-      assert.equal(new PdfReportViewer({filePath: '', title: report.title}).
-        render(), null);
+      const element = component.render().props.children;
+      assert.equal(element.type, 'div');
+      assert.equal(element.props['aria-label'], report.title);
+      assert.equal(resources.length, 0);
+      component.componentDidMount();
+      await new Promise(resolve => setImmediate(resolve));
+      assert.equal(resources.length, 3);
+      assert.notEqual(resources[2].type, 'module');
+      assert.equal(viewers[0].file,
+        'https://portal.example/api/report?id=1&name=a');
+      const previous = component.props;
+      component.props = {...previous, filePath: 'blob:https://portal.example/2'};
+      component.componentDidUpdate(previous);
+      await new Promise(resolve => setImmediate(resolve));
+      assert.ok(viewers[0].disposed);
+      assert.equal(viewers[1].file, 'blob:https://portal.example/2');
+      viewers[0].reject(new Error('Stale failure.'));
+      viewers[0].onError();
+      await new Promise(resolve => setImmediate(resolve));
+      assert.ok(!component.state.failed);
+      viewers[1].reject(new Error('PDF could not be loaded.'));
+      await new Promise(resolve => setImmediate(resolve));
+      assert.ok(component.state.failed);
+      assert.ok(viewers[1].disposed);
+      component.onRetry();
+      await new Promise(resolve => setImmediate(resolve));
+      assert.ok(!component.state.failed);
+      assert.equal(resources.length, 3);
+      viewers[2].resolve();
+      await new Promise(resolve => setImmediate(resolve));
+      component.componentWillUnmount();
+      assert.ok(viewers[2].disposed);
+      viewers[2].onError();
+      assert.ok(!component.state.failed);
     } finally {
-      if(original) {
-        Object.defineProperty(globalThis, 'document', original);
-      } else {
-        delete globalThis.document;
+      component.componentWillUnmount();
+      for(const [name, descriptor] of [
+          ['document', originalDocument], ['window', originalWindow]] as const) {
+        if(descriptor) {
+          Object.defineProperty(globalThis, name, descriptor);
+        } else {
+          delete (globalThis as any)[name];
+        }
       }
     }
   });
