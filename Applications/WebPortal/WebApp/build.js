@@ -1,6 +1,7 @@
 const { spawnSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const root = fs.realpathSync(process.cwd());
@@ -372,6 +373,25 @@ function resources() {
   }
   copyOutput(path.join(source, 'source/index.html'),
     path.join(root, 'application/index.html'), root);
+  const manifest =
+    JSON.parse(fs.readFileSync(path.join(source, 'package.json')));
+  if(manifest.config?.pdfjs) {
+    const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'web-portal-pdfjs-'));
+    try {
+      run(process.execPath, [
+        path.join(portal, 'pdfjs.js'),
+        path.join(state.dependenciesDirectory, 'cache_files/pdfjs'), staging
+      ], root, process.env);
+      for(const filename of collect(staging)) {
+        if(fs.statSync(filename).isFile() && !filename.endsWith('.map')) {
+          copyOutput(filename, path.join(root, 'application/resources/pdfjs',
+            path.relative(staging, filename)), root);
+        }
+      }
+    } finally {
+      fs.rmSync(staging, { recursive: true, force: true });
+    }
+  }
 }
 
 function deploy() {
@@ -474,6 +494,9 @@ function build() {
   inputs.push(...dependencies.map(directory =>
     path.join(directory, '.build_state.json')));
   if(project == 'application') {
+    if(manifest.config?.pdfjs) {
+      inputs.push(path.join(portal, 'pdfjs.js'));
+    }
     inputs.push(...collect(path.join(portal, 'resources')));
   }
   let current = hash(inputs);
