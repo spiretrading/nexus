@@ -9,7 +9,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(
   TimeAndSales ${header_files} ${source_files} ${generated_source_files})
 beam_configure_target(TimeAndSales)
-target_link_libraries(TimeAndSales BeamRoutines)
+target_link_libraries(TimeAndSales BeamRoutines Playback)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(TimeAndSales PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
