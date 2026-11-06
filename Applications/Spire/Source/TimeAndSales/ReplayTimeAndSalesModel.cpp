@@ -481,6 +481,9 @@ void ReplayTimeAndSalesModel::on_seek(int generation, ptime position,
   }
   m_seek_state = SeekState::NONE;
   if(entries) {
+    std::erase_if(*entries, [&] (const auto& entry) {
+      return entry.m_time_and_sale->m_timestamp < get_start();
+    });
     if(!merge(*entries)) {
       replace(std::move(*entries));
     }
