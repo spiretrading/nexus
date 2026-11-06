@@ -30,10 +30,9 @@ namespace {
       factor).convert_to<std::int64_t>());
   }
 
-  Chunk read_chunk(MarketDataClient& client, const Ticker& ticker,
-      const Range& range, const SnapshotLimit& limit,
+  Chunk make_chunk(MarketDataClient& client, const Ticker& ticker,
+      std::vector<SequencedTimeAndSale> time_and_sales,
       optional<SequencedBboQuote> initial_bbo) {
-    auto time_and_sales = load_time_and_sales(client, ticker, range, limit);
     auto bbo_indicators = load_bbo_indicators(client, ticker, time_and_sales,
       std::move(initial_bbo));
     auto chunk = Chunk();
@@ -44,6 +43,14 @@ namespace {
     }
     chunk.m_bbo = std::move(bbo_indicators.m_bbo);
     return chunk;
+  }
+
+  Chunk read_chunk(MarketDataClient& client, const Ticker& ticker,
+      const Range& range, const SnapshotLimit& limit,
+      optional<SequencedBboQuote> initial_bbo) {
+    return make_chunk(client, ticker,
+      load_time_and_sales(client, ticker, range, limit),
+      std::move(initial_bbo));
   }
 
   Beam::Sequence load_next_sequence(
@@ -358,12 +365,20 @@ void ReplayTimeAndSalesModel::query_seek() {
   auto generation = m_read_generation;
   auto position = m_position;
   m_seek_promise = QtPromise([=, client = m_client, ticker = m_ticker,
-      range = Range(get_start(), position), count = m_page_size] () mutable {
-    auto chunk = read_chunk(
-      client, ticker, range, SnapshotLimit::from_tail(count), none);
-    if(chunk.m_entries.empty()) {
-      chunk.m_next_sequence = load_next_sequence(client, ticker, position);
-    }
+      start = get_start(), count = m_page_size] () mutable {
+    auto time_and_sales = load_time_and_sales(client, ticker,
+      Range(Beam::Sequence::FIRST, position), SnapshotLimit::from_tail(count));
+    auto next_sequence = [&] {
+      if(time_and_sales.empty()) {
+        return Beam::Sequence::FIRST;
+      }
+      return increment(time_and_sales.back().get_sequence());
+    }();
+    std::erase_if(time_and_sales, [&] (const auto& time_and_sale) {
+      return time_and_sale->m_timestamp < start;
+    });
+    auto chunk = make_chunk(client, ticker, std::move(time_and_sales), none);
+    chunk.m_next_sequence = next_sequence;
     return chunk;
   }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
     auto chunk = optional<Chunk>();
