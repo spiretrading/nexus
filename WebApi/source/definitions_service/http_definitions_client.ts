@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
+import { CountryDatabase, CurrencyDatabase, EntitlementDatabase, ExchangeRate,
   VenueDatabase } from '..';
 import { ComplianceRuleSchema } from '../compliance_service';
 import { DefinitionsClient } from './definitions_client';
@@ -28,6 +28,12 @@ export class HttpDefinitionsClient extends DefinitionsClient {
 
   public get complianceRuleSchemas(): ComplianceRuleSchema[] {
     return this._complianceRuleSchemas.slice();
+  }
+
+  public async loadExchangeRates(): Promise<ExchangeRate[]> {
+    const response = await Beam.post(
+      '/api/definitions_service/load_exchange_rates', {});
+    return Beam.arrayFromJson(ExchangeRate, response);
   }
 
   public async open(): Promise<void> {
