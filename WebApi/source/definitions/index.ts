@@ -7,6 +7,7 @@ export * from './exchange_rate_table';
 export * from './money';
 export * from './quantity';
 export * from './scope';
+export * from './side';
 export * from './ticker';
 export * from './venue';
 export * from './standard_countries';
