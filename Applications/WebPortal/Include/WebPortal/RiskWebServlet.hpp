@@ -1,21 +1,17 @@
 #ifndef NEXUS_RISK_WEB_SERVLET_HPP
 #define NEXUS_RISK_WEB_SERVLET_HPP
-#include <unordered_set>
+#include <condition_variable>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Services/ServiceProtocolServer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/WebSessionStore.hpp>
-#include <Beam/WebServices/WebSocketChannel.hpp>
-#include "Nexus/Clients/Clients.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Venue.hpp"
-#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "WebPortal/PortfolioModel.hpp"
+#include "Nexus/RiskService/RiskServices.hpp"
+#include "WebPortal/RiskPortfolioSubscription.hpp"
 #include "WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebSocketServerConnection.hpp"
 
 namespace Nexus {
 
@@ -24,18 +20,11 @@ namespace Nexus {
     public:
 
       /** The type of WebSocketChannel used. */
-      using WebSocketChannel = Beam::WebSocketChannel<
-        std::shared_ptr<Beam::TcpSocketChannel>>;
+      using WebSocketChannel = WebSocketServerConnection::Channel;
 
-      /**
-       * Constructs a RiskWebServlet.
-       * @param sessions The available web sessions.
-       * @param clients The clients used to access Spire services.
-       */
-      RiskWebServlet(
-        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
-        Clients clients);
-
+      /** Constructs a servlet using the authenticated web sessions. */
+      explicit RiskWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
       ~RiskWebServlet();
 
       std::vector<Beam::HttpRequestSlot> get_slots();
@@ -44,46 +33,34 @@ namespace Nexus {
       void close();
 
     private:
-      struct PortfolioFilter {
-        std::unordered_set<Beam::DirectoryEntry> m_groups;
-        std::unordered_set<Venue> m_venues;
-        std::unordered_set<CurrencyId> m_currencies;
-
-        bool is_filtered(const PortfolioModel::Entry& entry,
-          const Beam::DirectoryEntry& group) const;
+      struct RiskWebSession {
+        std::shared_ptr<WebPortalSession> m_session;
+        std::unique_ptr<RiskPortfolioSubscription> m_subscription;
+        Beam::RoutineHandler m_updates;
       };
-      struct PortfolioSubscriber {
-        Beam::DirectoryEntry m_account;
-        std::string m_subscription_id;
-        PortfolioFilter m_filter;
+      using WebServiceProtocolServer = Beam::ServiceProtocolServer<
+        WebSocketServerConnection*, Beam::JsonSender<Beam::SharedBuffer>,
+        Beam::NullEncoder, std::unique_ptr<Beam::LiveTimer>, RiskWebSession>;
 
-        PortfolioSubscriber(Beam::DirectoryEntry account,
-          std::unique_ptr<WebSocketChannel> channel);
-      };
-      Clients m_clients;
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
-      std::unordered_map<RiskPortfolioKey, PortfolioModel::Entry>
-        m_portfolio_entries;
-      std::unordered_set<PortfolioModel::Entry> m_updated_portfolio_entries;
-      std::vector<std::shared_ptr<PortfolioSubscriber>> m_portfolio_subscribers;
-      PortfolioModel m_portfolio_model;
-      Beam::Timer m_portfolio_timer;
-      std::unordered_map<Beam::DirectoryEntry, Beam::DirectoryEntry>
-        m_trader_groups;
+      WebSocketServerConnection m_websocket_server;
+      mutable std::mutex m_mutex;
+      std::condition_variable m_session_condition;
+      std::shared_ptr<WebPortalSession> m_pending_session;
+      std::unique_ptr<WebServiceProtocolServer> m_protocol_server;
       Beam::OpenState m_open_state;
-      Beam::RoutineTaskQueue m_tasks;
 
       RiskWebServlet(const RiskWebServlet&) = delete;
-      RiskWebServlet& operator=(const RiskWebServlet&) = delete;
-      const Beam::DirectoryEntry& find_trading_group(
-        const Beam::DirectoryEntry& trader);
-      void send_portfolio_entry(const PortfolioModel::Entry& entry,
-        const Beam::DirectoryEntry& group, PortfolioSubscriber& subscriber,
-        bool check_filter);
-      void on_portfolio_upgrade(const Beam::HttpRequest& request,
+      RiskWebServlet& operator =(const RiskWebServlet&) = delete;
+      void on_websocket_upgrade(const Beam::HttpRequest& request,
         std::unique_ptr<WebSocketChannel> channel);
-      void on_portfolio_update(const PortfolioModel::Entry& entry);
-      void on_portfolio_timer_expired(Beam::Timer::Result result);
+      void on_client_accepted(
+        WebServiceProtocolServer::ServiceProtocolClient& client);
+      void on_client_closed(
+        WebServiceProtocolServer::ServiceProtocolClient& client);
+      void on_subscribe(Beam::RequestToken<
+        WebServiceProtocolServer::ServiceProtocolClient,
+        SubscribeRiskPortfolioUpdatesService>& request);
   };
 }
 

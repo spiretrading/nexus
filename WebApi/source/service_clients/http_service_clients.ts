@@ -17,7 +17,8 @@ export class HttpServiceClients extends ServiceClients {
     this._administrationClient = new HttpAdministrationClient(serviceUrl);
     this._definitionsClient = new HttpDefinitionsClient();
     this._complianceClient = new HttpComplianceClient();
-    this._riskClient = new HttpRiskClient();
+    this._riskClient =
+      new HttpRiskClient(new URL('/api/risk_service/websocket', serviceUrl));
   }
 
   public get serviceLocatorClient(): Beam.HttpServiceLocatorClient {

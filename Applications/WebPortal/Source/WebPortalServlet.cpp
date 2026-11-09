@@ -38,7 +38,7 @@ WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
       clients.get_administration_client(),
       Timer(std::in_place_type<LiveTimer>, REPORT_NOTIFICATION_CHECK_INTERVAL),
       REPORT_NOTIFICATION_DELAY)),
-    m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
+    m_risk_servlet(Ref(m_sessions)) {}
 
 WebPortalServlet::~WebPortalServlet() {
   close();

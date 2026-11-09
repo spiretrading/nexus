@@ -1,52 +1,26 @@
 #include "WebPortal/RiskWebServlet.hpp"
-#include <algorithm>
-#include <Beam/WebServices/HttpRequest.hpp>
-#include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include "WebPortal/WebPortalSession.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 using namespace Beam;
-using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-RiskWebServlet::PortfolioSubscriber::PortfolioSubscriber(
-  DirectoryEntry account, std::unique_ptr<WebSocketChannel> channel)
-  : m_account(std::move(account)) {}
-
-bool RiskWebServlet::PortfolioFilter::is_filtered(
-    const PortfolioModel::Entry& entry, const DirectoryEntry& group) const {
-  if(m_groups.find(group) == m_groups.end()) {
-    return true;
-  }
-  if(m_currencies.find(entry.m_inventory.m_position.m_currency) ==
-      m_currencies.end()) {
-    return true;
-  }
-  if(m_venues.find(entry.m_inventory.m_position.m_ticker.get_venue()) ==
-      m_venues.end()) {
-    return true;
-  }
-  return false;
-}
-
 RiskWebServlet::RiskWebServlet(
-    Ref<WebSessionStore<WebPortalSession>> sessions, Clients clients)
-  : m_clients(std::move(clients)),
-    m_sessions(sessions.get()),
-    m_portfolio_model(m_clients),
-    m_portfolio_timer(m_clients.make_timer(seconds(1))) {
-  try {
-    m_portfolio_timer.get_publisher().monitor(m_tasks.get_slot<Timer::Result>(
-      std::bind_front(&RiskWebServlet::on_portfolio_timer_expired, this)));
-    m_portfolio_model.get_publisher().monitor(
-      m_tasks.get_slot<PortfolioModel::Entry>(
-        std::bind_front(&RiskWebServlet::on_portfolio_update, this)));
-    m_portfolio_timer.start();
-  } catch(const std::exception&) {
-    close();
-    throw;
-  }
+    Ref<WebSessionStore<WebPortalSession>> sessions)
+    : m_sessions(sessions.get()) {
+  m_protocol_server =
+    std::make_unique<WebServiceProtocolServer>(&m_websocket_server,
+      [] { return std::make_unique<LiveTimer>(seconds(30)); },
+      std::bind_front(&RiskWebServlet::on_client_accepted, this),
+      std::bind_front(&RiskWebServlet::on_client_closed, this));
+  Nexus::register_query_types(
+    out(m_protocol_server->get_slots().get_registry()));
+  register_risk_services(out(m_protocol_server->get_slots()));
+  register_risk_messages(out(m_protocol_server->get_slots()));
+  SubscribeRiskPortfolioUpdatesService::add_request_slot(
+    out(m_protocol_server->get_slots()),
+    std::bind_front(&RiskWebServlet::on_subscribe, this));
 }
 
 RiskWebServlet::~RiskWebServlet() {
@@ -61,8 +35,8 @@ std::vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
     RiskWebServlet::get_web_socket_slots() {
   auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
   slots.emplace_back(
-    matches_path(HttpMethod::GET, "/api/risk_service/portfolio"),
-    std::bind_front(&RiskWebServlet::on_portfolio_upgrade, this));
+    matches_path(HttpMethod::GET, "/api/risk_service/websocket"),
+    std::bind_front(&RiskWebServlet::on_websocket_upgrade, this));
   return slots;
 }
 
@@ -70,86 +44,89 @@ void RiskWebServlet::close() {
   if(m_open_state.set_closing()) {
     return;
   }
-  m_portfolio_timer.cancel();
+  {
+    auto lock = std::lock_guard(m_mutex);
+    m_pending_session.reset();
+    m_session_condition.notify_all();
+  }
+  m_websocket_server.close();
+  m_protocol_server->close();
   m_open_state.close();
 }
 
-const DirectoryEntry& RiskWebServlet::find_trading_group(
-    const DirectoryEntry& trader) {
-  auto group_iterator = m_trader_groups.find(trader);
-  if(group_iterator != m_trader_groups.end()) {
-    return group_iterator->second;
-  }
-  auto groups =
-    m_clients.get_administration_client().load_managed_trading_groups(
-      m_clients.get_service_locator_client().get_account());
-  for(auto& group : groups) {
-    auto trading_group =
-      m_clients.get_administration_client().load_trading_group(group);
-    if(std::ranges::contains(trading_group.get_managers(), trader) ||
-        std::ranges::contains(trading_group.get_traders(), trader)) {
-      m_trader_groups.insert(std::make_pair(trader, trading_group.get_entry()));
-      return find_trading_group(trader);
-    }
-  }
-  m_trader_groups.insert(std::make_pair(trader, DirectoryEntry{}));
-  return find_trading_group(trader);
-}
-
-void RiskWebServlet::send_portfolio_entry(const PortfolioModel::Entry& entry,
-    const DirectoryEntry& group, PortfolioSubscriber& subscriber,
-    bool check_filter) {
-  if(check_filter && subscriber.m_filter.is_filtered(entry, group)) {
-    return;
-  }
-}
-
-void RiskWebServlet::on_portfolio_upgrade(const HttpRequest& request,
+void RiskWebServlet::on_websocket_upgrade(const HttpRequest& request,
     std::unique_ptr<WebSocketChannel> channel) {
   auto session = m_sessions->find(request);
-  if(!session) {
+  if(!session || !session->is_logged_in() || session->is_expired()) {
     channel->get_connection().close();
     return;
   }
-  auto subscriber = std::make_shared<PortfolioSubscriber>(
-    session->get_account(), std::move(channel));
-}
-
-void RiskWebServlet::on_portfolio_update(const PortfolioModel::Entry& entry) {
-  m_updated_portfolio_entries.insert(entry);
-}
-
-void RiskWebServlet::on_portfolio_timer_expired(Timer::Result result) {
-  if(result != Timer::Result::EXPIRED) {
+  channel->get_socket().set_binary_mode();
+  auto lock = std::unique_lock(m_mutex);
+  m_session_condition.wait(lock, [&] {
+    return !m_pending_session || !m_open_state.is_open();
+  });
+  if(!m_open_state.is_open()) {
+    channel->get_connection().close();
     return;
   }
-  auto updated_entries = std::vector<PortfolioModel::Entry>();
-  updated_entries.reserve(m_updated_portfolio_entries.size());
-  std::move(m_updated_portfolio_entries.begin(),
-    m_updated_portfolio_entries.end(), std::back_inserter(updated_entries));
-  for(auto& updated_entry : updated_entries) {
-    auto key = RiskPortfolioKey(
-      updated_entry.m_account, updated_entry.m_inventory.m_position.m_ticker);
-    auto entry_result =
-      m_portfolio_entries.insert(std::pair(key, updated_entry));
-    if(!entry_result.second) {
-      entry_result.first->second = updated_entry;
-    }
+  m_pending_session = session;
+  m_websocket_server.push(std::move(channel));
+  m_session_condition.wait(lock, [&] {
+    return m_pending_session != session || !m_open_state.is_open();
+  });
+}
+
+void RiskWebServlet::on_client_accepted(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
+  auto lock = std::lock_guard(m_mutex);
+  client.get_session().m_session = std::move(m_pending_session);
+  m_session_condition.notify_all();
+  if(!client.get_session().m_session) {
+    throw EndOfFileException();
   }
-  m_updated_portfolio_entries.clear();
-  auto sender = JsonSender<SharedBuffer>();
-  auto i = m_portfolio_subscribers.begin();
-  while(i != m_portfolio_subscribers.end()) {
-    auto& subscriber = *i;
+}
+
+void RiskWebServlet::on_client_closed(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
+  auto& session = client.get_session();
+  if(session.m_subscription) {
+    session.m_subscription->close();
+    session.m_updates.wait();
+  }
+}
+
+void RiskWebServlet::on_subscribe(
+    RequestToken<WebServiceProtocolServer::ServiceProtocolClient,
+      SubscribeRiskPortfolioUpdatesService>& request) {
+  auto& session = request.get_session();
+  if(!session.m_session->is_logged_in() || session.m_session->is_expired()) {
+    throw ServiceRequestException("Session expired.");
+  }
+  if(session.m_subscription) {
+    throw ServiceRequestException("Already subscribed to portfolio updates.");
+  }
+  auto& publisher = session.m_session->get_clients().get_risk_client().
+    get_risk_portfolio_update_publisher();
+  session.m_subscription =
+    std::make_unique<RiskPortfolioSubscription>(publisher);
+  request.set(session.m_subscription->get_snapshot());
+  auto client = &request.get_client();
+  auto subscription = session.m_subscription.get();
+  session.m_updates = spawn([=] {
     try {
-      for(auto& entry : updated_entries) {
-        auto& group = find_trading_group(entry.m_account);
-        send_portfolio_entry(entry, group, *subscriber, true);
+      while(true) {
+        auto entry = subscription->pop();
+        auto& session = *client->get_session().m_session;
+        if(!session.is_logged_in() || session.is_expired()) {
+          throw EndOfFileException();
+        }
+        auto updates = std::vector<InventoryUpdate>();
+        updates.emplace_back(entry.m_key.m_account, entry.m_value);
+        send_record_message<InventoryMessage>(*client, updates);
       }
-      ++i;
     } catch(const std::exception&) {
-      i = m_portfolio_subscribers.erase(i);
+      client->close();
     }
-  }
-  m_portfolio_timer.start();
+  });
 }
