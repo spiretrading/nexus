@@ -14,7 +14,7 @@ include_directories(${PROJECT_BINARY_DIR})
 add_library(LegacyUI ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
 beam_configure_target(LegacyUI)
-target_link_libraries(LegacyUI BeamRoutines)
+target_link_libraries(LegacyUI BeamRoutines Playback)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(LegacyUI PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_legacy_ui)

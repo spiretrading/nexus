@@ -202,7 +202,7 @@ struct ReplayUiTester : QWidget {
           std::make_shared<TimeAndSalesPropertiesWindowFactory>()),
         m_book_view_factory(
           std::make_shared<BookViewPropertiesWindowFactory>()),
-        m_attachment_map(std::make_shared<ReplayAttachmentMap>()),
+        m_attachment_map(m_user_profile.GetReplayAttachmentMap()),
         m_replay_count(0),
         m_time_and_sale_count(0),
         m_book_view_count(0) {
