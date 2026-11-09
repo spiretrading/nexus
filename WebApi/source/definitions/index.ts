@@ -1,3 +1,4 @@
+export * from './bbo_quote';
 export * from './country';
 export * from './currency';
 export * from './currency_pair';
@@ -6,6 +7,7 @@ export * from './exchange_rate';
 export * from './exchange_rate_table';
 export * from './money';
 export * from './quantity';
+export * from './quote';
 export * from './scope';
 export * from './side';
 export * from './ticker';
