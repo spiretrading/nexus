@@ -82,6 +82,8 @@ std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
     slots.end(), administration_slots.begin(), administration_slots.end());
   auto risk_slots = m_risk_servlet.get_web_socket_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
+  auto market_data_slots = m_market_data_servlet.get_web_socket_slots();
+  slots.insert(slots.end(), market_data_slots.begin(), market_data_slots.end());
   return slots;
 }
 

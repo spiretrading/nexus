@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import { HttpAdministrationClient, HttpComplianceClient, HttpDefinitionsClient,
-  HttpRiskClient } from '..';
+  HttpMarketDataClient, HttpRiskClient } from '..';
 import { ServiceClients } from './service_clients';
 
 /** Implements the ServiceClients class using HTTP requests. */
@@ -19,6 +19,8 @@ export class HttpServiceClients extends ServiceClients {
     this._complianceClient = new HttpComplianceClient();
     this._riskClient =
       new HttpRiskClient(new URL('/api/risk_service/websocket', serviceUrl));
+    this._marketDataClient = new HttpMarketDataClient(
+      new URL('/api/market_data_service/websocket', serviceUrl));
   }
 
   public get serviceLocatorClient(): Beam.HttpServiceLocatorClient {
@@ -41,6 +43,10 @@ export class HttpServiceClients extends ServiceClients {
     return this._riskClient;
   }
 
+  public get marketDataClient(): HttpMarketDataClient {
+    return this._marketDataClient;
+  }
+
   public async login(username: string, password: string):
       Promise<Beam.DirectoryEntry> {
     const account = await this._serviceLocatorClient.login(username, password);
@@ -56,11 +62,13 @@ export class HttpServiceClients extends ServiceClients {
     await this._definitionsClient.open();
     await this._complianceClient.open();
     await this._riskClient.open();
+    await this._marketDataClient.open();
     this.isOpen = true;
   }
 
   public async close(): Promise<void> {
     this.isOpen = false;
+    await this._marketDataClient.close();
     await this._riskClient.close();
     await this._complianceClient.close();
     await this._definitionsClient.close();
@@ -74,4 +82,5 @@ export class HttpServiceClients extends ServiceClients {
   private _definitionsClient: HttpDefinitionsClient;
   private _complianceClient: HttpComplianceClient;
   private _riskClient: HttpRiskClient;
+  private _marketDataClient: HttpMarketDataClient;
 }

@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import {AdministrationClient, ComplianceClient, DefinitionsClient,
-  RiskClient} from '..';
+  MarketDataClient, RiskClient} from '..';
 
 /** Client used to access Nexus services. */
 export abstract class ServiceClients {
@@ -19,6 +19,9 @@ export abstract class ServiceClients {
 
   /** Returns the RiskClient. */
   public abstract get riskClient(): RiskClient;
+
+  /** Returns the MarketDataClient. */
+  public abstract get marketDataClient(): MarketDataClient;
 
   /**
    * Logs into and opens all services.
