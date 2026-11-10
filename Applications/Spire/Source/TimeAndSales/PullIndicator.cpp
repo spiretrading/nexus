@@ -134,27 +134,6 @@ void PullIndicator::display() {
   }
 }
 
-void PullIndicator::on_horizontal_position(int position) {
-  if(isVisible()) {
-    update_position(m_table_view->get_body().sizeHint());
-  }
-}
-
-void PullIndicator::on_vertical_position(int position) {
-  auto& scroll_box = m_table_view->get_scroll_box();
-  auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
-  if(m_is_loading) {
-    if(m_spinner->state() == QMovie::Running) {
-      display();
-    }
-  } else if(position > m_last_position &&
-      scroll_bar.get_range().m_end - position <
-        scroll_bar.get_page_size() / 2) {
-    load_page();
-  }
-  m_last_position = position;
-}
-
 void PullIndicator::load_page() {
   auto table = std::static_pointer_cast<TimeAndSalesTableModel>(
     m_table_view->get_table());
@@ -174,6 +153,27 @@ void PullIndicator::fill() {
     return;
   }
   load_page();
+}
+
+void PullIndicator::on_horizontal_position(int position) {
+  if(isVisible()) {
+    update_position(m_table_view->get_body().sizeHint());
+  }
+}
+
+void PullIndicator::on_vertical_position(int position) {
+  auto& scroll_box = m_table_view->get_scroll_box();
+  auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
+  if(m_is_loading) {
+    if(m_spinner->state() == QMovie::Running) {
+      display();
+    }
+  } else if(position > m_last_position &&
+      scroll_bar.get_range().m_end - position <
+        scroll_bar.get_page_size() / 2) {
+    load_page();
+  }
+  m_last_position = position;
 }
 
 void PullIndicator::on_begin_loading() {
