@@ -26,14 +26,17 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      enum class State {
+        NONE,
+        LOADING,
+        RELOADING
+      };
       TableView* m_table_view;
       QMovie* m_spinner;
       QWidget* m_loading_panel;
       QMovie* m_loading_spinner;
       QTimer m_timer;
-      bool m_is_loading;
-      bool m_is_full_reload;
-      bool m_is_fill_enabled;
+      State m_state;
       int m_load_index;
       int m_last_position;
 

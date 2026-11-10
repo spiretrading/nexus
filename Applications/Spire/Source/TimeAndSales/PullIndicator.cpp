@@ -20,9 +20,7 @@ PullIndicator::PullIndicator(TableView& table_view)
     : QWidget(&table_view.get_body()),
       m_table_view(&table_view),
       m_timer(this),
-      m_is_loading(false),
-      m_is_full_reload(false),
-      m_is_fill_enabled(true),
+      m_state(State::NONE),
       m_load_index(0),
       m_last_position(0) {
   m_spinner = new QMovie(":/Icons/spinner.gif");
@@ -142,8 +140,7 @@ void PullIndicator::load_page() {
 }
 
 void PullIndicator::fill() {
-  if(!m_is_fill_enabled || m_is_loading ||
-      m_table_view->get_table()->get_row_size() == 0) {
+  if(m_state != State::NONE || m_table_view->get_table()->get_row_size() == 0) {
     return;
   }
   auto& scroll_box = m_table_view->get_scroll_box();
@@ -164,7 +161,7 @@ void PullIndicator::on_horizontal_position(int position) {
 void PullIndicator::on_vertical_position(int position) {
   auto& scroll_box = m_table_view->get_scroll_box();
   auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
-  if(m_is_loading) {
+  if(m_state != State::NONE) {
     if(m_spinner->state() == QMovie::Running) {
       display();
     }
@@ -177,25 +174,31 @@ void PullIndicator::on_vertical_position(int position) {
 }
 
 void PullIndicator::on_begin_loading() {
-  if(m_is_loading) {
+  if(m_state != State::NONE) {
     return;
   }
-  m_is_loading = true;
-  m_is_fill_enabled = false;
   m_load_index = m_table_view->get_table()->get_row_size();
-  m_is_full_reload = m_load_index == 0;
+  m_state = [&] {
+    if(m_load_index == 0) {
+      return State::RELOADING;
+    }
+    return State::LOADING;
+  }();
   const auto PULL_DELAY_TIMEOUT_MS = 1000;
   m_timer.start(PULL_DELAY_TIMEOUT_MS);
 }
 
 void PullIndicator::on_end_loading() {
-  m_is_loading = false;
+  if(m_state == State::NONE) {
+    return;
+  }
+  m_state = State::NONE;
   m_spinner->stop();
   m_loading_spinner->stop();
   m_timer.stop();
   hide();
   m_loading_panel->hide();
-  if(m_is_fill_enabled) {
+  if(m_table_view->get_table()->get_row_size() > m_load_index) {
     QTimer::singleShot(0, this, [this] {
       fill();
     });
@@ -207,12 +210,9 @@ void PullIndicator::on_operation(const TableModel::Operation& operation) {
     [&] (const TableModel::AddOperation& operation) {
       if(operation.m_index < m_load_index) {
         ++m_load_index;
-      } else if(m_is_loading) {
-        m_is_fill_enabled = true;
       }
     },
     [&] (const TableModel::RemoveOperation& operation) {
-      m_is_fill_enabled = true;
       if(operation.m_index < m_load_index) {
         --m_load_index;
       }
@@ -220,10 +220,10 @@ void PullIndicator::on_operation(const TableModel::Operation& operation) {
 }
 
 void PullIndicator::on_timeout() {
-  if(!m_is_loading) {
+  if(m_state == State::NONE) {
     return;
   }
-  if(m_is_full_reload) {
+  if(m_state == State::RELOADING) {
     update_loading_panel();
     m_loading_spinner->start();
     m_loading_panel->raise();
