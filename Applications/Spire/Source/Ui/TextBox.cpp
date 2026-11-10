@@ -356,8 +356,8 @@ class TextBox::LineEdit : public QLineEdit {
     scoped_connection m_highlight_connection;
 
     void elide_placeholder_text() {
-      m_elided_placeholder =
-        fontMetrics().elidedText(m_placeholder, Qt::ElideRight, width());
+      m_elided_placeholder = QFontMetrics(m_placeholder_style.m_font).
+        elidedText(m_placeholder, Qt::ElideRight, width());
     }
 
     bool is_placeholder_visible() const {
@@ -440,6 +440,7 @@ class TextBox::LineEdit : public QLineEdit {
       if(*font_size) {
         m_placeholder_style.m_font.setPixelSize(*(*font_size));
       }
+      elide_placeholder_text();
       if(is_placeholder_visible()) {
         update();
       }
