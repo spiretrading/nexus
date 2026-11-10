@@ -12,7 +12,8 @@ export abstract class RiskClient {
 
   /**
    * Connects to the service.
-   * @throws ServiceError Indicates the connection failed.
+   * @throws Error If the client is closed or a terminal connection failure
+   * occurs.
    */
   public abstract open(): Promise<void>;
 
