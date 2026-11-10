@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import * as Beam from 'beam';
 import { Inventory, Money, Position, Quantity, Ticker } from '../../source';
 import { Currencies } from '../../source/definitions/standard_currencies';
+import { RiskClient } from '../../source/risk_service/risk_client';
 import { HttpRiskClient } from '../../source/risk_service/http_risk_client';
 import { InventoryMessage } from '../../source/risk_service/inventory_message';
 import { InventoryUpdate } from '../../source/risk_service/inventory_update';
@@ -113,7 +114,9 @@ describe('HttpRiskClient', () => {
 
   it('snapshot_and_updates', async () => {
     const {client, socket} = await openClient();
-    const publisher = client.getRiskPortfolioUpdatePublisher();
+    const riskClient: RiskClient = client;
+    const publisher = riskClient.getRiskPortfolioUpdatePublisher();
+    assert.strictEqual(publisher.getSnapshot().size, 0);
     const queue = new Beam.Queue<RiskInventoryEntry>();
     publisher.monitor(queue);
     assert.strictEqual(client.getRiskPortfolioUpdatePublisher(), publisher);
@@ -136,10 +139,25 @@ describe('HttpRiskClient', () => {
     const snapshot = [await late.pop(), await late.pop()];
     assert.ok(snapshot.some(entry => entry.equals(update)));
     assert.ok(snapshot.some(entry => entry.equals(second)));
+    const captured = {value: new Beam.Map<RiskPortfolioKey, Inventory>()};
+    const subsequent = new Beam.Queue<RiskInventoryEntry>();
+    publisher.monitor(subsequent, captured);
+    assert.strictEqual(captured.value.size, 2);
+    assert.ok(captured.value.get(update.key).equals(update.value));
+    assert.ok(captured.value.get(second.key).equals(second.value));
+    assert.strictEqual(subsequent.tryPop(), null);
+    const copy = publisher.getSnapshot();
+    copy.delete(update.key);
+    assert.strictEqual(publisher.getSnapshot().size, 2);
     const newest = makeEntry(2, '-10', 4);
     sendUpdates(socket, [newest]);
     assert.ok((await queue.pop()).equals(newest));
     assert.ok((await late.pop()).equals(newest));
+    const published = await subsequent.pop();
+    assert.ok(published instanceof RiskInventoryEntry);
+    assert.ok(published.equals(newest));
+    assert.ok(publisher.getSnapshot().get(newest.key).equals(newest.value));
+    assert.ok(captured.value.get(second.key).equals(second.value));
     assert.strictEqual(socket.requests.tryPop(), null);
   });
 
@@ -161,8 +179,13 @@ describe('HttpRiskClient', () => {
     const removed = new RiskInventoryEntry(position.key,
       new Inventory(position.key.ticker, Currencies.CAD));
     sendUpdates(socket, [removed, empty]);
-    assert.ok((await queue.pop()).equals(removed));
+    const deletion = await queue.pop();
+    assert.ok(deletion instanceof RiskInventoryEntry);
+    assert.ok(deletion.equals(removed));
     assert.strictEqual(queue.tryPop(), null);
+    assert.strictEqual(publisher.getSnapshot().size, 1);
+    assert.ok(!publisher.getSnapshot().has(position.key));
+    assert.ok(publisher.getSnapshot().get(closed.key).equals(closed.value));
     const late = new Beam.Queue<RiskInventoryEntry>();
     publisher.monitor(late);
     assert.ok((await late.pop()).equals(closed));
@@ -209,7 +232,14 @@ describe('HttpRiskClient', () => {
     await assert.rejects(queue.pop(), Beam.PipeBrokenError);
     const late = new Beam.Queue<RiskInventoryEntry>();
     publisher.monitor(late);
+    assert.ok((await late.pop()).equals(entry));
     await assert.rejects(late.pop(), Beam.PipeBrokenError);
+    assert.ok(publisher.getSnapshot().get(entry.key).equals(entry.value));
+    const captured = {value: new Beam.Map<RiskPortfolioKey, Inventory>()};
+    const subsequent = new Beam.Queue<RiskInventoryEntry>();
+    publisher.monitor(subsequent, captured);
+    assert.ok(captured.value.get(entry.key).equals(entry.value));
+    await assert.rejects(subsequent.pop(), Beam.PipeBrokenError);
     assert.ok(socket.isClosed);
     await client.close();
   });

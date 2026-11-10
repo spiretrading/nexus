@@ -3,14 +3,13 @@ import { Inventory } from '../accounting/inventory';
 import { RiskInventoryEntry, RiskPortfolioKey } from './risk_portfolio_types';
 
 /** Publishes the current risk portfolio and subsequent inventory updates. */
-export class RiskPortfolioPublisher implements
-    Beam.Publisher<RiskInventoryEntry> {
+export class RiskPortfolioPublisher implements Beam.SnapshotPublisher<
+    RiskInventoryEntry, Beam.Map<RiskPortfolioKey, Inventory>> {
 
   /** Constructs an empty portfolio publisher. */
   constructor() {
-    this._entries = new Beam.Map<RiskPortfolioKey, Inventory>();
-    this._publisher = new Beam.QueueWriterPublisher<RiskInventoryEntry>();
-    this._exception = null;
+    this._publisher = new Beam.TablePublisher<RiskPortfolioKey, Inventory>();
+    this._isClosed = false;
   }
 
   /**
@@ -19,44 +18,48 @@ export class RiskPortfolioPublisher implements
    * @param isRemoved - Whether to remove the entry from the portfolio.
    */
   public update(entry: RiskInventoryEntry, isRemoved: boolean): void {
-    if(this._exception) {
+    if(this._isClosed) {
       return;
     }
     if(isRemoved) {
-      if(!this._entries.delete(entry.key)) {
-        return;
-      }
+      this._publisher.erase(entry.key, entry.value);
     } else {
-      this._entries.set(entry.key, entry.value);
+      this._publisher.push(entry.key, entry.value);
     }
-    this._publisher.push(entry);
+  }
+
+  public getSnapshot(): Beam.Map<RiskPortfolioKey, Inventory> {
+    return this._publisher.getSnapshot();
+  }
+
+  public monitor(queue: Beam.QueueWriter<RiskInventoryEntry>): void;
+  public monitor(queue: Beam.QueueWriter<RiskInventoryEntry>,
+    snapshot: { value: Beam.Map<RiskPortfolioKey, Inventory> }): void;
+  public monitor(queue: Beam.QueueWriter<RiskInventoryEntry>,
+      snapshot?: { value: Beam.Map<RiskPortfolioKey, Inventory> }): void {
+    const writer = new Beam.CallbackQueueWriter<
+      Beam.KeyValuePair<RiskPortfolioKey, Inventory>>(
+        entry => queue.push(new RiskInventoryEntry(entry.key, entry.value)),
+        error => queue.close(error));
+    if(snapshot) {
+      this._publisher.monitor(writer, snapshot);
+    } else {
+      this._publisher.monitor(writer);
+    }
   }
 
   /**
-   * Sends the current portfolio to a queue and subscribes it to later updates.
-   * @param queue - The queue to receive the portfolio and its updates.
+   * Closes monitored queues and retains the current portfolio.
+   * @param error - The error used to close the queues.
    */
-  public monitor(queue: Beam.QueueWriter<RiskInventoryEntry>): void {
-    if(this._exception) {
-      queue.close(this._exception);
-      return;
-    }
-    for(const [key, value] of this._entries) {
-      queue.push(new RiskInventoryEntry(key, value));
-    }
-    this._publisher.monitor(queue);
-  }
-
   public close(error?: Error): void {
-    if(this._exception) {
+    if(this._isClosed) {
       return;
     }
-    this._exception = error ?? new Beam.PipeBrokenError();
-    this._entries = new Beam.Map<RiskPortfolioKey, Inventory>();
-    this._publisher.close(this._exception);
+    this._isClosed = true;
+    this._publisher.close(error);
   }
 
-  private _entries: Beam.Map<RiskPortfolioKey, Inventory>;
-  private _publisher: Beam.QueueWriterPublisher<RiskInventoryEntry>;
-  private _exception: Error;
+  private _publisher: Beam.TablePublisher<RiskPortfolioKey, Inventory>;
+  private _isClosed: boolean;
 }

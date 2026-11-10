@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import { Inventory } from '../accounting/inventory';
 import { Quantity } from '../definitions/quantity';
 import { InventoryMessage } from './inventory_message';
 import { InventoryUpdate } from './inventory_update';
@@ -29,7 +30,8 @@ export class HttpRiskClient extends RiskClient {
         this.onInventoryMessage, this.onBreak));
   }
 
-  public getRiskPortfolioUpdatePublisher(): Beam.Publisher<RiskInventoryEntry> {
+  public getRiskPortfolioUpdatePublisher(): Beam.SnapshotPublisher<
+      RiskInventoryEntry, Beam.Map<RiskPortfolioKey, Inventory>> {
     if(!this._isSubscribed && !this._isClosed) {
       this._isSubscribed = true;
       this.subscribe();
