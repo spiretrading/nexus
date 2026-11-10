@@ -12,10 +12,12 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
+#include "Spire/TimeAndSales/ReplayTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
@@ -72,10 +74,17 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-      m_time_and_sales_model_builder([this] (const auto& ticker) {
-        return std::make_shared<ServiceTimeAndSalesModel>(
-          ticker, m_clients.get_market_data_client());
-      }),
+      m_time_and_sales_model_builder(
+        [this] (const auto& ticker, const auto& session) ->
+            std::shared_ptr<TimeAndSalesModel> {
+          if(session) {
+            return std::make_shared<ReplayTimeAndSalesModel>(
+              ticker, m_clients.get_market_data_client(), session);
+          }
+          return std::make_shared<ServiceTimeAndSalesModel>(
+            ticker, m_clients.get_market_data_client());
+        }),
+      m_replay_attachment_map(std::make_shared<ReplayAttachmentMap>()),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
@@ -273,6 +282,11 @@ const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
 const TimeAndSalesWindow::ModelBuilder&
     UserProfile::GetTimeAndSalesModelBuilder() const {
   return m_time_and_sales_model_builder;
+}
+
+const std::shared_ptr<ReplayAttachmentMap>&
+    UserProfile::GetReplayAttachmentMap() const {
+  return m_replay_attachment_map;
 }
 
 const PortfolioViewerProperties&
