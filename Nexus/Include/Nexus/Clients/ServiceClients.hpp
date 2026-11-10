@@ -34,18 +34,22 @@ namespace Nexus {
        * @param username The client's username.
        * @param password The client's password.
        * @param address The IpAddress to connect to.
+       * @param encryption The ServiceLocator server trust configuration.
        */
       ServiceClients(const std::string& username, const std::string& password,
-        const Beam::IpAddress& address);
+        const Beam::IpAddress& address,
+        const Beam::AesGcmClientConfig& encryption);
 
       /**
        * Constructs a ServiceClients from an existing session.
        * @param session_id The encrypted session id.
        * @param key The encryption key used to encode the session id.
        * @param address The IpAddress to connect to.
+       * @param encryption The ServiceLocator server trust configuration.
        */
       ServiceClients(const std::string& session_id, unsigned int key,
-        const Beam::IpAddress& address);
+        const Beam::IpAddress& address,
+        const Beam::AesGcmClientConfig& encryption);
 
       ~ServiceClients();
 
@@ -79,8 +83,9 @@ namespace Nexus {
   };
 
   inline ServiceClients::ServiceClients(const std::string& username,
-    const std::string& password, const Beam::IpAddress& address)
-    : m_service_locator_client(username, password, address),
+    const std::string& password, const Beam::IpAddress& address,
+    const Beam::AesGcmClientConfig& encryption)
+    : m_service_locator_client(username, password, address, encryption),
       m_administration_client(Beam::Ref(m_service_locator_client)),
       m_definitions_client(Beam::Ref(m_service_locator_client)),
       m_market_data_client(Beam::Ref(m_service_locator_client)),
@@ -92,8 +97,9 @@ namespace Nexus {
         Beam::make_live_ntp_time_client(m_service_locator_client)) {}
 
   inline ServiceClients::ServiceClients(const std::string& session_id,
-    unsigned int key, const Beam::IpAddress& address)
-    : m_service_locator_client(session_id, key, address),
+    unsigned int key, const Beam::IpAddress& address,
+    const Beam::AesGcmClientConfig& encryption)
+    : m_service_locator_client(session_id, key, address, encryption),
       m_administration_client(Beam::Ref(m_service_locator_client)),
       m_definitions_client(Beam::Ref(m_service_locator_client)),
       m_market_data_client(Beam::Ref(m_service_locator_client)),

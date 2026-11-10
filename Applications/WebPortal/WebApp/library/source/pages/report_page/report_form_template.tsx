@@ -171,13 +171,18 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
     return ValidationError.NONE;
   }
 
-  private isValid(): boolean {
+  private isValid(committed = false): boolean {
     const {value} = this.props;
     const report = this.props.reports.find(entry =>
       entry.id === value.reportType);
-    if(!report || report.parameters.some(parameter =>
-        validateReportParameter(parameter, value.parameters[parameter.name]) !==
-          ValidationError.NONE || this.state.errors.get(parameter.name)) ||
+    if(!report || report.parameters.some(parameter => {
+      const error = this.state.errors.get(parameter.name);
+      if(error !== undefined && error !== ValidationError.NONE) {
+        return true;
+      }
+      return (committed || error === undefined) && validateReportParameter(
+        parameter, value.parameters[parameter.name]) !== ValidationError.NONE;
+    }) ||
         validateReportParameter(SHARING_PARAMETER, value.recipients) !==
           ValidationError.NONE || !value.recipients.every(isReportRecipient) ||
         this.state.sharingError) {
@@ -202,7 +207,7 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
   }
 
   private setError(name: string, error: ValidationError): void {
-    if((this.state.errors.get(name) ?? ValidationError.NONE) !== error) {
+    if(this.state.errors.get(name) !== error) {
       this.setState(state => {
         const errors = new Map(state.errors);
         errors.set(name, error);
@@ -273,9 +278,12 @@ export class ReportFormTemplate extends React.Component<Properties, State> {
 
   private onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if(this.props.submitDisabled || !this.isValid()) {
+      return;
+    }
     (document.activeElement as HTMLElement)?.blur();
     queueMicrotask(() => {
-      if(this.mounted && !this.props.submitDisabled && this.isValid()) {
+      if(this.mounted && !this.props.submitDisabled && this.isValid(true)) {
         this.props.onSubmit?.(this.props.value);
       }
     });

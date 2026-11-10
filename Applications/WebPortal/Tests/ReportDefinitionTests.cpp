@@ -6,12 +6,14 @@
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Tests;
 
@@ -374,7 +376,10 @@ TEST_SUITE("ReportDefinition") {
     auto reports = LocalReportService(definitions, client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(account);
@@ -414,7 +419,10 @@ TEST_SUITE("ReportDefinition") {
       std::vector({make_definition("hidden", {"alice"})}), client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>)));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5)));
     REQUIRE(parse_response(load(empty, *session)).empty());
   }
 
@@ -426,7 +434,10 @@ TEST_SUITE("ReportDefinition") {
     auto reports = LocalReportService(definitions, client, execute,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     session->set_account(client.get_account());

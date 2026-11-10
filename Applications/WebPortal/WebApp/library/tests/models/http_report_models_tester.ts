@@ -251,17 +251,41 @@ describe('HTTP report models', () => {
 
   it('maps_detail_content_and_download_url', async () => {
     const model = new HttpReportDetailModel();
+    await assert.rejects(model.retry('job'), /not loaded/);
     await model.load();
     Request.handler = () => ({status: 200, body: {id: 'job', title: 'Example',
       parameters: [{label: 'Currency', value: 'USD'}],
       status: 2, file_path: '/api/reporting_service/download_report?id=job',
-      content: 'a,b'}});
+      media_type: 'text/csv', content: 'a,b'}});
     const report = await model.loadReport('job');
     assert.equal(report.content, 'a,b');
+    assert.equal(report.mediaType, 'text/csv');
     assert.equal(report.status, 2);
     assert.equal(report.filePath,
       '/api/reporting_service/download_report?id=job');
     assert.deepEqual(Request.calls[0].body, {id: 'job'});
+    await model.retry('job');
+    assert.ok(Request.calls[1].url.endsWith('/retry_report_jobs'));
+    assert.deepEqual(Request.calls[1].body, {ids: ['job']});
+  });
+
+  it('maps_binary_report_metadata_without_fetching_files', async () => {
+    const model = new HttpReportDetailModel();
+    await model.load();
+    for(const mediaType of ['application/pdf', 'application/zip']) {
+      Request.handler = () => ({status: 200, body: {id: 'job', title: 'Example',
+        parameters: [], status: 2, media_type: mediaType,
+        file_path: '/api/reporting_service/download_report?id=job'}});
+      const count = Request.calls.length;
+      const report = await model.loadReport('job');
+      assert.equal(report.mediaType, mediaType);
+      assert.equal(report.content, undefined);
+      assert.equal(
+        report.filePath, '/api/reporting_service/download_report?id=job');
+      assert.equal(Request.calls.length, count + 1);
+      assert.equal(
+        Request.calls.at(-1).url, '/api/reporting_service/load_report');
+    }
   });
 
   it('composes_models_without_loading_unimplemented_routes', async () => {

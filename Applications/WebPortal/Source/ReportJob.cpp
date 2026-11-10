@@ -1,7 +1,9 @@
 #include "WebPortal/ReportJob.hpp"
 #include <algorithm>
 #include <ranges>
+#include <stdexcept>
 #include <string_view>
+#include <utility>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -36,6 +38,9 @@ namespace {
     } else if(type == "Date") {
       return to_iso_extended_string(
         from_undelimited_string(get<std::string>(value)));
+    } else if(type == "YearMonth") {
+      return to_iso_extended_string(
+        from_undelimited_string(get<std::string>(value))).substr(0, 7);
     } else if(type == "DateTime") {
       return to_iso_extended_string(from_iso_string(get<std::string>(value)));
     } else if(type == "DateRange") {
@@ -91,4 +96,22 @@ std::vector<std::string> Nexus::format_report_parameters(const ReportJob& job) {
     }
   }
   return result;
+}
+
+Notification Nexus::make_report_notification(const ReportJob& job) {
+  auto [description, status] = [&] {
+    if(job.m_status == ReportJob::Status::COMPLETED) {
+      return std::pair(job.m_definition.m_name + " is ready.", "COMPLETED");
+    } else if(job.m_status == ReportJob::Status::FAILED) {
+      return std::pair(job.m_definition.m_name + " failed.", "FAILED");
+    } else {
+      throw std::invalid_argument("Report must be completed or failed.");
+    }
+  }();
+  auto data = JsonObject();
+  data["report_id"] = job.m_id;
+  data["status"] = status;
+  return Notification("", job.m_account, std::move(description),
+    std::format("{}", data), Notification::Category::REPORT, not_a_date_time,
+    false);
 }

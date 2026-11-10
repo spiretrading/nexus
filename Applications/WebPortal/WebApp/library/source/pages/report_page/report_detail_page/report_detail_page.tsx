@@ -20,7 +20,7 @@ interface Properties {
   /** The displayed report status. Defaults to READY. */
   status?: ReportDetailPage.Status;
 
-  /** Called when the user requests another retrieval attempt. */
+  /** Called when the user retries report generation or retrieval. */
   onRetry?: () => void;
 }
 

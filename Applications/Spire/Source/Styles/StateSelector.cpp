@@ -4,7 +4,6 @@
 #include "Spire/Ui/HoverObserver.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -43,7 +42,7 @@ namespace {
     struct Observer {
       FocusObserver m_observer;
       int m_match_count;
-      scoped_connection m_match_connection;
+      Stylist::ListenerConnection m_match_connection;
 
       Observer(QWidget& widget)
         : m_observer(widget),
@@ -86,8 +85,8 @@ namespace {
         }
         return Focus();
       }();
-      m_observer->m_match_connection = scoped_connection(
-        m_stylist->connect_match_signal(selector, [=] (auto is_match) {
+      m_observer->m_match_connection =
+        m_stylist->add_match_listener(selector, [=] (auto is_match) {
           if(is_match) {
             ++m_observer->m_match_count;
             if(m_observer->m_match_count == 1) {
@@ -99,7 +98,7 @@ namespace {
               m_on_update({}, {m_stylist});
             }
           }
-        }));
+        });
       if(m_stylist->is_match(selector)) {
         ++m_observer->m_match_count;
         if(m_observer->m_match_count == 1) {

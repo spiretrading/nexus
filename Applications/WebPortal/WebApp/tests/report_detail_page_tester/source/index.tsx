@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { LocalReportDetailModel, ReportDetailController,
-  ReportDetailModel } from 'web_portal';
+  ReportDetailModel, ReportViewer } from 'web_portal';
+import SAMPLE_REPORT from './sample_report.pdf';
 
 class DemoReportDetailModel extends LocalReportDetailModel {
   public async loadReport(id: string): Promise<ReportDetailModel.Report> {
@@ -35,6 +36,25 @@ class App extends React.Component<{}, State> {
           <option value='1'>Profit and Loss</option>
           <option value='2'>Trading Volume</option>
           <option value='3'>Binary download</option>
+          <option value='4'>Sample PDF</option>
+          <option value='5'>Missing PDF</option>
+          <option value='6'>Invalid PDF</option>
+          <option value='7'>Quoted CSV</option>
+          <option value='8'>Large CSV</option>
+          <option value='9'>Empty CSV</option>
+          <option value='10'>Invalid CSV</option>
+          <option value='11'>Missing CSV</option>
+          <option value='12'>Markdown report</option>
+          <option value='13'>JSON report</option>
+          <option value='14'>Plain text report</option>
+          <option value='15'>Invalid JSON</option>
+          <option value='16'>Empty text</option>
+          <option value='17'>Empty Markdown</option>
+          <option value='18'>JSON scalar</option>
+          <option value='19'>Missing Markdown</option>
+          <option value='20'>Missing JSON</option>
+          <option value='21'>Missing text</option>
+          <option value='22'>Large JSON</option>
         </select></label>
         <label><input type='checkbox' onChange={this.onFailQueries}/>
           Fail queries</label>
@@ -74,7 +94,7 @@ class App extends React.Component<{}, State> {
 }
 
 function makeDetails(): ReportDetailModel.Report[] {
-  return ['Profit and Loss', 'Trading Volume', 'Binary download'].
+  const reports = ['Profit and Loss', 'Trading Volume', 'Binary download'].
     map((title, index) => {
       const content = `Report,Account,Scope,Period\n` +
         `${title},Alpha Group ${index + 1},Canada,Month to Date\n`;
@@ -87,7 +107,7 @@ function makeDetails(): ReportDetailModel.Report[] {
       })();
       const filePath = URL.createObjectURL(file);
       downloads.push(filePath);
-      return {id: String(index + 1), title, filePath,
+      return {id: String(index + 1), title, filePath, mediaType: file.type,
         status: ReportDetailModel.Status.READY,
         parameters: [
           {label: 'Account / Group', value: `Alpha Group ${index + 1}`},
@@ -100,15 +120,102 @@ function makeDetails(): ReportDetailModel.Report[] {
           return null;
         })()};
     });
+  const invalid = URL.createObjectURL(new Blob(['Not a PDF.'],
+    {type: 'application/pdf'}));
+  const sample = URL.createObjectURL(new Blob([
+    Uint8Array.from(atob(SAMPLE_REPORT.split(',')[1]),
+      character => character.charCodeAt(0))], {type: 'application/pdf'}));
+  downloads.push(invalid, sample);
+  for(const [id, title, filePath] of [
+      ['4', 'Sample PDF', sample],
+      ['5', 'Missing PDF', 'missing-report.pdf'],
+      ['6', 'Invalid PDF', invalid]]) {
+    reports.push({id, title, filePath, mediaType: 'application/pdf',
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  const large = ['Trade,Account,Ticker,Quantity,Price,Amount'];
+  for(let i = 1; i <= 50000; ++i) {
+    large.push(`${i},Account ${i % 100},ABC.TSX,${i % 1000},12.50,` +
+      `${(i % 1000 * 12.5).toFixed(2)}`);
+  }
+  for(const [id, title, content] of [
+      ['7', 'Quoted CSV', '\uFEFFName,Amount,Account,Notes,Value,Value,\r\n' +
+        'Zulu,10,0007,"Comma, inside",first,second,\r\n' +
+        'Alpha,2.5,0008,"Two\r\nlines",third,fourth,\r\n' +
+        'Beta,-3,0009,"A ""quoted"" value",fifth,sixth,\r\n' +
+        '<img src=x onerror=alert(1)>,,0010,=1+1,seventh,eighth,'],
+      ['8', 'Large CSV', large.join('\n')],
+      ['9', 'Empty CSV', ''],
+      ['10', 'Invalid CSV', 'Name,Value\n"Unclosed,1']]) {
+    const filePath = URL.createObjectURL(new Blob([content], {type: 'text/csv'}));
+    downloads.push(filePath);
+    reports.push({id, title, filePath, mediaType: 'text/csv',
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  reports.push({id: '11', title: 'Missing CSV', filePath: 'missing-report.csv',
+    mediaType: 'text/csv', status: ReportDetailModel.Status.READY,
+    parameters: [], content: null});
+  for(const [id, title, mediaType, content] of [
+      ['12', 'Markdown report', 'text/markdown',
+        '# Account summary\n\nTrading results for **Alpha Group**.\n\n' +
+        '| Ticker | Quantity | Profit |\n| --- | ---: | ---: |\n' +
+        '| ABC.TSX | 100 | $125.50 |\n| XYZ.TSX | 25 | -$30.00 |\n\n' +
+        '## Notes\n\n- Values are in CAD.\n- Includes ~~pending~~ ' +
+        '*completed* trades.\n\n- [x] Reconciled\n- [ ] Reviewed\n\n' +
+        '> Prepared for the account owner.\n\n' +
+        '```json\n{"account": "Alpha Group", "trades": 125}\n```\n\n' +
+        '[Spire](https://spiretrading.com)\n\n' +
+        '<script>alert("script")</script>\n' +
+        '<span style="position:fixed;inset:0" onclick="alert(1)">' +
+        'This text is safe.</span>\n\n[Unsafe link](javascript:alert(1))'],
+      ['13', 'JSON report', 'application/json',
+        '{"account":"Alpha Group","id":900719925474099312345,' +
+        '"amount":123.4567890123456789,"negativeZero":-0,' +
+        '"trades":[{"ticker":"ABC.TSX","quantity":100},' +
+        '{"ticker":"XYZ.TSX","quantity":25}],"complete":true,' +
+        '"error":null,"empty":{},"notes":"<img src=x onerror=alert(1)>"}'],
+      ['14', 'Plain text report', 'text/plain',
+        'Account statement\n\nAccount\tAlpha Group\n' +
+        'Ticker      Quantity      Profit\n' +
+        'ABC.TSX          100      125.50\n' +
+        'XYZ.TSX           25      -30.00\n\n' +
+        '<b>This is literal text.</b>\nUnicode: caf\u00e9 \u65e5\u672c\n'],
+      ['15', 'Invalid JSON', 'application/json', '{"account":'],
+      ['16', 'Empty text', 'text/plain', ''],
+      ['17', 'Empty Markdown', 'text/markdown', ''],
+      ['18', 'JSON scalar', 'application/json', 'null']]) {
+    const filePath =
+      URL.createObjectURL(new Blob([content], {type: mediaType}));
+    downloads.push(filePath);
+    reports.push({id, title, filePath, mediaType,
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  for(const [id, title, mediaType, extension] of [
+      ['19', 'Missing Markdown', 'text/markdown', 'md'],
+      ['20', 'Missing JSON', 'application/json', 'json'],
+      ['21', 'Missing text', 'text/plain', 'txt']]) {
+    reports.push({id, title, mediaType, filePath: 'missing-report.' + extension,
+      status: ReportDetailModel.Status.READY, parameters: [], content: null});
+  }
+  const transactions = Array.from({length: 10000}, (_, index) => ({
+    id: String(9007199254740993n + BigInt(index)),
+    account: `Account ${index % 100}`,
+    ticker: 'ABC.TSX',
+    quantity: index % 1000,
+    settled: index % 2 === 0
+  }));
+  const filePath = URL.createObjectURL(new Blob([
+    JSON.stringify({transactions})], {type: 'application/json'}));
+  downloads.push(filePath);
+  reports.push({id: '22', title: 'Large JSON', filePath,
+    mediaType: 'application/json', status: ReportDetailModel.Status.READY,
+    parameters: [], content: null});
+  return reports;
 }
 
 function renderReportContent(report: ReportDetailModel.Report):
     React.ReactNode {
-  if(report.content == null) {
-    return null;
-  }
-  return <pre style={{margin: 0, whiteSpace: 'pre-wrap',
-    overflowWrap: 'anywhere'}}>{report.content}</pre>;
+  return <ReportViewer report={report}/>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {

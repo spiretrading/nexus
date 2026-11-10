@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <Beam/IO/AesGcmChannel.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <boost/optional/optional.hpp>
@@ -29,6 +30,9 @@ namespace Spire {
 
         /** The server's address. */
         Beam::IpAddress m_address;
+
+        /** The ServiceLocator server trust configuration. */
+        Beam::AesGcmClientConfig m_encryption;
       };
 
       /**
@@ -42,11 +46,13 @@ namespace Spire {
        * @param username The username to sign in with.
        * @param password The password to sign in with.
        * @param address The IpAddress to connect to.
+       * @param encryption The ServiceLocator server trust configuration.
        * @return The clients used to sign in to Spire.
        */
       using ClientsFactory =
         std::function<Nexus::Clients (const std::string& username,
-          const std::string& password, const Beam::IpAddress& address)>;
+          const std::string& password, const Beam::IpAddress& address,
+          const Beam::AesGcmClientConfig& encryption)>;
 
       /**
        * Constructs a sign in controller in a state ready to display the sign in

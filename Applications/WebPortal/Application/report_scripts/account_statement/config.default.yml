@@ -1,0 +1,18 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $password
+  public_key: $service_locator_public_key
+
+company:
+  name: Eidolon Systems Ltd.
+  address:
+    - 710 - 55 Eglinton Ave E
+    - Toronto, ON M4P 1G8
+    - Canada
+  logo: logo.png
+  registrations:
+    - label: GST/HST registration
+      value: 827729054 RT0001
+...

@@ -1,0 +1,20 @@
+id: account_statement
+name: Account Statement
+description: Spire licence fees for your account for one trading month.
+access: ['*']
+parameters:
+  - name: month
+    label: Trading Month
+    type: YearMonth
+    required: true
+command: python3
+arguments:
+  - report_scripts/account_statement/statement.py
+  - --account-id
+  - '{submitter.id}'
+  - --month
+  - '{month}'
+output:
+  media_type: application/pdf
+  extension: pdf
+  filename: 'statement_{submitter.name}_{month}'

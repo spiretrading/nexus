@@ -137,7 +137,7 @@ AnyTagComboBox::AnyTagComboBox(std::shared_ptr<AnyQueryModel> query_model,
     std::move(query_model), m_tag_box->get_tags()),
     std::make_shared<LocalValueModel<std::any>>(),
     m_any_input_box, std::move(item_builder), std::move(matches_builder));
-  m_combo_box->connect_submit_signal(
+  m_submit_connection = m_combo_box->connect_submit_signal(
     std::bind_front(&AnyTagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
@@ -269,7 +269,7 @@ void AnyTagComboBox::push_combo_box() {
     submit();
   } else {
     auto drop_down_window = find_drop_down_window();
-    if(drop_down_window && !drop_down_window->isVisible()) {
+    if(!drop_down_window || !drop_down_window->isVisible()) {
       m_tag_box->get_current()->set("");
     }
   }

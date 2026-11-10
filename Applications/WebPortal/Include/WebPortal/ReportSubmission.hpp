@@ -113,9 +113,19 @@ namespace Nexus {
   std::vector<std::string> make_report_arguments(
     const ReportDefinition& definition, const Beam::JsonObject& parameters);
 
+  /** Expands arguments with trusted submitter.id and submitter.name values. */
+  std::vector<std::string> make_report_arguments(
+    const ReportDefinition& definition, const Beam::JsonObject& parameters,
+    const Beam::DirectoryEntry& submitter);
+
   /** Expands parameter placeholders in a report template. */
   std::string expand_report_template(const ReportDefinition& definition,
     const Beam::JsonObject& parameters, const std::string& text);
+
+  /** Expands a template with the authenticated submitting account. */
+  std::string expand_report_template(const ReportDefinition& definition,
+    const Beam::JsonObject& parameters, const std::string& text,
+    const Beam::DirectoryEntry& submitter);
 }
 
 #endif

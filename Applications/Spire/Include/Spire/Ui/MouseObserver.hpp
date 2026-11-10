@@ -35,6 +35,8 @@ namespace Spire {
        */
       explicit MouseObserver(QWidget& widget);
 
+      ~MouseObserver();
+
       /** Connects a slot to the mouse signal. */
       boost::signals2::connection connect_filtered_mouse_signal(
         const FilteredMouseSignal::slot_type& slot) const;
@@ -47,7 +49,6 @@ namespace Spire {
       struct EventFilter;
       mutable FilteredMouseSignal m_mouse_signal;
       std::shared_ptr<EventFilter> m_filter;
-      boost::signals2::scoped_connection m_filter_connection;
   };
 }
 

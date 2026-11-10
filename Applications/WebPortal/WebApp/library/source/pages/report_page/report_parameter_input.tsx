@@ -3,7 +3,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountGroupListInput, AccountGroupQueryModel, ComboBox, DateInput,
   DecimalInput, InputErrorMessage, InputGroup, IntegerInput,
-  MoneyInput, ScopeInput, Select, TimeOfDayInput } from '../../components';
+  MoneyInput, ScopeInput, Select, TimeOfDayInput, YearMonthInput } from
+  '../../components';
 import { DateRange, DateRangeValidation, QueryModel,
   ValidationError } from '../../models';
 import { ParametersDateRangeInput } from './parameters_date_range_input';
@@ -43,7 +44,7 @@ interface State {
 export class ReportParameterInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.state = {draftError: ValidationError.NONE};
+    this.state = {draftError: null};
     this.element = React.createRef();
     this.mounted = false;
     this.emptyRange = new DateRange(null, null);
@@ -60,9 +61,10 @@ export class ReportParameterInput extends React.Component<Properties, State> {
         style={{maxWidth: '384px'}}
         onValidationChange={this.onRangeValidation}/>;
     }
-    const error = this.state.draftError || this.props.error ||
-      validateReportParameter(definition, value);
-    return <div ref={this.element} onInput={this.onInput} onBlur={this.onBlur}>
+    const error = this.props.error || (this.state.draftError ??
+      validateReportParameter(definition, value));
+    return <div ref={this.element} onInput={this.onInput} onBlur={this.onBlur}
+        onKeyUp={this.onKeyUp}>
       <InputGroup label={definition.label}
           validation={{valid: error === ValidationError.NONE, error}}
           errorMessage={<InputErrorMessage label={definition.label}
@@ -78,7 +80,8 @@ export class ReportParameterInput extends React.Component<Properties, State> {
 
   public componentDidUpdate(previous: Properties): void {
     if(previous.value !== this.props.value) {
-      this.setError(ValidationError.NONE);
+      this.setError(validateReportParameter(
+        this.props.definition, this.props.value));
       if(this.element.current?.contains(document.activeElement)) {
         this.onInput();
       }
@@ -105,6 +108,9 @@ export class ReportParameterInput extends React.Component<Properties, State> {
           model={accountModel} onChange={this.onChange}/>;
       case 'Date':
         return <DateInput value={value as Beam.Date} onChange={this.onChange}/>;
+      case 'YearMonth':
+        return <YearMonthInput value={value as Beam.Date}
+          onChange={this.onChange}/>;
       case 'DateTime':
         return <DateTimeField value={value as Beam.DateTime}
           onChange={this.onChange}/>;
@@ -160,7 +166,7 @@ export class ReportParameterInput extends React.Component<Properties, State> {
       }
       return;
     }
-    if(!['Date', 'Time', 'DateTime', 'Integer', 'Decimal', 'Money'].
+    if(!['Date', 'YearMonth', 'Time', 'DateTime', 'Integer', 'Decimal', 'Money'].
         includes(type)) {
       return;
     }
@@ -184,6 +190,8 @@ export class ReportParameterInput extends React.Component<Properties, State> {
       value = values[0];
     } else if(type === 'Money') {
       value = Nexus.Money.parse(parts[0]);
+    } else if(type === 'YearMonth') {
+      value = new Beam.Date(values[0], values[1], 1);
     } else {
       let time: Beam.Duration = null;
       if(type !== 'Date') {
@@ -240,8 +248,14 @@ export class ReportParameterInput extends React.Component<Properties, State> {
   };
 
   private onChange = (value: ReportParameterValue) => {
-    this.setError(ValidationError.NONE);
+    this.setError(validateReportParameter(this.props.definition, value));
     this.props.onChange(value ?? null);
+  };
+
+  private onKeyUp = (event: React.KeyboardEvent) => {
+    if(event.key === 'Escape') {
+      this.onInput();
+    }
   };
 
   private onCurrencyChange = (value: string) => {
@@ -372,6 +386,8 @@ function getValueLabel(type: string): string {
     return 'country, venue, or ticker';
   } else if(type === 'DateTime') {
     return 'date and time';
+  } else if(type === 'YearMonth') {
+    return 'year and month';
   }
   return 'value';
 }

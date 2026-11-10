@@ -78,6 +78,7 @@ add_subdirectory(Config/StyleParser)
 add_subdirectory(Config/Styles)
 add_subdirectory(Config/TimeAndSales)
 add_subdirectory(Config/Toolbar)
+add_subdirectory(Config/UiTests)
 add_subdirectory(Config/UiViewer)
 add_subdirectory(Config/Utilities)
 

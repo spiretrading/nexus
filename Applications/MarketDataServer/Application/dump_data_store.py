@@ -4,12 +4,22 @@ import functools
 import multiprocessing
 import sqlite3
 import sys
+import threading
+import traceback
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 
 import beam
 import nexus
 import pymysql
 import pytz
 import yaml
+
+BATCH_SIZE = 100000
+FLOAT_COLUMNS = frozenset(('ask_price', 'ask_size', 'bid_price', 'bid_size',
+  'board_lot', 'price', 'size'))
+TABLES = ('bbo_quotes', 'time_and_sales', 'book_quotes', 'order_imbalances',
+  'ticker_info')
 
 def parse_date(source):
   try:
@@ -31,33 +41,57 @@ def parse_ip_address(source):
   return beam.IpAddress(
     source[0:separator], int(source[separator + 1 :]))
 
+def quote_identifier(name):
+  return '`' + name.replace('`', '``') + '`'
+
+def get_placeholder(connection):
+  if isinstance(connection, sqlite3.Connection):
+    return '?'
+  return '%s'
+
+def open_cursor(connection):
+  if isinstance(connection, sqlite3.Connection):
+    return connection.cursor()
+  return connection.cursor(pymysql.cursors.SSCursor)
+
 def load_tickers(source):
-  tickers = []
-  cursor = source.cursor()
-  query = 'SELECT DISTINCT `symbol`, `venue` FROM `bbo_quotes`'
-  cursor.execute(query)
-  for result in cursor.fetchall():
-    tickers.append(nexus.Ticker(result[0], nexus.Venue(result[1])))
-  return tickers
+  with closing(source.cursor()) as cursor:
+    cursor.execute('SELECT DISTINCT `symbol`, `venue` FROM `bbo_quotes`')
+    return [nexus.Ticker(symbol, nexus.Venue(venue))
+      for symbol, venue in cursor]
 
 def load_venues(source):
-  venues = []
-  cursor = source.cursor()
-  query = 'SELECT DISTINCT `venue` FROM `order_imbalances`'
-  cursor.execute(query)
-  for result in cursor.fetchall():
-    venues.append(nexus.Venue(result[0]))
-  return venues
+  with closing(source.cursor()) as cursor:
+    cursor.execute('SELECT DISTINCT `venue` FROM `order_imbalances`')
+    return [nexus.Venue(row[0]) for row in cursor]
 
-def backup_ticker_info(source, destination):
-  query = beam.PagedQuery()
-  query.index = nexus.Scope.GLOBAL
-  query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
-  rows = source.load_ticker_info(query)
-  for info in rows:
-    destination.store(info)
+def load_columns(connection):
+  columns = {}
+  with closing(connection.cursor()) as cursor:
+    for table in TABLES:
+      cursor.execute('PRAGMA table_info(' + quote_identifier(table) + ')')
+      columns[table] = tuple(row[1] for row in cursor)
+  return columns
 
-def backup(index, start, end, loader, destination):
+def get_select_columns(connection, columns):
+  names = []
+  for name in columns:
+    column = quote_identifier(name)
+    if isinstance(connection, sqlite3.Connection) and name in FLOAT_COLUMNS:
+      column = 'CAST(' + column + ' AS TEXT)'
+    names.append(column)
+  return ', '.join(names)
+
+def format_rows(columns, rows):
+  """Yields rows with Viper's six-decimal floating-point SQL representation."""
+  indexes = [i for i, name in enumerate(columns) if name in FLOAT_COLUMNS]
+  for row in rows:
+    values = list(row)
+    for i in indexes:
+      values[i] = format(float(values[i]), '.6f')
+    yield values
+
+def get_range(index, start, end):
   if isinstance(index, nexus.Ticker):
     country = nexus.VENUES.select(index.venue).country_code
     if country == nexus.countries.CA or country == nexus.countries.US:
@@ -74,24 +108,134 @@ def backup(index, start, end, loader, destination):
       timezone = pytz.timezone('Asia/Tokyo')
   else:
     timezone = pytz.timezone('US/Eastern')
-  localized_start = timezone.localize(start)
-  localized_end = timezone.localize(end)
-  utc_start = localized_start.astimezone(pytz.utc)
-  utc_end = localized_end.astimezone(pytz.utc)
-  query = beam.Query()
-  query.index = index
-  query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
-  query.set_range(utc_start, utc_end)
-  values = loader(query)
-  for i in range(len(values)):
-    values[i] = beam.SequencedValue(
-      beam.IndexedValue(values[i].value, index), values[i].sequence)
-  destination.store(values)
+  epoch = datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)
+  start = timezone.localize(start).astimezone(pytz.utc) - epoch
+  end = timezone.localize(end).astimezone(pytz.utc) - epoch
+  return (start // datetime.timedelta(milliseconds=1),
+    end // datetime.timedelta(milliseconds=1))
 
-def backup_spawn(index, start, end, source, destination):
-  backup(index, start, end, source.load_bbo_quotes, destination)
-  backup(index, start, end, source.load_time_and_sales, destination)
-  backup(index, start, end, source.load_book_quotes, destination)
+class Writer:
+  def __init__(self, connection, columns):
+    self.connection = connection
+    self.columns = columns
+    self.lock = threading.Lock()
+    self.statements = {}
+    placeholder = get_placeholder(connection)
+    for table in TABLES:
+      names = ', '.join(quote_identifier(name) for name in columns[table])
+      parameters = ', '.join(placeholder for name in columns[table])
+      statement = 'INSERT INTO ' + quote_identifier(table) + \
+        ' (' + names + ') VALUES (' + parameters + ')'
+      if table == 'ticker_info':
+        updates = []
+        for name in columns[table]:
+          if name not in ('symbol', 'venue'):
+            column = quote_identifier(name)
+            if isinstance(connection, sqlite3.Connection):
+              updates.append(column + ' = excluded.' + column)
+            else:
+              updates.append(column + ' = VALUES(' + column + ')')
+        if isinstance(connection, sqlite3.Connection):
+          statement += ' ON CONFLICT (`symbol`, `venue`) DO UPDATE SET '
+        else:
+          statement += ' ON DUPLICATE KEY UPDATE '
+        statement += ', '.join(updates)
+      self.statements[table] = statement
+
+  def store(self, table, rows):
+    with self.lock:
+      with closing(self.connection.cursor()) as cursor:
+        try:
+          cursor.execute('BEGIN')
+          cursor.executemany(self.statements[table],
+            format_rows(self.columns[table], rows))
+          self.connection.commit()
+        except Exception:
+          self.connection.rollback()
+          raise
+
+def copy_table(source, destination, table, index, start, end):
+  """Copies the inclusive sequence range selected by the timestamp bounds."""
+  placeholder = get_placeholder(source)
+  if isinstance(index, nexus.Ticker):
+    condition = '`symbol` = ' + placeholder + ' AND `venue` = ' + placeholder
+    parameters = (index.symbol, str(index.venue.code))
+  else:
+    condition = '`venue` = ' + placeholder
+    parameters = (str(index.code),)
+  table_name = quote_identifier(table)
+  with closing(source.cursor()) as cursor:
+    cursor.execute('SELECT MIN(`query_sequence`) FROM ' + table_name +
+      ' WHERE ' + condition + ' AND `timestamp` >= ' + placeholder,
+      parameters + (start,))
+    first = cursor.fetchone()[0]
+    cursor.execute('SELECT MAX(`query_sequence`) FROM ' + table_name +
+      ' WHERE ' + condition + ' AND `timestamp` <= ' + placeholder,
+      parameters + (end,))
+    last = cursor.fetchone()[0]
+  if first is None or last is None or first > last:
+    return
+  columns = destination.columns[table]
+  sequence_column = columns.index('query_sequence')
+  statement = 'SELECT ' + get_select_columns(source, columns)
+  statement += ' FROM ' + table_name + ' WHERE ' + condition + \
+    ' AND `query_sequence` >= ' + placeholder + \
+    ' AND `query_sequence` <= ' + placeholder + \
+    ' ORDER BY `query_sequence` LIMIT ' + str(BATCH_SIZE)
+  while first <= last:
+    with closing(open_cursor(source)) as cursor:
+      cursor.execute(statement, parameters + (first, last))
+      rows = cursor.fetchmany(BATCH_SIZE)
+    if not rows:
+      return
+    destination.store(table, rows)
+    first = rows[-1][sequence_column] + 1
+    del rows
+
+def backup(index, start, end, source_builder, destination):
+  start, end = get_range(index, start, end)
+  with closing(source_builder()) as source:
+    if isinstance(index, nexus.Ticker):
+      for table in ('bbo_quotes', 'time_and_sales', 'book_quotes'):
+        copy_table(source, destination, table, index, start, end)
+    else:
+      copy_table(source, destination, 'order_imbalances', index, start, end)
+
+def backup_ticker_info(source, destination):
+  columns = destination.columns['ticker_info']
+  symbol_column = columns.index('symbol')
+  venue_column = columns.index('venue')
+  placeholder = get_placeholder(source)
+  select = 'SELECT ' + get_select_columns(source, columns)
+  select += ' FROM `ticker_info`'
+  anchor = None
+  while True:
+    statement = select
+    parameters = ()
+    if anchor is not None:
+      statement += ' WHERE (`symbol`, `venue`) > (' + \
+        placeholder + ', ' + placeholder + ')'
+      parameters += anchor
+    statement += ' ORDER BY `symbol`, `venue` LIMIT ' + str(BATCH_SIZE)
+    with closing(open_cursor(source)) as cursor:
+      cursor.execute(statement, parameters)
+      rows = cursor.fetchmany(BATCH_SIZE)
+    if not rows:
+      return
+    destination.store('ticker_info', rows)
+    anchor = (rows[-1][symbol_column], rows[-1][venue_column])
+    del rows
+
+def run_backups(indexes, start, end, source_builder, destination, cores):
+  with ThreadPoolExecutor(max_workers=cores) as executor:
+    for i in range(0, len(indexes), cores):
+      futures = [executor.submit(backup, index, start, end, source_builder,
+        destination) for index in indexes[i : i + cores]]
+      for future in futures:
+        try:
+          future.result()
+        except Exception:
+          traceback.print_exc()
 
 def main():
   parser = argparse.ArgumentParser(
@@ -107,65 +251,59 @@ def main():
   parser.add_argument('-j', '--cores', type=int, help='Number of cores to use',
     required=False, default=(multiprocessing.cpu_count() - 1))
   args = parser.parse_args()
+  if args.cores < 1:
+    parser.error('Number of cores must be positive.')
   try:
-    stream = open(args.config, 'r').read()
-    config = yaml.load(stream, yaml.SafeLoader)
+    with open(args.config, 'r') as stream:
+      config = yaml.load(stream, yaml.SafeLoader)
   except IOError:
     sys.stderr.write('%s not found\n' % args.config)
-    exit(1)
+    sys.exit(1)
   except yaml.YAMLError as e:
     report_yaml_error(e)
-    exit(1)
+    sys.exit(1)
   if args.output and args.input:
     print('Can not use Sqlite as both the input and output.')
-    exit(1)
+    sys.exit(1)
   elif not args.output and not args.input:
     print('Sqlite path not specified.')
-    exit(1)
+    sys.exit(1)
   data_store_config = config['data_store']
   address = parse_ip_address(data_store_config['address'])
   username = data_store_config['username']
   password = data_store_config['password']
   schema = data_store_config['schema']
+  mysql_builder = functools.partial(pymysql.connect, host=address.host,
+    port=address.port, user=username, password=password, database=schema,
+    autocommit=True)
   if args.output is not None:
     sqlite_path = args.output
-    connection = pymysql.connect(
-      host=address.host, user=username, password=password, database=schema,
-      port=address.port)
+    source_builder = mysql_builder
   else:
     sqlite_path = args.input
-    connection = sqlite3.connect(sqlite_path)
-  tickers = load_tickers(connection)
-  venues = load_venues(connection)
-  connection.close()
-  mysql_data_store = nexus.MySqlHistoricalDataStore(
-    address.host, address.port, username, password, schema)
-  sqlite_data_store = nexus.SqliteHistoricalDataStore(sqlite_path)
+    source_builder = functools.partial(sqlite3.connect, sqlite_path)
+  with closing(source_builder()) as source:
+    tickers = load_tickers(source)
+    venues = load_venues(source)
+  with closing(nexus.MySqlHistoricalDataStore(
+      address.host, address.port, username, password, schema)):
+    pass
+  with closing(nexus.SqliteHistoricalDataStore(sqlite_path)):
+    pass
+  with closing(sqlite3.connect(sqlite_path)) as connection:
+    columns = load_columns(connection)
   if args.output is not None:
-    source = mysql_data_store
-    destination = sqlite_data_store
+    destination = sqlite3.connect(sqlite_path, check_same_thread=False)
   else:
-    source = sqlite_data_store
-    destination = mysql_data_store
-  routines = beam.RoutineHandlerGroup()
-  count = 0
-  for ticker in tickers:
-    routines.spawn(functools.partial(backup_spawn, ticker, args.start,
-      args.end, source, destination))
-    count += 1
-    if count % args.cores == 0:
-      routines.wait()
-  routines.wait()
-  routines = beam.RoutineHandlerGroup()
-  count = 0
-  for venue in venues:
-    routines.spawn(functools.partial(backup, venue, args.start, args.end,
-      source.load_order_imbalances, destination))
-    count += 1
-    if count % args.cores == 0:
-      routines.wait()
-  routines.wait()
-  backup_ticker_info(source, destination)
+    destination = mysql_builder()
+  with closing(destination):
+    writer = Writer(destination, columns)
+    run_backups(tickers, args.start, args.end, source_builder, writer,
+      args.cores)
+    run_backups(venues, args.start, args.end, source_builder, writer,
+      args.cores)
+    with closing(source_builder()) as source:
+      backup_ticker_info(source, writer)
 
 if __name__ == '__main__':
   main()

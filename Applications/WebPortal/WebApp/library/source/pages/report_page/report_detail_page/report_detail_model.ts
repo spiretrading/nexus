@@ -6,6 +6,9 @@ export abstract class ReportDetailModel {
 
   /** Retrieves the identified generated report. */
   public abstract loadReport(id: string): Promise<ReportDetailModel.Report>;
+
+  /** Queues a failed report for another generation attempt. */
+  public abstract retry(id: string): Promise<void>;
 }
 
 export namespace ReportDetailModel {
@@ -44,6 +47,9 @@ export namespace ReportDetailModel {
 
     /** The report parameters in display order. */
     parameters: readonly Parameter[];
+
+    /** The output MIME type saved with the report job. */
+    mediaType: string;
 
     /** The state of the report content. */
     status: Status;

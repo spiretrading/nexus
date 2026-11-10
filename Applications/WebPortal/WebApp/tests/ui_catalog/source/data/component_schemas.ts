@@ -12,8 +12,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   NumberInput,
   NumberSliderInput, MoneyInput, OptionalInput,
   ReadonlyInput, RecurrenceValueInput, ScopeValueInput, TextInput,
-  TickerValueInput } from
-  '../viewer/propertyInput';
+  TickerValueInput, YearMonthValueInput } from '../viewer/propertyInput';
 import { AccountGroupListInputExample } from
   './account_group_list_input_example';
 import { DateRangeInputExample } from './date_range_input_example';
@@ -245,6 +244,17 @@ const dateInput =
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
+
+const YEAR_MONTH_INPUT =
+  new ComponentSchema('YearMonthInput',
+    [new PropertySchema('value',
+      new Beam.Date(Beam.Date.today().year, Beam.Date.today().month, 1),
+        YearMonthValueInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('error', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.YearMonthInput);
 
 const DAY_OF_WEEK_SELECT =
   new ComponentSchema('DayOfWeekSelect',
@@ -1542,7 +1552,7 @@ export const componentSections = [
     iconLabelButton, input, integerField, intervalInput, labeledCheckbox, link,
     listInput, modal, navigationHeader, navigationTab, pagination, radioButton,
     segmentButton, segmentedControl, segmentedSpinner, select, skeleton,
-    sortableTableHeaderCell, timeOfDayInput]),
+    sortableTableHeaderCell, timeOfDayInput, YEAR_MONTH_INPUT]),
   new ComponentSection('App Kit', [accountGroupListInput, countrySelect,
     currencySelect, DATE_EXPRESSION_INPUT, dateRangeInput, DAY_OF_MONTH_INPUT,
     DAY_OF_WEEK_SELECT,

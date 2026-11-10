@@ -87,4 +87,41 @@ TEST_SUITE("ReportJob") {
     REQUIRE(
       output.str() == "QUEUED RUNNING COMPLETED FAILED CANCELLED UNKNOWN(99)");
   }
+
+  TEST_CASE("notification_content") {
+    auto account = DirectoryEntry::make_account(1, "Alice");
+    auto job = ReportJob("report-\"quoted\"\\id\n", account,
+      {DirectoryEntry::make_account(2, "Bob")},
+      ReportDefinition("statement", "Account Statement"));
+    for(auto status :
+        {ReportJob::Status::COMPLETED, ReportJob::Status::FAILED}) {
+      job.m_status = status;
+      auto notification = make_report_notification(job);
+      REQUIRE(notification.m_account == account);
+      REQUIRE(notification.m_category == Notification::Category::REPORT);
+      REQUIRE(!notification.m_is_read);
+      REQUIRE(notification.m_id.empty());
+      REQUIRE(notification.m_timestamp.is_not_a_date_time());
+      auto expected = JsonObject();
+      expected["report_id"] = job.m_id;
+      if(status == ReportJob::Status::COMPLETED) {
+        REQUIRE(notification.m_description == "Account Statement is ready.");
+        expected["status"] = "COMPLETED";
+      } else {
+        REQUIRE(notification.m_description == "Account Statement failed.");
+        expected["status"] = "FAILED";
+      }
+      REQUIRE(parse<JsonValue>(notification.m_data) == JsonValue(expected));
+    }
+  }
+
+  TEST_CASE("notification_unsupported_status") {
+    auto job = ReportJob();
+    for(auto status : {ReportJob::Status::STAGED, ReportJob::Status::QUEUED,
+        ReportJob::Status::RUNNING, ReportJob::Status::CANCELLED,
+        static_cast<ReportJob::Status>(99)}) {
+      job.m_status = status;
+      REQUIRE_THROWS_AS(make_report_notification(job), std::invalid_argument);
+    }
+  }
 }

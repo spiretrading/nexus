@@ -23,12 +23,17 @@ namespace Nexus {
        * @param max_concurrency - The positive global execution limit.
        * @param timer The timer controlling automatic schedule checks.
        * @param retry_timer The timer used to retry saving completed jobs.
+       * @param administration_client The client used to send notifications.
+       * @param notification_timer The timer checking notification deadlines.
+       * @param notification_delay The grace period after saving a result.
        */
       FileReportService(std::filesystem::path definitions_directory,
         std::filesystem::path jobs_directory,
         Beam::ServiceLocatorClient client, Beam::TimeClient time_client,
         std::size_t max_concurrency, Beam::Timer timer,
-        Beam::Timer retry_timer);
+        Beam::Timer retry_timer, AdministrationClient administration_client,
+        Beam::Timer notification_timer,
+        boost::posix_time::time_duration notification_delay);
 
       ~FileReportService();
 
@@ -79,8 +84,7 @@ namespace Nexus {
       mutable std::mutex m_mutex;
       std::unordered_map<std::string, std::string> m_filenames;
       Beam::OpenState m_open_state;
-      std::optional<ReportJobService<FileReportService, Beam::TimeClient>>
-        m_jobs;
+      ReportJobService<FileReportService, Beam::TimeClient> m_jobs;
       std::optional<ReportScheduleService<FileReportService>> m_schedules;
 
       FileReportService(const FileReportService&) = delete;

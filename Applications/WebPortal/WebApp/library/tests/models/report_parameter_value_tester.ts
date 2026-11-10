@@ -13,12 +13,55 @@ import { parseReportParameterValue, reportParameterValueToJson,
   validateReportParameter } from '../../source/pages/report_page';
 
 describe('ReportParameterValue', () => {
+  it('preserves_year_month_defaults_and_saved_forms', () => {
+    const report = ReportDefinition.fromJson({id: 'monthly', name: 'Monthly',
+      description: '', parameters: [{name: 'month', label: 'Month',
+        type: 'YearMonth', required: true, default: '2026-02-01'}],
+      output: {media_type: 'text/plain', extension: 'txt'}});
+    const form = ReportFormTemplate.makeValue(report);
+    assert.ok((form.parameters.month as Beam.Date).equals(
+      new Beam.Date(2026, 2, 1)));
+    const request = reportFormValueToJson({...form,
+      parameters: {month: new Beam.Date(2025, 12, 1)}});
+    assert.equal(request.parameters.month, '20251201');
+    const loaded = parseReportFormValue(request, [report]);
+    const copy = copyReportFormValue(loaded, [report]);
+    assert.deepEqual(reportFormValueToJson(copy), request);
+    assert.ok(copy.parameters.month instanceof Beam.Date);
+    const parameter = report.parameters[0];
+    assert.equal(validateReportParameter(parameter, null),
+      ValidationError.REQUIRED);
+    assert.equal(validateReportParameter(new ReportParameterDefinition(
+      'month', 'Month', 'YearMonth', false), null), ValidationError.NONE);
+    assert.equal(validateReportParameter(parameter, new Beam.Date(2026, 2, 2)),
+      ValidationError.FORMAT);
+    assert.throws(() => parseReportParameterValue('YearMonth', '2026-13'));
+  });
+
+  it('normalizes_year_month_dates_to_the_first_day', () => {
+    for(const json of ['20260228', '2026-02-28', '20260201']) {
+      const value = parseReportParameterValue('YearMonth', json) as Beam.Date;
+      assert.ok(value.equals(new Beam.Date(2026, 2, 1)));
+      assert.equal(reportParameterValueToJson(value), '20260201');
+    }
+    for(const json of ['1400-01-01', '9999-12-31']) {
+      assert.equal((parseReportParameterValue('YearMonth', json) as
+        Beam.Date).day, 1);
+    }
+    for(const invalid of ['', '2026-02', '20260229', '20260001', '20261301',
+        '13991201', '10000-01-01', '20260101\n', 20260101, {}]) {
+      assert.throws(() => parseReportParameterValue('YearMonth', invalid),
+        undefined, JSON.stringify(invalid));
+    }
+  });
+
   it('parses_shared_types_and_round_trips', () => {
     const account = Beam.DirectoryEntry.makeAccount(1, 'Alice');
     const cases: [string, any][] = [
       ['DirectoryEntry', account.toJson()],
       ['DirectoryEntryList', [account.toJson()]],
       ['Date', '20261002'],
+      ['YearMonth', '20260201'],
       ['DateRange', {start: '20260901', end: '20260930'}],
       ['DateTime', new Beam.DateTime(new Beam.Date(2026, 10, 2),
         Beam.Duration.HOUR.multiply(9)).toJson()],

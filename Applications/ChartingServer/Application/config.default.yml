@@ -7,4 +7,5 @@ service_locator:
   address: $service_locator_address
   username: charting_service
   password: $admin_password
+  public_key: $service_locator_public_key
 ...

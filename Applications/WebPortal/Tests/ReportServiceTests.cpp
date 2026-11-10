@@ -5,6 +5,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/FileReportService.hpp"
 #include "WebPortal/LocalReportService.hpp"
 
@@ -13,6 +14,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 static_assert(IsReportService<FileReportService>);
 static_assert(IsReportService<
@@ -140,7 +142,10 @@ TEST_SUITE("ReportService") {
     const auto local = std::make_shared<LvalueTokenService>(
       std::vector<ReportDefinition>(), environment.get_root(), execute,
       TimeClient(&time), 1, Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(local);
     auto backend = ReportScheduleBackend(local);
     auto borrowed = ReportService(local.get());
@@ -168,7 +173,10 @@ TEST_SUITE("ReportService") {
       },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     auto job =
       ReportJob("job-id", {}, {}, make_definition(), {}, {"5", "20261001"});
@@ -218,7 +226,10 @@ TEST_SUITE("ReportService") {
         return 0;
       }, &time_client, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     get<JsonObject>(
       *definition.m_parameters[1].m_default).set("start", "2000-01-01");
@@ -267,7 +278,10 @@ TEST_SUITE("ReportService") {
       std::vector({definition}), client, executor,
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(local);
     auto submission = ReportSubmission();
     submission.m_time_zone = "UTC";
@@ -304,7 +318,10 @@ TEST_SUITE("ReportService") {
         std::vector({make_definition()}), client, std::move(executor),
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto submission = ReportSubmission();
     submission.m_time_zone = "UTC";
     submission.m_report_type = "example";

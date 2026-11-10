@@ -143,11 +143,11 @@ bool AnyComboBox::eventFilter(QObject* watched, QEvent* event) {
       update_focus_proxy();
     }
   } else if(watched == m_data->m_input_focus_proxy) {
-    if(event->type() == QEvent::FocusOut &&
-        (m_data->m_drop_down_list->isVisible() ||
-        m_data->m_empty_state->isVisible())) {
+    if(event->type() == QEvent::FocusOut && is_pop_up_visible()) {
       return true;
     }
+  } else if(!m_data->m_drop_down_list) {
+    return QWidget::eventFilter(watched, event);
   } else if(watched == &m_data->m_drop_down_list->get_list_view()) {
     if(event->type() == QEvent::KeyPress) {
       auto key = static_cast<QKeyEvent*>(event)->key();
@@ -208,7 +208,7 @@ void AnyComboBox::keyPressEvent(QKeyEvent* event) {
   if(is_read_only()) {
     return QWidget::keyPressEvent(event);
   }
-  if(m_data->m_drop_down_list->isVisible() &&
+  if(m_data->m_drop_down_list && m_data->m_drop_down_list->isVisible() &&
       (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up ||
       event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown)) {
     auto is_top_current =
@@ -221,12 +221,13 @@ void AnyComboBox::keyPressEvent(QKeyEvent* event) {
     }
   }
   if(event->key() == Qt::Key_Down || event->key() == Qt::Key_Up) {
+    initialize_pop_ups();
     m_data->m_drop_down_list->setVisible(
       m_data->m_drop_down_list->get_list_view().get_list()->get_size() != 0);
     event->accept();
     return;
   } else if(event->key() == Qt::Key_Escape) {
-    if(m_data->m_drop_down_list->isVisible() &&
+    if(m_data->m_drop_down_list && m_data->m_drop_down_list->isVisible() &&
         m_data->m_drop_down_list->get_list_view().get_selection().get() == 0) {
       m_data->m_drop_down_list->hide();
       return;
@@ -275,6 +276,23 @@ void AnyComboBox::initialize_deferred_data() const {
   m_data->m_highlight_connection =
     m_input_box->get_highlight()->connect_update_signal(
       std::bind_front(&AnyComboBox::on_highlight, self));
+  self->update_focus_proxy();
+  m_data->m_focus_observer.connect_state_signal(
+    std::bind_front(&AnyComboBox::on_focus, self));
+  m_data->m_key_observer.connect_filtered_key_press_signal(
+    std::bind_front(&AnyComboBox::on_input_key_press, self));
+}
+
+bool AnyComboBox::is_pop_up_visible() const {
+  return m_data->m_drop_down_list && (m_data->m_drop_down_list->isVisible() ||
+    m_data->m_empty_state->isVisible());
+}
+
+void AnyComboBox::initialize_pop_ups() const {
+  if(m_data->m_drop_down_list) {
+    return;
+  }
+  auto self = const_cast<AnyComboBox*>(this);
   auto list_view = new ListView(m_data->m_matches, std::move(m_item_builder));
   list_view->setFocusPolicy(Qt::NoFocus);
   m_data->m_drop_down_list = new DropDownList(*list_view, *self);
@@ -288,16 +306,18 @@ void AnyComboBox::initialize_deferred_data() const {
   m_data->m_empty_state = new EmptyState(tr("No matches"), *self);
   m_data->m_empty_state->installEventFilter(self);
   m_data->m_empty_state->window()->installEventFilter(self);
-  self->update_focus_proxy();
   m_data->m_drop_down_current_connection = m_data->m_drop_down_list->
     get_list_view().get_current()->connect_update_signal(
       std::bind_front(&AnyComboBox::on_drop_down_current, self));
   m_data->m_drop_down_list->get_list_view().connect_submit_signal(
     std::bind_front(&AnyComboBox::on_drop_down_submit, self));
-  m_data->m_focus_observer.connect_state_signal(
-    std::bind_front(&AnyComboBox::on_focus, self));
-  m_data->m_key_observer.connect_filtered_key_press_signal(
-    std::bind_front(&AnyComboBox::on_input_key_press, self));
+}
+
+void AnyComboBox::hide_pop_ups() {
+  if(m_data->m_drop_down_list) {
+    m_data->m_drop_down_list->hide();
+    m_data->m_empty_state->hide();
+  }
 }
 
 void AnyComboBox::update_completion() {
@@ -355,6 +375,7 @@ void AnyComboBox::revert_to(const QString& query, bool autocomplete) {
 }
 
 void AnyComboBox::revert_current() {
+  initialize_pop_ups();
   auto& list_view = m_data->m_drop_down_list->get_list_view();
   list_view.get_current()->set(none);
   clear(*list_view.get_selection());
@@ -384,7 +405,9 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
   m_data->m_submission = value;
   m_data->m_submission_text = query;
   m_input_box->get_highlight()->set(Highlight(query.size()));
-  m_data->m_drop_down_list->hide();
+  if(m_data->m_drop_down_list) {
+    m_data->m_drop_down_list->hide();
+  }
   m_data->m_query_result = m_query_model->submit(query).then(std::bind_front(
     &AnyComboBox::on_query, this, ++m_data->m_completion_tag, false));
   m_data->m_submit_signal(value);
@@ -483,6 +506,7 @@ void AnyComboBox::on_query(
     return true;
   }();
   if(!is_unchanged) {
+    initialize_pop_ups();
     auto& list_view = m_data->m_drop_down_list->get_list_view();
     for(auto i = 0; i < list_view.get_list()->get_size(); ++i) {
       list_view.get_list_item(i)->hide();
@@ -507,6 +531,7 @@ void AnyComboBox::on_query(
   m_data->m_is_querying = false;
   update_completion();
   if(show) {
+    initialize_pop_ups();
     if(selection.empty()) {
       m_data->m_drop_down_list->hide();
       m_data->m_empty_state->show();
@@ -516,8 +541,7 @@ void AnyComboBox::on_query(
       m_data->m_drop_down_list->show();
     }
   } else {
-    m_data->m_drop_down_list->hide();
-    m_data->m_empty_state->hide();
+    hide_pop_ups();
   }
 }
 
@@ -561,8 +585,7 @@ void AnyComboBox::on_drop_down_submit(const std::any& submission) {
 
 void AnyComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE && m_data && !m_data->m_is_querying) {
-    m_data->m_drop_down_list->hide();
-    m_data->m_empty_state->hide();
+    hide_pop_ups();
     if(m_data->m_input_focus_proxy) {
       auto focus_out_event = QFocusEvent(QEvent::FocusOut);
       QCoreApplication::sendEvent(
@@ -615,7 +638,7 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
     return true;
   }
   if(event.key() == Qt::Key_Escape) {
-    if(m_data->m_drop_down_list->isVisible()) {
+    if(m_data->m_drop_down_list && m_data->m_drop_down_list->isVisible()) {
       m_data->m_drop_down_list->hide();
     } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
         m_data->m_submission_text &&

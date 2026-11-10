@@ -8,25 +8,22 @@
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Spire;
+using namespace Spire::Tests;
 
 TEST_SUITE("QtValueModel") {
-  TEST_CASE("set_from_another_thread") {
-    run_test([] {
-      auto model = QtValueModel<int>(0);
-      auto setter = std::thread([&] {
-        model.set(123);
-      });
-      while(model.get() != 123) {
-        QApplication::processEvents(QEventLoop::WaitForMoreEvents);
-      }
-      setter.join();
-      REQUIRE(model.get() == 123);
+  UI_TEST_CASE("set_from_another_thread") {
+    auto model = QtValueModel<int>(0);
+    auto setter = std::thread([&] {
+      model.set(123);
     });
+    while(model.get() != 123) {
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+    }
+    setter.join();
+    REQUIRE(model.get() == 123);
   }
 
-  TEST_CASE("set_without_a_running_event_loop") {
-    auto argc = 0;
-    auto application = QApplication(argc, nullptr);
+  UI_TEST_CASE("set_without_a_running_event_loop") {
     auto model = std::make_shared<QtValueModel<int>>(0);
     auto state = std::make_shared<std::promise<QValidator::State>>();
     auto state_result = state->get_future();
@@ -42,9 +39,10 @@ TEST_SUITE("QtValueModel") {
 
   TEST_CASE("set_after_event_loop_stops") {
     auto model = std::shared_ptr<QtValueModel<int>>();
-    run_test([&] {
+    {
+      auto fixture = UiTestFixture();
       model = std::make_shared<QtValueModel<int>>(0);
-    });
+    }
     auto updates = std::make_shared<std::atomic_int>(0);
     model->connect_update_signal([=] (const auto& value) {
       ++*updates;
