@@ -6,9 +6,10 @@ import { TickerQuery } from './ticker_query';
 export abstract class MarketDataClient {
 
   /**
-   * Subscribes to the latest BBO and subsequent updates for a ticker.
-   * @param query - A query made by BasicQuery.makeCurrentQuery.
-   * @param queue - Receives quotes and closes on cancellation or failure.
+   * Queries a ticker's BBO quotes.
+   * @param query - The query to submit.
+   * @param queue - Receives quotes and closes on completion, cancellation or
+   * failure.
    * @return A queue wrapper whose close() cancels the subscription and closes
    *         the supplied queue. Repeated calls to close() have no effect.
    */

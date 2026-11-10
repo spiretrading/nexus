@@ -4,11 +4,12 @@ using namespace Beam;
 using namespace Nexus;
 
 BboQuoteSubscription::BboQuoteSubscription(
-    MarketDataClient& client, Ticker ticker)
-    : m_ticker(std::move(ticker)),
+    MarketDataClient& client, const TickerQuery& query)
+    : m_ticker(query.get_index()),
+      m_is_live(query.get_range().get_end() == Sequence::LAST),
       m_updates(std::make_shared<Queue<SequencedBboQuote>>()),
       m_is_closed(false) {
-  client.query(make_current_query(m_ticker), m_updates);
+  client.query(query, m_updates);
 }
 
 BboQuoteSubscription::~BboQuoteSubscription() {
@@ -21,7 +22,16 @@ const Ticker& BboQuoteSubscription::get_ticker() const {
 
 std::vector<SequencedBboQuote> BboQuoteSubscription::get_snapshot() {
   auto snapshot = std::vector<SequencedBboQuote>();
-  if(auto value = m_updates->try_pop()) {
+  if(!m_is_live) {
+    try {
+      while(true) {
+        snapshot.push_back(m_updates->pop());
+      }
+    } catch(const PipeBrokenException&) {
+      return snapshot;
+    }
+  }
+  while(auto value = m_updates->try_pop()) {
     snapshot.push_back(*value);
   }
   if(m_updates->is_broken()) {

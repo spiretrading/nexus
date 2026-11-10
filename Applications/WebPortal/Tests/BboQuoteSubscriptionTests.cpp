@@ -14,7 +14,8 @@ TEST_SUITE("BboQuoteSubscription") {
     auto client = MarketDataClient(
       std::in_place_type<TestMarketDataClient>, operations);
     auto ticker = parse_ticker("TST.TSX");
-    auto subscription = BboQuoteSubscription(client, ticker);
+    auto subscription = BboQuoteSubscription(
+      client, make_current_query(ticker));
     auto operation = operations->pop();
     auto& query = std::get<
       TestMarketDataClient::QuerySequencedBboQuoteOperation>(*operation);
@@ -37,8 +38,10 @@ TEST_SUITE("BboQuoteSubscription") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = MarketDataClient(
       std::in_place_type<TestMarketDataClient>, operations);
-    auto first = BboQuoteSubscription(client, parse_ticker("TST.TSX"));
-    auto second = BboQuoteSubscription(client, parse_ticker("OTHER.TSX"));
+    auto first = BboQuoteSubscription(
+      client, make_current_query(parse_ticker("TST.TSX")));
+    auto second = BboQuoteSubscription(
+      client, make_current_query(parse_ticker("TST.TSX")));
     auto first_operation = operations->pop();
     auto second_operation = operations->pop();
     auto& first_query = std::get<
@@ -55,11 +58,76 @@ TEST_SUITE("BboQuoteSubscription") {
     REQUIRE(second.pop() == quote);
   }
 
+  TEST_CASE("query_parameters_and_snapshot") {
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
+    auto client = MarketDataClient(
+      std::in_place_type<TestMarketDataClient>, operations);
+    auto query = make_current_query(parse_ticker("TST.TSX"));
+    query.set_range(Range(Sequence(20), Sequence::LAST));
+    query.set_snapshot_limit(SnapshotLimit::from_head(2));
+    query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+    query.set_filter(ConstantExpression(false));
+    auto subscription = BboQuoteSubscription(client, query);
+    auto operation = operations->pop();
+    auto& submitted = std::get<
+      TestMarketDataClient::QuerySequencedBboQuoteOperation>(*operation);
+    REQUIRE(submitted.m_query.get_index() == query.get_index());
+    REQUIRE(submitted.m_query.get_range() == query.get_range());
+    REQUIRE(submitted.m_query.get_snapshot_limit() ==
+      query.get_snapshot_limit());
+    REQUIRE(submitted.m_query.get_interruption_policy() ==
+      query.get_interruption_policy());
+    REQUIRE(submitted.m_query.get_filter().as<ConstantExpression>().
+      get_value() == query.get_filter().as<ConstantExpression>().get_value());
+    auto first = SequencedBboQuote(BboQuote(), Sequence(20));
+    auto second = SequencedBboQuote(BboQuote(), Sequence(21));
+    submitted.m_queue.push(first);
+    submitted.m_queue.push(second);
+    REQUIRE(subscription.get_snapshot() == std::vector{first, second});
+  }
+
+  TEST_CASE("historical_snapshot") {
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
+    auto client = MarketDataClient(
+      std::in_place_type<TestMarketDataClient>, operations);
+    auto query = make_latest_query(parse_ticker("TST.TSX"));
+    query.set_range(Range(Sequence(20), Sequence(30)));
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto subscription = BboQuoteSubscription(client, query);
+    auto operation = operations->pop();
+    auto& submitted = std::get<
+      TestMarketDataClient::QuerySequencedBboQuoteOperation>(*operation);
+    REQUIRE(submitted.m_query.get_index() == query.get_index());
+    REQUIRE(submitted.m_query.get_range() == query.get_range());
+    REQUIRE(submitted.m_query.get_snapshot_limit() ==
+      query.get_snapshot_limit());
+    REQUIRE(submitted.m_query.get_interruption_policy() ==
+      query.get_interruption_policy());
+    REQUIRE(submitted.m_query.get_filter().as<ConstantExpression>().
+      get_value() == query.get_filter().as<ConstantExpression>().get_value());
+    auto result = Queue<std::vector<SequencedBboQuote>>();
+    auto reader = RoutineHandler(spawn([&] {
+      try {
+        result.push(subscription.get_snapshot());
+      } catch(const std::exception&) {
+        result.close(std::current_exception());
+      }
+    }));
+    auto first = SequencedBboQuote(BboQuote(), Sequence(20));
+    auto second = SequencedBboQuote(BboQuote(), Sequence(21));
+    submitted.m_queue.push(first);
+    submitted.m_queue.push(second);
+    submitted.m_queue.close();
+    REQUIRE(result.pop() == std::vector{first, second});
+    reader.wait();
+  }
+
   TEST_CASE("cancel_pending_reader") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = MarketDataClient(
       std::in_place_type<TestMarketDataClient>, operations);
-    auto subscription = BboQuoteSubscription(client, parse_ticker("TST.TSX"));
+    auto subscription = BboQuoteSubscription(
+      client, make_current_query(parse_ticker("TST.TSX")));
     auto result = Queue<SequencedBboQuote>();
     auto reader = RoutineHandler(spawn([&] {
       try {
@@ -79,7 +147,8 @@ TEST_SUITE("BboQuoteSubscription") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = MarketDataClient(
       std::in_place_type<TestMarketDataClient>, operations);
-    auto subscription = BboQuoteSubscription(client, parse_ticker("TST.TSX"));
+    auto subscription = BboQuoteSubscription(
+      client, make_current_query(parse_ticker("TST.TSX")));
     auto operation = operations->pop();
     auto& query = std::get<
       TestMarketDataClient::QuerySequencedBboQuoteOperation>(*operation);

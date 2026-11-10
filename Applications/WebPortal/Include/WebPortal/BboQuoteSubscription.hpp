@@ -5,23 +5,23 @@
 
 namespace Nexus {
 
-  /** Supplies the current BBO and subsequent updates for a ticker. */
+  /** Supplies BBO query results and subsequent updates. */
   class BboQuoteSubscription {
     public:
 
       /**
        * Subscribes using an authenticated market data client.
        * @param client The client used to query market data.
-       * @param ticker The ticker whose BBO updates to receive.
+       * @param query The query to submit.
        */
-      BboQuoteSubscription(MarketDataClient& client, Ticker ticker);
+      BboQuoteSubscription(MarketDataClient& client, const TickerQuery& query);
 
       ~BboQuoteSubscription();
 
       /** Returns the subscribed ticker. */
       const Ticker& get_ticker() const;
 
-      /** Returns the updates currently available for the initial snapshot. */
+      /** Returns the snapshot, waiting for completion of a historical query. */
       std::vector<SequencedBboQuote> get_snapshot();
 
       /** Returns the next update, waiting until one is available. */
@@ -35,6 +35,7 @@ namespace Nexus {
 
     private:
       Ticker m_ticker;
+      bool m_is_live;
       std::shared_ptr<Beam::Queue<SequencedBboQuote>> m_updates;
       std::atomic_bool m_is_closed;
 

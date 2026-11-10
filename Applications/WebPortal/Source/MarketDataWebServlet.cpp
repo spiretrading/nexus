@@ -139,25 +139,17 @@ void MarketDataWebServlet::on_query_bbo_quotes(
   if(!session.m_session->is_logged_in() || session.m_session->is_expired()) {
     throw ServiceRequestException("Session expired.");
   }
-  auto filter = dynamic_cast<const ConstantExpression*>(
-    &query.get_filter().as<VirtualExpression>());
-  if(query.get_range() != Range::TOTAL ||
-      query.get_snapshot_limit() != SnapshotLimit::from_tail(1) ||
-      !filter || !(filter->get_value() == true)) {
-    throw ServiceRequestException("Only current BBO queries are supported.");
-  }
-  for(auto& [id, entry] : session.m_subscriptions) {
-    if(entry.m_subscription->get_ticker() == query.get_index()) {
-      throw ServiceRequestException("Ticker already subscribed.");
-    }
-  }
   if(session.m_next_id == std::numeric_limits<int>::max()) {
     throw ServiceRequestException("Query IDs exhausted.");
   }
   auto subscription = std::make_unique<BboQuoteSubscription>(
     session.m_session->get_clients().get_market_data_client(),
-    query.get_index());
+    query);
   auto snapshot = subscription->get_snapshot();
+  if(query.get_range().get_end() != Beam::Sequence::LAST) {
+    request.set(BboQuoteQueryResult(-1, std::move(snapshot)));
+    return;
+  }
   auto id = session.m_next_id++;
   auto& entry = session.m_subscriptions[id];
   entry.m_subscription = std::move(subscription);
