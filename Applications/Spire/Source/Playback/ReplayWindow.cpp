@@ -5,6 +5,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DateBox.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
@@ -195,11 +196,15 @@ ReplayWindow::ReplayWindow(std::shared_ptr<ReplaySession> session,
   date_box->setFixedWidth(scale_width(118));
   bottom_layout->addWidget(date_box);
   bottom_layout->addSpacing(scale_width(8));
-  auto time_box = new DurationBox(std::make_shared<PlaybackTimeModel>(
-    m_session->get_timeline(), m_session->get_playhead()));
-  time_box->setFixedWidth(scale_width(80));
+  auto time_box = new EditableBox(
+    *new DurationBox(std::make_shared<PlaybackTimeModel>(
+      m_session->get_timeline(), m_session->get_playhead())));
+  time_box->setFixedWidth(scale_width(96));
   update_style(*time_box, [] (auto& style) {
-    style.get(Any()).set(DurationFormat("hh:mm:ss"));
+    style.get(Any()).set(DurationFormat("hh:mm:ss.fff"));
+    style.get(ReadOnly()).
+      set(DurationFormat("hh:mm:ss")).
+      set(horizontal_padding(scale_width(8)));
   });
   bottom_layout->addWidget(time_box);
   bottom_layout->addSpacing(scale_width(8));
@@ -242,6 +247,8 @@ ReplayWindow::ReplayWindow(std::shared_ptr<ReplaySession> session,
   on_state_update(m_session->get_state()->get());
   m_date_connection = date_box->connect_submit_signal(
     std::bind_front(&ReplayWindow::on_date_submit, this));
+  m_time_read_only_connection = time_box->connect_read_only_signal(
+    std::bind_front(&ReplayWindow::on_time_read_only, this));
   m_playhead_connection = m_session->get_playhead()->connect_update_signal(
     std::bind_front(&ReplayWindow::on_playhead_update, this));
   m_state_connection = m_session->get_state()->connect_update_signal(
@@ -301,6 +308,12 @@ void ReplayWindow::on_jump_to_end_click() {
 void ReplayWindow::on_date_submit(const optional<date>& date) {
   if(m_play_toggle->isEnabled()) {
     m_play_toggle->get_current()->set(true);
+  }
+}
+
+void ReplayWindow::on_time_read_only(bool read_only) {
+  if(!read_only) {
+    m_session->pause();
   }
 }
 
