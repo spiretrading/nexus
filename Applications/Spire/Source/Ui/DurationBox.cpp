@@ -3,6 +3,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -94,8 +95,10 @@ namespace {
         to_fraction_units(duration, fractional_digits), fractional_digits);
   }
 
-  int get_text_width(const QWidget& editor, const QString& text) {
-    return editor.fontMetrics().horizontalAdvance(text);
+  QFont make_placeholder_font() {
+    auto font = QFont("Roboto Mono");
+    font.setPixelSize(scale_width(12));
+    return font;
   }
 
   struct FieldModel : ScalarValueModel<optional<int>> {
@@ -378,6 +381,7 @@ namespace {
         set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
         set(LeadingZeros(leading_zeros));
       style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
+      style.get(Any() > Placeholder()).set(Font(make_placeholder_font()));
     });
     find_focus_proxy(*field)->installEventFilter(&event_filter);
     return field;
@@ -389,8 +393,8 @@ namespace {
     auto field = make_field(
       std::move(current), std::move(modifiers), placeholder, 2, event_filter);
     auto& editor = *find_focus_proxy(*field);
-    field->setMinimumWidth(std::max(2 * get_character_width(editor.font()),
-      get_text_width(editor, placeholder)));
+    field->setMinimumWidth(2 * std::max(get_character_width(editor.font()),
+      get_character_width(make_placeholder_font())));
     return field;
   }
 
@@ -733,8 +737,8 @@ void DurationBox::set_format(const QString& format) {
       fractional_digits);
   auto placeholder = QString(fractional_digits, 'f');
   m_fields[FRACTIONAL_SECOND]->set_placeholder(placeholder);
-  m_fields[FRACTIONAL_SECOND]->setMinimumWidth(get_text_width(
-    *find_focus_proxy(*m_fields[FRACTIONAL_SECOND]), placeholder));
+  m_fields[FRACTIONAL_SECOND]->setMinimumWidth(
+    fractional_digits * get_character_width(make_placeholder_font()));
   update_style(*m_fields[FRACTIONAL_SECOND], [&] (auto& style) {
     style.get(Any()).set(LeadingZeros(fractional_digits));
   });
