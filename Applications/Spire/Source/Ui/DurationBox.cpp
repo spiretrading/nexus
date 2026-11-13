@@ -436,10 +436,9 @@ namespace {
     return field;
   }
 
-  auto make_separator(const QString& text, int width) {
+  auto make_separator(const QString& text) {
     auto separator = make_label(text);
     separator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-    separator->setFixedWidth(width);
     match(*separator, DurationSeparator());
     return separator;
   }
@@ -488,10 +487,8 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
     make_minute_field(std::move(minute_model), *this),
     make_second_field(std::move(second_model), *this),
     make_fractional_second_field(std::move(fractional_second_model), *this)};
-  auto separator_width =
-    get_character_width(find_focus_proxy(*m_fields[0])->font());
-  m_separators = {make_separator(":", separator_width),
-    make_separator(":", separator_width), make_separator(".", separator_width)};
+  m_separators =
+    {make_separator(":"), make_separator(":"), make_separator(".")};
   auto container_layout = make_hbox_layout(container);
   for(auto i = 0; i < FIELD_COUNT; ++i) {
     if(i != 0) {
