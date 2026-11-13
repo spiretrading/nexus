@@ -691,6 +691,12 @@ void DurationBox::set_format(const QString& format) {
   for(auto i = 0; i < FIELD_COUNT - 1; ++i) {
     m_separators[i]->setVisible(visibility[i] && visibility[i + 1]);
   }
+  for(auto i = std::size_t(0); i < m_fields.size(); ++i) {
+    if(visibility[i]) {
+      m_input_box->get_body()->setFocusProxy(m_fields[i]);
+      break;
+    }
+  }
   auto is_truncated = false;
   auto is_valid = true;
   for(auto i = std::size_t(0); i < m_fields.size(); ++i) {

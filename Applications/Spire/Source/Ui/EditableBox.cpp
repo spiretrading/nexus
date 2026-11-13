@@ -76,7 +76,9 @@ void EditableBox::set_read_only(bool read_only) {
         std::bind_front(&EditableBox::on_submit, this));
     }
     m_input_box->get_highlight()->set(Highlight(-1));
-    m_input_box->setFocus();
+    if(!m_input_box->isAncestorOf(QApplication::focusWidget())) {
+      m_input_box->setFocus();
+    }
   }
   m_read_only_signal(read_only);
 }

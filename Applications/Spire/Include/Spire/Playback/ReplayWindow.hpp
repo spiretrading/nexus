@@ -3,11 +3,14 @@
 #include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Playback/ReplayAttachMenuButton.hpp"
 #include "Spire/Playback/ReplaySession.hpp"
+#include <QPointer>
 #include "Spire/Playback/SeekBar.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
   class Button;
+  class EditableBox;
   class ToggleButton;
 
   /**
@@ -43,11 +46,16 @@ namespace Spire {
       std::shared_ptr<ReplaySession> m_session;
       std::shared_ptr<PropertyHubListModel> m_attachments;
       SeekBar* m_seek_bar;
+      EditableBox* m_time_box;
       Button* m_start_button;
       Button* m_end_button;
       ToggleButton* m_play_toggle;
       PlaybackSpeedBox* m_speed_box;
+      boost::optional<FocusObserver> m_time_focus_observer;
+      QPointer<QWidget> m_last_focused;
       boost::signals2::scoped_connection m_date_connection;
+      boost::signals2::scoped_connection m_time_focus_connection;
+      boost::signals2::scoped_connection m_time_read_only_connection;
       boost::signals2::scoped_connection m_playhead_connection;
       boost::signals2::scoped_connection m_state_connection;
       boost::signals2::scoped_connection m_timeline_connection;
@@ -57,9 +65,12 @@ namespace Spire {
       void on_jump_to_start_click();
       void on_jump_to_end_click();
       void on_date_submit(const boost::optional<boost::gregorian::date>& date);
+      void on_time_focus(FocusObserver::State state);
+      void on_time_read_only(bool read_only);
       void on_playhead_update(const boost::posix_time::time_duration& playhead);
       void on_state_update(PlaybackState state);
       void on_timeline_update(const Timeline& timeline);
+      void on_focus_changed(QWidget* old, QWidget* now);
   };
 }
 

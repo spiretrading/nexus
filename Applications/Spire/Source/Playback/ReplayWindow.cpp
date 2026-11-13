@@ -1,10 +1,12 @@
 #include "Spire/Playback/ReplayWindow.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
+#include <QApplication>
 #include <QIcon>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DateBox.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
@@ -195,13 +197,18 @@ ReplayWindow::ReplayWindow(std::shared_ptr<ReplaySession> session,
   date_box->setFixedWidth(scale_width(118));
   bottom_layout->addWidget(date_box);
   bottom_layout->addSpacing(scale_width(8));
-  auto time_box = new DurationBox(std::make_shared<PlaybackTimeModel>(
-    m_session->get_timeline(), m_session->get_playhead()));
-  time_box->setFixedWidth(scale_width(80));
-  update_style(*time_box, [] (auto& style) {
-    style.get(Any()).set(DurationFormat("hh:mm:ss"));
+  m_time_box = new EditableBox(
+    *new DurationBox(std::make_shared<PlaybackTimeModel>(
+      m_session->get_timeline(), m_session->get_playhead())));
+  m_time_box->setFixedWidth(scale_width(96));
+  update_style(*m_time_box, [] (auto& style) {
+    style.get(Any()).set(DurationFormat("hh:mm:ss.fff"));
+    style.get(ReadOnly()).
+      set(DurationFormat("hh:mm:ss")).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Hover() && ReadOnly()).set(border_color(QColor(0x4B23A0)));
   });
-  bottom_layout->addWidget(time_box);
+  bottom_layout->addWidget(m_time_box);
   bottom_layout->addSpacing(scale_width(8));
   m_start_button = make_playback_icon_button(
     ":/Icons/start.svg", tr("Jump to Start (Home)"));
@@ -242,6 +249,13 @@ ReplayWindow::ReplayWindow(std::shared_ptr<ReplaySession> session,
   on_state_update(m_session->get_state()->get());
   m_date_connection = date_box->connect_submit_signal(
     std::bind_front(&ReplayWindow::on_date_submit, this));
+  m_time_focus_observer.emplace(*m_time_box);
+  m_time_focus_connection = m_time_focus_observer->connect_state_signal(
+    std::bind_front(&ReplayWindow::on_time_focus, this));
+  m_time_read_only_connection = m_time_box->connect_read_only_signal(
+    std::bind_front(&ReplayWindow::on_time_read_only, this));
+  connect(qApp, &QApplication::focusChanged, this,
+    &ReplayWindow::on_focus_changed);
   m_playhead_connection = m_session->get_playhead()->connect_update_signal(
     std::bind_front(&ReplayWindow::on_playhead_update, this));
   m_state_connection = m_session->get_state()->connect_update_signal(
@@ -304,6 +318,23 @@ void ReplayWindow::on_date_submit(const optional<date>& date) {
   }
 }
 
+void ReplayWindow::on_time_focus(FocusObserver::State state) {
+  if(state != FocusObserver::State::NONE && m_time_box->is_read_only()) {
+    m_time_box->set_read_only(false);
+  }
+}
+
+void ReplayWindow::on_time_read_only(bool read_only) {
+  if(!read_only) {
+    m_session->pause();
+  } else if(m_last_focused) {
+    auto focus_widget = QApplication::focusWidget();
+    if(!focus_widget || m_time_box->isAncestorOf(focus_widget)) {
+      m_last_focused->setFocus(Qt::ShortcutFocusReason);
+    }
+  }
+}
+
 void ReplayWindow::on_playhead_update(const time_duration& playhead) {
   m_start_button->setDisabled(playhead.is_zero());
   m_end_button->setDisabled(is_playhead_at_end() ||
@@ -334,4 +365,16 @@ void ReplayWindow::on_timeline_update(const Timeline& timeline) {
   m_end_button->setEnabled(is_valid && !is_playhead_at_end() &&
     m_session->get_state()->get() != PlaybackState::REAL_TIME);
   m_play_toggle->setEnabled(is_valid && !is_playhead_at_end());
+}
+
+void ReplayWindow::on_focus_changed(QWidget* old, QWidget* now) {
+  if(!now || !m_time_box->isAncestorOf(now) ||
+      (old && m_time_box->isAncestorOf(old))) {
+    return;
+  }
+  if(old && isAncestorOf(old)) {
+    m_last_focused = old;
+  } else {
+    m_last_focused = nullptr;
+  }
 }
