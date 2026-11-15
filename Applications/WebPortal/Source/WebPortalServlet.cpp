@@ -38,7 +38,7 @@ WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
       clients.get_administration_client(),
       Timer(std::in_place_type<LiveTimer>, REPORT_NOTIFICATION_CHECK_INTERVAL),
       REPORT_NOTIFICATION_DELAY)),
-    m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
+    m_risk_servlet(Ref(m_sessions)) {}
 
 WebPortalServlet::~WebPortalServlet() {
   close();
@@ -82,6 +82,8 @@ std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
     slots.end(), administration_slots.begin(), administration_slots.end());
   auto risk_slots = m_risk_servlet.get_web_socket_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
+  auto market_data_slots = m_market_data_servlet.get_web_socket_slots();
+  slots.insert(slots.end(), market_data_slots.begin(), market_data_slots.end());
   return slots;
 }
 

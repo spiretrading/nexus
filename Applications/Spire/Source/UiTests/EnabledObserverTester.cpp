@@ -9,6 +9,31 @@
 using namespace Spire;
 using namespace Spire::Tests;
 
+namespace {
+  struct FilterInstaller : QObject {
+    QObject* m_filter;
+
+    explicit FilterInstaller(QObject& filter)
+      : m_filter(&filter) {}
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::EnabledChange) {
+        watched->installEventFilter(m_filter);
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
+
+  void add_removed_filters(QWidget& widget) {
+    auto first = QObject();
+    auto second = QObject();
+    widget.installEventFilter(&first);
+    widget.installEventFilter(&second);
+    widget.removeEventFilter(&first);
+    widget.removeEventFilter(&second);
+  }
+}
+
 TEST_SUITE("EnabledObserver") {
   UI_TEST_CASE("enabled_change") {
     auto window = QWidget();
@@ -150,5 +175,27 @@ TEST_SUITE("EnabledObserver") {
     calls.pop_front();
     REQUIRE(calls.front() == 3);
     calls.pop_front();
+  }
+
+  UI_TEST_CASE("filters_changed_during_enabled_change") {
+    auto widget = QWidget();
+    auto observer = EnabledObserver(widget);
+    auto updates = std::deque<bool>();
+    observer.connect_enabled_signal([&] (auto is_enabled) {
+      updates.push_back(is_enabled);
+    });
+    auto filter = QObject();
+    auto installer = FilterInstaller(filter);
+    widget.installEventFilter(&installer);
+    add_removed_filters(widget);
+    widget.setEnabled(false);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(!updates.front());
+    updates.pop_front();
+    add_removed_filters(widget);
+    widget.setEnabled(true);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(updates.front());
+    updates.pop_front();
   }
 }

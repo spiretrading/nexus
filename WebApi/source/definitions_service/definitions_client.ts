@@ -1,5 +1,5 @@
 import { ComplianceRuleSchema, CountryDatabase, CurrencyDatabase,
-  EntitlementDatabase, VenueDatabase } from '..';
+  EntitlementDatabase, ExchangeRate, VenueDatabase } from '..';
 
 /** Client used to access definitions services. */
 export abstract class DefinitionsClient {
@@ -21,6 +21,9 @@ export abstract class DefinitionsClient {
 
   /** Returns the list of compliace rule schemas. */
   public abstract get complianceRuleSchemas(): ComplianceRuleSchema[];
+
+  /** Loads the list of exchange rates. */
+  public abstract loadExchangeRates(): Promise<ExchangeRate[]>;
 
   /**
    * Connects to the service.
