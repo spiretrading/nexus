@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 
@@ -15,7 +16,8 @@ int main(int argc, char** argv) {
   auto model = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>(QObject::tr("New Blotter")),
     std::make_shared<LocalBooleanModel>(false),
-    std::make_shared<LocalBooleanModel>(false));
+    std::make_shared<LocalBooleanModel>(false),
+    std::make_shared<ArrayListModel<BlotterTaskEntry>>());
   auto window = BlotterWindow(model);
   window.show();
   return application.exec();

@@ -1,5 +1,6 @@
 #ifndef SPIRE_BLOTTER_MODEL_HPP
 #define SPIRE_BLOTTER_MODEL_HPP
+#include "Spire/Blotter/BlotterTaskEntry.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
@@ -17,6 +18,9 @@ namespace Spire {
 
       /** Returns whether the blotter is pinned for saving on exit. */
       virtual const std::shared_ptr<BooleanModel>& is_pinned() const = 0;
+
+      /** Returns the blotter's order execution task entries. */
+      virtual const std::shared_ptr<TasksModel>& get_tasks() const = 0;
   };
 }
 
