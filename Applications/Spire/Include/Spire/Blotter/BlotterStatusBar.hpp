@@ -1,5 +1,6 @@
 #ifndef SPIRE_BLOTTER_STATUS_BAR_HPP
 #define SPIRE_BLOTTER_STATUS_BAR_HPP
+#include <QBoxLayout>
 #include <QWidget>
 
 namespace Spire {
@@ -9,10 +10,15 @@ namespace Spire {
     public:
 
       /**
-       * Constructs an empty BlotterStatusBar.
+       * Constructs a BlotterStatusBar.
        * @param parent The parent widget.
        */
       explicit BlotterStatusBar(QWidget* parent = nullptr);
+
+      QSize minimumSizeHint() const override;
+
+    private:
+      QBoxLayout* m_compact_layout;
   };
 }
 
