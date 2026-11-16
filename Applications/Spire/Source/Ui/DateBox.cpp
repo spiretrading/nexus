@@ -4,7 +4,6 @@
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -29,6 +28,13 @@ namespace {
       set(horizontal_padding(0));
     style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignCenter));
+    style.get(Any() > Placeholder()).set(Font(make_field_placeholder_font()));
+  }
+
+  void set_field_width(IntegerBox& box, int digits) {
+    box.setFixedWidth(digits *
+      std::max(get_character_width(find_focus_proxy(box)->font()),
+        get_character_width(make_field_placeholder_font())));
   }
 
   void apply_date_box_style(StyleSheet& style) {
@@ -46,11 +52,11 @@ namespace {
     auto box = new IntegerBox(current, std::move(modifiers));
     box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("YYYY");
-    box->setFixedWidth(scale_width(32));
     update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(4));
     });
+    set_field_width(*box, 4);
     return box;
   }
 
@@ -60,11 +66,11 @@ namespace {
     auto box = new IntegerBox(current, std::move(modifiers));
     box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("MM");
-    box->setFixedWidth(scale_width(22));
     update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(2));
     });
+    set_field_width(*box, 2);
     return box;
   }
 
@@ -74,11 +80,11 @@ namespace {
     auto box = new IntegerBox(current, std::move(modifiers));
     box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("DD");
-    box->setFixedWidth(scale_width(20));
     update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(2));
     });
+    set_field_width(*box, 2);
     return box;
   }
 
