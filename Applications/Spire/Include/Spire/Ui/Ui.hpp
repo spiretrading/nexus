@@ -61,6 +61,9 @@ namespace Spire {
    * @param font The font used to calculate the character width.
    */
   int get_character_width(const QFont& font);
+
+  /** Returns the font used by field placeholders. */
+  QFont make_field_placeholder_font();
 }
 
 #endif
