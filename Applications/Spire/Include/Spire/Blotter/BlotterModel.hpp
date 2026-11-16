@@ -11,6 +11,12 @@ namespace Spire {
 
       /** Returns the blotter's name. */
       virtual const std::shared_ptr<TextModel>& get_name() const = 0;
+
+      /** Returns whether the blotter is active. */
+      virtual const std::shared_ptr<BooleanModel>& is_active() const = 0;
+
+      /** Returns whether the blotter is pinned for saving on exit. */
+      virtual const std::shared_ptr<BooleanModel>& is_pinned() const = 0;
   };
 }
 

@@ -13,7 +13,9 @@ int main(int argc, char** argv) {
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
   auto model = std::make_shared<CompositeBlotterModel>(
-    std::make_shared<LocalTextModel>(QObject::tr("New Blotter")));
+    std::make_shared<LocalTextModel>(QObject::tr("New Blotter")),
+    std::make_shared<LocalBooleanModel>(false),
+    std::make_shared<LocalBooleanModel>(false));
   auto window = BlotterWindow(model);
   window.show();
   return application.exec();

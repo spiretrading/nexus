@@ -18,7 +18,7 @@ BlotterWindow::BlotterWindow(
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   auto split_view = new SplitView(
-    *new BlotterTasksView(), *new BlotterTabView());
+    *new BlotterTasksView(m_model), *new BlotterTabView());
   update_style(*split_view, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Vertical);
   });

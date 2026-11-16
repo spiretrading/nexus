@@ -1,6 +1,6 @@
 #ifndef SPIRE_BLOTTER_TASKS_VIEW_HPP
 #define SPIRE_BLOTTER_TASKS_VIEW_HPP
-#include <QWidget>
+#include "Spire/Blotter/BlotterModel.hpp"
 
 namespace Spire {
 
@@ -10,9 +10,11 @@ namespace Spire {
 
       /**
        * Constructs a BlotterTasksView.
+       * @param model The blotter whose tasks to display.
        * @param parent The parent widget.
        */
-      explicit BlotterTasksView(QWidget* parent = nullptr);
+      explicit BlotterTasksView(
+        std::shared_ptr<BlotterModel> model, QWidget* parent = nullptr);
   };
 }
 

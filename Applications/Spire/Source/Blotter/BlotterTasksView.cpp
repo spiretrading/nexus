@@ -5,9 +5,10 @@
 
 using namespace Spire;
 
-BlotterTasksView::BlotterTasksView(QWidget* parent)
+BlotterTasksView::BlotterTasksView(
+    std::shared_ptr<BlotterModel> model, QWidget* parent)
     : QWidget(parent) {
   auto layout = make_vbox_layout(this);
-  layout->addWidget(new BlotterTasksCommandBar());
+  layout->addWidget(new BlotterTasksCommandBar(std::move(model)));
   layout->addWidget(new BlotterTasksTableView(), 1);
 }
