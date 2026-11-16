@@ -29,11 +29,17 @@ endif()
 add_executable(BlotterUiTester ${app_type} ${header_files} ${source_files})
 beam_configure_target(BlotterUiTester)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(BlotterUiTester
+target_link_libraries(BlotterUiTester Blotter Library Styles Resources
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(BlotterUiTester
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_FONT_LIBRARY_DEBUG_PATH}
