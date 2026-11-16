@@ -9,7 +9,7 @@ namespace Spire {
     public:
 
       /**
-       * Constructs an empty BlotterTasksView.
+       * Constructs a BlotterTasksView.
        * @param parent The parent widget.
        */
       explicit BlotterTasksView(QWidget* parent = nullptr);
