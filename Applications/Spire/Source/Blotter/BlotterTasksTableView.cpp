@@ -95,15 +95,16 @@ BlotterTasksTableView::BlotterTasksTableView(
   auto& header = table_view->get_header();
   auto pin_header = header.get_item(pinned_column);
   pin_header->set_is_resizeable(false);
-  pin_header->set_label(*pin_label);
   pin_header->setAccessibleName(tr("Pinned"));
   add_tooltip(tr("Pinned"), *pin_header);
   update_style(*pin_header, [] (auto& style) {
+    style.get(Any() > TableHeaderItem::Separator()).set(Visibility::VISIBLE);
     style.get(Any() > TableHeaderItem::Label() > is_a<Icon>()).
       set(Fill(QColor(0xB8B8B8)));
     style.get(Hover() > TableHeaderItem::Label() > is_a<Icon>()).
       set(Fill(QColor(0x4B23A0)));
   });
+  pin_header->set_label(*pin_label);
   header.get_widths()->set(
     pinned_column, std::max(scale_width(26), pin_header->sizeHint().width()));
   enclose(*this, *table_view);

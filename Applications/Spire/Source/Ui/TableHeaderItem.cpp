@@ -23,7 +23,6 @@ using namespace Spire::Styles;
 namespace {
   using FilterActive = Styles::StateSelector<void, struct FilterActiveTag>;
   using FilterControl = Styles::StateSelector<void, struct FilterControlTag>;
-  using ResizeHandle = Styles::StateSelector<void, struct ResizeHandleTag>;
   using Resizeable = Styles::StateSelector<void, struct ResizeableTag>;
   using Sash = Styles::StateSelector<void, struct SashTag>;
 
@@ -37,7 +36,7 @@ namespace {
     style.get(Any() > TableHeaderItem::ActiveElement()).
       set(Visibility::INVISIBLE);
     style.get(Any() > FilterControl()).set(Visibility::NONE);
-    style.get(Any() > (ResizeHandle() || Sash())).
+    style.get(Any() > (TableHeaderItem::Separator() || Sash())).
       set(Visibility::NONE);
     style.get(highlight_selector > TableHeaderItem::Label()).
       set(TextColor(QColor(0x4B23A0)));
@@ -52,9 +51,10 @@ namespace {
       set(Fill(QColor(0x4B23A0)));
     style.get(FocusVisible() > is_a<Box>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Resizeable() > (ResizeHandle() || Sash())).
+    style.get(Resizeable() > (TableHeaderItem::Separator() || Sash())).
       set(Visibility::VISIBLE);
-    style.get(Any() > (Sash() && Drag()) < Any() > ResizeHandle()).
+    style.get(Any() > (Sash() && Drag()) < Any() >
+        TableHeaderItem::Separator()).
       set(BackgroundColor(QColor(0x4B23A0)));
     return style;
   }
@@ -269,15 +269,15 @@ namespace {
     return {indicator, box};
   }
 
-  auto make_resize_handle() {
-    auto resize_handle = new Box(nullptr);
-    resize_handle->setFixedWidth(scale_width(1));
-    resize_handle->setFixedHeight(scale_width(14));
-    update_style(*resize_handle, [] (auto& style) {
+  auto make_separator() {
+    auto separator = new Box(nullptr);
+    separator->setFixedWidth(scale_width(1));
+    separator->setFixedHeight(scale_width(14));
+    update_style(*separator, [] (auto& style) {
       style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
     });
-    match(*resize_handle, ResizeHandle());
-    return resize_handle;
+    match(*separator, TableHeaderItem::Separator());
+    return separator;
   }
 
   auto make_outline() {
@@ -318,9 +318,9 @@ TableHeaderItem::TableHeaderItem(
   m_controls_layout = make_hbox_layout();
   m_controls_layout->setSpacing(scale_width(3));
   m_controls_layout->addWidget(m_sort_indicator, 0, Qt::AlignVCenter);
-  auto resize_handle = make_resize_handle();
-  link(*this, *resize_handle);
-  m_controls_layout->addWidget(resize_handle, 0, Qt::AlignVCenter);
+  auto separator = make_separator();
+  link(*this, *separator);
+  m_controls_layout->addWidget(separator, 0, Qt::AlignVCenter);
   body_layout->addLayout(m_controls_layout);
   set_label(*make_name_label(std::make_shared<HeaderNameListModel>(m_model)));
   auto container_body = new LayeredWidget();

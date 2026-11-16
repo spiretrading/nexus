@@ -36,6 +36,9 @@ namespace Spire {
       /** Identifies styling for the container sub-component.  */
       using Container = Styles::StateSelector<void, struct ContainerTag>;
 
+      /** Identifies styling for the column separator. */
+      using Separator = Styles::StateSelector<void, struct SeparatorTag>;
+
       /** Specifies whether and how the column is sorted. */
       enum class Order {
 
