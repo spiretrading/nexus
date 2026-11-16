@@ -13,7 +13,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(Blotter ${header_files} ${source_files} ${generated_header_files}
   ${generated_source_files})
 beam_configure_target(Blotter)
-target_link_libraries(Blotter BeamRoutines)
+target_link_libraries(Blotter BeamRoutines Canvas)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Blotter PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
@@ -29,7 +29,14 @@ endif()
 add_executable(BlotterUiTester ${app_type} ${header_files} ${source_files})
 beam_configure_target(BlotterUiTester)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(BlotterUiTester Blotter Library Styles Resources
+target_link_libraries(BlotterUiTester Async Blotter BookView CanvasView Catalog
+  Charting Dashboard InputWidgets KeyBindings LegacyUI Library
+  OrderImbalanceIndicator PortfolioViewer Resources Styles TimeAndSales Toolbar
+  Utilities
+  debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
+  optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${LUA_LIBRARY_DEBUG_PATH}
+  optimized ${LUA_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)

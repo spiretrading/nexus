@@ -2,8 +2,8 @@
 
 using namespace Spire;
 
-CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
-  std::shared_ptr<BooleanModel> is_active,
+CompositeBlotterModel::CompositeBlotterModel(
+  std::shared_ptr<TextModel> name, std::shared_ptr<BooleanModel> is_active,
   std::shared_ptr<BooleanModel> is_pinned,
   std::shared_ptr<TasksModel> tasks) noexcept
   : m_name(std::move(name)),
