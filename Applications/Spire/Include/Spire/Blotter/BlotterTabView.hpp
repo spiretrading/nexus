@@ -4,12 +4,12 @@
 
 namespace Spire {
 
-  /** Displays a blotter's positions, order log, executions, and profit/loss. */
+  /** Displays a blotter's secondary views. */
   class BlotterTabView : public QWidget {
     public:
 
       /**
-       * Constructs an empty BlotterTabView.
+       * Constructs a BlotterTabView with empty tab bodies.
        * @param parent The parent widget.
        */
       explicit BlotterTabView(QWidget* parent = nullptr);
