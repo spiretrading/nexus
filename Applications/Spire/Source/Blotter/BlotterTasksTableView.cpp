@@ -87,7 +87,7 @@ BlotterTasksTableView::BlotterTasksTableView(
   auto pin_label = new QWidget();
   pin_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto pin_layout = make_hbox_layout(pin_label);
-  pin_layout->setContentsMargins(0, scale_height(6), 0, scale_height(4));
+  pin_layout->setContentsMargins(0, scale_height(8), 0, scale_height(2));
   pin_layout->addWidget(pin_icon, 0, Qt::AlignVCenter);
   pin_layout->addStretch();
   link(*pin_label, *pin_icon);
