@@ -4,11 +4,6 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QStatusBar>
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/FunctionalAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -26,24 +21,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace std;
-
-namespace {
-  void FlattenPosition(const PortfolioViewerModel::Entry& entry,
-      UserProfile& userProfile) {
-    auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
-      entry.m_account);
-    auto orderFields = make_market_order_fields(blotter.GetExecutingAccount(),
-      entry.m_inventory.m_position.m_ticker,
-      entry.m_inventory.m_position.m_currency,
-      get_opposite(get_side(entry.m_inventory.m_position)),
-      DESTINATIONS.get_preferred_destination(
-        entry.m_inventory.m_position.m_ticker.get_venue()).m_id,
-      abs(entry.m_inventory.m_position.m_quantity));
-    auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields, userProfile);
-    auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
-    taskEntry.m_task->Execute();
-  }
-}
 
 PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
     const PortfolioViewerProperties& properties, QWidget* parent,
@@ -169,16 +146,9 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
   auto contextMenu = std::make_unique<QMenu>();
   if(!selectedAccounts.empty()) {
     auto blotterAction = new FunctionalAction(contextMenu.get());
-    blotterAction->SetFunction(
-      [&] {
-        for(auto& account : selectedAccounts) {
-          auto& blotter =
-            m_userProfile->GetBlotterSettings().GetConsolidatedBlotter(account);
-          auto& window = BlotterWindow::GetBlotterWindow(Ref(*m_userProfile),
-            Ref(blotter));
-          window.show();
-        }
-      });
+    blotterAction->SetFunction([] {
+      // TODO: Open the selected accounts' new blotters.
+    });
     QString blotterText;
     if(selectedAccounts.size() == 1) {
       blotterText = tr("Open Blotter");
@@ -204,19 +174,9 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
     profileAction->setText(profileText);
     contextMenu->addAction(profileAction);
     auto flattenAction = new FunctionalAction(contextMenu.get());
-    flattenAction->SetFunction(
-      [&] {
-        QMessageBox::StandardButton selection = QMessageBox::warning(this,
-          tr("Confirm"),
-          tr("Are you sure you want to flatten all selected positions?"),
-          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel);
-        if(selection == QMessageBox::Cancel) {
-          return;
-        }
-        for(auto& position : positions) {
-          FlattenPosition(position, *m_userProfile);
-        }
-      });
+    flattenAction->SetFunction([] {
+      // TODO: Flatten the selected positions through the new blotter.
+    });
     QString flattenText;
     if(positions.size() == 1) {
       flattenText = tr("Flatten Position");

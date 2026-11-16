@@ -1,15 +1,8 @@
 #include "Spire/CanvasView/OrderTaskView.hpp"
-#include <Beam/Utilities/Algorithm.hpp>
 #include <QKeyEvent>
-#include <QMessageBox>
 #include "Nexus/Definitions/Ticker.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterTasksModel.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
@@ -72,28 +65,7 @@ void OrderTaskView::RemoveTaskEntry() {
 }
 
 void OrderTaskView::ExecuteTask(const CanvasNode& node) {
-  auto errors = Validate(node);
-  if(!errors.empty()) {
-    QMessageBox::warning(m_parent, QObject::tr("Error"),
-      QString::fromStdString(errors.front().GetErrorMessage()));
-    return;
-  }
-  auto& activeBlotter = m_userProfile->GetBlotterSettings().GetActiveBlotter();
-  auto& blotterWindow =
-    BlotterWindow::GetBlotterWindow(Ref(*m_userProfile), Ref(activeBlotter));
-  if(!blotterWindow.isVisible()) {
-    blotterWindow.setAttribute(Qt::WA_ShowWithoutActivating);
-    blotterWindow.show();
-    m_parent->raise();
-  }
-  auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[*m_state->m_ticker].push_back(entry.m_task);
-  entry.m_task->GetPublisher().monitor(m_slotHandler.get_slot<Task::StateEntry>(
-    [=, ticker = *m_state->m_ticker, task = entry.m_task] (
-        const Task::StateEntry& update) {
-      OnTaskState(task, ticker, update);
-    }));
-  entry.m_task->Execute();
+  // TODO: Submit the task through the new active blotter.
 }
 
 std::unique_ptr<CanvasNode>
@@ -234,14 +206,6 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 
 bool OrderTaskView::HandleCancelBindingEvent(
     const CancelKeyBindingsModel::Operation& operation) {
-  flush(m_slotHandler);
-  execute(operation, out(m_tasksExecuted[*m_state->m_ticker]));
+  // TODO: Cancel tasks through the new active blotter.
   return true;
-}
-
-void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
-    const Ticker& ticker, const Task::StateEntry& update) {
-  if(IsTerminal(update.m_state)) {
-    remove_first(m_tasksExecuted[ticker], task);
-  }
 }

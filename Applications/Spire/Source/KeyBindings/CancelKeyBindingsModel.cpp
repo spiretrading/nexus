@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
@@ -210,89 +209,5 @@ void Spire::execute(CancelKeyBindingsModel::Operation operation,
   }
   for(auto& i : tasks_to_cancel) {
     i->Cancel();
-  }
-}
-
-void Spire::execute(
-    CancelKeyBindingsModel::Operation operation, OrderExecutionClient& client,
-    Out<std::vector<OrderLogModel::OrderEntry>> entries) {
-  if(entries->empty()) {
-    return;
-  }
-  auto orders_to_cancel = std::vector<std::shared_ptr<const Order>>();
-  auto expected_side = get_side(operation);
-  auto direction = get_direction(expected_side);
-  if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
-    orders_to_cancel.push_back(entries->back().m_order);
-    entries->pop_back();
-  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST) {
-    orders_to_cancel.push_back(entries->front().m_order);
-    entries->erase(entries->begin());
-  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK ||
-      operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID ||
-      operation == CancelKeyBindingsModel::Operation::OLDEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::OLDEST_BID) {
-    auto cancel = [&] (auto begin, auto end) {
-      for(auto i = begin; i != end; ++i) {
-        if(i->m_order->get_info().m_fields.m_side == expected_side) {
-          orders_to_cancel.push_back(i->m_order);
-          entries->erase(to_base(i));
-          break;
-        }
-      }
-    };
-    if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK ||
-        operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID) {
-      cancel(entries->rbegin(), entries->rend());
-    } else {
-      cancel(entries->begin(), entries->end());
-    }
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL) {
-    for(auto& entry : *entries) {
-      orders_to_cancel.push_back(entry.m_order);
-    }
-    entries->clear();
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS ||
-      operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-    std::erase_if(*entries, [&] (const auto& entry) {
-      if(entry.m_order->get_info().m_fields.m_side != expected_side) {
-        return false;
-      }
-      orders_to_cancel.push_back(entry.m_order);
-      return true;
-    });
-  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::CLOSEST_BID ||
-      operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-    auto cancel = [&] (auto begin, auto end, auto find_max) {
-      auto closest_iterator = end;
-      auto closest_price = optional<Money>();
-      for(auto i = begin; i != end; ++i) {
-        if(i->m_order->get_info().m_fields.m_side == expected_side) {
-          auto price = i->m_order->get_info().m_fields.m_price;
-          if(price != Money::ZERO) {
-            if(!closest_price || (find_max ?
-                price > *closest_price : price < *closest_price)) {
-              closest_price = price;
-              closest_iterator = i;
-            }
-          }
-        }
-      }
-      if(closest_iterator != end) {
-        orders_to_cancel.push_back(closest_iterator->m_order);
-        entries->erase(to_base(closest_iterator));
-      }
-    };
-    if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-        operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-      cancel(entries->begin(), entries->end(), false);
-    } else {
-      cancel(entries->begin(), entries->end(), true);
-    }
-  }
-  for(auto& order : orders_to_cancel) {
-    client.cancel(*order);
   }
 }

@@ -2,7 +2,6 @@
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -72,12 +71,6 @@ namespace Spire {
       using ReopenSignal =
         Signal<void (const LegacyUI::WindowSettings& settings)>;
 
-      /**
-       * Signals to open a blotter.
-       * @param blotter The model of the blotter to open.
-       */
-      using OpenBlotterSignal = Signal<void (BlotterModel& blotter)>;
-
       /** Signals that the user is minimizing all windows. */
       using MinimizeAllSignal = Signal<void ()>;
 
@@ -101,7 +94,7 @@ namespace Spire {
         const std::filesystem::path& path)>;
 
       /**
-       * Signals a new blotter was created.
+       * Signals a request to create a new blotter.
        * @param name The name of the new blotter.
        * @param account The account the blotter is for.
        */
@@ -117,22 +110,16 @@ namespace Spire {
        * @param roles The account's roles.
        * @param account_query_model The model used to query accounts.
        * @param recently_closed_windows The list of recently closed windows.
-       * @param pinned_blotters The list of the user's pinned blotters.
        * @param parent The parent widget.
        */
       ToolbarWindow(Beam::DirectoryEntry account, Nexus::AccountRoles roles,
         std::shared_ptr<AccountQueryModel> account_query_model,
         std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
-        std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters,
         QWidget* parent = nullptr);
 
       /** Returns the list of recently closed window. */
       const std::shared_ptr<RecentlyClosedWindowListModel>&
         get_recently_closed_windows() const;
-
-      /** Returns the list of pinned blotters. */
-      const std::shared_ptr<ListModel<BlotterModel*>>&
-        get_pinned_blotters() const;
 
       /** Connects a slot to the OpenSignal. */
       boost::signals2::connection connect_open_signal(
@@ -141,10 +128,6 @@ namespace Spire {
       /** Connects a slot to the ReopenSignal. */
       boost::signals2::connection connect_reopen_signal(
         const ReopenSignal::slot_type& slot) const;
-
-      /** Connects a slot to the OpenBlotterSignal. */
-      boost::signals2::connection connect_open_blotter_signal(
-        const OpenBlotterSignal::slot_type& slot) const;
 
       /** Connects a slot to the MinimizeAllSignal. */
       boost::signals2::connection connect_minimize_all_signal(
@@ -179,7 +162,6 @@ namespace Spire {
     private:
       mutable OpenSignal m_open_signal;
       mutable ReopenSignal m_reopen_signal;
-      mutable OpenBlotterSignal m_open_blotter_signal;
       mutable MinimizeAllSignal m_minimize_all_signal;
       mutable RestoreAllSignal m_restore_all_signal;
       mutable ImportSignal m_import_signal;
@@ -194,9 +176,7 @@ namespace Spire {
       NewBlotterForm* m_new_blotter_form;
       SettingsPanel* m_settings_panel;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
-      std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       boost::signals2::scoped_connection m_recently_closed_windows_connection;
-      boost::signals2::scoped_connection m_pinned_blotter_connection;
 
       MenuButton* make_window_manager_button();
       MenuButton* make_recently_closed_button() const;
@@ -213,8 +193,6 @@ namespace Spire {
       void on_new_blotter_action();
       void on_new_blotter_submission(
         const QString& name, const Beam::DirectoryEntry& account);
-      void on_blotter_operation(
-        const ListModel<BlotterModel*>::Operation& operation);
   };
 
   /** Returns the text representation of a WindowType. */ 

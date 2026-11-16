@@ -33,13 +33,10 @@ namespace Spire {
       UserProfile* m_user_profile;
       std::unique_ptr<EventFilter> m_event_filter;
       std::unique_ptr<ToolbarWindow> m_toolbar_window;
-      std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       std::vector<std::unique_ptr<BookViewController>> m_book_view_controllers;
       std::vector<std::unique_ptr<TimeAndSalesController>>
         m_time_and_sales_controllers;
       std::unique_ptr<KeyBindingsWindow> m_key_bindings_window;
-      boost::signals2::scoped_connection m_blotter_added_connection;
-      boost::signals2::scoped_connection m_blotter_removed_connection;
 
       ToolbarController(const ToolbarController&) = delete;
       ToolbarController& operator =(const ToolbarController&) = delete;
@@ -55,7 +52,6 @@ namespace Spire {
       void open_profile_window();
       void on_open(ToolbarWindow::WindowType window);
       void on_reopen(const LegacyUI::WindowSettings& settings);
-      void on_open_blotter(BlotterModel& model);
       void on_minimize_all();
       void on_restore_all();
       void on_import(
@@ -64,8 +60,6 @@ namespace Spire {
         UserSettings::Categories categories, const std::filesystem::path& path);
       void on_new_blotter(
         const QString& name, const Beam::DirectoryEntry& account);
-      void on_blotter_added(BlotterModel& blotter);
-      void on_blotter_removed(BlotterModel& blotter);
       void on_book_view_closed(BookViewController& controller);
       void on_key_bindings_window_closed();
       void on_time_and_sales_closed(TimeAndSalesController& controller);

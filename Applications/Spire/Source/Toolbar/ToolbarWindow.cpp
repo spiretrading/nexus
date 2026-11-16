@@ -2,9 +2,8 @@
 #include <QFileDialog>
 #include <QIcon>
 #include <QStandardPaths>
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -28,25 +27,6 @@ namespace {
       QStandardPaths::DocumentsLocation).toStdString());
     path /= account.m_name + "_settings.json";
     return QString::fromStdString(path.string());
-  }
-
-  auto make_unique_blotter_name(
-      const QString& name, const ListModel<BlotterModel*>& blotters) {
-    auto unique_name = name;
-    auto count = 1;
-    auto is_existing_name = true;
-    while(is_existing_name) {
-      is_existing_name = false;
-      for(auto i = 0; i < blotters.get_size(); ++i) {
-        if(blotters.get(i)->GetName() == unique_name.toStdString()) {
-          ++count;
-          unique_name = QString("%1 %2").arg(name).arg(count);
-          is_existing_name = true;
-          break;
-        }
-      }
-    }
-    return unique_name;
   }
 
   auto get_recently_closed_icon(ToolbarWindow::WindowType window) {
@@ -99,13 +79,12 @@ namespace {
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     std::shared_ptr<AccountQueryModel> account_query_model,
     std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
-    std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
+    QWidget* parent)
     : Window(parent),
       m_account(std::move(account)),
       m_roles(roles),
       m_account_query_model(std::move(account_query_model)),
-      m_recently_closed_windows(std::move(recently_closed_windows)),
-      m_pinned_blotters(std::move(pinned_blotters)) {
+      m_recently_closed_windows(std::move(recently_closed_windows)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
@@ -145,8 +124,6 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   auto blotter_button = make_blotter_button();
   m_blotter_menu = &blotter_button->get_menu();
   populate_blotter_menu();
-  m_pinned_blotter_connection = m_pinned_blotters->connect_operation_signal(
-    std::bind_front(&ToolbarWindow::on_blotter_operation, this));
   bottom_layout->addWidget(blotter_button);
   if(roles.test(AccountRole::MANAGER) ||
       roles.test(AccountRole::ADMINISTRATOR)) {
@@ -193,11 +170,6 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recently_closed_windows;
 }
 
-const std::shared_ptr<ListModel<BlotterModel*>>&
-    ToolbarWindow::get_pinned_blotters() const {
-  return m_pinned_blotters;
-}
-
 connection ToolbarWindow::connect_open_signal(
     const OpenSignal::slot_type& slot) const {
   return m_open_signal.connect(slot);
@@ -206,11 +178,6 @@ connection ToolbarWindow::connect_open_signal(
 connection ToolbarWindow::connect_reopen_signal(
     const ReopenSignal::slot_type& slot) const {
   return m_reopen_signal.connect(slot);
-}
-
-connection ToolbarWindow::connect_open_blotter_signal(
-    const OpenBlotterSignal::slot_type& slot) const {
-  return m_open_blotter_signal.connect(slot);
 }
 
 connection ToolbarWindow::connect_minimize_all_signal(
@@ -323,12 +290,10 @@ void ToolbarWindow::populate_blotter_menu() {
   m_blotter_menu->add_action(
     tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
   m_blotter_menu->add_separator();
-  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
-    auto blotter = m_pinned_blotters->get(i);
-    m_blotter_menu->add_action(QString::fromStdString(blotter->GetName()), [=] {
-      m_open_blotter_signal(*blotter);
-    });
-  }
+  m_blotter_menu->add_action(tr("Global"), [=] {
+    m_open_signal(WindowType::BLOTTER);
+  });
+  // TODO: Populate the menu with the new pinned blotters.
 }
 
 void ToolbarWindow::on_recently_closed_window_operation(
@@ -385,14 +350,8 @@ void ToolbarWindow::on_new_blotter_submission(
     }
     return name;
   }();
-  auto unique_name = make_unique_blotter_name(base_name, *m_pinned_blotters);
   m_new_blotter_form->deleteLater();
-  m_new_blotter_signal(unique_name, account);
-}
-
-void ToolbarWindow::on_blotter_operation(
-    const ListModel<BlotterModel*>::Operation& operation) {
-  populate_blotter_menu();
+  m_new_blotter_signal(base_name, account);
 }
 
 const QString& Spire::to_text(ToolbarWindow::WindowType type) {

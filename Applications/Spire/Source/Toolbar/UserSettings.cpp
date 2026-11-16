@@ -260,6 +260,9 @@ std::vector<QWidget*> Spire::import_settings(
     }
     for(auto& layout : *settings.m_layouts) {
       auto window = layout->Reopen(Ref(*user_profile));
+      if(!window) {
+        continue;
+      }
       if(dynamic_cast<PortfolioViewerWindow*>(window) &&
           !user_profile->IsManager()) {
         continue;

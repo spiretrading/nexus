@@ -1,7 +1,7 @@
 #ifndef SPIRE_UI_SERIALIZATION_HPP
 #define SPIRE_UI_SERIALIZATION_HPP
 #include <Beam/Serialization/TypeRegistry.hpp>
-#include "Spire/Blotter/BlotterWindowSettings.hpp"
+#include "Spire/Blotter/LegacyBlotterWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindowSettings.hpp"
 #include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
@@ -258,7 +258,7 @@ namespace Spire {
     (VolumeDashboardCellBuilder, "Spire.VolumeDashboardCellBuilder"));
 
   BEAM_REGISTER_TYPES(RegisterWindowSettingsTypes,
-    (BlotterWindowSettings, "Spire.BlotterWindowSettings"),
+    (LegacyBlotterWindowSettings, "Spire.BlotterWindowSettings"),
     (BookViewWindowSettings, "Spire.Current.BookViewWindowSettings"),
     (LegacyBookViewWindowSettings, "Spire.BookViewWindowSettings"),
     (CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),

@@ -2,13 +2,13 @@
 #define SPIRE_CANCEL_KEY_BINDINGS_MODEL_HPP
 #include <array>
 #include <unordered_map>
+#include <Beam/Pointers/Out.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/ShuttleArray.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <QKeySequence>
 #include <QValidator>
-#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
-#include "Spire/Blotter/OrderLogModel.hpp"
+#include "Nexus/Definitions/Money.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
@@ -116,16 +116,6 @@ namespace Spire {
   void execute(CancelKeyBindingsModel::Operation operation,
     const std::unordered_map<std::shared_ptr<Task>, Nexus::Money>& prices,
     Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
-
-  /**
-   * Executes a cancel operation on a list of order entries.
-   * @param operation The cancel operation to execute.
-   * @param entries The list of order entries to execute the cancel operation
-   *        on.
-   */
-  void execute(CancelKeyBindingsModel::Operation operation,
-    Nexus::OrderExecutionClient& client,
-    Beam::Out<std::vector<OrderLogModel::OrderEntry>> entries);
 }
 
 namespace Beam {

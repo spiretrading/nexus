@@ -191,42 +191,41 @@ void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
   m_model.get_session_technicals()->set(technicals);
 }
 
-void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
-  add(order, order.m_order->get_info().m_fields.m_quantity,
-    OrderStatus::PENDING_NEW);
+void LocalBookViewModel::add(const std::shared_ptr<Order>& order) {
+  add(order, order->get_info().m_fields.m_quantity, OrderStatus::PENDING_NEW);
 }
 
-void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
+void LocalBookViewModel::add(const std::shared_ptr<Order>& order,
     Quantity quantity, OrderStatus status) {
-  auto& fields = order.m_order->get_info().m_fields;
+  auto& fields = order->get_info().m_fields;
   if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
-  orders.push_back(order.m_order);
+  orders.push_back(order);
   auto& user_orders =
     *pick(fields.m_side, m_model.get_ask_orders(), m_model.get_bid_orders());
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
-    submit_pegged(*order.m_order);
-    auto& entry = m_pegged_entries[order.m_order->get_info().m_id];
+    submit_pegged(*order);
+    auto& entry = m_pegged_entries[order->get_info().m_id];
     if(entry.m_is_initialized) {
       display_price = entry.m_effective_price;
     }
   }
   auto user_order =
     UserOrder(fields.m_destination, display_price, quantity, status);
-  user_order.m_id = order.m_order->get_info().m_id;
+  user_order.m_id = order->get_info().m_id;
   user_orders.push(user_order);
 }
 
-void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
-  auto& fields = order.m_order->get_info().m_fields;
+void LocalBookViewModel::remove(const std::shared_ptr<Order>& order) {
+  auto& fields = order->get_info().m_fields;
   if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
-  auto i = std::ranges::find(orders, order.m_order);
+  auto i = std::ranges::find(orders, order);
   if(i == orders.end()) {
     return;
   }

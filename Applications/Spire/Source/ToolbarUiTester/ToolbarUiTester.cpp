@@ -87,10 +87,9 @@ void ToolbarUiTester::on_toolbar_click() {
   }
   auto recently_closed_windows =
     std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>();
-  auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
   auto account_query_model = make_test_account_query_model();
   m_toolbar_window = new ToolbarWindow(account, roles, account_query_model,
-    recently_closed_windows, pinned_blotters);
+    recently_closed_windows);
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarUiTester::on_open, this));
   m_toolbar_window->connect_minimize_all_signal(

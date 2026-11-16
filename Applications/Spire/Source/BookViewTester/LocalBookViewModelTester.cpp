@@ -47,10 +47,6 @@ namespace {
   auto make_order(const OrderFields& fields) {
     return make_order(fields, 1);
   }
-
-  auto make_entry(std::shared_ptr<Order> order) {
-    return OrderLogModel::OrderEntry(std::move(order));
-  }
 }
 
 TEST_SUITE("LocalBookViewModel") {
@@ -191,7 +187,7 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     auto order = make_order(
       make_limit_order_fields(TICKER, Side::BID, 100, parse_money("10.00")));
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get_size() == 1);
     auto& user_order = model.get_bid_orders()->get(0);
     REQUIRE(user_order.m_price == parse_money("10.00"));
@@ -202,8 +198,8 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     auto fields =
       make_limit_order_fields(TICKER, Side::BID, 100, parse_money("10.00"));
-    model.add(make_entry(make_order(fields, 7)));
-    model.add(make_entry(make_order(fields, 9)));
+    model.add(make_order(fields, 7));
+    model.add(make_order(fields, 9));
     REQUIRE(model.get_bid_orders()->get(0).m_id == 7);
     REQUIRE(model.get_bid_orders()->get(1).m_id == 9);
   }
@@ -212,10 +208,9 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     auto order = make_order(
       make_limit_order_fields(TICKER, Side::ASK, 200, parse_money("10.05")));
-    auto entry = make_entry(order);
-    model.add(entry);
+    model.add(order);
     REQUIRE(model.get_ask_orders()->get_size() == 1);
-    model.remove(entry);
+    model.remove(order);
     REQUIRE(model.get_ask_orders()->get_size() == 0);
   }
 
@@ -223,7 +218,7 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     auto order = make_order(
       make_limit_order_fields(TICKER, Side::BID, 100, parse_money("10.00")));
-    model.add(make_entry(order));
+    model.add(order);
     auto report = ExecutionReport();
     report.m_id = order->get_info().m_id;
     report.m_status = OrderStatus::PARTIALLY_FILLED;
@@ -245,7 +240,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get_size() == 1);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
   }
@@ -255,21 +250,21 @@ TEST_SUITE("LocalBookViewModel") {
     SUBCASE("bid") {
       auto order = make_order(make_pegged_order_fields(
         TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-      model.add(make_entry(order));
+      model.add(order);
       model.update(make_default_bbo());
       REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
     }
     SUBCASE("ask") {
       auto order = make_order(make_pegged_order_fields(
         TICKER, Side::ASK, 100, Money::ZERO, Money::ZERO));
-      model.add(make_entry(order));
+      model.add(order);
       model.update(make_default_bbo());
       REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("10.01"));
     }
     SUBCASE("ask_with_limit") {
       auto order = make_order(make_pegged_order_fields(
         TICKER, Side::ASK, 100, parse_money("9.95"), Money::ZERO));
-      model.add(make_entry(order));
+      model.add(order);
       model.update(make_default_bbo());
       REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("10.01"));
     }
@@ -279,7 +274,7 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, parse_money("10.00"), parse_money("0.05")));
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get_size() == 1);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
   }
@@ -289,7 +284,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
@@ -301,12 +296,12 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
     model.clear_orders();
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
   }
 
@@ -315,12 +310,12 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
-    model.remove(make_entry(order));
+    model.remove(order);
     REQUIRE(model.get_bid_orders()->get_size() == 0);
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
   }
 
@@ -329,7 +324,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
     auto report = ExecutionReport();
@@ -337,7 +332,7 @@ TEST_SUITE("LocalBookViewModel") {
     report.m_status = OrderStatus::CANCELED;
     model.update(report);
     REQUIRE(model.get_bid_orders()->get_size() == 0);
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("9.80"));
   }
 
@@ -346,7 +341,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_bbo(parse_money("9.99"), parse_money("10.01")));
     auto order = make_order(make_pegged_order_fields(TICKER,
       Side::ASK, 100, parse_money("9.95"), Money::ZERO), 3);
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("10.01"));
     REQUIRE(model.get_ask_orders()->get(0).m_id == 3);
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
@@ -359,7 +354,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(TICKER,
       Side::BID, 100, Money::ZERO, parse_money("0.03")));
-    model.add(make_entry(order));
+    model.add(order);
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("9.97"));
   }
 
@@ -369,14 +364,14 @@ TEST_SUITE("LocalBookViewModel") {
       model.update(make_bbo(parse_money("9.99"), parse_money("10.00")));
       auto order = make_order(make_pegged_order_fields(TICKER,
         Side::ASK, 100, Money::ZERO, Money::ZERO, PegType::MARKET));
-      model.add(make_entry(order));
+      model.add(order);
       REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("9.99"));
     }
     SUBCASE("midpoint") {
       model.update(make_bbo(parse_money("9.90"), parse_money("10.10")));
       auto order = make_order(make_pegged_order_fields(TICKER,
         Side::BID, 100, Money::ZERO, Money::ZERO, PegType::MID_POINT));
-      model.add(make_entry(order));
+      model.add(order);
       REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
     }
   }
@@ -386,7 +381,7 @@ TEST_SUITE("LocalBookViewModel") {
     model.update(make_default_bbo());
     auto order = make_order(make_pegged_order_fields(
       TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
-    model.add(make_entry(order));
+    model.add(order);
     auto report = ExecutionReport();
     report.m_id = order->get_info().m_id;
     report.m_status = OrderStatus::FILLED;
@@ -400,10 +395,10 @@ TEST_SUITE("LocalBookViewModel") {
   TEST_CASE("clear_orders") {
     auto model = LocalBookViewModel(TICKER);
     model.update(make_default_bbo());
-    model.add(make_entry(make_order(make_limit_order_fields(
-      TICKER, Side::BID, 100, parse_money("10.00")))));
-    model.add(make_entry(make_order(make_pegged_order_fields(
-      TICKER, Side::ASK, 200, Money::ZERO, Money::ZERO))));
+    model.add(make_order(make_limit_order_fields(
+      TICKER, Side::BID, 100, parse_money("10.00"))));
+    model.add(make_order(make_pegged_order_fields(
+      TICKER, Side::ASK, 200, Money::ZERO, Money::ZERO)));
     REQUIRE(model.get_bid_orders()->get_size() == 1);
     REQUIRE(model.get_ask_orders()->get_size() == 1);
     model.clear_orders();
@@ -416,7 +411,7 @@ TEST_SUITE("LocalBookViewModel") {
     SUBCASE("bid") {
       auto order = make_order(
         make_limit_order_fields(TICKER, Side::BID, 500, parse_money("10.00")));
-      model.add(make_entry(order), 300, OrderStatus::NEW);
+      model.add(order, 300, OrderStatus::NEW);
       REQUIRE(model.get_bid_orders()->get_size() == 1);
       auto& user_order = model.get_bid_orders()->get(0);
       REQUIRE(user_order.m_size == 300);
@@ -426,7 +421,7 @@ TEST_SUITE("LocalBookViewModel") {
     SUBCASE("zero_remaining") {
       auto order = make_order(
         make_limit_order_fields(TICKER, Side::ASK, 100, parse_money("10.05")));
-      model.add(make_entry(order), 0, OrderStatus::NEW);
+      model.add(order, 0, OrderStatus::NEW);
       REQUIRE(model.get_ask_orders()->get_size() == 1);
       auto& user_order = model.get_ask_orders()->get(0);
       REQUIRE(user_order.m_size == 0);
@@ -435,7 +430,7 @@ TEST_SUITE("LocalBookViewModel") {
     SUBCASE("pending_new") {
       auto order = make_order(
         make_limit_order_fields(TICKER, Side::BID, 200, parse_money("10.00")));
-      model.add(make_entry(order), 200, OrderStatus::PENDING_NEW);
+      model.add(order, 200, OrderStatus::PENDING_NEW);
       REQUIRE(model.get_bid_orders()->get_size() == 1);
       auto& user_order = model.get_bid_orders()->get(0);
       REQUIRE(user_order.m_size == 200);
@@ -445,7 +440,7 @@ TEST_SUITE("LocalBookViewModel") {
       model.update(make_default_bbo());
       auto order = make_order(make_pegged_order_fields(
         TICKER, Side::BID, 500, Money::ZERO, Money::ZERO));
-      model.add(make_entry(order), 300, OrderStatus::NEW);
+      model.add(order, 300, OrderStatus::NEW);
       REQUIRE(model.get_bid_orders()->get_size() == 1);
       auto& user_order = model.get_bid_orders()->get(0);
       REQUIRE(user_order.m_size == 300);

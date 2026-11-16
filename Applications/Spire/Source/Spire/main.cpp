@@ -9,7 +9,6 @@
 #include <QSharedMemory>
 #include <QStandardPaths>
 #include <tclap/CmdLine.h>
-#include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
@@ -254,8 +253,7 @@ int main(int argc, char* argv[]) {
       } catch(const std::exception&) {
         throw std::runtime_error("Unable to create profile path.");
       }
-      BlotterSettings::Load(out(*user_profile));
-      loaded_settings.insert("BlotterSettings");
+      // TODO: Load the new blotter settings.
       CatalogSettings::Load(out(*user_profile));
       loaded_settings.insert("CatalogSettings");
       RiskTimerProperties::Load(out(*user_profile));
@@ -343,9 +341,7 @@ int main(int argc, char* argv[]) {
   if(loaded_settings.contains("CatalogSettings")) {
     CatalogSettings::Save(*user_profile);
   }
-  if(loaded_settings.contains("BlotterSettings")) {
-    BlotterSettings::Save(*user_profile);
-  }
+  // TODO: Save the new blotter settings.
   toolbar_controller->close();
   return 0;
 }

@@ -8,7 +8,6 @@
 #include <QScreen>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
@@ -370,11 +369,6 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         m_quote_timer(this),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_line_number(0) {
-    auto& settings = m_user_profile.GetBlotterSettings();
-    settings.SetActiveBlotter(settings.GetConsolidatedBlotter());
-    settings.SetDefaultBlotterTaskProperties(
-      BlotterTaskProperties::GetDefault());
-    settings.SetDefaultOrderLogProperties(OrderLogProperties::GetDefault());
     auto venue_quote_panel = new QWidget();
     auto venue_quote_layout = new QHBoxLayout(venue_quote_panel);
     venue_quote_layout->setContentsMargins(0, 0, 0, 0);

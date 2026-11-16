@@ -1,6 +1,4 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -9,18 +7,11 @@ using namespace Spire;
 
 namespace {
   const auto RETRY_INTERVAL = 3000;
-
-  bool is_order_displayed(const Order& order, const Ticker& ticker) {
-    auto& fields = order.get_info().m_fields;
-    return fields.m_ticker == ticker && (fields.m_type == OrderType::LIMIT ||
-      fields.m_type == OrderType::PEGGED);
-  }
 }
 
 ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
-    BlotterSettings& blotter, MarketDataClient market_data_client)
+    MarketDataClient market_data_client)
     : m_ticker(std::move(ticker)),
-      m_blotter(&blotter),
       m_market_data_client(std::move(market_data_client)),
       m_model(m_ticker) {
   if(!m_ticker) {
@@ -38,9 +29,7 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
   query_book_quotes();
   query_time_and_sales();
-  on_active_blotter(m_blotter->GetActiveBlotter());
-  m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
-    std::bind_front(&ServiceBookViewModel::on_active_blotter, this));
+  // TODO: Monitor the new active blotter's orders.
 }
 
 const std::shared_ptr<BookQuoteListModel>&
@@ -76,49 +65,6 @@ const std::shared_ptr<BboQuoteModel>&
 const std::shared_ptr<SessionTechnicalsModel>&
     ServiceBookViewModel::get_session_technicals() const {
   return m_model.get_session_technicals();
-}
-
-void ServiceBookViewModel::initialize_order(
-    const OrderLogModel::OrderEntry& order) {
-  if(!is_order_displayed(*order.m_order, m_ticker)) {
-    return;
-  }
-  auto execution_reports = monitor(order);
-  if(execution_reports && !execution_reports->empty() &&
-      is_terminal(execution_reports->back().m_status)) {
-    return;
-  }
-  auto filled_quantity = Quantity(0);
-  auto status = OrderStatus::PENDING_NEW;
-  if(execution_reports) {
-    for(auto& report : *execution_reports) {
-      filled_quantity += report.m_last_quantity;
-      if(report.m_status == OrderStatus::NEW) {
-        status = OrderStatus::NEW;
-      }
-    }
-  }
-  auto& fields = order.m_order->get_info().m_fields;
-  m_model.add(order, fields.m_quantity - filled_quantity, status);
-}
-
-optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
-    const OrderLogModel::OrderEntry& order) {
-  auto& publisher = order.m_order->get_publisher();
-  auto id = order.m_order->get_info().m_id;
-  auto [sequence, is_inserted] = m_order_sequences.try_emplace(id, -1);
-  auto reports = optional<std::vector<ExecutionReport>>();
-  if(is_inserted) {
-    publisher.monitor(m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-      out(reports));
-  } else {
-    reports = publisher.get_snapshot();
-  }
-  if(reports && !reports->empty()) {
-    sequence->second = reports->back().m_sequence;
-  }
-  return reports;
 }
 
 void ServiceBookViewModel::query_book_quotes() {
@@ -203,45 +149,4 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
 void ServiceBookViewModel::on_time_and_sales_interruption(
     const std::exception_ptr&) {
   m_time_and_sale_retry_timer.start(RETRY_INTERVAL);
-}
-
-void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {
-  auto sequence = m_order_sequences.find(report.m_id);
-  if(sequence == m_order_sequences.end() ||
-      report.m_sequence <= sequence->second) {
-    return;
-  }
-  sequence->second = report.m_sequence;
-  m_model.update(report);
-}
-
-void ServiceBookViewModel::on_order_added(
-    const OrderLogModel::OrderEntry& order) {
-  initialize_order(order);
-}
-
-void ServiceBookViewModel::on_order_removed(
-    const OrderLogModel::OrderEntry& order) {
-  if(!is_order_displayed(*order.m_order, m_ticker)) {
-    return;
-  }
-  m_model.remove(order);
-}
-
-void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
-  m_order_event_handler.reset();
-  m_order_event_handler.emplace();
-  m_order_sequences.clear();
-  auto& orders = blotter.GetOrderLogModel();
-  m_model.transact([&] {
-    m_model.clear_orders();
-    for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
-      auto& entry = orders.GetEntry(orders.index(i, 0));
-      initialize_order(entry);
-    }
-  });
-  m_order_added_connection = orders.ConnectOrderAddedSignal(
-    std::bind_front(&ServiceBookViewModel::on_order_added, this));
-  m_order_removed_connection = orders.ConnectOrderRemovedSignal(
-    std::bind_front(&ServiceBookViewModel::on_order_removed, this));
 }

@@ -1,11 +1,7 @@
 #ifndef SPIRE_ORDER_TASK_VIEW_HPP
 #define SPIRE_ORDER_TASK_VIEW_HPP
-#include <unordered_map>
-#include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <QKeyEvent>
-#include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
@@ -13,6 +9,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /**
    * Stores the necessary state to display a CondensedCanvasWidget for an Order
@@ -68,13 +65,10 @@ namespace Spire {
       QWidget* m_parent;
       UserProfile* m_userProfile;
       bool m_isTaskEntryWidgetForInteractionsProperties;
-      std::unordered_map<Nexus::Ticker, std::vector<std::shared_ptr<Task>>>
-        m_tasksExecuted;
       State* m_state;
       CondensedCanvasWidget* m_taskEntryWidget;
       DisplayWidgetSlot m_displayWidgetSlot;
       RemoveWidgetSlot m_removeWidgetSlot;
-      Beam::TaskQueue m_slotHandler;
 
       void RemoveTaskEntry();
       void ExecuteTask(const CanvasNode& node);
@@ -85,8 +79,6 @@ namespace Spire {
       void HandleInteractionsPropertiesEvent();
       bool HandleCancelBindingEvent(
         const CancelKeyBindingsModel::Operation& operation);
-      void OnTaskState(const std::shared_ptr<Task>& task,
-        const Nexus::Ticker& ticker, const Task::StateEntry& update);
   };
 }
 

@@ -6,9 +6,6 @@
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QUrl>
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
@@ -27,9 +24,9 @@ using namespace Spire::LegacyUI;
 
 namespace {
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
-      BlotterSettings& blotter, MarketDataClient market_data_client) {
+      MarketDataClient market_data_client) {
     return std::make_unique<ServiceBookViewModel>(
-      ticker, blotter, std::move(market_data_client));
+      ticker, std::move(market_data_client));
   }
 }
 
@@ -63,7 +60,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             std::move(book_view_properties)))),
       m_book_view_models([this] (const auto& ticker) {
         return book_view_model_builder(
-          ticker, *m_blotterSettings, m_clients.get_market_data_client());
+          ticker, m_clients.get_market_data_client());
       }),
       m_book_view_model_builder([this] (const auto& ticker) {
         return m_book_view_models.load(ticker);
@@ -85,7 +82,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.add(exchangeRate);
   }
-  m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
 }
 
 UserProfile::~UserProfile() = default;
@@ -185,14 +181,6 @@ const std::shared_ptr<ListModel<PropertyHubMember*>>&
 const std::shared_ptr<TickerInfoQueryModel>&
     UserProfile::GetTickerInfoQueryModel() const {
   return m_ticker_info_query_model;
-}
-
-const BlotterSettings& UserProfile::GetBlotterSettings() const {
-  return *m_blotterSettings;
-}
-
-BlotterSettings& UserProfile::GetBlotterSettings() {
-  return *m_blotterSettings;
 }
 
 SavedDashboards& UserProfile::GetSavedDashboards() {
@@ -326,17 +314,10 @@ std::filesystem::path Spire::get_profile_path(const std::string& username) {
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
     const Ticker& ticker, Side side) {
-  auto position = [&] {
-    auto& blotter = userProfile.GetBlotterSettings().GetActiveBlotter();
-    if(auto position = blotter.GetOpenPositionsModel().GetOpenPosition(
-        ticker)) {
-      return position->m_inventory.m_position.m_quantity;
-    }
-    return Quantity(0);
-  }();
+  // TODO: Read the position from the new active blotter.
   return get_default_order_quantity(
     *userProfile.GetKeyBindings()->get_interactions_key_bindings(ticker),
-    ticker, position, side);
+    ticker, Quantity(0), side);
 }
 
 void Spire::open_web_portal(

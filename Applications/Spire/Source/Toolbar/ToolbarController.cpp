@@ -6,9 +6,6 @@
 #include <QScreen>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/CanvasView/CanvasWindow.hpp"
@@ -79,15 +76,7 @@ namespace {
     next_position.setY(next_height);
     toolbar_window.move(next_position);
     toolbar_window.show();
-    next_position.ry() += toolbar_window.frameSize().height();
-    auto& global_blotter = BlotterWindow::GetBlotterWindow(Ref(user_profile),
-      Ref(user_profile.GetBlotterSettings().GetConsolidatedBlotter()));
-    global_blotter.move(next_position);
-    global_blotter.show();
-    global_blotter.resize(global_blotter.width(),
-      resolution.height() - next_position.y() -
-        (global_blotter.frameSize().height() - global_blotter.size().height()));
-    windows.push_back(&global_blotter);
+    // TODO: Add the new global blotter to the default layout.
     return windows;
   }
 }
@@ -138,13 +127,6 @@ void ToolbarController::open() {
       std::unique_ptr<ToolbarWindow>(static_cast<ToolbarWindow*>(
         ToolbarWindowSettings().Reopen(Ref(*m_user_profile))));
   }
-  m_pinned_blotters = m_toolbar_window->get_pinned_blotters();
-  m_blotter_added_connection =
-    m_user_profile->GetBlotterSettings().ConnectBlotterAddedSignal(
-      std::bind_front(&ToolbarController::on_blotter_added, this));
-  m_blotter_removed_connection =
-    m_user_profile->GetBlotterSettings().ConnectBlotterRemovedSignal(
-      std::bind_front(&ToolbarController::on_blotter_removed, this));
   auto windows = std::vector<QWidget*>();
   if(!window_settings.empty()) {
     for(auto& settings : window_settings) {
@@ -180,8 +162,6 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_open, this));
   m_toolbar_window->connect_reopen_signal(
     std::bind_front(&ToolbarController::on_reopen, this));
-  m_toolbar_window->connect_open_blotter_signal(
-    std::bind_front(&ToolbarController::on_open_blotter, this));
   m_toolbar_window->connect_minimize_all_signal(
     std::bind_front(&ToolbarController::on_minimize_all, this));
   m_toolbar_window->connect_restore_all_signal(
@@ -307,7 +287,9 @@ void ToolbarController::open_profile_window() {
 }
 
 void ToolbarController::on_open(ToolbarWindow::WindowType window) {
-  if(window == ToolbarWindow::WindowType::CHART) {
+  if(window == ToolbarWindow::WindowType::BLOTTER) {
+    // TODO: Open the new global blotter.
+  } else if(window == ToolbarWindow::WindowType::CHART) {
     open_chart_window();
   } else if(window == ToolbarWindow::WindowType::BOOK_VIEW) {
     open_book_view_window();
@@ -332,6 +314,9 @@ void ToolbarController::on_open(ToolbarWindow::WindowType window) {
 
 void ToolbarController::on_reopen(const WindowSettings& settings) {
   auto window = settings.Reopen(Ref(*m_user_profile));
+  if(!window) {
+    return;
+  }
   auto recently_closed_windows = m_user_profile->GetRecentlyClosedWindows();
   for(auto i = 0; i != recently_closed_windows->get_size(); ++i) {
     if(&*recently_closed_windows->get(i) == &settings) {
@@ -353,13 +338,6 @@ void ToolbarController::on_reopen(const WindowSettings& settings) {
   } else {
     window->show();
   }
-}
-
-void ToolbarController::on_open_blotter(BlotterModel& blotter) {
-  auto& window =
-    BlotterWindow::GetBlotterWindow(Ref(*m_user_profile), Ref(blotter));
-  window.show();
-  window.activateWindow();
 }
 
 void ToolbarController::on_minimize_all() {
@@ -412,30 +390,7 @@ void ToolbarController::on_export(
 
 void ToolbarController::on_new_blotter(
     const QString& name, const DirectoryEntry& account) {
-  auto blotter = std::make_unique<BlotterModel>(name.toStdString(), account,
-    false, Ref(*m_user_profile),
-    m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
-    m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());
-  m_user_profile->GetBlotterSettings().AddBlotter(std::move(blotter));
-  auto& window = BlotterWindow::GetBlotterWindow(Ref(*m_user_profile),
-    Ref(*m_user_profile->GetBlotterSettings().GetAllBlotters().back()));
-  window.show();
-  window.activateWindow();
-}
-
-void ToolbarController::on_blotter_added(BlotterModel& blotter) {
-  if(!blotter.IsConsolidated()) {
-    m_pinned_blotters->push(&blotter);
-  }
-}
-
-void ToolbarController::on_blotter_removed(BlotterModel& blotter) {
-  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
-    if(m_pinned_blotters->get(i) == &blotter) {
-      m_pinned_blotters->remove(i);
-      break;
-    }
-  }
+  // TODO: Assign a unique name, create the new blotter, and open its window.
 }
 
 void ToolbarController::on_book_view_closed(BookViewController& controller) {

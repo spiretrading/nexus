@@ -10,7 +10,6 @@
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
-#include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
@@ -153,12 +152,6 @@ namespace Spire {
       const std::shared_ptr<TickerInfoQueryModel>&
         GetTickerInfoQueryModel() const;
 
-      /** Returns the BlotterSettings. */
-      const BlotterSettings& GetBlotterSettings() const;
-
-      /** Returns the BlotterSettings. */
-      BlotterSettings& GetBlotterSettings();
-
       /** Returns the SavedDashboards. */
       SavedDashboards& GetSavedDashboards();
 
@@ -278,7 +271,6 @@ namespace Spire {
       AdditionalTagDatabase m_additionalTagDatabase;
       std::shared_ptr<KeyBindingsModel> m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;
-      std::unique_ptr<BlotterSettings> m_blotterSettings;
       boost::optional<OrderImbalanceIndicatorWindowSettings>
         m_initialOrderImbalanceIndicatorWindowSettings;
       boost::optional<PortfolioViewerWindowSettings>

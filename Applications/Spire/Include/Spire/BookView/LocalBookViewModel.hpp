@@ -7,7 +7,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Spire/Blotter/OrderLogModel.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 
 namespace Spire {
@@ -32,7 +32,7 @@ namespace Spire {
       void update(const Nexus::TimeAndSale& time_and_sale);
 
       /** Adds an order. */
-      void add(const OrderLogModel::OrderEntry& order);
+      void add(const std::shared_ptr<Nexus::Order>& order);
 
       /**
        * Adds an order with a specified quantity and status.
@@ -40,11 +40,11 @@ namespace Spire {
        * @param quantity The remaining quantity.
        * @param status The order's status.
        */
-      void add(const OrderLogModel::OrderEntry& order, Nexus::Quantity quantity,
-        Nexus::OrderStatus status);
+      void add(const std::shared_ptr<Nexus::Order>& order,
+        Nexus::Quantity quantity, Nexus::OrderStatus status);
 
       /** Removes an order. */
-      void remove(const OrderLogModel::OrderEntry& order);
+      void remove(const std::shared_ptr<Nexus::Order>& order);
 
       /** Updates from an execution report. */
       void update(const Nexus::ExecutionReport& report);
