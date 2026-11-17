@@ -66,7 +66,8 @@ TEST_SUITE("TagBox") {
     tags->push("Brown");
     tags->push("Cherry");
     auto box = new TagBox(tags, std::make_shared<LocalTextModel>(), &window);
-    box->setGeometry(10, 10, 80, 30);
+    box->move(10, 10);
+    box->setFixedSize(80, box->minimumSizeHint().height());
     window.show();
     QApplication::processEvents();
     hover(window, *box);
@@ -101,7 +102,7 @@ TEST_SUITE("TagBox") {
     REQUIRE(!find_visible_tip());
     move_cursor(window, QPoint(390, 190));
     wait(400);
-    tags->push("Cherry");
+    tags->push("A tag wider than the entire box");
     QApplication::processEvents();
     hover(window, *box);
     auto tip = find_visible_tip();

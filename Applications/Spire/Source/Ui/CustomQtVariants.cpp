@@ -195,16 +195,18 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<DirectoryEntry>(value));
   } else if(value.type() == typeid(Money)) {
     return QVariant::fromValue(std::any_cast<Money>(value));
-  } else if(value.type() == typeid(Quantity)) {
-    return QVariant::fromValue(std::any_cast<Quantity>(value));
-  } else if(value.type() == typeid(Scope)) {
-    return QVariant::fromValue(std::any_cast<Scope>(value));
   } else if(value.type() == typeid(OrderStatus)) {
     return QVariant::fromValue(std::any_cast<OrderStatus>(value));
   } else if(value.type() == typeid(OrderType)) {
     return QVariant::fromValue(std::any_cast<OrderType>(value));
+  } else if(value.type() == typeid(PositionSide)) {
+    return QVariant::fromValue(std::any_cast<PositionSide>(value));
   } else if(value.type() == typeid(PositionSideToken)) {
     return QVariant::fromValue(std::any_cast<PositionSideToken>(value));
+  } else if(value.type() == typeid(Quantity)) {
+    return QVariant::fromValue(std::any_cast<Quantity>(value));
+  } else if(value.type() == typeid(Scope)) {
+    return QVariant::fromValue(std::any_cast<Scope>(value));
   } else if(value.type() == typeid(Side)) {
     return QVariant::fromValue(std::any_cast<Side>(value));
   } else if(value.type() == typeid(Ticker)) {
@@ -213,6 +215,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<TimeAndSale::Condition>(value));
   } else if(value.type() == typeid(TimeInForce)) {
     return QVariant::fromValue(std::any_cast<TimeInForce>(value));
+  } else if(value.type() == typeid(TradeSide)) {
+    return QVariant::fromValue(std::any_cast<TradeSide>(value));
   } else if(value.type() == typeid(Venue)) {
     return QVariant::fromValue(std::any_cast<Venue>(value));
   } else if(value.type() == typeid(QColor)) {
@@ -341,10 +345,10 @@ const QString& Spire::to_text(
 
 const QString& Spire::to_text(Side side, const QLocale& locale) {
   if(side == Side::ASK) {
-    static const auto value = QObject::tr("Sell");
+    static const auto value = QObject::tr("Ask");
     return value;
   } else if(side == Side::BID) {
-    static const auto value = QObject::tr("Buy");
+    static const auto value = QObject::tr("Bid");
     return value;
   } else {
     static const auto value = QObject::tr("None");
@@ -412,6 +416,30 @@ const QString& Spire::to_text(OrderType type, const QLocale& locale) {
     static const auto value = QObject::tr("");
     return value;
   }
+}
+
+const QString& Spire::to_text(PositionSide side, const QLocale& locale) {
+  if(side.m_side == Side::BID) {
+    static const auto text = QObject::tr("Long");
+    return text;
+  } else if(side.m_side == Side::ASK) {
+    static const auto text = QObject::tr("Short");
+    return text;
+  }
+  static const auto text = QObject::tr("Flat");
+  return text;
+}
+
+const QString& Spire::to_text(TradeSide side, const QLocale& locale) {
+  if(side.m_side == Side::BID) {
+    static const auto text = QObject::tr("Buy");
+    return text;
+  } else if(side.m_side == Side::ASK) {
+    static const auto text = QObject::tr("Sell");
+    return text;
+  }
+  static const auto text = QObject::tr("None");
+  return text;
 }
 
 QString Spire::to_text(PositionSideToken token, const QLocale& locale) {
@@ -520,14 +548,16 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<DirectoryEntry>(value), locale);
   } else if(value.type() == typeid(Money)) {
     return to_text(std::any_cast<Money>(value), locale);
-  } else if(value.type() == typeid(Quantity)) {
-    return to_text(std::any_cast<Quantity>(value), locale);
   } else if(value.type() == typeid(OrderStatus)) {
     return to_text(std::any_cast<OrderStatus>(value), locale);
   } else if(value.type() == typeid(OrderType)) {
     return to_text(std::any_cast<OrderType>(value), locale);
+  } else if(value.type() == typeid(PositionSide)) {
+    return to_text(std::any_cast<PositionSide>(value), locale);
   } else if(value.type() == typeid(PositionSideToken)) {
     return to_text(std::any_cast<PositionSideToken>(value), locale);
+  } else if(value.type() == typeid(Quantity)) {
+    return to_text(std::any_cast<Quantity>(value), locale);
   } else if(value.type() == typeid(Scope)) {
     return to_text(std::any_cast<Scope>(value), locale);
   } else if(value.type() == typeid(Side)) {
@@ -540,6 +570,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<TimeAndSale::Condition>(value), locale);
   } else if(value.type() == typeid(TimeInForce)) {
     return to_text(std::any_cast<TimeInForce>(value), locale);
+  } else if(value.type() == typeid(TradeSide)) {
+    return to_text(std::any_cast<TradeSide>(value), locale);
   } else if(value.type() == typeid(Venue)) {
     return to_text(std::any_cast<Venue>(value), locale);
   } else if(value.type() == typeid(QKeySequence)) {
@@ -584,8 +616,8 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
     optional<Quantity>, double, optional<double>, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,
-    optional<Money>, OrderStatus, OrderType, Side, Ticker, QKeySequence,
-    QString>(left, right);
+    optional<Money>, OrderStatus, OrderType, PositionSide, Side, Ticker,
+    TradeSide, QKeySequence, QString>(left, right);
 }
 
 bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
@@ -595,8 +627,8 @@ bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
     CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
-    PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
-    QString>(left, right);
+    PositionSide, PositionSideToken, Side, Ticker, TimeInForce, TradeSide,
+    Venue, QColor, QKeySequence, QString>(left, right);
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {
@@ -720,12 +752,36 @@ optional<OrderType> Spire::from_text(const QString& text) {
 
 template<>
 optional<Side> Spire::from_text(const QString& text) {
-  if(text == QObject::tr("Sell")) {
-    return optional<Side>(Side::ASK);
-  } else if(text == QObject::tr("Buy")) {
-    return optional<Side>(Side::BID);
+  if(text == QObject::tr("Ask") || text == QObject::tr("Sell")) {
+    return Side(Side::ASK);
+  } else if(text == QObject::tr("Bid") || text == QObject::tr("Buy")) {
+    return Side(Side::BID);
   } else if(text == QObject::tr("None")) {
-    return optional<Side>(Side::NONE);
+    return Side(Side::NONE);
+  }
+  return none;
+}
+
+template<>
+optional<PositionSide> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("Long")) {
+    return PositionSide(Side::BID);
+  } else if(text == QObject::tr("Short")) {
+    return PositionSide(Side::ASK);
+  } else if(text == QObject::tr("Flat")) {
+    return PositionSide(Side::NONE);
+  }
+  return none;
+}
+
+template<>
+optional<TradeSide> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("Buy")) {
+    return TradeSide(Side::BID);
+  } else if(text == QObject::tr("Sell")) {
+    return TradeSide(Side::ASK);
+  } else if(text == QObject::tr("None")) {
+    return TradeSide(Side::NONE);
   }
   return none;
 }

@@ -25,6 +25,24 @@
 
 namespace Spire {
 
+  /** Wraps a Side for display within the context of a position. */
+  struct PositionSide {
+
+    /** The underlying side. */
+    Nexus::Side m_side;
+
+    auto operator <=>(const PositionSide&) const = default;
+  };
+
+  /** Wraps a Side for display within the context of a trade. */
+  struct TradeSide {
+
+    /** The underlying side. */
+    Nexus::Side m_side;
+
+    auto operator <=>(const TradeSide&) const = default;
+  };
+
   /**
    * Wraps a Side so that it can be displayed within the context of a
    * position.
@@ -64,6 +82,9 @@ Q_DECLARE_METATYPE(Nexus::Venue);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
 Q_DECLARE_METATYPE(Spire::Task::State);
 #endif
+
+Q_DECLARE_METATYPE(Spire::PositionSide);
+Q_DECLARE_METATYPE(Spire::TradeSide);
 
 namespace Spire {
 
@@ -156,6 +177,14 @@ namespace Spire {
   /** Returns the text representation of an OrderType. */
   const QString& to_text(
     Nexus::OrderType type, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a PositionSide. */
+  const QString& to_text(
+    PositionSide side, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a TradeSide. */
+  const QString& to_text(
+    TradeSide side, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a PositionSideToken. */
   QString to_text(PositionSideToken token, const QLocale& locale = QLocale());
@@ -260,6 +289,12 @@ namespace Spire {
 
   template<>
   boost::optional<Nexus::Side> from_text(const QString& text);
+
+  template<>
+  boost::optional<PositionSide> from_text(const QString& text);
+
+  template<>
+  boost::optional<TradeSide> from_text(const QString& text);
 
   template<>
   boost::optional<Nexus::Ticker> from_text(const QString& text);
