@@ -41,7 +41,9 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = nexus.ServiceClients(username, password, address)
+  encryption = beam.AesGcmClientConfig(section['public_key'])
+  service_clients = nexus.ServiceClients(
+    username, password, address, encryption)
   nexus.load_definitions(service_clients.definitions_client)
   scope = nexus.parse_country_code(args.scope)
   if scope == nexus.CountryCode.NONE:

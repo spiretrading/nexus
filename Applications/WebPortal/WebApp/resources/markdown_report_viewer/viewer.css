@@ -1,0 +1,46 @@
+.spire-markdown-report article {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.spire-markdown-report article > :first-child {
+  margin-top: 0;
+}
+
+.spire-markdown-report article > :last-child {
+  margin-bottom: 0;
+}
+
+.spire-markdown-report pre {
+  overflow: auto;
+  padding: 12px;
+  background-color: #F5F5F5;
+}
+
+.spire-markdown-report code {
+  font-family: monospace;
+}
+
+.spire-markdown-report img {
+  max-width: 100%;
+  height: auto;
+}
+
+.spire-markdown-report table {
+  display: block;
+  max-width: 100%;
+  overflow: auto;
+  border-collapse: collapse;
+}
+
+.spire-markdown-report th,
+.spire-markdown-report td {
+  border: 1px solid #CCCCCC;
+  padding: 6px 12px;
+}
+
+.spire-markdown-report blockquote {
+  margin-left: 0;
+  padding-left: 16px;
+  border-left: 4px solid #CCCCCC;
+}

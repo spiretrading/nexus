@@ -1,0 +1,14 @@
+.spire-pdf-report .pdfViewer {
+  padding: 0;
+  background: transparent;
+}
+
+.spire-pdf-report .pdfViewer .page {
+  margin: 0 auto;
+  border: 0;
+  box-shadow: none;
+}
+
+.spire-pdf-report .pdfViewer .page.loadingIcon::after {
+  display: none;
+}

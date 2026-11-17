@@ -6,12 +6,14 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/ReportScheduleService.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   class ScheduleTimer {
@@ -231,7 +233,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     auto count = std::max(1u, std::thread::hardware_concurrency()) - 1;
@@ -283,7 +288,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 2,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto first = started.pop();
@@ -324,7 +332,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto job = started.pop();
@@ -383,7 +394,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     auto submission = ReportScheduleSubmission(ReportSubmission(
@@ -476,7 +490,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
@@ -518,7 +535,10 @@ TEST_SUITE("ReportScheduleService") {
     {
       auto timer = ScheduleTimer();
       auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
       auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
         TimeClient(&time), &timer);
       REQUIRE(backend.load_jobs().size() == 1);
@@ -534,7 +554,10 @@ TEST_SUITE("ReportScheduleService") {
     {
       auto timer = ScheduleTimer();
       auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
       auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
         TimeClient(&time), &timer);
       REQUIRE(
@@ -578,7 +601,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     REQUIRE(executions == 0);
@@ -618,7 +644,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     time.set(time_from_string("2026-10-09 12:00:00"));
@@ -677,7 +706,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(
       Ref(backend), Ref(worker), client, TimeClient(&time), &timer);
     for(auto& id : {"a", "b", "later"}) {
@@ -718,7 +750,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     REQUIRE(started.pop().m_id == older.m_id);
@@ -751,7 +786,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2024-03-03 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto first = wait_for_terminal(backend);
@@ -799,7 +837,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
@@ -832,7 +873,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto failed = wait_for_terminal(backend);
@@ -877,7 +921,10 @@ TEST_SUITE("ReportScheduleService") {
     auto timer = ScheduleTimer();
     auto retry_timer = TriggerTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      &retry_timer);
+      &retry_timer,
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     auto result = backend.m_failed_results.pop();
@@ -915,7 +962,10 @@ TEST_SUITE("ReportScheduleService") {
     auto time = FixedTimeClient(time_from_string("2026-10-06 12:00:00"));
     auto timer = ScheduleTimer();
     auto worker = ReportJobService(Ref(backend), TimeClient(&time), 1,
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto scheduler = ReportScheduleService(Ref(backend), Ref(worker), client,
       TimeClient(&time), &timer);
     REQUIRE(started.pop().m_id == job.m_id);

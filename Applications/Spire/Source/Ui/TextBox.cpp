@@ -325,6 +325,14 @@ class TextBox::LineEdit : public QLineEdit {
         auto painter = QPainter(this);
         painter.setPen(m_placeholder_style.m_text_color);
         painter.setFont(m_placeholder_style.m_font);
+        if((m_placeholder_style.m_alignment & Qt::AlignVCenter) &&
+            !(alignment() & (Qt::AlignTop | Qt::AlignBottom))) {
+          auto text_metrics = QFontMetricsF(font());
+          auto placeholder_metrics = QFontMetricsF(m_placeholder_style.m_font);
+          painter.translate(0, (text_metrics.ascent() -
+            text_metrics.descent() - placeholder_metrics.ascent() +
+            placeholder_metrics.descent()) / 2);
+        }
         painter.drawText(contentsRect(),
           m_placeholder_style.m_alignment, m_elided_placeholder);
       }
@@ -356,8 +364,8 @@ class TextBox::LineEdit : public QLineEdit {
     scoped_connection m_highlight_connection;
 
     void elide_placeholder_text() {
-      m_elided_placeholder =
-        fontMetrics().elidedText(m_placeholder, Qt::ElideRight, width());
+      m_elided_placeholder = QFontMetrics(m_placeholder_style.m_font).
+        elidedText(m_placeholder, Qt::ElideRight, width());
     }
 
     bool is_placeholder_visible() const {
@@ -440,6 +448,7 @@ class TextBox::LineEdit : public QLineEdit {
       if(*font_size) {
         m_placeholder_style.m_font.setPixelSize(*(*font_size));
       }
+      elide_placeholder_text();
       if(is_placeholder_visible()) {
         update();
       }

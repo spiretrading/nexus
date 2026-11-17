@@ -55,6 +55,7 @@ namespace {
           "servers:\n"
           "  - name: Local Environment\n"
           "    address: 127.0.0.1:20000\n"
+          "    public_key: \"\"\n"
           "...\n";
       }
       auto config_stream = std::ifstream(config_path);
@@ -68,7 +69,8 @@ namespace {
     for(auto server : server_list) {
       auto name = extract<std::string>(server, "name");
       auto address = extract<IpAddress>(server, "address");
-      servers.push_back({name, address});
+      servers.emplace_back(name, address,
+        AesGcmClientConfig(extract<std::string>(server, "public_key")));
     }
     return servers;
   }
@@ -143,6 +145,7 @@ int main(int argc, char* argv[]) {
       "servers:\n"
       "  - name: Local Environment\n"
       "    address: 127.0.0.1:20000\n"
+      "    public_key: \"\"\n"
       "...\n";
   }
   auto config = YAML::Node();
@@ -171,10 +174,11 @@ int main(int argc, char* argv[]) {
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
   auto toolbar_controller = optional<ToolbarController>();
   auto service_client_factory =
-    [&] (const auto& username, const auto& password, const auto& address)  {
+    [&] (const auto& username, const auto& password, const auto& address,
+        const auto& encryption) {
       auto service_locator_client =
         std::make_unique<ApplicationServiceLocatorClient>(
-          username, password, address);
+          username, password, address, encryption);
       auto clients =
         std::make_unique<SpireClients>(std::move(service_locator_client));
       return Clients(std::move(clients));
@@ -281,10 +285,19 @@ int main(int argc, char* argv[]) {
     sign_in_controller->connect_signed_in_signal(sign_in_handler);
   } else {
     try {
+      auto address = IpAddress(host_argument.getValue(),
+        static_cast<unsigned short>(port_argument.getValue()));
+      auto encryption = [&] {
+        for(auto& server : servers) {
+          if(server.m_address == address) {
+            return server.m_encryption;
+          }
+        }
+        throw SignInException("Server not found in configuration.");
+      }();
       auto service_clients = service_client_factory(
         username_argument.getValue(), password_argument.getValue(),
-          IpAddress(host_argument.getValue(),
-            static_cast<unsigned short>(port_argument.getValue())));
+        address, encryption);
       sign_in_handler(std::move(service_clients));
       if(key_argument.isSet()) {
         write_to_shared_memory(key_argument.getValue(), "1\n");

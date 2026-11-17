@@ -6,6 +6,7 @@
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/DateRule.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/ReportSubmission.hpp"
@@ -368,7 +369,10 @@ output: {media_type: text/plain, extension: txt}
     auto reports = LocalReportService({definition}, client,
       [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     session->set_account(client.get_account());
@@ -574,7 +578,10 @@ output: {media_type: text/plain, extension: txt}
       [] (const auto&, auto) { return 0; },
       TimeClient(std::in_place_type<LocalTimeClient>), 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);
     auto session = sessions.create();
     auto body = JsonObject();
@@ -651,7 +658,10 @@ output: {media_type: text/plain, extension: txt}
     auto local = LocalReportService({definition}, client,
       [&] (const auto&, auto) { ++executions; return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     auto submission = ReportScheduleSubmission(
       ReportSubmission("example", make_parameters(client.get_account()),
@@ -724,7 +734,10 @@ output: {media_type: text/plain, extension: txt}
     auto reports = LocalReportService({make_definition()}, client,
       [] (const auto&, auto) { return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto sessions = WebSessionStore<WebPortalSession>();
     auto session = sessions.create();
     auto servlet = ReportingWebServlet(Ref(sessions), &reports);

@@ -23,6 +23,7 @@ void local_resources() {
     ":/Fonts/Roboto/RobotoCondensed-Light.ttf" <<
     ":/Fonts/Roboto/RobotoCondensed-LightItalic.ttf" <<
     ":/Fonts/Roboto/RobotoCondensed-Regular.ttf" <<
+    ":/Fonts/Roboto/RobotoMono-Regular.ttf" <<
     ":/Fonts/Roboto/Roboto-Italic.ttf" <<
     ":/Fonts/Roboto/Roboto-Light.ttf" <<
     ":/Fonts/Roboto/Roboto-LightItalic.ttf" <<

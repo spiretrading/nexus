@@ -4,6 +4,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -44,7 +45,10 @@ TEST_SUITE("ReportSharing") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     job.m_recipients = {existing};
     local.store(job);
@@ -109,7 +113,10 @@ TEST_SUITE("ReportSharing") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto service = ReportService(&local);
     auto job = make_job(client.get_account());
     local.store(job);
@@ -165,7 +172,10 @@ TEST_SUITE("ReportSharing") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(alice);
     local.store(job);
     REQUIRE_THROWS_AS(
@@ -188,7 +198,10 @@ TEST_SUITE("ReportSharing") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     local.store(job);
     auto ready = std::barrier(3);

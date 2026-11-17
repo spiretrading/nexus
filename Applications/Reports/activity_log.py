@@ -98,10 +98,11 @@ def main():
   address = parse_ip_address(config['service_locator'])
   username = config['username']
   password = config['password']
+  encryption = beam.AesGcmClientConfig(config['public_key'])
   start_date = beam.to_utc_time(args.start)
   end_date = beam.to_utc_time(args.end)
   service_locator_client = beam.ApplicationServiceLocatorClient(
-    username, password, address)
+    username, password, address, encryption)
   definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
   nexus.load_definitions(definitions_client)

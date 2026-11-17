@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include "WebPortal/ReportAccess.hpp"
 #include "WebPortal/ReportScheduleService.hpp"
 #include "WebPortal/ReportService.hpp"
@@ -41,11 +42,17 @@ namespace Nexus {
        * @param max_concurrency The positive global execution limit.
        * @param timer The timer controlling automatic schedule checks.
        * @param retry_timer The timer used to retry saving completed jobs.
+       * @param administration_client The client used to send notifications.
+       * @param notification_timer The timer checking notification deadlines.
+       * @param notification_delay The grace period after saving a result.
        */
       LocalReportService(std::vector<ReportDefinition> definitions,
         Beam::ServiceLocatorClient client, Executor executor,
         Beam::TimeClient time_client, std::size_t max_concurrency,
-        Beam::Timer timer, Beam::Timer retry_timer);
+        Beam::Timer timer, Beam::Timer retry_timer,
+        AdministrationClient administration_client,
+        Beam::Timer notification_timer,
+        boost::posix_time::time_duration notification_delay);
 
       ~LocalReportService();
 
@@ -104,9 +111,8 @@ namespace Nexus {
       std::vector<ReportSchedule> m_schedules;
       std::unordered_map<std::string, Beam::SharedBuffer> m_outputs;
       Beam::OpenState m_open_state;
-      std::unique_ptr<ReportJobService<
-        LocalReportService, Beam::TimeClient>> m_service;
-      std::optional<ReportScheduleService<LocalReportService>> m_scheduler;
+      ReportJobService<LocalReportService, Beam::TimeClient> m_service;
+      ReportScheduleService<LocalReportService> m_scheduler;
 
       LocalReportService(const LocalReportService&) = delete;
       LocalReportService& operator =(const LocalReportService&) = delete;
@@ -115,26 +121,24 @@ namespace Nexus {
 
   template<IsReportExecutor E>
   LocalReportService<E>::LocalReportService(
-      std::vector<ReportDefinition> definitions,
-      Beam::ServiceLocatorClient client, Executor executor,
-      Beam::TimeClient time_client, std::size_t max_concurrency,
-      Beam::Timer timer, Beam::Timer retry_timer)
-      : m_executor(std::move(executor)),
-        m_client(std::move(client)),
-        m_time_client(std::move(time_client)),
-        m_definitions(std::move(definitions)) {
-    try {
-      m_service = std::make_unique<
-        ReportJobService<LocalReportService, Beam::TimeClient>>(
-          Beam::Ref(*this), m_time_client, max_concurrency,
-          std::move(retry_timer));
-      m_scheduler.emplace(Beam::Ref(*this), Beam::Ref(*m_service), m_client,
-        m_time_client, std::move(timer));
-    } catch(const std::exception&) {
-      m_open_state.close();
-      throw;
-    }
-  }
+    std::vector<ReportDefinition> definitions,
+    Beam::ServiceLocatorClient client, Executor executor,
+    Beam::TimeClient time_client, std::size_t max_concurrency,
+    Beam::Timer timer, Beam::Timer retry_timer,
+    AdministrationClient administration_client,
+    Beam::Timer notification_timer,
+    boost::posix_time::time_duration notification_delay)
+BEAM_SUPPRESS_THIS_INITIALIZER()
+    : m_executor(std::move(executor)),
+      m_client(std::move(client)),
+      m_time_client(std::move(time_client)),
+      m_definitions(std::move(definitions)),
+      m_service(Beam::Ref(*this), m_time_client, max_concurrency,
+        std::move(retry_timer), std::move(administration_client),
+        std::move(notification_timer), notification_delay),
+      m_scheduler(Beam::Ref(*this), Beam::Ref(m_service), m_client,
+        m_time_client, std::move(timer)) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<IsReportExecutor E>
   LocalReportService<E>::~LocalReportService() {
@@ -207,7 +211,9 @@ namespace Nexus {
     if(!job || !access.is_visible(*job)) {
       throw ReportNotFoundException();
     }
-    return make_report_detail(*job);
+    auto report = make_report_detail(*job);
+    m_service.mark_loaded(account, *job);
+    return report;
   }
 
   template<IsReportExecutor E>
@@ -272,7 +278,7 @@ namespace Nexus {
   std::string LocalReportService<E>::submit(const Beam::DirectoryEntry& account,
       const ReportSubmission& submission) {
     m_open_state.ensure_open();
-    return m_service->submit(prepare_report_job(
+    return m_service.submit(prepare_report_job(
       load_definitions(), account, submission, m_client, convert_report_time(
         m_time_client.get_time(), "UTC", submission.m_time_zone)));
   }
@@ -282,7 +288,7 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::vector<std::string>& ids,
       const std::vector<Beam::DirectoryEntry>& recipients) {
     m_open_state.ensure_open();
-    m_service->share(
+    m_service.share(
       account, ids, prepare_report_recipients(recipients, account, m_client));
   }
 
@@ -290,14 +296,14 @@ namespace Nexus {
   void LocalReportService<E>::cancel(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_open_state.ensure_open();
-    m_service->cancel(account, ids);
+    m_service.cancel(account, ids);
   }
 
   template<IsReportExecutor E>
   void LocalReportService<E>::retry(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_open_state.ensure_open();
-    m_service->retry(account, ids, [&] (auto& jobs) {
+    m_service.retry(account, ids, [&] (auto& jobs) {
       prepare_report_retries(jobs, load_definitions(account), m_client);
     });
   }
@@ -312,7 +318,7 @@ namespace Nexus {
   void LocalReportService<E>::remove(const Beam::DirectoryEntry& account,
       const std::vector<std::string>& ids) {
     m_open_state.ensure_open();
-    m_service->remove(account, ids);
+    m_service.remove(account, ids);
   }
 
   template<IsReportExecutor E>
@@ -362,7 +368,7 @@ namespace Nexus {
   std::string LocalReportService<E>::submit(const Beam::DirectoryEntry& account,
       const ReportScheduleSubmission& submission) {
     m_open_state.ensure_open();
-    return m_scheduler->submit(account, submission);
+    return m_scheduler.submit(account, submission);
   }
 
   template<IsReportExecutor E>
@@ -370,14 +376,14 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& id,
       const ReportScheduleSubmission& submission) {
     m_open_state.ensure_open();
-    m_scheduler->update(account, id, submission);
+    m_scheduler.update(account, id, submission);
   }
 
   template<IsReportExecutor E>
   void LocalReportService<E>::remove_schedule(
       const Beam::DirectoryEntry& account, const std::string& id) {
     m_open_state.ensure_open();
-    m_scheduler->remove(account, id);
+    m_scheduler.remove(account, id);
   }
 
   template<IsReportExecutor E>
@@ -385,8 +391,8 @@ namespace Nexus {
     if(m_open_state.set_closing()) {
       return;
     }
-    m_scheduler->close();
-    m_service->close();
+    m_scheduler.close();
+    m_service.close();
     m_open_state.close();
   }
 

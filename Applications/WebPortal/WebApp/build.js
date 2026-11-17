@@ -362,7 +362,7 @@ function copyOutput(from, to, directory) {
   fs.copyFileSync(from, to);
 }
 
-function resources() {
+async function resources() {
   const directory = path.join(portal, 'resources');
   for(const filename of collect(directory)) {
     if(fs.statSync(filename).isFile()) {
@@ -372,6 +372,96 @@ function resources() {
   }
   copyOutput(path.join(source, 'source/index.html'),
     path.join(root, 'application/index.html'), root);
+  const manifest =
+    JSON.parse(fs.readFileSync(path.join(source, 'package.json')));
+  const viewers = {};
+  if(manifest.config?.pdfjs) {
+    const distribution = path.join(root, 'node_modules/pdfjs-dist');
+    const files = ['LICENSE', 'build/pdf.worker.mjs', 'web/pdf_viewer.css'].
+      map(filename => path.join(distribution, filename));
+    for(const directory of ['cmaps', 'iccs', 'standard_fonts', 'wasm',
+        'web/images']) {
+      files.push(...collect(path.join(distribution, directory)));
+    }
+    for(const filename of files) {
+      if(fs.statSync(filename).isFile() && !filename.endsWith('.map')) {
+        const relative = path.relative(distribution, filename);
+        const output = path.join(root, 'application/resources/pdfjs', relative);
+        copyOutput(filename, output, root);
+        if(relative == path.join('web', 'pdf_viewer.css')) {
+          fs.writeFileSync(output, fs.readFileSync(output, 'utf8').
+            replaceAll(':root', '.spire-pdf-report'));
+        }
+      }
+    }
+    viewers['report_viewer/viewer'] =
+      path.join(portal, 'resources/report_viewer/viewer.js');
+    viewers['report_viewer/worker'] =
+      path.join(distribution, 'build/pdf.worker.mjs');
+  }
+  if(manifest.config?.csv) {
+    viewers['csv_report_viewer/viewer'] =
+      path.join(portal, 'resources/csv_report_viewer/viewer.js');
+    for(const [name, license] of [['ag-grid-community', 'LICENSE.txt'],
+        ['ag-stack', 'LICENSE.txt'], ['papaparse', 'LICENSE']]) {
+      copyOutput(path.join(root, 'node_modules', name, license),
+        path.join(root, 'application/resources/csv_report_viewer',
+          name + '.LICENSE.txt'), root);
+    }
+  }
+  if(manifest.config?.markdown) {
+    viewers['markdown_report_viewer/viewer'] =
+      path.join(portal, 'resources/markdown_report_viewer/viewer.js');
+    for(const name of ['dompurify', 'marked']) {
+      copyOutput(path.join(root, 'node_modules', name, 'LICENSE'),
+        path.join(root, 'application/resources/markdown_report_viewer',
+          name + '.LICENSE.txt'), root);
+    }
+  }
+  if(manifest.config?.json) {
+    viewers['json_report_viewer/viewer'] =
+      path.join(portal, 'resources/json_report_viewer/viewer.js');
+    for(const name of ['vanilla-jsoneditor', 'lossless-json']) {
+      copyOutput(path.join(root, 'node_modules', name, 'LICENSE.md'),
+        path.join(root, 'application/resources/json_report_viewer',
+          name + '.LICENSE.txt'), root);
+    }
+  }
+  if(manifest.config?.text) {
+    viewers['text_report_viewer/viewer'] =
+      path.join(portal, 'resources/text_report_viewer/viewer.js');
+  }
+  if(Object.keys(viewers).length !== 0) {
+    const webpack = require(path.join(root, 'node_modules/webpack'));
+    await new Promise((resolve, reject) => {
+      webpack({
+        mode: 'production',
+        devtool: false,
+        entry: viewers,
+        output: {
+          path: path.join(root, 'application/resources'),
+          filename: '[name].js'
+        },
+        resolve: {
+          modules: [path.join(root, 'node_modules')]
+        },
+        performance: {
+          hints: false
+        }
+      }, (error, stats) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        console.log(stats.toString({colors: false}));
+        if(stats.hasErrors()) {
+          reject(new Error('Failed to build the report viewers.'));
+          return;
+        }
+        resolve();
+      });
+    });
+  }
 }
 
 function deploy() {
@@ -439,7 +529,7 @@ function deploy() {
   save();
 }
 
-function build() {
+async function build() {
   configure();
   const dependencies = buildDependencies();
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json')));
@@ -504,7 +594,7 @@ function build() {
       }
       run(process.execPath, ['node_modules/webpack/bin/webpack.js'], root,
         { ...process.env, PROD_ENV: production });
-      resources();
+      await resources();
     } else {
       npm(['run', 'build']);
     }
@@ -604,7 +694,7 @@ function orchestrate() {
   }
 }
 
-function main() {
+async function main() {
   if(!['portal', 'library', 'application', 'tests', 'dali'].includes(project) ||
       !['build', 'configure', 'setup'].includes(command)) {
     throw new Error('Invalid project or command.');
@@ -657,13 +747,11 @@ function main() {
   } else if(action == 'clean' || action == 'reset') {
     clean();
   } else {
-    build();
+    await build();
   }
 }
 
-try {
-  main();
-} catch(error) {
+main().catch(error => {
   console.error(error.message);
   process.exitCode = 1;
-}
+});

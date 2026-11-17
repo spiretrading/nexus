@@ -7,6 +7,7 @@ service_locator:
   address: $service_locator_address
   username: definitions_service
   password: $admin_password
+  public_key: $service_locator_public_key
 
 minimum_spire_version: "1"
 organization: "Spire Trading Inc."

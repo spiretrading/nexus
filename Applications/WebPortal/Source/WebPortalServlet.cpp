@@ -14,6 +14,11 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 
+namespace {
+  const auto REPORT_NOTIFICATION_CHECK_INTERVAL = seconds(1);
+  const auto REPORT_NOTIFICATION_DELAY = seconds(5);
+}
+
 WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
   ServiceLocatorWebServlet::ClientsBuilder clients_builder,
   ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
@@ -29,8 +34,11 @@ WebPortalServlet::WebPortalServlet(std::filesystem::path web_app_directory,
       std::in_place_type<FileReportService>, "report_definitions", "reports",
       clients.get_service_locator_client(), clients.get_time_client(),
       report_concurrency, Timer(std::in_place_type<LiveTimer>, seconds(1)),
-      Timer(std::in_place_type<LiveTimer>, seconds(1)))),
-    m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
+      Timer(std::in_place_type<LiveTimer>, seconds(1)),
+      clients.get_administration_client(),
+      Timer(std::in_place_type<LiveTimer>, REPORT_NOTIFICATION_CHECK_INTERVAL),
+      REPORT_NOTIFICATION_DELAY)),
+    m_risk_servlet(Ref(m_sessions)) {}
 
 WebPortalServlet::~WebPortalServlet() {
   close();
@@ -74,6 +82,8 @@ std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
     slots.end(), administration_slots.begin(), administration_slots.end());
   auto risk_slots = m_risk_servlet.get_web_socket_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
+  auto market_data_slots = m_market_data_servlet.get_web_socket_slots();
+  slots.insert(slots.end(), market_data_slots.begin(), market_data_slots.end());
   return slots;
 }
 

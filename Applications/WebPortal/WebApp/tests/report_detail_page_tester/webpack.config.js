@@ -18,6 +18,10 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.pdf$/,
+        type: 'asset/inline'
+      },
+      {
         test: /\.tsx?$/,
         loader: 'ts-loader'
       },

@@ -2,6 +2,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -71,7 +72,10 @@ TEST_SUITE("ReportDownload") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     local.store(job);
     job.m_id = "second";
@@ -96,7 +100,10 @@ TEST_SUITE("ReportDownload") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     local.store(job);
     auto bytes = "A\0B\r\n"s;
@@ -154,7 +161,10 @@ TEST_SUITE("ReportDownload") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(bob);
     job.m_recipients = {group};
     local.store(job);
@@ -202,7 +212,10 @@ TEST_SUITE("ReportDownload") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     local.store(job);
     auto content = from<SharedBuffer>("original");
@@ -226,7 +239,10 @@ TEST_SUITE("ReportDownload") {
       LocalReportService({}, client, [] (const auto&, auto) { return 0; },
         TimeClient(std::in_place_type<LocalTimeClient>), 1,
         Timer(std::in_place_type<TriggerTimer>),
-        Timer(std::in_place_type<TriggerTimer>));
+        Timer(std::in_place_type<TriggerTimer>),
+        AdministrationClient(std::in_place_type<TestAdministrationClient>,
+          std::make_shared<TestAdministrationClient::Queue>()),
+        Timer(std::in_place_type<TriggerTimer>), seconds(5));
     auto job = make_job(client.get_account());
     job.m_id = "report /?";
     job.m_definition.m_id = "type\"\r\n";

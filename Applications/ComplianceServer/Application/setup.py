@@ -22,6 +22,8 @@ def main():
     required=False)
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
+  parser.add_argument('--public_key', type=Path,
+    help='ServiceLocator public key PEM file.', required=True)
   parser.add_argument('-p', '--password', type=str, help='Password.',
     required=True)
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
@@ -41,6 +43,8 @@ def main():
     ('%s:20000' % variables['local_interface']) if args.address is None else \
     args.address
   variables['admin_password'] = args.password
+  variables['service_locator_public_key'] = args.public_key.read_text(
+    encoding='utf-8-sig')
   variables['mysql_address'] = args.mysql_address
   variables['mysql_username'] = args.mysql_username
   variables['mysql_password'] = \

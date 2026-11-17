@@ -115,9 +115,11 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
+  encryption = beam.AesGcmClientConfig(section['public_key'])
   service_clients = []
   for i in range(args.connections):
-    service_clients.append(nexus.ServiceClients(username, password, address))
+    service_clients.append(
+      nexus.ServiceClients(username, password, address, encryption))
   nexus.load_definitions(service_clients[0].definitions_client)
   if args.order:
     cancel_order_by_id(service_clients[0], args.order, args.message)

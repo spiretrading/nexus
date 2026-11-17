@@ -47,18 +47,19 @@ def setup_application(root, application, arg_vars, *args):
 
 def setup_server(root, server, arg_vars):
   setup_application(root, server, arg_vars,
-    'local', 'world', 'address', 'password')
+    'local', 'world', 'address', 'password', 'public_key')
 
 
 def setup_server_with_mysql(root, server, arg_vars):
   setup_application(root, server, arg_vars,
-    'local', 'world', 'address', 'password', 'mysql_address', 'mysql_username',
-    'mysql_password', 'mysql_schema')
+    'local', 'world', 'address', 'password', 'public_key', 'mysql_address',
+    'mysql_username', 'mysql_password', 'mysql_schema')
 
 
 def setup_service_locator(root, arg_vars):
   setup_application(root, 'ServiceLocator', arg_vars, 'local', 'world',
-    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
+    'private_key', 'mysql_address', 'mysql_username', 'mysql_password',
+    'mysql_schema')
 
 
 def setup_beam(root, dependencies):
@@ -82,6 +83,12 @@ def main():
     required=False)
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
+  parser.add_argument('--public_key', type=Path,
+    help='ServiceLocator public key PEM file '
+      '(defaults to service_locator_public.pem in its application folder).')
+  parser.add_argument('--private_key', type=Path,
+    help='ServiceLocator private key PEM file '
+      '(defaults to service_locator_private.pem in its application folder).')
   parser.add_argument('-p', '--password', type=str, help='Password.',
     required=True)
   parser.add_argument('-ma', '--mysql_address', type=str,
@@ -114,6 +121,13 @@ def main():
       parser.error(
         'Missing application setup script: ' + str(path / 'setup.py'))
   setup_beam(root, dependencies)
+  service_locator = find_application(root, 'ServiceLocator')
+  if arg_vars['public_key'] is None:
+    arg_vars['public_key'] = service_locator / 'service_locator_public.pem'
+  if arg_vars['private_key'] is None:
+    arg_vars['private_key'] = service_locator / 'service_locator_private.pem'
+  arg_vars['public_key'] = arg_vars['public_key'].expanduser().resolve()
+  arg_vars['private_key'] = arg_vars['private_key'].expanduser().resolve()
   setup_service_locator(root, arg_vars)
   for server in mysql_servers:
     setup_server_with_mysql(root, server, arg_vars)

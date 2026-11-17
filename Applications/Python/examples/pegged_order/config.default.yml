@@ -3,4 +3,5 @@ service_locator:
   address: $service_locator_address
   username: $username
   password: $password
+  public_key: $service_locator_public_key
 ...

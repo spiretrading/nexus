@@ -3,6 +3,7 @@ service_locator:
   address: $service_locator_address
   username: market_data_feed
   password: $admin_password
+  public_key: $service_locator_public_key
 
 feeds: 1
 bbo_period: 1s

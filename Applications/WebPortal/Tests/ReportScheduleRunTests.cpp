@@ -3,6 +3,7 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "WebPortal/LocalReportService.hpp"
 #include "WebPortal/Tests/ReportingWebServletTests.hpp"
 
@@ -39,7 +40,10 @@ TEST_SUITE("ReportScheduleRun") {
     auto service = LocalReportService({definition}, client,
       [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 1,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     service.store(schedule);
     auto id = run_schedule(service, schedule.m_account, schedule.m_id);
     auto job = started.pop();
@@ -69,7 +73,10 @@ TEST_SUITE("ReportScheduleRun") {
     auto local = LocalReportService({definition}, client,
       [&] (const auto& job, auto) { started.push(job); return 0; }, &time, 2,
       Timer(std::in_place_type<TriggerTimer>),
-      Timer(std::in_place_type<TriggerTimer>));
+      Timer(std::in_place_type<TriggerTimer>),
+      AdministrationClient(std::in_place_type<TestAdministrationClient>,
+        std::make_shared<TestAdministrationClient::Queue>()),
+      Timer(std::in_place_type<TriggerTimer>), seconds(5));
     local.store(schedule);
     auto service = ReportService(&local);
     auto id = run_schedule(service, schedule.m_account, schedule.m_id);

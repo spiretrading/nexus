@@ -3,6 +3,7 @@ import { matchPath, RouteComponentProps } from 'react-router-dom';
 import { DisplaySize } from '../../display_size';
 import { PageNotFoundPage } from '../page_not_found_page';
 import { ReportController } from './report_controller';
+import { ReportDetailModel, ReportViewer } from './report_detail_page';
 import { ReportModel } from './report_model';
 
 interface Properties extends RouteComponentProps {
@@ -31,8 +32,8 @@ export class ReportRouter extends React.Component<Properties> {
         }}>
       <ReportController model={this.props.model} page={route.page}
         reportId={route.id} scheduleId={route.id} basePath='/reports'
-        onNewReport={this.onNewReport} onNavigate={this.onNavigate}
-        onActionError={this.onActionError}/>
+        renderReportContent={renderReportContent} onNewReport={this.onNewReport}
+        onNavigate={this.onNavigate} onActionError={this.onActionError}/>
     </div>;
   }
 
@@ -80,6 +81,11 @@ export class ReportRouter extends React.Component<Properties> {
   private onActionError = (error: unknown) => {
     console.error(error);
   };
+}
+
+function renderReportContent(report: ReportDetailModel.Report):
+    React.ReactNode {
+  return <ReportViewer report={report}/>;
 }
 
 function matchReport(path: string): {page: ReportController.Page; id?: string} {

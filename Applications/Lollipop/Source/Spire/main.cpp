@@ -60,6 +60,7 @@ namespace {
           "servers:\n"
           "  - name: Local Environment\n"
           "    address: 127.0.0.1:20000\n"
+          "    public_key: \"\"\n"
           "...";
       }
       auto configStream = std::ifstream(configPath);
@@ -73,7 +74,8 @@ namespace {
     for(auto server : serverList) {
       auto name = extract<std::string>(server, "name");
       auto address = extract<IpAddress>(server, "address");
-      servers.push_back({name, address});
+      servers.emplace_back(name, address,
+        AesGcmClientConfig(extract<std::string>(server, "public_key")));
     }
     return servers;
   }
@@ -202,6 +204,7 @@ int main(int argc, char* argv[]) {
       "servers:\n"
       "  - name: Local Environment\n"
       "    address: 127.0.0.1:20000\n"
+      "    public_key: \"\"\n"
       "...\n";
   }
   auto config = YAML::Node();
@@ -243,12 +246,22 @@ int main(int argc, char* argv[]) {
     }
   } else {
     try {
-      auto loader = QtPromise([&] {
+      auto address = IpAddress(hostArgument.getValue(),
+        static_cast<unsigned short>(portArgument.getValue()));
+      auto encryption = [&] {
+        for(auto& server : servers) {
+          if(server.m_address == address) {
+            return server.m_encryption;
+          }
+        }
+        throw std::runtime_error("Server not found in configuration.");
+      }();
+      auto username = usernameArgument.getValue();
+      auto password = passwordArgument.getValue();
+      auto loader = QtPromise([=] {
         auto service_locator_client =
           std::make_unique<ApplicationServiceLocatorClient>(
-            usernameArgument.getValue(), passwordArgument.getValue(),
-            IpAddress(hostArgument.getValue(),
-              static_cast<unsigned short>(portArgument.getValue())));
+            username, password, address, encryption);
         auto service_clients = std::make_unique<SpireClients>(
           std::move(service_locator_client));
         return Clients(std::move(service_clients));
