@@ -10,5 +10,6 @@ BlotterTasksView::BlotterTasksView(
     : QWidget(parent) {
   auto layout = make_vbox_layout(this);
   layout->addWidget(new BlotterTasksCommandBar(model));
-  layout->addWidget(new BlotterTasksTableView(model->get_tasks()), 1);
+  layout->addWidget(new BlotterTasksTableView(
+    model->get_tasks(), model->get_task_monitors()), 1);
 }
