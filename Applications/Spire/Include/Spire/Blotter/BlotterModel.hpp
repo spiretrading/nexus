@@ -1,6 +1,7 @@
 #ifndef SPIRE_BLOTTER_MODEL_HPP
 #define SPIRE_BLOTTER_MODEL_HPP
 #include "Spire/Blotter/BlotterTaskEntry.hpp"
+#include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
@@ -21,6 +22,10 @@ namespace Spire {
 
       /** Returns the blotter's order execution task entries. */
       virtual const std::shared_ptr<TasksModel>& get_tasks() const = 0;
+
+      /** Returns the monitor definitions in task column order. */
+      virtual const std::shared_ptr<TaskMonitorsModel>&
+        get_task_monitors() const = 0;
   };
 }
 

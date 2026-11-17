@@ -3,9 +3,8 @@
 #include <any>
 #include <memory>
 #include <vector>
-#include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
 #include <QTimer>
-#include "Spire/Async/EventHandler.hpp"
+#include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -42,16 +41,15 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const;
 
     private:
+      struct Evaluation;
       std::shared_ptr<Task> m_task;
-      std::unique_ptr<CanvasNode> m_observer;
+      std::shared_ptr<Evaluation> m_evaluation;
       std::vector<const CanvasNode*> m_dependencies;
       std::vector<const CanvasNode*> m_remaining_dependencies;
-      bool m_is_translated;
       std::any m_value;
       mutable UpdateSignal m_update_signal;
       QTimer m_translate_timer;
-      Beam::ScopedSlotAdaptor m_callbacks;
-      EventHandler m_event_handler;
+      QtTaskQueue m_events;
 
       CanvasObserver(const CanvasObserver&) = delete;
       CanvasObserver& operator =(const CanvasObserver&) = delete;

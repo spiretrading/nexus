@@ -24,6 +24,13 @@ CanvasNodeTranslationContext::CanvasNodeTranslationContext(
     m_executor(m_parent->m_executor),
     m_orderPublisher(m_parent->m_orderPublisher) {}
 
+std::unique_ptr<CanvasNodeTranslationContext>
+    CanvasNodeTranslationContext::make_isolated_context() {
+  auto context = std::make_unique<CanvasNodeTranslationContext>(Ref(*this));
+  context->m_parent = nullptr;
+  return context;
+}
+
 const UserProfile& CanvasNodeTranslationContext::GetUserProfile() const {
   return *m_userProfile;
 }

@@ -14,28 +14,33 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 
+using namespace Aspen;
 using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  struct ObserverTranslator {
+struct CanvasObserver::Evaluation {
+  struct Translator {
     using type = ValueTypes;
 
     template<typename T>
-    Aspen::Box<void> operator ()(const Translation& translation,
-        const std::function<void (const std::any& value)>& callback) const {
-      return Aspen::box(Aspen::lift([=] (const T& value) {
-        callback(value);
-      }, translation.Extract<Aspen::Box<T>>()));
+    Box<void> operator ()(const Translation& translation,
+        const std::shared_ptr<Evaluation>& evaluation) const {
+      return box(lift([=] (const T& value) {
+        evaluation->m_updates.push(value);
+      }, translation.Extract<Box<T>>()));
     }
   };
-}
+
+  std::unique_ptr<CanvasNode> m_expression;
+  std::unique_ptr<CanvasNodeTranslationContext> m_context;
+  ScopedQueueWriter<std::any> m_updates;
+  Shared<Cell<bool>> m_stop;
+};
 
 CanvasObserver::CanvasObserver(
     std::shared_ptr<Task> task, const CanvasNode& observer)
-    : m_task(std::move(task)),
-      m_is_translated(false) {
+    : m_task(std::move(task)) {
   auto children = std::vector<CustomNode::Child>();
   children.emplace_back("target", m_task->GetNode().GetType());
   children.emplace_back("observer", observer.GetType());
@@ -58,17 +63,23 @@ CanvasObserver::CanvasObserver(
     }
   }
   m_remaining_dependencies = m_dependencies;
-  m_observer = std::move(expression);
-  if(auto translation = PreprocessTranslation(*m_observer)) {
-    m_observer = std::move(translation);
+  if(auto translation = PreprocessTranslation(*expression)) {
+    expression = std::move(translation);
   }
+  m_evaluation = std::make_shared<Evaluation>(std::move(expression),
+    m_task->GetContext().make_isolated_context(), m_events.get_slot<std::any>(
+      std::bind_front(&CanvasObserver::on_reactor_update, this)));
   QObject::connect(&m_translate_timer, &QTimer::timeout,
     std::bind_front(&CanvasObserver::translate, this));
   constexpr auto TRANSLATE_INTERVAL = 100;
   m_translate_timer.start(TRANSLATE_INTERVAL);
 }
 
-CanvasObserver::~CanvasObserver() = default;
+CanvasObserver::~CanvasObserver() {
+  if(m_evaluation) {
+    m_evaluation->m_stop->set_complete(true);
+  }
+}
 
 const std::any& CanvasObserver::get_value() const {
   return m_value;
@@ -80,9 +91,6 @@ connection CanvasObserver::connect_update_signal(
 }
 
 void CanvasObserver::translate() {
-  if(m_is_translated) {
-    return;
-  }
   try {
     while(!m_remaining_dependencies.empty()) {
       auto dependency = m_remaining_dependencies.back();
@@ -92,26 +100,25 @@ void CanvasObserver::translate() {
       m_remaining_dependencies.pop_back();
     }
     for(auto& dependency : m_dependencies) {
-      auto& mirror = *m_observer->GetChildren().front().FindNode(
-        GetFullName(*dependency));
-      Mirror(
-        *dependency, m_task->GetContext(), mirror, out(m_task->GetContext()));
+      auto& mirror =
+        *m_evaluation->m_expression->GetChildren().front().FindNode(
+          GetFullName(*dependency));
+      Mirror(*dependency, m_task->GetContext(), mirror,
+        out(*m_evaluation->m_context));
     }
-    auto observer =
-      Translate(m_task->GetContext(), m_observer->GetChildren().back());
-    auto reactor = instantiate<ObserverTranslator>(
-      observer.GetTypeInfo())(observer, m_callbacks.make_slot(
-        std::bind_front(&CanvasObserver::on_reactor_update, this)));
-    m_task->GetExecutor().Add(std::move(reactor));
-    m_is_translated = true;
+    auto observer = Translate(*m_evaluation->m_context,
+      m_evaluation->m_expression->GetChildren().back());
+    auto reactor = instantiate<Evaluation::Translator>(observer.GetTypeInfo())(
+      observer, m_evaluation);
+    m_task->GetExecutor().Add(
+      box(until(m_evaluation->m_stop, std::move(reactor))));
+    m_translate_timer.stop();
   } catch(const std::exception&) {
     return;
   }
 }
 
 void CanvasObserver::on_reactor_update(const std::any& value) {
-  m_event_handler.push([=, this] {
-    m_value = value;
-    m_update_signal(m_value);
-  });
+  m_value = value;
+  m_update_signal(m_value);
 }

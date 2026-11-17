@@ -4,8 +4,8 @@
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
+#include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/BlotterUiTester/BlotterController.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -24,11 +24,12 @@ int main(int argc, char** argv) {
   auto profile = UserProfile("root", true, true, {}, {},
     get_default_additional_tag_database(), {}, {}, {},
     Clients(std::in_place_type<TestClients>, Ref(environment)));
-  auto tasks = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
+  auto monitors = make_default_task_monitors();
+  auto tasks = std::make_shared<MonitoredTasksModel>(monitors);
   auto model = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>(QObject::tr("New Blotter")),
     std::make_shared<LocalBooleanModel>(false),
-    std::make_shared<LocalBooleanModel>(false), tasks);
+    std::make_shared<LocalBooleanModel>(false), tasks, monitors);
   auto window = BlotterWindow(model);
   auto controller = BlotterController(tasks, Ref(environment), Ref(profile));
   window.show();

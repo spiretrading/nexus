@@ -31,6 +31,12 @@ namespace Spire {
       CanvasNodeTranslationContext(
         Beam::Ref<CanvasNodeTranslationContext> parent);
 
+      /**
+       * Returns a context with its own translations and the same execution
+       * services and order publisher.
+       */
+      std::unique_ptr<CanvasNodeTranslationContext> make_isolated_context();
+
       /** Returns the UserProfile. */
       const UserProfile& GetUserProfile() const;
 
