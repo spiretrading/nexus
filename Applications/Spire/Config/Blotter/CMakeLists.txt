@@ -84,10 +84,10 @@ file(GLOB_RECURSE header_files ../../Include/Spire/BlotterTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/BlotterTester/*.cpp)
 add_executable(BlotterTester ${header_files} ${source_files})
 beam_configure_target(BlotterTester)
-target_link_libraries(BlotterTester Async Blotter BookView CanvasView Catalog
-  Charting Dashboard InputWidgets KeyBindings LegacyUI Library
-  OrderImbalanceIndicator PortfolioViewer Resources Styles TimeAndSales Toolbar
-  Utilities
+target_link_libraries(BlotterTester SpireTesterLibrary Async Blotter BookView
+  CanvasView Catalog Charting Dashboard InputWidgets KeyBindings LegacyUI
+  Library OrderImbalanceIndicator PortfolioViewer Resources Styles TimeAndSales
+  Toolbar Utilities
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
@@ -96,6 +96,8 @@ target_link_libraries(BlotterTester Async Blotter BookView CanvasView Catalog
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(BlotterTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}

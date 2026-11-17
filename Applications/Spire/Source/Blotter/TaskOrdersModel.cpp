@@ -1,7 +1,7 @@
 #include "Spire/Blotter/TaskOrdersModel.hpp"
 #include <algorithm>
 #include <unordered_set>
-#include "Spire/Async/EventHandler.hpp"
+#include <Beam/Queues/ScopedBaseQueue.hpp>
 
 using namespace Beam;
 using namespace boost;
@@ -12,10 +12,11 @@ using namespace Spire;
 struct TaskOrdersModel::TaskEntry {
   std::shared_ptr<Task> m_task;
   std::unordered_set<OrderId> m_orders;
-  EventHandler m_events;
+  ScopedBaseQueue<> m_subscription;
 
   TaskEntry(std::shared_ptr<Task> task)
-    : m_task(std::move(task)) {}
+    : m_task(std::move(task)),
+      m_subscription(nullptr) {}
 };
 
 TaskOrdersModel::TaskOrdersModel(std::shared_ptr<TasksModel> tasks)
@@ -54,20 +55,22 @@ void TaskOrdersModel::transact(
 }
 
 void TaskOrdersModel::add(int index, std::shared_ptr<Task> task) {
-  auto entry = std::make_unique<TaskEntry>(std::move(task));
-  auto task_entry = entry.get();
-  m_entries.insert(m_entries.begin() + index, std::move(entry));
-  if(!task_entry->m_task) {
-    return;
-  }
+  auto entry = std::make_shared<TaskEntry>(std::move(task));
+  m_entries.insert(m_entries.begin() + index, entry);
+  auto subscription = std::make_shared<ScopedQueueWriter<Type>>(
+    m_events.get_slot<Type>(
+      [=, this, weak_entry = std::weak_ptr(entry)] (const auto& order) {
+        if(auto entry = weak_entry.lock()) {
+          on_order(*entry, order);
+        }
+      }));
+  entry->m_subscription = ScopedBaseQueue(subscription);
   auto snapshot = optional<std::vector<Type>>();
-  task_entry->m_task->GetContext().GetOrderPublisher().monitor(
-    task_entry->m_events.get_slot<Type>([=, this] (const auto& order) {
-      on_order(*task_entry, order);
-    }), out(snapshot));
+  entry->m_task->GetContext().GetOrderPublisher().monitor(
+    std::move(subscription), out(snapshot));
   if(snapshot) {
     for(auto& order : *snapshot) {
-      on_order(*task_entry, order);
+      on_order(*entry, order);
     }
   }
 }

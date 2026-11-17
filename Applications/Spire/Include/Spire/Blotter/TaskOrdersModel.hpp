@@ -1,6 +1,7 @@
 #ifndef SPIRE_TASK_ORDERS_MODEL_HPP
 #define SPIRE_TASK_ORDERS_MODEL_HPP
 #include <unordered_map>
+#include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Blotter/BlotterTaskEntry.hpp"
 #include "Spire/Blotter/OrdersModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -35,8 +36,9 @@ namespace Spire {
       std::shared_ptr<TasksModel> m_tasks;
       ArrayListModel<Type> m_orders;
       std::unordered_map<Nexus::OrderId, int> m_counts;
-      std::vector<std::unique_ptr<TaskEntry>> m_entries;
+      std::vector<std::shared_ptr<TaskEntry>> m_entries;
       ListModelTransactionLog<Type> m_transaction;
+      QtTaskQueue m_events;
       boost::signals2::scoped_connection m_orders_connection;
       boost::signals2::scoped_connection m_tasks_connection;
 
