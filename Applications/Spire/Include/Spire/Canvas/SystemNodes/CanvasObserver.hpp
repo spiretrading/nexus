@@ -1,63 +1,62 @@
 #ifndef SPIRE_CANVAS_OBSERVER_HPP
 #define SPIRE_CANVAS_OBSERVER_HPP
+#include <any>
 #include <memory>
 #include <vector>
-#include <Beam/Pointers/Ref.hpp>
-#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
-#include <boost/any.hpp>
-#include <boost/signals2/signal.hpp>
 #include <QTimer>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /** Emits changes produced from a translated CanvasNode. */
+  /** Observes the value of a Canvas expression for a task. */
   class CanvasObserver {
     public:
 
       /**
-       * Signals an update to a CanvasNode.
-       * @param value The CanvasNode's updated value.
+       * Signals a change to the observed value.
+       * @param value The latest value of the expression.
        */
-      using UpdateSignal =
-        boost::signals2::signal<void (const boost::any& value)>;
+      using UpdateSignal = Signal<void (const std::any& value)>;
 
       /**
-       * Constructs a CanvasObserver.
-       * @param task The task the <i>target</i> belongs to.
-       * @param observer The operation to perform on the <i>target</i>.
+       * Observes an expression in the context of a task.
+       * @param task The task to observe.
+       * @param observer The expression to evaluate.
        */
       CanvasObserver(std::shared_ptr<Task> task, const CanvasNode& observer);
 
-      /** Returns the current value of the CanvasNode. */
-      const boost::any& GetValue() const;
+      ~CanvasObserver();
+
+      /** Returns the latest value, or an empty any before the first update. */
+      const std::any& get_value() const;
 
       /**
        * Connects a slot to the UpdateSignal.
        * @param slot The slot to connect to the signal.
        * @return A connection to the signal.
        */
-      boost::signals2::connection ConnectUpdateSignal(
+      boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const;
 
     private:
       std::shared_ptr<Task> m_task;
       std::unique_ptr<CanvasNode> m_observer;
       std::vector<const CanvasNode*> m_dependencies;
-      std::vector<const CanvasNode*> m_remainingDependencies;
-      bool m_isTranslated;
-      boost::any m_value;
-      mutable UpdateSignal m_updateSignal;
-      QTimer m_translateTimer;
+      std::vector<const CanvasNode*> m_remaining_dependencies;
+      bool m_is_translated;
+      std::any m_value;
+      mutable UpdateSignal m_update_signal;
+      QTimer m_translate_timer;
       Beam::ScopedSlotAdaptor m_callbacks;
-      EventHandler m_eventHandler;
+      EventHandler m_event_handler;
 
       CanvasObserver(const CanvasObserver&) = delete;
       CanvasObserver& operator =(const CanvasObserver&) = delete;
-      void Translate();
-      void OnReactorUpdate(const boost::any& value);
+      void translate();
+      void on_reactor_update(const std::any& value);
   };
 }
 
