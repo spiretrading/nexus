@@ -2,6 +2,10 @@ find_package(Qt5Widgets REQUIRED)
 set(library_source_files ${SPIRE_SOURCE_PATH}/SpireTester/SpireTester.cpp)
 add_library(SpireTesterLibrary ${library_source_files})
 beam_configure_target(SpireTesterLibrary)
+if(WIN32)
+  target_compile_definitions(SpireTesterLibrary PRIVATE
+    SPIRE_TEST_FONT_DIRECTORY="${SPIRE_RESOURCES_PATH}/Fonts/Roboto")
+endif()
 set_target_properties(SpireTesterLibrary PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_tester)
 file(GLOB_RECURSE header_files ../../Include/Spire/SpireTester/*.hpp)

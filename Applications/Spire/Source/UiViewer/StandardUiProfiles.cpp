@@ -4235,7 +4235,7 @@ UiProfile Spire::make_position_side_box_profile() {
     [] (auto& profile) {
       return setup_enum_box_profile<SideBox, make_position_side_box>(
         profile, [] (const std::any& value) {
-          return PositionSideToken(std::any_cast<Side>(value));
+          return PositionSide(std::any_cast<Side>(value));
         });
     });
   return profile;
@@ -4714,7 +4714,7 @@ UiProfile Spire::make_side_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_property = define_enum<Side>(
-    {{"Buy", Side::BID}, {"Sell", Side::ASK}});
+    {{"Bid", Side::BID}, {"Ask", Side::ASK}});
   populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SideBox", properties, std::bind_front(
@@ -4725,8 +4725,8 @@ UiProfile Spire::make_side_box_profile() {
 UiProfile Spire::make_side_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<bool>("Buy"));
-  properties.push_back(make_standard_property<bool>("Sell"));
+  properties.push_back(make_standard_property<bool>("Bid"));
+  properties.push_back(make_standard_property<bool>("Ask"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
   return profile;

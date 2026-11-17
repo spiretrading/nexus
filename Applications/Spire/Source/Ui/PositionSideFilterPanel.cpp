@@ -13,11 +13,11 @@ PositionSideFilterPanel* Spire::make_position_side_filter_panel(
 
 PositionSideFilterPanel* Spire::make_position_side_filter_panel(
     std::shared_ptr<SideListModel> selection, QWidget* parent) {
-  auto tokens = std::make_shared<ArrayListModel<PositionSideToken>>();
+  auto tokens = std::make_shared<ArrayListModel<PositionSide>>();
   for(auto i = 0; i < selection->get_size(); ++i) {
-    tokens->push(PositionSideToken(selection->get(i)));
+    tokens->push(PositionSide(selection->get(i)));
   }
-  return make_closed_filter_panel<PositionSideToken>(
-    {PositionSideToken(Side::BID), PositionSideToken(Side::ASK),
-      PositionSideToken(Side::NONE)}, std::move(tokens), parent);
+  return make_closed_filter_panel<PositionSide>(
+    {PositionSide(Side::BID), PositionSide(Side::ASK),
+      PositionSide(Side::NONE)}, std::move(tokens), parent);
 }

@@ -264,7 +264,7 @@ namespace Spire {
           m_f(operation.get_previous()), m_f(operation.get_value())));
       },
       [&] <typename T> (const T& operation) requires
-          !std::is_same_v<T, typename ListModel<Source>::UpdateOperation> {
+          (!std::is_same_v<T, typename ListModel<Source>::UpdateOperation>) {
         m_transaction.push(operation);
       });
   }
