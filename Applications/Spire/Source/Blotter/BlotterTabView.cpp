@@ -4,6 +4,7 @@
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TabView.hpp"
 
@@ -18,8 +19,9 @@ BlotterTabView::BlotterTabView(QWidget* parent)
     std::vector{tr("Positions"), tr("Pos")}, *new BlotterPositionsView());
   tab_view->add(
     std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
-  tab_view->add(
-    std::vector{tr("Order Log"), tr("Orders")}, *new BlotterOrderLogView());
+  auto orders = std::make_shared<ArrayListModel<OrdersModel::Type>>();
+  tab_view->add(std::vector{tr("Order Log"), tr("Orders")},
+    *new BlotterOrderLogView(orders));
   tab_view->add(
     std::vector{tr("Executions"), tr("Exec")}, *new BlotterExecutionsView());
   tab_view->add(tr("Task"), *new BlotterTaskView());
