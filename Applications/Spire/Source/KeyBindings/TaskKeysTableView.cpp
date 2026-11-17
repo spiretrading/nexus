@@ -21,11 +21,11 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
-#include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Ui/TradeSideBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
@@ -389,7 +389,7 @@ namespace {
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::SIDE) {
             auto current = make_proxy.operator ()<Side>();
-            return {new EditableBox(*make_side_box(current)),
+            return {new EditableBox(*make_trade_side_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::QUANTITY) {
             auto current = make_proxy.operator ()<QuantitySetting>();
