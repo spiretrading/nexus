@@ -6,13 +6,13 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TaskStateBox.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
-#include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
@@ -48,6 +48,8 @@ BlotterTasksTableView::BlotterTasksTableView(
   auto column_count = static_cast<int>(TaskColumn::STATE) + 1;
   auto table = std::make_shared<ListToTableModel<BlotterTaskEntry>>(
     tasks, column_count, &extract);
+  auto pin_image =
+    image_from_svg(":/Icons/blotter/tasks/pin-small.svg", scale(10, 10));
   auto table_view = TableViewBuilder(table).
     add_header_item(tr("Pinned")).
     add_header_item(tr("Name")).
@@ -57,12 +59,12 @@ BlotterTasksTableView::BlotterTasksTableView(
       auto column = static_cast<TaskColumn>(index);
       if(column == TaskColumn::PINNED) {
         auto entry = make_list_value_model(tasks, row);
-        auto pin = make_icon_toggle_button(
-          image_from_svg(":/Icons/blotter/tasks/pin.svg", scale(26, 26)),
-          make_field_value_model(entry, &BlotterTaskEntry::m_is_pinned),
-          tr("Pin task"));
+        auto pin = make_icon_toggle_button(pin_image,
+          make_field_value_model(entry, &BlotterTaskEntry::m_is_pinned));
         pin->setFixedSize(scale(26, 26));
         update_style(*pin, [] (auto& style) {
+          style.get((Hover() || Press()) > Body()).
+            set(BackgroundColor(Qt::transparent));
           style.get(Any() > is_a<Icon>()).set(Fill(QColor(0xB8B8B8)));
         });
         return pin;
@@ -81,9 +83,14 @@ BlotterTasksTableView::BlotterTasksTableView(
       std::make_shared<ListEmptySelectionModel>())).
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto pin_icon = new Icon(
-    image_from_svg(":/Icons/blotter/tasks/pin-small.svg", scale(10, 10)));
-  pin_icon->setFixedSize(scale(10, 10));
+  update_style(table_view->get_body(), [] (auto& style) {
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > Row() > Current()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+  });
+  auto pin_icon = new Icon(pin_image);
+  pin_icon->setFixedSize(pin_image.size());
   auto pin_label = new QWidget();
   pin_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto pin_layout = make_hbox_layout(pin_label);
@@ -96,7 +103,6 @@ BlotterTasksTableView::BlotterTasksTableView(
   auto pin_header = header.get_item(pinned_column);
   pin_header->set_is_resizeable(false);
   pin_header->setAccessibleName(tr("Pinned"));
-  add_tooltip(tr("Pinned"), *pin_header);
   update_style(*pin_header, [] (auto& style) {
     style.get(Any() > TableHeaderItem::Separator()).set(Visibility::VISIBLE);
     style.get(Any() > TableHeaderItem::Label() > is_a<Icon>()).

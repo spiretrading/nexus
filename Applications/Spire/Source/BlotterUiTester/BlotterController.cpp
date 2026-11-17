@@ -57,8 +57,9 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
     m_type->addItem(to_text(OrderType(type)), static_cast<int>(type));
   }
   form->addRow(tr("Type"), m_type);
-  m_side->addItem(tr("Buy"), static_cast<int>(Side::BID));
-  m_side->addItem(tr("Sell"), static_cast<int>(Side::ASK));
+  for(auto side : {Side::BID, Side::ASK}) {
+    m_side->addItem(to_text(Side(side)), static_cast<int>(side));
+  }
   form->addRow(tr("Side"), m_side);
   form->addRow(tr("Destination"), m_destination);
   m_quantity->setRange(1, 1000000000);
