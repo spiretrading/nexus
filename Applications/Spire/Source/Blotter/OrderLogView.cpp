@@ -12,6 +12,8 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Beam;
+using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -52,9 +54,7 @@ namespace {
     } else if(column == OrderColumn::QUANTITY) {
       return fields.m_quantity;
     } else if(column == OrderColumn::PRICE) {
-      if(fields.m_type == OrderType::LIMIT) {
-        return fields.m_price;
-      }
+      return make_optional(fields.m_type == OrderType::LIMIT, fields.m_price);
     } else if(column == OrderColumn::TIME_IN_FORCE) {
       return fields.m_time_in_force;
     }
@@ -92,7 +92,7 @@ namespace {
         return m_orders->remove(row);
       }
 
-      boost::signals2::connection connect_operation_signal(
+      connection connect_operation_signal(
           const OperationSignal::slot_type& slot) const override {
         return m_transaction.connect_operation_signal(slot);
       }
@@ -108,7 +108,7 @@ namespace {
       std::vector<std::shared_ptr<Entry>> m_entries;
       TableModelTransactionLog m_transaction;
       QtTaskQueue m_events;
-      boost::signals2::scoped_connection m_connection;
+      scoped_connection m_connection;
 
       static AnyRef extract_entry(const Entry& entry, int column) {
         if(column == static_cast<int>(OrderColumn::STATUS)) {
@@ -130,7 +130,7 @@ namespace {
                 }
               }));
         entry->m_subscription = ScopedBaseQueue(subscription);
-        auto snapshot = boost::optional<std::vector<ExecutionReport>>();
+        auto snapshot = optional<std::vector<ExecutionReport>>();
         entry->m_order->get_publisher().monitor(
           std::move(subscription), out(snapshot));
         if(snapshot && !snapshot->empty()) {
@@ -205,7 +205,7 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto table = std::make_shared<OrderLogTableModel>(m_orders);
   auto table_view = TableViewBuilder(table).
-    add_header_item(tr("Time")).
+    add_header_item(tr("Time"), TableHeaderItem::Order::DESCENDING).
     add_header_item(tr("ID")).
     add_header_item(tr("Status")).
     add_header_item(tr("Ticker")).

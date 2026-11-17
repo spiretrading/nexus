@@ -5,6 +5,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace boost::posix_time;
@@ -82,6 +83,37 @@ TEST_SUITE("OrderLogView") {
     REQUIRE(fixture.status(0) == OrderStatus::FILLED);
     REQUIRE(fixture.m_table->get<ptime>(0, TIME_COLUMN) ==
       order->get_info().m_timestamp);
+  }
+
+  UI_TEST_CASE("price_sorting") {
+    const auto PRICE_COLUMN = 9;
+    auto fixture = Fixture();
+    auto add_order = [&] (OrderType type, Money price) {
+      auto fields = OrderFields();
+      fields.m_type = type;
+      fields.m_price = price;
+      fixture.m_orders->push(std::make_shared<PrimitiveOrder>(
+        OrderInfo(fields, fixture.m_orders->get_size() + 1,
+          time_from_string("2026-11-17 10:00:00"))));
+    };
+    add_order(OrderType::LIMIT, Money(10));
+    add_order(OrderType::MARKET, Money(0));
+    add_order(OrderType::LIMIT, Money(2));
+    fixture.open();
+    auto sorted = SortedTableModel(fixture.m_table);
+    auto price = [&] (int row) {
+      return to_text(sorted.at(row, PRICE_COLUMN));
+    };
+    sorted.set_column_order(
+      {{PRICE_COLUMN, SortedTableModel::Ordering::ASCENDING}});
+    REQUIRE(price(0).isEmpty());
+    REQUIRE(price(1) == to_text(Money(2)));
+    REQUIRE(price(2) == to_text(Money(10)));
+    sorted.set_column_order(
+      {{PRICE_COLUMN, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(price(0) == to_text(Money(10)));
+    REQUIRE(price(1) == to_text(Money(2)));
+    REQUIRE(price(2).isEmpty());
   }
 
   UI_TEST_CASE("order_list_changes") {
