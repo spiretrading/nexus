@@ -79,6 +79,17 @@ if(WIN32)
     dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
+target_link_libraries(BlotterUiTester
+  debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+  optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+  debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+  optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+  debug ${YAML_LIBRARY_DEBUG_PATH}
+  optimized ${YAML_LIBRARY_OPTIMIZED_PATH})
+if(WIN32)
+  target_link_libraries(BlotterUiTester Crypt32.lib)
+endif()
+target_compile_definitions(BlotterUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 beam_install_target(BlotterUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")
 file(GLOB_RECURSE header_files ../../Include/Spire/BlotterTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/BlotterTester/*.cpp)
