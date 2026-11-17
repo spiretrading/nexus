@@ -1,4 +1,4 @@
-#include "Spire/Blotter/BlotterOrderLogView.hpp"
+#include "Spire/Blotter/OrderLogView.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -50,8 +50,7 @@ namespace {
   }
 }
 
-BlotterOrderLogView::BlotterOrderLogView(
-    std::shared_ptr<OrdersModel> orders, QWidget* parent)
+OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
     : QWidget(parent),
       m_orders(std::move(orders)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -76,6 +75,6 @@ BlotterOrderLogView::BlotterOrderLogView(
   setFocusProxy(table_view);
 }
 
-const std::shared_ptr<OrdersModel>& BlotterOrderLogView::get_orders() const {
+const std::shared_ptr<OrdersModel>& OrderLogView::get_orders() const {
   return m_orders;
 }
