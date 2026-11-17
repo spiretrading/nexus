@@ -43,7 +43,7 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   row_words.push_back(
     QString::fromStdString(DESTINATIONS.from(arguments.m_destination).m_id));
   row_words.push_back(to_text(arguments.m_order_type));
-  row_words.push_back(to_text(arguments.m_side));
+  row_words.push_back(to_text(TradeSide(arguments.m_side)));
   row_words.push_back(to_text(arguments.m_quantity));
   row_words.push_back(to_text(arguments.m_time_in_force));
   for(auto& tag : arguments.m_additional_tags) {

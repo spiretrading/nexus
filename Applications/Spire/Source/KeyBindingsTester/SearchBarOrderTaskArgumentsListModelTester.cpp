@@ -31,6 +31,27 @@ TEST_SUITE("SearchBarOrderTaskArgumentsListModel") {
     REQUIRE(search_list.get_size() == 3);
   }
 
+  TEST_CASE("trade_side_filter") {
+    auto source = std::make_shared<ArrayListModel<OrderTaskArguments>>();
+    auto alpha = OrderTaskArguments();
+    alpha.m_name = "Alpha";
+    alpha.m_side = Side::BID;
+    source->push(alpha);
+    auto beta = OrderTaskArguments();
+    beta.m_name = "Beta";
+    beta.m_side = Side::ASK;
+    source->push(beta);
+    auto keywords = std::make_shared<LocalTextModel>();
+    auto search_list = SearchBarOrderTaskArgumentsListModel(
+      source, keywords, get_default_additional_tag_database());
+    keywords->set("buy");
+    REQUIRE(search_list.get_size() == 1);
+    REQUIRE(search_list.get(0).m_side == Side::BID);
+    keywords->set("sell");
+    REQUIRE(search_list.get_size() == 1);
+    REQUIRE(search_list.get(0).m_side == Side::ASK);
+  }
+
   TEST_CASE("scope_venue_filter") {
     auto source = std::make_shared<ArrayListModel<OrderTaskArguments>>();
     auto task1 = OrderTaskArguments();

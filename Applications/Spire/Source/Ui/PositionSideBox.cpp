@@ -9,7 +9,7 @@ namespace {
   PositionSideBox::Settings setup() {
     static auto settings = [] {
       auto to_text = [] (const Side& side) {
-        return Spire::to_text(PositionSideToken(side));
+        return Spire::to_text(PositionSide(side));
       };
       auto view_builder = [=] (const Side& side) {
         return make_label(to_text(side));
