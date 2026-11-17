@@ -1,7 +1,9 @@
+#include <Beam/Queues/CallbackQueueWriter.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
@@ -84,6 +86,21 @@ TEST_SUITE("BacktesterMarketDataClient") {
     REQUIRE(status.m_state == "PreOpen");
     status = queue->pop();
     REQUIRE(status.m_state == "Authorized");
+  }
+
+  TEST_CASE("submit_subscription_before_starting_replay") {
+    auto fixture = Fixture();
+    fixture.m_event_handler.suspend();
+    using Operation = std::shared_ptr<TestMarketDataClient::Operation>;
+    auto operations = std::make_shared<CallbackQueueWriter<Operation>>(
+      [&] (const Operation&) {
+        CHECK(fixture.m_event_handler.advance() == nullptr);
+      });
+    auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
+      MarketDataClient(std::in_place_type<TestMarketDataClient>, operations));
+    client.query(
+      make_real_time_query(TD), std::make_shared<Queue<TickerStatus>>());
+    REQUIRE(fixture.m_event_handler.advance() != nullptr);
   }
 
   TEST_CASE("historical_query") {
