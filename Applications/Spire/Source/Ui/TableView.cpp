@@ -1,7 +1,6 @@
 #include "Spire/Ui/TableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
-#include <QPointer>
 #include <QScopedValueRollback>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -149,19 +148,19 @@ namespace {
       DisplayedSelection(std::shared_ptr<ListModel<T>> source,
           std::shared_ptr<FilteredTableModel> filtered,
           std::shared_ptr<SortedTableModel> sorted, auto is_updating,
-          connection tracking, TableView& view)
+          connection tracking)
           : m_source(std::move(source)),
             m_filtered(std::move(filtered)),
             m_sorted(std::move(sorted)),
             m_tracking_connection(std::move(tracking)) {
         m_connection = m_source->connect_operation_signal(
-          [=, this, view = QPointer(&view)] (const auto& operation) {
+          [=, this] (const auto& operation) {
             if(is_updating()) {
               return;
             }
             if(auto add =
                 std::get_if<typename ListModel<T>::AddOperation>(&operation)) {
-              if(view && add->m_index == m_source->get_size() - 1) {
+              if(add->m_index == m_source->get_size() - 1) {
                 append(add->m_index);
                 return;
               }
@@ -176,6 +175,25 @@ namespace {
             }
           });
         refresh();
+      }
+
+      void track(auto refresh) {
+        auto on_row_change = [=, this] (const auto& operation) {
+          if(is_row_change(operation)) {
+            refresh(*this);
+          }
+        };
+        auto& source = *m_filtered->get_source();
+        m_source_connection = source.connect_operation_signal(
+          [=, this] (const auto& operation) {
+            if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
+              if(m_filtered->index_from_source(add->m_index) != -1) {
+                return;
+              }
+            }
+            on_row_change(operation);
+          });
+        m_view_connection = m_sorted->connect_operation_signal(on_row_change);
       }
 
       void refresh() {
@@ -267,6 +285,8 @@ namespace {
       std::vector<int> m_indices;
       connection m_tracking_connection;
       scoped_connection m_connection;
+      scoped_connection m_source_connection;
+      scoped_connection m_view_connection;
 
       static int& row_of(T& value) {
         if constexpr(std::same_as<T, int>) {
@@ -384,34 +404,26 @@ TableView::TableView(
   };
   auto rows = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    is_updating, tracking, *this);
+    is_updating, tracking);
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
     m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
-    is_updating, tracking, *this);
+    is_updating, tracking);
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
   body_selection->m_is_tracking_rows = false;
   m_body = new TableBody(m_sorted_table, body_current, body_selection,
     m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
-  auto refresh_selection = [=] (const TableModel::Operation& operation) {
-    if(is_row_change(operation)) {
-      auto guard = QScopedValueRollback(body_selection->m_is_updating, true);
-      rows->refresh();
-      items->refresh();
+  auto refresh = [selection = std::weak_ptr(body_selection)] (auto& list) {
+    if(auto model = selection.lock()) {
+      auto guard = QScopedValueRollback(model->m_is_updating, true);
+      list.refresh();
+    } else {
+      list.refresh();
     }
   };
-  m_source_selection_connection = m_table->connect_operation_signal(
-    [=, this] (const auto& operation) {
-      if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
-        if(m_filtered_table->index_from_source(add->m_index) != -1) {
-          return;
-        }
-      }
-      refresh_selection(operation);
-    });
-  m_view_selection_connection =
-    m_sorted_table->connect_operation_signal(refresh_selection);
+  rows->track(refresh);
+  items->track(refresh);
   body_current->set_source(std::make_shared<SourceToViewIndexModel>(
     m_sorted_table, m_filtered_table, m_current));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,

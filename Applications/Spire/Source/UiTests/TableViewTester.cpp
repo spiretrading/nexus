@@ -81,11 +81,25 @@ TEST_SUITE("TableView") {
     REQUIRE(displayed->get_row_selection()->push(0) == QValidator::Acceptable);
     REQUIRE(source->get_row_selection()->get(0) == 2);
     table->insert({5}, 0);
-    auto& rows = *displayed->get_row_selection();
-    REQUIRE(rows.push(0) == QValidator::Acceptable);
-    REQUIRE(rows.get_size() == 2);
-    REQUIRE(rows.get(0) == 1);
-    REQUIRE(rows.get(1) == 0);
+    auto rows = displayed->get_row_selection();
+    REQUIRE(rows->get(0) == 1);
+    REQUIRE(rows->push(0) == QValidator::Acceptable);
+    REQUIRE(rows->get_size() == 2);
+    REQUIRE(rows->get(0) == 1);
+    REQUIRE(rows->get(1) == 0);
+    auto items = displayed->get_item_selection();
+    REQUIRE(items->push(TableIndex(1, 0)) == QValidator::Acceptable);
+    SUBCASE("retained_lists") {
+      displayed.reset();
+    }
+    table->remove(3);
+    REQUIRE(source->get_row_selection()->get_size() == 1);
+    REQUIRE(rows->get_size() == 1);
+    REQUIRE(rows->get(0) == 0);
+    REQUIRE(source->get_item_selection()->get_size() == 0);
+    REQUIRE(items->get_size() == 0);
+    rows.reset();
+    items.reset();
     displayed.reset();
     REQUIRE(weak_filter.expired());
   }

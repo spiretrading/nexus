@@ -101,8 +101,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_body_style_connection;
       boost::signals2::scoped_connection m_selection_filter_connection;
-      boost::signals2::scoped_connection m_source_selection_connection;
-      boost::signals2::scoped_connection m_view_selection_connection;
 
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
