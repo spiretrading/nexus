@@ -45,8 +45,13 @@ TEST_SUITE("TableView") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({0});
     auto filter = std::make_shared<MinimumFilter>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<ArrayListModel<TableIndex>>(),
+      std::make_shared<ArrayListModel<int>>(),
+      std::make_shared<ArrayListModel<int>>());
     auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
-      add_header_item("Value").set_filter(filter).make());
+      add_header_item("Value").set_filter(filter).
+      set_selection(selection).make());
     SUBCASE("initial_filter") {}
     SUBCASE("updated_filter") {
       filter->set_minimum(2);
@@ -61,8 +66,55 @@ TEST_SUITE("TableView") {
     table->push({5});
     REQUIRE(displayed->get_row_selection()->push(0) == QValidator::Acceptable);
     REQUIRE(source->get_row_selection()->get(0) == 2);
+    table->insert({5}, 0);
+    auto& rows = *displayed->get_row_selection();
+    REQUIRE(rows.push(0) == QValidator::Acceptable);
+    REQUIRE(rows.get_size() == 2);
+    REQUIRE(rows.get(0) == 1);
+    REQUIRE(rows.get(1) == 0);
     displayed.reset();
     REQUIRE(weak_filter.expired());
+  }
+
+  UI_TEST_CASE("append_selection") {
+    class Selection : public ArrayListModel<int> {
+      public:
+        mutable int m_previous_reads = 0;
+
+        const int& get(int index) const override {
+          if(index < get_size() - 1) {
+            ++m_previous_reads;
+          }
+          return ArrayListModel<int>::get(index);
+        }
+    };
+    auto table = std::make_shared<ArrayTableModel>();
+    const auto SIZE = 64;
+    for(auto i = 0; i != SIZE; ++i) {
+      table->push({i});
+    }
+    auto rows = std::make_shared<Selection>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<ArrayListModel<TableIndex>>(), rows,
+      std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+      set_selection(selection).make());
+    auto& displayed = *view->get_body().get_selection()->get_row_selection();
+    auto append = [&] {
+      for(auto i = 0; i != SIZE; ++i) {
+        rows->push(i);
+        REQUIRE(displayed.get_size() == i + 1);
+        REQUIRE(displayed.get(i) == SIZE - i - 1);
+      }
+    };
+    SUBCASE("individual") {
+      append();
+    }
+    SUBCASE("transaction") {
+      rows->transact(append);
+    }
+    REQUIRE(rows->m_previous_reads == 0);
   }
 
   UI_TEST_CASE("select_sorted_row") {

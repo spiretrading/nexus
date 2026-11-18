@@ -1,6 +1,7 @@
 #include "Spire/Ui/TableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
+#include <QPointer>
 #include <QScopedValueRollback>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -148,14 +149,24 @@ namespace {
       DisplayedSelection(std::shared_ptr<ListModel<T>> source,
           std::shared_ptr<FilteredTableModel> filtered,
           std::shared_ptr<SortedTableModel> sorted, auto is_updating,
-          connection tracking)
+          connection tracking, TableView& view)
           : m_source(std::move(source)),
             m_filtered(std::move(filtered)),
             m_sorted(std::move(sorted)),
             m_tracking_connection(std::move(tracking)) {
         m_connection = m_source->connect_operation_signal(
-          [=, this] (const auto& operation) {
-            if(!is_updating() && !std::holds_alternative<
+          [=, this, view = QPointer(&view)] (const auto& operation) {
+            if(is_updating()) {
+              return;
+            }
+            if(auto add =
+                std::get_if<typename ListModel<T>::AddOperation>(&operation)) {
+              if(view && add->m_index == m_source->get_size() - 1) {
+                append(add->m_index);
+                return;
+              }
+            }
+            if(!std::holds_alternative<
                 typename ListModel<T>::PreRemoveOperation>(operation) &&
                 !std::holds_alternative<
                   typename ListModel<T>::StartTransaction>(operation) &&
@@ -171,13 +182,9 @@ namespace {
         auto values = std::vector<T>();
         m_indices.clear();
         for(auto i = 0; i != m_source->get_size();) {
-          auto value = m_source->get(i);
-          auto& row = row_of(value);
-          row = m_filtered->index_from_source(row);
-          if(row >= 0 && row < m_sorted->get_row_size()) {
-            row = m_sorted->index_from_source(row);
+          if(auto value = from_source(m_source->get(i))) {
             m_indices.push_back(i);
-            values.push_back(value);
+            values.push_back(*value);
           } else if(m_tracking_connection.connected()) {
             auto blocker = shared_connection_block(m_connection);
             if(m_source->remove(i) != QValidator::Invalid) {
@@ -269,6 +276,28 @@ namespace {
         }
       }
 
+      optional<T> from_source(T value) const {
+        auto& row = row_of(value);
+        row = m_filtered->index_from_source(row);
+        if(row < 0 || row >= m_sorted->get_row_size()) {
+          return none;
+        }
+        row = m_sorted->index_from_source(row);
+        return value;
+      }
+
+      void append(int index) {
+        if(auto value = from_source(m_source->get(index))) {
+          m_indices.push_back(index);
+          const auto apply = std::function<void ()>([&] {
+            ArrayListModel<T>::insert(*value, this->get_size());
+          });
+          ArrayListModel<T>::transact(apply);
+        } else if(m_tracking_connection.connected()) {
+          refresh();
+        }
+      }
+
       optional<T> to_source(T value) const {
         auto& row = row_of(value);
         if(row < 0 || row >= m_sorted->get_row_size()) {
@@ -355,10 +384,10 @@ TableView::TableView(
   };
   auto rows = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    is_updating, tracking);
+    is_updating, tracking, *this);
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
     m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
-    is_updating, tracking);
+    is_updating, tracking, *this);
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
   body_selection->m_tracks_rows = false;
