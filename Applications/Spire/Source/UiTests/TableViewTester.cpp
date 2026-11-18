@@ -137,6 +137,47 @@ TEST_SUITE("TableView") {
     REQUIRE(rows->m_previous_reads == 0);
   }
 
+  UI_TEST_CASE("clear_selection_on_click") {
+    const auto SIZE = 64;
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i <= SIZE; ++i) {
+      table->push({i});
+    }
+    auto rows = std::make_shared<CountingSelection<int>>();
+    auto cells = std::make_shared<CountingSelection<TableIndex>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+      set_selection(selection).make());
+    view->resize(320, 240);
+    view->show();
+    QApplication::processEvents();
+    for(auto i = 0; i < SIZE; ++i) {
+      rows->push(i);
+      cells->push(TableIndex(i, 0));
+    }
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    auto& body = view->get_body();
+    auto item = body.find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    move_cursor(*item, item->rect().center());
+    press_mouse(*item, Qt::LeftButton);
+    release_mouse(*item, Qt::LeftButton);
+    REQUIRE(rows->get_size() == 1);
+    REQUIRE(rows->get(0) == SIZE);
+    REQUIRE(cells->get_size() == 1);
+    REQUIRE(cells->get(0) == TableIndex(SIZE, 0));
+    auto& displayed = *body.get_selection();
+    REQUIRE(displayed.get_row_selection()->get_size() == 1);
+    REQUIRE(displayed.get_row_selection()->get(0) == 0);
+    REQUIRE(displayed.get_item_selection()->get_size() == 1);
+    REQUIRE(displayed.get_item_selection()->get(0) == TableIndex(0, 0));
+    REQUIRE(rows->m_previous_reads == 0);
+    REQUIRE(cells->m_previous_reads == 0);
+  }
+
   UI_TEST_CASE("selection_on_row_insert") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({10});

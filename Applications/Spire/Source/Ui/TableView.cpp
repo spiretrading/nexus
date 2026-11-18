@@ -173,6 +173,13 @@ namespace {
                 append(add->m_index);
                 return;
               }
+            } else if(auto removal = std::get_if<
+                typename ListModel<T>::RemoveOperation>(&operation)) {
+              if(!m_indices.empty() && removal->m_index == m_indices.back()) {
+                m_indices.pop_back();
+                ArrayListModel<T>::remove(this->get_size() - 1);
+                return;
+              }
             }
             if(!std::holds_alternative<
                 typename ListModel<T>::PreRemoveOperation>(operation) &&
