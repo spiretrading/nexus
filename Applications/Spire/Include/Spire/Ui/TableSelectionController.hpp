@@ -1,5 +1,6 @@
 #ifndef SPIRE_TABLE_SELECTION_CONTROLLER_HPP
 #define SPIRE_TABLE_SELECTION_CONTROLLER_HPP
+#include <vector>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableIndex.hpp"
@@ -108,6 +109,10 @@ namespace Spire {
         const ListModel<int>::OperationSignal::slot_type& slot) const;
 
     private:
+      struct ColumnRange {
+        int m_begin;
+        int m_end;
+      };
       mutable ListModel<Index>::OperationSignal m_item_operation_signal;
       mutable ListModel<int>::OperationSignal m_row_operation_signal;
       mutable ListModel<int>::OperationSignal m_column_operation_signal;
@@ -117,6 +122,7 @@ namespace Spire {
       int m_column_size;
       boost::optional<Index> m_current;
       boost::optional<Index> m_range_anchor;
+      boost::optional<std::vector<ColumnRange>> m_previous_range;
       boost::signals2::scoped_connection m_item_connection;
       boost::signals2::scoped_connection m_row_connection;
       boost::signals2::scoped_connection m_column_connection;

@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableSelectionController.hpp"
+#include <unordered_set>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 
@@ -58,9 +59,30 @@ namespace {
     }
   }
 
-  auto increment(auto i, int direction, int column_size) {
-    advance(i, direction, column_size);
-    return i;
+  bool is_in_range(auto value, auto anchor, auto end) {
+    auto direction = get_direction(anchor, end);
+    return can_advance(anchor, direction, value) &&
+      can_advance(value, direction, end);
+  }
+
+  void reconcile_range(
+      auto& list, auto start, auto end, int columns, auto is_old) {
+    auto kept = std::unordered_set<decltype(start)>();
+    for(auto i = list.get_size(); i-- > 0;) {
+      auto value = list.get(i);
+      if(is_in_range(value, start, end)) {
+        kept.insert(value);
+      } else if(is_old(value)) {
+        list.remove(i);
+      }
+    }
+    auto direction = get_direction(start, end);
+    for(auto i = start; can_advance(i, direction, end);
+        advance(i, direction, columns)) {
+      if(!kept.contains(i)) {
+        list.push(i);
+      }
+    }
   }
 
   auto find_index(auto value, auto& list) {
@@ -110,6 +132,9 @@ int TableSelectionController::get_column_size() const {
 }
 
 void TableSelectionController::add_row(int index) {
+  if(m_previous_range) {
+    m_previous_range->emplace(m_previous_range->begin() + index, 0, 0);
+  }
   ++m_row_size;
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
@@ -117,11 +142,31 @@ void TableSelectionController::add_row(int index) {
 }
 
 void TableSelectionController::remove_row(int index) {
+  if(m_previous_range) {
+    m_previous_range->erase(m_previous_range->begin() + index);
+  }
   update_rows(TableModel::PreRemoveOperation(index));
   --m_row_size;
 }
 
 void TableSelectionController::move_row(int source, int destination) {
+  if(!m_previous_range && m_range_anchor && m_current &&
+      m_range_anchor->m_row != m_current->m_row) {
+    auto [first, last] = std::minmax(*m_range_anchor, *m_current,
+      [] (auto left, auto right) { return left.m_row < right.m_row; });
+    if(std::min(source, destination) <= last.m_row &&
+        std::max(source, destination) >= first.m_row) {
+      m_previous_range.emplace(m_row_size);
+      auto& range = *m_previous_range;
+      std::fill(range.begin() + first.m_row, range.begin() + last.m_row + 1,
+        ColumnRange(0, m_column_size));
+      range[first.m_row].m_begin = first.m_column;
+      range[last.m_row].m_end = last.m_column + 1;
+    }
+  }
+  if(m_previous_range) {
+    move_element(*m_previous_range, source, destination);
+  }
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
   update_rows(TableModel::MoveOperation(source, destination));
@@ -199,51 +244,56 @@ void TableSelectionController::click(Index index) {
       click(index);
       m_mode = Mode::RANGE;
       m_range_anchor = index;
-    } else if(!m_current) {
-      auto select = [&] (auto selection, auto index, auto anchor) {
-        auto direction = get_direction(anchor, index);
-        for(auto i = anchor; can_advance(i, direction, index);
-            advance(i, direction, m_column_size)) {
-          selection->push(i);
-        }
-      };
-      auto range_anchor = *m_range_anchor;
-      m_selection->transact([&] {
-        select(
-          m_selection->get_row_selection(), index.m_row, range_anchor.m_row);
-        select(m_selection->get_column_selection(), index.m_column,
-          range_anchor.m_column);
-        select(m_selection->get_item_selection(), index, range_anchor);
-      });
     } else {
       auto select =
-        [&] (auto selection, auto current, auto index, auto anchor) {
+        [&] (auto& selection, auto current, auto index, auto anchor) {
           auto direction = get_direction(current, index);
           for(auto i = current; can_advance(i, direction, index);
               advance(i, direction, m_column_size)) {
             if(i == anchor || !can_advance(i, direction, anchor)) {
-              if(find_index(i, *selection) == -1) {
-                selection->push(i);
+              if(find_index(i, selection) == -1) {
+                selection.push(i);
               }
             } else if(i != index) {
-              auto j = find_index(i, *selection);
+              auto j = find_index(i, selection);
               if(j != -1) {
-                selection->remove(j);
+                selection.remove(j);
               }
             }
           }
         };
-      auto range_anchor = *m_range_anchor;
+      auto anchor = *m_range_anchor;
+      auto current = m_current.get_value_or(anchor);
       m_selection->transact([&] {
-        select(m_selection->get_row_selection(), m_current->m_row, index.m_row,
-          range_anchor.m_row);
-        select(m_selection->get_column_selection(), m_current->m_column,
-          index.m_column, range_anchor.m_column);
-        select(
-          m_selection->get_item_selection(), *m_current, index, range_anchor);
+        auto& rows = *m_selection->get_row_selection();
+        auto& columns = *m_selection->get_column_selection();
+        auto& items = *m_selection->get_item_selection();
+        if(m_previous_range) {
+          reconcile_range(rows, anchor.m_row, index.m_row, m_column_size,
+            [&] (int row) {
+              return row >= 0 && row < std::ssize(*m_previous_range) &&
+                (*m_previous_range)[row].m_end != 0;
+            });
+          select(columns, current.m_column, index.m_column, anchor.m_column);
+          reconcile_range(items, anchor, index, m_column_size,
+            [&] (Index cell) {
+              if(cell.m_row < 0 ||
+                  cell.m_row >= std::ssize(*m_previous_range)) {
+                return false;
+              }
+              auto& range = (*m_previous_range)[cell.m_row];
+              return cell.m_column >= range.m_begin &&
+                cell.m_column < range.m_end;
+            });
+        } else {
+          select(rows, current.m_row, index.m_row, anchor.m_row);
+          select(columns, current.m_column, index.m_column, anchor.m_column);
+          select(items, current, index, anchor);
+        }
       });
     }
   }
+  m_previous_range = none;
   m_current = index;
 }
 

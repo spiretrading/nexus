@@ -211,32 +211,65 @@ TEST_SUITE("TableView") {
       release_mouse(widget, Qt::LeftButton);
     };
     auto& body = view->get_body();
-    click(*body.find_item(TableIndex(0, 0)));
-    click(*view->get_header().get_item(0));
-    QApplication::processEvents();
-    REQUIRE(body.get_table()->get<int>(3, 0) == 10);
-    REQUIRE(rows->get_size() == 1);
-    REQUIRE(rows->get(0) == 0);
-    auto shift_click = [&] {
+    auto shift_click = [&] (int row) {
+      QApplication::processEvents();
       press_key(body, Qt::Key_Shift);
-      click(*body.find_item(TableIndex(1, 0)));
+      click(*body.find_item(TableIndex(row, 0)));
       release_key(body, Qt::Key_Shift);
+    };
+    click(*body.find_item(TableIndex(0, 0)));
+    SUBCASE("reordered_range") {
+      table->push({50});
+      auto& cells = *selection->get_item_selection();
+      rows->push(4);
+      cells.push(TableIndex(4, 0));
+      shift_click(2);
+      REQUIRE(rows->get_size() == 4);
+      table->set(1, 0, 5);
+      REQUIRE(body.get_table()->get<int>(0, 0) == 5);
+      SUBCASE("extend") {
+        shift_click(3);
+      }
+      SUBCASE("fill_gap") {
+        table->set(3, 0, 25);
+        REQUIRE(body.get_table()->get<int>(2, 0) == 25);
+        shift_click(3);
+      }
+      REQUIRE(rows->get_size() == 4);
+      REQUIRE(rows->get(0) == 0);
+      REQUIRE(rows->get(1) == 4);
+      REQUIRE(rows->get(2) == 2);
+      REQUIRE(rows->get(3) == 3);
+      for(auto row : {0, 2, 3, 4}) {
+        REQUIRE(std::find(cells.begin(), cells.end(), TableIndex(row, 0)) !=
+          cells.end());
+      }
+      for(auto& cell : std::as_const(cells)) {
+        REQUIRE(cell.m_row != 1);
+      }
+    }
+    SUBCASE("header_sort") {
+      click(*view->get_header().get_item(0));
+      QApplication::processEvents();
+      REQUIRE(body.get_table()->get<int>(3, 0) == 10);
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 0);
+      SUBCASE("retained_anchor") {
+        shift_click(1);
+        REQUIRE(rows->get_size() == 3);
+        REQUIRE(rows->get(0) == 0);
+        REQUIRE(rows->get(1) == 1);
+        REQUIRE(rows->get(2) == 2);
+      }
+      SUBCASE("deselected_anchor") {
+        rows->remove(0);
+        shift_click(1);
+        REQUIRE(rows->get_size() == 1);
+        REQUIRE(rows->get(0) == 2);
+      }
       auto current = view->get_current()->get();
       REQUIRE(current.has_value());
       REQUIRE(*current == TableIndex(2, 0));
-    };
-    SUBCASE("retained_anchor") {
-      shift_click();
-      REQUIRE(rows->get_size() == 3);
-      REQUIRE(rows->get(0) == 0);
-      REQUIRE(rows->get(1) == 1);
-      REQUIRE(rows->get(2) == 2);
-    }
-    SUBCASE("deselected_anchor") {
-      rows->remove(0);
-      shift_click();
-      REQUIRE(rows->get_size() == 1);
-      REQUIRE(rows->get(0) == 2);
     }
   }
 
