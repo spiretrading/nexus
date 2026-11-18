@@ -401,8 +401,15 @@ TableView::TableView(
       items->refresh();
     }
   };
-  m_source_selection_connection =
-    m_table->connect_operation_signal(refresh_selection);
+  m_source_selection_connection = m_table->connect_operation_signal(
+    [=, this] (const auto& operation) {
+      if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
+        if(m_filtered_table->index_from_source(add->m_index) != -1) {
+          return;
+        }
+      }
+      refresh_selection(operation);
+    });
   m_view_selection_connection =
     m_sorted_table->connect_operation_signal(refresh_selection);
   body_current->set_source(std::make_shared<SourceToViewIndexModel>(

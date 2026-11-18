@@ -12,6 +12,19 @@ using namespace Spire::Tests;
 
 namespace {
   template<typename T>
+  class CountingSelection : public ArrayListModel<T> {
+    public:
+      mutable int m_previous_reads = 0;
+
+      const T& get(int index) const override {
+        if(index < this->get_size() - 1) {
+          ++m_previous_reads;
+        }
+        return ArrayListModel<T>::get(index);
+      }
+  };
+
+  template<typename T>
   struct FixedSelection : ArrayListModel<T> {
     using ArrayListModel<T>::ArrayListModel;
 
@@ -77,23 +90,12 @@ TEST_SUITE("TableView") {
   }
 
   UI_TEST_CASE("append_selection") {
-    class Selection : public ArrayListModel<int> {
-      public:
-        mutable int m_previous_reads = 0;
-
-        const int& get(int index) const override {
-          if(index < get_size() - 1) {
-            ++m_previous_reads;
-          }
-          return ArrayListModel<int>::get(index);
-        }
-    };
     auto table = std::make_shared<ArrayTableModel>();
     const auto SIZE = 64;
     for(auto i = 0; i != SIZE; ++i) {
       table->push({i});
     }
-    auto rows = std::make_shared<Selection>();
+    auto rows = std::make_shared<CountingSelection<int>>();
     auto selection = std::make_shared<TableSelectionModel>(
       std::make_shared<ArrayListModel<TableIndex>>(), rows,
       std::make_shared<ArrayListModel<int>>());
@@ -115,6 +117,39 @@ TEST_SUITE("TableView") {
       rows->transact(append);
     }
     REQUIRE(rows->m_previous_reads == 0);
+  }
+
+  UI_TEST_CASE("selection_on_row_insert") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    table->push({20});
+    auto rows = std::make_shared<CountingSelection<int>>();
+    auto cells = std::make_shared<CountingSelection<TableIndex>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+      set_filter(std::make_shared<MinimumFilter>()).
+      set_selection(selection).make());
+    for(auto row : {0, 1}) {
+      rows->push(row);
+      cells->push(TableIndex(row, 0));
+    }
+    auto& displayed = *view->get_body().get_selection();
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    table->push({0});
+    REQUIRE(displayed.get_row_selection()->get(0) == 1);
+    REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(0, 0));
+    auto row_reads = rows->m_previous_reads;
+    auto cell_reads = cells->m_previous_reads;
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    table->push({30});
+    REQUIRE(displayed.get_row_selection()->get(0) == 2);
+    REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(1, 0));
+    REQUIRE(rows->m_previous_reads == row_reads);
+    REQUIRE(cells->m_previous_reads == cell_reads);
   }
 
   UI_TEST_CASE("select_sorted_row") {
