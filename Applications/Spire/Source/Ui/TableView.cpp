@@ -321,7 +321,7 @@ TableView::TableView(
   link(*this, *m_header_view);
   m_selection->track(*m_table);
   m_filtered_table = std::make_shared<FilteredTableModel>(
-    m_table, std::bind_front(&TableView::is_filtered, this));
+    m_table, std::bind_front(&TableFilter::is_filtered, m_filter));
   m_selection_filter_connection = m_selection->m_filter_signal->connect(
     [=, this] (int row, bool& excluded) {
       if(!m_selection->m_is_updating &&
@@ -451,10 +451,6 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool TableView::is_filtered(const TableModel& model, int row) {
-  return m_filter->is_filtered(model, row);
-}
-
 void TableView::update_scroll_sizes() {
   auto scroll_size = m_body->estimate_scroll_line_height();
   m_scroll_box->get_vertical_scroll_bar().set_line_size(scroll_size);
@@ -483,7 +479,8 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
 }
 
 void TableView::on_filter(int column, TableFilter::Filter filter) {
-  m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
+  m_filtered_table->set_filter(
+    std::bind_front(&TableFilter::is_filtered, m_filter));
 }
 
 void TableView::on_current(const optional<Index>&) {

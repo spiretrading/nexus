@@ -104,7 +104,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_source_selection_connection;
       boost::signals2::scoped_connection m_view_selection_connection;
 
-      bool is_filtered(const TableModel& model, int row);
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter(int column, TableFilter::Filter filter);

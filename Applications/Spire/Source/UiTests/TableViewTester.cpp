@@ -39,6 +39,30 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("retained_body_selection") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({0});
+    auto filter = std::make_shared<MinimumFilter>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_filter(filter).make());
+    SUBCASE("initial_filter") {}
+    SUBCASE("updated_filter") {
+      filter->set_minimum(2);
+    }
+    auto source = view->get_selection();
+    auto displayed = view->get_body().get_selection();
+    auto weak_filter = std::weak_ptr(filter);
+    filter.reset();
+    view.reset();
+    REQUIRE(!weak_filter.expired());
+    table->push({0});
+    table->push({5});
+    REQUIRE(displayed->get_row_selection()->push(0) == QValidator::Acceptable);
+    REQUIRE(source->get_row_selection()->get(0) == 2);
+    displayed.reset();
+    REQUIRE(weak_filter.expired());
+  }
+
   UI_TEST_CASE("select_sorted_row") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({30});
