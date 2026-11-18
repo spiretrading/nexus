@@ -390,7 +390,7 @@ TableView::TableView(
     is_updating, tracking, *this);
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
-  body_selection->m_tracks_rows = false;
+  body_selection->m_is_tracking_rows = false;
   m_body = new TableBody(m_sorted_table, body_current, body_selection,
     m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));

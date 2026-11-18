@@ -64,7 +64,7 @@ namespace Spire {
       std::shared_ptr<ColumnSelectionModel> m_column_selection;
       std::weak_ptr<TableModel> m_table;
       std::shared_ptr<FilterSignal> m_filter_signal;
-      bool m_tracks_rows;
+      bool m_is_tracking_rows;
       bool m_is_updating;
       boost::signals2::scoped_connection m_table_connection;
 

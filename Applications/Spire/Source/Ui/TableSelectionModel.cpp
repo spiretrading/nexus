@@ -114,7 +114,7 @@ TableSelectionModel::TableSelectionModel(
   : m_item_selection(std::move(item_selection)),
     m_row_selection(std::move(row_selection)),
     m_column_selection(std::move(column_selection)),
-    m_tracks_rows(true),
+    m_is_tracking_rows(true),
     m_is_updating(false) {}
 
 std::shared_ptr<const TableSelectionModel::ItemSelectionModel>
@@ -180,7 +180,7 @@ connection TableSelectionModel::track(
 }
 
 void TableSelectionModel::update_rows(const TableModel::Operation& operation) {
-  if(m_tracks_rows) {
+  if(m_is_tracking_rows) {
     auto guard = QScopedValueRollback(m_is_updating, true);
     transact([&] {
       update(*m_row_selection, operation);
