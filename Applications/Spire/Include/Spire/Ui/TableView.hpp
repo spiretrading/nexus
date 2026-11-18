@@ -87,6 +87,7 @@ namespace Spire {
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
+      std::shared_ptr<SelectionModel> m_selection;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
       std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<HeaderModel> m_header;
@@ -99,6 +100,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_filter_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_body_style_connection;
+      boost::signals2::scoped_connection m_selection_filter_connection;
+      boost::signals2::scoped_connection m_source_selection_connection;
+      boost::signals2::scoped_connection m_view_selection_connection;
 
       bool is_filtered(const TableModel& model, int row);
       void update_scroll_sizes();

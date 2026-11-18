@@ -3,6 +3,7 @@
 #include <memory>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TableIndex.hpp"
+#include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
 
@@ -55,9 +56,19 @@ namespace Spire {
       decltype(auto) transact(F&& f);
 
     private:
+      friend class TableSelectionController;
+      friend class TableView;
+      using FilterSignal = Signal<void (int row, bool& excluded)>;
       std::shared_ptr<ItemSelectionModel> m_item_selection;
       std::shared_ptr<RowSelectionModel> m_row_selection;
       std::shared_ptr<ColumnSelectionModel> m_column_selection;
+      std::shared_ptr<FilterSignal> m_filter_signal;
+      bool m_tracks_rows;
+      bool m_is_updating;
+      boost::signals2::scoped_connection m_table_connection;
+
+      void track(TableModel& table);
+      void update_rows(const TableModel::Operation& operation);
   };
 
   template<typename F>

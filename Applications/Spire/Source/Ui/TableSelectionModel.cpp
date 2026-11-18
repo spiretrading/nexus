@@ -1,6 +1,99 @@
 #include "Spire/Ui/TableSelectionModel.hpp"
+#include <QScopedValueRollback>
+#include "Spire/Spire/FilteredListModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 
 using namespace Spire;
+
+namespace {
+  int& row_of(int& row) {
+    return row;
+  }
+
+  int& row_of(TableIndex& index) {
+    return index.m_row;
+  }
+
+  template<typename T>
+  class SelectableList : public FilteredListModel<T> {
+    public:
+      SelectableList(std::shared_ptr<ListModel<T>> source,
+        std::function<bool (T)> is_excluded)
+        : FilteredListModel<T>(source, [=] (const auto& list, int index) {
+            return is_excluded(list.get(index));
+          }),
+          m_source(std::move(source)),
+          m_is_excluded(std::move(is_excluded)),
+          m_is_pruning(false) {}
+
+      QValidator::State set(int index, const T& value) override {
+        if(m_is_excluded(value)) {
+          return QValidator::Invalid;
+        }
+        return FilteredListModel<T>::set(index, value);
+      }
+
+      QValidator::State push(const T& value) override {
+        if(m_is_excluded(value)) {
+          return QValidator::Invalid;
+        }
+        return m_source->push(value);
+      }
+
+      QValidator::State insert(const T& value, int index) override {
+        if(m_is_excluded(value)) {
+          return QValidator::Invalid;
+        } else if(index == this->get_size()) {
+          return m_source->insert(value, m_source->get_size());
+        }
+        return m_source->insert(value, this->index_to_source(index));
+      }
+
+      QValidator::State move(int source, int destination) override {
+        return m_source->move(
+          this->index_to_source(source), this->index_to_source(destination));
+      }
+
+      QValidator::State remove(int index) override {
+        auto is_excluded = m_is_excluded(this->get(index));
+        auto state = m_source->remove(this->index_to_source(index));
+        if(state == QValidator::Invalid && is_excluded) {
+          auto guard = QScopedValueRollback(m_is_pruning, true);
+          this->set_filter([=, this] (const auto& list, int index) {
+            return (m_is_pruning && this->index_from_source(index) == -1) ||
+              m_is_excluded(list.get(index));
+          });
+          return QValidator::Acceptable;
+        }
+        return state;
+      }
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override {
+        m_source->transact([&] { transaction(); });
+      }
+
+    private:
+      std::shared_ptr<ListModel<T>> m_source;
+      std::function<bool (T)> m_is_excluded;
+      bool m_is_pruning;
+  };
+
+  void update(auto& selection, const TableModel::Operation& operation) {
+    for(auto i = selection.get_size(); i-- > 0;) {
+      auto value = selection.get(i);
+      auto& row = row_of(value);
+      auto tracker = TableRowIndexTracker(row);
+      tracker.update(operation);
+      if(tracker.get_index() == -1) {
+        selection.remove(i);
+      } else if(tracker.get_index() != row) {
+        row = tracker.get_index();
+        selection.set(i, value);
+      }
+    }
+  }
+}
 
 TableSelectionModel::TableSelectionModel(
   std::shared_ptr<ItemSelectionModel> item_selection,
@@ -8,7 +101,9 @@ TableSelectionModel::TableSelectionModel(
   std::shared_ptr<ColumnSelectionModel> column_selection)
   : m_item_selection(std::move(item_selection)),
     m_row_selection(std::move(row_selection)),
-    m_column_selection(std::move(column_selection)) {}
+    m_column_selection(std::move(column_selection)),
+    m_tracks_rows(true),
+    m_is_updating(false) {}
 
 std::shared_ptr<const TableSelectionModel::ItemSelectionModel>
     TableSelectionModel::get_item_selection() const {
@@ -38,4 +133,41 @@ std::shared_ptr<const TableSelectionModel::ColumnSelectionModel>
 const std::shared_ptr<TableSelectionModel::ColumnSelectionModel>&
     TableSelectionModel::get_column_selection() {
   return m_column_selection;
+}
+
+void TableSelectionModel::track(TableModel& table) {
+  if(m_table_connection.connected()) {
+    return;
+  }
+  if(!m_filter_signal) {
+    m_filter_signal = std::make_shared<FilterSignal>();
+    auto is_excluded = [signal = m_filter_signal] (auto value) {
+      auto excluded = false;
+      (*signal)(row_of(value), excluded);
+      return excluded;
+    };
+    m_row_selection = std::make_shared<SelectableList<int>>(
+      m_row_selection, is_excluded);
+    m_item_selection = std::make_shared<SelectableList<TableIndex>>(
+      m_item_selection, is_excluded);
+  }
+  m_table_connection = table.connect_operation_signal(
+    [=, this] (const auto& operation) {
+      auto guard = QScopedValueRollback(m_is_updating, true);
+      if(auto remove = std::get_if<TableModel::RemoveOperation>(&operation)) {
+        update_rows(TableModel::PreRemoveOperation(remove->m_index));
+      } else if(std::holds_alternative<TableModel::AddOperation>(operation) ||
+          std::holds_alternative<TableModel::MoveOperation>(operation)) {
+        update_rows(operation);
+      }
+    });
+}
+
+void TableSelectionModel::update_rows(const TableModel::Operation& operation) {
+  if(m_tracks_rows) {
+    transact([&] {
+      update(*m_row_selection, operation);
+      update(*m_item_selection, operation);
+    });
+  }
 }

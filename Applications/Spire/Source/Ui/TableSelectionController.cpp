@@ -112,98 +112,18 @@ void TableSelectionController::add_row(int index) {
   ++m_row_size;
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
-  m_selection->transact([&] {
-    auto& rows = m_selection->get_row_selection();
-    for(auto i = 0; i != rows->get_size(); ++i) {
-      auto selection = rows->get(i);
-      if(selection >= index) {
-        rows->set(i, selection + 1);
-      }
-    }
-    auto& items = m_selection->get_item_selection();
-    for(auto i = 0; i != items->get_size(); ++i) {
-      auto& selection = items->get(i);
-      if(selection.m_row >= index) {
-        auto update = selection;
-        ++update.m_row;
-        items->set(i, update);
-      }
-    }
-  });
+  m_selection->update_rows(TableModel::AddOperation(index));
 }
 
 void TableSelectionController::remove_row(int index) {
-  m_selection->transact([&] {
-    {
-      auto& rows = m_selection->get_row_selection();
-      auto i = 0;
-      while(i != rows->get_size()) {
-        auto selection = rows->get(i);
-        if(selection == index) {
-          if(rows->remove(i) == QValidator::State::Invalid) {
-            ++i;
-          }
-        } else {
-          if(selection > index) {
-            rows->set(i, selection - 1);
-          }
-          ++i;
-        }
-      }
-    }
-    {
-      auto& items = m_selection->get_item_selection();
-      auto i = 0;
-      while(i != items->get_size()) {
-        auto selection = items->get(i);
-        if(selection.m_row == index) {
-          if(items->remove(i) == QValidator::State::Invalid) {
-            ++i;
-          }
-        } else {
-          if(selection.m_row > index) {
-            auto update = selection;
-            --update.m_row;
-            items->set(i, update);
-          }
-          ++i;
-        }
-      }
-    }
-  });
+  m_selection->update_rows(TableModel::PreRemoveOperation(index));
   --m_row_size;
 }
 
 void TableSelectionController::move_row(int source, int destination) {
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
-  auto direction = get_direction(destination, source);
-  m_selection->transact([&] {
-    auto& rows = m_selection->get_row_selection();
-    for(auto i = 0; i != rows->get_size(); ++i) {
-      auto selection = rows->get(i);
-      if(selection == source) {
-        rows->set(i, destination);
-      } else if(direction == 1 && selection >= destination &&
-          selection < source || direction == -1 && selection > source &&
-          selection <= destination) {
-        rows->set(i, selection + direction);
-      }
-    }
-    auto& items = m_selection->get_item_selection();
-    for(auto i = 0; i != items->get_size(); ++i) {
-      auto selection = items->get(i);
-      if(selection.m_row == source) {
-        selection.m_row = destination;
-        items->set(i, selection);
-      } else if(direction == 1 && selection.m_row >= destination &&
-          selection.m_row < source || direction == -1 &&
-          selection.m_row > source && selection.m_row <= destination) {
-        selection.m_row += direction;
-        items->set(i, selection);
-      }
-    }
-  });
+  m_selection->update_rows(TableModel::MoveOperation(source, destination));
 }
 
 void TableSelectionController::select_all() {

@@ -189,7 +189,8 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   });
   enclose(*this, *box);
   update_button_state();
-  auto& row_selection = m_table_view->get_selection()->get_row_selection();
+  auto& row_selection =
+    m_table_view->get_body().get_selection()->get_row_selection();
   row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
 }
@@ -212,8 +213,8 @@ void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
 }
 
 void TaskKeysPage::update_button_state() {
-  auto is_enabled =
-    m_table_view->get_selection()->get_row_selection()->get_size() > 0;
+  auto& selection = m_table_view->get_body().get_selection();
+  auto is_enabled = selection->get_row_selection()->get_size() > 0;
   m_duplicate_button->setEnabled(is_enabled);
   m_delete_button->setEnabled(is_enabled);
 }
@@ -230,7 +231,8 @@ void TaskKeysPage::on_new_task_action() {
 }
 
 void TaskKeysPage::on_duplicate_task_action() {
-  auto& selection = m_table_view->get_selection()->get_row_selection();
+  auto& selection =
+    m_table_view->get_body().get_selection()->get_row_selection();
   if(selection->get_size() == 0) {
     return;
   }
@@ -255,7 +257,8 @@ void TaskKeysPage::on_duplicate_task_action() {
 void TaskKeysPage::on_delete_task_action() {
   auto current = m_table_view->get_body().get_current()->get();
   m_key_bindings->get_order_task_arguments()->transact([&] {
-    for(auto i : *m_table_view->get_selection()->get_row_selection()) {
+    auto& selection = m_table_view->get_body().get_selection();
+    for(auto i : *selection->get_row_selection()) {
       m_key_bindings->get_order_task_arguments()->remove(
         any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
     }
