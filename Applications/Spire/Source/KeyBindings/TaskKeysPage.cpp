@@ -150,6 +150,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   toolbar_layout->addWidget(m_duplicate_button);
   toolbar_layout->addSpacing(scale_width(4));
   m_delete_button = make_button(":/Icons/delete3.svg", tr("Delete"));
+  m_delete_button->setAccessibleName(tr("Delete"));
   m_delete_button->connect_click_signal(
     std::bind_front(&TaskKeysPage::on_delete_task_action, this));
   update_style(*m_delete_button, [] (auto& style) {
@@ -176,11 +177,11 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto layout = make_vbox_layout(body);
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
-  auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
+  m_filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
     additional_tags);
   m_table_view = make_task_keys_table_view(
-    std::move(filtered_tasks), std::make_shared<ConsolidatedScopeQueryModel>(
+    m_filtered_tasks, std::make_shared<ConsolidatedScopeQueryModel>(
       std::move(tickers), populate_scope_query_model()), additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
@@ -189,8 +190,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   });
   enclose(*this, *box);
   update_button_state();
-  auto& row_selection =
-    m_table_view->get_body().get_selection()->get_row_selection();
+  auto& row_selection = m_table_view->get_selection()->get_row_selection();
   row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
 }
@@ -213,7 +213,7 @@ void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
 }
 
 void TaskKeysPage::update_button_state() {
-  auto& selection = m_table_view->get_body().get_selection();
+  auto& selection = m_table_view->get_selection();
   auto is_enabled = selection->get_row_selection()->get_size() > 0;
   m_duplicate_button->setEnabled(is_enabled);
   m_delete_button->setEnabled(is_enabled);
@@ -231,46 +231,30 @@ void TaskKeysPage::on_new_task_action() {
 }
 
 void TaskKeysPage::on_duplicate_task_action() {
-  auto& selection =
-    m_table_view->get_body().get_selection()->get_row_selection();
-  if(selection->get_size() == 0) {
+  auto& selection = *m_table_view->get_selection()->get_row_selection();
+  if(selection.get_size() == 0) {
     return;
   }
-  auto last_current_row = m_table_view->get_body().get_current()->get()->m_row;
-  auto sorted_selection =
-    std::vector<int>(selection->begin(), selection->end());
-  std::sort(sorted_selection.begin(), sorted_selection.end(),
-    std::greater<int>());
-  for(auto index : sorted_selection) {
-    auto order_task = m_key_bindings->get_order_task_arguments()->get(
-      any_cast<int>(m_table_view->get_body().get_table()->at(index, 0)));
-    order_task.m_key = QKeySequence();
-    m_key_bindings->get_order_task_arguments()->insert(order_task,
-      m_table_view->get_body().get_current()->get()->m_row);
-  }
-  QTimer::singleShot(0, this, [=] {
-    m_table_view->get_body().get_current()->set(
-      TableView::Index(last_current_row, 1));
-  });
+  auto row = selection.get(0);
+  auto task = m_filtered_tasks->get(row);
+  task.m_key = QKeySequence();
+  m_filtered_tasks->insert(task, row);
+  m_table_view->get_current()->set(TableIndex(row, 1));
 }
 
 void TaskKeysPage::on_delete_task_action() {
-  auto current = m_table_view->get_body().get_current()->get();
-  m_key_bindings->get_order_task_arguments()->transact([&] {
-    auto& selection = m_table_view->get_body().get_selection();
-    for(auto i : *selection->get_row_selection()) {
-      m_key_bindings->get_order_task_arguments()->remove(
-        any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
-    }
-  });
-  auto row_size = m_table_view->get_body().get_table()->get_row_size();
-  if(row_size > 0) {
-    if(current->m_row >= row_size) {
-      --current->m_row;
-    }
-    m_table_view->get_body().get_current()->set(*current);
-    m_table_view->get_body().get_selection()->get_row_selection()->push(
-      current->m_row);
+  auto& selection = *m_table_view->get_selection()->get_row_selection();
+  if(selection.get_size() == 0) {
+    return;
+  }
+  auto& body = m_table_view->get_body();
+  auto current = body.get_current()->get();
+  m_table_view->get_table()->remove(selection.get(0));
+  auto size = body.get_table()->get_row_size();
+  if(current && size != 0) {
+    current->m_row = std::min(current->m_row, size - 1);
+    body.get_current()->set(*current);
+    body.get_selection()->get_row_selection()->push(current->m_row);
   }
 }
 

@@ -9,8 +9,9 @@ using namespace Spire;
 SearchBarOrderTaskArgumentsListModel::SearchBarOrderTaskArgumentsListModel(
     std::shared_ptr<OrderTaskArgumentsListModel> source,
     std::shared_ptr<TextModel> keywords, AdditionalTagDatabase additional_tags)
-    : m_cache(source, std::move(additional_tags)),
-      m_filtered_list(std::move(source), make_filter(keywords->get())),
+    : m_source(std::move(source)),
+      m_cache(m_source, std::move(additional_tags)),
+      m_filtered_list(m_source, make_filter(keywords->get())),
       m_keywords(std::move(keywords)) {
   m_connection = m_keywords->connect_update_signal(
     std::bind_front(&SearchBarOrderTaskArgumentsListModel::on_keywords, this));
@@ -37,7 +38,10 @@ QValidator::State SearchBarOrderTaskArgumentsListModel::push(
 
 QValidator::State SearchBarOrderTaskArgumentsListModel::insert(
     const OrderTaskArguments& value, int index) {
-  return m_filtered_list.insert(value, index);
+  if(index == get_size()) {
+    return m_source->push(value);
+  }
+  return m_source->insert(value, m_filtered_list.index_to_source(index));
 }
 
 QValidator::State SearchBarOrderTaskArgumentsListModel::move(

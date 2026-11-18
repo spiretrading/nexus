@@ -40,6 +40,7 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
+      std::shared_ptr<OrderTaskArgumentsListModel> m_source;
       OrderTaskArgumentsContentCache m_cache;
       FilteredListModel<OrderTaskArguments> m_filtered_list;
       std::shared_ptr<TextModel> m_keywords;
