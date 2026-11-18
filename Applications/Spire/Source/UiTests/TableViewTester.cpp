@@ -91,6 +91,7 @@ TEST_SUITE("TableView") {
     REQUIRE(rows->get(0) == 1);
     REQUIRE(rows->get(1) == 0);
     auto items = displayed->get_item_selection();
+    auto columns = displayed->get_column_selection();
     REQUIRE(items->push(TableIndex(1, 0)) == QValidator::Acceptable);
     SUBCASE("retained_lists") {
       displayed.reset();
@@ -105,6 +106,9 @@ TEST_SUITE("TableView") {
     items.reset();
     displayed.reset();
     REQUIRE(weak_filter.expired());
+    source.reset();
+    selection.reset();
+    REQUIRE(columns->push(0) == QValidator::Acceptable);
   }
 
   UI_TEST_CASE("append_selection") {
@@ -657,6 +661,8 @@ TEST_SUITE("TableView") {
       set_selection(selection).make());
     auto& selected_rows = *selection->get_row_selection();
     SUBCASE("edits_after_rebinding") {
+      auto previous_columns =
+        first_view->get_body().get_selection()->get_column_selection();
       first->push({15});
       auto second = std::make_shared<ArrayTableModel>();
       second->push({20});
@@ -689,6 +695,15 @@ TEST_SUITE("TableView") {
         };
         check(*previous.get_row_selection(), 1);
         check(*previous.get_item_selection(), TableIndex(1, 0));
+        REQUIRE(previous_columns->push(0) == QValidator::Invalid);
+        REQUIRE(columns.get_size() == 0);
+        auto& active =
+          *view->get_body().get_selection()->get_column_selection();
+        REQUIRE(active.push(0) == QValidator::Acceptable);
+        check(*previous_columns, 0);
+        REQUIRE(columns.get_size() == 1);
+        REQUIRE(columns.get(0) == 0);
+        REQUIRE(active.remove(0) == QValidator::Acceptable);
       }
       REQUIRE(rows->get_size() == 1);
       REQUIRE(rows->get(0) == 0);
@@ -757,7 +772,12 @@ TEST_SUITE("TableView") {
       set_selection(selection).make());
     auto& displayed = *view->get_body().get_selection();
     REQUIRE(view->get_selection() == selection);
-    REQUIRE(displayed.get_column_selection() == columns);
+    auto& displayed_columns = *displayed.get_column_selection();
+    columns->push(0);
+    REQUIRE(displayed_columns.get_size() == 1);
+    REQUIRE(displayed_columns.get(0) == 0);
+    REQUIRE(displayed_columns.remove(0) == QValidator::Acceptable);
+    REQUIRE(columns->get_size() == 0);
     REQUIRE(rows->get(0) == 0);
     REQUIRE(displayed.get_row_selection()->get(0) == 1);
     REQUIRE(displayed.get_item_selection()->get(0) == TableIndex(1, 0));

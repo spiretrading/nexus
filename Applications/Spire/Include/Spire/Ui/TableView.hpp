@@ -84,6 +84,9 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      class SourceToViewIndexModel;
+      template<typename T> class DisplayedSelection;
+      class DisplayedColumnSelection;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
@@ -102,6 +105,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_body_style_connection;
       boost::signals2::scoped_connection m_selection_filter_connection;
 
+      static bool is_row_change(const TableModel::Operation& operation);
+      void initialize_body(TableViewItemBuilder item_builder,
+        boost::signals2::connection tracking);
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter(int column, TableFilter::Filter filter);
