@@ -1,6 +1,7 @@
 #include "Spire/Ui/TableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
+#include <QScopedValueRollback>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -358,11 +359,12 @@ TableView::TableView(
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
   body_selection->m_tracks_rows = false;
-  m_body = new TableBody(m_sorted_table, body_current,
-    std::move(body_selection), m_header_view->get_widths(),
+  m_body = new TableBody(m_sorted_table, body_current, body_selection,
+    m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
   auto refresh_selection = [=] (const TableModel::Operation& operation) {
     if(is_row_change(operation)) {
+      auto guard = QScopedValueRollback(body_selection->m_is_updating, true);
       rows->refresh();
       items->refresh();
     }

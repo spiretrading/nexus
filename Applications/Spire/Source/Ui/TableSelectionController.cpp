@@ -1,5 +1,6 @@
 #include "Spire/Ui/TableSelectionController.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -112,18 +113,18 @@ void TableSelectionController::add_row(int index) {
   ++m_row_size;
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
-  m_selection->update_rows(TableModel::AddOperation(index));
+  update_rows(TableModel::AddOperation(index));
 }
 
 void TableSelectionController::remove_row(int index) {
-  m_selection->update_rows(TableModel::PreRemoveOperation(index));
+  update_rows(TableModel::PreRemoveOperation(index));
   --m_row_size;
 }
 
 void TableSelectionController::move_row(int source, int destination) {
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
-  m_selection->update_rows(TableModel::MoveOperation(source, destination));
+  update_rows(TableModel::MoveOperation(source, destination));
 }
 
 void TableSelectionController::select_all() {
@@ -261,20 +262,40 @@ connection TableSelectionController::connect_column_operation_signal(
   return m_column_operation_signal.connect(slot);
 }
 
+void TableSelectionController::update_rows(
+    const TableModel::Operation& operation) {
+  auto update = [&] (optional<Index>& index) {
+    if(index) {
+      auto tracker = TableRowIndexTracker(index->m_row);
+      tracker.update(operation);
+      if(tracker.get_index() == -1) {
+        index = none;
+      } else {
+        index->m_row = tracker.get_index();
+      }
+    }
+  };
+  update(m_range_anchor);
+  update(m_current);
+  m_selection->update_rows(operation);
+}
+
 void TableSelectionController::on_item_operation(
     const ListModel<Index>::Operation& operation) {
   visit(operation,
     [&] (const TableSelectionModel::ItemSelectionModel::PreRemoveOperation&
         operation) {
       m_item_operation_signal(operation);
-      if(m_selection->get_item_selection()->get(operation.m_index) ==
-          m_range_anchor) {
+      if(!m_selection->m_is_updating &&
+          m_selection->get_item_selection()->get(operation.m_index) ==
+            m_range_anchor) {
         m_range_anchor = none;
       }
     },
     [&] (const TableSelectionModel::ItemSelectionModel::UpdateOperation&
         operation) {
-      if(operation.get_previous() == m_range_anchor) {
+      if(!m_selection->m_is_updating &&
+          operation.get_previous() == m_range_anchor) {
         m_range_anchor = none;
       }
       m_item_operation_signal(operation);
@@ -290,7 +311,7 @@ void TableSelectionController::on_row_operation(
     [&] (const TableSelectionModel::RowSelectionModel::PreRemoveOperation&
         operation) {
       m_row_operation_signal(operation);
-      if(m_range_anchor &&
+      if(!m_selection->m_is_updating && m_range_anchor &&
           m_selection->get_row_selection()->get(operation.m_index) ==
             m_range_anchor->m_row) {
         m_range_anchor = none;
@@ -298,7 +319,8 @@ void TableSelectionController::on_row_operation(
     },
     [&] (const TableSelectionModel::RowSelectionModel::UpdateOperation&
         operation) {
-      if(m_range_anchor && operation.get_previous() == m_range_anchor->m_row) {
+      if(!m_selection->m_is_updating && m_range_anchor &&
+          operation.get_previous() == m_range_anchor->m_row) {
         m_range_anchor = none;
       }
       m_row_operation_signal(operation);

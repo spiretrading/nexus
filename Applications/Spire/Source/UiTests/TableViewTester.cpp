@@ -88,6 +88,56 @@ TEST_SUITE("TableView") {
     REQUIRE(*current == TableIndex(1, 0));
   }
 
+  UI_TEST_CASE("sorted_range_selection") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto value : {10, 20, 30, 40}) {
+      table->push({value});
+    }
+    auto rows = std::make_shared<ArrayListModel<int>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<ArrayListModel<TableIndex>>(), rows,
+      std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).
+      set_selection(selection).make());
+    view->resize(320, 240);
+    view->show();
+    QApplication::processEvents();
+    auto click = [&] (QWidget& widget) {
+      move_cursor(widget, widget.rect().center());
+      press_mouse(widget, Qt::LeftButton);
+      release_mouse(widget, Qt::LeftButton);
+    };
+    auto& body = view->get_body();
+    click(*body.find_item(TableIndex(0, 0)));
+    click(*view->get_header().get_item(0));
+    QApplication::processEvents();
+    REQUIRE(body.get_table()->get<int>(3, 0) == 10);
+    REQUIRE(rows->get_size() == 1);
+    REQUIRE(rows->get(0) == 0);
+    auto shift_click = [&] {
+      press_key(body, Qt::Key_Shift);
+      click(*body.find_item(TableIndex(1, 0)));
+      release_key(body, Qt::Key_Shift);
+      auto current = view->get_current()->get();
+      REQUIRE(current.has_value());
+      REQUIRE(*current == TableIndex(2, 0));
+    };
+    SUBCASE("retained_anchor") {
+      shift_click();
+      REQUIRE(rows->get_size() == 3);
+      REQUIRE(rows->get(0) == 0);
+      REQUIRE(rows->get(1) == 1);
+      REQUIRE(rows->get(2) == 2);
+    }
+    SUBCASE("deselected_anchor") {
+      rows->remove(0);
+      shift_click();
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 2);
+    }
+  }
+
   UI_TEST_CASE("injected_current") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({10});

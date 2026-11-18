@@ -164,7 +164,6 @@ void TableSelectionModel::track(TableModel& table) {
   }
   m_table_connection = table.connect_operation_signal(
     [=, this] (const auto& operation) {
-      auto guard = QScopedValueRollback(m_is_updating, true);
       if(auto remove = std::get_if<TableModel::RemoveOperation>(&operation)) {
         update_rows(TableModel::PreRemoveOperation(remove->m_index));
       } else if(std::holds_alternative<TableModel::AddOperation>(operation) ||
@@ -176,6 +175,7 @@ void TableSelectionModel::track(TableModel& table) {
 
 void TableSelectionModel::update_rows(const TableModel::Operation& operation) {
   if(m_tracks_rows) {
+    auto guard = QScopedValueRollback(m_is_updating, true);
     transact([&] {
       update(*m_row_selection, operation);
       update(*m_item_selection, operation);

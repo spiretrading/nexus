@@ -1113,17 +1113,19 @@ void TableBody::move_row(int source, int destination) {
     }
   } else if(layout.is_visible(destination)) {
     mount_row(destination);
+    auto hidden_row = source;
     if(destination < source) {
-      ++source;
+      ++hidden_row;
     }
-    layout.remove_hidden_row(source);
+    layout.remove_hidden_row(hidden_row);
   } else {
     auto height = layout.get_row_height(source);
     layout.remove_hidden_row(source);
+    auto hidden_row = destination;
     if(source < destination) {
-      --destination;
+      --hidden_row;
     }
-    layout.add_hidden_row(destination, height);
+    layout.add_hidden_row(hidden_row, height);
   }
   m_selection_controller.move_row(source, destination);
 }
