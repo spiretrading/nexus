@@ -3,6 +3,7 @@
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -146,11 +147,14 @@ const std::shared_ptr<TableSelectionModel::ColumnSelectionModel>&
   return m_column_selection;
 }
 
-void TableSelectionModel::track(TableModel& table) {
-  if(m_table_connection.connected()) {
-    return;
+connection TableSelectionModel::track(
+    const std::shared_ptr<TableModel>& table) {
+  if(m_table.lock() == table) {
+    return m_table_connection;
   }
-  if(!m_filter_signal) {
+  if(m_filter_signal) {
+    m_filter_signal->disconnect_all_slots();
+  } else {
     m_filter_signal = std::make_shared<FilterSignal>();
     auto is_excluded = [signal = m_filter_signal] (auto value) {
       auto excluded = false;
@@ -162,7 +166,8 @@ void TableSelectionModel::track(TableModel& table) {
     m_item_selection = std::make_shared<SelectableList<TableIndex>>(
       m_item_selection, is_excluded);
   }
-  m_table_connection = table.connect_operation_signal(
+  m_table = table;
+  m_table_connection = table->connect_operation_signal(
     [=, this] (const auto& operation) {
       if(auto remove = std::get_if<TableModel::RemoveOperation>(&operation)) {
         update_rows(TableModel::PreRemoveOperation(remove->m_index));
@@ -171,6 +176,7 @@ void TableSelectionModel::track(TableModel& table) {
         update_rows(operation);
       }
     });
+  return m_table_connection;
 }
 
 void TableSelectionModel::update_rows(const TableModel::Operation& operation) {

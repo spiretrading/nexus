@@ -269,6 +269,58 @@ TEST_SUITE("TableView") {
     REQUIRE(displayed.get_item_selection()->get_size() == 0);
   }
 
+  UI_TEST_CASE("reused_selection") {
+    auto first = std::make_shared<ArrayTableModel>();
+    first->push({10});
+    auto rows = std::make_shared<ArrayListModel<int>>(std::vector{0});
+    auto cells = std::make_shared<ArrayListModel<TableIndex>>(
+      std::vector{TableIndex(0, 0)});
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto filter = std::make_shared<MinimumFilter>();
+    auto first_view = std::unique_ptr<TableView>(TableViewBuilder(first).
+      add_header_item("Value").set_filter(filter).
+      set_selection(selection).make());
+    auto& selected_rows = *selection->get_row_selection();
+    SUBCASE("same_table") {
+      auto view = std::unique_ptr<TableView>(TableViewBuilder(first).
+        add_header_item("Value").set_selection(selection).make());
+      first->insert({5}, 0);
+      REQUIRE(rows->get(0) == 1);
+      REQUIRE(cells->get(0) == TableIndex(1, 0));
+      REQUIRE(selected_rows.push(0) == QValidator::Acceptable);
+      filter->set_minimum(10);
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 1);
+      REQUIRE(selected_rows.push(0) == QValidator::Invalid);
+    }
+    SUBCASE("different_table") {
+      SUBCASE("closed_view") {
+        first_view.reset();
+      }
+      SUBCASE("open_view") {}
+      auto second = std::make_shared<ArrayTableModel>();
+      second->push({20});
+      auto second_view = std::unique_ptr<TableView>(TableViewBuilder(second).
+        add_header_item("Value").set_selection(selection).make());
+      first->insert({5}, 0);
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 0);
+      REQUIRE(cells->get(0) == TableIndex(0, 0));
+      filter->set_minimum(100);
+      second->insert({15}, 0);
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 1);
+      REQUIRE(cells->get_size() == 1);
+      REQUIRE(cells->get(0) == TableIndex(1, 0));
+      auto& displayed = *second_view->get_body().get_selection();
+      REQUIRE(displayed.get_row_selection()->get(0) == 1);
+      REQUIRE(displayed.get_item_selection()->get(0) == TableIndex(1, 0));
+      REQUIRE(selected_rows.push(0) == QValidator::Acceptable);
+      REQUIRE(rows->get_size() == 2);
+    }
+  }
+
   UI_TEST_CASE("source_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({30});

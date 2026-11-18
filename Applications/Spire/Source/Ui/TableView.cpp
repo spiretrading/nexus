@@ -147,10 +147,12 @@ namespace {
     public:
       DisplayedSelection(std::shared_ptr<ListModel<T>> source,
           std::shared_ptr<FilteredTableModel> filtered,
-          std::shared_ptr<SortedTableModel> sorted, auto is_updating)
+          std::shared_ptr<SortedTableModel> sorted, auto is_updating,
+          connection tracking)
           : m_source(std::move(source)),
             m_filtered(std::move(filtered)),
-            m_sorted(std::move(sorted)) {
+            m_sorted(std::move(sorted)),
+            m_tracking_connection(std::move(tracking)) {
         m_connection = m_source->connect_operation_signal(
           [=, this] (const auto& operation) {
             if(!is_updating() && !std::holds_alternative<
@@ -176,7 +178,7 @@ namespace {
             row = m_sorted->index_from_source(row);
             m_indices.push_back(i);
             values.push_back(value);
-          } else {
+          } else if(m_tracking_connection.connected()) {
             auto blocker = shared_connection_block(m_connection);
             if(m_source->remove(i) != QValidator::Invalid) {
               continue;
@@ -256,6 +258,7 @@ namespace {
       std::shared_ptr<FilteredTableModel> m_filtered;
       std::shared_ptr<SortedTableModel> m_sorted;
       std::vector<int> m_indices;
+      connection m_tracking_connection;
       scoped_connection m_connection;
 
       static int& row_of(T& value) {
@@ -325,7 +328,7 @@ TableView::TableView(
   m_header_view = new TableHeader(m_header, m_filter);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
-  m_selection->track(*m_table);
+  auto tracking = m_selection->track(m_table);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableFilter::is_filtered, m_filter));
   m_selection_filter_connection = m_selection->m_filter_signal->connect(
@@ -347,15 +350,15 @@ TableView::TableView(
   }
   auto body_current = make_proxy_value_model(
     std::make_shared<LocalValueModel<optional<Index>>>());
-  auto is_updating = [selection = m_selection] {
-    return selection->m_is_updating;
+  auto is_updating = [selection = m_selection, tracking] {
+    return selection->m_is_updating && tracking.connected();
   };
   auto rows = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    is_updating);
+    is_updating, tracking);
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
     m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
-    is_updating);
+    is_updating, tracking);
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
   body_selection->m_tracks_rows = false;
