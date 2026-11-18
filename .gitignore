@@ -60,6 +60,7 @@ Applications/SimulationOrderExecutionServer/Application/SimulationOrderExecution
 Applications/SimulationOrderExecutionServer/SimulationOrderExecutionServer
 Applications/WebPortal/Application/WebPortal
 Applications/WebPortal/WebPortal
+Applications/WebPortal/WebPortalTests
 Nexus/Config/Accounting/AccountingTests
 Nexus/Config/AdministrationService/AdministrationServiceTests
 Nexus/Config/Backtester/BacktesterTests
