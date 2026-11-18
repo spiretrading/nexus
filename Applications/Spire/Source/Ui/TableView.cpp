@@ -264,10 +264,16 @@ namespace {
       }
 
       QValidator::State move(int source, int destination) override {
+        if(!m_tracking_connection.connected()) {
+          return QValidator::Invalid;
+        }
         return m_source->move(m_indices.at(source), m_indices.at(destination));
       }
 
       QValidator::State remove(int index) override {
+        if(!m_tracking_connection.connected()) {
+          return QValidator::Invalid;
+        }
         return m_source->remove(m_indices.at(index));
       }
 
@@ -320,7 +326,8 @@ namespace {
 
       optional<T> to_source(T value) const {
         auto& row = row_of(value);
-        if(row < 0 || row >= m_sorted->get_row_size()) {
+        if(!m_tracking_connection.connected() || row < 0 ||
+            row >= m_sorted->get_row_size()) {
           return none;
         }
         row = m_filtered->index_to_source(m_sorted->index_to_source(row));
@@ -410,7 +417,7 @@ TableView::TableView(
     is_updating, tracking);
   auto body_selection = std::make_shared<SelectionModel>(
     items, rows, m_selection->get_column_selection());
-  body_selection->m_is_tracking_rows = false;
+  body_selection->m_source_tracking = tracking;
   m_body = new TableBody(m_sorted_table, body_current, body_selection,
     m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));

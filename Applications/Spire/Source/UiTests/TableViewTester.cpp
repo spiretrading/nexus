@@ -427,13 +427,57 @@ TEST_SUITE("TableView") {
       add_header_item("Value").set_filter(filter).
       set_selection(selection).make());
     auto& selected_rows = *selection->get_row_selection();
+    SUBCASE("edits_after_rebinding") {
+      first->push({15});
+      auto second = std::make_shared<ArrayTableModel>();
+      second->push({20});
+      second->push({25});
+      auto view = std::unique_ptr<TableView>(TableViewBuilder(second).
+        add_header_item("Value").set_selection(selection).make());
+      auto& body = first_view->get_body();
+      auto& previous = *body.get_selection();
+      auto& columns = *selection->get_column_selection();
+      SUBCASE("mouse") {
+        first_view->resize(320, 200);
+        first_view->show();
+        QApplication::processEvents();
+        auto cell = body.find_item(TableIndex(1, 0));
+        REQUIRE(cell);
+        move_cursor(*cell, cell->rect().center());
+        press_mouse(*cell, Qt::LeftButton);
+        release_mouse(*cell, Qt::LeftButton);
+      }
+      SUBCASE("select_all") {
+        press_key(body, Qt::Key_A, Qt::ControlModifier);
+      }
+      SUBCASE("displayed_lists") {
+        auto check = [] (auto& list, const auto& value) {
+          REQUIRE(list.set(0, value) == QValidator::Invalid);
+          REQUIRE(list.push(value) == QValidator::Invalid);
+          REQUIRE(list.insert(value, 0) == QValidator::Invalid);
+          REQUIRE(list.move(0, 0) == QValidator::Invalid);
+          REQUIRE(list.remove(0) == QValidator::Invalid);
+        };
+        check(*previous.get_row_selection(), 1);
+        check(*previous.get_item_selection(), TableIndex(1, 0));
+      }
+      REQUIRE(rows->get_size() == 1);
+      REQUIRE(rows->get(0) == 0);
+      REQUIRE(cells->get_size() == 1);
+      REQUIRE(cells->get(0) == TableIndex(0, 0));
+      REQUIRE(columns.get_size() == 0);
+      REQUIRE(view->get_body().get_selection()->get_row_selection()->push(1) ==
+        QValidator::Acceptable);
+      REQUIRE(rows->get(1) == 1);
+    }
     SUBCASE("same_table") {
       auto view = std::unique_ptr<TableView>(TableViewBuilder(first).
         add_header_item("Value").set_selection(selection).make());
       first->insert({5}, 0);
       REQUIRE(rows->get(0) == 1);
       REQUIRE(cells->get(0) == TableIndex(1, 0));
-      REQUIRE(selected_rows.push(0) == QValidator::Acceptable);
+      auto& displayed = *first_view->get_body().get_selection();
+      REQUIRE(displayed.get_row_selection()->push(0) == QValidator::Acceptable);
       filter->set_minimum(10);
       REQUIRE(rows->get_size() == 1);
       REQUIRE(rows->get(0) == 1);

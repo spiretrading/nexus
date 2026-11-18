@@ -128,6 +128,9 @@ void TableSelectionController::move_row(int source, int destination) {
 }
 
 void TableSelectionController::select_all() {
+  if(!m_selection->is_active()) {
+    return;
+  }
   auto select = [&] (auto selection, auto current, auto start, auto end) {
     for(auto i = start; i != end; advance(i, 1, m_column_size)) {
       if(i != current && find_index(i, *selection) == -1) {
@@ -159,6 +162,9 @@ void TableSelectionController::select_all() {
 }
 
 void TableSelectionController::click(Index index) {
+  if(!m_selection->is_active()) {
+    return;
+  }
   if(m_mode == Mode::SINGLE) {
     auto select = [&] (auto selection, auto index) {
       if(selection->get_size() != 1 || selection->get(0) != index) {

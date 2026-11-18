@@ -1,6 +1,7 @@
 #ifndef SPIRE_TABLE_SELECTION_MODEL_HPP
 #define SPIRE_TABLE_SELECTION_MODEL_HPP
 #include <memory>
+#include <optional>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TableIndex.hpp"
 #include "Spire/Spire/TableModel.hpp"
@@ -64,10 +65,11 @@ namespace Spire {
       std::shared_ptr<ColumnSelectionModel> m_column_selection;
       std::weak_ptr<TableModel> m_table;
       std::shared_ptr<FilterSignal> m_filter_signal;
-      bool m_is_tracking_rows;
       bool m_is_updating;
+      std::optional<boost::signals2::connection> m_source_tracking;
       boost::signals2::scoped_connection m_table_connection;
 
+      bool is_active() const;
       boost::signals2::connection track(
         const std::shared_ptr<TableModel>& table);
       void update_rows(const TableModel::Operation& operation);
