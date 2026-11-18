@@ -50,7 +50,8 @@ namespace {
         : m_source(std::move(source)),
           m_additional_tags(std::move(additional_tags)),
           m_destination(std::move(destination)),
-          m_scope(std::move(scope)) {
+          m_scope(std::move(scope)),
+          m_transaction(get_row_size()) {
       for(auto i = 0; i != get_row_size(); ++i) {
         add_available_tags(i);
       }

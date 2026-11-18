@@ -44,6 +44,7 @@ namespace Spire {
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_connection;
 
+      void update_source();
       void on_update(const std::vector<Type>& data);
   };
 
@@ -57,6 +58,7 @@ namespace Spire {
     : m_source(std::move(source)),
       m_data(m_source->get()),
       m_is_transaction(false),
+      m_transaction(get_size()),
       m_connection(m_source->connect_update_signal(
         std::bind_front(&ArrayValueToListModel::on_update, this))) {}
 
@@ -82,10 +84,7 @@ namespace Spire {
     }
     auto previous = m_data[index];
     m_data[index] = value;
-    if(!m_is_transaction) {
-      auto blocker = boost::signals2::shared_connection_block(m_connection);
-      m_source->set(m_data);
-    }
+    update_source();
     m_transaction.push(UpdateOperation(index, std::move(previous), value));
     return QValidator::Acceptable;
   }
@@ -97,10 +96,7 @@ namespace Spire {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
-    if(!m_is_transaction) {
-      auto blocker = boost::signals2::shared_connection_block(m_connection);
-      m_source->set(m_data);
-    }
+    update_source();
     m_transaction.push(AddOperation(index));
     return QValidator::Acceptable;
   }
@@ -113,10 +109,7 @@ namespace Spire {
     m_transaction.transact([&] {
       m_transaction.push(PreRemoveOperation(index));
       m_data.erase(std::next(m_data.begin(), index));
-      if(!m_is_transaction) {
-        auto blocker = boost::signals2::shared_connection_block(m_connection);
-        m_source->set(m_data);
-      }
+      update_source();
       m_transaction.push(RemoveOperation(index));
     });
     return QValidator::Acceptable;
@@ -145,6 +138,20 @@ namespace Spire {
       throw;
     }
     end();
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::update_source() {
+    if(m_is_transaction) {
+      return;
+    }
+    auto blocker = boost::signals2::shared_connection_block(m_connection);
+    try {
+      m_source->set(m_data);
+    } catch(...) {
+      m_transaction.set_size(get_size());
+      throw;
+    }
   }
 
   template<typename T>

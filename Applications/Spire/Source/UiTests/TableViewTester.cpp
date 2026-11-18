@@ -376,9 +376,16 @@ TEST_SUITE("TableView") {
     current->set(TableIndex(0, 0));
     REQUIRE(updates.size() == 2);
     REQUIRE(updates.back() == displayed);
-    connection.disconnect();
+    updates.clear();
     table->insert({5}, 0);
     require_current(1);
+    REQUIRE(*body.get_current()->get() == TableIndex(1, 0));
+    if(displayed.m_row == 0) {
+      REQUIRE(updates == std::vector{TableIndex(1, 0)});
+    } else {
+      REQUIRE(updates.empty());
+    }
+    connection.disconnect();
     table->transact([&] {
       table->insert({0}, 0);
       REQUIRE(current->get().has_value());

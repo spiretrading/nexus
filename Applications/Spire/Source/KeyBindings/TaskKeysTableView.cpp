@@ -119,6 +119,7 @@ namespace {
 
     explicit UniqueTaskKeyTableModel(std::shared_ptr<TableModel> source)
         : m_source(std::move(source)),
+          m_transaction(get_row_size()),
           m_source_connection(m_source->connect_operation_signal(
             std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
       for(auto row = 0; row < get_row_size(); ++row) {

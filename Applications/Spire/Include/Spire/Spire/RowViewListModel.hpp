@@ -72,6 +72,7 @@ namespace Details {
       m_source = nullptr;
       m_row.set(-1);
     } else {
+      m_transaction.set_size(get_size());
       m_source_connection = m_source->connect_operation_signal(
         std::bind_front(&RowViewListModel::on_operation, this));
     }
@@ -141,6 +142,7 @@ namespace Details {
         if(m_row.get_index() == -1) {
           m_source_connection.disconnect();
           m_source = nullptr;
+          m_transaction.set_size(0);
         }
       });
   }

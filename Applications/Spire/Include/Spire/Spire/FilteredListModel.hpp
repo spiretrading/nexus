@@ -107,6 +107,7 @@ namespace Spire {
         m_filtered_data.push_back(i);
       }
     }
+    m_transaction.set_size(get_size());
     m_source_connection = m_source->connect_operation_signal(
       std::bind_front(&FilteredListModel::on_operation, this));
   }

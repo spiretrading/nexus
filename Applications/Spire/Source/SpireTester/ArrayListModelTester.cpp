@@ -148,23 +148,17 @@ TEST_SUITE("ArrayListModel") {
     REQUIRE(model.get_size() == 1);
     REQUIRE(model.get(0) == 1);
     REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == 0);
-      });
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(0)});
+    operations.clear();
     REQUIRE_NOTHROW(model.insert(2, 0));
     REQUIRE(model.get_size() == 2);
     REQUIRE(model.get(0) == 2);
     REQUIRE(model.get(1) == 1);
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == 0);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(0)});
+    operations.clear();
     REQUIRE_THROWS(model.insert(3, -1));
     REQUIRE(model.get_size() == 2);
     REQUIRE(operations.empty());
@@ -173,12 +167,9 @@ TEST_SUITE("ArrayListModel") {
     REQUIRE(model.get(0) == 2);
     REQUIRE(model.get(1) == 3);
     REQUIRE(model.get(2) == 1);
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == 1);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(1)});
   }
 
   TEST_CASE("update") {

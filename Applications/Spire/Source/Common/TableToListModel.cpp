@@ -18,6 +18,7 @@ RowView::RowView(TableModel& table, int row)
 
 TableToListModel::TableToListModel(std::shared_ptr<TableModel> table)
     : m_table(std::move(table)),
+      m_transaction(get_size()),
       m_update(nullptr) {
   m_connection = m_table->connect_operation_signal(
     std::bind_front(&TableToListModel::on_operation, this));

@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/SpireTester/ListModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -101,13 +102,9 @@ TEST_SUITE("ColumnViewListModel") {
     REQUIRE(model.get(2) == 6);
     source->insert({7, 8}, 1);
     REQUIRE(operations1.empty());
-    REQUIRE(operations2.size() == 1);
-    operation = operations2.front();
-    operations2.pop_front();
-    test_operation(operation,
-      [&] (const ColumnViewListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == 1);
-      });
+    REQUIRE(operations2.size() == 3);
+    require_list_transaction<int>(
+      operations2, {ListModel<int>::AddOperation(1)});
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 4);
     REQUIRE(model.get(0) == 2);

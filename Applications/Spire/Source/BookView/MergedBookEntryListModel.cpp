@@ -23,6 +23,7 @@ MergedBookEntryListModel::MergedBookEntryListModel(
   if(m_previous_preview) {
     m_entries.push_back(*m_previous_preview);
   }
+  m_transaction.set_size(get_size());
   m_book_quotes_connection = m_book_quotes->connect_operation_signal(
     std::bind_front(&MergedBookEntryListModel::on_book_quote_operation, this));
   m_user_orders_connection = m_user_orders->connect_operation_signal(

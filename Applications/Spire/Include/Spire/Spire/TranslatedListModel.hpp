@@ -85,7 +85,8 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> source)
       : m_source(std::move(source)),
         m_translation(m_source->get_size()),
-        m_reverse_translation(m_source->get_size()) {
+        m_reverse_translation(m_source->get_size()),
+        m_transaction(get_size()) {
     std::iota(m_translation.begin(), m_translation.end(), 0);
     m_reverse_translation = m_translation;
     m_source_connection = m_source->connect_operation_signal(

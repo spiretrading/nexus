@@ -69,7 +69,8 @@ namespace Spire {
 
   template<typename T>
   ProxyListModel<T>::ProxyListModel(std::shared_ptr<ListModel<Type>> source)
-      : m_source(std::move(source)) {
+      : m_source(std::move(source)),
+        m_transaction(get_size()) {
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&ProxyListModel::on_operation, this));
   }
@@ -107,6 +108,7 @@ namespace Spire {
       if(source) {
         m_source = std::move(source);
       }
+      m_transaction.set_size(m_source->get_size());
       end();
       throw;
     }

@@ -52,10 +52,10 @@ namespace Spire {
 
     private:
       std::shared_ptr<ListModel<Type>> m_list;
-      boost::signals2::scoped_connection m_connection;
       int m_columns;
       Accessor m_accessor;
       TableModelTransactionLog m_transaction;
+      boost::signals2::scoped_connection m_connection;
 
       void on_operation(const typename ListModel<Type>::Operation& operation);
   };
@@ -209,6 +209,7 @@ namespace Spire {
     : m_list(std::move(list)),
       m_columns(columns),
       m_accessor(std::move(accessor)),
+      m_transaction(get_row_size()),
       m_connection(m_list->connect_operation_signal(
         std::bind_front(&ListToTableModel::on_operation, this))) {}
 

@@ -25,6 +25,44 @@ namespace {
 }
 
 TEST_SUITE("ModelTransactionLog") {
+  TEST_CASE("insertion_boundaries") {
+    auto log = ModelTransactionLog<Model>(2);
+    auto operations = std::vector<std::string>();
+    auto connection = record(log, operations);
+    log.push(Model::AddOperation(1));
+    REQUIRE(operations ==
+      std::vector<std::string>{"start", "operation", "end"});
+    operations.clear();
+    log.push(Model::AddOperation(3));
+    REQUIRE(operations == std::vector<std::string>{"operation"});
+    log.transact([&] {
+      log.push(Model::PreRemoveOperation(1));
+      log.push(Model::RemoveOperation(1));
+    });
+    operations.clear();
+    log.push(Model::AddOperation(2));
+    log.push(Model::AddOperation(4));
+    REQUIRE(operations ==
+      std::vector<std::string>{"start", "operation", "end", "operation"});
+  }
+
+  TEST_CASE("insertion_from_append") {
+    auto log = ModelTransactionLog<Model>();
+    auto operations = std::vector<std::string>();
+    auto connection = record(log, operations);
+    auto has_inserted = false;
+    log.connect_operation_signal([&] (const auto& operation) {
+      if(!has_inserted &&
+          std::holds_alternative<Model::AddOperation>(operation)) {
+        has_inserted = true;
+        log.push(Model::AddOperation(0));
+      }
+    });
+    log.push(Model::AddOperation(0));
+    REQUIRE(operations ==
+      std::vector<std::string>{"operation", "start", "operation", "end"});
+  }
+
   TEST_CASE("pushed_transaction_is_not_duplicated") {
     auto log = ModelTransactionLog<Model>();
     auto operations = std::vector<std::string>();
@@ -73,7 +111,7 @@ TEST_SUITE("ModelTransactionLog") {
   }
 
   TEST_CASE("move_from_end_transaction") {
-    auto log = ModelTransactionLog<Model>();
+    auto log = ModelTransactionLog<Model>(2);
     auto operations = std::vector<std::string>();
     auto connection = record(log, operations);
     auto has_moved = false;

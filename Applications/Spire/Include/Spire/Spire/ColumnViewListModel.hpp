@@ -65,6 +65,7 @@ namespace Spire {
       m_source = nullptr;
     } else {
       m_column = column;
+      m_transaction.set_size(get_size());
       m_source_connection = m_source->connect_operation_signal(
         std::bind_front(&ColumnViewListModel::on_operation, this));
     }

@@ -92,17 +92,11 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(0, 0) == 1);
     REQUIRE(source->get<int>(1, 0) == 4);
     REQUIRE(source->get<int>(2, 0) == 2);
-    auto signal_count = 0;
-    auto added_index = 0;
+    auto operations = std::deque<TableModel::Operation>();
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == added_index);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->insert({9}, 1);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
     REQUIRE(filtered_model.get<int>(1, 0) == 2);
     REQUIRE(filtered_model.get_row_size() == 2);
@@ -110,9 +104,10 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(1, 0) == 9);
     REQUIRE(source->get<int>(2, 0) == 4);
     REQUIRE(source->get<int>(3, 0) == 2);
-    added_index = 1;
     source->insert({0}, 2);
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(1)});
+    operations.clear();
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
     REQUIRE(filtered_model.get<int>(1, 0) == 0);
     REQUIRE(filtered_model.get<int>(2, 0) == 2);
@@ -122,9 +117,9 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 0);
     REQUIRE(source->get<int>(3, 0) == 4);
     REQUIRE(source->get<int>(4, 0) == 2);
-    added_index = 3;
     source->insert({0}, 5);
-    REQUIRE(signal_count == 2);
+    REQUIRE(operations.size() == 1);
+    require_transaction(operations, {TableModel::AddOperation(3)});
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
     REQUIRE(filtered_model.get<int>(1, 0) == 0);
     REQUIRE(filtered_model.get<int>(2, 0) == 2);
@@ -274,39 +269,13 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
-    auto signal_count = 0;
-    auto add_count = 0;
-    auto pre_remove_count = 0;
-    auto remove_count = 0;
-    auto update_count = 0;
+    auto operations = std::deque<TableModel::Operation>();
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        visit(operation,
-          [&] (const TableModel::AddOperation& operation) {
-            ++add_count;
-            REQUIRE(operation.m_index == 0);
-          },
-          [&] (const TableModel::PreRemoveOperation& operation) {
-            ++pre_remove_count;
-            REQUIRE(operation.m_index == 2);
-          },
-          [&] (const TableModel::RemoveOperation& operation) {
-            ++remove_count;
-            REQUIRE(operation.m_index == 2);
-          },
-          [&] (const TableModel::UpdateOperation& operation) {
-            ++update_count;
-            REQUIRE(operation.m_row == 1);
-            REQUIRE(operation.m_column == 0);
-          },
-          [] (const auto&) {
-            REQUIRE(false);
-          });
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->set(0, 0, 0);
-    REQUIRE(signal_count == 1);
-    REQUIRE(add_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(0)});
+    operations.clear();
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 2);
     REQUIRE(filtered_model.get<int>(2, 0) == 1);
@@ -316,9 +285,9 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
     source->set(3, 0, 10);
-    REQUIRE(signal_count == 3);
-    REQUIRE(pre_remove_count == 1);
-    REQUIRE(remove_count == 1);
+    require_transaction(operations,
+      {TableModel::PreRemoveOperation(2), TableModel::RemoveOperation(2)});
+    operations.clear();
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 2);
     REQUIRE(filtered_model.get_row_size() == 2);
@@ -327,8 +296,8 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 10);
     source->set(1, 0, 1);
-    REQUIRE(signal_count == 4);
-    REQUIRE(update_count == 1);
+    require_transaction(operations, {TableModel::UpdateOperation(1, 0, 2, 1)});
+    operations.clear();
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get_row_size() == 2);
@@ -337,7 +306,7 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 10);
     source->set(3, 0, 6);
-    REQUIRE(signal_count == 4);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get_row_size() == 2);

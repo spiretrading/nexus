@@ -84,7 +84,8 @@ class CalendarListModel : public ListModel<date> {
     CalendarListModel(std::shared_ptr<DateModel> current)
         : m_current(std::move(current)),
           m_current_connection(m_current->connect_update_signal(
-            [=] (auto current) { on_current(current); })) {
+            [=] (auto current) { on_current(current); })),
+          m_transaction(CALENDAR_DAY_COUNT) {
       on_current(m_current->get());
     }
 

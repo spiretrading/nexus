@@ -7,7 +7,8 @@ using namespace Spire;
 TranslatedTableModel::TranslatedTableModel(std::shared_ptr<TableModel> source)
     : m_source(std::move(source)),
       m_translation(m_source->get_row_size()),
-      m_reverse_translation(m_source->get_row_size()) {
+      m_reverse_translation(m_source->get_row_size()),
+      m_transaction(get_row_size()) {
   std::iota(m_translation.begin(), m_translation.end(), 0);
   m_reverse_translation = m_translation;
   m_source_connection = m_source->connect_operation_signal(

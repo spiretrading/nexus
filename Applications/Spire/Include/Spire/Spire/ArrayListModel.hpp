@@ -53,7 +53,8 @@ namespace Spire {
 
   template<typename T>
   ArrayListModel<T>::ArrayListModel(std::vector<Type> data)
-    : m_data(std::move(data)) {}
+    : m_data(std::move(data)),
+      m_transaction(get_size()) {}
 
   template<typename T>
   int ArrayListModel<T>::get_size() const {

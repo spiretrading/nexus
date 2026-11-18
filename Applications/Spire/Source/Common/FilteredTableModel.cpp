@@ -16,7 +16,8 @@ FilteredTableModel::FilteredTableModel(
     std::shared_ptr<TableModel> source, Filter filter)
     : m_source(std::move(source)),
       m_list(std::make_shared<TableToListModel>(m_source)),
-      m_filtered_list(m_list, make_filter(*m_source, std::move(filter))) {
+      m_filtered_list(m_list, make_filter(*m_source, std::move(filter))),
+      m_transaction(get_row_size()) {
   m_connection = m_filtered_list.connect_operation_signal(
     std::bind_front(&FilteredTableModel::on_operation, this));
 }

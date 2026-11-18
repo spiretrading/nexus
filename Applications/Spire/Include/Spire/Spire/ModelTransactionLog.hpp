@@ -13,8 +13,20 @@ namespace Spire {
       /** The type of the model. */
       using Type = T;
 
-      /** Constructs an empty log. */
+      /** Constructs a log for an empty model. */
       ModelTransactionLog();
+
+      /**
+       * Constructs a log for a model with an initial size.
+       * @param size The number of elements already in the model.
+       */
+      explicit ModelTransactionLog(int size);
+
+      /**
+       * Synchronizes the size after a model change made outside the log.
+       * @param size The current number of elements in the model.
+       */
+      void set_size(int size);
 
       /** Starts a transaction. */
       void start();
@@ -48,6 +60,7 @@ namespace Spire {
 
     private:
       mutable typename Type::OperationSignal m_operation_signal;
+      int m_size;
       int m_level;
       bool m_is_first;
 
@@ -57,8 +70,18 @@ namespace Spire {
 
   template<typename T>
   ModelTransactionLog<T>::ModelTransactionLog()
-    : m_level(0),
+    : ModelTransactionLog(0) {}
+
+  template<typename T>
+  ModelTransactionLog<T>::ModelTransactionLog(int size)
+    : m_size(size),
+      m_level(0),
       m_is_first(true) {}
+
+  template<typename T>
+  void ModelTransactionLog<T>::set_size(int size) {
+    m_size = size;
+  }
 
   template<typename T>
   void ModelTransactionLog<T>::start() {
@@ -84,14 +107,19 @@ namespace Spire {
       end();
       return;
     }
-    if(m_level == 0) {
-      if(std::holds_alternative<typename Type::MoveOperation>(operation)) {
-        transact([&] {
-          push(operation);
-        });
-        return;
-      }
-    } else if(m_is_first) {
+    auto add = std::get_if<typename Type::AddOperation>(&operation);
+    if(m_level == 0 && ((add && add->m_index < m_size) ||
+        std::holds_alternative<typename Type::MoveOperation>(operation))) {
+      transact([&] { push(operation); });
+      return;
+    }
+    if(add) {
+      ++m_size;
+    } else if(
+        std::holds_alternative<typename Type::RemoveOperation>(operation)) {
+      --m_size;
+    }
+    if(m_level != 0 && m_is_first) {
       m_is_first = false;
       m_operation_signal(typename Type::StartTransaction());
     }

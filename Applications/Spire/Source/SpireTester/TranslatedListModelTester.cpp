@@ -148,17 +148,13 @@ TEST_SUITE("TranslatedListModel") {
     REQUIRE(translation.get(1) == 2);
     REQUIRE(translation.get(2) == 4);
     REQUIRE(translation.get(3) == 9);
-    auto signal_count = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        auto add_operation =
-          std::get_if<ListModel<int>::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == 3);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->insert(6, 2);
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(3)});
     REQUIRE(translation.get(0) == 1);
     REQUIRE(translation.get(1) == 2);
     REQUIRE(translation.get(2) == 4);

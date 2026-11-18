@@ -147,7 +147,8 @@ namespace {
 
     ExpandableTableModel(std::shared_ptr<VenueHighlightListToTableModel> source)
         : m_source(std::move(source)),
-          m_venue_list(std::make_shared<ArrayListModel<Venue>>()) {
+          m_venue_list(std::make_shared<ArrayListModel<Venue>>()),
+          m_transaction(get_row_size()) {
       for(auto& venue : VENUES.get_entries()) {
         m_venue_list->push(venue.m_venue);
       }

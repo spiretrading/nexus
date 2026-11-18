@@ -164,7 +164,8 @@ namespace Spire {
     std::shared_ptr<ListModel<Source>> source, FF&& f, GG&& g)
       : m_source(std::move(source)),
         m_f(std::forward<FF>(f)),
-        m_g(std::forward<GG>(g)) {
+        m_g(std::forward<GG>(g)),
+        m_transaction(get_size()) {
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&TransformListModel::on_operation, this));
   }

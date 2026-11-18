@@ -7,6 +7,7 @@ ColumnViewTableModel::ColumnViewTableModel(std::shared_ptr<TableModel> source,
   int column)
   : m_source(std::move(source)),
     m_column(column),
+    m_transaction(get_row_size()),
     m_source_connection(m_source->connect_operation_signal(
       std::bind_front(&ColumnViewTableModel::on_operation, this))) {}
 

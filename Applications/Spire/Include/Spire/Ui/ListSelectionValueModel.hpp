@@ -57,6 +57,7 @@ namespace Spire {
       std::shared_ptr<ListModel<int>> selection)
       : m_values(std::move(values)),
         m_selection(std::move(selection)),
+        m_transaction(get_size()),
         m_connection(m_selection->connect_operation_signal(
           std::bind_front(&ListSelectionValueModel::on_operation, this))) {
     for(auto i = 0; i != get_size(); ++i) {

@@ -46,6 +46,7 @@ TimeAndSalesTableModel::TimeAndSalesTableModel(
       std::make_shared<ProxyListModel<TimeAndSalesModel::Type>>(m_model)),
     m_table(make_table(m_source)),
     m_is_loading(false),
+    m_transaction(get_row_size()),
     m_connection(m_table->connect_operation_signal(
       std::bind_front(&TimeAndSalesTableModel::on_operation, this))) {}
 

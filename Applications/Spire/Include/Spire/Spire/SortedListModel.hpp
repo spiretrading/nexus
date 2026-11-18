@@ -149,7 +149,8 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> source, Comparator comparator)
       : m_source(std::move(source)),
         m_translation(m_source),
-        m_comparator(std::move(comparator)) {
+        m_comparator(std::move(comparator)),
+        m_transaction(get_size()) {
     sort();
     m_source_connection = m_translation.connect_operation_signal(
       std::bind_front(&SortedListModel::on_operation, this));

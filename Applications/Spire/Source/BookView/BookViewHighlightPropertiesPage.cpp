@@ -136,6 +136,7 @@ namespace {
         std::shared_ptr<ValueModel<std::array<Type, N>>> source)
         : m_source(std::move(source)),
           m_data(m_source->get()),
+          m_transaction(get_size()),
           m_connection(m_source->connect_update_signal(
             std::bind_front(&FixedSizeArrayValueToListModel::on_update,
               this))) {}

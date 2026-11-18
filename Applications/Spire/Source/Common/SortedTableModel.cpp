@@ -38,7 +38,8 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
     std::vector<ColumnOrder> order, Comparator comparator)
     : m_source(std::move(source)),
       m_translation(m_source),
-      m_comparator(std::move(comparator)) {
+      m_comparator(std::move(comparator)),
+      m_transaction(get_row_size()) {
   set_column_order(order);
   m_source_connection = m_translation.connect_operation_signal(
     std::bind_front(&SortedTableModel::on_operation, this));

@@ -7,6 +7,24 @@
 using namespace Spire;
 
 TEST_SUITE("ArrayValueToListModel") {
+  TEST_CASE("source_exception_on_remove") {
+    auto source = make_local_value_model(std::vector{1, 2});
+    auto model = ArrayValueToListModel(source);
+    auto connection = source->connect_update_signal([] (const auto&) {
+      throw std::runtime_error("Failed.");
+    });
+    REQUIRE_THROWS_AS(model.remove(0), std::runtime_error);
+    connection.disconnect();
+    REQUIRE(model.get_size() == 1);
+    auto operations = std::vector<ListModel<int>::Operation>();
+    model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); });
+    model.push(3);
+    REQUIRE(operations.size() == 1);
+    REQUIRE(
+      std::get<ListModel<int>::AddOperation>(operations.front()).m_index == 1);
+  }
+
   TEST_CASE("transaction_updates_the_source") {
     auto source = make_local_value_model(std::vector{1, 2, 3});
     auto model = ArrayValueToListModel(source);

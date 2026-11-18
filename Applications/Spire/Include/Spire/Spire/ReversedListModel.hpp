@@ -78,7 +78,8 @@ namespace Spire {
   template<typename T>
   ReversedListModel<T>::ReversedListModel(
       std::shared_ptr<ListModel<Type>> source)
-      : m_source(std::move(source)) {
+      : m_source(std::move(source)),
+        m_transaction(get_size()) {
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&ReversedListModel::on_operation, this));
   }

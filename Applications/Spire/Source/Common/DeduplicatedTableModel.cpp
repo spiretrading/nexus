@@ -14,7 +14,8 @@ DeduplicatedTableModel::DeduplicatedTableModel(
 DeduplicatedTableModel::DeduplicatedTableModel(
     std::shared_ptr<TableModel> source, IsEqual is_equal)
     : m_source(std::move(source)),
-      m_is_equal(std::move(is_equal)) {
+      m_is_equal(std::move(is_equal)),
+      m_transaction(get_row_size()) {
   m_connection = m_source->connect_operation_signal(
     std::bind_front(&DeduplicatedTableModel::on_operation, this));
 }

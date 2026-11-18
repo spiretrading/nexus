@@ -178,6 +178,7 @@ namespace {
       std::shared_ptr<EditableTableView::HeaderModel> header)
       : m_source(std::move(source)),
         m_header(std::move(header)),
+        m_transaction(get_row_size()),
         m_source_connection(m_source->connect_operation_signal(
           std::bind_front(&EditableTableModel::on_operation, this))) {}
 
@@ -250,6 +251,7 @@ namespace {
     explicit EditableTableHeaderModel(
       std::shared_ptr<ListModel<TableHeaderItem::Model>> source)
       : m_source(std::move(source)),
+        m_transaction(get_size()),
         m_source_connection(m_source->connect_operation_signal(
           std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
 

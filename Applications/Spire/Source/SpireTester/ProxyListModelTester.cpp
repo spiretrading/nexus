@@ -37,6 +37,7 @@ namespace {
     REQUIRE(operations.empty());
     REQUIRE(proxy.get_size() == 2);
     second->push(9);
+    REQUIRE(operations.size() == 1);
     require_list_transaction<int>(operations,
       {
         ListModel<int>::AddOperation(2)
@@ -169,6 +170,7 @@ TEST_SUITE("ProxyListModel") {
   }
 
   TEST_CASE("set_source_remove_exception") {
+    require_set_source_exception<ListModel<int>::PreRemoveOperation>();
     require_set_source_exception<ListModel<int>::RemoveOperation>();
   }
 
