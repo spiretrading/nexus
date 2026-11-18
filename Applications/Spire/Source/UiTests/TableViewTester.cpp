@@ -394,6 +394,52 @@ TEST_SUITE("TableView") {
     REQUIRE(!body.get_current()->get().has_value());
   }
 
+  UI_TEST_CASE("current_on_batched_removals") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto value : {10, 20, 30}) {
+      table->push({value});
+    }
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).make());
+    auto& current = *view->get_current();
+    auto& displayed = *view->get_body().get_current();
+    current.set(TableIndex(1, 0));
+    auto updates = std::vector<optional<TableIndex>>();
+    auto connection = scoped_connection(displayed.connect_update_signal(
+      [&] (const auto& index) { updates.push_back(index); }));
+    SUBCASE("current_survives") {
+      auto expected = 20;
+      table->transact([&] {
+        table->remove(0);
+        SUBCASE("same_record") {
+          table->remove(1);
+        }
+        SUBCASE("new_current") {
+          current.set(TableIndex(1, 0));
+          table->remove(0);
+          expected = 30;
+        }
+        REQUIRE(updates.empty());
+      });
+      REQUIRE(table->get<int>(0, 0) == expected);
+      REQUIRE(current.get().has_value());
+      REQUIRE(*current.get() == TableIndex(0, 0));
+      REQUIRE(displayed.get().has_value());
+      REQUIRE(*displayed.get() == TableIndex(0, 0));
+    }
+    SUBCASE("current_removed") {
+      table->transact([&] {
+        table->remove(0);
+        table->remove(0);
+        REQUIRE(updates.empty());
+      });
+      REQUIRE(!current.get());
+      REQUIRE(!displayed.get());
+    }
+    REQUIRE(updates.size() == 1);
+    REQUIRE((updates.front() == displayed.get()));
+  }
+
   UI_TEST_CASE("fixed_current_on_move") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({20});

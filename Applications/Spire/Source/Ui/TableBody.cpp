@@ -1072,10 +1072,10 @@ void TableBody::pre_remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+  m_current_controller.remove_row(index);
 }
 
 void TableBody::remove_row(int index) {
-  m_current_controller.remove_row(index);
   auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }

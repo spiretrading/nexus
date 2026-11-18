@@ -58,6 +58,7 @@ namespace {
     std::shared_ptr<FilteredTableModel> m_filtered_table;
     std::shared_ptr<TableView::CurrentModel> m_current;
     LocalValueModel<optional<TableIndex>> m_index;
+    mutable optional<TableIndex> m_transaction_index;
     int m_source_size;
     bool m_is_transacting;
     scoped_connection m_source_connection;
@@ -83,6 +84,10 @@ namespace {
     }
 
     const Type& get() const {
+      if(m_is_transacting) {
+        m_transaction_index = from_source(m_current->get());
+        return m_transaction_index;
+      }
       return m_index.get();
     }
 
