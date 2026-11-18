@@ -238,8 +238,16 @@ void TaskKeysPage::on_duplicate_task_action() {
   auto row = selection.get(0);
   auto task = m_filtered_tasks->get(row);
   task.m_key = QKeySequence();
-  m_filtered_tasks->insert(task, row);
+  auto size = m_filtered_tasks->get_size();
+  if(m_filtered_tasks->insert(task, row) == QValidator::Invalid) {
+    return;
+  } else if(m_filtered_tasks->get_size() == size) {
+    clear(selection);
+    m_table_view->get_current()->set(none);
+    return;
+  }
   m_table_view->get_current()->set(TableIndex(row, 1));
+  selection.push(row);
 }
 
 void TaskKeysPage::on_delete_task_action() {

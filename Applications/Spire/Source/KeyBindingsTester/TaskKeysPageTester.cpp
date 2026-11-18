@@ -41,23 +41,43 @@ TEST_SUITE("TaskKeysPage") {
     REQUIRE(table.get_table()->get_row_size() == 1);
     table.get_current()->set(TableIndex(0, 1));
     table.get_selection()->get_row_selection()->push(0);
-    SUBCASE("duplicate") {
+    auto children = page.findChildren<QWidget*>();
+    auto button = std::ranges::find_if(children, [] (auto widget) {
+      return widget->accessibleName() == "Delete";
+    });
+    REQUIRE(button != children.end());
+    auto delete_task = [&] {
+      auto event = QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+      QApplication::sendEvent(*button, &event);
+    };
+    auto duplicate_task = [&] {
       auto event = QKeyEvent(QEvent::KeyPress, Qt::Key_D, Qt::ControlModifier);
       QApplication::sendEvent(&page, &event);
+    };
+    SUBCASE("duplicate") {
+      duplicate_task();
       REQUIRE(tasks.get_size() == 3);
       REQUIRE(tasks.get(0).m_name == hidden.m_name);
       REQUIRE(tasks.get(1).m_name == match.m_name);
       REQUIRE(tasks.get(1).m_key.isEmpty());
       REQUIRE(tasks.get(2).m_key == match.m_key);
+      REQUIRE(table.get_current()->get().has_value());
+      REQUIRE(*table.get_current()->get() == TableIndex(0, 1));
+      delete_task();
+      REQUIRE(tasks.get_size() == 2);
+      REQUIRE(tasks.get(1).m_key == match.m_key);
+    }
+    SUBCASE("duplicate_hidden_by_search") {
+      search.get_current()->set("F3");
+      duplicate_task();
+      REQUIRE(tasks.get_size() == 3);
+      REQUIRE(table.get_table()->get_row_size() == 1);
+      REQUIRE(table.get_selection()->get_row_selection()->get_size() == 0);
+      REQUIRE(!table.get_current()->get());
+      REQUIRE(!(*button)->isEnabled());
     }
     SUBCASE("delete") {
-      auto children = page.findChildren<QWidget*>();
-      auto button = std::ranges::find_if(children, [] (auto widget) {
-        return widget->accessibleName() == "Delete";
-      });
-      REQUIRE(button != children.end());
-      auto event = QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
-      QApplication::sendEvent(*button, &event);
+      delete_task();
       REQUIRE(tasks.get_size() == 1);
       REQUIRE(tasks.get(0).m_name == hidden.m_name);
       REQUIRE(table.get_table()->get_row_size() == 0);
