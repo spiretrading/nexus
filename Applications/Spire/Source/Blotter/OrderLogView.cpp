@@ -33,6 +33,13 @@ namespace {
     TIME_IN_FORCE
   };
 
+  Qt::Alignment get_alignment(OrderColumn column) {
+    if(column == OrderColumn::QUANTITY || column == OrderColumn::PRICE) {
+      return Qt::AlignRight | Qt::AlignVCenter;
+    }
+    return Qt::AlignCenter;
+  }
+
   AnyRef extract(const std::shared_ptr<Order>& order, int index) {
     auto column = static_cast<OrderColumn>(index);
     auto& info = order->get_info();
@@ -233,11 +240,9 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
         }
         return TableView::default_item_builder(table, row, index);
       }();
-      if(column != OrderColumn::QUANTITY && column != OrderColumn::PRICE) {
-        update_style(*item, [] (auto& style) {
-          style.get(Any()).set(TextAlign(Qt::AlignCenter));
-        });
-      }
+      update_style(*item, [=] (auto& style) {
+        style.get(Any()).set(TextAlign(get_alignment(column)));
+      });
       return item;
     }).
     make();
@@ -247,12 +252,10 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
     table_view->get_header().get_widths()->set(
       i, scale_width(DEFAULT_WIDTHS[i]));
     auto column = static_cast<OrderColumn>(i);
-    if(column != OrderColumn::QUANTITY && column != OrderColumn::PRICE) {
-      update_style(*table_view->get_header().get_item(i), [] (auto& style) {
-        style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(Qt::AlignCenter));
-      });
-    }
+    update_style(*table_view->get_header().get_item(i), [=] (auto& style) {
+      style.get(Any() > TableHeaderItem::Label()).
+        set(TextAlign(get_alignment(column)));
+    });
   }
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   enclose(*this, *table_view);

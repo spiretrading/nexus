@@ -1,17 +1,20 @@
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include <algorithm>
+#include <cstdint>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TaskStateBox.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -28,6 +31,48 @@ namespace {
   };
 
   constexpr auto FIXED_COLUMNS = static_cast<int>(TaskColumn::STATE) + 1;
+
+  Qt::Alignment get_alignment(const std::type_info& type) {
+    if(type == typeid(Nexus::Money) || type == typeid(Nexus::Quantity) ||
+        type == typeid(float) || type == typeid(double) ||
+        type == typeid(int) || type == typeid(unsigned int) ||
+        type == typeid(std::int64_t) || type == typeid(std::uint64_t)) {
+      return Qt::AlignRight | Qt::AlignVCenter;
+    }
+    return Qt::AlignCenter;
+  }
+
+  void set_alignment(QWidget& cell, Qt::Alignment alignment) {
+    update_style(cell, [=] (auto& style) {
+      style.get(Any()).set(TextAlign(alignment));
+    });
+  }
+
+  TextBox* make_monitor_cell(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    auto value = table->at(row, column);
+    auto cell = make_label(to_text(value));
+    set_alignment(*cell, get_alignment(value.get_type()));
+    auto connection = table->connect_operation_signal(
+      [=, row = TableRowIndexTracker(row)] (const auto& operation) mutable {
+        auto update = std::get_if<TableModel::UpdateOperation>(&operation);
+        if(!update) {
+          row.update(operation);
+          return;
+        }
+        if(update->m_row != row.get_index() || update->m_column != column) {
+          return;
+        }
+        auto alignment = get_alignment(update->m_value.type());
+        if(alignment != get_alignment(update->m_previous.type())) {
+          set_alignment(*cell, alignment);
+        }
+        cell->get_current()->set(to_text(update->m_value));
+      });
+    QObject::connect(
+      cell, &QObject::destroyed, [=] { connection.disconnect(); });
+    return cell;
+  }
 
   AnyRef extract(BlotterTaskEntry& entry, int index) {
     auto column = static_cast<TaskColumn>(index);
@@ -175,9 +220,14 @@ TableView* BlotterTasksTableView::make_table() const {
         auto state = make_task_state_box(
           make_field_value_model(entry, &BlotterTaskEntry::m_state));
         state->set_read_only(true);
+        set_alignment(*state, Qt::AlignCenter);
         return state;
+      } else if(index >= FIXED_COLUMNS) {
+        return make_monitor_cell(table, row, index);
       }
-      return TableView::default_item_builder(table, row, index);
+      auto item = TableView::default_item_builder(table, row, index);
+      set_alignment(*item, Qt::AlignCenter);
+      return item;
     }).
     set_comparator([] (const AnyRef& left, const AnyRef& right) {
       if(left.has_value() != right.has_value()) {
@@ -210,6 +260,12 @@ TableView* BlotterTasksTableView::make_table() const {
   link(*pin_label, *pin_icon);
   auto pinned_column = static_cast<int>(TaskColumn::PINNED);
   auto& header = table_view->get_header();
+  for(auto i = pinned_column + 1; i < table->get_column_size(); ++i) {
+    update_style(*header.get_item(i), [] (auto& style) {
+      style.get(Any() > TableHeaderItem::Label()).
+        set(TextAlign(Qt::AlignCenter));
+    });
+  }
   auto pin_header = header.get_item(pinned_column);
   pin_header->set_is_resizeable(false);
   pin_header->setAccessibleName(tr("Pinned"));
