@@ -164,30 +164,27 @@ TEST_SUITE("ColumnViewListModel") {
     source->push({6, 7});
     auto model = ColumnViewListModel<int>(source, 1);
     REQUIRE(model.get_size() == 4);
-    auto signal_count = 0;
-    auto source_index = 0;
-    auto destination_index = 0;
+    using Model = ColumnViewListModel<int>;
+    auto operations = std::deque<Model::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
-      [&] (const auto& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<ColumnViewListModel<int>::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_index);
-        REQUIRE(move_operation->m_destination == destination_index);
-      }));
-    source_index = 1;
-    destination_index = 3;
-    source->move(source_index, destination_index);
-    REQUIRE(signal_count == 1);
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    auto require_move = [&] (int from, int to) {
+      source->move(from, to);
+      REQUIRE(operations.size() == 3);
+      REQUIRE(std::holds_alternative<Model::StartTransaction>(operations[0]));
+      auto move = std::get_if<Model::MoveOperation>(&operations[1]);
+      REQUIRE(move);
+      REQUIRE(move->m_source == from);
+      REQUIRE(move->m_destination == to);
+      REQUIRE(std::holds_alternative<Model::EndTransaction>(operations[2]));
+      operations.clear();
+    };
+    require_move(1, 3);
     REQUIRE(model.get(0) == 1);
     REQUIRE(model.get(1) == 5);
     REQUIRE(model.get(2) == 7);
     REQUIRE(model.get(3) == 3);
-    source_index = 3;
-    destination_index = 0;
-    source->move(source_index, destination_index);
-    REQUIRE(signal_count == 2);
+    require_move(3, 0);
     REQUIRE(model.get(0) == 3);
     REQUIRE(model.get(1) == 1);
     REQUIRE(model.get(2) == 5);

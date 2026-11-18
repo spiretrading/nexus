@@ -8,15 +8,6 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  template<typename... F>
-  decltype(auto) test_operation(
-      const TableModel::Operation& operation, F&&... f) {
-    return visit(
-      operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
-  }
-}
-
 TEST_SUITE("TranslatedTableModel") {
   TEST_CASE("translate") {
     auto source = std::make_shared<ArrayTableModel>();
@@ -30,13 +21,8 @@ TEST_SUITE("TranslatedTableModel") {
       operations.push_back(operation);
     });
     REQUIRE_NOTHROW(translation.move(3, 0));
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
-      REQUIRE(operation.m_source == 3);
-      REQUIRE(operation.m_destination == 0);
-    });
+    require_transaction(operations, {TableModel::MoveOperation(3, 0)});
+    operations.clear();
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 4);
     REQUIRE(translation.get<int>(2, 0) == 2);
@@ -44,13 +30,7 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE_THROWS(translation.move(6, 2));
     REQUIRE(operations.empty());
     REQUIRE_NOTHROW(translation.move(1, 2));
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
-      REQUIRE(operation.m_source == 1);
-      REQUIRE(operation.m_destination == 2);
-    });
+    require_transaction(operations, {TableModel::MoveOperation(1, 2)});
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -419,17 +399,17 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(0, 0) == 4);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE_NOTHROW(translation.move(1, 0));
-    REQUIRE(signal_count == 3);
+    REQUIRE(signal_count == 5);
     REQUIRE(move_count == 1);
     REQUIRE(translation.get<int>(0, 0) == 2);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->set(1, 0, 0);
-    REQUIRE(signal_count == 4);
+    REQUIRE(signal_count == 6);
     REQUIRE(update_count == 1);
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->remove(0);
-    REQUIRE(signal_count == 8);
+    REQUIRE(signal_count == 10);
     REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(translation.get<int>(0, 0) == 0);

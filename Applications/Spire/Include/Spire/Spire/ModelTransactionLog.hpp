@@ -23,7 +23,7 @@ namespace Spire {
       void end();
 
       /**
-       * Pushes an operation to a model transaction.
+       * Pushes an operation to the log.
        * @param operation The operation to push.
        */
       void push(const typename Type::Operation& operation);
@@ -84,7 +84,14 @@ namespace Spire {
       end();
       return;
     }
-    if(m_level != 0 && m_is_first) {
+    if(m_level == 0) {
+      if(std::holds_alternative<typename Type::MoveOperation>(operation)) {
+        transact([&] {
+          push(operation);
+        });
+        return;
+      }
+    } else if(m_is_first) {
       m_is_first = false;
       m_operation_signal(typename Type::StartTransaction());
     }

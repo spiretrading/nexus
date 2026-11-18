@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
@@ -8,6 +9,8 @@
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Tests;
 
@@ -42,7 +45,7 @@ namespace {
       return table.get<int>(row, 0) < m_minimum;
     }
 
-    boost::signals2::connection connect_filter_signal(
+    connection connect_filter_signal(
         const FilterSignal::slot_type& slot) const override {
       return m_filter_signal.connect(slot);
     }
@@ -277,16 +280,28 @@ TEST_SUITE("TableView") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({10});
     table->push({20});
-    auto current = std::make_shared<TableCurrentIndexModel>(table);
-    auto builder = TableViewBuilder(table);
-    SUBCASE("source_order") {
-      builder.add_header_item("Value");
+    auto current = make_proxy_value_model(
+      std::make_shared<LocalValueModel<optional<TableIndex>>>());
+    auto builder = TableViewBuilder(table).set_current(current);
+    auto make_view = [&] {
+      SUBCASE("source_order") {
+        builder.add_header_item("Value");
+      }
+      SUBCASE("sorted_and_filtered") {
+        builder.add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+          set_filter(std::make_shared<MinimumFilter>());
+      }
+      return std::unique_ptr<TableView>(builder.make());
+    };
+    auto view = std::unique_ptr<TableView>();
+    SUBCASE("current_before_view") {
+      current->set_source(std::make_shared<TableCurrentIndexModel>(table));
+      view = make_view();
     }
-    SUBCASE("sorted_and_filtered") {
-      builder.add_header_item("Value", TableHeaderItem::Order::DESCENDING).
-        set_filter(std::make_shared<MinimumFilter>());
+    SUBCASE("current_after_view") {
+      view = make_view();
+      current->set_source(std::make_shared<TableCurrentIndexModel>(table));
     }
-    auto view = std::unique_ptr<TableView>(builder.set_current(current).make());
     current->set(TableIndex(0, 0));
     auto& body = view->get_body();
     auto require_current = [&] (int source_row) {
@@ -296,19 +311,85 @@ TEST_SUITE("TableView") {
       REQUIRE(displayed.has_value());
       REQUIRE(body.get_table()->get<int>(displayed->m_row, 0) == 10);
     };
+    require_current(0);
+    auto updates = std::vector<TableIndex>();
+    auto connection = scoped_connection(
+      body.get_current()->connect_update_signal([&] (const auto& index) {
+        REQUIRE(index.has_value());
+        updates.push_back(*index);
+      }));
+    auto displayed = *body.get_current()->get();
+    table->move(0, 1);
+    require_current(1);
+    REQUIRE(*body.get_current()->get() == displayed);
+    REQUIRE(updates.empty());
+    table->transact([&] {
+      table->move(1, 0);
+      REQUIRE(current->get().has_value());
+      REQUIRE(*current->get() == TableIndex(0, 0));
+      current->set(TableIndex(1, 0));
+      REQUIRE(updates.empty());
+    });
+    REQUIRE(updates.size() == 1);
+    REQUIRE(body.get_table()->get<int>(updates.back().m_row, 0) == 20);
+    current->set(TableIndex(0, 0));
+    REQUIRE(updates.size() == 2);
+    REQUIRE(updates.back() == displayed);
+    connection.disconnect();
     table->insert({5}, 0);
     require_current(1);
     table->transact([&] {
       table->insert({0}, 0);
-      require_current(2);
+      REQUIRE(current->get().has_value());
+      REQUIRE(*current->get() == TableIndex(2, 0));
       table->remove(0);
-      require_current(1);
+      REQUIRE(current->get().has_value());
+      REQUIRE(*current->get() == TableIndex(1, 0));
       table->remove(0);
-      require_current(0);
     });
+    require_current(0);
     table->remove(0);
     REQUIRE(!current->get().has_value());
     REQUIRE(!body.get_current()->get().has_value());
+  }
+
+  UI_TEST_CASE("fixed_current_on_move") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({20});
+    table->push({10});
+    auto current =
+      std::make_shared<LocalValueModel<optional<TableIndex>>>(
+        TableIndex(0, 0));
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).
+      set_current(current).make());
+    auto& body = view->get_body();
+    REQUIRE(body.get_current()->get().has_value());
+    REQUIRE(*body.get_current()->get() == TableIndex(1, 0));
+    auto updates = std::vector<TableIndex>();
+    auto connection = scoped_connection(
+      body.get_current()->connect_update_signal([&] (const auto& index) {
+        REQUIRE(index.has_value());
+        updates.push_back(*index);
+      }));
+    table->move(0, 1);
+    REQUIRE(updates == std::vector{TableIndex(0, 0)});
+    REQUIRE(*body.get_current()->get() == TableIndex(0, 0));
+    updates.clear();
+    table->transact([&] {
+      table->move(1, 0);
+      table->transact([&] { table->move(0, 1); });
+      REQUIRE(updates.empty());
+    });
+    REQUIRE(updates.empty());
+    table->transact([&] {
+      table->move(1, 0);
+      table->move(0, 1);
+      table->move(1, 0);
+      REQUIRE(updates.empty());
+    });
+    REQUIRE(updates == std::vector{TableIndex(1, 0)});
+    REQUIRE(*body.get_current()->get() == TableIndex(1, 0));
   }
 
   UI_TEST_CASE("filter_current_and_selection") {

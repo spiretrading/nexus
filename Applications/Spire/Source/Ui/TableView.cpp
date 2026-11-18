@@ -59,6 +59,7 @@ namespace {
     std::shared_ptr<TableView::CurrentModel> m_current;
     LocalValueModel<optional<TableIndex>> m_index;
     int m_source_size;
+    bool m_is_transacting;
     scoped_connection m_source_connection;
     scoped_connection m_current_connection;
     scoped_connection m_table_connection;
@@ -70,7 +71,8 @@ namespace {
           m_filtered_table(std::move(filtered_table)),
           m_current(std::move(current)),
           m_index(from_source(m_current->get())),
-          m_source_size(m_filtered_table->get_source()->get_row_size()) {
+          m_source_size(m_filtered_table->get_source()->get_row_size()),
+          m_is_transacting(false) {
       m_source_connection =
         m_filtered_table->get_source()->connect_operation_signal(
           std::bind_front(&SourceToViewIndexModel::on_source_operation, this));
@@ -119,7 +121,8 @@ namespace {
     }
 
     void on_current(const optional<TableIndex>& index) {
-      if(m_source_size != m_filtered_table->get_source()->get_row_size()) {
+      if(m_is_transacting ||
+          m_source_size != m_filtered_table->get_source()->get_row_size()) {
         return;
       }
       auto displayed = from_source(index);
@@ -129,10 +132,16 @@ namespace {
     }
 
     void on_source_operation(const TableModel::Operation& operation) {
-      if(is_row_change(operation)) {
-        m_source_size = m_filtered_table->get_source()->get_row_size();
-        on_current(m_current->get());
+      if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
+        m_is_transacting = true;
+        return;
+      } else if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
+        m_is_transacting = false;
+      } else if(m_is_transacting || !is_row_change(operation)) {
+        return;
       }
+      m_source_size = m_filtered_table->get_source()->get_row_size();
+      on_current(m_current->get());
     }
 
     void on_operation(const TableModel::Operation& operation) {

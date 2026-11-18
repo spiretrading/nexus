@@ -1,6 +1,7 @@
 #include <deque>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/SpireTester/TableModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -106,32 +107,22 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE_NOTHROW(model.push({10, 11, 12}));
     REQUIRE(signal_count == 4);
     REQUIRE(model.get_row_size() == 4);
-    auto source = 0;
-    auto destination = 0;
-    connection = model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source);
-        REQUIRE(move_operation->m_destination == destination);
-      });
+    auto operations = std::deque<TableModel::Operation>();
+    connection = model.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     REQUIRE_THROWS(model.move(0, 4));
-    REQUIRE(signal_count == 4);
     REQUIRE_THROWS(model.move(5, 1));
-    REQUIRE(signal_count == 4);
-    source = 2;
-    destination = 2;
-    REQUIRE_NOTHROW(model.move(source, destination));
+    REQUIRE_NOTHROW(model.move(2, 2));
+    REQUIRE(operations.empty());
     REQUIRE(model.get<int>(0, 0) == 1);
     REQUIRE(model.get<int>(1, 0) == 4);
     REQUIRE(model.get<int>(2, 0) == 7);
     REQUIRE(model.get<int>(3, 0) == 10);
-    source = 0;
-    destination = 3;
-    REQUIRE_NOTHROW(model.move(source, destination));
-    REQUIRE(signal_count == 5);
+    REQUIRE_NOTHROW(model.move(0, 3));
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::MoveOperation(0, 3)});
+    operations.clear();
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(0, 1) == 5);
     REQUIRE(model.get<int>(1, 0) == 7);
@@ -140,10 +131,9 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(model.get<int>(2, 1) == 11);
     REQUIRE(model.get<int>(3, 0) == 1);
     REQUIRE(model.get<int>(3, 1) == 2);
-    source = 3;
-    destination = 1;
-    REQUIRE_NOTHROW(model.move(source, destination));
-    REQUIRE(signal_count == 6);
+    REQUIRE_NOTHROW(model.move(3, 1));
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::MoveOperation(3, 1)});
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(0, 1) == 5);
     REQUIRE(model.get<int>(1, 0) == 1);

@@ -208,20 +208,11 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(3, 0) == 6);
     REQUIRE(source->get<int>(4, 0) == 1);
     REQUIRE(source->get<int>(5, 0) == 3);
-    auto signal_count = 0;
-    auto source_row = 0;
-    auto destination_row = 0;
+    auto operations = std::deque<TableModel::Operation>();
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_row);
-        REQUIRE(move_operation->m_destination == destination_row);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->move(3, 0);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get<int>(2, 0) == 3);
@@ -232,7 +223,7 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(4, 0) == 1);
     REQUIRE(source->get<int>(5, 0) == 3);
     source->move(0, 4);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get<int>(2, 0) == 3);
@@ -242,10 +233,9 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(3, 0) == 1);
     REQUIRE(source->get<int>(4, 0) == 6);
     REQUIRE(source->get<int>(5, 0) == 3);
-    source_row = 0;
-    destination_row = 2;
     source->move(1, 5);
-    REQUIRE(signal_count == 1);
+    require_transaction(operations, {TableModel::MoveOperation(0, 2)});
+    operations.clear();
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
     REQUIRE(filtered_model.get<int>(1, 0) == 3);
     REQUIRE(filtered_model.get<int>(2, 0) == 2);
@@ -255,10 +245,8 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(3, 0) == 6);
     REQUIRE(source->get<int>(4, 0) == 3);
     REQUIRE(source->get<int>(5, 0) == 2);
-    source_row = 1;
-    destination_row = 0;
     source->move(4, 0);
-    REQUIRE(signal_count == 2);
+    require_transaction(operations, {TableModel::MoveOperation(1, 0)});
     REQUIRE(filtered_model.get<int>(0, 0) == 3);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get<int>(2, 0) == 2);

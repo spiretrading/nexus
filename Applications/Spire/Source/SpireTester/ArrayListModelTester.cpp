@@ -120,27 +120,18 @@ TEST_SUITE("ArrayListModel") {
     REQUIRE(model.get(1) == 7);
     REQUIRE(model.get(2) == 10);
     REQUIRE(model.get(3) == 1);
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::MoveOperation& operation) {
-        REQUIRE(operation.m_source == 0);
-        REQUIRE(operation.m_destination == 3);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(0, 3)});
+    operations.clear();
     REQUIRE_NOTHROW(model.move(3, 1));
     REQUIRE(model.get(0) == 4);
     REQUIRE(model.get(1) == 1);
     REQUIRE(model.get(2) == 7);
     REQUIRE(model.get(3) == 10);
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::MoveOperation& operation) {
-        REQUIRE(operation.m_source == 3);
-        REQUIRE(operation.m_destination == 1);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(3, 1)});
   }
 
   TEST_CASE("insert") {

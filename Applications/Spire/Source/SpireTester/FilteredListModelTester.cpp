@@ -210,20 +210,11 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 6);
     REQUIRE(source->get(4) == 1);
     REQUIRE(source->get(5) == 3);
-    auto signal_count = 0;
-    auto source_row = 0;
-    auto destination_row = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<ListModel<int>::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_row);
-        REQUIRE(move_operation->m_destination == destination_row);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->move(3, 0);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 2);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 3);
@@ -234,7 +225,7 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(4) == 1);
     REQUIRE(source->get(5) == 3);
     source->move(0, 4);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 2);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 3);
@@ -244,10 +235,10 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 1);
     REQUIRE(source->get(4) == 6);
     REQUIRE(source->get(5) == 3);
-    source_row = 0;
-    destination_row = 2;
     source->move(1, 5);
-    REQUIRE(signal_count == 1);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(0, 2)});
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 1);
     REQUIRE(filtered_list.get(1) == 3);
     REQUIRE(filtered_list.get(2) == 2);
@@ -257,10 +248,9 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 6);
     REQUIRE(source->get(4) == 3);
     REQUIRE(source->get(5) == 2);
-    source_row = 1;
-    destination_row = 0;
     source->move(4, 0);
-    REQUIRE(signal_count == 2);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(1, 0)});
     REQUIRE(filtered_list.get(0) == 3);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 2);
