@@ -69,8 +69,8 @@ namespace Spire {
   void ModelTransactionLog<T>::end() {
     --m_level;
     if(m_level == 0 && !m_is_first) {
-      m_operation_signal(typename Type::EndTransaction());
       m_is_first = true;
+      m_operation_signal(typename Type::EndTransaction());
     }
   }
 

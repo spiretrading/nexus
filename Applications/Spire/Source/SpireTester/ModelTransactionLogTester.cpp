@@ -72,6 +72,23 @@ TEST_SUITE("ModelTransactionLog") {
       std::vector<std::string>{"start", "operation", "end"});
   }
 
+  TEST_CASE("move_from_end_transaction") {
+    auto log = ModelTransactionLog<Model>();
+    auto operations = std::vector<std::string>();
+    auto connection = record(log, operations);
+    auto has_moved = false;
+    log.connect_operation_signal([&] (const auto& operation) {
+      if(std::holds_alternative<Model::EndTransaction>(operation) &&
+          !has_moved) {
+        has_moved = true;
+        log.push(Model::MoveOperation(1, 0));
+      }
+    });
+    log.push(Model::MoveOperation(0, 1));
+    REQUIRE(operations == std::vector<std::string>{
+      "start", "operation", "end", "start", "operation", "end"});
+  }
+
   TEST_CASE("throwing_transaction_does_not_latch_the_log") {
     auto log = ModelTransactionLog<Model>();
     auto operations = std::vector<std::string>();
