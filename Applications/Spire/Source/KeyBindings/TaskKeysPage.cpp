@@ -273,19 +273,19 @@ void TaskKeysPage::on_reset() {
 void TaskKeysPage::on_new_task_submission(const QString& name) {
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
-  auto current = [&] {
-    if(auto current = m_table_view->get_current()->get()) {
-      m_key_bindings->get_order_task_arguments()->insert(
-        order_task, current->m_row);
-      return TableIndex(current->m_row, 1);
-    } else {
-      m_key_bindings->get_order_task_arguments()->push(order_task);
-      return TableIndex(
-        m_key_bindings->get_order_task_arguments()->get_size() - 1, 1);
+  auto size = m_filtered_tasks->get_size();
+  auto row = [&] {
+    if(auto& current = m_table_view->get_current()->get()) {
+      return current->m_row;
     }
+    return size;
   }();
-  QTimer::singleShot(0, this, [=] {
-    m_table_view->get_current()->set(current);
+  if(m_filtered_tasks->insert(order_task, row) == QValidator::Invalid ||
+      m_filtered_tasks->get_size() == size) {
+    return;
+  }
+  QTimer::singleShot(0, this, [=, this] {
+    m_table_view->get_current()->set(TableIndex(row, 1));
   });
 }
 

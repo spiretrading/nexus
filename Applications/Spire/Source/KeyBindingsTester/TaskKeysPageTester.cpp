@@ -3,6 +3,7 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
@@ -54,6 +55,42 @@ TEST_SUITE("TaskKeysPage") {
       auto event = QKeyEvent(QEvent::KeyPress, Qt::Key_D, Qt::ControlModifier);
       QApplication::sendEvent(&page, &event);
     };
+    SUBCASE("new_task") {
+      auto create = [&] (const QString& name) {
+        auto open =
+          QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::ShiftModifier);
+        QApplication::sendEvent(&page, &open);
+        auto& form = find_child<LineInputForm>(page);
+        auto& input = dynamic_cast<TextBox&>(*form.focusProxy());
+        input.get_current()->set(name);
+        auto submit =
+          QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QApplication::sendEvent(&find_child<QLineEdit>(input), &submit);
+        QApplication::processEvents();
+      };
+      SUBCASE("before_current") {
+        create("Match copy");
+        REQUIRE(tasks.get_size() == 3);
+        REQUIRE(tasks.get(0).m_name == hidden.m_name);
+        REQUIRE(tasks.get(1).m_name == "Match copy");
+        REQUIRE(tasks.get(2).m_key == match.m_key);
+        REQUIRE((table.get_current()->get() == TableIndex(0, 1)));
+      }
+      SUBCASE("without_current") {
+        table.get_current()->set(boost::none);
+        create("Match copy");
+        REQUIRE(tasks.get_size() == 3);
+        REQUIRE(tasks.get(2).m_name == "Match copy");
+        REQUIRE((table.get_current()->get() == TableIndex(1, 1)));
+      }
+      SUBCASE("hidden_by_search") {
+        create("Other");
+        REQUIRE(tasks.get_size() == 3);
+        REQUIRE(tasks.get(1).m_name == "Other");
+        REQUIRE(table.get_table()->get_row_size() == 1);
+        REQUIRE((table.get_current()->get() == TableIndex(0, 1)));
+      }
+    }
     SUBCASE("duplicate") {
       duplicate_task();
       REQUIRE(tasks.get_size() == 3);
