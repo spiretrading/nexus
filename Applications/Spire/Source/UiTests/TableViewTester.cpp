@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -84,6 +85,44 @@ TEST_SUITE("TableView") {
     auto current = view->get_current()->get();
     REQUIRE(current.has_value());
     REQUIRE(*current == TableIndex(1, 0));
+  }
+
+  UI_TEST_CASE("injected_current") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    table->push({20});
+    auto current = std::make_shared<TableCurrentIndexModel>(table);
+    auto builder = TableViewBuilder(table);
+    SUBCASE("source_order") {
+      builder.add_header_item("Value");
+    }
+    SUBCASE("sorted_and_filtered") {
+      builder.add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+        set_filter(std::make_shared<MinimumFilter>());
+    }
+    auto view = std::unique_ptr<TableView>(builder.set_current(current).make());
+    current->set(TableIndex(0, 0));
+    auto& body = view->get_body();
+    auto require_current = [&] (int source_row) {
+      auto displayed = body.get_current()->get();
+      REQUIRE(current->get().has_value());
+      REQUIRE(current->get()->m_row == source_row);
+      REQUIRE(displayed.has_value());
+      REQUIRE(body.get_table()->get<int>(displayed->m_row, 0) == 10);
+    };
+    table->insert({5}, 0);
+    require_current(1);
+    table->transact([&] {
+      table->insert({0}, 0);
+      require_current(2);
+      table->remove(0);
+      require_current(1);
+      table->remove(0);
+      require_current(0);
+    });
+    table->remove(0);
+    REQUIRE(!current->get().has_value());
+    REQUIRE(!body.get_current()->get().has_value());
   }
 
   UI_TEST_CASE("filter_current_and_selection") {

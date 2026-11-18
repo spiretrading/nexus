@@ -46,11 +46,19 @@ namespace {
     return order;
   }
 
+  bool is_row_change(const TableModel::Operation& operation) {
+    return std::holds_alternative<TableModel::AddOperation>(operation) ||
+      std::holds_alternative<TableModel::RemoveOperation>(operation) ||
+      std::holds_alternative<TableModel::MoveOperation>(operation);
+  }
+
   struct SourceToViewIndexModel : ValueModel<optional<TableIndex>> {
     std::shared_ptr<SortedTableModel> m_sorted_table;
     std::shared_ptr<FilteredTableModel> m_filtered_table;
     std::shared_ptr<TableView::CurrentModel> m_current;
     LocalValueModel<optional<TableIndex>> m_index;
+    int m_source_size;
+    scoped_connection m_source_connection;
     scoped_connection m_current_connection;
     scoped_connection m_table_connection;
 
@@ -60,7 +68,11 @@ namespace {
         : m_sorted_table(std::move(sorted_table)),
           m_filtered_table(std::move(filtered_table)),
           m_current(std::move(current)),
-          m_index(from_source(m_current->get())) {
+          m_index(from_source(m_current->get())),
+          m_source_size(m_filtered_table->get_source()->get_row_size()) {
+      m_source_connection =
+        m_filtered_table->get_source()->connect_operation_signal(
+          std::bind_front(&SourceToViewIndexModel::on_source_operation, this));
       m_current_connection = m_current->connect_update_signal(
         std::bind_front(&SourceToViewIndexModel::on_current, this));
       m_table_connection = m_sorted_table->connect_operation_signal(
@@ -106,33 +118,26 @@ namespace {
     }
 
     void on_current(const optional<TableIndex>& index) {
-      m_index.set(from_source(index));
+      if(m_source_size != m_filtered_table->get_source()->get_row_size()) {
+        return;
+      }
+      auto displayed = from_source(index);
+      if(displayed != m_index.get()) {
+        m_index.set(displayed);
+      }
+    }
+
+    void on_source_operation(const TableModel::Operation& operation) {
+      if(is_row_change(operation)) {
+        m_source_size = m_filtered_table->get_source()->get_row_size();
+        on_current(m_current->get());
+      }
     }
 
     void on_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          if(auto current = m_index.get()) {
-            if(operation.m_index <= current->m_row) {
-              ++current->m_row;
-              m_index.set(current);
-            }
-          }
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          if(auto current = m_index.get()) {
-            if(operation.m_index < current->m_row) {
-              --current->m_row;
-              m_index.set(current);
-            }
-          }
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          auto current = from_source(m_current->get());
-          if(current != m_index.get()) {
-            m_index.set(current);
-          }
-        });
+      if(is_row_change(operation)) {
+        on_current(m_current->get());
+      }
     }
   };
 
@@ -357,9 +362,7 @@ TableView::TableView(
     std::move(body_selection), m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
   auto refresh_selection = [=] (const TableModel::Operation& operation) {
-    if(std::holds_alternative<TableModel::AddOperation>(operation) ||
-        std::holds_alternative<TableModel::MoveOperation>(operation) ||
-        std::holds_alternative<TableModel::RemoveOperation>(operation)) {
+    if(is_row_change(operation)) {
       rows->refresh();
       items->refresh();
     }
