@@ -11,8 +11,9 @@ using namespace Spire;
 using namespace Spire::Tests;
 
 namespace {
-  struct FixedSelection : ArrayListModel<int> {
-    using ArrayListModel<int>::ArrayListModel;
+  template<typename T>
+  struct FixedSelection : ArrayListModel<T> {
+    using ArrayListModel<T>::ArrayListModel;
 
     QValidator::State remove(int index) override {
       return QValidator::Invalid;
@@ -169,7 +170,7 @@ TEST_SUITE("TableView") {
     auto filter = std::make_shared<MinimumFilter>();
     auto selection = std::make_shared<TableSelectionModel>(
       std::make_shared<ArrayListModel<TableIndex>>(),
-      std::make_shared<FixedSelection>(std::vector{0, 1}),
+      std::make_shared<FixedSelection<int>>(std::vector{0, 1}),
       std::make_shared<ArrayListModel<int>>());
     auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
       add_header_item("Value").set_filter(filter).
@@ -185,6 +186,37 @@ TEST_SUITE("TableView") {
     REQUIRE(rows.get_size() == 0);
     REQUIRE(view->get_body().get_selection()->get_row_selection()->
       get_size() == 0);
+  }
+
+  UI_TEST_CASE("remove_fixed_selection") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    table->push({20});
+    table->push({30});
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<FixedSelection<TableIndex>>(
+        std::vector{TableIndex(0, 0), TableIndex(2, 0)}),
+      std::make_shared<FixedSelection<int>>(std::vector{0, 2}),
+      std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_selection(selection).make());
+    auto& displayed = *view->get_body().get_selection();
+    REQUIRE(selection->get_row_selection()->remove(0) == QValidator::Invalid);
+    table->remove(0);
+    for(auto model : {selection.get(), &displayed}) {
+      auto& rows = *model->get_row_selection();
+      auto& items = *model->get_item_selection();
+      REQUIRE(rows.get_size() == 1);
+      REQUIRE(rows.get(0) == 1);
+      REQUIRE(items.get_size() == 1);
+      REQUIRE(items.get(0) == TableIndex(1, 0));
+    }
+    table->remove(1);
+    table->push({40});
+    REQUIRE(selection->get_row_selection()->get_size() == 0);
+    REQUIRE(selection->get_item_selection()->get_size() == 0);
+    REQUIRE(displayed.get_row_selection()->get_size() == 0);
+    REQUIRE(displayed.get_item_selection()->get_size() == 0);
   }
 
   UI_TEST_CASE("source_selection") {

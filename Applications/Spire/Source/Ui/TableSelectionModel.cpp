@@ -24,7 +24,7 @@ namespace {
           }),
           m_source(std::move(source)),
           m_is_excluded(std::move(is_excluded)),
-          m_is_pruning(false) {}
+          m_pruned_index(-1) {}
 
       QValidator::State set(int index, const T& value) override {
         if(m_is_excluded(value)) {
@@ -58,14 +58,20 @@ namespace {
         auto is_excluded = m_is_excluded(this->get(index));
         auto state = m_source->remove(this->index_to_source(index));
         if(state == QValidator::Invalid && is_excluded) {
-          auto guard = QScopedValueRollback(m_is_pruning, true);
-          this->set_filter([=, this] (const auto& list, int index) {
-            return (m_is_pruning && this->index_from_source(index) == -1) ||
-              m_is_excluded(list.get(index));
-          });
+          exclude(index);
           return QValidator::Acceptable;
         }
         return state;
+      }
+
+      void exclude(int index) {
+        auto guard =
+          QScopedValueRollback(m_pruned_index, this->index_to_source(index));
+        this->set_filter([=, this] (const auto& list, int index) {
+          return (m_pruned_index != -1 && (index == m_pruned_index ||
+            this->index_from_source(index) == -1)) ||
+            m_is_excluded(list.get(index));
+        });
       }
 
     protected:
@@ -76,17 +82,22 @@ namespace {
     private:
       std::shared_ptr<ListModel<T>> m_source;
       std::function<bool (T)> m_is_excluded;
-      bool m_is_pruning;
+      int m_pruned_index;
   };
 
-  void update(auto& selection, const TableModel::Operation& operation) {
+  template<typename T>
+  void update(ListModel<T>& selection, const TableModel::Operation& operation) {
     for(auto i = selection.get_size(); i-- > 0;) {
       auto value = selection.get(i);
       auto& row = row_of(value);
       auto tracker = TableRowIndexTracker(row);
       tracker.update(operation);
       if(tracker.get_index() == -1) {
-        selection.remove(i);
+        if(selection.remove(i) == QValidator::Invalid) {
+          if(auto list = dynamic_cast<SelectableList<T>*>(&selection)) {
+            list->exclude(i);
+          }
+        }
       } else if(tracker.get_index() != row) {
         row = tracker.get_index();
         selection.set(i, value);
