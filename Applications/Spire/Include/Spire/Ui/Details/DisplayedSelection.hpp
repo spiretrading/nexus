@@ -82,11 +82,6 @@ namespace Spire {
 
   template<typename T>
   void TableView::DisplayedSelection<T>::track(auto refresh) {
-    auto on_row_change = [=, this] (const auto& operation) {
-      if(is_row_change(operation)) {
-        refresh(*this);
-      }
-    };
     auto& source = *m_filtered->get_source();
     m_source_connection = source.connect_operation_signal(
       [=, this] (const auto& operation) {
@@ -95,9 +90,20 @@ namespace Spire {
             return;
           }
         }
-        on_row_change(operation);
+        if(is_row_change(operation)) {
+          refresh(*this);
+        }
       });
-    m_view_connection = m_sorted->connect_operation_signal(on_row_change);
+    m_view_connection = m_sorted->connect_operation_signal(
+      [=, this, has_pending_move = false] (const auto& operation) mutable {
+        if(std::holds_alternative<TableModel::MoveOperation>(operation)) {
+          has_pending_move = true;
+        } else if(is_row_change(operation) || (has_pending_move &&
+            std::holds_alternative<TableModel::EndTransaction>(operation))) {
+          has_pending_move = false;
+          refresh(*this);
+        }
+      });
   }
 }
 

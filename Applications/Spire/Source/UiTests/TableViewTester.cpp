@@ -215,6 +215,42 @@ TEST_SUITE("TableView") {
     REQUIRE(cells->m_previous_reads == cell_reads);
   }
 
+  UI_TEST_CASE("sort_selection") {
+    const auto SIZE = 64;
+    auto table = std::make_shared<ArrayTableModel>();
+    auto rows = std::make_shared<CountingSelection<int>>();
+    auto cells = std::make_shared<CountingSelection<TableIndex>>();
+    for(auto i = 0; i != SIZE; ++i) {
+      table->push({i});
+      rows->push(i);
+      cells->push(TableIndex(i, 0));
+    }
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).
+      set_selection(selection).make());
+    view->resize(320, 240);
+    view->show();
+    QApplication::processEvents();
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    auto& header = *view->get_header().get_item(0);
+    move_cursor(header, header.rect().center());
+    press_mouse(header, Qt::LeftButton);
+    release_mouse(header, Qt::LeftButton);
+    auto& displayed = *view->get_body().get_selection();
+    REQUIRE(displayed.get_row_selection()->get_size() == SIZE);
+    REQUIRE(displayed.get_item_selection()->get_size() == SIZE);
+    for(auto i = 0; i != SIZE; ++i) {
+      auto row = SIZE - i - 1;
+      REQUIRE(displayed.get_row_selection()->get(i) == row);
+      REQUIRE(displayed.get_item_selection()->get(i) == TableIndex(row, 0));
+    }
+    REQUIRE(rows->m_previous_reads <= SIZE - 1);
+    REQUIRE(cells->m_previous_reads <= SIZE - 1);
+  }
+
   UI_TEST_CASE("select_sorted_row") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({30});
