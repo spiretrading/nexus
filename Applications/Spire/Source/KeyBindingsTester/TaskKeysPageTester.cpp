@@ -75,6 +75,9 @@ TEST_SUITE("TaskKeysPage") {
         REQUIRE(tasks.get(1).m_name == "Match copy");
         REQUIRE(tasks.get(2).m_key == match.m_key);
         REQUIRE((table.get_current()->get() == TableIndex(0, 1)));
+        delete_task();
+        REQUIRE(tasks.get_size() == 2);
+        REQUIRE(tasks.get(1).m_key == match.m_key);
       }
       SUBCASE("without_current") {
         table.get_current()->set(boost::none);
@@ -82,12 +85,14 @@ TEST_SUITE("TaskKeysPage") {
         REQUIRE(tasks.get_size() == 3);
         REQUIRE(tasks.get(2).m_name == "Match copy");
         REQUIRE((table.get_current()->get() == TableIndex(1, 1)));
+        REQUIRE(table.get_selection()->get_row_selection()->get(0) == 1);
       }
       SUBCASE("hidden_by_search") {
         create("Other");
         REQUIRE(tasks.get_size() == 3);
         REQUIRE(tasks.get(1).m_name == "Other");
         REQUIRE(table.get_table()->get_row_size() == 1);
+        REQUIRE(table.get_selection()->get_row_selection()->get(0) == 0);
         REQUIRE((table.get_current()->get() == TableIndex(0, 1)));
       }
     }

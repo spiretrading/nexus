@@ -284,6 +284,7 @@ void TaskKeysPage::on_new_task_submission(const QString& name) {
       m_filtered_tasks->get_size() == size) {
     return;
   }
+  m_table_view->get_selection()->get_row_selection()->push(row);
   QTimer::singleShot(0, this, [=, this] {
     m_table_view->get_current()->set(TableIndex(row, 1));
   });
