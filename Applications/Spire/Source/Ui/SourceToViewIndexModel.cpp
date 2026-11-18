@@ -14,7 +14,8 @@ TableView::SourceToViewIndexModel::SourceToViewIndexModel(
       m_current(std::move(current)),
       m_index(from_source(m_current->get())),
       m_source_size(m_filtered_table->get_source()->get_row_size()),
-      m_is_transacting(false) {
+      m_is_source_transacting(false),
+      m_is_view_transacting(false) {
   m_source_connection =
     m_filtered_table->get_source()->connect_operation_signal(
       std::bind_front(&SourceToViewIndexModel::on_source_operation, this));
@@ -26,7 +27,7 @@ TableView::SourceToViewIndexModel::SourceToViewIndexModel(
 
 const TableView::SourceToViewIndexModel::Type&
     TableView::SourceToViewIndexModel::get() const {
-  if(m_is_transacting) {
+  if(m_is_source_transacting || m_is_view_transacting) {
     m_transaction_index = from_source(m_current->get());
     return m_transaction_index;
   }
@@ -71,7 +72,7 @@ optional<TableIndex> TableView::SourceToViewIndexModel::to_source(
 }
 
 void TableView::SourceToViewIndexModel::on_current(const Type& index) {
-  if(m_is_transacting ||
+  if(m_is_source_transacting || m_is_view_transacting ||
       m_source_size != m_filtered_table->get_source()->get_row_size()) {
     return;
   }
@@ -84,11 +85,11 @@ void TableView::SourceToViewIndexModel::on_current(const Type& index) {
 void TableView::SourceToViewIndexModel::on_source_operation(
     const TableModel::Operation& operation) {
   if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
-    m_is_transacting = true;
+    m_is_source_transacting = true;
     return;
   } else if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
-    m_is_transacting = false;
-  } else if(m_is_transacting || !is_row_change(operation)) {
+    m_is_source_transacting = false;
+  } else if(m_is_source_transacting || !is_row_change(operation)) {
     return;
   }
   m_source_size = m_filtered_table->get_source()->get_row_size();
@@ -97,7 +98,13 @@ void TableView::SourceToViewIndexModel::on_source_operation(
 
 void TableView::SourceToViewIndexModel::on_operation(
     const TableModel::Operation& operation) {
-  if(is_row_change(operation)) {
-    on_current(m_current->get());
+  if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
+    m_is_view_transacting = true;
+    return;
+  } else if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
+    m_is_view_transacting = false;
+  } else if(m_is_view_transacting || !is_row_change(operation)) {
+    return;
   }
+  on_current(m_current->get());
 }

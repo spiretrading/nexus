@@ -462,6 +462,42 @@ TEST_SUITE("TableView") {
     REQUIRE(!body.get_current()->get().has_value());
   }
 
+  UI_TEST_CASE("current_on_sort") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != 5; ++i) {
+      table->push({i});
+    }
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).make());
+    auto source_row = 2;
+    SUBCASE("same_position") {}
+    SUBCASE("new_position") {
+      source_row = 1;
+    }
+    view->get_selection()->get_row_selection()->push(source_row);
+    view->get_current()->set(TableIndex(source_row, 0));
+    auto& body = view->get_body();
+    auto& rows = *body.get_selection()->get_row_selection();
+    auto updates = std::vector<TableIndex>();
+    auto connection = scoped_connection(
+      body.get_current()->connect_update_signal([&] (const auto& index) {
+        REQUIRE(index.has_value());
+        REQUIRE(index->m_row == rows.get(0));
+        REQUIRE(body.get_table()->get<int>(index->m_row, 0) == source_row);
+        updates.push_back(*index);
+      }));
+    auto sorted = std::static_pointer_cast<SortedTableModel>(body.get_table());
+    sorted->set_column_order({{0, SortedTableModel::Ordering::DESCENDING}});
+    auto expected = TableIndex(4 - source_row, 0);
+    REQUIRE((body.get_current()->get() == expected));
+    REQUIRE(rows.get(0) == expected.m_row);
+    if(expected.m_row == source_row) {
+      REQUIRE(updates.empty());
+    } else {
+      REQUIRE(updates == std::vector{expected});
+    }
+  }
+
   UI_TEST_CASE("current_on_batched_removals") {
     auto table = std::make_shared<ArrayTableModel>();
     for(auto value : {10, 20, 30}) {

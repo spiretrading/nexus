@@ -23,7 +23,8 @@ namespace Spire {
       LocalValueModel<Type> m_index;
       mutable Type m_transaction_index;
       int m_source_size;
-      bool m_is_transacting;
+      bool m_is_source_transacting;
+      bool m_is_view_transacting;
       boost::signals2::scoped_connection m_source_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_table_connection;
