@@ -88,7 +88,18 @@ namespace {
 
   template<typename T>
   void update(ListModel<T>& selection, const TableModel::Operation& operation) {
-    for(auto i = selection.get_size(); i-- > 0;) {
+    auto is_removing =
+      std::holds_alternative<TableModel::PreRemoveOperation>(operation);
+    auto to_index = [=] (int offset, int size) {
+      if(is_removing) {
+        return offset;
+      }
+      return size - 1 - offset;
+    };
+    auto pending = std::vector<std::pair<int, T>>();
+    for(auto offset = 0; offset < selection.get_size();) {
+      auto size = selection.get_size();
+      auto i = to_index(offset, size);
       auto value = selection.get(i);
       auto& row = row_of(value);
       auto tracker = TableRowIndexTracker(row);
@@ -102,7 +113,17 @@ namespace {
       } else if(tracker.get_index() != row) {
         row = tracker.get_index();
         selection.set(i, value);
+        if(selection.get_size() < size) {
+          pending.emplace_back(offset, value);
+        }
       }
+      if(selection.get_size() == size) {
+        ++offset;
+      }
+    }
+    for(auto i = std::ssize(pending); i-- > 0;) {
+      auto& [offset, value] = pending[i];
+      selection.insert(value, to_index(offset, selection.get_size() + 1));
     }
   }
 }

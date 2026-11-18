@@ -76,7 +76,7 @@ namespace Spire {
       m_selection.erase(previous);
       return m_list.set(index, value);
     }
-    return m_list.remove(index);
+    return remove(index);
   }
 
   template<typename T>

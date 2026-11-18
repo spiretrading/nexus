@@ -3,6 +3,7 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/UiTests/UiTests.hpp"
@@ -323,6 +324,49 @@ TEST_SUITE("TableView") {
     REQUIRE(rows.get_size() == 0);
     REQUIRE(view->get_body().get_selection()->get_row_selection()->
       get_size() == 0);
+  }
+
+  UI_TEST_CASE("track_multi_selection") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto i : {10, 20, 30}) {
+      table->push({i, i});
+    }
+    auto rows = std::make_shared<ListMultiSelectionModel>();
+    auto cells = std::make_shared<TableMultiSelectionModel>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("A").add_header_item("B").set_selection(selection).
+      make());
+    for(auto row : {2, 0, 1}) {
+      rows->push(row);
+      cells->push(TableIndex(row, 1));
+    }
+    cells->push(TableIndex(1, 0));
+    auto expected = std::vector<int>();
+    SUBCASE("remove") {
+      table->remove(0);
+      expected = {1, 0};
+    }
+    SUBCASE("insert") {
+      table->insert({5, 5}, 0);
+      expected = {3, 1, 2};
+    }
+    SUBCASE("move_down") {
+      table->move(0, 2);
+      expected = {1, 2, 0};
+    }
+    SUBCASE("move_up") {
+      table->move(2, 0);
+      expected = {0, 1, 2};
+    }
+    REQUIRE(rows->get_size() == std::ssize(expected));
+    REQUIRE(cells->get_size() == rows->get_size() + 1);
+    for(auto i = 0; i != rows->get_size(); ++i) {
+      REQUIRE(rows->get(i) == expected[i]);
+      REQUIRE(cells->get(i) == TableIndex(expected[i], 1));
+    }
+    REQUIRE(cells->get(rows->get_size()) == TableIndex(expected.back(), 0));
   }
 
   UI_TEST_CASE("remove_fixed_selection") {
