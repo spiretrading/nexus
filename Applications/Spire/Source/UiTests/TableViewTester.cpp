@@ -262,6 +262,27 @@ TEST_SUITE("TableView") {
       release_key(body, Qt::Key_Shift);
     };
     click(*body.find_item(TableIndex(0, 0)));
+    SUBCASE("insertion_inside_range") {
+      auto end = 4;
+      SUBCASE("forward") {
+        shift_click(2);
+        table->insert({15}, 1);
+      }
+      SUBCASE("backward") {
+        click(*body.find_item(TableIndex(3, 0)));
+        shift_click(1);
+        table->insert({25}, 2);
+        end = 0;
+      }
+      auto& cells = std::as_const(*selection->get_item_selection());
+      REQUIRE(rows->get_size() == 3);
+      shift_click(end);
+      REQUIRE(rows->get_size() == 5);
+      for(auto row = 0; row != 5; ++row) {
+        REQUIRE(std::ranges::contains(std::as_const(*rows), row));
+        REQUIRE(std::ranges::contains(cells, TableIndex(row, 0)));
+      }
+    }
     SUBCASE("reordered_range") {
       table->push({50});
       auto& cells = *selection->get_item_selection();

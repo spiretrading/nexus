@@ -132,6 +132,9 @@ int TableSelectionController::get_column_size() const {
 }
 
 void TableSelectionController::add_row(int index) {
+  save_range([=] (int first, int last) {
+    return first < index && index <= last;
+  });
   if(m_previous_range) {
     m_previous_range->emplace(m_previous_range->begin() + index, 0, 0);
   }
@@ -150,20 +153,10 @@ void TableSelectionController::remove_row(int index) {
 }
 
 void TableSelectionController::move_row(int source, int destination) {
-  if(!m_previous_range && m_range_anchor && m_current &&
-      m_range_anchor->m_row != m_current->m_row) {
-    auto [first, last] = std::minmax(*m_range_anchor, *m_current,
-      [] (auto left, auto right) { return left.m_row < right.m_row; });
-    if(std::min(source, destination) <= last.m_row &&
-        std::max(source, destination) >= first.m_row) {
-      m_previous_range.emplace(m_row_size);
-      auto& range = *m_previous_range;
-      std::fill(range.begin() + first.m_row, range.begin() + last.m_row + 1,
-        ColumnRange(0, m_column_size));
-      range[first.m_row].m_begin = first.m_column;
-      range[last.m_row].m_end = last.m_column + 1;
-    }
-  }
+  save_range([=] (int first, int last) {
+    return std::min(source, destination) <= last &&
+      first <= std::max(source, destination);
+  });
   if(m_previous_range) {
     move_element(*m_previous_range, source, destination);
   }
@@ -316,6 +309,24 @@ connection TableSelectionController::connect_row_operation_signal(
 connection TableSelectionController::connect_column_operation_signal(
     const ListModel<int>::OperationSignal::slot_type& slot) const {
   return m_column_operation_signal.connect(slot);
+}
+
+void TableSelectionController::save_range(auto is_affected) {
+  if(m_previous_range || !m_range_anchor || !m_current ||
+      m_range_anchor->m_row == m_current->m_row) {
+    return;
+  }
+  auto [first, last] = std::minmax(*m_range_anchor, *m_current,
+    [] (auto left, auto right) { return left.m_row < right.m_row; });
+  if(!is_affected(first.m_row, last.m_row)) {
+    return;
+  }
+  m_previous_range.emplace(m_row_size);
+  auto& range = *m_previous_range;
+  std::fill(range.begin() + first.m_row, range.begin() + last.m_row + 1,
+    ColumnRange(0, m_column_size));
+  range[first.m_row].m_begin = first.m_column;
+  range[last.m_row].m_end = last.m_column + 1;
 }
 
 void TableSelectionController::update_rows(

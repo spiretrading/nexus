@@ -127,6 +127,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_row_connection;
       boost::signals2::scoped_connection m_column_connection;
 
+      void save_range(auto is_affected);
       void update_rows(const TableModel::Operation& operation);
       void on_item_operation(const ListModel<Index>::Operation& operation);
       void on_row_operation(const ListModel<int>::Operation& operation);
