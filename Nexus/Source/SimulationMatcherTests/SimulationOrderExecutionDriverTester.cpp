@@ -30,10 +30,10 @@ namespace {
           Ref(m_environment.get_time_environment())));
     }
 
-    OrderInfo make_bid_limit(Money price) {
+    OrderInfo make_bid_limit(Money price, OrderId id = 1) {
       auto info = OrderInfo();
       info.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, price);
-      info.m_id = 1;
+      info.m_id = id;
       info.m_timestamp = m_environment.get_time_environment().get_time();
       return info;
     }
@@ -84,9 +84,14 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     auto rejection_report = rejection_reports->pop();
     REQUIRE(rejection_report.m_status == OrderStatus::REJECTED);
     REQUIRE(rejection_report.m_text == "No BBO quote available.");
+    auto limit = driver.submit(fixture.make_bid_limit(Money::ONE, 2));
+    auto limit_reports = std::make_shared<Queue<ExecutionReport>>();
+    limit->get_publisher().monitor(limit_reports);
+    REQUIRE(limit_reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(limit_reports->pop().m_status == OrderStatus::NEW);
     fixture.m_environment.update_bbo_price(SHOP, Money::ONE, Money::ONE);
-    flush_pending_routines();
-    auto order = driver.submit(fixture.make_bid_market(2));
+    REQUIRE(limit_reports->pop().m_status == OrderStatus::FILLED);
+    auto order = driver.submit(fixture.make_bid_market(3));
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
