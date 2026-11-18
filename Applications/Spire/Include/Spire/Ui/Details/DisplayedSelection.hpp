@@ -1,5 +1,6 @@
 #ifndef SPIRE_DISPLAYED_SELECTION_HPP
 #define SPIRE_DISPLAYED_SELECTION_HPP
+#include <utility>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -29,6 +30,7 @@ namespace Spire {
       std::shared_ptr<FilteredTableModel> m_filtered;
       std::shared_ptr<SortedTableModel> m_sorted;
       std::vector<int> m_indices;
+      bool m_is_refresh_pending;
       boost::signals2::connection m_tracking_connection;
       boost::signals2::scoped_connection m_connection;
       boost::signals2::scoped_connection m_source_connection;
@@ -48,6 +50,7 @@ namespace Spire {
       : m_source(std::move(source)),
         m_filtered(std::move(filtered)),
         m_sorted(std::move(sorted)),
+        m_is_refresh_pending(false),
         m_tracking_connection(std::move(tracking)) {
     m_connection = m_source->connect_operation_signal(
       [=, this] (const auto& operation) {
@@ -86,22 +89,36 @@ namespace Spire {
     m_source_connection = source.connect_operation_signal(
       [=, this] (const auto& operation) {
         if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
-          if(m_filtered->index_from_source(add->m_index) != -1) {
+          if(!m_is_refresh_pending &&
+              m_filtered->index_from_source(add->m_index) != -1) {
+            return;
+          }
+        } else if(!is_row_change(operation)) {
+          auto update = std::get_if<TableModel::UpdateOperation>(&operation);
+          if(!m_is_refresh_pending || !update ||
+              m_filtered->index_from_source(update->m_row) != -1) {
             return;
           }
         }
-        if(is_row_change(operation)) {
-          refresh(*this);
-        }
+        m_is_refresh_pending = false;
+        refresh(*this);
       });
     m_view_connection = m_sorted->connect_operation_signal(
-      [=, this, has_pending_move = false] (const auto& operation) mutable {
-        if(std::holds_alternative<TableModel::MoveOperation>(operation)) {
-          has_pending_move = true;
-        } else if(is_row_change(operation) || (has_pending_move &&
-            std::holds_alternative<TableModel::EndTransaction>(operation))) {
-          has_pending_move = false;
-          refresh(*this);
+      [=, this, is_transacting = false] (const auto& operation) mutable {
+        if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
+          is_transacting = true;
+        } else if(
+            std::holds_alternative<TableModel::EndTransaction>(operation)) {
+          is_transacting = false;
+          if(std::exchange(m_is_refresh_pending, false)) {
+            refresh(*this);
+          }
+        } else if(is_row_change(operation)) {
+          if(is_transacting) {
+            m_is_refresh_pending = true;
+          } else {
+            refresh(*this);
+          }
         }
       });
   }

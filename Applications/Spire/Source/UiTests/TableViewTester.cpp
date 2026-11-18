@@ -618,6 +618,58 @@ TEST_SUITE("TableView") {
     REQUIRE(!view->get_current()->get().has_value());
     REQUIRE(rows->get_size() == 1);
     REQUIRE(cells->get_size() == 0);
+    table->transact([&] {
+      table->set(1, 0, 0);
+      table->set(1, 0, 30);
+    });
+    REQUIRE(rows->get_size() == 0);
+  }
+
+  UI_TEST_CASE("bulk_filter_selection") {
+    const auto SIZE = 64;
+    auto table = std::make_shared<ArrayTableModel>();
+    auto rows = std::make_shared<CountingSelection<int>>();
+    auto cells = std::make_shared<CountingSelection<TableIndex>>();
+    for(auto i = 0; i != SIZE; ++i) {
+      table->push({i + 1});
+      rows->push(i);
+      cells->push(TableIndex(i, 0));
+    }
+    auto filter = std::make_shared<MinimumFilter>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_filter(filter).set_selection(selection).
+      make());
+    auto& displayed = *view->get_body().get_selection();
+    auto visible = SIZE / 2;
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    filter->set_minimum(visible + 1);
+    REQUIRE(rows->m_previous_reads <= SIZE + visible);
+    REQUIRE(cells->m_previous_reads <= SIZE + visible);
+    REQUIRE(rows->get_size() == visible);
+    REQUIRE(cells->get_size() == visible);
+    REQUIRE(displayed.get_row_selection()->get_size() == visible);
+    REQUIRE(displayed.get_item_selection()->get_size() == visible);
+    for(auto i = 0; i != visible; ++i) {
+      REQUIRE(rows->get(i) == i + visible);
+      REQUIRE(cells->get(i) == TableIndex(i + visible, 0));
+      REQUIRE(displayed.get_row_selection()->get(i) == i);
+      REQUIRE(displayed.get_item_selection()->get(i) == TableIndex(i, 0));
+    }
+    rows->m_previous_reads = 0;
+    cells->m_previous_reads = 0;
+    filter->set_minimum(1);
+    REQUIRE(rows->m_previous_reads <= visible);
+    REQUIRE(cells->m_previous_reads <= visible);
+    REQUIRE(displayed.get_row_selection()->get_size() == visible);
+    REQUIRE(displayed.get_item_selection()->get_size() == visible);
+    for(auto i = 0; i != visible; ++i) {
+      REQUIRE(displayed.get_row_selection()->get(i) == i + visible);
+      REQUIRE(displayed.get_item_selection()->get(i) ==
+        TableIndex(i + visible, 0));
+    }
   }
 
   UI_TEST_CASE("filter_fixed_selection") {
