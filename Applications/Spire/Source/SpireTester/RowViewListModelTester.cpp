@@ -134,6 +134,52 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE_THROWS(model.get(0));
   }
 
+  TEST_CASE("source_transaction_removes_viewed_row") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1});
+    source->push({2});
+    auto model = RowViewListModel<int>(source, 0);
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    source->transact([&] {
+      source->set(0, 0, 3);
+      source->remove(0);
+      source->set(0, 0, 4);
+      REQUIRE(model.get_size() == 0);
+      REQUIRE(operations.size() == 2);
+      REQUIRE(std::get_if<ListModel<int>::StartTransaction>(&operations[0]));
+      auto& update = std::get<ListModel<int>::UpdateOperation>(operations[1]);
+      REQUIRE(update.get_previous() == 1);
+      REQUIRE(update.get_value() == 3);
+    });
+    REQUIRE(operations.size() == 3);
+    REQUIRE(std::get_if<ListModel<int>::EndTransaction>(&operations.back()));
+    source->set(0, 0, 5);
+    REQUIRE(operations.size() == 3);
+    auto weak_source = std::weak_ptr(source);
+    source.reset();
+    REQUIRE(weak_source.expired());
+  }
+
+  TEST_CASE("attach_during_source_transaction") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1});
+    source->start_transaction();
+    source->set(0, 0, 2);
+    auto model = RowViewListModel<int>(source, 0);
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    model.transact([&] {
+      source->set(0, 0, 3);
+      source->end_transaction();
+      REQUIRE(operations.size() == 2);
+    });
+    REQUIRE(operations.size() == 3);
+    REQUIRE(std::get_if<ListModel<int>::EndTransaction>(&operations.back()));
+  }
+
   TEST_CASE("source_move") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({0});

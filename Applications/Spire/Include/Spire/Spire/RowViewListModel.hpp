@@ -52,6 +52,7 @@ namespace Details {
     private:
       std::shared_ptr<TableModel> m_source;
       TableRowIndexTracker m_row;
+      int m_source_transaction_depth;
       boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const TableModel::Operation& operation);
@@ -61,7 +62,8 @@ namespace Details {
   RowViewListModel<T>::RowViewListModel(
       std::shared_ptr<TableModel> source, int row)
       : m_source(std::move(source)),
-        m_row(row) {
+        m_row(row),
+        m_source_transaction_depth(0) {
     if(row < 0 || row >= m_source->get_row_size()) {
       m_source = nullptr;
       m_row.set(-1);
@@ -105,12 +107,24 @@ namespace Details {
   template<typename T>
   void RowViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
+    auto disconnect_if_removed = [&] {
+      if(m_row.get_index() == -1 && m_source_transaction_depth == 0) {
+        m_source_connection.disconnect();
+        m_source = nullptr;
+        this->m_transaction.set_size(0);
+      }
+    };
     visit(operation,
       [&] (const TableModel::StartTransaction&) {
+        ++m_source_transaction_depth;
         this->m_transaction.start();
       },
       [&] (const TableModel::EndTransaction&) {
-        this->m_transaction.end();
+        if(m_source_transaction_depth != 0) {
+          --m_source_transaction_depth;
+          disconnect_if_removed();
+          this->m_transaction.end();
+        }
       },
       [&] (const TableModel::UpdateOperation& operation) {
         if(m_row.get_index() == operation.m_row) {
@@ -121,11 +135,7 @@ namespace Details {
       },
       [&] (const auto& operation) {
         m_row.update(operation);
-        if(m_row.get_index() == -1) {
-          m_source_connection.disconnect();
-          m_source = nullptr;
-          this->m_transaction.set_size(0);
-        }
+        disconnect_if_removed();
       });
   }
 }
