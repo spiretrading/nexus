@@ -5,6 +5,25 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  void track_rows(const TableModel::Operation& operation, bool& is_transacting,
+      auto refresh) {
+    visit(operation,
+      [&] (const TableModel::StartTransaction&) {
+        is_transacting = true;
+      },
+      [&] (const TableModel::EndTransaction&) {
+        is_transacting = false;
+        refresh();
+      },
+      [&] (const TableRowChange auto&) {
+        if(!is_transacting) {
+          refresh();
+        }
+      });
+  }
+}
+
 TableView::SourceToViewIndexModel::SourceToViewIndexModel(
     std::shared_ptr<SortedTableModel> sorted_table,
     std::shared_ptr<FilteredTableModel> filtered_table,
@@ -84,27 +103,15 @@ void TableView::SourceToViewIndexModel::on_current(const Type& index) {
 
 void TableView::SourceToViewIndexModel::on_source_operation(
     const TableModel::Operation& operation) {
-  if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
-    m_is_source_transacting = true;
-    return;
-  } else if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
-    m_is_source_transacting = false;
-  } else if(m_is_source_transacting || !is_row_change(operation)) {
-    return;
-  }
-  m_source_size = m_filtered_table->get_source()->get_row_size();
-  on_current(m_current->get());
+  track_rows(operation, m_is_source_transacting, [&] {
+    m_source_size = m_filtered_table->get_source()->get_row_size();
+    on_current(m_current->get());
+  });
 }
 
 void TableView::SourceToViewIndexModel::on_operation(
     const TableModel::Operation& operation) {
-  if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
-    m_is_view_transacting = true;
-    return;
-  } else if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
-    m_is_view_transacting = false;
-  } else if(m_is_view_transacting || !is_row_change(operation)) {
-    return;
-  }
-  on_current(m_current->get());
+  track_rows(operation, m_is_view_transacting, [&] {
+    on_current(m_current->get());
+  });
 }

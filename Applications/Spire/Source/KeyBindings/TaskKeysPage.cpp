@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include <concepts>
 #include <QTimer>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -292,11 +293,9 @@ void TaskKeysPage::on_new_task_submission(const QString& name) {
 
 void TaskKeysPage::on_row_selection(
     const ListModel<int>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<int>::AddOperation& operation) {
-      update_button_state();
-    },
-    [&] (const ListModel<int>::RemoveOperation& operation) {
-      update_button_state();
-    });
+  visit(operation, [&] <typename T> (const T&) requires
+      (std::same_as<T, AnyListModel::AddOperation> ||
+        std::same_as<T, AnyListModel::RemoveOperation>) {
+    update_button_state();
+  });
 }

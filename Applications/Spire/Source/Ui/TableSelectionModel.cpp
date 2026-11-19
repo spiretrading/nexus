@@ -193,12 +193,13 @@ connection TableSelectionModel::track(
   m_table = table;
   m_table_connection = table->connect_operation_signal(
     [=, this] (const auto& operation) {
-      if(auto remove = std::get_if<TableModel::RemoveOperation>(&operation)) {
-        update_rows(TableModel::PreRemoveOperation(remove->m_index));
-      } else if(std::holds_alternative<TableModel::AddOperation>(operation) ||
-          std::holds_alternative<TableModel::MoveOperation>(operation)) {
-        update_rows(operation);
-      }
+      visit(operation,
+        [&] (const TableModel::RemoveOperation& remove) {
+          update_rows(TableModel::PreRemoveOperation(remove.m_index));
+        },
+        [&] (const TableRowChange auto&) {
+          update_rows(operation);
+        });
     });
   return m_table_connection;
 }

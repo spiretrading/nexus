@@ -13,13 +13,16 @@ namespace {
       std::vector<std::string>& operations) {
     return log.connect_operation_signal(
       [&] (const Model::Operation& operation) {
-        if(std::holds_alternative<Model::StartTransaction>(operation)) {
-          operations.push_back("start");
-        } else if(std::holds_alternative<Model::EndTransaction>(operation)) {
-          operations.push_back("end");
-        } else {
-          operations.push_back("operation");
-        }
+        visit(operation,
+          [&] (const Model::StartTransaction&) {
+            operations.push_back("start");
+          },
+          [&] (const Model::EndTransaction&) {
+            operations.push_back("end");
+          },
+          [&] (const auto&) {
+            operations.push_back("operation");
+          });
       });
   }
 }
@@ -52,11 +55,12 @@ TEST_SUITE("ModelTransactionLog") {
     auto connection = record(log, operations);
     auto has_inserted = false;
     log.connect_operation_signal([&] (const auto& operation) {
-      if(!has_inserted &&
-          std::holds_alternative<Model::AddOperation>(operation)) {
-        has_inserted = true;
-        log.push(Model::AddOperation(0));
-      }
+      visit(operation, [&] (const Model::AddOperation&) {
+        if(!has_inserted) {
+          has_inserted = true;
+          log.push(Model::AddOperation(0));
+        }
+      });
     });
     log.push(Model::AddOperation(0));
     REQUIRE(operations ==
@@ -116,11 +120,12 @@ TEST_SUITE("ModelTransactionLog") {
     auto connection = record(log, operations);
     auto has_moved = false;
     log.connect_operation_signal([&] (const auto& operation) {
-      if(std::holds_alternative<Model::EndTransaction>(operation) &&
-          !has_moved) {
-        has_moved = true;
-        log.push(Model::MoveOperation(1, 0));
-      }
+      visit(operation, [&] (const Model::EndTransaction&) {
+        if(!has_moved) {
+          has_moved = true;
+          log.push(Model::MoveOperation(1, 0));
+        }
+      });
     });
     log.push(Model::MoveOperation(0, 1));
     REQUIRE(operations == std::vector<std::string>{

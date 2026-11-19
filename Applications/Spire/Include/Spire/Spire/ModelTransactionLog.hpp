@@ -1,7 +1,7 @@
 #ifndef SPIRE_MODEL_TRANSACTION_LOG_HPP
 #define SPIRE_MODEL_TRANSACTION_LOG_HPP
 #include <utility>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ListModel.hpp"
 
 namespace Spire {
 
@@ -99,31 +99,42 @@ namespace Spire {
 
   template<typename T>
   void ModelTransactionLog<T>::push(const typename Type::Operation& operation) {
-    if(std::holds_alternative<typename Type::StartTransaction>(operation)) {
-      start();
-      return;
-    } else if(
-        std::holds_alternative<typename Type::EndTransaction>(operation)) {
-      end();
-      return;
-    }
-    auto add = std::get_if<typename Type::AddOperation>(&operation);
-    if(m_level == 0 && ((add && add->m_index < m_size) ||
-        std::holds_alternative<typename Type::MoveOperation>(operation))) {
-      transact([&] { push(operation); });
-      return;
-    }
-    if(add) {
-      ++m_size;
-    } else if(
-        std::holds_alternative<typename Type::RemoveOperation>(operation)) {
-      --m_size;
-    }
-    if(m_level != 0 && m_is_first) {
-      m_is_first = false;
-      m_operation_signal(typename Type::StartTransaction());
-    }
-    m_operation_signal(operation);
+    auto publish = [&] (bool shifts_indices) {
+      auto notify = [&] {
+        if(m_level != 0 && m_is_first) {
+          m_is_first = false;
+          m_operation_signal(typename Type::StartTransaction());
+        }
+        m_operation_signal(operation);
+      };
+      if(shifts_indices && m_level == 0) {
+        transact(notify);
+      } else {
+        notify();
+      }
+    };
+    visit(operation,
+      [&] (const typename Type::StartTransaction&) {
+        start();
+      },
+      [&] (const typename Type::EndTransaction&) {
+        end();
+      },
+      [&] (const typename Type::AddOperation& add) {
+        auto shifts_indices = add.m_index < m_size;
+        ++m_size;
+        publish(shifts_indices);
+      },
+      [&] (const typename Type::MoveOperation&) {
+        publish(true);
+      },
+      [&] (const typename Type::RemoveOperation&) {
+        --m_size;
+        publish(false);
+      },
+      [&] (const auto&) {
+        publish(false);
+      });
   }
 
   template<typename T>

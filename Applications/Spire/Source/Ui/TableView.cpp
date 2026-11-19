@@ -196,12 +196,6 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool TableView::is_row_change(const TableModel::Operation& operation) {
-  return std::holds_alternative<TableModel::AddOperation>(operation) ||
-    std::holds_alternative<TableModel::RemoveOperation>(operation) ||
-    std::holds_alternative<TableModel::MoveOperation>(operation);
-}
-
 void TableView::initialize_body(
     TableViewItemBuilder item_builder, connection tracking) {
   if(!m_current) {

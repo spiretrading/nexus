@@ -57,28 +57,27 @@ namespace Spire {
         if(is_updating()) {
           return;
         }
-        if(auto add =
-            std::get_if<typename ListModel<T>::AddOperation>(&operation)) {
-          if(add->m_index == m_source->get_size() - 1) {
-            append(add->m_index);
-            return;
-          }
-        } else if(auto removal = std::get_if<
-            typename ListModel<T>::RemoveOperation>(&operation)) {
-          if(!m_indices.empty() && removal->m_index == m_indices.back()) {
-            m_indices.pop_back();
-            ArrayListModel<T>::remove(this->get_size() - 1);
-            return;
-          }
-        }
-        if(!std::holds_alternative<
-            typename ListModel<T>::PreRemoveOperation>(operation) &&
-            !std::holds_alternative<
-              typename ListModel<T>::StartTransaction>(operation) &&
-            !std::holds_alternative<
-              typename ListModel<T>::EndTransaction>(operation)) {
-          refresh();
-        }
+        visit(operation,
+          [&] (const AnyListModel::AddOperation& add) {
+            if(add.m_index == m_source->get_size() - 1) {
+              append(add.m_index);
+            } else {
+              refresh();
+            }
+          },
+          [&] (const AnyListModel::RemoveOperation& removal) {
+            if(!m_indices.empty() && removal.m_index == m_indices.back()) {
+              m_indices.pop_back();
+              ArrayListModel<T>::remove(this->get_size() - 1);
+            } else {
+              refresh();
+            }
+          },
+          [&] <typename O> (const O&) requires
+              (std::derived_from<O, AnyListModel::MoveOperation> ||
+                std::derived_from<O, AnyListModel::UpdateOperation>) {
+            refresh();
+          });
       });
     refresh();
   }
@@ -88,38 +87,44 @@ namespace Spire {
     auto& source = *m_filtered->get_source();
     m_source_connection = source.connect_operation_signal(
       [=, this] (const auto& operation) {
-        if(auto add = std::get_if<TableModel::AddOperation>(&operation)) {
-          if(!m_is_refresh_pending &&
-              m_filtered->index_from_source(add->m_index) != -1) {
-            return;
-          }
-        } else if(!is_row_change(operation)) {
-          auto update = std::get_if<TableModel::UpdateOperation>(&operation);
-          if(!m_is_refresh_pending || !update ||
-              m_filtered->index_from_source(update->m_row) != -1) {
-            return;
-          }
-        }
-        m_is_refresh_pending = false;
-        refresh(*this);
+        auto refresh_selection = [&] {
+          m_is_refresh_pending = false;
+          refresh(*this);
+        };
+        visit(operation,
+          [&] (const TableModel::AddOperation& add) {
+            if(m_is_refresh_pending ||
+                m_filtered->index_from_source(add.m_index) == -1) {
+              refresh_selection();
+            }
+          },
+          [&] (const TableModel::UpdateOperation& update) {
+            if(m_is_refresh_pending &&
+                m_filtered->index_from_source(update.m_row) == -1) {
+              refresh_selection();
+            }
+          },
+          [&] (const TableRowChange auto&) { refresh_selection(); });
       });
     m_view_connection = m_sorted->connect_operation_signal(
       [=, this, is_transacting = false] (const auto& operation) mutable {
-        if(std::holds_alternative<TableModel::StartTransaction>(operation)) {
-          is_transacting = true;
-        } else if(
-            std::holds_alternative<TableModel::EndTransaction>(operation)) {
-          is_transacting = false;
-          if(std::exchange(m_is_refresh_pending, false)) {
-            refresh(*this);
-          }
-        } else if(is_row_change(operation)) {
-          if(is_transacting) {
-            m_is_refresh_pending = true;
-          } else {
-            refresh(*this);
-          }
-        }
+        visit(operation,
+          [&] (const TableModel::StartTransaction&) {
+            is_transacting = true;
+          },
+          [&] (const TableModel::EndTransaction&) {
+            is_transacting = false;
+            if(std::exchange(m_is_refresh_pending, false)) {
+              refresh(*this);
+            }
+          },
+          [&] (const TableRowChange auto&) {
+            if(is_transacting) {
+              m_is_refresh_pending = true;
+            } else {
+              refresh(*this);
+            }
+          });
       });
   }
 }
