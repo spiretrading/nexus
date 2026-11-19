@@ -3,6 +3,7 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
+#include "Spire/SpireTester/ListModelTester.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -149,6 +150,55 @@ TEST_SUITE("TableView") {
       rows->transact(append);
     }
     REQUIRE(rows->m_previous_reads == 0);
+  }
+
+  UI_TEST_CASE("displayed_selection_transaction") {
+    using Model = ListModel<int>;
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto value : {10, 20, 30}) {
+      table->push({value});
+    }
+    auto rows = std::make_shared<ArrayListModel<int>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<ArrayListModel<TableIndex>>(), rows,
+      std::make_shared<ArrayListModel<int>>());
+    auto filter = std::make_shared<MinimumFilter>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_filter(filter).
+      set_selection(selection).make());
+    auto& displayed = *view->get_body().get_selection()->get_row_selection();
+    auto operations = std::deque<Model::Operation>();
+    auto connection = scoped_connection(displayed.connect_operation_signal(
+      [&] (const Model::Operation& operation) {
+        operations.push_back(operation);
+      }));
+    auto append = [&] {
+      rows->push(1);
+      REQUIRE(displayed.get_size() == 1);
+      rows->transact([&] { rows->push(2); });
+      REQUIRE(displayed.get_size() == 2);
+    };
+    SUBCASE("source") {
+      rows->transact(append);
+    }
+    SUBCASE("displayed") {
+      displayed.transact(append);
+    }
+    SUBCASE("pruned_first") {
+      rows->push(0);
+      operations.clear();
+      rows->transact([&] {
+        filter->set_minimum(20);
+        REQUIRE(displayed.get_size() == 0);
+        append();
+      });
+      require_list_transaction<int>(operations,
+        {Model::PreRemoveOperation(0), Model::RemoveOperation(0),
+          Model::AddOperation(0), Model::AddOperation(1)});
+      return;
+    }
+    require_list_transaction<int>(
+      operations, {Model::AddOperation(0), Model::AddOperation(1)});
   }
 
   UI_TEST_CASE("clear_selection_on_click") {

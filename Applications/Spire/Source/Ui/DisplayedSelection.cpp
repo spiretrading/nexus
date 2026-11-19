@@ -1,8 +1,7 @@
 #include "Spire/Ui/Details/DisplayedSelection.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
+#include <QScopedValueRollback>
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -24,7 +23,7 @@ void TableView::DisplayedSelection<T>::refresh() {
       m_indices.push_back(i);
       values.push_back(*value);
     } else if(m_tracking_connection.connected()) {
-      auto blocker = shared_connection_block(m_connection);
+      auto guard = QScopedValueRollback(m_is_pruning, true);
       if(m_source->remove(i) != QValidator::Invalid) {
         continue;
       }

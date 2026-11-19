@@ -44,6 +44,13 @@ namespace Spire {
       using ListModel<T>::transact;
 
     protected:
+
+      /** Starts a transaction on this list. */
+      void start_transaction();
+
+      /** Ends the current transaction on this list. */
+      void end_transaction();
+
       void transact(const std::function<void ()>& transaction) override;
 
     private:
@@ -132,6 +139,16 @@ namespace Spire {
   boost::signals2::connection ArrayListModel<T>::connect_operation_signal(
       const typename OperationSignal::slot_type& slot) const {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  template<typename T>
+  void ArrayListModel<T>::start_transaction() {
+    m_transaction.start();
+  }
+
+  template<typename T>
+  void ArrayListModel<T>::end_transaction() {
+    m_transaction.end();
   }
 
   template<typename T>

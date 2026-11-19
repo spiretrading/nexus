@@ -31,6 +31,7 @@ namespace Spire {
       std::shared_ptr<SortedTableModel> m_sorted;
       std::vector<int> m_indices;
       bool m_is_refresh_pending;
+      bool m_is_pruning;
       boost::signals2::connection m_tracking_connection;
       boost::signals2::scoped_connection m_connection;
       boost::signals2::scoped_connection m_source_connection;
@@ -51,14 +52,26 @@ namespace Spire {
         m_filtered(std::move(filtered)),
         m_sorted(std::move(sorted)),
         m_is_refresh_pending(false),
+        m_is_pruning(false),
         m_tracking_connection(std::move(tracking)) {
     m_connection = m_source->connect_operation_signal(
-      [=, this] (const auto& operation) {
-        if(is_updating()) {
-          return;
-        }
+      [=, this, depth = 0] (const auto& operation) mutable {
+        auto is_updating_selection = m_is_pruning || is_updating();
         visit(operation,
+          [&] (const AnyListModel::StartTransaction&) {
+            ++depth;
+            this->start_transaction();
+          },
+          [&] (const AnyListModel::EndTransaction&) {
+            if(depth != 0) {
+              --depth;
+              this->end_transaction();
+            }
+          },
           [&] (const AnyListModel::AddOperation& add) {
+            if(is_updating_selection) {
+              return;
+            }
             if(add.m_index == m_source->get_size() - 1) {
               append(add.m_index);
             } else {
@@ -66,6 +79,9 @@ namespace Spire {
             }
           },
           [&] (const AnyListModel::RemoveOperation& removal) {
+            if(is_updating_selection) {
+              return;
+            }
             if(!m_indices.empty() && removal.m_index == m_indices.back()) {
               m_indices.pop_back();
               ArrayListModel<T>::remove(this->get_size() - 1);
@@ -76,7 +92,9 @@ namespace Spire {
           [&] <typename O> (const O&) requires
               (std::derived_from<O, AnyListModel::MoveOperation> ||
                 std::derived_from<O, AnyListModel::UpdateOperation>) {
-            refresh();
+            if(!is_updating_selection) {
+              refresh();
+            }
           });
       });
     refresh();
