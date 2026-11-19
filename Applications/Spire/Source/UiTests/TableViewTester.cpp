@@ -258,21 +258,34 @@ TEST_SUITE("TableView") {
       rows->push(row);
       cells->push(TableIndex(row, 0));
     }
-    auto& displayed = *view->get_body().get_selection();
-    rows->m_previous_reads = 0;
-    cells->m_previous_reads = 0;
-    table->push({0});
-    REQUIRE(displayed.get_row_selection()->get(0) == 1);
-    REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(0, 0));
-    auto row_reads = rows->m_previous_reads;
-    auto cell_reads = cells->m_previous_reads;
-    rows->m_previous_reads = 0;
-    cells->m_previous_reads = 0;
-    table->push({30});
-    REQUIRE(displayed.get_row_selection()->get(0) == 2);
-    REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(1, 0));
-    REQUIRE(rows->m_previous_reads == row_reads);
-    REQUIRE(cells->m_previous_reads == cell_reads);
+    SUBCASE("source_selection") {
+      view.reset();
+      rows->m_previous_reads = 0;
+      cells->m_previous_reads = 0;
+      table->push({30});
+      REQUIRE(rows->m_previous_reads == 0);
+      REQUIRE(cells->m_previous_reads == 0);
+      table->insert({15}, 1);
+      REQUIRE(rows->get(1) == 2);
+      REQUIRE(cells->get(1) == TableIndex(2, 0));
+    }
+    SUBCASE("displayed_selection") {
+      auto& displayed = *view->get_body().get_selection();
+      rows->m_previous_reads = 0;
+      cells->m_previous_reads = 0;
+      table->push({0});
+      REQUIRE(displayed.get_row_selection()->get(0) == 1);
+      REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(0, 0));
+      auto row_reads = rows->m_previous_reads;
+      auto cell_reads = cells->m_previous_reads;
+      rows->m_previous_reads = 0;
+      cells->m_previous_reads = 0;
+      table->push({30});
+      REQUIRE(displayed.get_row_selection()->get(0) == 2);
+      REQUIRE(displayed.get_item_selection()->get(1) == TableIndex(1, 0));
+      REQUIRE(rows->m_previous_reads == row_reads);
+      REQUIRE(cells->m_previous_reads == cell_reads);
+    }
   }
 
   UI_TEST_CASE("sort_selection") {

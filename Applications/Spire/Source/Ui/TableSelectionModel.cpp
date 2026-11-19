@@ -201,10 +201,16 @@ connection TableSelectionModel::track(
   m_table_connection = table->connect_operation_signal(
     [=, this] (const auto& operation) {
       visit(operation,
+        [&] (const TableModel::AddOperation& add) {
+          auto source = m_table.lock();
+          if(source && add.m_index != source->get_row_size() - 1) {
+            update_rows(operation);
+          }
+        },
         [&] (const TableModel::RemoveOperation& remove) {
           update_rows(TableModel::PreRemoveOperation(remove.m_index));
         },
-        [&] (const TableRowChange auto&) {
+        [&] (const TableModel::MoveOperation&) {
           update_rows(operation);
         });
     });
