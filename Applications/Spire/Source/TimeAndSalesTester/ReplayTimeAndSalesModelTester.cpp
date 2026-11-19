@@ -593,7 +593,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       fixture.set_position(seconds(1 + 10 * i));
     }
     wait_for_back(*model, seconds(151));
-    REQUIRE(model->get_size() == 151);
+    REQUIRE(model->get_size() == 50);
     REQUIRE(*count == queries + 1);
   }
 
@@ -688,6 +688,25 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     REQUIRE(model->get(1).m_indicator == BboIndicator::INSIDE);
   }
 
+  UI_TEST_CASE("a_high_speed_replay_shows_the_latest_page") {
+    auto fixture = Fixture(seconds(0));
+    fixture.store(make_offsets(60));
+    auto model = fixture.make_model();
+    wait(model->load_older(3));
+    fixture.m_session->get_speed()->set(Decimal(100));
+    fixture.m_session->play();
+    fixture.set_position(seconds(20));
+    wait_until([&] {
+      return get_offsets(*model) ==
+        std::vector<time_duration>{seconds(18), seconds(19), seconds(20)};
+    });
+    fixture.set_position(seconds(40));
+    wait_until([&] {
+      return get_offsets(*model) ==
+        std::vector<time_duration>{seconds(38), seconds(39), seconds(40)};
+    });
+  }
+
   UI_TEST_CASE(
       "destroying_a_model_during_a_replay_leaves_other_models_working") {
     auto fixture = Fixture(seconds(0));
@@ -706,20 +725,28 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     fixture.m_session->get_speed()->set(Decimal(100));
     fixture.m_session->play();
     fixture.set_position(seconds(20));
-    wait_for_back(*survivor, seconds(20));
+    wait_until([&] {
+      return get_offsets(*survivor) ==
+        std::vector<time_duration>{seconds(18), seconds(19), seconds(20)};
+    });
     fixture.set_position(seconds(30));
     playing = nullptr;
     fixture.set_position(seconds(40));
-    wait_for_back(*survivor, seconds(40));
+    wait_until([&] {
+      return get_offsets(*survivor) ==
+        std::vector<time_duration>{seconds(38), seconds(39), seconds(40)};
+    });
     auto queries = count->load();
     gate->hold();
-    fixture.m_session->get_speed()->set(Decimal(1));
-    fixture.set_position(seconds(50));
+    fixture.set_position(seconds(10));
     wait_until([&] {
       return *count > queries;
     });
     loading = nullptr;
     gate->release();
-    wait_for_back(*survivor, seconds(50));
+    wait_until([&] {
+      return get_offsets(*survivor) ==
+        std::vector<time_duration>{seconds(8), seconds(9), seconds(10)};
+    });
   }
 }

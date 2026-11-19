@@ -297,12 +297,34 @@ void ReplayTimeAndSalesModel::pop_back() {
 
 void ReplayTimeAndSalesModel::replace(std::vector<Type> entries) {
   ++m_older_generation;
-  m_transaction.transact([&] {
-    while(!m_entries.empty()) {
-      pop_back();
+  auto updates = std::vector<Type>();
+  for(auto& entry : entries) {
+    if(entry.m_time_and_sale->m_timestamp < get_start()) {
+      continue;
     }
-    for(auto& entry : entries) {
-      append(std::move(entry));
+    if(!updates.empty() && entry.m_time_and_sale.get_sequence() <=
+        updates.back().m_time_and_sale.get_sequence()) {
+      continue;
+    }
+    updates.push_back(std::move(entry));
+  }
+  m_transaction.transact([&] {
+    while(get_size() > std::ssize(updates)) {
+      pop_front();
+    }
+    auto offset = static_cast<int>(std::ssize(updates)) - get_size();
+    for(auto i = 0; i < get_size(); ++i) {
+      if(m_entries[i] == updates[offset + i]) {
+        continue;
+      }
+      auto previous = std::move(m_entries[i]);
+      m_entries[i] = std::move(updates[offset + i]);
+      m_transaction.push(
+        UpdateOperation(i, std::move(previous), m_entries[i]));
+    }
+    for(auto i = offset; i > 0; --i) {
+      m_entries.push_front(std::move(updates[i - 1]));
+      m_transaction.push(AddOperation(0));
     }
   });
 }
@@ -337,6 +359,23 @@ bool ReplayTimeAndSalesModel::merge(std::vector<Type>& entries) {
 
 void ReplayTimeAndSalesModel::publish(ptime end) {
   if(m_seek_state != SeekState::NONE) {
+    return;
+  }
+  auto last = std::ranges::upper_bound(m_buffer, end, std::ranges::less(),
+    [] (const auto& entry) {
+      return entry.m_time_and_sale->m_timestamp;
+    });
+  auto backlog = static_cast<int>(last - m_buffer.begin());
+  static const auto PAGE_REPLACE_BACKLOG = 3;
+  if(backlog >= PAGE_REPLACE_BACKLOG && is_high_speed()) {
+    auto entries = std::vector<Type>();
+    auto retained = std::min(get_size(), std::max(0, m_page_size - backlog));
+    entries.insert(entries.end(), m_entries.end() - retained, m_entries.end());
+    entries.insert(entries.end(),
+      std::make_move_iterator(last - std::min(backlog, m_page_size)),
+      std::make_move_iterator(last));
+    m_buffer.erase(m_buffer.begin(), last);
+    replace(std::move(entries));
     return;
   }
   m_transaction.transact([&] {
