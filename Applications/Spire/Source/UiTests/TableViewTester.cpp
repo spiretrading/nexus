@@ -399,6 +399,79 @@ TEST_SUITE("TableView") {
     REQUIRE(cells->m_previous_reads <= SIZE - 1);
   }
 
+  UI_TEST_CASE("moved_header_column") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10, 30, 90});
+    table->push({20, 40, 50});
+    auto cells = std::make_shared<ArrayListModel<TableIndex>>();
+    auto columns = std::make_shared<ArrayListModel<int>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, std::make_shared<ArrayListModel<int>>(), columns);
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("A").add_header_item("B").add_header_item("C").
+      set_selection(selection).make());
+    view->resize(360, 240);
+    view->show();
+    QApplication::processEvents();
+    auto& header = view->get_header();
+    auto& body = view->get_body();
+    auto click = [] (QWidget* widget) {
+      REQUIRE(widget);
+      move_cursor(*widget, widget->rect().center());
+      press_mouse(*widget, Qt::LeftButton);
+      release_mouse(*widget, Qt::LeftButton);
+      QApplication::processEvents();
+    };
+    header.get_items()->move(2, 0);
+    QApplication::processEvents();
+    SUBCASE("selection") {
+      click(body.find_item(TableIndex(0, 0)));
+      REQUIRE(view->get_current()->get().value() == TableIndex(0, 2));
+      REQUIRE(cells->get_size() == 1);
+      REQUIRE(cells->get(0) == TableIndex(0, 2));
+      REQUIRE(columns->get_size() == 1);
+      REQUIRE(columns->get(0) == 2);
+      header.get_items()->move(0, 1);
+      REQUIRE(body.get_current()->get().value() == TableIndex(0, 1));
+      REQUIRE(body.get_selection()->get_item_selection()->get(0) ==
+        TableIndex(0, 1));
+      REQUIRE(body.get_selection()->get_column_selection()->get(0) == 1);
+      REQUIRE(cells->get(0) == TableIndex(0, 2));
+      REQUIRE(columns->get(0) == 2);
+      QApplication::processEvents();
+      press_key(body, Qt::Key_Shift);
+      click(body.find_item(TableIndex(0, 2)));
+      release_key(body, Qt::Key_Shift);
+      REQUIRE(cells->get_size() == 2);
+      REQUIRE(std::ranges::contains(std::as_const(*cells), TableIndex(0, 2)));
+      REQUIRE(std::ranges::contains(std::as_const(*cells), TableIndex(0, 1)));
+      header.get_items()->move(0, 1);
+      QApplication::processEvents();
+      press_key(body, Qt::Key_Shift);
+      click(body.find_item(TableIndex(0, 1)));
+      release_key(body, Qt::Key_Shift);
+      REQUIRE(cells->get_size() == 2);
+      REQUIRE(std::ranges::contains(std::as_const(*cells), TableIndex(0, 2)));
+      REQUIRE(std::ranges::contains(std::as_const(*cells), TableIndex(0, 0)));
+      REQUIRE(columns->get_size() == 2);
+      REQUIRE(std::ranges::contains(std::as_const(*columns), 2));
+      REQUIRE(std::ranges::contains(std::as_const(*columns), 0));
+    }
+    SUBCASE("sort") {
+      auto column = -1;
+      view->connect_sort_signal([&] (int index, TableHeaderItem::Order) {
+        column = index;
+      });
+      click(header.get_item(0));
+      REQUIRE(header.get_items()->get(0).m_order ==
+        TableHeaderItem::Order::ASCENDING);
+      REQUIRE(body.get_table()->get<int>(0, 2) == 50);
+      REQUIRE(column == 2);
+      click(header.get_item(0));
+      REQUIRE(body.get_table()->get<int>(0, 2) == 90);
+    }
+  }
+
   UI_TEST_CASE("spacer_column_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     auto cells = std::make_shared<ArrayListModel<TableIndex>>();

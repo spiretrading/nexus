@@ -17,7 +17,7 @@ namespace Spire {
 
       /**
        * Signals an action to change a column's sort order.
-       * @param column The index of the column that triggered the action.
+       * @param column The displayed index of the column.
        * @param order The sort order to update to.
        */
       using SortSignal =
@@ -42,6 +42,9 @@ namespace Spire {
       /** Returns the list of widths of each item. */
       const std::shared_ptr<ListModel<int>>& get_widths() const;
 
+      /** Returns the source column indices in display order. */
+      std::shared_ptr<const ListModel<int>> get_column_order() const;
+
       /** Returns a column's header item. */
       TableHeaderItem* get_item(int column);
 
@@ -63,12 +66,13 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      friend class TableView;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
       std::shared_ptr<TableFilter> m_filter;
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
-      TranslatedListModel<int> m_translation;
+      std::shared_ptr<TranslatedListModel<int>> m_translation;
       int m_resize_index;
       ScrollBox* m_scroll_box;
       QBoxLayout* m_body_layout;

@@ -11,7 +11,9 @@ namespace Spire {
     public:
       DisplayedSelection(std::shared_ptr<ListModel<T>> source,
         std::shared_ptr<FilteredTableModel> filtered,
-        std::shared_ptr<SortedTableModel> sorted, auto is_updating,
+        std::shared_ptr<SortedTableModel> sorted,
+        std::shared_ptr<const TranslatedListModel<int>> columns,
+        auto is_updating,
         boost::signals2::connection tracking);
 
       void track(auto refresh);
@@ -29,14 +31,17 @@ namespace Spire {
       std::shared_ptr<ListModel<T>> m_source;
       std::shared_ptr<FilteredTableModel> m_filtered;
       std::shared_ptr<SortedTableModel> m_sorted;
+      std::shared_ptr<const TranslatedListModel<int>> m_columns;
       std::vector<int> m_indices;
       mutable std::vector<T> m_transaction_values;
       bool m_is_refresh_pending;
       bool m_is_pruning;
+      int m_inactive_depth;
       boost::signals2::connection m_tracking_connection;
       boost::signals2::scoped_connection m_connection;
       boost::signals2::scoped_connection m_source_connection;
       boost::signals2::scoped_connection m_view_connection;
+      boost::signals2::scoped_connection m_column_connection;
 
       boost::optional<T> from_source(T value) const;
       void append(int index);
@@ -47,17 +52,21 @@ namespace Spire {
   TableView::DisplayedSelection<T>::DisplayedSelection(
       std::shared_ptr<ListModel<T>> source,
       std::shared_ptr<FilteredTableModel> filtered,
-      std::shared_ptr<SortedTableModel> sorted, auto is_updating,
+      std::shared_ptr<SortedTableModel> sorted,
+      std::shared_ptr<const TranslatedListModel<int>> columns, auto is_updating,
       boost::signals2::connection tracking)
       : m_source(std::move(source)),
         m_filtered(std::move(filtered)),
         m_sorted(std::move(sorted)),
+        m_columns(std::move(columns)),
         m_is_refresh_pending(false),
         m_is_pruning(false),
+        m_inactive_depth(0),
         m_tracking_connection(std::move(tracking)) {
     m_connection = m_source->connect_operation_signal(
       [=, this, depth = 0] (const auto& operation) mutable {
-        auto is_updating_selection = m_is_pruning || is_updating();
+        auto is_updating_selection = m_is_pruning ||
+          (m_filtered && is_updating());
         visit(operation,
           [&] (const AnyListModel::StartTransaction&) {
             ++depth;
@@ -103,6 +112,17 @@ namespace Spire {
 
   template<typename T>
   void TableView::DisplayedSelection<T>::track(auto refresh) {
+    if(m_columns) {
+      m_column_connection = m_columns->connect_operation_signal(
+        [=, this] (const auto& operation) {
+          visit(operation, [&] (const AnyListModel::MoveOperation&) {
+            refresh(*this);
+          });
+        });
+    }
+    if(!m_filtered) {
+      return;
+    }
     auto& source = *m_filtered->get_source();
     m_source_connection = source.connect_operation_signal(
       [=, this, is_transacting = false] (

@@ -74,6 +74,9 @@ namespace Spire {
        */
       void move_row(int source, int destination);
 
+      /** Tracks a displayed column move in a source-backed selection. */
+      void move_column(int source, int destination);
+
       /** Selects all items. */
       void select_all();
 
@@ -123,6 +126,7 @@ namespace Spire {
       boost::optional<Index> m_current;
       boost::optional<Index> m_range_anchor;
       boost::optional<std::vector<ColumnRange>> m_previous_range;
+      std::vector<int> m_previous_columns;
       boost::signals2::scoped_connection m_item_connection;
       boost::signals2::scoped_connection m_row_connection;
       boost::signals2::scoped_connection m_column_connection;

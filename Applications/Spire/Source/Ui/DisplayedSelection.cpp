@@ -12,6 +12,14 @@ namespace {
   int& row_of(TableIndex& index) {
     return index.m_row;
   }
+
+  int& column_of(int& column) {
+    return column;
+  }
+
+  int& column_of(TableIndex& index) {
+    return index.m_column;
+  }
 }
 
 template<typename T>
@@ -117,12 +125,20 @@ QValidator::State TableView::DisplayedSelection<T>::remove(int index) {
 
 template<typename T>
 void TableView::DisplayedSelection<T>::start_transaction() {
+  if(!m_tracking_connection.connected()) {
+    ++m_inactive_depth;
+    return;
+  }
   m_source->start_transaction();
   ArrayListModel<T>::start_transaction();
 }
 
 template<typename T>
 void TableView::DisplayedSelection<T>::end_transaction() {
+  if(m_inactive_depth != 0) {
+    --m_inactive_depth;
+    return;
+  }
   try {
     ArrayListModel<T>::end_transaction();
   } catch(...) {
@@ -134,12 +150,21 @@ void TableView::DisplayedSelection<T>::end_transaction() {
 
 template<typename T>
 optional<T> TableView::DisplayedSelection<T>::from_source(T value) const {
-  auto& row = row_of(value);
-  row = m_filtered->index_from_source(row);
-  if(row < 0 || row >= m_sorted->get_row_size()) {
-    return none;
+  if(m_filtered) {
+    auto& row = row_of(value);
+    row = m_filtered->index_from_source(row);
+    if(row < 0 || row >= m_sorted->get_row_size()) {
+      return none;
+    }
+    row = m_sorted->index_from_source(row);
   }
-  row = m_sorted->index_from_source(row);
+  if(m_columns) {
+    auto& column = column_of(value);
+    if(column < 0 || column >= m_columns->get_size()) {
+      return none;
+    }
+    column = m_columns->index_from_source(column);
+  }
   return value;
 }
 
@@ -157,12 +182,23 @@ void TableView::DisplayedSelection<T>::append(int index) {
 
 template<typename T>
 optional<T> TableView::DisplayedSelection<T>::to_source(T value) const {
-  auto& row = row_of(value);
-  if(!m_tracking_connection.connected() || row < 0 ||
-      row >= m_sorted->get_row_size()) {
+  if(!m_tracking_connection.connected()) {
     return none;
   }
-  row = m_filtered->index_to_source(m_sorted->index_to_source(row));
+  if(m_filtered) {
+    auto& row = row_of(value);
+    if(row < 0 || row >= m_sorted->get_row_size()) {
+      return none;
+    }
+    row = m_filtered->index_to_source(m_sorted->index_to_source(row));
+  }
+  if(m_columns) {
+    auto& column = column_of(value);
+    if(column < 0 || column >= m_columns->get_size()) {
+      return none;
+    }
+    column = m_columns->index_to_source(column);
+  }
   return value;
 }
 

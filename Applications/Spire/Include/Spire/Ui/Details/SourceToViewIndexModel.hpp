@@ -8,6 +8,7 @@ namespace Spire {
     public:
       SourceToViewIndexModel(std::shared_ptr<SortedTableModel> sorted_table,
         std::shared_ptr<FilteredTableModel> filtered_table,
+        std::shared_ptr<const TranslatedListModel<int>> columns,
         std::shared_ptr<TableView::CurrentModel> current);
 
       const Type& get() const override;
@@ -19,6 +20,7 @@ namespace Spire {
     private:
       std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
+      std::shared_ptr<const TranslatedListModel<int>> m_columns;
       std::shared_ptr<TableView::CurrentModel> m_current;
       LocalValueModel<Type> m_index;
       mutable Type m_transaction_index;
@@ -28,6 +30,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_source_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_table_connection;
+      boost::signals2::scoped_connection m_column_connection;
 
       Type from_source(const Type& index) const;
       Type to_source(const Type& index) const;

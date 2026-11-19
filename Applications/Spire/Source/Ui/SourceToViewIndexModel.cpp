@@ -27,9 +27,11 @@ namespace {
 TableView::SourceToViewIndexModel::SourceToViewIndexModel(
     std::shared_ptr<SortedTableModel> sorted_table,
     std::shared_ptr<FilteredTableModel> filtered_table,
+    std::shared_ptr<const TranslatedListModel<int>> columns,
     std::shared_ptr<TableView::CurrentModel> current)
     : m_sorted_table(std::move(sorted_table)),
       m_filtered_table(std::move(filtered_table)),
+      m_columns(std::move(columns)),
       m_current(std::move(current)),
       m_index(from_source(m_current->get())),
       m_source_size(m_filtered_table->get_source()->get_row_size()),
@@ -42,6 +44,12 @@ TableView::SourceToViewIndexModel::SourceToViewIndexModel(
     std::bind_front(&SourceToViewIndexModel::on_current, this));
   m_table_connection = m_sorted_table->connect_operation_signal(
     std::bind_front(&SourceToViewIndexModel::on_operation, this));
+  m_column_connection = m_columns->connect_operation_signal(
+    [=, this] (const auto& operation) {
+      visit(operation, [&] (const AnyListModel::MoveOperation&) {
+        on_current(m_current->get());
+      });
+    });
 }
 
 const TableView::SourceToViewIndexModel::Type&
@@ -55,11 +63,19 @@ const TableView::SourceToViewIndexModel::Type&
 
 QValidator::State TableView::SourceToViewIndexModel::test(
     const Type& value) const {
-  return m_current->test(to_source(value));
+  auto translated = to_source(value);
+  if(value && !translated) {
+    return QValidator::Invalid;
+  }
+  return m_current->test(translated);
 }
 
 QValidator::State TableView::SourceToViewIndexModel::set(const Type& value) {
-  return m_current->set(to_source(value));
+  auto translated = to_source(value);
+  if(value && !translated) {
+    return QValidator::Invalid;
+  }
+  return m_current->set(translated);
 }
 
 connection TableView::SourceToViewIndexModel::connect_update_signal(
@@ -69,7 +85,8 @@ connection TableView::SourceToViewIndexModel::connect_update_signal(
 
 optional<TableIndex> TableView::SourceToViewIndexModel::from_source(
     const Type& index) const {
-  if(!index) {
+  if(!index || index->m_column < 0 ||
+      index->m_column >= m_columns->get_size()) {
     return none;
   }
   auto filtered = m_filtered_table->index_from_source(index->m_row);
@@ -77,17 +94,19 @@ optional<TableIndex> TableView::SourceToViewIndexModel::from_source(
     return none;
   }
   auto row = m_sorted_table->index_from_source(filtered);
-  return TableIndex(row, index->m_column);
+  return TableIndex(row, m_columns->index_from_source(index->m_column));
 }
 
 optional<TableIndex> TableView::SourceToViewIndexModel::to_source(
     const Type& index) const {
-  if(!index) {
+  if(!index || index->m_row < 0 ||
+      index->m_row >= m_sorted_table->get_row_size() || index->m_column < 0 ||
+      index->m_column >= m_columns->get_size()) {
     return none;
   }
   auto row = m_filtered_table->index_to_source(
     m_sorted_table->index_to_source(index->m_row));
-  return TableIndex(row, index->m_column);
+  return TableIndex(row, m_columns->index_to_source(index->m_column));
 }
 
 void TableView::SourceToViewIndexModel::on_current(const Type& index) {

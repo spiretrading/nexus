@@ -19,10 +19,12 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
+      /** Signals a change to a source column's sort order. */
+      using SortSignal = TableHeader::SortSignal;
+
       using Index = TableBody::Index;
       using CurrentModel = TableBody::CurrentModel;
       using SelectionModel = TableBody::SelectionModel;
-      using SortSignal = TableHeader::SortSignal;
       using Comparator = SortedTableModel::Comparator;
       using ValueComparator = SortedTableModel::ValueComparator;
 
@@ -55,10 +57,10 @@ namespace Spire {
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
 
-      /** Returns the current value. */
+      /** Returns the current index in source table coordinates. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
-      /** Returns the selection. */
+      /** Returns the selection in source table coordinates. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns the table header. */
@@ -86,7 +88,6 @@ namespace Spire {
     private:
       class SourceToViewIndexModel;
       template<typename T> class DisplayedSelection;
-      class DisplayedColumnSelection;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;

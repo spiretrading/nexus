@@ -7,7 +7,6 @@
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/Button.hpp"
-#include "Spire/Ui/Details/DisplayedColumnSelection.hpp"
 #include "Spire/Ui/Details/DisplayedSelection.hpp"
 #include "Spire/Ui/Details/SourceToViewIndexModel.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -208,12 +207,14 @@ void TableView::initialize_body(
   };
   auto rows = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    is_updating, tracking);
+    nullptr, is_updating, tracking);
+  auto& column_order = m_header_view->m_translation;
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
     m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
+    column_order, is_updating, tracking);
+  auto columns = std::make_shared<DisplayedSelection<int>>(
+    m_selection->get_column_selection(), nullptr, nullptr, column_order,
     is_updating, tracking);
-  auto columns =
-    std::make_shared<DisplayedColumnSelection>(m_selection, tracking);
   auto body_selection = std::make_shared<SelectionModel>(items, rows, columns);
   body_selection->m_source_tracking = tracking;
   m_body = new TableBody(m_sorted_table, body_current, body_selection,
@@ -229,8 +230,9 @@ void TableView::initialize_body(
   };
   rows->track(refresh);
   items->track(refresh);
+  columns->track(refresh);
   body_current->set_source(std::make_shared<SourceToViewIndexModel>(
-    m_sorted_table, m_filtered_table, m_current));
+    m_sorted_table, m_filtered_table, column_order, m_current));
 }
 
 void TableView::update_scroll_sizes() {
@@ -243,8 +245,9 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   auto header_item = m_header->get(index);
   header_item.m_order = order;
   auto column_order = m_sorted_table->get_column_order();
-  adjust(
-    SortedTableModel::ColumnOrder(index, to_table_order(order)), column_order);
+  auto source = m_header_view->get_column_order()->get(index);
+  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)),
+    column_order);
   m_sorted_table->set_column_order(column_order);
   for(auto i = 0; i != m_header->get_size(); ++i) {
     if(i == index) {
@@ -257,7 +260,7 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
       }
     }
   }
-  m_sort_signal(index, order);
+  m_sort_signal(source, order);
 }
 
 void TableView::on_filter(int column, TableFilter::Filter filter) {
