@@ -450,6 +450,31 @@ TEST_SUITE("TableView") {
       release_key(body, Qt::Key_Shift);
     };
     click(*body.find_item(TableIndex(0, 0)));
+    SUBCASE("removed_range_endpoint") {
+      auto endpoint = 3;
+      auto first = 0;
+      SUBCASE("forward") {}
+      SUBCASE("backward") {
+        click(*body.find_item(TableIndex(3, 0)));
+        endpoint = 0;
+        first = 1;
+      }
+      shift_click(endpoint);
+      REQUIRE(rows->get_size() == 4);
+      table->remove(endpoint);
+      REQUIRE(rows->get_size() == 3);
+      shift_click(1);
+      auto& cells = std::as_const(*selection->get_item_selection());
+      REQUIRE(rows->get_size() == 2);
+      for(auto row = first; row != first + 2; ++row) {
+        REQUIRE(std::ranges::contains(std::as_const(*rows), row));
+        REQUIRE(std::ranges::contains(cells, TableIndex(row, 0)));
+      }
+      for(auto& cell : cells) {
+        REQUIRE(cell.m_row >= first);
+        REQUIRE(cell.m_row < first + 2);
+      }
+    }
     SUBCASE("insertion_inside_range") {
       auto end = 4;
       SUBCASE("forward") {

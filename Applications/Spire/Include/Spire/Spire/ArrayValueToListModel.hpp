@@ -37,14 +37,24 @@ namespace Spire {
       void end_transaction() override;
 
     private:
+      struct RemovedValue {
+        int m_index;
+        Type m_value;
+      };
+      using RowChange = std::variant<AddOperation, RemovedValue>;
       std::shared_ptr<ValueModel<std::vector<Type>>> m_source;
       std::vector<Type> m_data;
+      std::vector<RowChange> m_changes;
       int m_transaction_depth;
       boost::signals2::scoped_connection m_connection;
 
       template<typename O>
       QValidator::State apply(const O& operation, auto edit);
-      QValidator::State write(const std::vector<Type>& data, auto commit);
+      void insert_row(int index, const Type& value);
+      void remove_row(int index);
+      void restore(const std::vector<Type>& data,
+        const std::vector<RowChange>& changes);
+      QValidator::State write(const std::vector<Type>& data, auto synchronize);
       void on_update(const std::vector<Type>& data);
   };
 
@@ -119,8 +129,16 @@ namespace Spire {
   template<typename T>
   void ArrayValueToListModel<T>::end_transaction() {
     if(--m_transaction_depth == 0) {
+      auto changes = std::exchange(m_changes, {});
       try {
-        write(m_data, [] {});
+        write(m_data, [&] (bool accepted) {
+          auto& stored = m_source->get();
+          if(accepted) {
+            on_update(stored);
+          } else {
+            restore(stored, changes);
+          }
+        });
       } catch(...) {
         TransactionLogModel<ListModel<T>>::end_transaction();
         throw;
@@ -135,13 +153,14 @@ namespace Spire {
       auto edit) {
     auto publish = [&] {
       if constexpr(std::same_as<O, RemoveOperation>) {
-        this->m_transaction.transact([&] {
-          this->m_transaction.push(PreRemoveOperation(operation.m_index));
-          edit(m_data);
-          this->m_transaction.push(operation);
-        });
+        remove_row(operation.m_index);
       } else {
         edit(m_data);
+        if constexpr(std::same_as<O, AddOperation>) {
+          if(m_transaction_depth != 0) {
+            m_changes.emplace_back(operation);
+          }
+        }
         this->m_transaction.push(operation);
       }
     };
@@ -151,26 +170,71 @@ namespace Spire {
     }
     auto data = m_data;
     edit(data);
-    return write(data, publish);
+    return write(data, [&] (bool accepted) {
+      auto& stored = m_source->get();
+      if(accepted && stored == data) {
+        publish();
+      } else {
+        on_update(stored);
+      }
+    });
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::insert_row(int index, const Type& value) {
+    m_data.insert(m_data.begin() + index, value);
+    this->m_transaction.push(AddOperation(index));
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::remove_row(int index) {
+    this->m_transaction.transact([&] {
+      this->m_transaction.push(PreRemoveOperation(index));
+      if(m_transaction_depth != 0) {
+        m_changes.emplace_back(RemovedValue(index, m_data[index]));
+      }
+      m_data.erase(m_data.begin() + index);
+      this->m_transaction.push(RemoveOperation(index));
+    });
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::restore(
+      const std::vector<Type>& data, const std::vector<RowChange>& changes) {
+    for(auto i = std::ssize(changes); i-- > 0;) {
+      visit(changes[i],
+        [&] (const AddOperation& add) {
+          remove_row(add.m_index);
+        },
+        [&] (const RemovedValue& removed) {
+          insert_row(removed.m_index, removed.m_value);
+        });
+    }
+    if(m_data.size() != data.size()) {
+      on_update(data);
+      return;
+    }
+    for(auto i = 0; i != get_size(); ++i) {
+      if(m_data[i] != data[i]) {
+        auto previous = std::exchange(m_data[i], data[i]);
+        this->m_transaction.push(
+          UpdateOperation(i, std::move(previous), data[i]));
+      }
+    }
   }
 
   template<typename T>
   QValidator::State ArrayValueToListModel<T>::write(
-      const std::vector<Type>& data, auto commit) {
-    auto synchronize = [&] (bool accepted) {
-      auto& stored = m_source->get();
-      if((accepted || stored != m_data) && stored == data) {
-        commit();
-      } else {
-        on_update(stored);
-      }
-    };
+      const std::vector<Type>& data, auto synchronize) {
     auto state = QValidator::Invalid;
     try {
       auto blocker = boost::signals2::shared_connection_block(m_connection);
       state = m_source->set(data);
     } catch(...) {
-      synchronize(false);
+      auto& stored = m_source->get();
+      if(stored != m_data) {
+        synchronize(stored == data);
+      }
       throw;
     }
     synchronize(state != QValidator::Invalid);
@@ -182,6 +246,7 @@ namespace Spire {
     if(m_data == data) {
       return;
     }
+    m_changes.clear();
     this->m_transaction.transact([&] {
       auto size = get_size();
       for(auto i = size - 1; i >= 0; --i) {
@@ -191,8 +256,7 @@ namespace Spire {
       }
       for(const auto& value : data) {
         auto index = get_size();
-        m_data.insert(std::next(m_data.begin(), index), value);
-        this->m_transaction.push(AddOperation(index));
+        insert_row(index, value);
       }
     });
   }

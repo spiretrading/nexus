@@ -145,6 +145,13 @@ void TableSelectionController::add_row(int index) {
 }
 
 void TableSelectionController::remove_row(int index) {
+  if(m_current && m_current->m_row == index && m_range_anchor &&
+      m_range_anchor->m_row != index) {
+    save_range([] (int, int) {
+      return true;
+    });
+    m_current->m_row += get_direction(index, m_range_anchor->m_row);
+  }
   if(m_previous_range) {
     m_previous_range->erase(m_previous_range->begin() + index);
   }

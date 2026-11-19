@@ -3,7 +3,9 @@
 #include <vector>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayValueToListModel.hpp"
+#include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
+#include "Spire/Spire/ListCurrentIndexModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 using namespace Spire;
@@ -58,6 +60,33 @@ TEST_SUITE("ArrayValueToListModel") {
     REQUIRE(model->push(2) == QValidator::Acceptable);
     REQUIRE(source->get() == std::vector{1, 2});
     REQUIRE(filtered.get(1) == 2);
+  }
+
+  TEST_CASE("unaffected_rows_after_rejected_transaction") {
+    auto source = make_constant_value_model(std::vector{1, 2, 2, 3});
+    auto model = std::make_shared<ArrayValueToListModel<int>>(source);
+    auto current = ListCurrentIndexModel(model, 2);
+    model->transact([&] {
+      SUBCASE("update") {
+        model->set(0, 0);
+        model->set(3, 4);
+      }
+      SUBCASE("structural_edits") {
+        model->insert(2, 1);
+        model->remove(0);
+        model->transact([&] { model->insert(0, 0); });
+      }
+      SUBCASE("equal_values") {
+        model->remove(1);
+        model->insert(2, 2);
+      }
+    });
+    REQUIRE(model->get_size() == 4);
+    for(auto i = 0; i != model->get_size(); ++i) {
+      REQUIRE(model->get(i) == source->get()[i]);
+    }
+    REQUIRE(current.get().has_value());
+    REQUIRE(*current.get() == 2);
   }
 
   TEST_CASE("source_update_exception") {
