@@ -42,8 +42,9 @@ namespace Spire {
       int m_transaction_depth;
       boost::signals2::scoped_connection m_connection;
 
-      void update_source();
-      void publish(const Operation& operation);
+      template<typename O>
+      QValidator::State apply(const O& operation, auto edit);
+      QValidator::State write(const std::vector<Type>& data, auto commit);
       void on_update(const std::vector<Type>& data);
   };
 
@@ -82,10 +83,10 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto previous = m_data[index];
-    m_data[index] = value;
-    publish(UpdateOperation(index, std::move(previous), value));
-    return QValidator::Acceptable;
+    auto operation = UpdateOperation(index, m_data[index], value);
+    return apply(operation, [&] (auto& data) {
+      data[index] = operation.get_value();
+    });
   }
 
   template<typename T>
@@ -94,9 +95,9 @@ namespace Spire {
     if(index < 0 || index > get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    m_data.insert(std::next(m_data.begin(), index), value);
-    publish(AddOperation(index));
-    return QValidator::Acceptable;
+    return apply(AddOperation(index), [=] (auto& data) {
+      data.insert(std::next(data.begin(), index), value);
+    });
   }
 
   template<typename T>
@@ -104,12 +105,9 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    this->m_transaction.transact([&] {
-      this->m_transaction.push(PreRemoveOperation(index));
-      m_data.erase(std::next(m_data.begin(), index));
-      publish(RemoveOperation(index));
+    return apply(RemoveOperation(index), [&] (auto& data) {
+      data.erase(std::next(data.begin(), index));
     });
-    return QValidator::Acceptable;
   }
 
   template<typename T>
@@ -120,37 +118,63 @@ namespace Spire {
 
   template<typename T>
   void ArrayValueToListModel<T>::end_transaction() {
-    auto flush = [&] {
-      --m_transaction_depth;
-      update_source();
+    if(--m_transaction_depth == 0) {
+      try {
+        write(m_data, [] {});
+      } catch(...) {
+        TransactionLogModel<ListModel<T>>::end_transaction();
+        throw;
+      }
+    }
+    TransactionLogModel<ListModel<T>>::end_transaction();
+  }
+
+  template<typename T>
+  template<typename O>
+  QValidator::State ArrayValueToListModel<T>::apply(const O& operation,
+      auto edit) {
+    auto publish = [&] {
+      if constexpr(std::same_as<O, RemoveOperation>) {
+        this->m_transaction.transact([&] {
+          this->m_transaction.push(PreRemoveOperation(operation.m_index));
+          edit(m_data);
+          this->m_transaction.push(operation);
+        });
+      } else {
+        edit(m_data);
+        this->m_transaction.push(operation);
+      }
     };
-    try {
-      TransactionLogModel<ListModel<T>>::end_transaction();
-    } catch(...) {
-      flush();
-      throw;
-    }
-    flush();
-  }
-
-  template<typename T>
-  void ArrayValueToListModel<T>::update_source() {
     if(m_transaction_depth != 0) {
-      return;
+      publish();
+      return QValidator::Acceptable;
     }
-    auto blocker = boost::signals2::shared_connection_block(m_connection);
-    m_source->set(m_data);
+    auto data = m_data;
+    edit(data);
+    return write(data, publish);
   }
 
   template<typename T>
-  void ArrayValueToListModel<T>::publish(const Operation& operation) {
+  QValidator::State ArrayValueToListModel<T>::write(
+      const std::vector<Type>& data, auto commit) {
+    auto synchronize = [&] (bool accepted) {
+      auto& stored = m_source->get();
+      if((accepted || stored != m_data) && stored == data) {
+        commit();
+      } else {
+        on_update(stored);
+      }
+    };
+    auto state = QValidator::Invalid;
     try {
-      update_source();
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
+      state = m_source->set(data);
     } catch(...) {
-      this->m_transaction.push(operation);
+      synchronize(false);
       throw;
     }
-    this->m_transaction.push(operation);
+    synchronize(state != QValidator::Invalid);
+    return state;
   }
 
   template<typename T>

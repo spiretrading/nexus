@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <QKeyEvent>
+#include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -23,6 +24,50 @@ namespace {
 }
 
 TEST_SUITE("TaskKeysPage") {
+  UI_TEST_CASE("reassign_task_key") {
+    auto bindings = std::make_shared<KeyBindingsModel>();
+    auto& tasks = *bindings->get_order_task_arguments();
+    auto key = QKeySequence(Qt::Key_F3);
+    auto task = OrderTaskArguments();
+    task.m_name = "First";
+    task.m_scope = Scope(Venues::TSX);
+    task.m_key = key;
+    tasks.push(task);
+    task.m_name = "Other venue";
+    task.m_scope = Scope(Venues::ASX);
+    tasks.push(task);
+    task.m_name = "Second F3";
+    task.m_scope = Scope(Venues::TSX);
+    task.m_key = QKeySequence();
+    tasks.push(task);
+    auto page =
+      TaskKeysPage(bindings, std::make_shared<LocalQueryModel<TickerInfo>>(),
+        get_default_additional_tag_database());
+    auto& table = *find_child<TableView>(page).get_table();
+    auto row = 2;
+    SUBCASE("visible_binding") {}
+    SUBCASE("hidden_binding") {
+      find_child<SearchBox>(page).get_current()->set("Second");
+      REQUIRE(table.get_row_size() == 1);
+      row = 0;
+    }
+    SUBCASE("previous_binding_leaves_search_results") {
+      find_child<SearchBox>(page).get_current()->set("F3");
+      REQUIRE(table.get_row_size() == 3);
+    }
+    auto column = 1 + static_cast<int>(OrderTaskColumns::KEY);
+    REQUIRE(table.set(row, column, key) == QValidator::Acceptable);
+    REQUIRE(tasks.get(2).m_key == key);
+    REQUIRE(tasks.get(0).m_key.isEmpty());
+    REQUIRE(tasks.get(1).m_key == key);
+    find_child<SearchBox>(page).get_current()->set("Second");
+    auto scope_column = 1 + static_cast<int>(OrderTaskColumns::SCOPE);
+    REQUIRE(table.set(0, scope_column, Scope(Venues::ASX)) ==
+      QValidator::Acceptable);
+    REQUIRE(tasks.get(1).m_key.isEmpty());
+    REQUIRE(tasks.get(2).m_key == key);
+  }
+
   UI_TEST_CASE("search_result_actions") {
     auto bindings = std::make_shared<KeyBindingsModel>();
     auto& tasks = *bindings->get_order_task_arguments();

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 #include <doctest/doctest.h>
@@ -7,7 +8,58 @@
 
 using namespace Spire;
 
+namespace {
+  struct NonzeroValues : LocalValueModel<std::vector<int>> {
+    using LocalValueModel::LocalValueModel;
+
+    QValidator::State set(const Type& value) override {
+      if(value.empty()) {
+        throw std::runtime_error("At least one value is required.");
+      } else if(std::ranges::find(value, 0) != value.end()) {
+        return QValidator::Invalid;
+      }
+      return LocalValueModel::set(value);
+    }
+  };
+}
+
 TEST_SUITE("ArrayValueToListModel") {
+  TEST_CASE("rejected_source_write") {
+    auto source = std::make_shared<NonzeroValues>(std::vector{1});
+    auto model = std::make_shared<ArrayValueToListModel<int>>(source);
+    auto filtered = FilteredListModel(model, [] (const auto&, int) {
+      return false;
+    });
+    auto operations = 0;
+    model->connect_operation_signal([&] (const auto&) { ++operations; });
+    SUBCASE("remove") {
+      REQUIRE_THROWS_AS(model->remove(0), std::runtime_error);
+      REQUIRE(operations == 0);
+    }
+    SUBCASE("insert") {
+      REQUIRE(model->insert(0, 0) == QValidator::Invalid);
+      REQUIRE(operations == 0);
+    }
+    SUBCASE("update") {
+      REQUIRE(model->set(0, 0) == QValidator::Invalid);
+      REQUIRE(operations == 0);
+    }
+    SUBCASE("transaction") {
+      model->transact([&] { model->push(0); });
+    }
+    SUBCASE("throwing_transaction") {
+      REQUIRE_THROWS_AS(model->transact([&] { model->remove(0); }),
+        std::runtime_error);
+    }
+    REQUIRE(model->get_size() == 1);
+    REQUIRE(model->get(0) == 1);
+    REQUIRE(filtered.get_size() == 1);
+    REQUIRE(filtered.get(0) == 1);
+    REQUIRE(model->push(2) == QValidator::Acceptable);
+    REQUIRE(source->get() == std::vector{1, 2});
+    REQUIRE(filtered.get(1) == 2);
+  }
+
   TEST_CASE("source_update_exception") {
     auto source = make_local_value_model(std::vector{1, 2});
     auto model = std::make_shared<ArrayValueToListModel<int>>(source);
