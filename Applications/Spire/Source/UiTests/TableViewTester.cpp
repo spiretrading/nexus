@@ -307,6 +307,32 @@ TEST_SUITE("TableView") {
       cells->push(TableIndex(i, 0));
     }
     auto& displayed = *view->get_body().get_selection();
+    SUBCASE("read_during_removal") {
+      auto& rows = *displayed.get_row_selection();
+      auto& cells = *displayed.get_item_selection();
+      auto row_operations = 0;
+      auto cell_operations = 0;
+      auto row_connection = scoped_connection(rows.connect_operation_signal(
+        [&] (const auto&) { ++row_operations; }));
+      auto cell_connection = scoped_connection(cells.connect_operation_signal(
+        [&] (const auto&) { ++cell_operations; }));
+      table->transact([&] {
+        for(auto i = 0; i != 2; ++i) {
+          table->remove(table->get_row_size() - 1);
+          auto last = table->get_row_size() - 1;
+          auto& row = rows.get(0);
+          auto& cell = cells.get(0);
+          REQUIRE(rows.get(1) == last - 1);
+          REQUIRE(cells.get(1) == TableIndex(last - 1, 0));
+          REQUIRE(row == last);
+          REQUIRE(cell == TableIndex(last, 0));
+          REQUIRE(row_operations == 0);
+          REQUIRE(cell_operations == 0);
+        }
+      });
+      REQUIRE(row_operations > 0);
+      REQUIRE(cell_operations > 0);
+    }
     SUBCASE("unselected_rows") {
       rows->m_previous_reads = 0;
       cells->m_previous_reads = 0;

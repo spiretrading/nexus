@@ -16,6 +16,7 @@ namespace {
 
 template<typename T>
 void TableView::DisplayedSelection<T>::refresh() {
+  m_is_refresh_pending = false;
   auto values = std::vector<T>();
   m_indices.clear();
   for(auto i = 0; i != m_source->get_size();) {
@@ -54,6 +55,18 @@ void TableView::DisplayedSelection<T>::refresh() {
       }
     }
   });
+}
+
+template<typename T>
+const T& TableView::DisplayedSelection<T>::get(int index) const {
+  if(m_is_refresh_pending && m_source->get_size() == this->get_size()) {
+    if(auto value = from_source(m_source->get(index))) {
+      m_transaction_values.resize(this->get_size());
+      m_transaction_values[index] = *value;
+      return m_transaction_values[index];
+    }
+  }
+  return ArrayListModel<T>::get(index);
 }
 
 template<typename T>

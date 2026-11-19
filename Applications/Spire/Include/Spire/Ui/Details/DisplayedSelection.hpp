@@ -16,6 +16,7 @@ namespace Spire {
 
       void track(auto refresh);
       void refresh();
+      const T& get(int index) const override;
       QValidator::State set(int index, const T& value) override;
       QValidator::State push(const T& value) override;
       QValidator::State insert(const T& value, int index) override;
@@ -29,6 +30,7 @@ namespace Spire {
       std::shared_ptr<FilteredTableModel> m_filtered;
       std::shared_ptr<SortedTableModel> m_sorted;
       std::vector<int> m_indices;
+      mutable std::vector<T> m_transaction_values;
       bool m_is_refresh_pending;
       bool m_is_pruning;
       boost::signals2::connection m_tracking_connection;
@@ -105,10 +107,6 @@ namespace Spire {
     m_source_connection = source.connect_operation_signal(
       [=, this, is_transacting = false] (
           const TableModel::Operation& operation) mutable {
-        auto refresh_selection = [&] {
-          m_is_refresh_pending = false;
-          refresh(*this);
-        };
         visit(operation,
           [&] (const TableModel::StartTransaction&) {
             is_transacting = true;
@@ -116,26 +114,26 @@ namespace Spire {
           [&] (const TableModel::EndTransaction&) {
             is_transacting = false;
             if(m_is_refresh_pending) {
-              refresh_selection();
+              refresh(*this);
             }
           },
           [&] (const TableModel::AddOperation& add) {
             if(m_is_refresh_pending ||
                 m_filtered->index_from_source(add.m_index) == -1) {
-              refresh_selection();
+              refresh(*this);
             }
           },
           [&] (const TableModel::UpdateOperation& update) {
             if(m_is_refresh_pending &&
                 m_filtered->index_from_source(update.m_row) == -1) {
-              refresh_selection();
+              refresh(*this);
             }
           },
           [&] (const TableRowChange auto&) {
             if(is_transacting && m_source->get_size() == this->get_size()) {
               m_is_refresh_pending = true;
             } else {
-              refresh_selection();
+              refresh(*this);
             }
           });
       });
@@ -148,7 +146,7 @@ namespace Spire {
           },
           [&] (const TableModel::EndTransaction&) {
             is_transacting = false;
-            if(std::exchange(m_is_refresh_pending, false)) {
+            if(m_is_refresh_pending) {
               refresh(*this);
             }
           },
