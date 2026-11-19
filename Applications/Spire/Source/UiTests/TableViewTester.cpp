@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/SpireTester/ListModelTester.hpp"
@@ -459,6 +460,29 @@ TEST_SUITE("TableView") {
       REQUIRE(columns->get_size() == 2);
       REQUIRE(std::ranges::contains(std::as_const(*columns), 2));
       REQUIRE(std::ranges::contains(std::as_const(*columns), 0));
+    }
+    SUBCASE("selection_bindings") {
+      for(auto column : {2, 1}) {
+        columns->push(column);
+        cells->push(TableIndex(1, column));
+      }
+      auto displayed = body.get_selection();
+      auto first = ListValueModel(displayed->get_column_selection(), 0);
+      auto second = ListValueModel(displayed->get_column_selection(), 1);
+      auto cell = ListValueModel(displayed->get_item_selection(), 0);
+      REQUIRE(first.get() == 0);
+      REQUIRE(second.get() == 2);
+      header.get_items()->move(0, 2);
+      REQUIRE(first.get_state() == QValidator::Acceptable);
+      REQUIRE(first.get() == 2);
+      REQUIRE(second.get_state() == QValidator::Acceptable);
+      REQUIRE(second.get() == 1);
+      REQUIRE(cell.get_state() == QValidator::Acceptable);
+      REQUIRE(cell.get() == TableIndex(1, 2));
+      columns->remove(0);
+      REQUIRE(first.get_state() == QValidator::Invalid);
+      REQUIRE(second.get_state() == QValidator::Acceptable);
+      REQUIRE(second.get() == 1);
     }
     SUBCASE("sort") {
       auto column = -1;

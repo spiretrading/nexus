@@ -220,12 +220,13 @@ void TableView::initialize_body(
   m_body = new TableBody(m_sorted_table, body_current, body_selection,
     m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
-  auto refresh = [selection = std::weak_ptr(body_selection)] (auto& list) {
+  auto refresh = [selection = std::weak_ptr(body_selection)] (
+      auto& list, const auto&... operation) {
     if(auto model = selection.lock()) {
       auto guard = QScopedValueRollback(model->m_is_updating, true);
-      list.refresh();
+      list.refresh(operation...);
     } else {
-      list.refresh();
+      list.refresh(operation...);
     }
   };
   rows->track(refresh);

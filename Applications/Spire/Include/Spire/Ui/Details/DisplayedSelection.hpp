@@ -18,6 +18,7 @@ namespace Spire {
 
       void track(auto refresh);
       void refresh();
+      void refresh(const AnyListModel::MoveOperation& column_move);
       const T& get(int index) const override;
       QValidator::State set(int index, const T& value) override;
       QValidator::State push(const T& value) override;
@@ -116,8 +117,8 @@ namespace Spire {
     if(m_columns) {
       m_column_connection = m_columns->connect_operation_signal(
         [=, this] (const auto& operation) {
-          visit(operation, [&] (const AnyListModel::MoveOperation&) {
-            refresh(*this);
+          visit(operation, [&] (const AnyListModel::MoveOperation& move) {
+            refresh(*this, move);
           });
         });
     }

@@ -1,5 +1,6 @@
 #include "Spire/Ui/Details/DisplayedSelection.hpp"
 #include <QScopedValueRollback>
+#include "Spire/Spire/ListIndexTracker.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -60,6 +61,23 @@ void TableView::DisplayedSelection<T>::refresh() {
       while(first < next_end) {
         ArrayListModel<T>::insert(values[first], first);
         ++first;
+      }
+    }
+  });
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::refresh(
+    const AnyListModel::MoveOperation& column_move) {
+  this->m_transaction.transact([&] {
+    for(auto i = 0; i != this->get_size(); ++i) {
+      auto value = ArrayListModel<T>::get(i);
+      auto& column = column_of(value);
+      auto tracker = ListIndexTracker(column);
+      tracker.update(column_move);
+      if(column != tracker.get_index()) {
+        column = tracker.get_index();
+        ArrayListModel<T>::set(i, value);
       }
     }
   });
