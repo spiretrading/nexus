@@ -9,6 +9,34 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("FilteredListModel") {
+  TEST_CASE("attach_at_transaction_start") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{2});
+    auto filtered = std::unique_ptr<FilteredListModel<int>>();
+    auto connection = scoped_connection(source->connect_operation_signal(
+      [&] (const ListModel<int>::Operation& operation) {
+        visit(operation, [&] (const AnyListModel::StartTransaction&) {
+          if(!filtered) {
+            filtered = std::make_unique<FilteredListModel<int>>(source,
+              [] (const auto&, int) { return false; });
+          }
+        });
+      }));
+    SUBCASE("insertion") {
+      source->transact([&] {
+        source->insert(1, 0);
+        source->push(3);
+      });
+    }
+    SUBCASE("removal") {
+      source->remove(0);
+    }
+    REQUIRE(filtered);
+    REQUIRE(filtered->get_size() == source->get_size());
+    for(auto i = 0; i != source->get_size(); ++i) {
+      REQUIRE(filtered->get(i) == source->get(i));
+    }
+  }
+
   TEST_CASE("filter") {
     auto source = std::make_shared<ArrayListModel<int>>();
     source->push(4);

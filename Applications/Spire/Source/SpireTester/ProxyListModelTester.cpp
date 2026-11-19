@@ -211,6 +211,38 @@ TEST_SUITE("ProxyListModel") {
     require_list_transaction<int>(operations, {Model::AddOperation(1)});
   }
 
+  TEST_CASE("edit_from_replacement_end") {
+    using Model = ListModel<int>;
+    auto first = std::make_shared<ArrayListModel<int>>();
+    auto second = std::make_shared<ArrayListModel<int>>(std::vector{1});
+    auto proxy = ProxyListModel(first);
+    auto is_throwing = false;
+    auto operations = std::deque<Model::Operation>();
+    auto connection = scoped_connection(proxy.connect_operation_signal(
+      [&] (const auto& operation) {
+        operations.push_back(operation);
+        visit(operation,
+          [&] (const Model::AddOperation& add) {
+            if(is_throwing && add.m_index == 0) {
+              throw std::runtime_error("Failed.");
+            }
+          },
+          [&] (const Model::EndTransaction&) {
+            second->push(2);
+          });
+      }));
+    SUBCASE("replacement") {
+      proxy.set_source(second);
+    }
+    SUBCASE("throwing_subscriber") {
+      is_throwing = true;
+      REQUIRE_THROWS_AS(proxy.set_source(second), std::runtime_error);
+    }
+    REQUIRE(proxy.get_size() == 2);
+    REQUIRE(operations.size() == 4);
+    REQUIRE(std::get<Model::AddOperation>(operations.back()).m_index == 1);
+  }
+
   TEST_CASE("set_source_remove_exception") {
     require_set_source_exception<ListModel<int>::PreRemoveOperation>();
     require_set_source_exception<ListModel<int>::RemoveOperation>();

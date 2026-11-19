@@ -43,6 +43,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_connection;
 
       void update_source();
+      void publish(const Operation& operation);
       void on_update(const std::vector<Type>& data);
   };
 
@@ -83,9 +84,7 @@ namespace Spire {
     }
     auto previous = m_data[index];
     m_data[index] = value;
-    update_source();
-    this->m_transaction.push(
-      UpdateOperation(index, std::move(previous), value));
+    publish(UpdateOperation(index, std::move(previous), value));
     return QValidator::Acceptable;
   }
 
@@ -96,8 +95,7 @@ namespace Spire {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
-    update_source();
-    this->m_transaction.push(AddOperation(index));
+    publish(AddOperation(index));
     return QValidator::Acceptable;
   }
 
@@ -109,8 +107,7 @@ namespace Spire {
     this->m_transaction.transact([&] {
       this->m_transaction.push(PreRemoveOperation(index));
       m_data.erase(std::next(m_data.begin(), index));
-      update_source();
-      this->m_transaction.push(RemoveOperation(index));
+      publish(RemoveOperation(index));
     });
     return QValidator::Acceptable;
   }
@@ -142,12 +139,18 @@ namespace Spire {
       return;
     }
     auto blocker = boost::signals2::shared_connection_block(m_connection);
+    m_source->set(m_data);
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::publish(const Operation& operation) {
     try {
-      m_source->set(m_data);
+      update_source();
     } catch(...) {
-      this->m_transaction.set_size(get_size());
+      this->m_transaction.push(operation);
       throw;
     }
+    this->m_transaction.push(operation);
   }
 
   template<typename T>

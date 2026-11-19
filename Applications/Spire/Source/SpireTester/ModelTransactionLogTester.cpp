@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <boost/signals2/shared_connection_block.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ModelTransactionLog.hpp"
@@ -28,6 +29,27 @@ namespace {
 }
 
 TEST_SUITE("ModelTransactionLog") {
+  TEST_CASE("blocked_late_subscription") {
+    auto log = ModelTransactionLog<Model>();
+    log.start();
+    log.push(Model::AddOperation(0));
+    auto operations = std::vector<std::string>();
+    auto connection = record(log, operations);
+    {
+      auto blocker = boost::signals2::shared_connection_block(connection);
+      log.end();
+    }
+    SUBCASE("standalone") {
+      log.push(Model::AddOperation(1));
+      REQUIRE(operations == std::vector<std::string>{"operation"});
+    }
+    SUBCASE("next_transaction") {
+      log.push(Model::AddOperation(0));
+      REQUIRE(operations ==
+        std::vector<std::string>{"start", "operation", "end"});
+    }
+  }
+
   TEST_CASE("insertion_boundaries") {
     auto log = ModelTransactionLog<Model>(2);
     auto operations = std::vector<std::string>();

@@ -78,8 +78,12 @@ namespace Spire {
 
   template<typename T>
   void ProxyListModel<T>::set_source(std::shared_ptr<ListModel<Type>> source) {
-    auto end = [&] {
+    auto connect_source = [&] {
+      if(source) {
+        m_source = std::move(source);
+      }
       m_size = boost::none;
+      this->m_transaction.set_size(get_size());
       m_connection = m_source->connect_operation_signal(
         std::bind_front(&ProxyListModel::on_operation, this));
     };
@@ -88,8 +92,13 @@ namespace Spire {
         --m_source_transaction_depth;
         this->m_transaction.end();
       }
-      m_connection.disconnect();
-      this->m_transaction.transact([&] {
+    } catch(...) {
+      connect_source();
+      throw;
+    }
+    m_connection.disconnect();
+    this->m_transaction.transact([&] {
+      try {
         m_size = m_source->get_size();
         while(*m_size != 0) {
           this->m_transaction.push(PreRemoveOperation(*m_size - 1));
@@ -102,16 +111,12 @@ namespace Spire {
           ++*m_size;
           this->m_transaction.push(AddOperation(*m_size - 1));
         }
-      });
-    } catch(...) {
-      if(source) {
-        m_source = std::move(source);
+      } catch(...) {
+        connect_source();
+        throw;
       }
-      this->m_transaction.set_size(m_source->get_size());
-      end();
-      throw;
-    }
-    end();
+      connect_source();
+    });
   }
 
   template<typename T>

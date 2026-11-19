@@ -1,5 +1,6 @@
 #ifndef SPIRE_MODEL_TRANSACTION_LOG_HPP
 #define SPIRE_MODEL_TRANSACTION_LOG_HPP
+#include <cstdint>
 #include <utility>
 #include "Spire/Spire/ListModel.hpp"
 
@@ -60,10 +61,14 @@ namespace Spire {
         const typename Type::OperationSignal::slot_type& slot) const;
 
     private:
-      mutable typename Type::OperationSignal m_operation_signal;
+      using Operation = typename Type::Operation;
+      using NotificationSignal =
+        Signal<void (const Operation&, std::uint64_t, bool)>;
+      mutable NotificationSignal m_operation_signal;
       int m_size;
       int m_level;
-      bool m_is_first;
+      std::uint64_t m_sequence;
+      std::uint64_t m_transaction;
 
       ModelTransactionLog(const ModelTransactionLog&) = delete;
       ModelTransactionLog& operator =(const ModelTransactionLog&) = delete;
@@ -77,7 +82,8 @@ namespace Spire {
   ModelTransactionLog<T>::ModelTransactionLog(int size)
     : m_size(size),
       m_level(0),
-      m_is_first(true) {}
+      m_sequence(0),
+      m_transaction(0) {}
 
   template<typename T>
   void ModelTransactionLog<T>::set_size(int size) {
@@ -92,9 +98,9 @@ namespace Spire {
   template<typename T>
   void ModelTransactionLog<T>::end() {
     --m_level;
-    if(m_level == 0 && !m_is_first) {
-      m_is_first = true;
-      m_operation_signal(typename Type::EndTransaction());
+    if(m_level == 0 && m_transaction != 0) {
+      auto transaction = std::exchange(m_transaction, 0);
+      m_operation_signal(typename Type::EndTransaction(), transaction, false);
     }
   }
 
@@ -102,11 +108,15 @@ namespace Spire {
   void ModelTransactionLog<T>::push(const typename Type::Operation& operation) {
     auto publish = [&] (bool shifts_indices) {
       auto notify = [&] {
-        if(m_level != 0 && m_is_first) {
-          m_is_first = false;
-          m_operation_signal(typename Type::StartTransaction());
+        if(m_level != 0 && m_transaction == 0) {
+          auto transaction = ++m_sequence;
+          m_transaction = transaction;
+          m_operation_signal(
+            typename Type::StartTransaction(), transaction, false);
+          m_operation_signal(operation, transaction, true);
+        } else {
+          m_operation_signal(operation, m_transaction, false);
         }
-        m_operation_signal(operation);
       };
       if(shifts_indices && m_level == 0) {
         transact(notify);
@@ -154,20 +164,26 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection ModelTransactionLog<T>::connect_operation_signal(
       const typename Type::OperationSignal::slot_type& slot) const {
-    if(m_is_first) {
-      return m_operation_signal.connect(slot);
-    }
-    using Slot = typename Type::OperationSignal::slot_type;
+    using Slot = NotificationSignal::slot_type;
     return m_operation_signal.connect(Slot(
-      [=, is_first = true] (const typename Type::Operation& operation) mutable {
-        if(is_first) {
-          is_first = false;
-          if(std::holds_alternative<typename Type::EndTransaction>(operation)) {
+      [callback = slot.slot_function(), initial = m_transaction,
+          needs_start = true] (const Operation& operation,
+          std::uint64_t transaction, bool is_opening) mutable {
+        if(initial != 0 && transaction == initial) {
+          if(is_opening && !std::holds_alternative<
+              typename Type::PreRemoveOperation>(operation)) {
             return;
           }
-          slot(typename Type::StartTransaction());
+          if(needs_start) {
+            if(std::holds_alternative<typename Type::EndTransaction>(
+                operation)) {
+              return;
+            }
+            needs_start = false;
+            callback(typename Type::StartTransaction());
+          }
         }
-        slot(operation);
+        callback(operation);
       }).track(slot));
   }
 }
