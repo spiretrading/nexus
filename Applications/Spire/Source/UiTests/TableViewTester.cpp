@@ -367,6 +367,58 @@ TEST_SUITE("TableView") {
     }
   }
 
+  UI_TEST_CASE("row_selection_bindings") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto value : {10, 20, 30}) {
+      table->push({value});
+    }
+    auto rows = std::make_shared<ArrayListModel<int>>();
+    auto cells = std::make_shared<ArrayListModel<TableIndex>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::ASCENDING).
+      set_selection(selection).make());
+    view->resize(320, 240);
+    view->show();
+    QApplication::processEvents();
+    for(auto i : {0, 1}) {
+      rows->push(i);
+      cells->push(TableIndex(i, 0));
+    }
+    auto& body = view->get_body();
+    auto& displayed = *body.get_selection();
+    auto first = ListValueModel(displayed.get_row_selection(), 0);
+    auto second = ListValueModel(displayed.get_row_selection(), 1);
+    auto cell = ListValueModel(displayed.get_item_selection(), 1);
+    SUBCASE("remove") {
+      table->remove(0);
+      REQUIRE(first.get_state() == QValidator::Invalid);
+    }
+    SUBCASE("sort") {
+      table->set(0, 0, 25);
+      REQUIRE(first.get_state() == QValidator::Acceptable);
+      REQUIRE(first.get() == 1);
+      auto item = body.find_item(TableIndex(1, 0));
+      REQUIRE(item);
+      REQUIRE(Styles::is_match(*item->parentWidget(), Styles::Selected()));
+    }
+    SUBCASE("move_selection_entry") {
+      rows->move(1, 0);
+      rows->insert(2, 1);
+      rows->remove(1);
+      REQUIRE(first.get_state() == QValidator::Acceptable);
+      REQUIRE(first.get() == 0);
+      REQUIRE(second.get_state() == QValidator::Acceptable);
+      REQUIRE(second.get() == 1);
+      return;
+    }
+    REQUIRE(second.get_state() == QValidator::Acceptable);
+    REQUIRE(second.get() == 0);
+    REQUIRE(cell.get_state() == QValidator::Acceptable);
+    REQUIRE(cell.get() == TableIndex(0, 0));
+  }
+
   UI_TEST_CASE("sort_selection") {
     const auto SIZE = 64;
     auto table = std::make_shared<ArrayTableModel>();
@@ -1082,6 +1134,9 @@ TEST_SUITE("TableView") {
       cells->push(TableIndex(row, 1));
     }
     cells->push(TableIndex(1, 0));
+    auto& displayed = *view->get_body().get_selection();
+    auto row = ListValueModel(displayed.get_row_selection(), 0);
+    auto cell = ListValueModel(displayed.get_item_selection(), 0);
     auto expected = std::vector<int>();
     SUBCASE("remove") {
       table->remove(0);
@@ -1100,6 +1155,10 @@ TEST_SUITE("TableView") {
       expected = {0, 1, 2};
     }
     REQUIRE(rows->get_size() == std::ssize(expected));
+    REQUIRE(row.get_state() == QValidator::Acceptable);
+    REQUIRE(view->get_body().get_table()->get<int>(row.get(), 0) == 30);
+    REQUIRE(cell.get_state() == QValidator::Acceptable);
+    REQUIRE(cell.get() == TableIndex(row.get(), 1));
     REQUIRE(cells->get_size() == rows->get_size() + 1);
     for(auto i = 0; i != rows->get_size(); ++i) {
       REQUIRE(rows->get(i) == expected[i]);

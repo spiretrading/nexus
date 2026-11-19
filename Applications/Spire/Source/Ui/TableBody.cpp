@@ -654,6 +654,7 @@ TableBody::TableBody(
       m_table(std::move(table)),
       m_current_controller(std::move(current), 0, widths->get_size()),
       m_selection_controller(std::move(selection), 0, widths->get_size()),
+      m_row_selection_transaction(RowSelectionTransaction::NONE),
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
@@ -1495,6 +1496,20 @@ void TableBody::on_current(const optional<Index>& current) {
 
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
+    [&] (const AnyListModel::StartTransaction&) {
+      m_row_selection_transaction = RowSelectionTransaction::OPEN;
+    },
+    [&] (const AnyListModel::EndTransaction&) {
+      if(std::exchange(m_row_selection_transaction,
+          RowSelectionTransaction::NONE) != RowSelectionTransaction::UPDATED) {
+        return;
+      }
+      for(auto index : std::as_const(*get_selection()->get_row_selection())) {
+        if(auto row = find_row(index)) {
+          match(*row, Selected());
+        }
+      }
+    },
     [&] (const ListModel<int>::AddOperation& operation) {
       auto& selection =
         m_selection_controller.get_selection()->get_row_selection();
@@ -1512,6 +1527,9 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(auto previous = find_row(operation.get_previous())) {
         unmatch(*previous, Selected());
+        if(m_row_selection_transaction == RowSelectionTransaction::OPEN) {
+          m_row_selection_transaction = RowSelectionTransaction::UPDATED;
+        }
       }
       if(auto row = find_row(operation.get_value())) {
         match(*row, Selected());

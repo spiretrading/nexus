@@ -26,42 +26,32 @@ namespace {
 template<typename T>
 void TableView::DisplayedSelection<T>::refresh() {
   m_is_refresh_pending = false;
-  auto values = std::vector<T>();
-  m_indices.clear();
-  for(auto i = 0; i != m_source->get_size();) {
-    if(auto value = from_source(m_source->get(i))) {
-      m_indices.push_back(i);
-      values.push_back(*value);
-    } else if(m_tracking_connection.connected()) {
-      auto guard = QScopedValueRollback(m_is_pruning, true);
-      if(m_source->remove(i) != QValidator::Invalid) {
-        continue;
-      }
-    }
-    ++i;
-  }
-  auto first = 0;
-  auto end = this->get_size();
-  auto next_end = static_cast<int>(values.size());
-  while(first < end && first < next_end && this->get(first) == values[first]) {
-    ++first;
-  }
-  while(end > first && next_end > first &&
-      this->get(end - 1) == values[next_end - 1]) {
-    --end;
-    --next_end;
-  }
   this->m_transaction.transact([&] {
-    if(end == first + 1 && next_end == end) {
-      ArrayListModel<T>::set(first, values[first]);
-    } else {
-      while(end > first) {
-        ArrayListModel<T>::remove(--end);
+    auto displayed = 0;
+    for(auto i = 0; i != m_source->get_size();) {
+      auto has_entry =
+        displayed < this->get_size() && m_indices[displayed] == i;
+      if(auto value = from_source(m_source->get(i))) {
+        if(!has_entry) {
+          m_indices.insert(m_indices.begin() + displayed, i);
+          ArrayListModel<T>::insert(*value, displayed);
+        } else if(*value != ArrayListModel<T>::get(displayed)) {
+          ArrayListModel<T>::set(displayed, *value);
+        }
+        ++displayed;
+      } else {
+        if(m_tracking_connection.connected()) {
+          auto guard = QScopedValueRollback(m_is_pruning, true);
+          if(m_source->remove(i) != QValidator::Invalid) {
+            continue;
+          }
+        }
+        if(has_entry) {
+          m_indices.erase(m_indices.begin() + displayed);
+          ArrayListModel<T>::remove(displayed);
+        }
       }
-      while(first < next_end) {
-        ArrayListModel<T>::insert(values[first], first);
-        ++first;
-      }
+      ++i;
     }
   });
 }
@@ -205,6 +195,59 @@ void TableView::DisplayedSelection<T>::append(int index) {
     });
   } else if(m_tracking_connection.connected()) {
     refresh();
+  }
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::remove_source(int index) {
+  if(!m_indices.empty() && m_indices.back() == index) {
+    m_indices.pop_back();
+    ArrayListModel<T>::remove(this->get_size() - 1);
+    return;
+  }
+  auto i = std::ranges::lower_bound(m_indices, index);
+  auto displayed = static_cast<int>(i - m_indices.begin());
+  auto is_displayed = i != m_indices.end() && *i == index;
+  if(is_displayed) {
+    i = m_indices.erase(i);
+  }
+  for(; i != m_indices.end(); ++i) {
+    --*i;
+  }
+  if(is_displayed) {
+    ArrayListModel<T>::remove(displayed);
+  }
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::move_source(
+    const AnyListModel::MoveOperation& move) {
+  if(this->get_size() == m_source->get_size()) {
+    ArrayListModel<T>::move(move.m_source, move.m_destination);
+    return;
+  }
+  auto [low, high] = std::minmax(move.m_source, move.m_destination);
+  auto first = std::ranges::lower_bound(m_indices, low);
+  auto end = std::upper_bound(first, m_indices.end(), high);
+  if(first == end) {
+    return;
+  }
+  auto source = first;
+  auto destination = end - 1;
+  if(move.m_source > move.m_destination) {
+    std::swap(source, destination);
+  }
+  auto is_displayed = *source == move.m_source;
+  for(auto i = first; i != end; ++i) {
+    auto tracker = ListIndexTracker(*i);
+    tracker.update(move);
+    *i = tracker.get_index();
+  }
+  if(is_displayed) {
+    auto from = static_cast<int>(source - m_indices.begin());
+    auto to = static_cast<int>(destination - m_indices.begin());
+    move_element(m_indices, from, to);
+    ArrayListModel<T>::move(from, to);
   }
 }
 

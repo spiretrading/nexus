@@ -66,6 +66,7 @@ namespace Spire {
       std::weak_ptr<TableModel> m_table;
       std::shared_ptr<FilterSignal> m_filter_signal;
       bool m_is_updating;
+      std::optional<int> m_pruned_index;
       std::optional<boost::signals2::connection> m_source_tracking;
       boost::signals2::scoped_connection m_table_connection;
 

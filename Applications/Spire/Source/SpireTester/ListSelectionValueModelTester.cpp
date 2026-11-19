@@ -57,6 +57,35 @@ TEST_SUITE("ListSelectionValueModel") {
     }
   }
 
+  TEST_CASE("selected_value_update") {
+    using Model = ListModel<int>;
+    auto values = std::make_shared<ArrayListModel<int>>(std::vector{10, 20});
+    auto selection =
+      std::make_shared<ArrayListModel<int>>(std::vector{0, 0});
+    auto selected = ListSelectionValueModel<int>(values, selection);
+    auto operations = std::deque<Model::Operation>();
+    selected.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    values->set(1, 21);
+    REQUIRE(operations.empty());
+    values->transact([&] { values->set(0, 11); });
+    REQUIRE(operations.size() == 4);
+    require_list_transaction<int>(operations,
+      {Model::UpdateOperation(0, 10, 11), Model::UpdateOperation(1, 10, 11)});
+    for(auto i = 1; i <= 2; ++i) {
+      auto& update = std::get<Model::UpdateOperation>(operations[i]);
+      REQUIRE(update.get_previous() == 10);
+      REQUIRE(update.get_value() == 11);
+    }
+    operations.clear();
+    selection->set(0, 1);
+    REQUIRE(operations.size() == 1);
+    auto& update = std::get<Model::UpdateOperation>(operations.front());
+    REQUIRE(update.get_previous() == 11);
+    REQUIRE(update.get_value() == 21);
+  }
+
   TEST_CASE("source_transaction") {
     using Model = ListModel<int>;
     auto values = std::make_shared<ArrayListModel<int>>(std::vector{10, 20});

@@ -13,7 +13,7 @@ namespace Spire {
         std::shared_ptr<FilteredTableModel> filtered,
         std::shared_ptr<SortedTableModel> sorted,
         std::shared_ptr<const TranslatedListModel<int>> columns,
-        auto is_updating,
+        std::shared_ptr<SelectionModel> selection,
         boost::signals2::connection tracking);
 
       void track(auto refresh);
@@ -47,6 +47,8 @@ namespace Spire {
       bool is_tail_append(int row) const;
       boost::optional<T> from_source(T value) const;
       void append(int index);
+      void remove_source(int index);
+      void move_source(const AnyListModel::MoveOperation& move);
       boost::optional<T> to_source(T value) const;
   };
 
@@ -55,7 +57,8 @@ namespace Spire {
       std::shared_ptr<ListModel<T>> source,
       std::shared_ptr<FilteredTableModel> filtered,
       std::shared_ptr<SortedTableModel> sorted,
-      std::shared_ptr<const TranslatedListModel<int>> columns, auto is_updating,
+      std::shared_ptr<const TranslatedListModel<int>> columns,
+      std::shared_ptr<SelectionModel> selection,
       boost::signals2::connection tracking)
       : m_source(std::move(source)),
         m_filtered(std::move(filtered)),
@@ -67,8 +70,8 @@ namespace Spire {
         m_tracking_connection(std::move(tracking)) {
     m_connection = m_source->connect_operation_signal(
       [=, this, depth = 0] (const auto& operation) mutable {
-        auto is_updating_selection = m_is_pruning ||
-          (m_filtered && is_updating());
+        auto is_remapping = m_filtered && selection->m_is_updating &&
+          m_tracking_connection.connected();
         visit(operation,
           [&] (const AnyListModel::StartTransaction&) {
             ++depth;
@@ -81,30 +84,35 @@ namespace Spire {
             }
           },
           [&] (const AnyListModel::AddOperation& add) {
-            if(is_updating_selection) {
+            if(is_remapping) {
               return;
             }
             if(add.m_index == m_source->get_size() - 1) {
-              append(add.m_index);
-            } else {
+              if(!m_is_pruning) {
+                append(add.m_index);
+              }
+              return;
+            }
+            for(auto i = std::ranges::lower_bound(m_indices, add.m_index);
+                i != m_indices.end(); ++i) {
+              ++*i;
+            }
+            if(!m_is_pruning) {
               refresh();
             }
           },
           [&] (const AnyListModel::RemoveOperation& removal) {
-            if(is_updating_selection) {
-              return;
-            }
-            if(!m_indices.empty() && removal.m_index == m_indices.back()) {
-              m_indices.pop_back();
-              ArrayListModel<T>::remove(this->get_size() - 1);
-            } else {
-              refresh();
+            if(!is_remapping) {
+              remove_source(removal.m_index);
+            } else if(selection->m_pruned_index) {
+              remove_source(*selection->m_pruned_index);
             }
           },
-          [&] <typename O> (const O&) requires
-              (std::derived_from<O, AnyListModel::MoveOperation> ||
-                std::derived_from<O, AnyListModel::UpdateOperation>) {
-            if(!is_updating_selection) {
+          [&] (const AnyListModel::MoveOperation& move) {
+            move_source(move);
+          },
+          [&] (const AnyListModel::UpdateOperation&) {
+            if(!is_remapping && !m_is_pruning) {
               refresh();
             }
           });

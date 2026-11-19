@@ -90,7 +90,8 @@ namespace {
   };
 
   template<typename T>
-  void update(ListModel<T>& selection, const TableModel::Operation& operation) {
+  void update(ListModel<T>& selection, const TableModel::Operation& operation,
+      std::optional<int>& pruned_index) {
     auto is_removing =
       std::holds_alternative<TableModel::PreRemoveOperation>(operation);
     auto to_index = [=] (int offset, int size) {
@@ -99,14 +100,19 @@ namespace {
       }
       return size - 1 - offset;
     };
+    auto pending = std::vector<std::pair<int, T>>();
     auto prune = [&] (int index) {
+      auto position = index;
+      if(is_removing) {
+        position += static_cast<int>(pending.size());
+      }
+      auto guard = QScopedValueRollback(pruned_index, std::optional(position));
       if(selection.remove(index) == QValidator::Invalid) {
         if(auto list = dynamic_cast<SelectableList<T>*>(&selection)) {
           list->exclude(index);
         }
       }
     };
-    auto pending = std::vector<std::pair<int, T>>();
     for(auto offset = 0; offset < selection.get_size();) {
       auto size = selection.get_size();
       auto i = to_index(offset, size);
@@ -221,8 +227,8 @@ void TableSelectionModel::update_rows(const TableModel::Operation& operation) {
   if(!m_source_tracking) {
     auto guard = QScopedValueRollback(m_is_updating, true);
     transact([&] {
-      update(*m_row_selection, operation);
-      update(*m_item_selection, operation);
+      update(*m_row_selection, operation, m_pruned_index);
+      update(*m_item_selection, operation, m_pruned_index);
     });
   }
 }

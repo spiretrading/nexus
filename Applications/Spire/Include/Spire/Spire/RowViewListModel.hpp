@@ -101,7 +101,11 @@ namespace Details {
     if(m_row.get_index() == -1) {
       return QValidator::State::Invalid;
     }
-    return m_source->set(m_row.get_index(), index, value);
+    if constexpr(std::same_as<Type, AnyRef>) {
+      return m_source->set(m_row.get_index(), index, to_any(value));
+    } else {
+      return m_source->set(m_row.get_index(), index, value);
+    }
   }
 
   template<typename T>
@@ -127,7 +131,14 @@ namespace Details {
         }
       },
       [&] (const TableModel::UpdateOperation& operation) {
-        if(m_row.get_index() == operation.m_row) {
+        if(m_row.get_index() != operation.m_row) {
+          return;
+        }
+        if constexpr(std::same_as<Type, AnyRef>) {
+          this->m_transaction.push(UpdateOperation(operation.m_column,
+            AnyRef(operation.m_previous, AnyRef::by_value),
+            AnyRef(operation.m_value, AnyRef::by_value)));
+        } else {
           this->m_transaction.push(UpdateOperation(operation.m_column,
             std::any_cast<const Type&>(operation.m_previous),
             std::any_cast<const Type&>(operation.m_value)));

@@ -202,19 +202,16 @@ void TableView::initialize_body(
   }
   auto body_current = make_proxy_value_model(
     std::make_shared<LocalValueModel<optional<Index>>>());
-  auto is_updating = [selection = m_selection, tracking] {
-    return selection->m_is_updating && tracking.connected();
-  };
   auto rows = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    nullptr, is_updating, tracking);
+    nullptr, m_selection, tracking);
   auto& column_order = m_header_view->m_translation;
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
     m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
-    column_order, is_updating, tracking);
+    column_order, m_selection, tracking);
   auto columns = std::make_shared<DisplayedSelection<int>>(
     m_selection->get_column_selection(), nullptr, nullptr, column_order,
-    is_updating, tracking);
+    m_selection, tracking);
   auto body_selection = std::make_shared<SelectionModel>(items, rows, columns);
   body_selection->m_source_tracking = tracking;
   m_body = new TableBody(m_sorted_table, body_current, body_selection,

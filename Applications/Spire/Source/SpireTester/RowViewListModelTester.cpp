@@ -64,6 +64,28 @@ TEST_SUITE("RowViewListModel") {
       });
   }
 
+  TEST_CASE("any_ref_update") {
+    using Model = RowViewListModel<AnyRef>;
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10, std::string("first")});
+    auto row = Model(table, 0);
+    auto updates = std::vector<Model::UpdateOperation>();
+    row.connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const Model::UpdateOperation& update) {
+        updates.push_back(update);
+      });
+    });
+    table->set(0, 0, 11);
+    REQUIRE(
+      row.set(1, AnyRef(std::string("second"))) == QValidator::Acceptable);
+    REQUIRE(updates.size() == 2);
+    REQUIRE(any_cast<int>(updates[0].get_previous()) == 10);
+    REQUIRE(any_cast<int>(updates[0].get_value()) == 11);
+    REQUIRE(any_cast<std::string>(updates[1].get_previous()) == "first");
+    REQUIRE(any_cast<std::string>(row.get(1)) == "second");
+    REQUIRE(any_cast<std::string>(updates[1].get_value()) == "second");
+  }
+
   TEST_CASE("source_add") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({1});

@@ -131,6 +131,16 @@ namespace Styles {
       void showEvent(QShowEvent* event) override;
 
     private:
+      struct Cover;
+      struct ColumnCover;
+      struct RowCover;
+      struct Layout;
+      struct Painter;
+      enum class RowSelectionTransaction {
+        NONE,
+        OPEN,
+        UPDATED
+      };
       struct Styles {
         QColor m_background_color;
         int m_horizontal_spacing;
@@ -139,15 +149,11 @@ namespace Styles {
         QColor m_horizontal_grid_color;
         QColor m_vertical_grid_color;
       };
-      struct Cover;
-      struct ColumnCover;
-      struct RowCover;
-      struct Layout;
-      struct Painter;
       std::shared_ptr<TableModel> m_table;
       std::unordered_set<Qt::Key> m_keys;
       TableCurrentController m_current_controller;
       TableSelectionController m_selection_controller;
+      RowSelectionTransaction m_row_selection_transaction;
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
       std::deque<RowCover*> m_recycled_rows;

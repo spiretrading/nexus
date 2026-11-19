@@ -37,9 +37,13 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> m_values;
       std::shared_ptr<ListModel<int>> m_selection;
       std::vector<Type> m_selection_values;
-      boost::signals2::scoped_connection m_connection;
+      boost::signals2::scoped_connection m_values_connection;
+      boost::signals2::scoped_connection m_selection_connection;
 
-      void on_operation(const typename ListModel<int>::Operation& operation);
+      void update(int index, const Type& value);
+      void on_values_operation(
+        const typename ListModel<Type>::Operation& operation);
+      void on_selection_operation(const ListModel<int>::Operation& operation);
   };
 
   template<typename T>
@@ -49,8 +53,10 @@ namespace Spire {
       : m_values(std::move(values)),
         m_selection(std::move(selection)) {
     this->m_transaction.set_size(get_size());
-    m_connection = m_selection->connect_operation_signal(
-      std::bind_front(&ListSelectionValueModel::on_operation, this));
+    m_values_connection = m_values->connect_operation_signal(
+      std::bind_front(&ListSelectionValueModel::on_values_operation, this));
+    m_selection_connection = m_selection->connect_operation_signal(
+      std::bind_front(&ListSelectionValueModel::on_selection_operation, this));
     for(auto i = 0; i != get_size(); ++i) {
       m_selection_values.push_back(get(i));
     }
@@ -68,8 +74,34 @@ namespace Spire {
   }
 
   template<typename T>
-  void ListSelectionValueModel<T>::on_operation(
-      const typename ListModel<int>::Operation& operation) {
+  void ListSelectionValueModel<T>::update(int index, const Type& value) {
+    auto update = UpdateOperation(index, m_selection_values[index], value);
+    m_selection_values[index] = update.get_value();
+    this->m_transaction.push(update);
+  }
+
+  template<typename T>
+  void ListSelectionValueModel<T>::on_values_operation(
+      const typename ListModel<Type>::Operation& operation) {
+    visit(operation,
+      [&] (const UpdateOperation& operation) {
+        for(auto i = 0; i != get_size(); ++i) {
+          if(m_selection->get(i) == operation.m_index) {
+            update(i, operation.get_value());
+          }
+        }
+      },
+      [&] (const AnyListModel::StartTransaction&) {
+        this->m_transaction.start();
+      },
+      [&] (const AnyListModel::EndTransaction&) {
+        this->m_transaction.end();
+      });
+  }
+
+  template<typename T>
+  void ListSelectionValueModel<T>::on_selection_operation(
+      const ListModel<int>::Operation& operation) {
     visit(operation,
       [&] (const AddOperation& operation) {
         m_selection_values.insert(
@@ -88,10 +120,7 @@ namespace Spire {
         this->m_transaction.push(operation);
       },
       [&] (const ListModel<int>::UpdateOperation& operation) {
-        auto update = UpdateOperation(operation.m_index,
-          m_selection_values[operation.m_index], get(operation.m_index));
-        m_selection_values[operation.m_index] = update.get_value();
-        this->m_transaction.push(update);
+        update(operation.m_index, get(operation.m_index));
       },
       [&] (const std::convertible_to<typename ListModel<Type>::Operation>
           auto& operation) {
