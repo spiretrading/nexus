@@ -238,11 +238,15 @@ void TableHeader::swap_filter_panel(int index) {
 }
 
 void TableHeader::on_filter(int column, TableFilter::Filter filter) {
-  auto& item = m_items->get(column);
+  if(column < 0 || column >= m_translation->get_size()) {
+    return;
+  }
+  auto displayed = m_translation->index_from_source(column);
+  auto& item = m_items->get(displayed);
   if(item.m_filter != filter) {
     auto revised_item = item;
     revised_item.m_filter = filter;
-    m_items->set(column, revised_item);
+    m_items->set(displayed, revised_item);
   }
 }
 
@@ -288,8 +292,9 @@ void TableHeader::on_filter_open(int index, bool is_open) {
     return;
   }
   m_is_closing_filters = true;
+  auto displayed = m_translation->index_from_source(index);
   for(auto i = 0; i != std::ssize(m_item_views); ++i) {
-    if(i != index && m_item_views[i]->is_filter_open()->get()) {
+    if(i != displayed && m_item_views[i]->is_filter_open()->get()) {
       m_item_views[i]->is_filter_open()->set(false);
     }
   }

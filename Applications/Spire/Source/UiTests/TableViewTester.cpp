@@ -472,6 +472,52 @@ TEST_SUITE("TableView") {
     }
   }
 
+  UI_TEST_CASE("moved_column_filter") {
+    struct ColumnFilter : EmptyTableFilter {
+      int m_opened_column = -1;
+      mutable FilterSignal m_filter_signal;
+
+      Filter get_filter(int) override {
+        return Filter::UNFILTERED;
+      }
+
+      QWidget* make_filter_widget(int column, QWidget& parent) override {
+        m_opened_column = column;
+        return new QWidget(&parent);
+      }
+
+      connection connect_filter_signal(
+          const FilterSignal::slot_type& slot) const override {
+        return m_filter_signal.connect(slot);
+      }
+    };
+    auto filter = std::make_shared<ColumnFilter>();
+    auto table = std::make_shared<ArrayTableModel>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("A").add_header_item("B").add_header_item("C").
+      set_filter(filter).make());
+    auto& header = view->get_header();
+    header.get_items()->move(2, 0);
+    SUBCASE("indicator") {
+      filter->m_filter_signal(2, TableFilter::Filter::FILTERED);
+      REQUIRE(header.get_items()->get(0).m_filter ==
+        TableFilter::Filter::FILTERED);
+      REQUIRE(header.get_items()->get(2).m_filter ==
+        TableFilter::Filter::UNFILTERED);
+    }
+    SUBCASE("panel") {
+      auto& first = *header.get_item(0)->is_filter_open();
+      auto& second = *header.get_item(1)->is_filter_open();
+      first.set(true);
+      REQUIRE(first.get());
+      REQUIRE(filter->m_opened_column == 2);
+      second.set(true);
+      REQUIRE_FALSE(first.get());
+      REQUIRE(second.get());
+      REQUIRE(filter->m_opened_column == 0);
+    }
+  }
+
   UI_TEST_CASE("spacer_column_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     auto cells = std::make_shared<ArrayListModel<TableIndex>>();
