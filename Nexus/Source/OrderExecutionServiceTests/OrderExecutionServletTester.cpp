@@ -234,12 +234,11 @@ TEST_SUITE("OrderExecutionServlet") {
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
     auto live_order = fixture.m_client->submit(
       make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 50, 2 * Money::ONE));
-    fixture.m_submissions->pop();
+    auto driver_order = fixture.m_submissions->pop();
     submit_and_fill(fixture,
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE),
       base + hours(6));
-    submit_and_fill(fixture,
-      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::ONE),
+    fill(*driver_order, live_order->get_info().m_fields.m_quantity,
       base + hours(7));
     fixture.m_container->close();
     auto snapshot =
