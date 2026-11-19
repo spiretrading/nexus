@@ -489,9 +489,9 @@ namespace Nexus {
       auto result = ExecutionReportQueryResult();
       result.m_id = subscription_id;
       order = m_data_store->load_order_record(id);
-      auto pending_reports = std::vector<ExecutionReport>();
       m_order_subscriptions.commit(
         query.get_index(), std::move(result), [&] (auto report_result) {
+          auto pending_reports = std::vector<ExecutionReport>();
           auto& reports = (**order)->m_execution_reports;
           for(auto& report : report_result.m_snapshot) {
             if(report->m_id != id) {
@@ -509,11 +509,11 @@ namespace Nexus {
             }
           }
           request.set(order);
+          for(auto& report : pending_reports) {
+            Beam::send_record_message<OrderUpdateMessage>(
+              request.get_client(), report);
+          }
         });
-      for(auto& report : pending_reports) {
-        Beam::send_record_message<OrderUpdateMessage>(
-          request.get_client(), report);
-      }
     } catch(...) {
       if(subscription_id != -1) {
         m_order_subscriptions.discard(
@@ -565,12 +565,12 @@ namespace Nexus {
       execution_report_result.m_id = subscription_id;
       submission_result.m_snapshot =
         m_data_store->load_order_records(revised_query);
-      auto pending_reports = std::vector<ExecutionReport>();
       m_submission_subscriptions.commit(revised_query.get_index(),
         std::move(submission_result), [&] (auto submission_result) {
           m_order_subscriptions.commit(revised_query.get_index(),
             std::move(execution_report_result),
             [&] (auto execution_report_result) {
+              auto pending_reports = std::vector<ExecutionReport>();
               for(auto& report : execution_report_result.m_snapshot) {
                 auto submission_iterator =
                   std::find_if(submission_result.m_snapshot.begin(),
@@ -595,12 +595,12 @@ namespace Nexus {
                 }
               }
               request.set(submission_result);
+              for(auto& report : pending_reports) {
+                Beam::send_record_message<OrderUpdateMessage>(
+                  request.get_client(), report);
+              }
             });
         });
-      for(auto& report : pending_reports) {
-        Beam::send_record_message<OrderUpdateMessage>(
-          request.get_client(), report);
-      }
     } catch(...) {
       m_submission_subscriptions.discard(
         revised_query.get_index(), request.get_client(), submission_id);
