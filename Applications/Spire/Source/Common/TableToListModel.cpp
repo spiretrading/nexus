@@ -1,7 +1,6 @@
 #include "Spire/Spire/TableToListModel.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 
 AnyRef RowView::get(int column) const {
@@ -19,6 +18,7 @@ RowView::RowView(TableModel& table, int row)
 TableToListModel::TableToListModel(std::shared_ptr<TableModel> table)
     : m_table(std::move(table)),
       m_update(nullptr) {
+  m_transaction.set_size(get_size());
   m_connection = m_table->connect_operation_signal(
     std::bind_front(&TableToListModel::on_operation, this));
 }
@@ -58,15 +58,6 @@ QValidator::State TableToListModel::move(int source, int destination) {
 
 QValidator::State TableToListModel::remove(int index) {
   return m_table->remove(index);
-}
-
-connection TableToListModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
-}
-
-void TableToListModel::transact(const std::function<void ()>& transaction) {
-  m_transaction.transact(transaction);
 }
 
 void TableToListModel::on_operation(const TableModel::Operation& operation) {

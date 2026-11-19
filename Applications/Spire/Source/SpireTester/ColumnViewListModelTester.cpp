@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/SpireTester/ListModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -101,13 +102,9 @@ TEST_SUITE("ColumnViewListModel") {
     REQUIRE(model.get(2) == 6);
     source->insert({7, 8}, 1);
     REQUIRE(operations1.empty());
-    REQUIRE(operations2.size() == 1);
-    operation = operations2.front();
-    operations2.pop_front();
-    test_operation(operation,
-      [&] (const ColumnViewListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == 1);
-      });
+    REQUIRE(operations2.size() == 3);
+    require_list_transaction<int>(
+      operations2, {ListModel<int>::AddOperation(1)});
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 4);
     REQUIRE(model.get(0) == 2);
@@ -164,30 +161,27 @@ TEST_SUITE("ColumnViewListModel") {
     source->push({6, 7});
     auto model = ColumnViewListModel<int>(source, 1);
     REQUIRE(model.get_size() == 4);
-    auto signal_count = 0;
-    auto source_index = 0;
-    auto destination_index = 0;
+    using Model = ColumnViewListModel<int>;
+    auto operations = std::deque<Model::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
-      [&] (const auto& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<ColumnViewListModel<int>::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_index);
-        REQUIRE(move_operation->m_destination == destination_index);
-      }));
-    source_index = 1;
-    destination_index = 3;
-    source->move(source_index, destination_index);
-    REQUIRE(signal_count == 1);
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    auto require_move = [&] (int from, int to) {
+      source->move(from, to);
+      REQUIRE(operations.size() == 3);
+      REQUIRE(std::holds_alternative<Model::StartTransaction>(operations[0]));
+      auto move = std::get_if<Model::MoveOperation>(&operations[1]);
+      REQUIRE(move);
+      REQUIRE(move->m_source == from);
+      REQUIRE(move->m_destination == to);
+      REQUIRE(std::holds_alternative<Model::EndTransaction>(operations[2]));
+      operations.clear();
+    };
+    require_move(1, 3);
     REQUIRE(model.get(0) == 1);
     REQUIRE(model.get(1) == 5);
     REQUIRE(model.get(2) == 7);
     REQUIRE(model.get(3) == 3);
-    source_index = 3;
-    destination_index = 0;
-    source->move(source_index, destination_index);
-    REQUIRE(signal_count == 2);
+    require_move(3, 0);
     REQUIRE(model.get(0) == 3);
     REQUIRE(model.get(1) == 1);
     REQUIRE(model.get(2) == 5);

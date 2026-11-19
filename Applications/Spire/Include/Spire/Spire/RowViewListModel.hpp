@@ -2,10 +2,10 @@
 #define SPIRE_ROW_VIEW_LIST_MODEL_HPP
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 namespace Details {
@@ -25,7 +25,8 @@ namespace Details {
    */
   template<typename T>
   class RowViewListModel :
-      public ListModel<T>, private Details::AnyRefRowViewListModel<T> {
+      public TransactionLogModel<ListModel<T>>,
+      private Details::AnyRefRowViewListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = ListModel<T>::OperationSignal;
@@ -47,17 +48,11 @@ namespace Details {
       int get_size() const override;
       const Type& get(int index) const override;
       QValidator::State set(int index, const Type& value) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       TableRowIndexTracker m_row;
-      ListModelTransactionLog<Type> m_transaction;
+      int m_source_transaction_depth;
       boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const TableModel::Operation& operation);
@@ -67,11 +62,13 @@ namespace Details {
   RowViewListModel<T>::RowViewListModel(
       std::shared_ptr<TableModel> source, int row)
       : m_source(std::move(source)),
-        m_row(row) {
+        m_row(row),
+        m_source_transaction_depth(0) {
     if(row < 0 || row >= m_source->get_row_size()) {
       m_source = nullptr;
       m_row.set(-1);
     } else {
+      this->m_transaction.set_size(get_size());
       m_source_connection = m_source->connect_operation_signal(
         std::bind_front(&RowViewListModel::on_operation, this));
     }
@@ -104,44 +101,52 @@ namespace Details {
     if(m_row.get_index() == -1) {
       return QValidator::State::Invalid;
     }
-    return m_source->set(m_row.get_index(), index, value);
-  }
-
-  template<typename T>
-  boost::signals2::connection RowViewListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void RowViewListModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
+    if constexpr(std::same_as<Type, AnyRef>) {
+      return m_source->set(m_row.get_index(), index, to_any(value));
+    } else {
+      return m_source->set(m_row.get_index(), index, value);
+    }
   }
 
   template<typename T>
   void RowViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
+    auto disconnect_if_removed = [&] {
+      if(m_row.get_index() == -1 && m_source_transaction_depth == 0) {
+        m_source_connection.disconnect();
+        m_source = nullptr;
+        this->m_transaction.set_size(0);
+      }
+    };
     visit(operation,
       [&] (const TableModel::StartTransaction&) {
-        m_transaction.start();
+        ++m_source_transaction_depth;
+        this->m_transaction.start();
       },
       [&] (const TableModel::EndTransaction&) {
-        m_transaction.end();
+        if(m_source_transaction_depth != 0) {
+          --m_source_transaction_depth;
+          disconnect_if_removed();
+          this->m_transaction.end();
+        }
       },
       [&] (const TableModel::UpdateOperation& operation) {
-        if(m_row.get_index() == operation.m_row) {
-          m_transaction.push(UpdateOperation(operation.m_column,
+        if(m_row.get_index() != operation.m_row) {
+          return;
+        }
+        if constexpr(std::same_as<Type, AnyRef>) {
+          this->m_transaction.push(UpdateOperation(operation.m_column,
+            AnyRef(operation.m_previous, AnyRef::by_value),
+            AnyRef(operation.m_value, AnyRef::by_value)));
+        } else {
+          this->m_transaction.push(UpdateOperation(operation.m_column,
             std::any_cast<const Type&>(operation.m_previous),
             std::any_cast<const Type&>(operation.m_value)));
         }
       },
       [&] (const auto& operation) {
         m_row.update(operation);
-        if(m_row.get_index() == -1) {
-          m_source_connection.disconnect();
-          m_source = nullptr;
-        }
+        disconnect_if_removed();
       });
   }
 }

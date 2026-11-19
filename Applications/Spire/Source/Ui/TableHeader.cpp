@@ -49,7 +49,8 @@ TableHeader::TableHeader(
     : QWidget(parent),
       m_items(std::move(items)),
       m_filter(std::move(filter)),
-      m_translation(std::make_shared<ArrayListModel<int>>()),
+      m_translation(std::make_shared<TranslatedListModel<int>>(
+        std::make_shared<ArrayListModel<int>>())),
       m_resize_index(-1),
       m_filter_panel(nullptr),
       m_closing_filter_panel(nullptr),
@@ -74,7 +75,7 @@ TableHeader::TableHeader(
       std::bind_front(&TableHeader::on_filter_open, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
-    m_translation.push(i);
+    m_translation->push(i);
     link(*this, *item);
     item->installEventFilter(this);
   }
@@ -132,6 +133,10 @@ const std::shared_ptr<TableFilter>& TableHeader::get_filter() const {
 
 const std::shared_ptr<ListModel<int>>& TableHeader::get_widths() const {
   return m_widths;
+}
+
+std::shared_ptr<const ListModel<int>> TableHeader::get_column_order() const {
+  return m_translation;
 }
 
 TableHeaderItem* TableHeader::get_item(int column) {
@@ -233,11 +238,15 @@ void TableHeader::swap_filter_panel(int index) {
 }
 
 void TableHeader::on_filter(int column, TableFilter::Filter filter) {
-  auto& item = m_items->get(column);
+  if(column < 0 || column >= m_translation->get_size()) {
+    return;
+  }
+  auto displayed = m_translation->index_from_source(column);
+  auto& item = m_items->get(displayed);
   if(item.m_filter != filter) {
     auto revised_item = item;
     revised_item.m_filter = filter;
-    m_items->set(column, revised_item);
+    m_items->set(displayed, revised_item);
   }
 }
 
@@ -254,21 +263,20 @@ void TableHeader::on_items_operation(
       header_layout->move(operation.m_source, operation.m_destination);
       move_element(m_item_views, operation.m_source, operation.m_destination);
       m_widths->move(operation.m_source, operation.m_destination);
-      m_translation.move(operation.m_source, operation.m_destination);
+      m_translation->move(operation.m_source, operation.m_destination);
     });
 }
 
 void TableHeader::on_widths_operation(
     const ListModel<int>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<int>::UpdateOperation& operation) {
-      m_item_views[operation.m_index]->setFixedWidth(
-        operation.get_value());
-    });
+  visit(operation, [&] (const ListModel<int>::UpdateOperation& operation) {
+    m_item_views[operation.m_index]->setFixedWidth(
+      operation.get_value());
+  });
 }
 
 void TableHeader::on_start_resize(int index) {
-  m_resize_index = m_translation.index_from_source(index);
+  m_resize_index = m_translation->index_from_source(index);
 }
 
 void TableHeader::on_end_resize(int index) {
@@ -276,7 +284,7 @@ void TableHeader::on_end_resize(int index) {
 }
 
 void TableHeader::on_sort(int index, TableHeaderItem::Order order) {
-  m_sort_signal(m_translation.index_from_source(index), order);
+  m_sort_signal(m_translation->index_from_source(index), order);
 }
 
 void TableHeader::on_filter_open(int index, bool is_open) {
@@ -284,8 +292,9 @@ void TableHeader::on_filter_open(int index, bool is_open) {
     return;
   }
   m_is_closing_filters = true;
+  auto displayed = m_translation->index_from_source(index);
   for(auto i = 0; i != std::ssize(m_item_views); ++i) {
-    if(i != index && m_item_views[i]->is_filter_open()->get()) {
+    if(i != displayed && m_item_views[i]->is_filter_open()->get()) {
       m_item_views[i]->is_filter_open()->set(false);
     }
   }

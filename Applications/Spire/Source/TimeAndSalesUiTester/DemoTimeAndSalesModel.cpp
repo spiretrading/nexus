@@ -140,11 +140,12 @@ connection DemoTimeAndSalesModel::connect_operation_signal(
   return m_entries.connect_operation_signal(slot);
 }
 
-void DemoTimeAndSalesModel::transact(
-    const std::function<void ()>& transaction) {
-  m_entries.transact([&] {
-    transaction();
-  });
+void DemoTimeAndSalesModel::start_transaction() {
+  m_entries.start_transaction();
+}
+
+void DemoTimeAndSalesModel::end_transaction() {
+  m_entries.end_transaction();
 }
 
 DemoTimeAndSalesModel::Type DemoTimeAndSalesModel::make_entry(

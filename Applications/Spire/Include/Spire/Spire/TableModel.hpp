@@ -1,13 +1,15 @@
 #ifndef SPIRE_TABLE_MODEL_HPP
 #define SPIRE_TABLE_MODEL_HPP
+#include <concepts>
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionalModel.hpp"
 
 namespace Spire {
 
   /** Base class for a model over a table of values. */
-  class TableModel {
+  class TableModel : public TransactionalModel {
     public:
 
       /** Indicates a row was added to the model. */
@@ -132,6 +134,12 @@ namespace Spire {
       TableModel(const TableModel&) = delete;
       TableModel& operator =(const TableModel&) = delete;
   };
+
+  /** An operation that inserts, removes, or moves a table row. */
+  template<typename T>
+  concept TableRowChange = std::same_as<T, TableModel::AddOperation> ||
+    std::same_as<T, TableModel::RemoveOperation> ||
+    std::same_as<T, TableModel::MoveOperation>;
 
   template<typename T>
   const T& TableModel::get(int row, int column) const {
