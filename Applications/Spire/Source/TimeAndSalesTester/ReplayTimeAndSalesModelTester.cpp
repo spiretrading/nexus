@@ -1,5 +1,7 @@
 #include <atomic>
+#include <condition_variable>
 #include <deque>
+#include <mutex>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
 #include <QApplication>
@@ -29,17 +31,53 @@ namespace {
       "XNYS");
   }
 
+  class QueryGate {
+    public:
+      QueryGate()
+        : m_is_held(false) {}
+
+      void hold() {
+        auto lock = std::lock_guard(m_mutex);
+        m_is_held = true;
+      }
+
+      void release() {
+        {
+          auto lock = std::lock_guard(m_mutex);
+          m_is_held = false;
+        }
+        m_condition.notify_all();
+      }
+
+      void wait() {
+        auto lock = std::unique_lock(m_mutex);
+        m_condition.wait(lock, [&] {
+          return !m_is_held;
+        });
+      }
+
+    private:
+      std::mutex m_mutex;
+      std::condition_variable m_condition;
+      bool m_is_held;
+  };
+
   class TimeAndSalesQueryCountingClient {
     public:
-      TimeAndSalesQueryCountingClient(
-          MarketDataClient client, std::shared_ptr<std::atomic_int> count)
+      TimeAndSalesQueryCountingClient(MarketDataClient client,
+          std::shared_ptr<std::atomic_int> count,
+          std::shared_ptr<QueryGate> gate)
         : m_client(std::move(client)),
-          m_count(std::move(count)) {}
+          m_count(std::move(count)),
+          m_gate(std::move(gate)) {}
 
       template<typename Q, typename T>
       void query(const Q& query, ScopedQueueWriter<T> queue) {
         if constexpr(std::is_same_v<T, SequencedTimeAndSale>) {
           ++*m_count;
+          if(m_gate) {
+            m_gate->wait();
+          }
         }
         m_client.query(query, std::move(queue));
       }
@@ -69,6 +107,7 @@ namespace {
     private:
       MarketDataClient m_client;
       std::shared_ptr<std::atomic_int> m_count;
+      std::shared_ptr<QueryGate> m_gate;
   };
 
   struct Fixture {
@@ -118,10 +157,12 @@ namespace {
     }
 
     std::shared_ptr<ReplayTimeAndSalesModel> make_model(
-        std::shared_ptr<std::atomic_int> count) {
+        std::shared_ptr<std::atomic_int> count,
+        std::shared_ptr<QueryGate> gate = nullptr) {
       return std::make_shared<ReplayTimeAndSalesModel>(TICKER,
         MarketDataClient(std::in_place_type<TimeAndSalesQueryCountingClient>,
-          m_clients.get_market_data_client(), std::move(count)),
+          m_clients.get_market_data_client(), std::move(count),
+          std::move(gate)),
         m_session);
     }
   };
@@ -142,6 +183,22 @@ namespace {
       REQUIRE(timer.isActive());
       QApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
+  }
+
+  void wait_for_back(const TimeAndSalesModel& model, time_duration offset) {
+    wait_until([&] {
+      return model.get_size() != 0 &&
+        model.get(model.get_size() - 1).m_time_and_sale->m_timestamp ==
+          BASE + offset;
+    });
+  }
+
+  std::vector<time_duration> make_offsets(int count) {
+    auto offsets = std::vector<time_duration>();
+    for(auto i = 1; i <= count; ++i) {
+      offsets.push_back(seconds(i));
+    }
+    return offsets;
   }
 
   void wait_for(time_duration duration) {
@@ -226,7 +283,9 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
         operations.push_back(operation);
       }));
     fixture.set_position(duration_from_string("00:00:01.500"));
-    REQUIRE(get_offsets(*model) == std::vector<time_duration>{seconds(1)});
+    wait_until([&] {
+      return get_offsets(*model) == std::vector<time_duration>{seconds(1)};
+    });
     auto removals = 0;
     for(auto& operation : operations) {
       REQUIRE(!std::get_if<TimeAndSalesModel::AddOperation>(&operation));
@@ -276,7 +335,9 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     REQUIRE(model->get_size() == 20);
     auto queries = count->load();
     fixture.set_position(seconds(25));
-    REQUIRE(model->get_size() == 15);
+    wait_until([&] {
+      return model->get_size() == 15;
+    });
     REQUIRE(get_offsets(*model).back() == seconds(25));
     fixture.set_position(seconds(26));
     REQUIRE(model->get_size() == 16);
@@ -531,6 +592,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     for(auto i = 4; i <= 15; ++i) {
       fixture.set_position(seconds(1 + 10 * i));
     }
+    wait_for_back(*model, seconds(151));
     REQUIRE(model->get_size() == 151);
     REQUIRE(*count == queries + 1);
   }
@@ -552,6 +614,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
     auto queries = count->load();
     fixture.set_position(seconds(16));
+    wait_for_back(*model, seconds(16));
     REQUIRE(model->get_size() == 16);
     wait_for(milliseconds(200));
     REQUIRE(*count == queries);
@@ -623,5 +686,40 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
       return model->get_size() == 2;
     });
     REQUIRE(model->get(1).m_indicator == BboIndicator::INSIDE);
+  }
+
+  UI_TEST_CASE(
+      "destroying_a_model_during_a_replay_leaves_other_models_working") {
+    auto fixture = Fixture(seconds(0));
+    fixture.store(make_offsets(60));
+    auto count = std::make_shared<std::atomic_int>(0);
+    auto gate = std::make_shared<QueryGate>();
+    auto releaser = std::shared_ptr<void>(nullptr, [&] (void*) {
+      gate->release();
+    });
+    auto survivor = fixture.make_model();
+    auto playing = fixture.make_model();
+    auto loading = fixture.make_model(count, gate);
+    wait(survivor->load_older(3));
+    wait(playing->load_older(3));
+    wait(loading->load_older(3));
+    fixture.m_session->get_speed()->set(Decimal(100));
+    fixture.m_session->play();
+    fixture.set_position(seconds(20));
+    wait_for_back(*survivor, seconds(20));
+    fixture.set_position(seconds(30));
+    playing = nullptr;
+    fixture.set_position(seconds(40));
+    wait_for_back(*survivor, seconds(40));
+    auto queries = count->load();
+    gate->hold();
+    fixture.m_session->get_speed()->set(Decimal(1));
+    fixture.set_position(seconds(50));
+    wait_until([&] {
+      return *count > queries;
+    });
+    loading = nullptr;
+    gate->release();
+    wait_for_back(*survivor, seconds(50));
   }
 }
