@@ -652,8 +652,8 @@ TableBody::TableBody(
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current_controller(std::move(current), 0, widths->get_size() + 1),
-      m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
+      m_current_controller(std::move(current), 0, widths->get_size()),
+      m_selection_controller(std::move(selection), 0, widths->get_size()),
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
@@ -1425,8 +1425,10 @@ bool TableBody::navigate_previous() {
 }
 
 void TableBody::on_item_activated(TableItem& item) {
-  auto& row_widget = *item.parentWidget();
   auto index = get_index(item);
+  if(index.m_column == m_widths->get_size()) {
+    return;
+  }
   if(m_current_controller.get_current()->get() != index) {
     m_current_controller.get_current()->set(index);
     if(auto current = m_current_controller.get_current()->get()) {

@@ -399,6 +399,55 @@ TEST_SUITE("TableView") {
     REQUIRE(cells->m_previous_reads <= SIZE - 1);
   }
 
+  UI_TEST_CASE("spacer_column_selection") {
+    auto table = std::make_shared<ArrayTableModel>();
+    auto cells = std::make_shared<ArrayListModel<TableIndex>>();
+    auto columns = std::make_shared<ArrayListModel<int>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, std::make_shared<ArrayListModel<int>>(), columns);
+    auto builder = TableViewBuilder(table).set_selection(selection);
+    SUBCASE("no_columns") {
+      auto view = std::unique_ptr<TableView>(builder.make());
+      table->push({});
+      press_key(view->get_body(), Qt::Key_A, Qt::ControlModifier);
+      REQUIRE(columns->get_size() == 0);
+      REQUIRE(cells->get_size() == 0);
+    }
+    SUBCASE("data_columns") {
+      auto view = std::unique_ptr<TableView>(
+        builder.add_header_item("A").add_header_item("B").make());
+      table->push({10, 20});
+      table->push({30, 40});
+      view->resize(320, 240);
+      view->show();
+      QApplication::processEvents();
+      auto& body = view->get_body();
+      SUBCASE("select_all") {
+        press_key(body, Qt::Key_A, Qt::ControlModifier);
+        REQUIRE(columns->get_size() == 2);
+        REQUIRE(cells->get_size() == 4);
+      }
+      SUBCASE("shift_click") {
+        auto click = [&] (int row) {
+          auto item = body.find_item(TableIndex(row, 0));
+          REQUIRE(item);
+          move_cursor(*item, item->rect().center());
+          press_mouse(*item, Qt::LeftButton);
+          release_mouse(*item, Qt::LeftButton);
+        };
+        click(0);
+        press_key(body, Qt::Key_Shift);
+        click(1);
+        release_key(body, Qt::Key_Shift);
+        REQUIRE(cells->get_size() == 3);
+        REQUIRE(std::ranges::contains(std::as_const(*cells), TableIndex(0, 1)));
+      }
+      for(auto& cell : std::as_const(*cells)) {
+        REQUIRE_NOTHROW(table->at(cell.m_row, cell.m_column));
+      }
+    }
+  }
+
   UI_TEST_CASE("select_sorted_row") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({30});

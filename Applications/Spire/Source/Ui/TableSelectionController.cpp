@@ -201,8 +201,10 @@ void TableSelectionController::select_all() {
     select(m_selection->get_row_selection(), current_row, 0, m_row_size);
     select(
       m_selection->get_column_selection(), current_column, 0, m_column_size);
-    select(m_selection->get_item_selection(), current, TableIndex(0, 0),
-      TableIndex(m_row_size, 0));
+    if(m_column_size != 0) {
+      select(m_selection->get_item_selection(), current, TableIndex(0, 0),
+        TableIndex(m_row_size, 0));
+    }
   });
 }
 
