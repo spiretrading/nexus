@@ -1,6 +1,8 @@
 #include <vector>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <QApplication>
+#include <QPointer>
+#include <QScreen>
 #include <QTextEdit>
 #include <QTimer>
 #include "Nexus/TestEnvironment/TestClients.hpp"
@@ -21,6 +23,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace Beam;
@@ -182,6 +185,8 @@ struct ReplayUiTester : QWidget {
   std::vector<std::unique_ptr<Replay>> m_replays;
   std::vector<std::unique_ptr<MemberSession>> m_member_sessions;
   QTextEdit* m_event_log;
+  std::shared_ptr<LocalOptionalIntegerModel> m_window_count;
+  std::vector<QPointer<QWidget>> m_batch_windows;
   int m_replay_count;
   int m_time_and_sale_count;
   int m_book_view_count;
@@ -203,6 +208,7 @@ struct ReplayUiTester : QWidget {
         m_book_view_factory(
           std::make_shared<BookViewPropertiesWindowFactory>()),
         m_attachment_map(m_user_profile.GetReplayAttachmentMap()),
+        m_window_count(std::make_shared<LocalOptionalIntegerModel>(10)),
         m_replay_count(0),
         m_time_and_sale_count(0),
         m_book_view_count(0) {
@@ -244,6 +250,26 @@ struct ReplayUiTester : QWidget {
     button_layout->addWidget(open_replay_button);
     button_layout->addWidget(open_time_and_sales_button);
     layout->addLayout(button_layout);
+    m_window_count->set_minimum(1);
+    m_window_count->set_maximum(200);
+    auto window_count_box = new IntegerBox(m_window_count);
+    window_count_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    window_count_box->setFixedWidth(scale_width(60));
+    auto open_windows_button = make_label_button(tr("Open Windows"));
+    open_windows_button->connect_click_signal(
+      std::bind_front(&ReplayUiTester::open_time_and_sales_windows, this));
+    auto close_windows_button = make_label_button(tr("Close All Windows"));
+    close_windows_button->connect_click_signal(
+      std::bind_front(&ReplayUiTester::close_time_and_sales_windows, this));
+    auto batch_layout = make_hbox_layout();
+    batch_layout->setSpacing(scale_width(8));
+    auto window_count_label = make_label(tr("Number of Windows:"));
+    window_count_label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    batch_layout->addWidget(window_count_label);
+    batch_layout->addWidget(window_count_box);
+    batch_layout->addWidget(open_windows_button);
+    batch_layout->addWidget(close_windows_button);
+    layout->addLayout(batch_layout);
     resize(scale(500, 400));
     auto& roster = *m_user_profile.GetPropertyHubMembers();
     for(auto member : roster) {
@@ -342,6 +368,65 @@ struct ReplayUiTester : QWidget {
       QPoint(x() - window->frameGeometry().width() - scale_width(WINDOW_GAP),
         y()) + QPoint(-offset.width(), offset.height()));
     ++m_book_view_count;
+  }
+
+  void open_time_and_sales_windows() {
+    auto count = m_window_count->get().get_value_or(0);
+    if(count <= 0) {
+      return;
+    }
+    auto replay = [&] () -> Replay* {
+      if(m_replays.empty()) {
+        return nullptr;
+      }
+      return m_replays.back().get();
+    }();
+    auto& infos = get_ticker_infos();
+    auto area = QApplication::primaryScreen()->availableGeometry();
+    for(auto i = 0; i < count; ++i) {
+      auto hub = m_user_profile.MakePropertyHub();
+      if(replay) {
+        m_attachment_map->attach(hub, replay->m_session);
+      }
+      auto window = new TimeAndSalesWindow(Ref(m_user_profile), m_tickers,
+        m_time_and_sales_factory, m_user_profile.GetTimeAndSalesModelBuilder(),
+        hub);
+      window->setAttribute(Qt::WA_DeleteOnClose);
+      hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(
+        infos[i % infos.size()].m_ticker);
+      window->show();
+      auto size = window->frameGeometry().size();
+      auto columns = std::max(1, area.width() / std::max(1, size.width()));
+      auto rows = std::max(1, area.height() / std::max(1, size.height()));
+      auto index = static_cast<int>(m_batch_windows.size());
+      auto slot = index % (columns * rows);
+      auto layer = index / (columns * rows);
+      window->move(area.left() + (slot % columns) * size.width() +
+          scale_width(WINDOW_GAP) * layer,
+        area.top() + (slot / columns) * size.height() +
+          scale_height(WINDOW_GAP) * layer);
+      m_batch_windows.push_back(window);
+    }
+    auto target = [&] {
+      if(replay) {
+        return replay->m_name;
+      }
+      return tr("no replay");
+    }();
+    m_event_log->append(tr("Opened %1 Time and Sales windows attached to %2").
+      arg(count).arg(target));
+  }
+
+  void close_time_and_sales_windows() {
+    auto count = 0;
+    for(auto& window : m_batch_windows) {
+      if(window) {
+        window->close();
+        ++count;
+      }
+    }
+    m_batch_windows.clear();
+    m_event_log->append(tr("Closed %1 Time and Sales windows").arg(count));
   }
 
   void remove_replay(Replay& replay) {

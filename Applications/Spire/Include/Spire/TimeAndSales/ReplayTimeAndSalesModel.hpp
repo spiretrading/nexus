@@ -44,7 +44,8 @@ namespace Spire {
     private:
       enum class SeekState {
         NONE,
-        PENDING,
+        REQUIRED,
+        SCHEDULED,
         QUERYING
       };
       Nexus::Ticker m_ticker;
@@ -63,7 +64,9 @@ namespace Spire {
       int m_read_generation;
       int m_older_generation;
       bool m_is_reading;
+      bool m_is_update_pending;
       SeekState m_seek_state;
+      std::shared_ptr<int> m_lifetime;
       QTimer m_seek_timer;
       QtPromise<void> m_read_promise;
       QtPromise<void> m_seek_promise;
@@ -78,6 +81,7 @@ namespace Spire {
       boost::posix_time::time_duration get_read_ahead() const;
       boost::posix_time::time_duration get_jump_threshold() const;
       int get_low_water() const;
+      bool is_high_speed() const;
       void append(Type entry);
       void pop_front();
       void pop_back();
@@ -90,6 +94,7 @@ namespace Spire {
       void request_seek();
       void query_seek();
       void update_playback();
+      void request_update_playback();
       void start_live();
       void stop_live();
       void on_read(int generation, boost::posix_time::ptime end,

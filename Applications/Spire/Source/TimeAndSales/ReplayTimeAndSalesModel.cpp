@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
+#include <QElapsedTimer>
+#include <QPointer>
 #include "Spire/Playback/ReplaySession.hpp"
 
 using namespace Beam;
@@ -53,6 +55,90 @@ namespace {
       std::move(initial_bbo));
   }
 
+  class UpdateScheduler {
+    public:
+      static UpdateScheduler& get_instance() {
+        static auto instance = UpdateScheduler();
+        return instance;
+      }
+
+      void push_seek(std::function<void ()> task) {
+        m_seeks.push_back(std::move(task));
+        schedule();
+      }
+
+      void push_update(std::function<void ()> task) {
+        m_updates.push_back(std::move(task));
+        schedule();
+      }
+
+    private:
+      static constexpr auto BATCH_GAP_MS = 8;
+      std::deque<std::function<void ()>> m_seeks;
+      std::deque<std::function<void ()>> m_updates;
+      QPointer<QTimer> m_timer;
+      QElapsedTimer m_last_run;
+
+      UpdateScheduler() = default;
+      UpdateScheduler(const UpdateScheduler&) = delete;
+      UpdateScheduler& operator =(const UpdateScheduler&) = delete;
+
+      void schedule() {
+        if(!m_timer) {
+          m_timer = new QTimer(QCoreApplication::instance());
+          m_timer->setSingleShot(true);
+          m_timer->setTimerType(Qt::PreciseTimer);
+          QObject::connect(m_timer, &QTimer::timeout,
+            std::bind_front(&UpdateScheduler::on_timeout, this));
+        }
+        if(m_timer->isActive()) {
+          return;
+        }
+        auto delay = [&] {
+          if(m_last_run.isValid()) {
+            return std::max<int>(0,
+              BATCH_GAP_MS - static_cast<int>(m_last_run.elapsed()));
+          }
+          return 0;
+        }();
+        m_timer->start(delay);
+      }
+
+      std::function<void ()> pop() {
+        auto& tasks = [&] () -> std::deque<std::function<void ()>>& {
+          if(!m_seeks.empty()) {
+            return m_seeks;
+          }
+          return m_updates;
+        }();
+        auto task = std::move(tasks.front());
+        tasks.pop_front();
+        return task;
+      }
+
+      bool is_empty() const {
+        return m_seeks.empty() && m_updates.empty();
+      }
+
+      void on_timeout() {
+        static const auto BATCH_BUDGET_MS = 8;
+        auto budget = QElapsedTimer();
+        budget.start();
+        while(!is_empty()) {
+          pop()();
+          if(budget.elapsed() >= BATCH_BUDGET_MS) {
+            break;
+          }
+        }
+        m_last_run.start();
+        if(is_empty()) {
+          m_timer->stop();
+        } else {
+          m_timer->start(BATCH_GAP_MS);
+        }
+      }
+  };
+
   Beam::Sequence load_next_sequence(
       MarketDataClient& client, const Ticker& ticker, ptime end) {
     auto last = load_time_and_sales(client, ticker,
@@ -77,10 +163,10 @@ ReplayTimeAndSalesModel::ReplayTimeAndSalesModel(Ticker ticker,
       m_read_generation(0),
       m_older_generation(0),
       m_is_reading(false),
-      m_seek_state(SeekState::NONE) {
-  static const auto SEEK_INTERVAL_MS = 100;
+      m_is_update_pending(false),
+      m_seek_state(SeekState::NONE),
+      m_lifetime(std::make_shared<int>(0)) {
   m_seek_timer.setSingleShot(true);
-  m_seek_timer.setInterval(SEEK_INTERVAL_MS);
   QObject::connect(&m_seek_timer, &QTimer::timeout,
     std::bind_front(&ReplayTimeAndSalesModel::on_seek_timeout, this));
   m_timeline_connection = m_session->get_timeline()->connect_update_signal(
@@ -164,6 +250,9 @@ time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
 
 time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
   static const auto JUMP_THRESHOLD = seconds(2);
+  if(m_session->get_state()->get() != PlaybackState::REPLAYING) {
+    return JUMP_THRESHOLD;
+  }
   return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
 }
 
@@ -172,6 +261,12 @@ int ReplayTimeAndSalesModel::get_low_water() const {
   static const auto MAX_LOW_WATER = 5000;
   return std::min<Decimal>(Decimal(MAX_LOW_WATER),
     Decimal(LOW_WATER) * get_speed_factor(*m_session)).convert_to<int>();
+}
+
+bool ReplayTimeAndSalesModel::is_high_speed() const {
+  static const auto HIGH_SPEED = Decimal(10);
+  return m_session->get_state()->get() != PlaybackState::REAL_TIME &&
+    m_session->get_speed()->get() >= HIGH_SPEED;
 }
 
 void ReplayTimeAndSalesModel::append(Type entry) {
@@ -205,12 +300,34 @@ void ReplayTimeAndSalesModel::pop_back() {
 
 void ReplayTimeAndSalesModel::replace(std::vector<Type> entries) {
   ++m_older_generation;
-  m_transaction.transact([&] {
-    while(!m_entries.empty()) {
-      pop_back();
+  auto updates = std::vector<Type>();
+  for(auto& entry : entries) {
+    if(entry.m_time_and_sale->m_timestamp < get_start()) {
+      continue;
     }
-    for(auto& entry : entries) {
-      append(std::move(entry));
+    if(!updates.empty() && entry.m_time_and_sale.get_sequence() <=
+        updates.back().m_time_and_sale.get_sequence()) {
+      continue;
+    }
+    updates.push_back(std::move(entry));
+  }
+  m_transaction.transact([&] {
+    while(get_size() > std::ssize(updates)) {
+      pop_front();
+    }
+    auto offset = static_cast<int>(std::ssize(updates)) - get_size();
+    for(auto i = 0; i < get_size(); ++i) {
+      if(m_entries[i] == updates[offset + i]) {
+        continue;
+      }
+      auto previous = std::move(m_entries[i]);
+      m_entries[i] = std::move(updates[offset + i]);
+      m_transaction.push(
+        UpdateOperation(i, std::move(previous), m_entries[i]));
+    }
+    for(auto i = offset; i > 0; --i) {
+      m_entries.push_front(std::move(updates[i - 1]));
+      m_transaction.push(AddOperation(0));
     }
   });
 }
@@ -245,6 +362,23 @@ bool ReplayTimeAndSalesModel::merge(std::vector<Type>& entries) {
 
 void ReplayTimeAndSalesModel::publish(ptime end) {
   if(m_seek_state != SeekState::NONE) {
+    return;
+  }
+  auto last = std::ranges::upper_bound(m_buffer, end, std::ranges::less(),
+    [] (const auto& entry) {
+      return entry.m_time_and_sale->m_timestamp;
+    });
+  auto backlog = static_cast<int>(last - m_buffer.begin());
+  static const auto PAGE_REPLACE_BACKLOG = 3;
+  if(backlog >= PAGE_REPLACE_BACKLOG && is_high_speed()) {
+    auto entries = std::vector<Type>();
+    auto retained = std::min(get_size(), std::max(0, m_page_size - backlog));
+    entries.insert(entries.end(), m_entries.end() - retained, m_entries.end());
+    entries.insert(entries.end(),
+      std::make_move_iterator(last - std::min(backlog, m_page_size)),
+      std::make_move_iterator(last));
+    m_buffer.erase(m_buffer.begin(), last);
+    replace(std::move(entries));
     return;
   }
   m_transaction.transact([&] {
@@ -332,7 +466,7 @@ void ReplayTimeAndSalesModel::seek() {
   ++m_read_generation;
   m_is_reading = false;
   if(m_seek_state == SeekState::NONE) {
-    m_seek_state = SeekState::PENDING;
+    m_seek_state = SeekState::REQUIRED;
   }
   stop_live();
   m_last_present_read_time = ptime(neg_infin);
@@ -340,14 +474,21 @@ void ReplayTimeAndSalesModel::seek() {
 }
 
 void ReplayTimeAndSalesModel::request_seek() {
-  if(m_seek_state == SeekState::QUERYING || m_seek_timer.isActive()) {
+  if(m_seek_state != SeekState::REQUIRED || m_seek_timer.isActive()) {
     return;
   }
-  query_seek();
+  m_seek_state = SeekState::SCHEDULED;
+  UpdateScheduler::get_instance().push_seek(
+    [this, lifetime = std::weak_ptr(m_lifetime)] {
+      if(lifetime.lock() && m_seek_state == SeekState::SCHEDULED) {
+        query_seek();
+      }
+    });
 }
 
 void ReplayTimeAndSalesModel::query_seek() {
-  m_seek_timer.start();
+  static const auto SEEK_INTERVAL_MS = 100;
+  m_seek_timer.start(SEEK_INTERVAL_MS);
   if(!m_entries.empty() &&
       m_entries.front().m_time_and_sale->m_timestamp <= m_position) {
     auto size = get_size();
@@ -380,17 +521,23 @@ void ReplayTimeAndSalesModel::query_seek() {
     auto chunk = make_chunk(client, ticker, std::move(time_and_sales), none);
     chunk.m_next_sequence = next_sequence;
     return chunk;
-  }, LaunchPolicy::ASYNC).then([=, this] (auto&& result) {
-    auto chunk = optional<Chunk>();
+  }, LaunchPolicy::ASYNC).then([=, this, lifetime = std::weak_ptr(m_lifetime)] (
+      auto&& result) {
+    auto chunk = std::make_shared<optional<Chunk>>();
     try {
-      chunk = std::move(result).get();
+      *chunk = std::move(result).get();
     } catch(const std::exception&) {}
-    if(chunk) {
-      on_seek(generation, position, std::move(chunk->m_entries), chunk->m_bbo,
-        chunk->m_next_sequence);
-    } else {
-      on_seek(generation, position, none, none, none);
-    }
+    UpdateScheduler::get_instance().push_seek([=, this] {
+      if(!lifetime.lock()) {
+        return;
+      }
+      if(*chunk) {
+        on_seek(generation, position, std::move((*chunk)->m_entries),
+          (*chunk)->m_bbo, (*chunk)->m_next_sequence);
+      } else {
+        on_seek(generation, position, none, none, none);
+      }
+    });
   });
 }
 
@@ -406,6 +553,21 @@ void ReplayTimeAndSalesModel::update_playback() {
     publish(m_position);
     read();
   }
+}
+
+void ReplayTimeAndSalesModel::request_update_playback() {
+  if(m_is_update_pending) {
+    return;
+  }
+  m_is_update_pending = true;
+  UpdateScheduler::get_instance().push_update(
+    [this, lifetime = std::weak_ptr(m_lifetime)] {
+      if(!lifetime.lock()) {
+        return;
+      }
+      m_is_update_pending = false;
+      update_playback();
+    });
 }
 
 void ReplayTimeAndSalesModel::start_live() {
@@ -462,7 +624,11 @@ void ReplayTimeAndSalesModel::on_read(int generation, ptime end,
     }
     m_buffer.push_back(std::move(entry));
   }
-  publish(m_position);
+  if(is_high_speed()) {
+    request_update_playback();
+  } else {
+    publish(m_position);
+  }
   if(m_session->get_state()->get() == PlaybackState::REAL_TIME &&
       std::ssize(*entries) != READ_SIZE) {
     start_live();
@@ -475,31 +641,45 @@ void ReplayTimeAndSalesModel::on_seek(int generation, ptime position,
     optional<std::vector<Type>> entries, optional<SequencedBboQuote> bbo,
     optional<Beam::Sequence> next_sequence) {
   if(generation != m_read_generation) {
-    m_seek_state = SeekState::PENDING;
+    if(entries) {
+      auto last = std::ranges::upper_bound(*entries, m_position,
+        std::ranges::less(), [] (const auto& entry) {
+          return entry.m_time_and_sale->m_timestamp;
+        });
+      if(last != entries->begin()) {
+        entries->erase(last, entries->end());
+        replace(std::move(*entries));
+      } else if(!entries->empty() && (m_entries.empty() ||
+          entries->back().m_time_and_sale->m_timestamp <
+            m_entries.back().m_time_and_sale->m_timestamp)) {
+        replace(std::move(*entries));
+      }
+    }
+    m_seek_state = SeekState::REQUIRED;
     request_seek();
     return;
   }
-  m_seek_state = SeekState::NONE;
-  if(entries) {
-    std::erase_if(*entries, [&] (const auto& entry) {
-      return entry.m_time_and_sale->m_timestamp < get_start();
-    });
-    if(!merge(*entries)) {
-      replace(std::move(*entries));
-    }
-    m_bbo = std::move(bbo);
-    m_next_sequence = next_sequence;
-  } else {
-    replace({});
+  if(!entries) {
+    static const auto RETRY_INTERVAL_MS = 1000;
+    m_seek_state = SeekState::REQUIRED;
+    m_seek_timer.start(RETRY_INTERVAL_MS);
+    return;
   }
+  m_seek_state = SeekState::NONE;
+  std::erase_if(*entries, [&] (const auto& entry) {
+    return entry.m_time_and_sale->m_timestamp < get_start();
+  });
+  if(!merge(*entries)) {
+    replace(std::move(*entries));
+  }
+  m_bbo = std::move(bbo);
+  m_next_sequence = next_sequence;
   m_read_end = position;
   update_playback();
 }
 
 void ReplayTimeAndSalesModel::on_seek_timeout() {
-  if(m_seek_state == SeekState::PENDING) {
-    query_seek();
-  }
+  request_seek();
 }
 
 void ReplayTimeAndSalesModel::on_older(
@@ -574,9 +754,17 @@ void ReplayTimeAndSalesModel::on_position(const ptime& position) {
   m_position = position;
   auto is_real_time =
     m_session->get_state()->get() == PlaybackState::REAL_TIME;
+  auto read_end = [&] {
+    if(m_seek_state == SeekState::NONE) {
+      return std::min(previous, m_read_end);
+    }
+    return previous;
+  }();
   if(position < previous ||
-      (!is_real_time && position - previous > get_jump_threshold())) {
+      (!is_real_time && position - read_end > get_jump_threshold())) {
     seek();
+  } else if(is_high_speed()) {
+    request_update_playback();
   } else {
     update_playback();
   }
@@ -587,5 +775,9 @@ void ReplayTimeAndSalesModel::on_speed(const Decimal& speed) {
 }
 
 void ReplayTimeAndSalesModel::on_state(PlaybackState state) {
-  update_playback();
+  if(is_high_speed()) {
+    request_update_playback();
+  } else {
+    update_playback();
+  }
 }
