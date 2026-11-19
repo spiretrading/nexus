@@ -288,6 +288,55 @@ TEST_SUITE("TableView") {
     }
   }
 
+  UI_TEST_CASE("selection_on_batched_row_removals") {
+    const auto SELECTED = 4;
+    const auto REMOVED = 8;
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != SELECTED + REMOVED; ++i) {
+      table->push({i});
+    }
+    auto rows = std::make_shared<CountingSelection<int>>();
+    auto cells = std::make_shared<CountingSelection<TableIndex>>();
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+      set_selection(selection).make());
+    for(auto i = 0; i != SELECTED; ++i) {
+      rows->push(i);
+      cells->push(TableIndex(i, 0));
+    }
+    auto& displayed = *view->get_body().get_selection();
+    SUBCASE("unselected_rows") {
+      rows->m_previous_reads = 0;
+      cells->m_previous_reads = 0;
+      table->transact([&] {
+        for(auto i = 0; i != REMOVED; ++i) {
+          table->remove(table->get_row_size() - 1);
+        }
+      });
+      auto max_reads = (REMOVED + 1) * (SELECTED - 1);
+      REQUIRE(rows->m_previous_reads <= max_reads);
+      REQUIRE(cells->m_previous_reads <= max_reads);
+      for(auto i = 0; i != SELECTED; ++i) {
+        auto row = SELECTED - i - 1;
+        REQUIRE(displayed.get_row_selection()->get(i) == row);
+        REQUIRE(displayed.get_item_selection()->get(i) == TableIndex(row, 0));
+      }
+    }
+    SUBCASE("selected_row") {
+      table->transact([&] {
+        table->remove(0);
+        REQUIRE(displayed.get_row_selection()->get_size() == SELECTED - 1);
+        REQUIRE(displayed.get_item_selection()->get_size() == SELECTED - 1);
+        displayed.get_row_selection()->remove(0);
+        displayed.get_item_selection()->remove(0);
+      });
+      REQUIRE(rows->get(0) == 1);
+      REQUIRE(cells->get(0) == TableIndex(1, 0));
+    }
+  }
+
   UI_TEST_CASE("sort_selection") {
     const auto SIZE = 64;
     auto table = std::make_shared<ArrayTableModel>();

@@ -103,12 +103,22 @@ namespace Spire {
   void TableView::DisplayedSelection<T>::track(auto refresh) {
     auto& source = *m_filtered->get_source();
     m_source_connection = source.connect_operation_signal(
-      [=, this] (const auto& operation) {
+      [=, this, is_transacting = false] (
+          const TableModel::Operation& operation) mutable {
         auto refresh_selection = [&] {
           m_is_refresh_pending = false;
           refresh(*this);
         };
         visit(operation,
+          [&] (const TableModel::StartTransaction&) {
+            is_transacting = true;
+          },
+          [&] (const TableModel::EndTransaction&) {
+            is_transacting = false;
+            if(m_is_refresh_pending) {
+              refresh_selection();
+            }
+          },
           [&] (const TableModel::AddOperation& add) {
             if(m_is_refresh_pending ||
                 m_filtered->index_from_source(add.m_index) == -1) {
@@ -121,10 +131,17 @@ namespace Spire {
               refresh_selection();
             }
           },
-          [&] (const TableRowChange auto&) { refresh_selection(); });
+          [&] (const TableRowChange auto&) {
+            if(is_transacting && m_source->get_size() == this->get_size()) {
+              m_is_refresh_pending = true;
+            } else {
+              refresh_selection();
+            }
+          });
       });
     m_view_connection = m_sorted->connect_operation_signal(
-      [=, this, is_transacting = false] (const auto& operation) mutable {
+      [=, this, is_transacting = false] (
+          const TableModel::Operation& operation) mutable {
         visit(operation,
           [&] (const TableModel::StartTransaction&) {
             is_transacting = true;
