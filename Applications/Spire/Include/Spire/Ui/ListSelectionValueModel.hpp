@@ -70,40 +70,33 @@ namespace Spire {
   template<typename T>
   void ListSelectionValueModel<T>::on_operation(
       const typename ListModel<int>::Operation& operation) {
-    this->m_transaction.transact([&] {
-      visit(operation,
-        [&] (const typename ListModel<int>::AddOperation& operation) {
-          m_selection_values.insert(
-            m_selection_values.begin() + operation.m_index,
-            get(operation.m_index));
-          this->m_transaction.push(AddOperation(operation.m_index));
-        },
-        [&] (const typename ListModel<int>::PreRemoveOperation& operation) {
-          this->m_transaction.push(PreRemoveOperation(operation.m_index));
-        },
-        [&] (const typename ListModel<int>::RemoveOperation& operation) {
-          m_selection_values.erase(
-            m_selection_values.begin() + operation.m_index);
-          this->m_transaction.push(RemoveOperation(operation.m_index));
-        },
-        [&] (const typename ListModel<int>::MoveOperation& operation) {
-          if(operation.m_source < operation.m_destination) {
-            std::rotate(m_selection_values.rend() - operation.m_source - 1,
-              m_selection_values.rend() - operation.m_source,
-              m_selection_values.rend() - operation.m_destination);
-          } else {
-            std::rotate(m_selection_values.begin() + operation.m_source,
-              m_selection_values.begin() + operation.m_source + 1,
-              m_selection_values.begin() + operation.m_destination + 1);
-          }
-          this->m_transaction.push(operation);
-        },
-        [&] (const typename ListModel<int>::UpdateOperation& operation) {
-          this->m_transaction.push(UpdateOperation(operation.m_index,
-            m_selection_values[operation.m_index], get(operation.m_index)));
-          m_selection_values[operation.m_index] = get(operation.m_index);
-        });
-    });
+    visit(operation,
+      [&] (const AddOperation& operation) {
+        m_selection_values.insert(
+          m_selection_values.begin() + operation.m_index,
+          get(operation.m_index));
+        this->m_transaction.push(operation);
+      },
+      [&] (const RemoveOperation& operation) {
+        m_selection_values.erase(
+          m_selection_values.begin() + operation.m_index);
+        this->m_transaction.push(operation);
+      },
+      [&] (const MoveOperation& operation) {
+        move_element(
+          m_selection_values, operation.m_source, operation.m_destination);
+        this->m_transaction.push(operation);
+      },
+      [&] (const ListModel<int>::UpdateOperation& operation) {
+        auto update = UpdateOperation(operation.m_index,
+          m_selection_values[operation.m_index], get(operation.m_index));
+        m_selection_values[operation.m_index] = update.get_value();
+        this->m_transaction.push(update);
+      },
+      [&] (const std::convertible_to<typename ListModel<Type>::Operation>
+          auto& operation) {
+        this->m_transaction.push(operation);
+      });
   }
 }
 
