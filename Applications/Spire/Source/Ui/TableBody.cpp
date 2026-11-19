@@ -991,8 +991,8 @@ int TableBody::estimate_row_height() const {
   if(m_table->get_row_size() == 0) {
     return 0;
   }
-  auto layout_height =
-    height() - m_styles.m_padding.top() - m_styles.m_padding.bottom();
+  auto layout_height = sizeHint().height() - m_styles.m_padding.top() -
+    m_styles.m_padding.bottom();
   return (layout_height + m_styles.m_vertical_spacing) /
     m_table->get_row_size();
 }
