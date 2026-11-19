@@ -30,7 +30,8 @@ TEST_SUITE("ArrayValueToListModel") {
     auto model = ArrayValueToListModel(source);
     model.transact([&] {
       model.set(0, 10);
-      model.set(2, 30);
+      model.transact([&] { model.set(2, 30); });
+      REQUIRE(source->get() == std::vector{1, 2, 3});
     });
     REQUIRE(source->get() == std::vector{10, 2, 30});
   }

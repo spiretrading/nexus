@@ -2,9 +2,9 @@
 #define SPIRE_TABLE_TO_LIST_MODEL_HPP
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -34,7 +34,7 @@ namespace Spire {
   };
 
   /** Provides a list view over a table model. */
-  class TableToListModel : public ListModel<RowView> {
+  class TableToListModel : public TransactionLogModel<ListModel<RowView>> {
     public:
 
       /**
@@ -51,16 +51,10 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<TableModel> m_table;
       boost::signals2::scoped_connection m_connection;
-      ListModelTransactionLog<RowView> m_transaction;
       mutable boost::optional<RowView> m_last;
       const TableModel::UpdateOperation* m_update;
 

@@ -4,10 +4,10 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -79,13 +79,13 @@ namespace {
   }
 }
 
-class CalendarListModel : public ListModel<date> {
+class CalendarListModel : public TransactionLogModel<ListModel<date>> {
   public:
     CalendarListModel(std::shared_ptr<DateModel> current)
         : m_current(std::move(current)),
           m_current_connection(m_current->connect_update_signal(
-            [=] (auto current) { on_current(current); })),
-          m_transaction(CALENDAR_DAY_COUNT) {
+            [=] (auto current) { on_current(current); })) {
+      m_transaction.set_size(CALENDAR_DAY_COUNT);
       on_current(m_current->get());
     }
 
@@ -101,21 +101,10 @@ class CalendarListModel : public ListModel<date> {
       return m_dates[index];
     }
 
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
-  protected:
-    void transact(const std::function<void ()>& transaction) override {
-      m_transaction.transact(transaction);
-    }
-
   private:
     std::shared_ptr<DateModel> m_current;
     scoped_connection m_current_connection;
     std::array<date, CALENDAR_DAY_COUNT> m_dates;
-    ListModelTransactionLog<date> m_transaction;
 
     void on_current(date current) {
       auto previous = m_dates;

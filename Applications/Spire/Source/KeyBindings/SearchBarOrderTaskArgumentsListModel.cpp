@@ -58,11 +58,12 @@ connection SearchBarOrderTaskArgumentsListModel::connect_operation_signal(
   return m_filtered_list.connect_operation_signal(slot);
 }
 
-void SearchBarOrderTaskArgumentsListModel::transact(
-    const std::function<void ()>& transaction) {
-  m_filtered_list.transact([&] {
-    transaction();
-  });
+void SearchBarOrderTaskArgumentsListModel::start_transaction() {
+  m_filtered_list.start_transaction();
+}
+
+void SearchBarOrderTaskArgumentsListModel::end_transaction() {
+  m_filtered_list.end_transaction();
 }
 
 FilteredListModel<OrderTaskArguments>::Filter

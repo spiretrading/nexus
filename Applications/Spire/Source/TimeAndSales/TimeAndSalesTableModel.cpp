@@ -40,15 +40,16 @@ namespace {
 }
 
 TimeAndSalesTableModel::TimeAndSalesTableModel(
-  std::shared_ptr<TimeAndSalesModel> model)
-  : m_model(std::move(model)),
-    m_source(
-      std::make_shared<ProxyListModel<TimeAndSalesModel::Type>>(m_model)),
-    m_table(make_table(m_source)),
-    m_is_loading(false),
-    m_transaction(get_row_size()),
-    m_connection(m_table->connect_operation_signal(
-      std::bind_front(&TimeAndSalesTableModel::on_operation, this))) {}
+    std::shared_ptr<TimeAndSalesModel> model)
+    : m_model(std::move(model)),
+      m_source(
+        std::make_shared<ProxyListModel<TimeAndSalesModel::Type>>(m_model)),
+      m_table(make_table(m_source)),
+      m_is_loading(false) {
+  m_transaction.set_size(get_row_size());
+  m_connection = m_table->connect_operation_signal(
+    std::bind_front(&TimeAndSalesTableModel::on_operation, this));
+}
 
 const std::shared_ptr<TimeAndSalesModel>&
     TimeAndSalesTableModel::get_model() const {
@@ -110,11 +111,6 @@ connection TimeAndSalesTableModel::connect_begin_loading_signal(
 connection TimeAndSalesTableModel::connect_end_loading_signal(
     const EndLoadingSignal::slot_type& slot) const {
   return m_end_loading_signal.connect(slot);
-}
-
-connection TimeAndSalesTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 void TimeAndSalesTableModel::on_operation(const Operation& operation) {

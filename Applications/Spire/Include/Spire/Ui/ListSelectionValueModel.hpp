@@ -2,7 +2,7 @@
 #define SPIRE_LIST_SELECTION_VALUE_MODEL_HPP
 #include <memory>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -11,7 +11,7 @@ namespace Spire {
    * @param <T> The type of model being selected from.
    */
   template<typename T>
-  class ListSelectionValueModel : public ListModel<T> {
+  class ListSelectionValueModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = typename ListModel<T>::OperationSignal;
@@ -33,19 +33,10 @@ namespace Spire {
 
       const Type& get(int index) const override;
 
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
-
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& f) override;
-
     private:
       std::shared_ptr<ListModel<Type>> m_values;
       std::shared_ptr<ListModel<int>> m_selection;
       std::vector<Type> m_selection_values;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const typename ListModel<int>::Operation& operation);
@@ -56,10 +47,10 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> values,
       std::shared_ptr<ListModel<int>> selection)
       : m_values(std::move(values)),
-        m_selection(std::move(selection)),
-        m_transaction(get_size()),
-        m_connection(m_selection->connect_operation_signal(
-          std::bind_front(&ListSelectionValueModel::on_operation, this))) {
+        m_selection(std::move(selection)) {
+    this->m_transaction.set_size(get_size());
+    m_connection = m_selection->connect_operation_signal(
+      std::bind_front(&ListSelectionValueModel::on_operation, this));
     for(auto i = 0; i != get_size(); ++i) {
       m_selection_values.push_back(get(i));
     }
@@ -77,35 +68,23 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection
-      ListSelectionValueModel<T>::connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void ListSelectionValueModel<T>::transact(const std::function<void ()>& f) {
-    f();
-  }
-
-  template<typename T>
   void ListSelectionValueModel<T>::on_operation(
       const typename ListModel<int>::Operation& operation) {
-    m_transaction.transact([&] {
+    this->m_transaction.transact([&] {
       visit(operation,
         [&] (const typename ListModel<int>::AddOperation& operation) {
           m_selection_values.insert(
             m_selection_values.begin() + operation.m_index,
             get(operation.m_index));
-          m_transaction.push(AddOperation(operation.m_index));
+          this->m_transaction.push(AddOperation(operation.m_index));
         },
         [&] (const typename ListModel<int>::PreRemoveOperation& operation) {
-          m_transaction.push(PreRemoveOperation(operation.m_index));
+          this->m_transaction.push(PreRemoveOperation(operation.m_index));
         },
         [&] (const typename ListModel<int>::RemoveOperation& operation) {
           m_selection_values.erase(
             m_selection_values.begin() + operation.m_index);
-          m_transaction.push(RemoveOperation(operation.m_index));
+          this->m_transaction.push(RemoveOperation(operation.m_index));
         },
         [&] (const typename ListModel<int>::MoveOperation& operation) {
           if(operation.m_source < operation.m_destination) {
@@ -117,10 +96,10 @@ namespace Spire {
               m_selection_values.begin() + operation.m_source + 1,
               m_selection_values.begin() + operation.m_destination + 1);
           }
-          m_transaction.push(operation);
+          this->m_transaction.push(operation);
         },
         [&] (const typename ListModel<int>::UpdateOperation& operation) {
-          m_transaction.push(UpdateOperation(operation.m_index,
+          this->m_transaction.push(UpdateOperation(operation.m_index,
             m_selection_values[operation.m_index], get(operation.m_index)));
           m_selection_values[operation.m_index] = get(operation.m_index);
         });

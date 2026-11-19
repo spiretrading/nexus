@@ -4,7 +4,7 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -13,7 +13,7 @@ namespace Spire {
    * @param <T> The type of list elements being viewed.
    */
   template<typename T>
-  class ListToTableModel : public TableModel {
+  class ListToTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /** The type of list elements being viewed. */
@@ -47,14 +47,11 @@ namespace Spire {
       QValidator::State
         set(int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<ListModel<Type>> m_list;
       int m_columns;
       Accessor m_accessor;
-      TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const typename ListModel<Type>::Operation& operation);
@@ -205,13 +202,14 @@ namespace Spire {
 
   template<typename T>
   ListToTableModel<T>::ListToTableModel(
-    std::shared_ptr<ListModel<Type>> list, int columns, Accessor accessor)
-    : m_list(std::move(list)),
-      m_columns(columns),
-      m_accessor(std::move(accessor)),
-      m_transaction(get_row_size()),
-      m_connection(m_list->connect_operation_signal(
-        std::bind_front(&ListToTableModel::on_operation, this))) {}
+      std::shared_ptr<ListModel<Type>> list, int columns, Accessor accessor)
+      : m_list(std::move(list)),
+        m_columns(columns),
+        m_accessor(std::move(accessor)) {
+    m_transaction.set_size(get_row_size());
+    m_connection = m_list->connect_operation_signal(
+      std::bind_front(&ListToTableModel::on_operation, this));
+  }
 
   template<typename T>
   const std::shared_ptr<ListModel<typename ListToTableModel<T>::Type>>&
@@ -254,12 +252,6 @@ namespace Spire {
   template<typename T>
   QValidator::State ListToTableModel<T>::remove(int row) {
     return m_list->remove(row);
-  }
-
-  template<typename T>
-  boost::signals2::connection ListToTableModel<T>::connect_operation_signal(
-      const OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
   }
 
   template<typename T>

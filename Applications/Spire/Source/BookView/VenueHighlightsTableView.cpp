@@ -5,6 +5,7 @@
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
@@ -138,17 +139,16 @@ namespace {
     }
   };
 
-  struct ExpandableTableModel : TableModel {
+  struct ExpandableTableModel : TransactionLogModel<TableModel> {
     std::shared_ptr<VenueHighlightListToTableModel> m_source;
     std::shared_ptr<ArrayListModel<Venue>> m_venue_list;
     std::vector<std::shared_ptr<SortedListModel<Venue>>> m_available_venues;
-    TableModelTransactionLog m_transaction;
     scoped_connection m_connection;
 
     ExpandableTableModel(std::shared_ptr<VenueHighlightListToTableModel> source)
         : m_source(std::move(source)),
-          m_venue_list(std::make_shared<ArrayListModel<Venue>>()),
-          m_transaction(get_row_size()) {
+          m_venue_list(std::make_shared<ArrayListModel<Venue>>()) {
+      m_transaction.set_size(get_row_size());
       for(auto& venue : VENUES.get_entries()) {
         m_venue_list->push(venue.m_venue);
       }
@@ -217,11 +217,6 @@ namespace {
         return QValidator::Invalid;
       }
       throw std::out_of_range("The row is out of range.");
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const {
-      return m_transaction.connect_operation_signal(slot);
     }
 
     void add_available_venues(int row) {

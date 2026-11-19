@@ -3,7 +3,7 @@
 #include <vector>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
@@ -13,7 +13,7 @@ namespace Spire {
    * @param <T> The type of list elements.
    */
   template<typename T>
-  class ArrayValueToListModel : public ListModel<T> {
+  class ArrayValueToListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using Operation = typename ListModel<T>::Operation;
@@ -33,15 +33,13 @@ namespace Spire {
       QValidator::State set(int index, const Type& value) override;
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
-      void transact(const std::function<void()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
       std::shared_ptr<ValueModel<std::vector<Type>>> m_source;
       std::vector<Type> m_data;
-      bool m_is_transaction;
-      ListModelTransactionLog<Type> m_transaction;
+      int m_transaction_depth;
       boost::signals2::scoped_connection m_connection;
 
       void update_source();
@@ -54,13 +52,14 @@ namespace Spire {
 
   template<typename T>
   ArrayValueToListModel<T>::ArrayValueToListModel(
-    std::shared_ptr<ValueModel<std::vector<Type>>> source)
-    : m_source(std::move(source)),
-      m_data(m_source->get()),
-      m_is_transaction(false),
-      m_transaction(get_size()),
-      m_connection(m_source->connect_update_signal(
-        std::bind_front(&ArrayValueToListModel::on_update, this))) {}
+      std::shared_ptr<ValueModel<std::vector<Type>>> source)
+      : m_source(std::move(source)),
+        m_data(m_source->get()),
+        m_transaction_depth(0) {
+    this->m_transaction.set_size(get_size());
+    m_connection = m_source->connect_update_signal(
+      std::bind_front(&ArrayValueToListModel::on_update, this));
+  }
 
   template<typename T>
   int ArrayValueToListModel<T>::get_size() const {
@@ -85,7 +84,8 @@ namespace Spire {
     auto previous = m_data[index];
     m_data[index] = value;
     update_source();
-    m_transaction.push(UpdateOperation(index, std::move(previous), value));
+    this->m_transaction.push(
+      UpdateOperation(index, std::move(previous), value));
     return QValidator::Acceptable;
   }
 
@@ -97,7 +97,7 @@ namespace Spire {
     }
     m_data.insert(std::next(m_data.begin(), index), value);
     update_source();
-    m_transaction.push(AddOperation(index));
+    this->m_transaction.push(AddOperation(index));
     return QValidator::Acceptable;
   }
 
@@ -106,50 +106,46 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    m_transaction.transact([&] {
-      m_transaction.push(PreRemoveOperation(index));
+    this->m_transaction.transact([&] {
+      this->m_transaction.push(PreRemoveOperation(index));
       m_data.erase(std::next(m_data.begin(), index));
       update_source();
-      m_transaction.push(RemoveOperation(index));
+      this->m_transaction.push(RemoveOperation(index));
     });
     return QValidator::Acceptable;
   }
 
   template<typename T>
-  boost::signals2::connection
-      ArrayValueToListModel<T>::connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
+  void ArrayValueToListModel<T>::start_transaction() {
+    ++m_transaction_depth;
+    TransactionLogModel<ListModel<T>>::start_transaction();
   }
 
   template<typename T>
-  void ArrayValueToListModel<T>::transact(
-      const std::function<void()>& transaction) {
-    m_is_transaction = true;
-    auto end = [&] {
-      auto blocker = boost::signals2::shared_connection_block(m_connection);
-      m_source->set(m_data);
-      m_is_transaction = false;
+  void ArrayValueToListModel<T>::end_transaction() {
+    auto flush = [&] {
+      --m_transaction_depth;
+      update_source();
     };
     try {
-      m_transaction.transact(transaction);
+      TransactionLogModel<ListModel<T>>::end_transaction();
     } catch(...) {
-      end();
+      flush();
       throw;
     }
-    end();
+    flush();
   }
 
   template<typename T>
   void ArrayValueToListModel<T>::update_source() {
-    if(m_is_transaction) {
+    if(m_transaction_depth != 0) {
       return;
     }
     auto blocker = boost::signals2::shared_connection_block(m_connection);
     try {
       m_source->set(m_data);
     } catch(...) {
-      m_transaction.set_size(get_size());
+      this->m_transaction.set_size(get_size());
       throw;
     }
   }
@@ -159,17 +155,17 @@ namespace Spire {
     if(m_data == data) {
       return;
     }
-    m_transaction.transact([&] {
+    this->m_transaction.transact([&] {
       auto size = get_size();
       for(auto i = size - 1; i >= 0; --i) {
-        m_transaction.push(PreRemoveOperation(i));
+        this->m_transaction.push(PreRemoveOperation(i));
         m_data.erase(std::next(m_data.begin(), i));
-        m_transaction.push(RemoveOperation(i));
+        this->m_transaction.push(RemoveOperation(i));
       }
       for(const auto& value : data) {
         auto index = get_size();
         m_data.insert(std::next(m_data.begin(), index), value);
-        m_transaction.push(AddOperation(index));
+        this->m_transaction.push(AddOperation(index));
       }
     });
   }

@@ -2,7 +2,6 @@
 #include <algorithm>
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -44,14 +43,42 @@ const MergedBookEntryListModel::Type&
   return m_entries[index];
 }
 
-connection MergedBookEntryListModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
-}
-
-void MergedBookEntryListModel::transact(
-    const std::function<void ()>& transaction) {
-  m_transaction.transact(transaction);
+template<typename T>
+void MergedBookEntryListModel::apply(const ListModel<T>::Operation& operation,
+    const ListModel<T>& source, int offset) {
+  visit(operation,
+    [&] (ListModel<T>::StartTransaction) {
+      m_transaction.start();
+    },
+    [&] (ListModel<T>::EndTransaction) {
+      m_transaction.end();
+    },
+    [&] (const ListModel<T>::AddOperation& operation) {
+      auto index = offset + operation.m_index;
+      m_entries.insert(
+        std::next(m_entries.begin(), index), source.get(operation.m_index));
+      m_transaction.push(AddOperation(index));
+    },
+    [&] (const ListModel<T>::PreRemoveOperation& operation) {
+      m_transaction.push(PreRemoveOperation(offset + operation.m_index));
+    },
+    [&] (const ListModel<T>::RemoveOperation& operation) {
+      auto index = offset + operation.m_index;
+      m_entries.erase(std::next(m_entries.begin(), index));
+      m_transaction.push(RemoveOperation(index));
+    },
+    [&] (const ListModel<T>::MoveOperation& operation) {
+      auto source_index = offset + operation.m_source;
+      auto destination = offset + operation.m_destination;
+      move_book_entry(m_entries, source_index, destination);
+      m_transaction.push(MoveOperation(source_index, destination));
+    },
+    [&] (const ListModel<T>::UpdateOperation& operation) {
+      auto index = offset + operation.m_index;
+      m_entries[index] = operation.get_value();
+      m_transaction.push(UpdateOperation(
+        index, operation.get_previous(), operation.get_value()));
+    });
 }
 
 void MergedBookEntryListModel::on_book_quote_operation(

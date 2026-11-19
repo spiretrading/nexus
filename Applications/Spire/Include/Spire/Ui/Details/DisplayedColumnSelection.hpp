@@ -17,12 +17,12 @@ namespace Spire {
       QValidator::State remove(int index) override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
       std::shared_ptr<TableSelectionModel> m_selection;
+      int m_inactive_depth;
       boost::signals2::connection m_tracking_connection;
   };
 }

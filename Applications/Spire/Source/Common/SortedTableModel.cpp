@@ -5,7 +5,6 @@
 
 using namespace boost::iterators;
 using namespace boost::posix_time;
-using namespace boost::signals2;
 using namespace Spire;
 
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
@@ -38,8 +37,8 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
     std::vector<ColumnOrder> order, Comparator comparator)
     : m_source(std::move(source)),
       m_translation(m_source),
-      m_comparator(std::move(comparator)),
-      m_transaction(get_row_size()) {
+      m_comparator(std::move(comparator)) {
+  m_transaction.set_size(get_row_size());
   set_column_order(order);
   m_source_connection = m_translation.connect_operation_signal(
     std::bind_front(&SortedTableModel::on_operation, this));
@@ -90,11 +89,6 @@ QValidator::State
 
 QValidator::State SortedTableModel::remove(int row) {
   return m_translation.remove(row);
-}
-
-connection SortedTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 bool SortedTableModel::is_sorted(int column) const {

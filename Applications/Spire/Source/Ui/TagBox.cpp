@@ -4,9 +4,9 @@
 #include <QTimer>
 #include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
@@ -105,16 +105,16 @@ namespace {
   }
 }
 
-struct AnyTagBox::PartialListModel : public AnyListModel {
+struct AnyTagBox::PartialListModel : public TransactionLogModel<AnyListModel> {
   std::shared_ptr<AnyListModel> m_source;
-  ModelTransactionLog<AnyListModel> m_transaction;
   scoped_connection m_source_connection;
 
   explicit PartialListModel(std::shared_ptr<AnyListModel> source)
-    : m_source(std::move(source)),
-      m_transaction(get_size()),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&PartialListModel::on_operation, this))) {}
+      : m_source(std::move(source)) {
+    m_transaction.set_size(get_size());
+    m_source_connection = m_source->connect_operation_signal(
+      std::bind_front(&PartialListModel::on_operation, this));
+  }
 
   int get_size() const override {
     return m_source->get_size() + 1;
@@ -147,15 +147,6 @@ struct AnyTagBox::PartialListModel : public AnyListModel {
 
   QValidator::State remove(int index) override {
     return QValidator::State::Invalid;
-  }
-
-  connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const override {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  void transact(const std::function<void ()>& transaction) override {
-    m_transaction.transact(transaction);
   }
 
   void on_operation(const Operation& operation) {

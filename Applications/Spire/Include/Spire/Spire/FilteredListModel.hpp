@@ -3,13 +3,13 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
   /** Implements a ListModel that filters values out of a source list. */
   template<typename T>
-  class FilteredListModel : public ListModel<T> {
+  class FilteredListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using Operation = typename ListModel<T>::Operation;
@@ -64,14 +64,8 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       struct RemoveEntry {
@@ -84,7 +78,6 @@ namespace Spire {
       int m_filter_count;
       boost::optional<RemoveEntry> m_remove_entry;
       std::vector<int> m_filtered_data;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
@@ -107,7 +100,7 @@ namespace Spire {
         m_filtered_data.push_back(i);
       }
     }
-    m_transaction.set_size(get_size());
+    this->m_transaction.set_size(get_size());
     m_source_connection = m_source->connect_operation_signal(
       std::bind_front(&FilteredListModel::on_operation, this));
   }
@@ -119,14 +112,14 @@ namespace Spire {
     m_filter = filter;
     auto source_index = 0;
     auto filtered_index = 0;
-    m_transaction.transact([&] {
+    this->m_transaction.transact([&] {
       while(source_index != m_source->get_size() &&
           filtered_index != static_cast<int>(m_filtered_data.size())) {
         if(!m_filter(*m_source, source_index)) {
           if(m_filtered_data[filtered_index] != source_index) {
             m_filtered_data.insert(
               m_filtered_data.begin() + filtered_index, source_index);
-            m_transaction.push(AddOperation(filtered_index));
+            this->m_transaction.push(AddOperation(filtered_index));
             if(count != m_filter_count) {
               return;
             }
@@ -134,12 +127,12 @@ namespace Spire {
           ++filtered_index;
         } else {
           if(m_filtered_data[filtered_index] == source_index) {
-            m_transaction.push(PreRemoveOperation(filtered_index));
+            this->m_transaction.push(PreRemoveOperation(filtered_index));
             if(count != m_filter_count) {
               return;
             }
             m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-            m_transaction.push(RemoveOperation(filtered_index));
+            this->m_transaction.push(RemoveOperation(filtered_index));
             if(count != m_filter_count) {
               return;
             }
@@ -148,12 +141,12 @@ namespace Spire {
         ++source_index;
       }
       while(filtered_index != static_cast<int>(m_filtered_data.size())) {
-        m_transaction.push(PreRemoveOperation(filtered_index));
+        this->m_transaction.push(PreRemoveOperation(filtered_index));
         if(count != m_filter_count) {
           return;
         }
         m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-        m_transaction.push(RemoveOperation(filtered_index));
+        this->m_transaction.push(RemoveOperation(filtered_index));
         if(count != m_filter_count) {
           return;
         }
@@ -161,7 +154,7 @@ namespace Spire {
       while(source_index != m_source->get_size()) {
         if(!m_filter(*m_source, source_index)) {
           m_filtered_data.push_back(source_index);
-          m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+          this->m_transaction.push(AddOperation(m_filtered_data.size() - 1));
           if(count != m_filter_count) {
             return;
           }
@@ -232,18 +225,6 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection FilteredListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void FilteredListModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
-  }
-
-  template<typename T>
   std::tuple<bool, std::vector<int>::iterator>
       FilteredListModel<T>::find(int index) {
     auto i = std::lower_bound(
@@ -258,23 +239,23 @@ namespace Spire {
   void FilteredListModel<T>::on_operation(const Operation& operation) {
     visit(operation,
       [&] (const StartTransaction&) {
-        m_transaction.start();
+        this->m_transaction.start();
       },
       [&] (const EndTransaction&) {
-        m_transaction.end();
+        this->m_transaction.end();
       },
       [&] (const AddOperation& operation) {
         if(operation.m_index >= m_source->get_size() - 1) {
           if(!m_filter(*m_source, operation.m_index)) {
             m_filtered_data.push_back(operation.m_index);
-            m_transaction.push(
+            this->m_transaction.push(
               AddOperation(static_cast<int>(m_filtered_data.size()) - 1));
           }
         } else {
           auto i = std::get<1>(find(operation.m_index));
           std::for_each(i, m_filtered_data.end(), [] (int& value) { ++value; });
           if(!m_filter(*m_source, operation.m_index)) {
-            m_transaction.push(AddOperation(
+            this->m_transaction.push(AddOperation(
               static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
                 m_filtered_data.begin())));
           }
@@ -298,7 +279,7 @@ namespace Spire {
             }
           }
           *destination = operation.m_destination;
-          m_transaction.push(MoveOperation(
+          this->m_transaction.push(MoveOperation(
             static_cast<int>(source - m_filtered_data.begin()),
             static_cast<int>(destination - m_filtered_data.begin())));
         } else if(operation.m_source < operation.m_destination) {
@@ -319,7 +300,7 @@ namespace Spire {
             m_remove_entry->m_iterator - m_filtered_data.begin());
           ++m_filter_count;
           auto count = m_filter_count;
-          m_transaction.push(PreRemoveOperation(m_remove_entry->m_index));
+          this->m_transaction.push(PreRemoveOperation(m_remove_entry->m_index));
           if(count != m_filter_count) {
             m_remove_entry = boost::none;
           }
@@ -333,7 +314,7 @@ namespace Spire {
           [] (int& value) { --value; });
         if(m_remove_entry->m_is_found) {
           m_filtered_data.erase(m_remove_entry->m_iterator);
-          m_transaction.push(RemoveOperation(m_remove_entry->m_index));
+          this->m_transaction.push(RemoveOperation(m_remove_entry->m_index));
         }
         m_remove_entry = boost::none;
       },
@@ -341,24 +322,24 @@ namespace Spire {
         auto [is_found, i] = find(operation.m_index);
         if(!m_filter(*m_source, operation.m_index)) {
           if(is_found) {
-            m_transaction.push(UpdateOperation(
+            this->m_transaction.push(UpdateOperation(
               static_cast<int>(i - m_filtered_data.begin()),
               operation.get_previous(), operation.get_value()));
           } else {
             auto filtered_index = static_cast<int>(m_filtered_data.insert(
               i, operation.m_index) - m_filtered_data.begin());
-            m_transaction.push(AddOperation(filtered_index));
+            this->m_transaction.push(AddOperation(filtered_index));
           }
         } else if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           ++m_filter_count;
           auto count = m_filter_count;
-          m_transaction.push(PreRemoveOperation(index));
+          this->m_transaction.push(PreRemoveOperation(index));
           if(count != m_filter_count) {
             return;
           }
           m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation(index));
+          this->m_transaction.push(RemoveOperation(index));
         }
       });
   }

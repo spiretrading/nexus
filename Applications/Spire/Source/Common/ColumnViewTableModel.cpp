@@ -1,15 +1,15 @@
 #include "Spire/Spire/ColumnViewTableModel.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 ColumnViewTableModel::ColumnViewTableModel(std::shared_ptr<TableModel> source,
-  int column)
-  : m_source(std::move(source)),
-    m_column(column),
-    m_transaction(get_row_size()),
-    m_source_connection(m_source->connect_operation_signal(
-      std::bind_front(&ColumnViewTableModel::on_operation, this))) {}
+    int column)
+    : m_source(std::move(source)),
+      m_column(column) {
+  m_transaction.set_size(get_row_size());
+  m_source_connection = m_source->connect_operation_signal(
+    std::bind_front(&ColumnViewTableModel::on_operation, this));
+}
 
 int ColumnViewTableModel::get_row_size() const {
   return m_source->get_row_size();
@@ -24,11 +24,6 @@ AnyRef ColumnViewTableModel::at(int row, int column) const {
     throw std::out_of_range("The column is out of range.");
   }
   return m_source->at(row, m_column);
-}
-
-connection ColumnViewTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 void ColumnViewTableModel::on_operation(

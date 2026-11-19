@@ -6,7 +6,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -17,7 +17,7 @@ namespace Spire {
    * its elements.
    */
   template<typename T>
-  class SortedListModel : public ListModel<T> {
+  class SortedListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using Operation = typename ListModel<T>::Operation;
@@ -96,20 +96,13 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       TranslatedListModel<Type> m_translation;
       Comparator m_comparator;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       bool comparator(int lhs, int rhs) const;
@@ -149,8 +142,8 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> source, Comparator comparator)
       : m_source(std::move(source)),
         m_translation(m_source),
-        m_comparator(std::move(comparator)),
-        m_transaction(get_size()) {
+        m_comparator(std::move(comparator)) {
+    this->m_transaction.set_size(get_size());
     sort();
     m_source_connection = m_translation.connect_operation_signal(
       std::bind_front(&SortedListModel::on_operation, this));
@@ -212,17 +205,6 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection SortedListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void SortedListModel<T>::transact(const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
-  }
-
-  template<typename T>
   bool SortedListModel<T>::comparator(int lhs, int rhs) const {
     return m_comparator(
       m_translation.get(lhs), lhs, m_translation.get(rhs), rhs);
@@ -230,13 +212,13 @@ namespace Spire {
 
   template<typename T>
   void SortedListModel<T>::sort() {
-    m_transaction.transact([&] {
+    this->m_transaction.transact([&] {
       m_translation.transact([&] {
         for(auto i = 1; i < get_size(); ++i) {
           auto index = find_sorted_index(i, i + 1);
           if(index != i) {
             m_translation.move(i, index);
-            m_transaction.push(MoveOperation(i, index));
+            this->m_transaction.push(MoveOperation(i, index));
           }
         }
       });
@@ -262,15 +244,15 @@ namespace Spire {
   void SortedListModel<T>::on_operation(const Operation& operation) {
     visit(operation,
       [&] (const StartTransaction&) {
-        m_transaction.start();
+        this->m_transaction.start();
       },
       [&] (const EndTransaction&) {
-        m_transaction.end();
+        this->m_transaction.end();
       },
       [&] (const AddOperation& operation) {
         auto index = find_sorted_index(operation.m_index, get_size());
         m_translation.move(operation.m_index, index);
-        m_transaction.push(AddOperation(index));
+        this->m_transaction.push(AddOperation(index));
       },
       [&] (const UpdateOperation& operation) {
         auto index = find_sorted_index(operation.m_index, get_size());
@@ -278,19 +260,19 @@ namespace Spire {
           index, operation.get_previous(), operation.get_value());
         if(operation.m_index != index) {
           m_translation.move(operation.m_index, index);
-          m_transaction.transact([&] {
-            m_transaction.push(MoveOperation(operation.m_index, index));
-            m_transaction.push(std::move(update));
+          this->m_transaction.transact([&] {
+            this->m_transaction.push(MoveOperation(operation.m_index, index));
+            this->m_transaction.push(std::move(update));
           });
         } else {
-          m_transaction.push(std::move(update));
+          this->m_transaction.push(std::move(update));
         }
       },
       [&] (const PreRemoveOperation& operation) {
-        m_transaction.push(operation);
+        this->m_transaction.push(operation);
       },
       [&] (const RemoveOperation& operation) {
-        m_transaction.push(operation);
+        this->m_transaction.push(operation);
       });
   }
 }

@@ -4,13 +4,13 @@
 #include "Spire/Ui/SingleSelectionModel.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 
 ListSelectionModel::ListSelectionModel()
     : m_mode(Mode::SINGLE),
       m_model(std::make_shared<ListSingleSelectionModel>()) {
-  m_model->connect_operation_signal(m_operation_signal);
+  m_model->connect_operation_signal(
+    std::bind_front(&decltype(m_transaction)::push, &m_transaction));
 }
 
 ListSelectionModel::Mode ListSelectionModel::get_mode() const {
@@ -46,7 +46,8 @@ void ListSelectionModel::set_mode(Mode mode) {
       m_model->push(previous->get(i));
     }
   }
-  m_model->connect_operation_signal(m_operation_signal);
+  m_model->connect_operation_signal(
+    std::bind_front(&decltype(m_transaction)::push, &m_transaction));
 }
 
 int ListSelectionModel::get_size() const {
@@ -71,13 +72,4 @@ QValidator::State ListSelectionModel::move(int source, int destination) {
 
 QValidator::State ListSelectionModel::remove(int index) {
   return m_model->remove(index);
-}
-
-connection ListSelectionModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_operation_signal.connect(slot);
-}
-
-void ListSelectionModel::transact(const std::function<void ()>& transaction) {
-  m_model->transact([&] { transaction(); });
 }

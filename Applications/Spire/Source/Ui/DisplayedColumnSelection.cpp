@@ -6,6 +6,7 @@ using namespace Spire;
 TableView::DisplayedColumnSelection::DisplayedColumnSelection(
   std::shared_ptr<TableSelectionModel> selection, connection tracking)
   : m_selection(std::move(selection)),
+    m_inactive_depth(0),
     m_tracking_connection(std::move(tracking)) {}
 
 int TableView::DisplayedColumnSelection::get_size() const {
@@ -60,11 +61,18 @@ connection TableView::DisplayedColumnSelection::connect_operation_signal(
     connect_operation_signal<>(slot);
 }
 
-void TableView::DisplayedColumnSelection::transact(
-    const std::function<void ()>& transaction) {
+void TableView::DisplayedColumnSelection::start_transaction() {
   if(m_tracking_connection.connected()) {
-    m_selection->get_column_selection()->transact<>(transaction);
+    m_selection->get_column_selection()->start_transaction();
   } else {
-    transaction();
+    ++m_inactive_depth;
+  }
+}
+
+void TableView::DisplayedColumnSelection::end_transaction() {
+  if(m_inactive_depth != 0) {
+    --m_inactive_depth;
+  } else {
+    m_selection->get_column_selection()->end_transaction();
   }
 }

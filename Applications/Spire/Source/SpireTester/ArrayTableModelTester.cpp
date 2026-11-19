@@ -1,4 +1,5 @@
 #include <deque>
+#include <stdexcept>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/SpireTester/TableModelTester.hpp"
@@ -8,6 +9,29 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("ArrayTableModel") {
+  TEST_CASE("transaction_boundaries") {
+    auto table = ArrayTableModel();
+    auto& model = static_cast<TableModel&>(table);
+    auto operations = std::deque<TableModel::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    model.start_transaction();
+    table.push({1});
+    REQUIRE_THROWS_AS(model.transact([&] {
+      table.push({2});
+      throw std::runtime_error("Interrupted.");
+    }), std::runtime_error);
+    REQUIRE(operations.size() == 3);
+    model.end_transaction();
+    REQUIRE(operations.size() == 4);
+    require_transaction(operations,
+      {TableModel::AddOperation(0), TableModel::AddOperation(1)});
+    operations.clear();
+    table.push({3});
+    REQUIRE(operations.size() == 1);
+    REQUIRE(std::holds_alternative<TableModel::AddOperation>(operations[0]));
+  }
+
   TEST_CASE("push") {
     auto model = ArrayTableModel();
     REQUIRE(model.get_row_size() == 0);

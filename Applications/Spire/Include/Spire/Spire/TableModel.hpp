@@ -4,11 +4,12 @@
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionalModel.hpp"
 
 namespace Spire {
 
   /** Base class for a model over a table of values. */
-  class TableModel {
+  class TableModel : public TransactionalModel {
     public:
 
       /** Indicates a row was added to the model. */

@@ -6,8 +6,8 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/BreakoutBox.hpp"
@@ -108,20 +108,19 @@ namespace {
     }
   };
 
-  struct UniqueTaskKeyTableModel : TableModel {
+  struct UniqueTaskKeyTableModel : TransactionLogModel<TableModel> {
     static const auto KEY_INDEX = static_cast<int>(OrderTaskColumns::KEY);
     static const auto SCOPE_INDEX = static_cast<int>(OrderTaskColumns::SCOPE);
     std::shared_ptr<TableModel> m_source;
-    TableModelTransactionLog m_transaction;
     std::unordered_set<std::pair<Scope, QKeySequence>, ScopeKeyHash>
       m_scope_keys;
     scoped_connection m_source_connection;
 
     explicit UniqueTaskKeyTableModel(std::shared_ptr<TableModel> source)
-        : m_source(std::move(source)),
-          m_transaction(get_row_size()),
-          m_source_connection(m_source->connect_operation_signal(
-            std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
+        : m_source(std::move(source)) {
+      m_transaction.set_size(get_row_size());
+      m_source_connection = m_source->connect_operation_signal(
+        std::bind_front(&UniqueTaskKeyTableModel::on_operation, this));
       for(auto row = 0; row < get_row_size(); ++row) {
         if(auto& key = get<QKeySequence>(row, KEY_INDEX); !key.isEmpty()) {
           m_scope_keys.insert({get<Scope>(row, SCOPE_INDEX), key});
@@ -185,11 +184,6 @@ namespace {
       m_scope_keys.erase(
         {get<Scope>(row, SCOPE_INDEX), get<QKeySequence>(row, KEY_INDEX)});
       return m_source->remove(row);
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
     }
 
     void on_operation(const Operation& operation) {

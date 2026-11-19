@@ -3,8 +3,8 @@
 #include <memory>
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -14,7 +14,7 @@ namespace Spire {
    * @param <T> The type of value being listed.
    */
   template<typename T>
-  class ProxyListModel : public ListModel<T> {
+  class ProxyListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = typename ListModel<T>::OperationSignal;
@@ -46,19 +46,12 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       boost::optional<int> m_size;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const Operation& operation);
@@ -69,8 +62,8 @@ namespace Spire {
 
   template<typename T>
   ProxyListModel<T>::ProxyListModel(std::shared_ptr<ListModel<Type>> source)
-      : m_source(std::move(source)),
-        m_transaction(get_size()) {
+      : m_source(std::move(source)) {
+    this->m_transaction.set_size(get_size());
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&ProxyListModel::on_operation, this));
   }
@@ -90,25 +83,25 @@ namespace Spire {
         std::bind_front(&ProxyListModel::on_operation, this));
     };
     try {
-      m_transaction.transact([&] {
+      this->m_transaction.transact([&] {
         m_size = m_source->get_size();
         while(*m_size != 0) {
-          m_transaction.push(PreRemoveOperation(*m_size - 1));
+          this->m_transaction.push(PreRemoveOperation(*m_size - 1));
           --*m_size;
-          m_transaction.push(RemoveOperation(*m_size));
+          this->m_transaction.push(RemoveOperation(*m_size));
         }
         m_source = std::move(source);
         auto size = m_source->get_size();
         while(*m_size != size) {
           ++*m_size;
-          m_transaction.push(AddOperation(*m_size - 1));
+          this->m_transaction.push(AddOperation(*m_size - 1));
         }
       });
     } catch(...) {
       if(source) {
         m_source = std::move(source);
       }
-      m_transaction.set_size(m_source->get_size());
+      this->m_transaction.set_size(m_source->get_size());
       end();
       throw;
     }
@@ -153,21 +146,8 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection ProxyListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void ProxyListModel<T>::transact(const std::function<void ()>& transaction) {
-    m_transaction.transact([&] {
-      transaction();
-    });
-  }
-
-  template<typename T>
   void ProxyListModel<T>::on_operation(const Operation& operation) {
-    m_transaction.push(operation);
+    this->m_transaction.push(operation);
   }
 }
 

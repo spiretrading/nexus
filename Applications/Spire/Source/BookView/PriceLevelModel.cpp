@@ -32,10 +32,12 @@ connection PriceLevelModel::connect_operation_signal(
   return m_levels.connect_operation_signal(slot);
 }
 
-void PriceLevelModel::transact(const std::function<void ()>& transaction) {
-  m_levels.transact([&] {
-    transaction();
-  });
+void PriceLevelModel::start_transaction() {
+  m_levels.start_transaction();
+}
+
+void PriceLevelModel::end_transaction() {
+  m_levels.end_transaction();
 }
 
 bool PriceLevelModel::insert_level(int index) {

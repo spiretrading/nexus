@@ -1,7 +1,6 @@
 #include "Spire/Spire/DeduplicatedTableModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 DeduplicatedTableModel::DeduplicatedTableModel(
@@ -14,8 +13,8 @@ DeduplicatedTableModel::DeduplicatedTableModel(
 DeduplicatedTableModel::DeduplicatedTableModel(
     std::shared_ptr<TableModel> source, IsEqual is_equal)
     : m_source(std::move(source)),
-      m_is_equal(std::move(is_equal)),
-      m_transaction(get_row_size()) {
+      m_is_equal(std::move(is_equal)) {
+  m_transaction.set_size(get_row_size());
   m_connection = m_source->connect_operation_signal(
     std::bind_front(&DeduplicatedTableModel::on_operation, this));
 }
@@ -39,11 +38,6 @@ QValidator::State DeduplicatedTableModel::set(
 
 QValidator::State DeduplicatedTableModel::remove(int row) {
   return m_source->remove(row);
-}
-
-connection DeduplicatedTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 void DeduplicatedTableModel::on_operation(const Operation& operation) {

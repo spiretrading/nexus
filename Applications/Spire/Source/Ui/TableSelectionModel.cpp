@@ -75,9 +75,12 @@ namespace {
         });
       }
 
-    protected:
-      void transact(const std::function<void ()>& transaction) override {
-        m_source->transact([&] { transaction(); });
+      void start_transaction() override {
+        m_source->start_transaction();
+      }
+
+      void end_transaction() override {
+        m_source->end_transaction();
       }
 
     private:

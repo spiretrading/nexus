@@ -21,9 +21,8 @@ namespace Spire {
       QValidator::State insert(const T& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
       std::shared_ptr<ListModel<T>> m_source;
@@ -60,12 +59,12 @@ namespace Spire {
         visit(operation,
           [&] (const AnyListModel::StartTransaction&) {
             ++depth;
-            this->start_transaction();
+            ArrayListModel<T>::start_transaction();
           },
           [&] (const AnyListModel::EndTransaction&) {
             if(depth != 0) {
               --depth;
-              this->end_transaction();
+              ArrayListModel<T>::end_transaction();
             }
           },
           [&] (const AnyListModel::AddOperation& add) {

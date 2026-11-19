@@ -39,10 +39,8 @@ namespace Spire {
       QValidator::State remove(int index) override;
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
       std::unordered_set<Type> m_selection;
@@ -106,9 +104,13 @@ namespace Spire {
   }
 
   template<typename T>
-  void MultiSelectionModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_list.transact([&] { transaction(); });
+  void MultiSelectionModel<T>::start_transaction() {
+    m_list.start_transaction();
+  }
+
+  template<typename T>
+  void MultiSelectionModel<T>::end_transaction() {
+    m_list.end_transaction();
   }
 }
 

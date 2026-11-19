@@ -41,7 +41,7 @@ void TableView::DisplayedSelection<T>::refresh() {
     --end;
     --next_end;
   }
-  auto apply = std::function<void ()>([&] {
+  this->m_transaction.transact([&] {
     if(end == first + 1 && next_end == end) {
       ArrayListModel<T>::set(first, values[first]);
     } else {
@@ -54,7 +54,6 @@ void TableView::DisplayedSelection<T>::refresh() {
       }
     }
   });
-  ArrayListModel<T>::transact(apply);
 }
 
 template<typename T>
@@ -104,11 +103,20 @@ QValidator::State TableView::DisplayedSelection<T>::remove(int index) {
 }
 
 template<typename T>
-void TableView::DisplayedSelection<T>::transact(
-    const std::function<void ()>& transaction) {
-  m_source->transact([&] {
-    ArrayListModel<T>::transact(transaction);
-  });
+void TableView::DisplayedSelection<T>::start_transaction() {
+  m_source->start_transaction();
+  ArrayListModel<T>::start_transaction();
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::end_transaction() {
+  try {
+    ArrayListModel<T>::end_transaction();
+  } catch(...) {
+    m_source->end_transaction();
+    throw;
+  }
+  m_source->end_transaction();
 }
 
 template<typename T>
@@ -126,9 +134,9 @@ template<typename T>
 void TableView::DisplayedSelection<T>::append(int index) {
   if(auto value = from_source(m_source->get(index))) {
     m_indices.push_back(index);
-    ArrayListModel<T>::transact({[&] {
+    this->m_transaction.transact([&] {
       ArrayListModel<T>::insert(*value, this->get_size());
-    }});
+    });
   } else if(m_tracking_connection.connected()) {
     refresh();
   }

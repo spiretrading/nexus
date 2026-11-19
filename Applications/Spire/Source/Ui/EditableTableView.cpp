@@ -7,6 +7,7 @@
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
@@ -168,19 +169,19 @@ namespace {
     }
   };
 
-  struct EditableTableModel : TableModel {
+  struct EditableTableModel : TransactionLogModel<TableModel> {
     std::shared_ptr<TableModel> m_source;
     std::shared_ptr<EditableTableView::HeaderModel> m_header;
-    TableModelTransactionLog m_transaction;
     scoped_connection m_source_connection;
 
     explicit EditableTableModel(std::shared_ptr<TableModel> source,
-      std::shared_ptr<EditableTableView::HeaderModel> header)
-      : m_source(std::move(source)),
-        m_header(std::move(header)),
-        m_transaction(get_row_size()),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&EditableTableModel::on_operation, this))) {}
+        std::shared_ptr<EditableTableView::HeaderModel> header)
+        : m_source(std::move(source)),
+          m_header(std::move(header)) {
+      m_transaction.set_size(get_row_size());
+      m_source_connection = m_source->connect_operation_signal(
+        std::bind_front(&EditableTableModel::on_operation, this));
+    }
 
     int get_row_size() const override {
       return m_source->get_row_size();
@@ -226,11 +227,6 @@ namespace {
       return m_source->remove(row);
     }
 
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
     void on_operation(const TableModel::Operation& operation) {
       visit(operation,
         [&] (const TableModel::UpdateOperation& operation) {
@@ -243,17 +239,18 @@ namespace {
     }
   };
 
-  struct EditableTableHeaderModel : ListModel<TableHeaderItem::Model> {
+  struct EditableTableHeaderModel :
+      TransactionLogModel<ListModel<TableHeaderItem::Model>> {
     std::shared_ptr<ListModel<TableHeaderItem::Model>> m_source;
-    ListModelTransactionLog<TableHeaderItem::Model> m_transaction;
     scoped_connection m_source_connection;
 
     explicit EditableTableHeaderModel(
-      std::shared_ptr<ListModel<TableHeaderItem::Model>> source)
-      : m_source(std::move(source)),
-        m_transaction(get_size()),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
+        std::shared_ptr<ListModel<TableHeaderItem::Model>> source)
+        : m_source(std::move(source)) {
+      m_transaction.set_size(get_size());
+      m_source_connection = m_source->connect_operation_signal(
+        std::bind_front(&EditableTableHeaderModel::on_operation, this));
+    }
 
     int get_size() const override {
       return m_source->get_size() + 1;
@@ -293,15 +290,6 @@ namespace {
         return QValidator::Invalid;
       }
       return m_source->remove(index - 1);
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
-    void transact(const std::function<void ()>& transaction) override {
-      m_transaction.transact(transaction);
     }
 
     void on_operation(const Operation& operation) {

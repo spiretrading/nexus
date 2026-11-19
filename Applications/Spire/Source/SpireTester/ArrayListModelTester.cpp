@@ -172,6 +172,17 @@ TEST_SUITE("ArrayListModel") {
       operations, {ListModel<int>::AddOperation(1)});
   }
 
+  TEST_CASE("insert_into_initial_data") {
+    auto model = ArrayListModel<int>({2, 4});
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    model.insert(3, 1);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(1)});
+  }
+
   TEST_CASE("update") {
     auto model = ArrayListModel<int>();
     auto operations = std::deque<ListModel<int>::Operation>();

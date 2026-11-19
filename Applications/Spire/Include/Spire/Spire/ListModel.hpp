@@ -15,13 +15,14 @@
 #include <boost/signals2/connection.hpp>
 #include <QValidator>
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionalModel.hpp"
 
 namespace Spire {
   class AnyRef;
   template<typename T> class ListModel;
 
   /** Base class used to model a list of values. */
-  class AnyListModel {
+  class AnyListModel : public TransactionalModel {
     public:
 
       /** Indicates a value was added to the model. */
@@ -144,18 +145,6 @@ namespace Spire {
        */
       virtual QValidator::State remove(int index) = 0;
 
-      /**
-       * Takes a callable function and invokes it. All operations performed on
-       * this model during the transaction get appended to a
-       * <code>Transaction</code> that is signalled at the end of the
-       * transaction. If a transaction is already being invoked, then all
-       * operations are appened into the parent transaction.
-       * @param transaction The transaction to perform.
-       * @return The result of the transaction.
-       */
-      template<typename F>
-      decltype(auto) transact(F&& transaction);
-
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;
@@ -170,17 +159,6 @@ namespace Spire {
        * @throws <code>std::out_of_range</code> iff index is out of range.
        */
       virtual std::any at(int index) const = 0;
-
-      /**
-       * Takes a callable function and invokes it. All operations performed on
-       * this model during the transaction get appended to a
-       * <code>Transaction</code> that is signalled at the end of the
-       * transaction. If a transaction is already being invoked, then all
-       * operations are appened into the parent transaction.
-       * @param transaction The transaction to perform.
-       * @return The result of the transaction.
-       */
-      virtual void transact(const std::function<void ()>& transaction) = 0;
 
     private:
       AnyListModel(const AnyListModel&) = delete;
@@ -606,24 +584,6 @@ namespace Spire {
     std::ostream& out, const AnyListModel::UpdateOperation& operation);
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::Operation& operation);
-
-  template<typename F>
-  decltype(auto) AnyListModel::transact(F&& transaction) {
-    using Result = decltype(transaction());
-    auto t = static_cast<void (AnyListModel::*)(const std::function<void ()>&)>(
-      &AnyListModel::transact);
-    if constexpr(std::is_same_v<Result, void>) {
-      (this->*t)([&] {
-        std::forward<F>(transaction)();
-      });
-    } else {
-      auto result = boost::optional<decltype(transaction())>();
-      (this->*t)([&] {
-        result.emplace(std::forward<F>(transaction)());
-      });
-      return *result;
-    }
-  }
 
   template<typename T>
   ListModelReference<T>& ListModelReference<T>::operator =(const T& value) {
