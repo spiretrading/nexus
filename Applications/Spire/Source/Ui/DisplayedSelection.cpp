@@ -149,6 +149,16 @@ void TableView::DisplayedSelection<T>::end_transaction() {
 }
 
 template<typename T>
+bool TableView::DisplayedSelection<T>::is_tail_append(int row) const {
+  if(row != m_sorted->get_row_size() - 1) {
+    return false;
+  }
+  auto filtered = m_sorted->index_to_source(row);
+  return m_filtered->index_to_source(filtered) ==
+    m_filtered->get_source()->get_row_size() - 1;
+}
+
+template<typename T>
 optional<T> TableView::DisplayedSelection<T>::from_source(T value) const {
   if(m_filtered) {
     auto& row = row_of(value);

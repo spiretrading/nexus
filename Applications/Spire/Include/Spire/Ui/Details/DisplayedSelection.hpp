@@ -43,6 +43,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_view_connection;
       boost::signals2::scoped_connection m_column_connection;
 
+      bool is_tail_append(int row) const;
       boost::optional<T> from_source(T value) const;
       void append(int index);
       boost::optional<T> to_source(T value) const;
@@ -139,7 +140,8 @@ namespace Spire {
           },
           [&] (const TableModel::AddOperation& add) {
             if(m_is_refresh_pending ||
-                m_filtered->index_from_source(add.m_index) == -1) {
+                (add.m_index != m_filtered->get_source()->get_row_size() - 1 &&
+                  m_filtered->index_from_source(add.m_index) == -1)) {
               refresh(*this);
             }
           },
@@ -170,7 +172,13 @@ namespace Spire {
               refresh(*this);
             }
           },
-          [&] (const TableRowChange auto&) {
+          [&] <TableRowChange O> (const O& change) {
+            if constexpr(std::same_as<O, TableModel::AddOperation>) {
+              if(is_tail_append(change.m_index) &&
+                  m_source->get_size() == this->get_size()) {
+                return;
+              }
+            }
             if(is_transacting) {
               m_is_refresh_pending = true;
             } else {
