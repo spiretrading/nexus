@@ -53,7 +53,8 @@ namespace Spire {
       decltype(auto) transact(F&& transaction);
 
       /**
-       * Connects a slot to a signal indicating the completion of a transaction.
+       * Connects a slot to model operations. If a transaction is already open,
+       * the slot receives its boundaries only if further operations occur.
        */
       boost::signals2::connection connect_operation_signal(
         const typename Type::OperationSignal::slot_type& slot) const;
@@ -153,7 +154,21 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection ModelTransactionLog<T>::connect_operation_signal(
       const typename Type::OperationSignal::slot_type& slot) const {
-    return m_operation_signal.connect(slot);
+    if(m_is_first) {
+      return m_operation_signal.connect(slot);
+    }
+    using Slot = typename Type::OperationSignal::slot_type;
+    return m_operation_signal.connect(Slot(
+      [=, is_first = true] (const typename Type::Operation& operation) mutable {
+        if(is_first) {
+          is_first = false;
+          if(std::holds_alternative<typename Type::EndTransaction>(operation)) {
+            return;
+          }
+          slot(typename Type::StartTransaction());
+        }
+        slot(operation);
+      }).track(slot));
   }
 }
 
