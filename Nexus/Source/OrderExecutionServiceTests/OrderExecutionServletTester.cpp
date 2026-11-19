@@ -267,6 +267,7 @@ TEST_SUITE("OrderExecutionServlet") {
     excluded_order->get_publisher().monitor(reports);
     fill(*driver_order, 200, base + hours(6) + minutes(1));
     while(reports->pop().m_status != OrderStatus::FILLED) {}
+    fixture.m_client.reset();
     fixture.m_container->close();
     auto stored =
       fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
