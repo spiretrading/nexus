@@ -37,6 +37,16 @@ namespace {
     }
   };
 
+  template<typename Model>
+  class FixedIndexSelection : public Model {
+    public:
+      using Model::Model;
+
+      QValidator::State set(int, const typename Model::Type&) override {
+        return QValidator::Invalid;
+      }
+  };
+
   struct MinimumFilter : EmptyTableFilter {
     int m_minimum = 1;
     mutable FilterSignal m_filter_signal;
@@ -769,6 +779,42 @@ TEST_SUITE("TableView") {
     REQUIRE(selection->get_item_selection()->get_size() == 0);
     REQUIRE(displayed.get_row_selection()->get_size() == 0);
     REQUIRE(displayed.get_item_selection()->get_size() == 0);
+  }
+
+  UI_TEST_CASE("rejected_selection_remap") {
+    auto table = std::make_shared<ArrayTableModel>();
+    for(auto value : {10, 20, 30, 40}) {
+      table->push({value});
+    }
+    auto rows = std::make_shared<FixedIndexSelection<ArrayListModel<int>>>(
+      std::vector{0, 2});
+    auto cells =
+      std::make_shared<FixedIndexSelection<FixedSelection<TableIndex>>>(
+        std::vector{TableIndex(0, 0), TableIndex(2, 0)});
+    auto selection = std::make_shared<TableSelectionModel>(
+      cells, rows, std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_selection(selection).make());
+    SUBCASE("insert") {
+      table->insert({15}, 1);
+    }
+    SUBCASE("remove") {
+      table->remove(1);
+    }
+    SUBCASE("move") {
+      table->move(2, 1);
+    }
+    auto& displayed = *view->get_body().get_selection();
+    for(auto model : {selection.get(), &displayed}) {
+      auto& selected_rows = *model->get_row_selection();
+      REQUIRE(selected_rows.get_size() == 1);
+      REQUIRE(selected_rows.get(0) == 0);
+      auto& items = *model->get_item_selection();
+      REQUIRE(items.get_size() == 1);
+      REQUIRE(items.get(0) == TableIndex(0, 0));
+    }
+    REQUIRE(rows->get_size() == 1);
+    REQUIRE(cells->get_size() == 2);
   }
 
   UI_TEST_CASE("reused_selection") {

@@ -96,6 +96,13 @@ namespace {
       }
       return size - 1 - offset;
     };
+    auto prune = [&] (int index) {
+      if(selection.remove(index) == QValidator::Invalid) {
+        if(auto list = dynamic_cast<SelectableList<T>*>(&selection)) {
+          list->exclude(index);
+        }
+      }
+    };
     auto pending = std::vector<std::pair<int, T>>();
     for(auto offset = 0; offset < selection.get_size();) {
       auto size = selection.get_size();
@@ -105,15 +112,12 @@ namespace {
       auto tracker = TableRowIndexTracker(row);
       tracker.update(operation);
       if(tracker.get_index() == -1) {
-        if(selection.remove(i) == QValidator::Invalid) {
-          if(auto list = dynamic_cast<SelectableList<T>*>(&selection)) {
-            list->exclude(i);
-          }
-        }
+        prune(i);
       } else if(tracker.get_index() != row) {
         row = tracker.get_index();
-        selection.set(i, value);
-        if(selection.get_size() < size) {
+        if(selection.set(i, value) == QValidator::Invalid) {
+          prune(i);
+        } else if(selection.get_size() < size) {
           pending.emplace_back(offset, value);
         }
       }
