@@ -707,6 +707,43 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     });
   }
 
+  UI_TEST_CASE("a_superseded_backward_seek_hides_later_time_and_sales") {
+    auto fixture = Fixture(seconds(60));
+    fixture.store({seconds(1), seconds(2), seconds(10), seconds(11),
+      seconds(12), seconds(13)});
+    auto count = std::make_shared<std::atomic_int>(0);
+    auto gate = std::make_shared<QueryGate>();
+    auto releaser = std::shared_ptr<void>(nullptr, [&] (void*) {
+      gate->release();
+    });
+    auto model = fixture.make_model(count, gate);
+    wait(model->load_older(4));
+    auto queries = count->load();
+    gate->hold();
+    fixture.set_position(duration_from_string("00:00:12.500"));
+    wait_until([&] {
+      return *count > queries;
+    });
+    fixture.set_position(duration_from_string("00:00:10.500"));
+    auto snapshots = std::vector<std::vector<time_duration>>();
+    auto connection = scoped_connection(model->connect_operation_signal(
+      [&] (const auto& operation) {
+        if(std::get_if<TimeAndSalesModel::EndTransaction>(&operation)) {
+          snapshots.push_back(get_offsets(*model));
+        }
+      }));
+    gate->release();
+    wait_until([&] {
+      return get_offsets(*model) ==
+        std::vector<time_duration>{seconds(1), seconds(2), seconds(10)};
+    });
+    for(auto& snapshot : snapshots) {
+      if(!snapshot.empty()) {
+        REQUIRE(snapshot.back() <= duration_from_string("00:00:10.500"));
+      }
+    }
+  }
+
   UI_TEST_CASE(
       "destroying_a_model_during_a_replay_leaves_other_models_working") {
     auto fixture = Fixture(seconds(0));

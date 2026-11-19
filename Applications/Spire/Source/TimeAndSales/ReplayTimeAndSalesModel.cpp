@@ -250,6 +250,9 @@ time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
 
 time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
   static const auto JUMP_THRESHOLD = seconds(2);
+  if(m_session->get_state()->get() != PlaybackState::REPLAYING) {
+    return JUMP_THRESHOLD;
+  }
   return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
 }
 
@@ -638,6 +641,20 @@ void ReplayTimeAndSalesModel::on_seek(int generation, ptime position,
     optional<std::vector<Type>> entries, optional<SequencedBboQuote> bbo,
     optional<Beam::Sequence> next_sequence) {
   if(generation != m_read_generation) {
+    if(entries) {
+      auto last = std::ranges::upper_bound(*entries, m_position,
+        std::ranges::less(), [] (const auto& entry) {
+          return entry.m_time_and_sale->m_timestamp;
+        });
+      if(last != entries->begin()) {
+        entries->erase(last, entries->end());
+        replace(std::move(*entries));
+      } else if(!entries->empty() && (m_entries.empty() ||
+          entries->back().m_time_and_sale->m_timestamp <
+            m_entries.back().m_time_and_sale->m_timestamp)) {
+        replace(std::move(*entries));
+      }
+    }
     m_seek_state = SeekState::REQUIRED;
     request_seek();
     return;
@@ -737,8 +754,14 @@ void ReplayTimeAndSalesModel::on_position(const ptime& position) {
   m_position = position;
   auto is_real_time =
     m_session->get_state()->get() == PlaybackState::REAL_TIME;
+  auto read_end = [&] {
+    if(m_seek_state == SeekState::NONE) {
+      return std::min(previous, m_read_end);
+    }
+    return previous;
+  }();
   if(position < previous ||
-      (!is_real_time && position - previous > get_jump_threshold())) {
+      (!is_real_time && position - read_end > get_jump_threshold())) {
     seek();
   } else if(is_high_speed()) {
     request_update_playback();
