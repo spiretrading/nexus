@@ -189,12 +189,22 @@ namespace Spire {
   template<typename T>
   void ArrayValueToListModel<T>::remove_row(int index) {
     this->m_transaction.transact([&] {
-      this->m_transaction.push(PreRemoveOperation(index));
+      auto erase = [&] {
+        m_data.erase(m_data.begin() + index);
+        this->m_transaction.push(RemoveOperation(index));
+      };
+      try {
+        this->m_transaction.push(PreRemoveOperation(index));
+      } catch(...) {
+        if(m_transaction_depth == 0) {
+          erase();
+        }
+        throw;
+      }
       if(m_transaction_depth != 0) {
         m_changes.emplace_back(RemovedValue(index, m_data[index]));
       }
-      m_data.erase(m_data.begin() + index);
-      this->m_transaction.push(RemoveOperation(index));
+      erase();
     });
   }
 

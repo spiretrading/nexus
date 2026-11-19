@@ -47,6 +47,8 @@ namespace Spire {
       bool is_tail_append(int row) const;
       boost::optional<T> from_source(T value) const;
       void append(int index);
+      void refresh_entry(int& source, int& displayed);
+      void update_source(int index);
       void remove_source(int index);
       void move_source(const AnyListModel::MoveOperation& move);
       boost::optional<T> to_source(T value) const;
@@ -111,9 +113,9 @@ namespace Spire {
           [&] (const AnyListModel::MoveOperation& move) {
             move_source(move);
           },
-          [&] (const AnyListModel::UpdateOperation&) {
+          [&] (const AnyListModel::UpdateOperation& update) {
             if(!is_remapping && !m_is_pruning) {
-              refresh();
+              update_source(update.m_index);
             }
           });
       });

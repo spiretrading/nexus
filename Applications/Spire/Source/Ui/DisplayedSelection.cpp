@@ -29,29 +29,7 @@ void TableView::DisplayedSelection<T>::refresh() {
   this->m_transaction.transact([&] {
     auto displayed = 0;
     for(auto i = 0; i != m_source->get_size();) {
-      auto has_entry =
-        displayed < this->get_size() && m_indices[displayed] == i;
-      if(auto value = from_source(m_source->get(i))) {
-        if(!has_entry) {
-          m_indices.insert(m_indices.begin() + displayed, i);
-          ArrayListModel<T>::insert(*value, displayed);
-        } else if(*value != ArrayListModel<T>::get(displayed)) {
-          ArrayListModel<T>::set(displayed, *value);
-        }
-        ++displayed;
-      } else {
-        if(m_tracking_connection.connected()) {
-          auto guard = QScopedValueRollback(m_is_pruning, true);
-          if(m_source->remove(i) != QValidator::Invalid) {
-            continue;
-          }
-        }
-        if(has_entry) {
-          m_indices.erase(m_indices.begin() + displayed);
-          ArrayListModel<T>::remove(displayed);
-        }
-      }
-      ++i;
+      refresh_entry(i, displayed);
     }
   });
 }
@@ -196,6 +174,50 @@ void TableView::DisplayedSelection<T>::append(int index) {
   } else if(m_tracking_connection.connected()) {
     refresh();
   }
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::refresh_entry(
+    int& source, int& displayed) {
+  auto has_entry =
+    displayed < this->get_size() && m_indices[displayed] == source;
+  if(auto value = from_source(m_source->get(source))) {
+    if(!has_entry) {
+      m_indices.insert(m_indices.begin() + displayed, source);
+      ArrayListModel<T>::insert(*value, displayed);
+    } else if(*value != ArrayListModel<T>::get(displayed)) {
+      ArrayListModel<T>::set(displayed, *value);
+    }
+    ++displayed;
+  } else {
+    if(m_tracking_connection.connected()) {
+      auto guard = QScopedValueRollback(m_is_pruning, true);
+      if(m_source->remove(source) != QValidator::Invalid) {
+        return;
+      }
+    }
+    if(has_entry) {
+      m_indices.erase(m_indices.begin() + displayed);
+      ArrayListModel<T>::remove(displayed);
+    }
+  }
+  ++source;
+}
+
+template<typename T>
+void TableView::DisplayedSelection<T>::update_source(int index) {
+  if(m_is_refresh_pending) {
+    refresh();
+    return;
+  }
+  auto displayed = index;
+  if(this->get_size() != m_source->get_size()) {
+    auto i = std::ranges::lower_bound(m_indices, index);
+    displayed = static_cast<int>(i - m_indices.begin());
+  }
+  this->m_transaction.transact([&] {
+    refresh_entry(index, displayed);
+  });
 }
 
 template<typename T>

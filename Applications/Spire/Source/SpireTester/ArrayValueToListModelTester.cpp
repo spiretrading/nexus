@@ -89,6 +89,29 @@ TEST_SUITE("ArrayValueToListModel") {
     REQUIRE(*current.get() == 2);
   }
 
+  TEST_CASE("pre_remove_exception") {
+    auto source = make_local_value_model(std::vector{1, 2});
+    auto model = std::make_shared<ArrayValueToListModel<int>>(source);
+    auto filtered = FilteredListModel(model, [] (const auto&, int) {
+      return false;
+    });
+    model->connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const AnyListModel::PreRemoveOperation& removal) {
+        REQUIRE(model->get(removal.m_index) == 1);
+        throw std::runtime_error("Removal subscriber failed.");
+      });
+    });
+    REQUIRE_THROWS_AS(model->remove(0), std::runtime_error);
+    REQUIRE(source->get() == std::vector{2});
+    REQUIRE(model->get_size() == 1);
+    REQUIRE(model->get(0) == 2);
+    REQUIRE(filtered.get_size() == 1);
+    REQUIRE(filtered.get(0) == 2);
+    model->push(3);
+    REQUIRE(source->get() == std::vector{2, 3});
+    REQUIRE(filtered.get(1) == 3);
+  }
+
   TEST_CASE("source_update_exception") {
     auto source = make_local_value_model(std::vector{1, 2});
     auto model = std::make_shared<ArrayValueToListModel<int>>(source);

@@ -25,6 +25,22 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  class FilteredViewTableModel : public FilteredTableModel {
+    public:
+      FilteredViewTableModel(std::shared_ptr<TableModel> table,
+          const std::shared_ptr<TableFilter>& filter)
+          : FilteredTableModel(std::move(table),
+              std::bind_front(&TableFilter::is_filtered, filter)) {
+        m_connection = filter->connect_filter_signal(
+          [=, this] (int, TableFilter::Filter) {
+            set_filter(std::bind_front(&TableFilter::is_filtered, filter));
+          });
+      }
+
+    private:
+      scoped_connection m_connection;
+  };
+
   struct TranslatedItemBuilder {
     TableViewItemBuilder m_builder;
 
@@ -81,24 +97,22 @@ TableView::TableView(
       m_current(std::move(current)),
       m_selection(std::move(selection)),
       m_header(std::move(header)),
-      m_filter(std::move(filter)),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
   for(auto i = 0; i != m_header->get_size(); ++i) {
     auto& item = m_header->get(i);
-    auto filter = m_filter->get_filter(i);
-    if(filter != item.m_filter) {
+    auto column_filter = filter->get_filter(i);
+    if(column_filter != item.m_filter) {
       auto revised_item = item;
-      revised_item.m_filter = filter;
+      revised_item.m_filter = column_filter;
       m_header->set(i, revised_item);
     }
   }
-  m_header_view = new TableHeader(m_header, m_filter);
+  m_header_view = new TableHeader(m_header, filter);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
   auto tracking = m_selection->track(m_table);
-  m_filtered_table = std::make_shared<FilteredTableModel>(
-    m_table, std::bind_front(&TableFilter::is_filtered, m_filter));
+  m_filtered_table = std::make_shared<FilteredViewTableModel>(m_table, filter);
   m_selection_filter_connection = m_selection->m_filter_signal->connect(
     [=, this] (int row, bool& excluded) {
       if(!m_selection->m_is_updating &&
@@ -128,8 +142,6 @@ TableView::TableView(
   layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
-  m_filter_connection = m_filter->connect_filter_signal(
-    std::bind_front(&TableView::on_filter, this));
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
@@ -259,11 +271,6 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
     }
   }
   m_sort_signal(source, order);
-}
-
-void TableView::on_filter(int column, TableFilter::Filter filter) {
-  m_filtered_table->set_filter(
-    std::bind_front(&TableFilter::is_filtered, m_filter));
 }
 
 void TableView::on_current(const optional<Index>&) {

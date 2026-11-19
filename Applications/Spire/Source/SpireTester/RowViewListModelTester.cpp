@@ -1,5 +1,6 @@
 #include <deque>
 #include <doctest/doctest.h>
+#include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/RowViewListModel.hpp"
 
@@ -84,6 +85,26 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(any_cast<std::string>(updates[1].get_previous()) == "first");
     REQUIRE(any_cast<std::string>(row.get(1)) == "second");
     REQUIRE(any_cast<std::string>(updates[1].get_value()) == "second");
+  }
+
+  TEST_CASE("erased_any_ref_update") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    auto row = std::shared_ptr<AnyListModel>(
+      std::make_shared<RowViewListModel<AnyRef>>(table, 0));
+    auto cell = AnyListValueModel(row, 0);
+    REQUIRE(std::any_cast<int>(cell.get()) == 10);
+    auto updates = std::vector<AnyListModel::UpdateOperation>();
+    row->connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const AnyListModel::UpdateOperation& update) {
+        updates.push_back(update);
+      });
+    });
+    table->set(0, 0, 20);
+    REQUIRE(std::any_cast<int>(cell.get()) == 20);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(std::any_cast<int>(updates.front().m_previous) == 10);
+    REQUIRE(std::any_cast<int>(updates.front().m_value) == 20);
   }
 
   TEST_CASE("source_add") {

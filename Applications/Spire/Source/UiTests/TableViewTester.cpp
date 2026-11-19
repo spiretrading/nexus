@@ -123,6 +123,58 @@ TEST_SUITE("TableView") {
     REQUIRE(columns->push(0) == QValidator::Acceptable);
   }
 
+  UI_TEST_CASE("retained_selection_filter_update") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    table->push({20});
+    auto filter = std::make_shared<MinimumFilter>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_filter(filter).make());
+    auto rows = view->get_body().get_selection()->get_row_selection();
+    auto source = view->get_selection()->get_row_selection();
+    REQUIRE(rows->push(0) == QValidator::Acceptable);
+    view.reset();
+    filter->set_minimum(15);
+    REQUIRE(rows->get_size() == 0);
+    REQUIRE(source->get_size() == 0);
+    REQUIRE(rows->push(0) == QValidator::Acceptable);
+    REQUIRE(source->get(0) == 1);
+    filter->set_minimum(0);
+    REQUIRE(rows->get(0) == 1);
+    auto weak_filter = std::weak_ptr(filter);
+    filter.reset();
+    rows.reset();
+    REQUIRE(weak_filter.expired());
+  }
+
+  UI_TEST_CASE("bulk_selection_update") {
+    const auto SIZE = 64;
+    auto table = std::make_shared<ArrayTableModel>();
+    auto rows = std::make_shared<CountingSelection<int>>();
+    for(auto i = 0; i != 2 * SIZE; ++i) {
+      table->push({i});
+    }
+    for(auto i = 0; i != SIZE; ++i) {
+      rows->push(i);
+    }
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<ArrayListModel<TableIndex>>(), rows,
+      std::make_shared<ArrayListModel<int>>());
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value", TableHeaderItem::Order::DESCENDING).
+      set_selection(selection).make());
+    auto& displayed = *view->get_body().get_selection()->get_row_selection();
+    auto& source = *selection->get_row_selection();
+    rows->m_previous_reads = 0;
+    source.transact([&] {
+      for(auto i = 0; i != SIZE; ++i) {
+        REQUIRE(source.set(i, SIZE + i) == QValidator::Acceptable);
+        REQUIRE(displayed.get(i) == SIZE - i - 1);
+      }
+    });
+    REQUIRE(rows->m_previous_reads <= 2 * SIZE);
+  }
+
   UI_TEST_CASE("append_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     const auto SIZE = 64;
