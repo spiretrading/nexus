@@ -7,7 +7,9 @@
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -218,6 +220,10 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
     add_header_item(tr("Destination"), tr("Dest")).
     add_header_item(tr("Currency"), tr("Curr")).
     add_header_item(tr("Time In Force"), tr("TIF")).
+    set_selection(std::make_shared<TableSelectionModel>(
+      std::make_shared<TableEmptySelectionModel>(),
+      std::make_shared<ListMultiSelectionModel>(),
+      std::make_shared<ListEmptySelectionModel>())).
     set_item_builder([] (const auto& table, auto row, auto index) {
       auto column = static_cast<OrderColumn>(index);
       auto item = [&] () -> QWidget* {
