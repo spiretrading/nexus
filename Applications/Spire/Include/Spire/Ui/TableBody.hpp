@@ -55,6 +55,9 @@ namespace Styles {
   /** Selects the current row. */
   using CurrentRow = StateSelector<void, struct CurrentRowTag>;
 
+  /** Outlines the current row of a table body. */
+  using CurrentRowOutline = StateSelector<void, struct CurrentRowOutlineTag>;
+
   /** Selects all columns. */
   using Column = StateSelector<void, struct ColumnTag>;
 

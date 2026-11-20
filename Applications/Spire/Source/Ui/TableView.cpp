@@ -147,6 +147,24 @@ TableView::TableView(
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
   setFocusProxy(m_scroll_box);
+  update_style(*m_body, [] (auto& style) {
+    auto focused = +Any() < (is_a<TableView>() && FocusIn());
+    style.get(Any() > (CurrentColumn() || CurrentRow())).
+      set(BackgroundColor(Qt::transparent));
+    style.get(Any() > CurrentRow() > Current()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(CurrentRowOutline() > Row() > Current()).
+      set(border_color(QColor(Qt::transparent)));
+    auto set_colors = [&] (const Selector& table, QColor outline, QColor fill) {
+      style.get(table > Selected()).set(BackgroundColor(fill));
+      style.get((table && !CurrentRowOutline()) > Row() > Current()).
+        set(border_color(outline));
+      style.get((table && CurrentRowOutline()) > CurrentRow()).
+        set(grid_color(outline));
+    };
+    set_colors(Any(), QColor(0xA0A0A0), QColor(0xE0E0E0));
+    set_colors(focused, QColor(0x4B23A0), QColor(0xE2E0FF));
+  });
   on_body_style();
 }
 
