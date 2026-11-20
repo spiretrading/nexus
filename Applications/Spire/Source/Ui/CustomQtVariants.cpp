@@ -548,6 +548,11 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<DirectoryEntry>(value), locale);
   } else if(value.type() == typeid(Money)) {
     return to_text(std::any_cast<Money>(value), locale);
+  } else if(value.type() == typeid(optional<Money>)) {
+    if(auto& price = std::any_cast<const optional<Money>&>(value)) {
+      return to_text(*price, locale);
+    }
+    return QString();
   } else if(value.type() == typeid(OrderStatus)) {
     return to_text(std::any_cast<OrderStatus>(value), locale);
   } else if(value.type() == typeid(OrderType)) {

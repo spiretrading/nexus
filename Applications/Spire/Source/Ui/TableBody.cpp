@@ -106,10 +106,14 @@ QWidget* TableBody::default_item_builder(
 
 struct TableBody::Cover : QWidget {
   QColor m_background_color;
+  QColor m_horizontal_grid_color;
+  QColor m_vertical_grid_color;
 
   Cover(QWidget* parent)
       : QWidget(parent),
-        m_background_color(Qt::transparent) {
+        m_background_color(Qt::transparent),
+        m_horizontal_grid_color(Qt::transparent),
+        m_vertical_grid_color(Qt::transparent) {
     update_style(*this, [] (auto& style) {
       style.get(CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
     });
@@ -594,6 +598,32 @@ struct TableBody::Painter {
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
 
+  static void paint_row_borders(TableBody& body, QPainter& painter) {
+    auto& layout = body.get_layout();
+    for(auto i = 0; i != layout.count(); ++i) {
+      auto& row = layout.get_row(i);
+      if(row.m_horizontal_grid_color.alpha() == 0 &&
+          row.m_vertical_grid_color.alpha() == 0) {
+        continue;
+      }
+      auto bounds = row.geometry();
+      if(bounds.isEmpty()) {
+        continue;
+      }
+      if(body.m_styles.m_vertical_spacing > 0) {
+        bounds.adjust(0, -1, 0, 1);
+      }
+      painter.fillRect(bounds.left(), bounds.top(), bounds.width(), 1,
+        row.m_horizontal_grid_color);
+      painter.fillRect(bounds.left(), bounds.bottom(), bounds.width(), 1,
+        row.m_horizontal_grid_color);
+      painter.fillRect(bounds.left(), bounds.top(), 1, bounds.height(),
+        row.m_vertical_grid_color);
+      painter.fillRect(bounds.right(), bounds.top(), 1, bounds.height(),
+        row.m_vertical_grid_color);
+    }
+  }
+
   static void paint_item_borders(
       TableBody& body, QPainter& painter, const optional<Index>& index) {
     auto item = body.find_item(index);
@@ -922,6 +952,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   Painter::paint_horizontal_borders(*this, painter);
   Painter::paint_vertical_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_hover_index);
+  Painter::paint_row_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_current_index);
   QWidget::paintEvent(event);
 }
@@ -1240,6 +1271,7 @@ void TableBody::initialize_visible_region() {
     m_current_index = m_current_controller.get();
     m_current_row = make_row_cover();
     m_current_row->mount(m_current_index->m_row);
+    match(*m_current_row, CurrentRow());
     on_cover_style(*m_current_row);
   }
   mount_row(0);
@@ -1618,12 +1650,24 @@ void TableBody::on_style() {
 void TableBody::on_cover_style(Cover& cover) {
   auto& stylist = find_stylist(cover);
   cover.m_background_color = Qt::transparent;
+  cover.m_horizontal_grid_color = Qt::transparent;
+  cover.m_vertical_grid_color = Qt::transparent;
+  auto assign = [&] (QColor& target) {
+    return [&, this] (auto color) {
+      target = color;
+      update();
+    };
+  };
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=, &cover] (auto color) {
-          cover.m_background_color = color;
-        });
+        stylist.evaluate(color, assign(cover.m_background_color));
+      },
+      [&] (const HorizontalGridColor& color) {
+        stylist.evaluate(color, assign(cover.m_horizontal_grid_color));
+      },
+      [&] (const VerticalGridColor& color) {
+        stylist.evaluate(color, assign(cover.m_vertical_grid_color));
       });
   }
   update();
