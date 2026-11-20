@@ -107,6 +107,8 @@ target_link_libraries(BlotterTester SpireTesterLibrary Async Blotter BookView
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(BlotterTester
+    debug ${QT_TEST_LIBRARY_DEBUG_PATH}
+    optimized ${QT_TEST_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
     optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
@@ -146,6 +148,9 @@ if(WIN32)
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
     dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
+else()
+  find_package(Qt5 5.15 REQUIRED COMPONENTS Test)
+  target_link_libraries(BlotterTester Qt5::Test)
 endif()
 target_link_libraries(BlotterTester
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}

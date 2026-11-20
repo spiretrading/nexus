@@ -1,5 +1,7 @@
 #include <QEventLoop>
 #include <QLayout>
+#include <QtTest/qtestkeyboard.h>
+#include <QtTest/qtestmouse.h>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
@@ -8,12 +10,14 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   struct Fixture {
@@ -49,6 +53,72 @@ namespace {
 }
 
 TEST_SUITE("BlotterTasksTableView") {
+  UI_TEST_CASE("row_multi_selection") {
+    auto environment = TestEnvironment();
+    auto profile = UserProfile("", false, false, {}, {},
+      get_default_additional_tag_database(), {}, {}, {},
+      Clients(std::in_place_type<TestClients>, Ref(environment)));
+    auto fixture = Fixture();
+    for(auto i = 0; i != 4; ++i) {
+      auto entry = BlotterTaskEntry();
+      entry.m_task =
+        std::make_shared<Task>(IntegerNode(i), DirectoryEntry(), Ref(profile));
+      fixture.m_tasks->push(entry);
+    }
+    fixture.m_view->resize(640, 240);
+    fixture.m_view->show();
+    fixture.m_view->activateWindow();
+    QApplication::processEvents();
+    auto window = fixture.m_view->windowHandle();
+    auto& table = fixture.table();
+    auto& rows = std::as_const(*table.get_selection()->get_row_selection());
+    auto click = [&] (TableIndex index, Qt::KeyboardModifiers modifiers) {
+      auto item = table.get_body().find_item(index);
+      REQUIRE(item);
+      auto point = item->mapToGlobal(item->rect().center());
+      QCursor::setPos(point);
+      QTest::mouseClick(window, Qt::LeftButton, modifiers,
+        fixture.m_view->mapFromGlobal(point));
+      QApplication::processEvents();
+    };
+    auto is_highlighted = [&] (int row) {
+      auto item = table.get_body().find_item(TableIndex(row, 1));
+      REQUIRE(item);
+      return find<BackgroundColor>(get_computed_block(*item->parentWidget())) ==
+        BackgroundColor(QColor(0xE2E0FF));
+    };
+    click(TableIndex(0, 1), Qt::NoModifier);
+    SUBCASE("toggle") {
+      QTest::keyPress(window, Qt::Key_Control);
+      click(TableIndex(2, 1), Qt::ControlModifier);
+      REQUIRE(std::vector(rows.begin(), rows.end()) == std::vector{0, 2});
+      REQUIRE(is_highlighted(0));
+      REQUIRE(is_highlighted(2));
+      click(TableIndex(0, 1), Qt::ControlModifier);
+      QTest::keyRelease(window, Qt::Key_Control);
+      REQUIRE(std::vector(rows.begin(), rows.end()) == std::vector{2});
+      REQUIRE_FALSE(is_highlighted(0));
+      REQUIRE(is_highlighted(2));
+    }
+    SUBCASE("range") {
+      QTest::keyPress(window, Qt::Key_Shift);
+      click(TableIndex(3, 1), Qt::ShiftModifier);
+      QTest::keyRelease(window, Qt::Key_Shift);
+      REQUIRE(std::vector(rows.begin(), rows.end()) ==
+        std::vector{0, 1, 2, 3});
+      for(auto i : rows) {
+        REQUIRE(is_highlighted(i));
+      }
+    }
+    SUBCASE("pin_button") {
+      QTest::keyPress(window, Qt::Key_Control);
+      click(TableIndex(1, 0), Qt::ControlModifier);
+      QTest::keyRelease(window, Qt::Key_Control);
+      REQUIRE(fixture.m_tasks->get(1).m_is_pinned);
+      REQUIRE(std::vector(rows.begin(), rows.end()) == std::vector{0, 1});
+    }
+  }
+
   UI_TEST_CASE("monitor_headers") {
     auto fixture = Fixture();
     auto names = QStringList{"Pinned", "Name", "ID", "State", "Ticker",

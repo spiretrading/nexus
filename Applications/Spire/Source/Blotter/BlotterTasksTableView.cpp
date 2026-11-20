@@ -241,7 +241,9 @@ TableView* BlotterTasksTableView::make_table() const {
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(table_view->get_body(), [] (auto& style) {
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > (CurrentColumn() || CurrentRow())).
+      set(BackgroundColor(Qt::transparent));
+    style.get(Any() > Selected()).set(BackgroundColor(QColor(0xE2E0FF)));
     style.get(Any() > Row() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
