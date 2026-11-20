@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QTextEdit>
 #include <QWidget>
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Async/QtTaskQueue.hpp"
@@ -29,6 +30,12 @@ namespace Spire {
         Beam::Ref<UserProfile> profile);
 
       ~BlotterController();
+
+      /**
+       * Logs a request to cancel tasks.
+       * @param tasks The tasks selected for cancellation.
+       */
+      void on_cancel_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
 
     private:
       struct Entry {
@@ -63,6 +70,7 @@ namespace Spire {
       QPushButton* m_fill;
       QPushButton* m_partial_fill;
       QPushButton* m_cancel;
+      QTextEdit* m_output;
       QtTaskQueue m_events;
 
       Nexus::OrderFields make_fields() const;

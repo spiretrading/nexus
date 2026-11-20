@@ -44,9 +44,12 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
       m_reject(new QPushButton(tr("Reject"))),
       m_fill(new QPushButton(tr("Fill Remaining"))),
       m_partial_fill(new QPushButton(tr("Partial Fill"))),
-      m_cancel(new QPushButton(tr("Cancel"))) {
+      m_cancel(new QPushButton(tr("Cancel"))),
+      m_output(new QTextEdit()) {
   setWindowTitle(tr("Blotter Controller"));
-  auto layout = new QHBoxLayout(this);
+  auto layout = new QVBoxLayout(this);
+  auto control_row = new QHBoxLayout();
+  layout->addLayout(control_row);
   auto creation = new QGroupBox(tr("Create Task"));
   auto form = new QFormLayout(creation);
   form->addRow(tr("Name"), m_name);
@@ -80,7 +83,7 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
   auto create = new QPushButton(tr("Create Task"));
   connect(create, &QPushButton::clicked, this, &BlotterController::on_create);
   form->addRow(create);
-  layout->addWidget(creation);
+  control_row->addWidget(creation);
   auto execution = new QGroupBox(tr("Control Order"));
   auto controls = new QVBoxLayout(execution);
   controls->addWidget(m_selection);
@@ -100,7 +103,10 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
   controls->addWidget(m_fill);
   controls->addWidget(m_cancel);
   controls->addStretch();
-  layout->addWidget(execution);
+  control_row->addWidget(execution);
+  m_output->setReadOnly(true);
+  m_output->setPlaceholderText(tr("Signal output"));
+  layout->addWidget(m_output, 1);
   connect(m_selection, qOverload<int>(&QComboBox::currentIndexChanged), this,
     &BlotterController::on_selection);
   connect(m_accept, &QPushButton::clicked, this, [=, this] {
@@ -122,7 +128,7 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
     m_events.get_slot<std::shared_ptr<Order>>(
       std::bind_front(&BlotterController::on_submission, this)));
   refresh();
-  resize(scale(660, 410));
+  resize(scale(660, 540));
 }
 
 BlotterController::~BlotterController() {
@@ -131,6 +137,15 @@ BlotterController::~BlotterController() {
     entry.m_task->GetExecutor().Close();
   }
   flush_pending_routines();
+}
+
+void BlotterController::on_cancel_tasks(
+    const std::vector<std::shared_ptr<Task>>& tasks) {
+  auto ids = QStringList();
+  for(auto& task : tasks) {
+    ids.push_back(QString::number(task->GetId()));
+  }
+  m_output->append(tr("Cancel Tasks: [%1]").arg(ids.join(", ")));
 }
 
 OrderFields BlotterController::make_fields() const {

@@ -66,7 +66,8 @@ BlotterTasksCommandBar::BlotterTasksCommandBar(
   layout->addSpacing(scale_width(4));
   auto cancel = make_icon_button(
     image_from_svg(":/Icons/blotter/tasks/cancel.svg", scale(26, 26)),
-    tr("Cancel task"));
+    tr("Cancel tasks"));
+  cancel->setAccessibleName(tr("Cancel tasks"));
   cancel->setFixedSize(scale(26, 26));
   cancel->connect_click_signal(m_cancel_signal);
   update_style(*cancel, [] (auto& style) {
