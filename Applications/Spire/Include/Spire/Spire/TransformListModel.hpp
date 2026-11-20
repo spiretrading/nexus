@@ -3,8 +3,8 @@
 #include <concepts>
 #include <type_traits>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 
 namespace Spire {
@@ -22,7 +22,7 @@ namespace Spire {
     std::invocable<U, T> G> requires
       std::convertible_to<std::invoke_result_t<F, U>, T> &&
         std::convertible_to<std::invoke_result_t<G, U, T>, U>
-  class TransformListModel : public ListModel<T> {
+  class TransformListModel : public TransactionLogModel<ListModel<T>> {
     public:
 
       /** The type of value to model. */
@@ -73,21 +73,14 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<ListModel<Source>> m_source;
       mutable boost::optional<Type> m_last;
       mutable F m_f;
       mutable G m_g;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const typename ListModel<Source>::Operation& operation);
@@ -165,6 +158,7 @@ namespace Spire {
       : m_source(std::move(source)),
         m_f(std::forward<FF>(f)),
         m_g(std::forward<GG>(g)) {
+    this->m_transaction.set_size(get_size());
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&TransformListModel::on_operation, this));
   }
@@ -237,35 +231,16 @@ namespace Spire {
     std::invocable<U, T> G> requires
       std::convertible_to<std::invoke_result_t<F, U>, T> &&
         std::convertible_to<std::invoke_result_t<G, U, T>, U>
-  boost::signals2::connection
-      TransformListModel<T, U, F, G>::connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T, typename U, std::invocable<U> F,
-    std::invocable<U, T> G> requires
-      std::convertible_to<std::invoke_result_t<F, U>, T> &&
-        std::convertible_to<std::invoke_result_t<G, U, T>, U>
-  void TransformListModel<T, U, F, G>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
-  }
-
-  template<typename T, typename U, std::invocable<U> F,
-    std::invocable<U, T> G> requires
-      std::convertible_to<std::invoke_result_t<F, U>, T> &&
-        std::convertible_to<std::invoke_result_t<G, U, T>, U>
   void TransformListModel<T, U, F, G>::on_operation(
       const typename ListModel<Source>::Operation& operation) {
     visit(operation,
       [&] (const typename ListModel<Source>::UpdateOperation& operation) {
-        m_transaction.push(UpdateOperation(operation.m_index,
+        this->m_transaction.push(UpdateOperation(operation.m_index,
           m_f(operation.get_previous()), m_f(operation.get_value())));
       },
       [&] <typename T> (const T& operation) requires
           (!std::is_same_v<T, typename ListModel<Source>::UpdateOperation>) {
-        m_transaction.push(operation);
+        this->m_transaction.push(operation);
       });
   }
 }

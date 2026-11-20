@@ -8,6 +8,7 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -25,7 +26,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct AppendableTableModel : TableModel {
+  struct AppendableTableModel : TransactionLogModel<TableModel> {
     static const auto KEY_COLUMN = 0;
     static const auto VALUE_COLUMN = 1;
     static const auto COLUMN_COUNT = 2;
@@ -41,7 +42,6 @@ namespace {
     std::shared_ptr<ScopeModel> m_scope;
     std::vector<std::shared_ptr<ListModel<int>>> m_available_tags;
     scoped_connection m_connection;
-    TableModelTransactionLog m_transaction;
 
     AppendableTableModel(std::shared_ptr<ArrayTableModel> source,
         AdditionalTagDatabase additional_tags,
@@ -51,6 +51,7 @@ namespace {
           m_additional_tags(std::move(additional_tags)),
           m_destination(std::move(destination)),
           m_scope(std::move(scope)) {
+      m_transaction.set_size(get_row_size());
       for(auto i = 0; i != get_row_size(); ++i) {
         add_available_tags(i);
       }
@@ -110,11 +111,6 @@ namespace {
         return QValidator::Invalid;
       }
       throw std::out_of_range("The row is out of range.");
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const {
-      return m_transaction.connect_operation_signal(slot);
     }
 
     void add_available_tags(int row) {

@@ -45,9 +45,10 @@ connection TestTimeAndSalesModel::connect_operation_signal(
   return m_entries.connect_operation_signal(slot);
 }
 
-void TestTimeAndSalesModel::transact(
-    const std::function<void ()>& transaction) {
-  m_entries.transact([&] {
-    transaction();
-  });
+void TestTimeAndSalesModel::start_transaction() {
+  m_entries.start_transaction();
+}
+
+void TestTimeAndSalesModel::end_transaction() {
+  m_entries.end_transaction();
 }

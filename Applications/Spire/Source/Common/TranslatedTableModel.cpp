@@ -1,13 +1,13 @@
 #include "Spire/Spire/TranslatedTableModel.hpp"
 #include <algorithm>
 
-using namespace boost::signals2;
 using namespace Spire;
 
 TranslatedTableModel::TranslatedTableModel(std::shared_ptr<TableModel> source)
     : m_source(std::move(source)),
       m_translation(m_source->get_row_size()),
       m_reverse_translation(m_source->get_row_size()) {
+  m_transaction.set_size(get_row_size());
   std::iota(m_translation.begin(), m_translation.end(), 0);
   m_reverse_translation = m_translation;
   m_source_connection = m_source->connect_operation_signal(
@@ -71,11 +71,6 @@ QValidator::State TranslatedTableModel::set(
 
 QValidator::State TranslatedTableModel::remove(int row) {
   return m_source->remove(m_translation[row]);
-}
-
-connection TranslatedTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 void TranslatedTableModel::translate(int direction, int row) {

@@ -1,12 +1,14 @@
 #include "Spire/Ui/TableView.hpp"
 #include <QEvent>
+#include <QScopedValueRollback>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Details/DisplayedSelection.hpp"
+#include "Spire/Ui/Details/SourceToViewIndexModel.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -23,6 +25,40 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  class FilteredViewTableModel : public FilteredTableModel {
+    public:
+      FilteredViewTableModel(std::shared_ptr<TableModel> table,
+          const std::shared_ptr<TableFilter>& filter)
+          : FilteredTableModel(std::move(table),
+              std::bind_front(&TableFilter::is_filtered, filter)) {
+        m_connection = filter->connect_filter_signal(
+          [=, this] (int, TableFilter::Filter) {
+            set_filter(std::bind_front(&TableFilter::is_filtered, filter));
+          });
+      }
+
+    private:
+      scoped_connection m_connection;
+  };
+
+  struct TranslatedItemBuilder {
+    TableViewItemBuilder m_builder;
+
+    QWidget* mount(
+        const std::shared_ptr<TableModel>& table, int row, int column) {
+      auto sorted_table = std::static_pointer_cast<SortedTableModel>(table);
+      auto filtered_table = std::static_pointer_cast<FilteredTableModel>(
+        sorted_table->get_source());
+      return m_builder.mount(filtered_table->get_source(),
+        filtered_table->index_to_source(sorted_table->index_to_source(row)),
+        column);
+    }
+
+    void unmount(QWidget* widget) {
+      m_builder.unmount(widget);
+    }
+  };
+
   SortedTableModel::Ordering to_table_order(TableHeaderItem::Order order) {
     if(order == TableHeaderItem::Order::ASCENDING) {
       return SortedTableModel::Ordering::ASCENDING;
@@ -44,95 +80,6 @@ namespace {
     }
     return order;
   }
-
-  struct SourceToViewIndexModel : ValueModel<optional<TableIndex>> {
-    std::shared_ptr<SortedTableModel> m_sorted_table;
-    std::shared_ptr<FilteredTableModel> m_filtered_table;
-    std::shared_ptr<TableView::CurrentModel> m_current;
-    LocalValueModel<optional<TableIndex>> m_index;
-    scoped_connection m_current_connection;
-    scoped_connection m_table_connection;
-
-    SourceToViewIndexModel(std::shared_ptr<SortedTableModel> sorted_table,
-        std::shared_ptr<FilteredTableModel> filtered_table,
-        std::shared_ptr<TableView::CurrentModel> current)
-        : m_sorted_table(std::move(sorted_table)),
-          m_filtered_table(std::move(filtered_table)),
-          m_current(std::move(current)),
-          m_index(from_source(m_current->get())) {
-      m_current_connection = m_current->connect_update_signal(
-        std::bind_front(&SourceToViewIndexModel::on_current, this));
-      m_table_connection = m_sorted_table->connect_operation_signal(
-        std::bind_front(&SourceToViewIndexModel::on_operation, this));
-    }
-
-    const Type& get() const {
-      return m_index.get();
-    }
-
-    QValidator::State test(const Type& value) const {
-      return m_current->test(to_source(value));
-    }
-
-    QValidator::State set(const Type& value) {
-      return m_current->set(to_source(value));
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      return m_index.connect_update_signal(slot);
-    }
-
-    optional<TableIndex> from_source(const optional<TableIndex>& index) const {
-      if(!index) {
-        return none;
-      }
-      auto row = m_sorted_table->index_from_source(
-        m_filtered_table->index_from_source(index->m_row));
-      return TableIndex(row, index->m_column);
-    }
-
-    optional<TableIndex> to_source(const optional<TableIndex>& index) const {
-      if(!index) {
-        return none;
-      }
-      auto row = m_filtered_table->index_to_source(
-        m_sorted_table->index_to_source(index->m_row));
-      return TableIndex(row, index->m_column);
-    }
-
-    void on_current(const optional<TableIndex>& index) {
-      m_index.set(from_source(index));
-    }
-
-    void on_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::MoveOperation& operation) {
-          auto current = from_source(m_current->get());
-          if(current != m_index.get()) {
-            m_index.set(current);
-          }
-        });
-    }
-  };
-
-  struct TranslatedItemBuilder {
-    TableViewItemBuilder m_builder;
-
-    QWidget* mount(
-        const std::shared_ptr<TableModel>& table, int row, int column) {
-      auto sorted_table = std::static_pointer_cast<SortedTableModel>(table);
-      auto filtered_table = std::static_pointer_cast<FilteredTableModel>(
-        sorted_table->get_source());
-      return m_builder.mount(filtered_table->get_source(),
-        filtered_table->index_to_source(sorted_table->index_to_source(row)),
-        column);
-    }
-
-    void unmount(QWidget* widget) {
-      m_builder.unmount(widget);
-    }
-  };
 }
 
 QWidget* TableView::default_item_builder(
@@ -148,24 +95,31 @@ TableView::TableView(
     : QWidget(parent),
       m_table(std::move(table)),
       m_current(std::move(current)),
+      m_selection(std::move(selection)),
       m_header(std::move(header)),
-      m_filter(std::move(filter)),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
   for(auto i = 0; i != m_header->get_size(); ++i) {
     auto& item = m_header->get(i);
-    auto filter = m_filter->get_filter(i);
-    if(filter != item.m_filter) {
+    auto column_filter = filter->get_filter(i);
+    if(column_filter != item.m_filter) {
       auto revised_item = item;
-      revised_item.m_filter = filter;
+      revised_item.m_filter = column_filter;
       m_header->set(i, revised_item);
     }
   }
-  m_header_view = new TableHeader(m_header, m_filter);
+  m_header_view = new TableHeader(m_header, filter);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
-  m_filtered_table = std::make_shared<FilteredTableModel>(
-    m_table, std::bind_front(&TableView::is_filtered, this));
+  auto tracking = m_selection->track(m_table);
+  m_filtered_table = std::make_shared<FilteredViewTableModel>(m_table, filter);
+  m_selection_filter_connection = m_selection->m_filter_signal->connect(
+    [=, this] (int row, bool& excluded) {
+      if(!m_selection->m_is_updating &&
+          m_filtered_table->index_from_source(row) == -1) {
+        excluded = true;
+      }
+    });
   if(comparator) {
     m_sorted_table = std::make_shared<SortedTableModel>(
       m_filtered_table, make_column_order(*m_header), std::move(comparator));
@@ -173,16 +127,7 @@ TableView::TableView(
     m_sorted_table = std::make_shared<SortedTableModel>(
       m_filtered_table, make_column_order(*m_header));
   }
-  if(!m_current) {
-    m_current = std::make_shared<TableCurrentIndexModel>(m_table);
-  }
-  auto body_current = make_proxy_value_model(
-    std::make_shared<LocalValueModel<optional<Index>>>());
-  m_body = new TableBody(m_sorted_table, body_current, std::move(selection),
-    m_header_view->get_widths(),
-    TranslatedItemBuilder(std::move(item_builder)));
-  body_current->set_source(std::make_shared<SourceToViewIndexModel>(
-    m_sorted_table, m_filtered_table, m_current));
+  initialize_body(std::move(item_builder), std::move(tracking));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
@@ -197,8 +142,6 @@ TableView::TableView(
   layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
-  m_filter_connection = m_filter->connect_filter_signal(
-    std::bind_front(&TableView::on_filter, this));
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
@@ -217,7 +160,7 @@ const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
 
 const std::shared_ptr<TableView::SelectionModel>&
     TableView::get_selection() const {
-  return m_body->get_selection();
+  return m_selection;
 }
 
 TableHeader& TableView::get_header() {
@@ -264,8 +207,42 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool TableView::is_filtered(const TableModel& model, int row) {
-  return m_filter->is_filtered(model, row);
+void TableView::initialize_body(
+    TableViewItemBuilder item_builder, connection tracking) {
+  if(!m_current) {
+    m_current = std::make_shared<TableCurrentIndexModel>(m_table);
+  }
+  auto body_current = make_proxy_value_model(
+    std::make_shared<LocalValueModel<optional<Index>>>());
+  auto rows = std::make_shared<DisplayedSelection<int>>(
+    m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
+    nullptr, m_selection, tracking);
+  auto& column_order = m_header_view->m_translation;
+  auto items = std::make_shared<DisplayedSelection<TableIndex>>(
+    m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
+    column_order, m_selection, tracking);
+  auto columns = std::make_shared<DisplayedSelection<int>>(
+    m_selection->get_column_selection(), nullptr, nullptr, column_order,
+    m_selection, tracking);
+  auto body_selection = std::make_shared<SelectionModel>(items, rows, columns);
+  body_selection->m_source_tracking = tracking;
+  m_body = new TableBody(m_sorted_table, body_current, body_selection,
+    m_header_view->get_widths(),
+    TranslatedItemBuilder(std::move(item_builder)));
+  auto refresh = [selection = std::weak_ptr(body_selection)] (
+      auto& list, const auto&... operation) {
+    if(auto model = selection.lock()) {
+      auto guard = QScopedValueRollback(model->m_is_updating, true);
+      list.refresh(operation...);
+    } else {
+      list.refresh(operation...);
+    }
+  };
+  rows->track(refresh);
+  items->track(refresh);
+  columns->track(refresh);
+  body_current->set_source(std::make_shared<SourceToViewIndexModel>(
+    m_sorted_table, m_filtered_table, column_order, m_current));
 }
 
 void TableView::update_scroll_sizes() {
@@ -278,8 +255,9 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   auto header_item = m_header->get(index);
   header_item.m_order = order;
   auto column_order = m_sorted_table->get_column_order();
-  adjust(
-    SortedTableModel::ColumnOrder(index, to_table_order(order)), column_order);
+  auto source = m_header_view->get_column_order()->get(index);
+  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)),
+    column_order);
   m_sorted_table->set_column_order(column_order);
   for(auto i = 0; i != m_header->get_size(); ++i) {
     if(i == index) {
@@ -292,11 +270,7 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
       }
     }
   }
-  m_sort_signal(index, order);
-}
-
-void TableView::on_filter(int column, TableFilter::Filter filter) {
-  m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
+  m_sort_signal(source, order);
 }
 
 void TableView::on_current(const optional<Index>&) {

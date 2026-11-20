@@ -5,7 +5,7 @@
 #include <memory>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -13,7 +13,7 @@ namespace Spire {
    * Implements a TableModel that signals an update only when a cell's value
    * changes.
    */
-  class DeduplicatedTableModel : public TableModel {
+  class DeduplicatedTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /**
@@ -46,13 +46,10 @@ namespace Spire {
       QValidator::State
         set(int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       IsEqual m_is_equal;
-      TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const Operation& operation);

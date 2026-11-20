@@ -35,11 +35,11 @@ namespace Spire {
       QValidator::State remove(int index) override;
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
+      std::shared_ptr<OrderTaskArgumentsListModel> m_source;
       OrderTaskArgumentsContentCache m_cache;
       FilteredListModel<OrderTaskArguments> m_filtered_list;
       std::shared_ptr<TextModel> m_keywords;

@@ -4,9 +4,33 @@ using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  struct TaskBindings : ArrayListModel<OrderTaskArguments> {
+    QValidator::State set(int index, const Type& value) override {
+      auto& previous = get(index);
+      if(value.m_key.isEmpty() || (value.m_key == previous.m_key &&
+          value.m_scope == previous.m_scope)) {
+        return ArrayListModel::set(index, value);
+      }
+      auto binding = value;
+      return transact([&] {
+        for(auto i = 0; i < get_size(); ++i) {
+          auto& task = get(i);
+          if(i != index && task.m_key == binding.m_key &&
+              task.m_scope == binding.m_scope) {
+            auto updated = task;
+            updated.m_key = QKeySequence();
+            ArrayListModel::set(i, updated);
+          }
+        }
+        return ArrayListModel::set(index, binding);
+      });
+    }
+  };
+}
+
 KeyBindingsModel::KeyBindingsModel()
-    : m_order_task_arguments(
-        std::make_shared<ArrayListModel<OrderTaskArguments>>()),
+    : m_order_task_arguments(std::make_shared<TaskBindings>()),
       m_cancel_key_bindings(std::make_shared<CancelKeyBindingsModel>()) {
   m_interactions.insert(std::pair(
     Scope::make_global(QObject::tr("Global").toStdString()),

@@ -3,14 +3,14 @@
 #include <stdexcept>
 #include <vector>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
   /** Implements a ListModel using an array as its backing data structure. */
   template<typename T>
-  class ArrayListModel : public ListModel<T> {
+  class ArrayListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = typename ListModel<T>::OperationSignal;
@@ -37,23 +37,18 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::vector<Type> m_data;
-      ListModelTransactionLog<Type> m_transaction;
   };
 
   template<typename T>
   ArrayListModel<T>::ArrayListModel(std::vector<Type> data)
-    : m_data(std::move(data)) {}
+      : m_data(std::move(data)) {
+    this->m_transaction.set_size(get_size());
+  }
 
   template<typename T>
   int ArrayListModel<T>::get_size() const {
@@ -76,7 +71,8 @@ namespace Spire {
     }
     auto previous = std::move(m_data[index]);
     m_data[index] = value;
-    m_transaction.push(UpdateOperation(index, std::move(previous), value));
+    this->m_transaction.push(
+      UpdateOperation(index, std::move(previous), value));
     return QValidator::State::Acceptable;
   }
 
@@ -86,7 +82,7 @@ namespace Spire {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
-    m_transaction.push(AddOperation(index));
+    this->m_transaction.push(AddOperation(index));
     return QValidator::State::Acceptable;
   }
 
@@ -110,7 +106,7 @@ namespace Spire {
         std::next(m_data.begin(), source + 1));
     }
     m_data[destination] = std::move(source_row);
-    m_transaction.push(MoveOperation(source, destination));
+    this->m_transaction.push(MoveOperation(source, destination));
     return QValidator::State::Acceptable;
   }
 
@@ -119,23 +115,12 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    m_transaction.transact([&] {
-      m_transaction.push(PreRemoveOperation(index));
+    this->m_transaction.transact([&] {
+      this->m_transaction.push(PreRemoveOperation(index));
       m_data.erase(std::next(m_data.begin(), index));
-      m_transaction.push(RemoveOperation(index));
+      this->m_transaction.push(RemoveOperation(index));
     });
     return QValidator::State::Acceptable;
-  }
-
-  template<typename T>
-  boost::signals2::connection ArrayListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void ArrayListModel<T>::transact(const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
   }
 }
 

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <ranges>
 #include <unordered_map>
+#include <unordered_set>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
@@ -24,6 +25,7 @@
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/KeyBindings/LegacyKeyBindings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/Spire/HashQtTypes.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -706,6 +708,17 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     receiver.set(Ref(buffer));
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
     receiver.shuttle(profile);
+    auto& tasks = *key_bindings->get_order_task_arguments();
+    auto keys = std::unordered_map<Scope, std::unordered_set<QKeySequence>>();
+    for(auto i = 0; i != tasks.get_size(); ++i) {
+      auto& task = tasks.get(i);
+      if(!task.m_key.isEmpty() &&
+          !keys[task.m_scope].insert(task.m_key).second) {
+        auto updated = task;
+        updated.m_key = QKeySequence();
+        tasks.set(i, updated);
+      }
+    }
     return key_bindings;
   };
   auto buffer = SharedBuffer();

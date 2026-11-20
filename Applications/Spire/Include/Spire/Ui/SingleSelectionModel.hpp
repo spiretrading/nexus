@@ -2,8 +2,8 @@
 #define SPIRE_SINGLE_SELECTION_MODEL_HPP
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/TableIndex.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -12,7 +12,7 @@ namespace Spire {
    * @param <T> The type of index to select.
    */
   template<typename T>
-  class SingleSelectionModel : public ListModel<T> {
+  class SingleSelectionModel : public TransactionLogModel<ListModel<T>> {
     public:
 
       /** The type of index to select. */
@@ -37,16 +37,9 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& f) override;
 
     private:
       boost::optional<Type> m_value;
-      ListModelTransactionLog<Type> m_transaction;
   };
 
   /** The type of single selection model used for ListViews. */
@@ -79,7 +72,7 @@ namespace Spire {
     }
     auto previous = *m_value;
     *m_value = value;
-    m_transaction.push(UpdateOperation(index, previous, value));
+    this->m_transaction.push(UpdateOperation(index, previous, value));
     return QValidator::State::Acceptable;
   }
 
@@ -88,12 +81,12 @@ namespace Spire {
       const Type& value, int index) {
     if(!m_value && index == 0) {
       m_value = value;
-      m_transaction.push(AddOperation(index));
+      this->m_transaction.push(AddOperation(index));
       return QValidator::State::Acceptable;
     } else if(m_value && (index == 0 || index == 1)) {
       auto previous = *m_value;
       m_value = value;
-      m_transaction.push(UpdateOperation(0, previous, value));
+      this->m_transaction.push(UpdateOperation(0, previous, value));
       return QValidator::State::Acceptable;
     }
     throw std::out_of_range("The index is out of range.");
@@ -113,22 +106,10 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    m_transaction.push(PreRemoveOperation(index));
+    this->m_transaction.push(PreRemoveOperation(index));
     m_value = boost::none;
-    m_transaction.push(RemoveOperation(index));
+    this->m_transaction.push(RemoveOperation(index));
     return QValidator::State::Acceptable;
-  }
-
-  template<typename T>
-  boost::signals2::connection SingleSelectionModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void SingleSelectionModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
   }
 }
 

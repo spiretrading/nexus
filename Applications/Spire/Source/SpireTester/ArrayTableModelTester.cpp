@@ -1,12 +1,37 @@
 #include <deque>
+#include <stdexcept>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/SpireTester/TableModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("ArrayTableModel") {
+  TEST_CASE("transaction_boundaries") {
+    auto table = ArrayTableModel();
+    auto& model = static_cast<TableModel&>(table);
+    auto operations = std::deque<TableModel::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    model.start_transaction();
+    table.push({1});
+    REQUIRE_THROWS_AS(model.transact([&] {
+      table.push({2});
+      throw std::runtime_error("Interrupted.");
+    }), std::runtime_error);
+    REQUIRE(operations.size() == 3);
+    model.end_transaction();
+    REQUIRE(operations.size() == 4);
+    require_transaction(operations,
+      {TableModel::AddOperation(0), TableModel::AddOperation(1)});
+    operations.clear();
+    table.push({3});
+    REQUIRE(operations.size() == 1);
+    REQUIRE(std::holds_alternative<TableModel::AddOperation>(operations[0]));
+  }
+
   TEST_CASE("push") {
     auto model = ArrayTableModel();
     REQUIRE(model.get_row_size() == 0);
@@ -106,32 +131,22 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE_NOTHROW(model.push({10, 11, 12}));
     REQUIRE(signal_count == 4);
     REQUIRE(model.get_row_size() == 4);
-    auto source = 0;
-    auto destination = 0;
-    connection = model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source);
-        REQUIRE(move_operation->m_destination == destination);
-      });
+    auto operations = std::deque<TableModel::Operation>();
+    connection = model.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     REQUIRE_THROWS(model.move(0, 4));
-    REQUIRE(signal_count == 4);
     REQUIRE_THROWS(model.move(5, 1));
-    REQUIRE(signal_count == 4);
-    source = 2;
-    destination = 2;
-    REQUIRE_NOTHROW(model.move(source, destination));
+    REQUIRE_NOTHROW(model.move(2, 2));
+    REQUIRE(operations.empty());
     REQUIRE(model.get<int>(0, 0) == 1);
     REQUIRE(model.get<int>(1, 0) == 4);
     REQUIRE(model.get<int>(2, 0) == 7);
     REQUIRE(model.get<int>(3, 0) == 10);
-    source = 0;
-    destination = 3;
-    REQUIRE_NOTHROW(model.move(source, destination));
-    REQUIRE(signal_count == 5);
+    REQUIRE_NOTHROW(model.move(0, 3));
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::MoveOperation(0, 3)});
+    operations.clear();
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(0, 1) == 5);
     REQUIRE(model.get<int>(1, 0) == 7);
@@ -140,10 +155,9 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(model.get<int>(2, 1) == 11);
     REQUIRE(model.get<int>(3, 0) == 1);
     REQUIRE(model.get<int>(3, 1) == 2);
-    source = 3;
-    destination = 1;
-    REQUIRE_NOTHROW(model.move(source, destination));
-    REQUIRE(signal_count == 6);
+    REQUIRE_NOTHROW(model.move(3, 1));
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::MoveOperation(3, 1)});
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(0, 1) == 5);
     REQUIRE(model.get<int>(1, 0) == 1);
@@ -184,21 +198,20 @@ TEST_SUITE("ArrayTableModel") {
       });
     REQUIRE_NOTHROW(model.remove(index));
     REQUIRE(signal_count == 3);
-    signal_count = 0;
+    auto operations = std::deque<TableModel::Operation>();
     connection = model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto add_operation = std::get_if<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == index);
-      });
+      [&] (const auto& operation) { operations.push_back(operation); });
     index = 0;
     REQUIRE_NOTHROW(model.insert({1, 2, 3}, index));
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 1);
+    require_transaction(operations, {TableModel::AddOperation(index)});
+    operations.clear();
     REQUIRE_NOTHROW(model.insert({4, 5, 6}, index));
     REQUIRE(model.get_row_size() == 2);
-    REQUIRE(signal_count == 2);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(index)});
+    operations.clear();
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(0, 1) == 5);
     REQUIRE(model.get<int>(1, 0) == 1);
@@ -206,11 +219,13 @@ TEST_SUITE("ArrayTableModel") {
     index = -1;
     REQUIRE_THROWS(model.insert({7, 8, 9}, index));
     REQUIRE(model.get_row_size() == 2);
-    REQUIRE(signal_count == 2);
+    REQUIRE(operations.empty());
     index = 2;
     REQUIRE_NOTHROW(model.insert({7, 8, 9}, index));
     REQUIRE(model.get_row_size() == 3);
-    REQUIRE(signal_count == 3);
+    REQUIRE(operations.size() == 1);
+    require_transaction(operations, {TableModel::AddOperation(index)});
+    operations.clear();
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(1, 0) == 1);
     REQUIRE(model.get<int>(2, 0) == 7);
@@ -218,10 +233,11 @@ TEST_SUITE("ArrayTableModel") {
     index = 1;
     REQUIRE_THROWS(model.insert({10}, index));
     REQUIRE(model.get_row_size() == 3);
-    REQUIRE(signal_count == 3);
+    REQUIRE(operations.empty());
     REQUIRE_NOTHROW(model.insert({10, 11, 12}, index));
     REQUIRE(model.get_row_size() == 4);
-    REQUIRE(signal_count == 4);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(index)});
     REQUIRE(model.get<int>(0, 0) == 4);
     REQUIRE(model.get<int>(1, 0) == 10);
     REQUIRE(model.get<int>(2, 0) == 1);

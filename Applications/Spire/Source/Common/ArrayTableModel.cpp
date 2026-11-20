@@ -4,7 +4,6 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 
 void ArrayTableModel::push(const std::vector<std::any>& row) {
@@ -85,9 +84,4 @@ QValidator::State ArrayTableModel::remove(int row) {
     m_transaction.push(RemoveOperation(row));
   });
   return QValidator::Acceptable;
-}
-
-connection ArrayTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }

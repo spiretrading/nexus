@@ -1,7 +1,6 @@
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -17,6 +16,7 @@ FilteredTableModel::FilteredTableModel(
     : m_source(std::move(source)),
       m_list(std::make_shared<TableToListModel>(m_source)),
       m_filtered_list(m_list, make_filter(*m_source, std::move(filter))) {
+  m_transaction.set_size(get_row_size());
   m_connection = m_filtered_list.connect_operation_signal(
     std::bind_front(&FilteredTableModel::on_operation, this));
 }
@@ -56,11 +56,6 @@ QValidator::State FilteredTableModel::set(
 
 QValidator::State FilteredTableModel::remove(int row) {
   return m_filtered_list.remove(row);
-}
-
-connection FilteredTableModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
 }
 
 void FilteredTableModel::on_operation(

@@ -48,11 +48,12 @@ connection TopMpidPriceListModel::connect_operation_signal(
   return m_top_prices.connect_operation_signal(slot);
 }
 
-void TopMpidPriceListModel::transact(
-    const std::function<void ()>& transaction) {
-  m_top_prices.transact([&] {
-    transaction();
-  });
+void TopMpidPriceListModel::start_transaction() {
+  m_top_prices.start_transaction();
+}
+
+void TopMpidPriceListModel::end_transaction() {
+  m_top_prices.end_transaction();
 }
 
 optional<int> TopMpidPriceListModel::find_index(Venue venue) const {

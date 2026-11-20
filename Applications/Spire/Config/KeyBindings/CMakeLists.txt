@@ -93,7 +93,7 @@ beam_install_target(KeyBindingsUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
 add_executable(KeyBindingsTester ${source_files})
 beam_configure_target(KeyBindingsTester)
-target_link_libraries(KeyBindingsTester BeamRoutines)
+target_link_libraries(KeyBindingsTester BeamRoutines SpireTesterLibrary)
 target_compile_definitions(KeyBindingsTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(KeyBindingsTester Async Dashboard Charting
@@ -116,6 +116,8 @@ target_link_libraries(KeyBindingsTester Async Dashboard Charting
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(KeyBindingsTester
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}

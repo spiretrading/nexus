@@ -493,14 +493,24 @@ TEST_SUITE("SortedTableModel") {
     order.push_back({1, SortedTableModel::Ordering::ASCENDING});
     order.push_back({2, SortedTableModel::Ordering::ASCENDING});
     auto sorted_model = SortedTableModel(source, order, test_comparator);
-    auto signal_count = 0;
+    auto operations = std::deque<TableModel::Operation>();
     sorted_model.connect_operation_signal(
-      [&] (const auto& operation) { ++signal_count; });
+      [&] (const auto& operation) { operations.push_back(operation); });
     source->push({2, std::string("Ava"), 4.1f});
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(3)});
+    operations.clear();
     source->set(3, 0, 1);
+    require_transaction(operations, {TableModel::MoveOperation(1, 4),
+      TableModel::UpdateOperation(4, 0, 6, 1)});
+    operations.clear();
     source->insert({6, std::string("Tom"), 11.1f}, 2);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(1)});
+    operations.clear();
     source->set(5, 1, std::string("Bob"));
-    REQUIRE(signal_count == 7);
+    require_transaction(operations, {TableModel::UpdateOperation(
+      3, 1, std::string("Ava"), std::string("Bob"))});
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{9, 6, 4, 2, 2, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Jack", "Tom", "John", "Bob", "Bob", "Liam"});
