@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -50,7 +51,18 @@ namespace {
       const std::shared_ptr<TableModel>& table, int row, int column) {
     auto value = table->at(row, column);
     auto cell = make_label(to_text(value));
-    set_alignment(*cell, get_alignment(value.get_type()));
+    auto align = [=] (Qt::Alignment alignment) {
+      update_style(*cell, [=] (auto& style) {
+        auto& rule = style.get(Any());
+        rule.set(TextAlign(alignment));
+        if(alignment.testFlag(Qt::AlignRight)) {
+          rule.set(PaddingRight(scale_width(4)));
+        } else {
+          rule.set(PaddingRight(0));
+        }
+      });
+    };
+    align(get_alignment(value.get_type()));
     auto connection = table->connect_operation_signal(
       [=, row = TableRowIndexTracker(row)] (const auto& operation) mutable {
         auto update = std::get_if<TableModel::UpdateOperation>(&operation);
@@ -63,7 +75,7 @@ namespace {
         }
         auto alignment = get_alignment(update->m_value.type());
         if(alignment != get_alignment(update->m_previous.type())) {
-          set_alignment(*cell, alignment);
+          align(alignment);
         }
         cell->get_current()->set(to_text(update->m_value));
       });
@@ -277,8 +289,16 @@ TableView* BlotterTasksTableView::make_table() const {
       set(Fill(QColor(0x4B23A0)));
   });
   pin_header->set_label(*pin_label);
-  header.get_widths()->set(
-    pinned_column, std::max(scale_width(26), pin_header->sizeHint().width()));
+  const auto DEFAULT_WIDTHS = std::array{30, 150, 65, 85};
+  auto& widths = *header.get_widths();
+  for(auto i = 0; i < FIXED_COLUMNS; ++i) {
+    widths.set(i, scale_width(DEFAULT_WIDTHS[i]));
+  }
+  for(auto i = 0; i < m_monitors->get_size(); ++i) {
+    if(auto width = m_monitors->get(i).m_default_width) {
+      widths.set(FIXED_COLUMNS + i, scale_width(*width));
+    }
+  }
   return table_view;
 }
 

@@ -1,5 +1,6 @@
 #ifndef SPIRE_BLOTTER_TASK_MONITOR_HPP
 #define SPIRE_BLOTTER_TASK_MONITOR_HPP
+#include <boost/optional/optional.hpp>
 #include <QString>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Spire/ListModel.hpp"
@@ -14,6 +15,9 @@ namespace Spire {
 
     /** The expression evaluated for each task, or null for an empty column. */
     std::shared_ptr<const CanvasNode> m_expression;
+
+    /** The initial column width in logical pixels, if specified. */
+    boost::optional<int> m_default_width;
   };
 
   /** The ordered monitor definitions for a blotter's tasks. */

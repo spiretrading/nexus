@@ -24,12 +24,12 @@ namespace {
     ID,
     STATUS,
     TICKER,
-    CURRENCY,
-    TYPE,
     SIDE,
-    DESTINATION,
-    QUANTITY,
     PRICE,
+    QUANTITY,
+    TYPE,
+    DESTINATION,
+    CURRENCY,
     TIME_IN_FORCE
   };
 
@@ -211,12 +211,12 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
     add_header_item(tr("ID")).
     add_header_item(tr("Status")).
     add_header_item(tr("Ticker")).
-    add_header_item(tr("Currency"), tr("Curr")).
-    add_header_item(tr("Type")).
     add_header_item(tr("Side")).
-    add_header_item(tr("Destination"), tr("Dest")).
-    add_header_item(tr("Quantity"), tr("Qty")).
     add_header_item(tr("Price"), tr("Px")).
+    add_header_item(tr("Quantity"), tr("Qty")).
+    add_header_item(tr("Type")).
+    add_header_item(tr("Destination"), tr("Dest")).
+    add_header_item(tr("Currency"), tr("Curr")).
     add_header_item(tr("Time In Force"), tr("TIF")).
     set_item_builder([] (const auto& table, auto row, auto index) {
       auto column = static_cast<OrderColumn>(index);
@@ -236,13 +236,18 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
         return TableView::default_item_builder(table, row, index);
       }();
       update_style(*item, [=] (auto& style) {
-        style.get(Any()).set(TextAlign(get_alignment(column)));
+        auto alignment = get_alignment(column);
+        auto& rule = style.get(Any());
+        rule.set(TextAlign(alignment));
+        if(alignment.testFlag(Qt::AlignRight)) {
+          rule.set(PaddingRight(scale_width(4)));
+        }
       });
       return item;
     }).
     make();
   const auto DEFAULT_WIDTHS =
-    std::array{110, 100, 100, 105, 90, 75, 50, 90, 70, 70, 90};
+    std::array{110, 100, 100, 90, 50, 70, 60, 71, 75, 70, 90};
   for(auto i = 0; i < table->get_column_size(); ++i) {
     table_view->get_header().get_widths()->set(
       i, scale_width(DEFAULT_WIDTHS[i]));

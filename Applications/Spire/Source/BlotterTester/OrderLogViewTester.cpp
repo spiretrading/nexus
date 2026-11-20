@@ -86,7 +86,7 @@ TEST_SUITE("OrderLogView") {
   }
 
   UI_TEST_CASE("price_sorting") {
-    const auto PRICE_COLUMN = 9;
+    const auto PRICE_COLUMN = 5;
     auto fixture = Fixture();
     auto add_order = [&] (OrderType type, Money price) {
       auto fields = OrderFields();
