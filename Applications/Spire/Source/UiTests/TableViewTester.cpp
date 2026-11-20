@@ -5,6 +5,7 @@
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/SpireTester/ListModelTester.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -14,6 +15,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 using namespace Spire::Tests;
 
 namespace {
@@ -70,6 +72,50 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("focus_colors") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({1});
+    auto window = QWidget();
+    auto view = TableViewBuilder(table).add_header_item("Value").make();
+    view->setParent(&window);
+    view->resize(240, 160);
+    auto outside = QWidget(&window);
+    outside.setFocusPolicy(Qt::StrongFocus);
+    window.show();
+    window.activateWindow();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto index = TableIndex(0, 0);
+    view->get_current()->set(index);
+    view->get_selection()->get_row_selection()->push(0);
+    auto item = body.find_item(index);
+    REQUIRE(item);
+    auto row_outline = false;
+    SUBCASE("row") {
+      match(body, CurrentRowOutline());
+      row_outline = true;
+    }
+    SUBCASE("cell") {}
+    auto check = [&] (QColor outline, QColor fill) {
+      QApplication::processEvents();
+      auto& row = get_computed_block(*item->parentWidget());
+      REQUIRE((find<BackgroundColor>(row) == BackgroundColor(fill)));
+      if(row_outline) {
+        REQUIRE((find<HorizontalGridColor>(row) ==
+          HorizontalGridColor(outline)));
+        REQUIRE(item->get_styles().m_border_top_color == Qt::transparent);
+      } else {
+        REQUIRE(item->get_styles().m_border_top_color == outline);
+      }
+    };
+    view->get_header().get_item(0)->setFocus();
+    check(QColor(0x4B23A0), QColor(0xE2E0FF));
+    outside.setFocus();
+    check(QColor(0xA0A0A0), QColor(0xE0E0E0));
+    body.setFocus();
+    check(QColor(0x4B23A0), QColor(0xE2E0FF));
+  }
+
   UI_TEST_CASE("retained_body_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({0});
