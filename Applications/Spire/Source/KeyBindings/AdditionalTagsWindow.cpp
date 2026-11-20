@@ -82,6 +82,10 @@ namespace {
     }
 
     QValidator::State set(int row, int column, const std::any& value) {
+      if(column == KEY_COLUMN && !find(m_additional_tags, m_destination->get(),
+          m_scope->get(), std::any_cast<int>(value))) {
+        return QValidator::Invalid;
+      }
       if(row < m_source->get_row_size()) {
         return m_source->set(row, column, value);
       } else if(row == m_source->get_row_size()) {
