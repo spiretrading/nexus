@@ -13,7 +13,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(Blotter ${header_files} ${source_files} ${generated_header_files}
   ${generated_source_files})
 beam_configure_target(Blotter)
-target_link_libraries(Blotter Async BeamRoutines Canvas)
+target_link_libraries(Blotter Async BeamRoutines Canvas KeyBindings)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Blotter PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"

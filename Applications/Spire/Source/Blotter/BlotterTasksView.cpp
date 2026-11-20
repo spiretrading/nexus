@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterTasksView.hpp"
+#include <QKeyEvent>
 #include "Spire/Blotter/BlotterTasksCommandBar.hpp"
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -8,9 +9,10 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-BlotterTasksView::BlotterTasksView(
-    std::shared_ptr<BlotterModel> model, QWidget* parent)
+BlotterTasksView::BlotterTasksView(std::shared_ptr<BlotterModel> model,
+    std::shared_ptr<CancelKeyBindingsModel> bindings, QWidget* parent)
     : QWidget(parent),
+      m_bindings(std::move(bindings)),
       m_tasks(model->get_tasks()),
       m_selection(std::make_shared<TableSelectionModel>(
         std::make_shared<TableEmptySelectionModel>(),
@@ -21,13 +23,37 @@ BlotterTasksView::BlotterTasksView(
   commands->connect_cancel_signal(
     std::bind_front(&BlotterTasksView::on_cancel, this));
   layout->addWidget(commands);
-  layout->addWidget(new BlotterTasksTableView(
-    m_tasks, model->get_task_monitors(), m_selection), 1);
+  m_table =
+    new BlotterTasksTableView(m_tasks, model->get_task_monitors(), m_selection);
+  layout->addWidget(m_table, 1);
 }
 
-connection BlotterTasksView::connect_cancel_tasks_signal(
-    const CancelTasksSignal::slot_type& slot) const {
-  return m_cancel_tasks_signal.connect(slot);
+connection BlotterTasksView::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
+connection BlotterTasksView::connect_cancel_operation_signal(
+    const CancelOperationSignal::slot_type& slot) const {
+  return m_cancel_operation_signal.connect(slot);
+}
+
+void BlotterTasksView::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier &&
+      m_selection->get_row_selection()->get_size() != 0) {
+    on_cancel();
+    event->accept();
+    return;
+  }
+  if(m_table->hasFocus() || m_table->isAncestorOf(focusWidget())) {
+    auto key = QKeySequence(event->modifiers() | event->key());
+    if(auto operation = m_bindings->find_operation(key)) {
+      event->accept();
+      m_cancel_operation_signal(*operation);
+      return;
+    }
+  }
+  QWidget::keyPressEvent(event);
 }
 
 void BlotterTasksView::on_cancel() {
@@ -40,5 +66,5 @@ void BlotterTasksView::on_cancel() {
   for(auto row : rows) {
     tasks.push_back(m_tasks->get(row).m_task);
   }
-  m_cancel_tasks_signal(tasks);
+  m_cancel_signal(tasks);
 }

@@ -148,6 +148,25 @@ void BlotterController::on_cancel_tasks(
   m_output->append(tr("Cancel Tasks: [%1]").arg(ids.join(", ")));
 }
 
+void BlotterController::on_cancel_orders(
+    const std::vector<std::shared_ptr<Order>>& orders) {
+  auto ids = QStringList();
+  for(auto& order : orders) {
+    ids.push_back(QString::number(order->get_info().m_id));
+  }
+  m_output->append(tr("Cancel Orders: [%1]").arg(ids.join(", ")));
+}
+
+void BlotterController::on_cancel_task_operation(
+    CancelKeyBindingsModel::Operation operation) {
+  m_output->append(tr("Cancel Tasks: %1").arg(to_text(operation)));
+}
+
+void BlotterController::on_cancel_order_operation(
+    CancelKeyBindingsModel::Operation operation) {
+  m_output->append(tr("Cancel Orders: %1").arg(to_text(operation)));
+}
+
 OrderFields BlotterController::make_fields() const {
   auto fields = OrderFields();
   fields.m_account =

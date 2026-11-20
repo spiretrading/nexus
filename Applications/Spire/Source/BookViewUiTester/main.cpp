@@ -49,51 +49,6 @@ std::time_t to_time_t_milliseconds(ptime pt) {
   return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
 }
 
-const QString& to_text(CancelKeyBindingsModel::Operation operation) {
-  if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
-    static const auto value = QObject::tr("Most Recent");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK) {
-    static const auto value = QObject::tr("Most Recent Ask");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID) {
-    static const auto value = QObject::tr("Most Recent Bid");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST) {
-    static const auto value = QObject::tr("Oldest");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_ASK) {
-    static const auto value = QObject::tr("Oldest Ask");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_BID) {
-    static const auto value = QObject::tr("Oldest bid");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL) {
-    static const auto value = QObject::tr("All");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS) {
-    static const auto value = QObject::tr("All Asks");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-    static const auto value = QObject::tr("All bids");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK) {
-    static const auto value = QObject::tr("Closest Ask");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_BID) {
-    static const auto value = QObject::tr("Closest bid");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK) {
-    static const auto value = QObject::tr("Furthest Ask");
-    return value;
-  } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-    static const auto value = QObject::tr("Furthest bid");
-    return value;
-  }
-  static const auto none = QString();
-  return none;
-}
-
 std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
   auto ticker_infos = std::vector<TickerInfo>();
   auto add_ticker = [&] (const Ticker& ticker, const std::string& name) {

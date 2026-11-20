@@ -10,52 +10,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const QString& to_text(CancelKeyBindingsModel::Operation operation) {
-    if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
-      static const auto value = QObject::tr("Most Recent");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK) {
-      static const auto value = QObject::tr("Most Recent Ask");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID) {
-      static const auto value = QObject::tr("Most Recent Bid");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::OLDEST) {
-      static const auto value = QObject::tr("Oldest");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_ASK) {
-      static const auto value = QObject::tr("Oldest Ask");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_BID) {
-      static const auto value = QObject::tr("Oldest Bid");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::ALL) {
-      static const auto value = QObject::tr("All");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS) {
-      static const auto value = QObject::tr("All Asks");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-      static const auto value = QObject::tr("All Bids");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK) {
-      static const auto value = QObject::tr("Closest Ask");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_BID) {
-      static const auto value = QObject::tr("Closest Bid");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK) {
-      static const auto value = QObject::tr("Furthest Ask");
-      return value;
-    } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-      static const auto value = QObject::tr("Furthest Bid");
-      return value;
-    } else {
-      static const auto value = QObject::tr("None");
-      return value;
-    }
-  }
-
   auto make_help_text_box() {
     auto help_text_box = make_text_area_label(
       "Allowed keys are <b>ESC, F1–F12</b> and <b>0–9</b> and "

@@ -97,6 +97,9 @@ namespace Spire {
       void on_update(Operation operation, const QKeySequence& sequence);
   };
 
+  /** Returns the display name of a cancel operation. */
+  const QString& to_text(CancelKeyBindingsModel::Operation operation);
+
   /**
    * Executes a cancel operation on a list of order tasks.
    * @param operation The cancel operation to execute.

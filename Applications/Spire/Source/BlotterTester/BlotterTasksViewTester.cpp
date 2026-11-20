@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <Beam/Queues/Queue.hpp>
+#include <QtTest/qtestkeyboard.h>
 #include <QtTest/qtestmouse.h>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterTasksView.hpp"
@@ -36,7 +37,8 @@ TEST_SUITE("BlotterTasksView") {
       std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false), tasks,
-      std::make_shared<ArrayListModel<BlotterTaskMonitor>>()));
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>()),
+      profile.GetKeyBindings()->get_cancel_key_bindings());
     view.resize(640, 240);
     view.show();
     QApplication::processEvents();
@@ -52,7 +54,7 @@ TEST_SUITE("BlotterTasksView") {
     REQUIRE(table);
     REQUIRE(cancel);
     auto requests = std::vector<std::vector<std::shared_ptr<Task>>>();
-    view.connect_cancel_tasks_signal(
+    view.connect_cancel_signal(
       [&] (const auto& selected) { requests.push_back(selected); });
     auto click = [&] (QWidget& widget) {
       auto point = widget.mapToGlobal(widget.rect().center());
@@ -75,6 +77,10 @@ TEST_SUITE("BlotterTasksView") {
     REQUIRE(requests.size() == 1);
     REQUIRE(std::ranges::is_permutation(requests.front(),
       std::array{tasks->get(2).m_task, tasks->get(1).m_task}));
+    body.setFocus();
+    QTest::keyClick(view.windowHandle(), Qt::Key_Escape);
+    REQUIRE(requests.size() == 2);
+    REQUIRE(requests.back() == requests.front());
     REQUIRE(!states->try_pop());
   }
 }

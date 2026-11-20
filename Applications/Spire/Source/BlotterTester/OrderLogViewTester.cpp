@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <thread>
 #include <QLayout>
+#include <QtTest/qtestkeyboard.h>
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Spire/Blotter/OrderLogView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -27,7 +29,8 @@ namespace {
     }
 
     void open() {
-      m_view = std::make_unique<OrderLogView>(m_orders);
+      m_view = std::make_unique<OrderLogView>(
+        m_orders, std::make_shared<CancelKeyBindingsModel>());
       auto table_view =
         dynamic_cast<TableView*>(m_view->layout()->itemAt(0)->widget());
       REQUIRE(table_view);
@@ -48,6 +51,39 @@ namespace {
 }
 
 TEST_SUITE("OrderLogView") {
+  UI_TEST_CASE("cancel_selected_orders") {
+    auto fixture = Fixture();
+    auto first = make_order(1);
+    auto second = make_order(2);
+    auto third = make_order(3);
+    fixture.m_orders->push(first);
+    fixture.m_orders->push(second);
+    fixture.m_orders->push(third);
+    fixture.open();
+    auto table = static_cast<TableView*>(fixture.m_view->focusProxy());
+    auto requests = std::vector<std::vector<OrdersModel::Type>>();
+    fixture.m_view->connect_cancel_signal([&] (const auto& orders) {
+      requests.push_back(orders);
+    });
+    auto& body = table->get_body();
+    fixture.m_view->show();
+    body.setFocus();
+    QApplication::processEvents();
+    auto handle = fixture.m_view->windowHandle();
+    auto rows = table->get_selection()->get_row_selection();
+    clear(*rows);
+    QTest::keyClick(handle, Qt::Key_Escape);
+    REQUIRE(requests.empty());
+    rows->push(2);
+    rows->push(0);
+    QTest::keyClick(handle, Qt::Key_Escape, Qt::ShiftModifier);
+    REQUIRE(requests.empty());
+    QTest::keyClick(handle, Qt::Key_Escape);
+    REQUIRE(requests.size() == 1);
+    REQUIRE(std::ranges::is_permutation(
+      requests.front(), std::vector<OrdersModel::Type>{first, third}));
+  }
+
   UI_TEST_CASE("time_and_status") {
     auto fixture = Fixture();
     auto order = make_order(1);

@@ -119,6 +119,52 @@ void CancelKeyBindingsModel::on_update(Operation operation,
   }
 }
 
+const QString& Spire::to_text(CancelKeyBindingsModel::Operation operation) {
+  if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
+    static const auto value = QObject::tr("Most Recent");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK) {
+    static const auto value = QObject::tr("Most Recent Ask");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID) {
+    static const auto value = QObject::tr("Most Recent Bid");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST) {
+    static const auto value = QObject::tr("Oldest");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_ASK) {
+    static const auto value = QObject::tr("Oldest Ask");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST_BID) {
+    static const auto value = QObject::tr("Oldest Bid");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::ALL) {
+    static const auto value = QObject::tr("All");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS) {
+    static const auto value = QObject::tr("All Asks");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
+    static const auto value = QObject::tr("All Bids");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK) {
+    static const auto value = QObject::tr("Closest Ask");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_BID) {
+    static const auto value = QObject::tr("Closest Bid");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK) {
+    static const auto value = QObject::tr("Furthest Ask");
+    return value;
+  } else if(operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
+    static const auto value = QObject::tr("Furthest Bid");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
 void Spire::execute(CancelKeyBindingsModel::Operation operation,
     Out<std::vector<std::shared_ptr<Task>>> tasks) {
   auto prices = std::unordered_map<std::shared_ptr<Task>, Money>();

@@ -201,9 +201,15 @@ namespace {
 
 }
 
-OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
+OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders,
+    std::shared_ptr<CancelKeyBindingsModel> bindings, QWidget* parent)
     : QWidget(parent),
-      m_orders(std::move(orders)) {
+      m_bindings(std::move(bindings)),
+      m_orders(std::move(orders)),
+      m_selection(std::make_shared<TableSelectionModel>(
+        std::make_shared<TableEmptySelectionModel>(),
+        std::make_shared<ListMultiSelectionModel>(),
+        std::make_shared<ListEmptySelectionModel>())) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto table = std::make_shared<OrderLogTableModel>(m_orders);
   auto table_view = TableViewBuilder(table).
@@ -218,10 +224,7 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
     add_header_item(tr("Destination"), tr("Dest")).
     add_header_item(tr("Currency"), tr("Curr")).
     add_header_item(tr("Time In Force"), tr("TIF")).
-    set_selection(std::make_shared<TableSelectionModel>(
-      std::make_shared<TableEmptySelectionModel>(),
-      std::make_shared<ListMultiSelectionModel>(),
-      std::make_shared<ListEmptySelectionModel>())).
+    set_selection(m_selection).
     set_item_builder([] (const auto& table, auto row, auto index) {
       auto column = static_cast<OrderColumn>(index);
       auto item = TableView::default_item_builder(table, row, index);
@@ -254,4 +257,36 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
 
 const std::shared_ptr<OrdersModel>& OrderLogView::get_orders() const {
   return m_orders;
+}
+
+connection OrderLogView::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
+connection OrderLogView::connect_cancel_operation_signal(
+    const CancelOperationSignal::slot_type& slot) const {
+  return m_cancel_operation_signal.connect(slot);
+}
+
+void OrderLogView::keyPressEvent(QKeyEvent* event) {
+  auto& rows = std::as_const(*m_selection->get_row_selection());
+  if(event->key() == Qt::Key_Escape && event->modifiers() == Qt::NoModifier &&
+      rows.get_size() != 0) {
+    auto orders = std::vector<OrdersModel::Type>();
+    orders.reserve(rows.get_size());
+    for(auto row : rows) {
+      orders.push_back(m_orders->get(row));
+    }
+    event->accept();
+    m_cancel_signal(orders);
+    return;
+  }
+  auto key = QKeySequence(event->modifiers() | event->key());
+  if(auto operation = m_bindings->find_operation(key)) {
+    event->accept();
+    m_cancel_operation_signal(*operation);
+    return;
+  }
+  QWidget::keyPressEvent(event);
 }

@@ -31,9 +31,16 @@ int main(int argc, char** argv) {
     std::make_shared<LocalBooleanModel>(false),
     std::make_shared<LocalBooleanModel>(false), tasks, monitors);
   auto controller = BlotterController(tasks, Ref(environment), Ref(profile));
-  auto window = BlotterWindow(model);
+  auto window =
+    BlotterWindow(model, profile.GetKeyBindings()->get_cancel_key_bindings());
   window.connect_cancel_tasks_signal(
     std::bind_front(&BlotterController::on_cancel_tasks, &controller));
+  window.connect_cancel_orders_signal(
+    std::bind_front(&BlotterController::on_cancel_orders, &controller));
+  window.connect_cancel_task_operation_signal(std::bind_front(
+    &BlotterController::on_cancel_task_operation, &controller));
+  window.connect_cancel_order_operation_signal(std::bind_front(
+    &BlotterController::on_cancel_order_operation, &controller));
   window.show();
   controller.show();
   auto screen = QApplication::primaryScreen()->availableGeometry();

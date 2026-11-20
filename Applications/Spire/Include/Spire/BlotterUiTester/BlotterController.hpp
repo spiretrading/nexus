@@ -37,6 +37,27 @@ namespace Spire {
        */
       void on_cancel_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
 
+      /**
+       * Logs a request to cancel orders.
+       * @param orders The orders selected for cancellation.
+       */
+      void on_cancel_orders(
+        const std::vector<std::shared_ptr<Nexus::Order>>& orders);
+
+      /**
+       * Logs a key-bound request to cancel tasks.
+       * @param operation The requested cancel operation.
+       */
+      void on_cancel_task_operation(
+        CancelKeyBindingsModel::Operation operation);
+
+      /**
+       * Logs a key-bound request to cancel orders.
+       * @param operation The requested cancel operation.
+       */
+      void on_cancel_order_operation(
+        CancelKeyBindingsModel::Operation operation);
+
     private:
       struct Entry {
         std::shared_ptr<Task> m_task;
