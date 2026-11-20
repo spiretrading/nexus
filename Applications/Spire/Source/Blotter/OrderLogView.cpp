@@ -5,8 +5,6 @@
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
-#include "Spire/Spire/TableValueModel.hpp"
-#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
@@ -226,21 +224,7 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders, QWidget* parent)
       std::make_shared<ListEmptySelectionModel>())).
     set_item_builder([] (const auto& table, auto row, auto index) {
       auto column = static_cast<OrderColumn>(index);
-      auto item = [&] () -> QWidget* {
-        if(column == OrderColumn::SIDE) {
-          return make_label(make_to_text_model(
-            make_table_value_model<Side>(table, row, index),
-            [] (const auto& side) {
-              if(side == Side::BID) {
-                return tr("Bid");
-              } else if(side == Side::ASK) {
-                return tr("Ask");
-              }
-              return QString();
-            }));
-        }
-        return TableView::default_item_builder(table, row, index);
-      }();
+      auto item = TableView::default_item_builder(table, row, index);
       update_style(*item, [=] (auto& style) {
         auto alignment = get_alignment(column);
         auto& rule = style.get(Any());
