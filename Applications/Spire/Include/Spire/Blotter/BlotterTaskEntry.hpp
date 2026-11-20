@@ -1,9 +1,9 @@
 #ifndef SPIRE_BLOTTER_TASK_ENTRY_HPP
 #define SPIRE_BLOTTER_TASK_ENTRY_HPP
 #include <vector>
-#include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
@@ -21,8 +21,8 @@ namespace Spire {
     /** The task's latest execution state. */
     Task::State m_state = Task::State::READY;
 
-    /** The task's observers, in monitor column order. */
-    std::vector<std::shared_ptr<CanvasObserver>> m_monitors;
+    /** The task's observed values, in monitor column order. */
+    std::vector<std::shared_ptr<ValueModel<std::any>>> m_monitors;
   };
 
   /** The observable collection of a blotter's task entries. */

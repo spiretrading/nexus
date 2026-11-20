@@ -6,19 +6,13 @@
 #include <QTimer>
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
   /** Observes the value of a Canvas expression for a task. */
-  class CanvasObserver {
+  class CanvasObserver : public ValueModel<std::any> {
     public:
-
-      /**
-       * Signals a change to the observed value.
-       * @param value The latest value of the expression.
-       */
-      using UpdateSignal = Signal<void (const std::any& value)>;
 
       /**
        * Observes an expression in the context of a task.
@@ -27,18 +21,16 @@ namespace Spire {
        */
       CanvasObserver(std::shared_ptr<Task> task, const CanvasNode& observer);
 
-      ~CanvasObserver();
-
-      /** Returns the latest value, or an empty any before the first update. */
-      const std::any& get_value() const;
+      ~CanvasObserver() override;
 
       /**
-       * Connects a slot to the UpdateSignal.
-       * @param slot The slot to connect to the signal.
-       * @return A connection to the signal.
+       * Returns the latest observed value. Literal values are available
+       * immediately. Other expressions begin empty until they yield a value.
        */
+      const Type& get() const override;
+
       boost::signals2::connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const;
+        const UpdateSignal::slot_type& slot) const override;
 
     private:
       struct Evaluation;
@@ -51,8 +43,6 @@ namespace Spire {
       QTimer m_translate_timer;
       QtTaskQueue m_events;
 
-      CanvasObserver(const CanvasObserver&) = delete;
-      CanvasObserver& operator =(const CanvasObserver&) = delete;
       void translate();
       void on_reactor_update(const std::any& value);
   };

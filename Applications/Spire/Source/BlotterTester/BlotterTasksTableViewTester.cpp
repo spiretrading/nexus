@@ -1,11 +1,14 @@
 #include <QEventLoop>
 #include <QLayout>
+#include <QTimer>
 #include <QtTest/qtestkeyboard.h>
 #include <QtTest/qtestmouse.h>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
+#include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -148,8 +151,18 @@ TEST_SUITE("BlotterTasksTableView") {
     auto fixture = Fixture();
     auto node = CustomNode(
       "Task", {CustomNode::Child("quantity", IntegerType::GetInstance())});
-    auto task = node.Replace(
-      node.GetChildren().front(), std::make_unique<IntegerNode>(7));
+    auto quantity = std::unique_ptr<CanvasNode>();
+    auto is_literal = false;
+    SUBCASE("literal") {
+      quantity = std::make_unique<IntegerNode>(7);
+      is_literal = true;
+    }
+    SUBCASE("computed") {
+      auto builder = CanvasNodeBuilder(FirstNode());
+      builder.Replace("expression", std::make_unique<IntegerNode>(7));
+      quantity = builder.Make();
+    }
+    auto task = node.Replace(node.GetChildren().front(), std::move(quantity));
     auto entry = BlotterTaskEntry();
     entry.m_task =
       std::make_shared<Task>(*task, DirectoryEntry(), Ref(profile));
@@ -157,7 +170,11 @@ TEST_SUITE("BlotterTasksTableView") {
     auto table = fixture.table().get_table();
     auto column = fixture.headers().indexOf("Quantity");
     REQUIRE(column >= 0);
-    REQUIRE_FALSE(to_any(table->at(0, column)).has_value());
+    if(is_literal) {
+      REQUIRE(table->get<Quantity>(0, column) == 7);
+    } else {
+      REQUIRE_FALSE(to_any(table->at(0, column)).has_value());
+    }
     auto loop = QEventLoop();
     auto value = std::any();
     auto connection = boost::signals2::scoped_connection(

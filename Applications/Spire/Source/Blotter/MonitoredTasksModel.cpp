@@ -1,4 +1,5 @@
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
+#include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
 
 using namespace Spire;
 

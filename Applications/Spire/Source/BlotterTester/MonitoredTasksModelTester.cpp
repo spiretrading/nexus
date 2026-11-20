@@ -1,9 +1,14 @@
 #include <algorithm>
-#include <QEventLoop>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
+#include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
+#include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
@@ -32,21 +37,42 @@ namespace {
       return entry;
     }
   };
-
-  auto read_quantity(const CanvasObserver& observer) {
-    if(!observer.get_value().has_value()) {
-      auto loop = QEventLoop();
-      auto connection = boost::signals2::scoped_connection(
-        observer.connect_update_signal([&] (const std::any&) { loop.quit(); }));
-      QTimer::singleShot(5000, &loop, &QEventLoop::quit);
-      loop.exec();
-    }
-    REQUIRE(observer.get_value().has_value());
-    return std::any_cast<Quantity>(observer.get_value());
-  }
 }
 
 TEST_SUITE("MonitoredTasksModel") {
+  UI_TEST_CASE("ready_task_values") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("MRU.TSX");
+    auto builder = CanvasNodeBuilder(SingleOrderTaskNode());
+    builder.Replace(SingleOrderTaskNode::TICKER_PROPERTY,
+      std::make_unique<TickerNode>(ticker));
+    builder.Replace(SingleOrderTaskNode::SIDE_PROPERTY,
+      std::make_unique<SideNode>(Side::ASK));
+    builder.Replace(SingleOrderTaskNode::PRICE_PROPERTY,
+      std::make_unique<MoneyNode>(Money(15)));
+    builder.Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
+      std::make_unique<IntegerNode>(75));
+    auto entry = BlotterTaskEntry();
+    entry.m_task = std::make_shared<Task>(
+      *builder.Make(), DirectoryEntry(), Ref(fixture.m_profile));
+    auto monitors = make_default_task_monitors();
+    monitors->push(BlotterTaskMonitor(
+      "Custom", std::make_shared<ReferenceNode>("target.quantity")));
+    auto tasks = MonitoredTasksModel(monitors);
+    tasks.push(entry);
+    auto& row = tasks.get(0);
+    REQUIRE(row.m_state == Task::State::READY);
+    auto value = [&] (int column) -> const std::any& {
+      return row.m_monitors.at(column)->get();
+    };
+    REQUIRE(std::any_cast<Ticker>(value(0)) == ticker);
+    REQUIRE(std::any_cast<Side>(value(1)) == Side::ASK);
+    REQUIRE(std::any_cast<Money>(value(2)) == Money(15));
+    REQUIRE(std::any_cast<Quantity>(value(3)) == 75);
+    REQUIRE(!value(4).has_value());
+    REQUIRE(std::any_cast<Quantity>(value(5)) == 75);
+  }
+
   UI_TEST_CASE("task_monitors") {
     auto fixture = Fixture();
     auto monitors = std::make_shared<ArrayListModel<BlotterTaskMonitor>>();
@@ -64,8 +90,9 @@ TEST_SUITE("MonitoredTasksModel") {
     tasks.insert(next, 0);
     REQUIRE(tasks.get(0).m_monitors.at(0) != observer);
     REQUIRE(tasks.get(1).m_monitors.at(0) == observer);
-    first.m_task->Execute();
-    REQUIRE(read_quantity(*observer) == 7);
+    REQUIRE(observer->test(Quantity(9)) == QValidator::Invalid);
+    REQUIRE(observer->set(Quantity(9)) == QValidator::Invalid);
+    REQUIRE(std::any_cast<Quantity>(observer->get()) == 7);
     first.m_is_pinned = true;
     tasks.set(1, first);
     REQUIRE(tasks.get(1).m_monitors.at(0) == observer);
@@ -84,7 +111,7 @@ TEST_SUITE("MonitoredTasksModel") {
     observer.reset();
     monitor.m_expression = std::make_shared<IntegerNode>(3);
     monitors->set(0, monitor);
-    REQUIRE(read_quantity(*tasks.get(1).m_monitors.at(0)) == 3);
+    REQUIRE(std::any_cast<Quantity>(tasks.get(1).m_monitors.at(0)->get()) == 3);
     REQUIRE(tasks.get(1).m_monitors.at(1) == second);
     monitors->remove(0);
     REQUIRE(tasks.get(1).m_monitors.size() == 1);

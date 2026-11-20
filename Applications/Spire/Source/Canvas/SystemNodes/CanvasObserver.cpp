@@ -11,13 +11,29 @@
 #include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
+#include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
+#include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 
 using namespace Aspen;
 using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  std::any get_initial_value(const CanvasNode& node) {
+    if(dynamic_cast<const BlotterTaskMonitorNode*>(&node)) {
+      return get_initial_value(node.GetChildren().front());
+    }
+    if(auto anchor = FindAnchor(node)) {
+      if(auto literal = dynamic_cast<const BaseValueNode*>(&*anchor)) {
+        return literal->to_any();
+      }
+    }
+    return {};
+  }
+}
 
 struct CanvasObserver::Evaluation {
   struct Translator {
@@ -52,7 +68,9 @@ CanvasObserver::CanvasObserver(
     return;
   }
   auto& target = expression->GetChildren().front();
-  for(auto& child : BreadthFirstView(*expression->FindChild("observer"))) {
+  auto& monitor = *expression->FindChild("observer");
+  m_value = get_initial_value(monitor);
+  for(auto& child : BreadthFirstView(monitor)) {
     if(auto reference = dynamic_cast<const ReferenceNode*>(&child)) {
       auto& referent = *reference->FindReferent();
       if(IsParent(target, referent) || &referent == &target) {
@@ -81,7 +99,7 @@ CanvasObserver::~CanvasObserver() {
   }
 }
 
-const std::any& CanvasObserver::get_value() const {
+const CanvasObserver::Type& CanvasObserver::get() const {
   return m_value;
 }
 

@@ -97,7 +97,7 @@ namespace {
     }
     auto monitor = index - FIXED_COLUMNS;
     if(monitor < std::ssize(entry.m_monitors) && entry.m_monitors[monitor]) {
-      return entry.m_monitors[monitor]->get_value();
+      return entry.m_monitors[monitor]->get();
     }
     return {};
   }
@@ -138,7 +138,7 @@ namespace {
             FIXED_COLUMNS + i < get_column_size(); ++i) {
           if(auto& observer = monitors[i]) {
             row.m_connections.emplace_back(observer->connect_update_signal(
-              [=, this, &row, previous = observer->get_value()]
+              [=, this, &row, previous = observer->get()]
                   (const std::any& value) mutable {
                 m_signal(UpdateOperation(row.m_index, FIXED_COLUMNS + i,
                   std::exchange(previous, value), value));

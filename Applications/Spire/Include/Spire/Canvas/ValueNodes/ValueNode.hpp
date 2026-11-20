@@ -1,5 +1,6 @@
 #ifndef SPIRE_VALUENODE_HPP
 #define SPIRE_VALUENODE_HPP
+#include <any>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
@@ -39,7 +40,12 @@ namespace Details {
   /*! \class BaseValueNode
       \brief Base class for a ValueNode.
    */
-  class BaseValueNode : public CanvasNode {};
+  class BaseValueNode : public CanvasNode {
+    public:
+
+      /** Returns a copy of the stored value in its native type. */
+      virtual std::any to_any() const = 0;
+  };
 
   /*! \class ValueNode
       \brief Simple implementation of a CanvasNode for wrapping a value.
@@ -62,6 +68,8 @@ namespace Details {
 
       //! Returns the stored value.
       const typename Type::Type& GetValue() const;
+
+      std::any to_any() const override;
 
     protected:
       friend struct Beam::DataShuttle;
@@ -100,6 +108,11 @@ namespace Details {
   template<typename T>
   const typename ValueNode<T>::Type::Type& ValueNode<T>::GetValue() const {
     return m_value;
+  }
+
+  template<typename T>
+  std::any ValueNode<T>::to_any() const {
+    return GetValue();
   }
 
   template<typename T>
