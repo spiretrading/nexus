@@ -18,12 +18,17 @@ TableItem::TableItem(QWidget* parent)
     : QWidget(parent),
       m_styles(Qt::transparent, Qt::transparent, Qt::transparent,
         Qt::transparent, Qt::transparent),
-      m_click_observer(*this),
+      m_is_mouse_pressed(false),
+      m_press_observer(*this),
       m_focus_observer(*this),
       m_mouse_observer(*this) {
   setFocusPolicy(Qt::NoFocus);
   auto layout = make_hbox_layout(this);
-  m_click_observer.connect_click_signal(m_active_signal);
+  m_press_observer.connect_press_end_signal([=, this] (auto reason) {
+    if(reason == PressObserver::Reason::KEYBOARD) {
+      m_active_signal();
+    }
+  });
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
   m_mouse_observer.connect_mouse_signal(
@@ -82,6 +87,7 @@ void TableItem::mount(QWidget& body) {
 }
 
 QWidget* TableItem::unmount() {
+  m_is_mouse_pressed = false;
   setFocusProxy(nullptr);
   setFocusPolicy(Qt::NoFocus);
   auto item = layout()->takeAt(0);
@@ -92,17 +98,27 @@ QWidget* TableItem::unmount() {
 }
 
 void TableItem::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::FOCUS_IN &&
-      QApplication::mouseButtons() != Qt::NoButton) {
+  auto buttons = QApplication::mouseButtons();
+  if(state == FocusObserver::State::FOCUS_IN && buttons != Qt::NoButton &&
+      !buttons.testFlag(Qt::LeftButton)) {
     m_active_signal();
   }
 }
 
 void TableItem::on_mouse(QWidget& target, const QMouseEvent& event) {
-  if(event.type() == QEvent::MouseButtonPress &&
-      event.button() == Qt::MouseButton::LeftButton &&
-      m_focus_observer.get_state() == FocusObserver::State::NONE) {
-    setFocus(Qt::FocusReason::MouseFocusReason);
+  if(event.button() != Qt::LeftButton) {
+    return;
+  }
+  if(event.type() == QEvent::MouseButtonPress ||
+      event.type() == QEvent::MouseButtonDblClick) {
+    m_is_mouse_pressed = true;
+    if(m_focus_observer.get_state() == FocusObserver::State::NONE) {
+      setFocus(Qt::MouseFocusReason);
+    }
+  } else if(event.type() == QEvent::MouseButtonRelease &&
+      std::exchange(m_is_mouse_pressed, false) && isEnabled() &&
+      rect().contains(mapFromGlobal(event.globalPos()))) {
+    m_active_signal();
   }
 }
 
