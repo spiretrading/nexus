@@ -9,6 +9,7 @@ namespace Spire {
   /** Displays a blotter. */
   class BlotterWindow : public Window {
     public:
+      using RunTasksSignal = BlotterTasksView::RunSignal;
       using CancelTasksSignal = BlotterTasksView::CancelSignal;
       using CancelTaskOperationSignal = BlotterTasksView::CancelOperationSignal;
       using CancelOrdersSignal = OrderLogView::CancelSignal;
@@ -26,6 +27,10 @@ namespace Spire {
 
       /** Returns the displayed blotter's model. */
       const std::shared_ptr<BlotterModel>& get_model() const;
+
+      /** Connects a slot to the RunTasksSignal. */
+      boost::signals2::connection connect_run_tasks_signal(
+        const RunTasksSignal::slot_type& slot) const;
 
       /** Connects a slot to the CancelTasksSignal. */
       boost::signals2::connection connect_cancel_tasks_signal(

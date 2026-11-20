@@ -34,6 +34,11 @@ const std::shared_ptr<BlotterModel>& BlotterWindow::get_model() const {
   return m_model;
 }
 
+connection BlotterWindow::connect_run_tasks_signal(
+    const RunTasksSignal::slot_type& slot) const {
+  return m_tasks_view->connect_run_signal(slot);
+}
+
 connection BlotterWindow::connect_cancel_tasks_signal(
     const CancelTasksSignal::slot_type& slot) const {
   return m_tasks_view->connect_cancel_signal(slot);

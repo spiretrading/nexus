@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
   auto controller = BlotterController(tasks, Ref(environment), Ref(profile));
   auto window =
     BlotterWindow(model, profile.GetKeyBindings()->get_cancel_key_bindings());
+  window.connect_run_tasks_signal(
+    std::bind_front(&BlotterController::on_run_tasks, &controller));
   window.connect_cancel_tasks_signal(
     std::bind_front(&BlotterController::on_cancel_tasks, &controller));
   window.connect_cancel_orders_signal(

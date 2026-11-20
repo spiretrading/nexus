@@ -32,6 +32,12 @@ namespace Spire {
       ~BlotterController();
 
       /**
+       * Runs the selected tasks and logs the request.
+       * @param tasks The tasks selected to run.
+       */
+      void on_run_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
+
+      /**
        * Logs a request to cancel tasks.
        * @param tasks The tasks selected for cancellation.
        */

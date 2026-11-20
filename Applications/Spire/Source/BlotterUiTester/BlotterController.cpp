@@ -1,4 +1,5 @@
 #include "Spire/BlotterUiTester/BlotterController.hpp"
+#include <algorithm>
 #include <stdexcept>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -21,6 +22,16 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  QString format_task_ids(const std::vector<std::shared_ptr<Task>>& tasks) {
+    auto ids = QStringList();
+    for(auto& task : tasks) {
+      ids.push_back(QString::number(task->GetId()));
+    }
+    return ids.join(", ");
+  }
+}
 
 BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
     Ref<TestEnvironment> environment, Ref<UserProfile> profile)
@@ -139,13 +150,25 @@ BlotterController::~BlotterController() {
   flush_pending_routines();
 }
 
+void BlotterController::on_run_tasks(
+    const std::vector<std::shared_ptr<Task>>& tasks) {
+  m_output->append(tr("Run Tasks: [%1]").arg(format_task_ids(tasks)));
+  for(auto& task : tasks) {
+    try {
+      task->Execute();
+    } catch(const std::exception& e) {
+      auto entry = std::ranges::find(m_entries, task, &Entry::m_task);
+      if(entry != m_entries.end()) {
+        on_state(static_cast<int>(entry - m_entries.begin()),
+          Task::StateEntry(Task::State::FAILED, e.what()));
+      }
+    }
+  }
+}
+
 void BlotterController::on_cancel_tasks(
     const std::vector<std::shared_ptr<Task>>& tasks) {
-  auto ids = QStringList();
-  for(auto& task : tasks) {
-    ids.push_back(QString::number(task->GetId()));
-  }
-  m_output->append(tr("Cancel Tasks: [%1]").arg(ids.join(", ")));
+  m_output->append(tr("Cancel Tasks: [%1]").arg(format_task_ids(tasks)));
 }
 
 void BlotterController::on_cancel_orders(
@@ -284,11 +307,6 @@ void BlotterController::on_create() {
         std::bind_front(&BlotterController::on_order, this, index)));
     m_selection->addItem(tr("%1: %2").arg(task->GetId()).arg(name));
     m_selection->setCurrentIndex(index);
-    try {
-      task->Execute();
-    } catch(const std::exception& e) {
-      on_state(index, Task::StateEntry(Task::State::FAILED, e.what()));
-    }
   } catch(const std::exception& e) {
     QMessageBox::warning(this, tr("Unable to Create Task"), e.what());
   }

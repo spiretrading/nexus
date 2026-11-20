@@ -11,6 +11,13 @@ namespace Spire {
     public:
 
       /**
+       * Signals a request to run the selected tasks.
+       * @param tasks The tasks selected when the run was requested.
+       */
+      using RunSignal =
+        Signal<void (const std::vector<std::shared_ptr<Task>>& tasks)>;
+
+      /**
        * Signals a request to cancel the selected tasks.
        * @param tasks The tasks selected when cancellation was requested.
        */
@@ -34,6 +41,10 @@ namespace Spire {
         std::shared_ptr<CancelKeyBindingsModel> bindings,
         QWidget* parent = nullptr);
 
+      /** Connects a slot to the RunSignal. */
+      boost::signals2::connection connect_run_signal(
+        const RunSignal::slot_type& slot) const;
+
       /** Connects a slot to the CancelSignal. */
       boost::signals2::connection connect_cancel_signal(
         const CancelSignal::slot_type& slot) const;
@@ -46,6 +57,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      mutable RunSignal m_run_signal;
       mutable CancelSignal m_cancel_signal;
       mutable CancelOperationSignal m_cancel_operation_signal;
       std::shared_ptr<CancelKeyBindingsModel> m_bindings;
@@ -53,6 +65,8 @@ namespace Spire {
       std::shared_ptr<TableSelectionModel> m_selection;
       QWidget* m_table;
 
+      std::vector<std::shared_ptr<Task>> get_selected_tasks() const;
+      void on_run();
       void on_cancel();
   };
 }

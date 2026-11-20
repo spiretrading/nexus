@@ -18,7 +18,7 @@ using namespace Nexus;
 using namespace Spire;
 
 TEST_SUITE("BlotterTasksView") {
-  UI_TEST_CASE("cancel_selected_tasks") {
+  UI_TEST_CASE("selected_task_commands") {
     initialize_resources();
     auto environment = TestEnvironment();
     auto profile = UserProfile("", false, false, {}, {},
@@ -43,19 +43,26 @@ TEST_SUITE("BlotterTasksView") {
     view.show();
     QApplication::processEvents();
     auto table = static_cast<TableView*>(nullptr);
+    auto run = static_cast<QWidget*>(nullptr);
     auto cancel = static_cast<QWidget*>(nullptr);
     for(auto widget : view.findChildren<QWidget*>()) {
       if(auto candidate = dynamic_cast<TableView*>(widget)) {
         table = candidate;
+      } else if(widget->accessibleName() == "Run tasks") {
+        run = widget;
       } else if(widget->accessibleName() == "Cancel tasks") {
         cancel = widget;
       }
     }
     REQUIRE(table);
+    REQUIRE(run);
     REQUIRE(cancel);
     auto requests = std::vector<std::vector<std::shared_ptr<Task>>>();
     view.connect_cancel_signal(
       [&] (const auto& selected) { requests.push_back(selected); });
+    auto runs = std::vector<std::vector<std::shared_ptr<Task>>>();
+    view.connect_run_signal(
+      [&] (const auto& selected) { runs.push_back(selected); });
     auto click = [&] (QWidget& widget) {
       auto point = widget.mapToGlobal(widget.rect().center());
       QCursor::setPos(point);
@@ -65,6 +72,8 @@ TEST_SUITE("BlotterTasksView") {
     };
     click(*cancel);
     REQUIRE(requests.empty());
+    click(*run);
+    REQUIRE(runs.empty());
     const auto ID_COLUMN = 2;
     click(*table->get_header().get_item(ID_COLUMN));
     auto& body = table->get_body();
@@ -81,6 +90,23 @@ TEST_SUITE("BlotterTasksView") {
     QTest::keyClick(view.windowHandle(), Qt::Key_Escape);
     REQUIRE(requests.size() == 2);
     REQUIRE(requests.back() == requests.front());
+    REQUIRE(runs.empty());
+    click(*run);
+    REQUIRE(runs.size() == 1);
+    REQUIRE(runs.back() == requests.front());
+    body.setFocus();
+    QTest::keyClick(view.windowHandle(), Qt::Key_Return, Qt::ControlModifier);
+    REQUIRE(runs.size() == 1);
+    QTest::keyClick(view.windowHandle(), Qt::Key_Return);
+    REQUIRE(runs.size() == 2);
+    REQUIRE(runs.back() == requests.front());
+    QTest::keyClick(view.windowHandle(), Qt::Key_Enter, Qt::KeypadModifier);
+    REQUIRE(runs.size() == 3);
+    REQUIRE(runs.back() == requests.front());
+    clear(*rows);
+    QTest::keyClick(view.windowHandle(), Qt::Key_Return);
+    REQUIRE(runs.size() == 3);
+    REQUIRE(requests.size() == 2);
     REQUIRE(!states->try_pop());
   }
 }

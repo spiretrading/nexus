@@ -54,7 +54,8 @@ BlotterTasksCommandBar::BlotterTasksCommandBar(
   layout->addSpacing(scale_width(8));
   auto run = make_icon_button(
     image_from_svg(":/Icons/blotter/tasks/run.svg", scale(26, 26)),
-    tr("Run task"));
+    tr("Run tasks"));
+  run->setAccessibleName(tr("Run tasks"));
   run->setFixedSize(scale(26, 26));
   run->connect_click_signal(m_run_signal);
   update_style(*run, [] (auto& style) {
