@@ -252,15 +252,7 @@ TableView* BlotterTasksTableView::make_table() const {
     set_selection(m_selection).
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(table_view->get_body(), [] (auto& style) {
-    style.get(Any() > (CurrentColumn() || CurrentRow())).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Any() > CurrentRow()).set(grid_color(QColor(0x4B23A0)));
-    style.get(Any() > Selected()).set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(Any() > Row() > Current()).
-      set(BackgroundColor(Qt::transparent)).
-      set(border_color(QColor(Qt::transparent)));
-  });
+  match(table_view->get_body(), CurrentRowOutline());
   auto pin_icon = new Icon(pin_image);
   pin_icon->setFixedSize(pin_image.size());
   auto pin_label = new QWidget();
