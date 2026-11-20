@@ -27,9 +27,8 @@ namespace Spire {
       const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
 
     private:
       struct TaskEntry;
@@ -37,9 +36,7 @@ namespace Spire {
       ArrayListModel<Type> m_orders;
       std::unordered_map<Nexus::OrderId, int> m_counts;
       std::vector<std::shared_ptr<TaskEntry>> m_entries;
-      ListModelTransactionLog<Type> m_transaction;
       QtTaskQueue m_events;
-      boost::signals2::scoped_connection m_orders_connection;
       boost::signals2::scoped_connection m_tasks_connection;
 
       void add(int index, std::shared_ptr<Task> task);

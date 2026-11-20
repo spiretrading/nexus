@@ -21,8 +21,6 @@ struct TaskOrdersModel::TaskEntry {
 
 TaskOrdersModel::TaskOrdersModel(std::shared_ptr<TasksModel> tasks)
     : m_tasks(std::move(tasks)) {
-  m_orders_connection = m_orders.connect_operation_signal(
-    [=, this] (const auto& operation) { m_transaction.push(operation); });
   for(auto i = 0; i != m_tasks->get_size(); ++i) {
     add(i, m_tasks->get(i).m_task);
   }
@@ -46,12 +44,15 @@ const TaskOrdersModel::Type& TaskOrdersModel::get(int index) const {
 
 connection TaskOrdersModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
+  return m_orders.connect_operation_signal(slot);
 }
 
-void TaskOrdersModel::transact(
-    const std::function<void ()>& transaction) {
-  m_transaction.transact(transaction);
+void TaskOrdersModel::start_transaction() {
+  m_orders.start_transaction();
+}
+
+void TaskOrdersModel::end_transaction() {
+  m_orders.end_transaction();
 }
 
 void TaskOrdersModel::add(int index, std::shared_ptr<Task> task) {
@@ -102,10 +103,10 @@ void TaskOrdersModel::on_order(TaskEntry& entry, const Type& order) {
 
 void TaskOrdersModel::on_operation(const TasksModel::Operation& operation) {
   visit(operation,
-    [&] (const TasksModel::StartTransaction&) { m_transaction.start(); },
-    [&] (const TasksModel::EndTransaction&) { m_transaction.end(); },
+    [&] (const TasksModel::StartTransaction&) { start_transaction(); },
+    [&] (const TasksModel::EndTransaction&) { end_transaction(); },
     [&] (const TasksModel::AddOperation& operation) {
-      m_transaction.transact([&] {
+      transact([&] {
         add(operation.m_index, m_tasks->get(operation.m_index).m_task);
       });
     },
@@ -121,13 +122,13 @@ void TaskOrdersModel::on_operation(const TasksModel::Operation& operation) {
     [&] (const TasksModel::RemoveOperation& operation) {
       auto entry = std::move(m_entries[operation.m_index]);
       m_entries.erase(m_entries.begin() + operation.m_index);
-      m_transaction.transact([&] { withdraw(*entry); });
+      transact([&] { withdraw(*entry); });
     },
     [&] (const TasksModel::UpdateOperation& operation) {
       if(operation.get_previous().m_task == operation.get_value().m_task) {
         return;
       }
-      m_transaction.transact([&] {
+      transact([&] {
         auto entry = std::move(m_entries[operation.m_index]);
         m_entries.erase(m_entries.begin() + operation.m_index);
         add(operation.m_index, operation.get_value().m_task);

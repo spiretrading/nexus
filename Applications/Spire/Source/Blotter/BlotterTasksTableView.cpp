@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cstdint>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
@@ -10,7 +9,6 @@
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TaskStateBox.hpp"
@@ -174,10 +172,12 @@ namespace {
 
 BlotterTasksTableView::BlotterTasksTableView(
     std::shared_ptr<TasksModel> tasks,
-    std::shared_ptr<TaskMonitorsModel> monitors, QWidget* parent)
+    std::shared_ptr<TaskMonitorsModel> monitors,
+    std::shared_ptr<TableSelectionModel> selection, QWidget* parent)
     : QWidget(parent),
       m_tasks(std::move(tasks)),
-      m_monitors(std::move(monitors)) {
+      m_monitors(std::move(monitors)),
+      m_selection(std::move(selection)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_table_view = make_table();
   enclose(*this, *m_table_view);
@@ -237,10 +237,7 @@ TableView* BlotterTasksTableView::make_table() const {
       }
       return compare(left, right);
     }).
-    set_selection(std::make_shared<TableSelectionModel>(
-      std::make_shared<TableEmptySelectionModel>(),
-      std::make_shared<ArrayListModel<int>>(),
-      std::make_shared<ListEmptySelectionModel>())).
+    set_selection(m_selection).
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(table_view->get_body(), [] (auto& style) {

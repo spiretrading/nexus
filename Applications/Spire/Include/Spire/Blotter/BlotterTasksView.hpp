@@ -1,6 +1,7 @@
 #ifndef SPIRE_BLOTTER_TASKS_VIEW_HPP
 #define SPIRE_BLOTTER_TASKS_VIEW_HPP
 #include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Ui/TableSelectionModel.hpp"
 
 namespace Spire {
 
@@ -15,6 +16,9 @@ namespace Spire {
        */
       explicit BlotterTasksView(
         std::shared_ptr<BlotterModel> model, QWidget* parent = nullptr);
+
+    private:
+      std::shared_ptr<TableSelectionModel> m_selection;
   };
 }
 

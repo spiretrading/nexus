@@ -8,6 +8,8 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -23,7 +25,12 @@ namespace {
         : m_monitors(make_default_task_monitors()),
           m_tasks(std::make_shared<MonitoredTasksModel>(m_monitors)) {
       initialize_resources();
-      m_view = std::make_unique<BlotterTasksTableView>(m_tasks, m_monitors);
+      auto selection = std::make_shared<TableSelectionModel>(
+        std::make_shared<TableEmptySelectionModel>(),
+        std::make_shared<ListMultiSelectionModel>(),
+        std::make_shared<ListEmptySelectionModel>());
+      m_view = std::make_unique<BlotterTasksTableView>(
+        m_tasks, m_monitors, std::move(selection));
     }
 
     TableView& table() {

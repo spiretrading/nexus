@@ -15,14 +15,18 @@ namespace Spire {
        * Constructs a BlotterTasksTableView.
        * @param tasks The blotter's order execution task entries.
        * @param monitors The monitors to display after the fixed task columns.
+       * @param selection The selection in source table coordinates.
        * @param parent The parent widget.
        */
       BlotterTasksTableView(std::shared_ptr<TasksModel> tasks,
-        std::shared_ptr<TaskMonitorsModel> monitors, QWidget* parent = nullptr);
+        std::shared_ptr<TaskMonitorsModel> monitors,
+        std::shared_ptr<TableSelectionModel> selection,
+        QWidget* parent = nullptr);
 
     private:
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<TaskMonitorsModel> m_monitors;
+      std::shared_ptr<TableSelectionModel> m_selection;
       TableView* m_table_view;
       boost::signals2::scoped_connection m_monitor_connection;
 

@@ -68,13 +68,14 @@ namespace {
     return QString();
   }
 
-  class OrderLogTableModel : public TableModel {
+  class OrderLogTableModel : public TransactionLogModel<TableModel> {
     public:
       OrderLogTableModel(std::shared_ptr<OrdersModel> orders)
           : m_orders(std::move(orders)) {
         for(auto i = 0; i < m_orders->get_size(); ++i) {
           m_entries.push_back(make_entry(i));
         }
+        m_transaction.set_size(get_row_size());
         m_connection = m_orders->connect_operation_signal(
           std::bind_front(&OrderLogTableModel::on_operation, this));
       }
@@ -99,11 +100,6 @@ namespace {
         return m_orders->remove(row);
       }
 
-      connection connect_operation_signal(
-          const OperationSignal::slot_type& slot) const override {
-        return m_transaction.connect_operation_signal(slot);
-      }
-
     private:
       struct Entry {
         std::shared_ptr<Order> m_order;
@@ -113,7 +109,6 @@ namespace {
       };
       std::shared_ptr<OrdersModel> m_orders;
       std::vector<std::shared_ptr<Entry>> m_entries;
-      TableModelTransactionLog m_transaction;
       QtTaskQueue m_events;
       scoped_connection m_connection;
 
