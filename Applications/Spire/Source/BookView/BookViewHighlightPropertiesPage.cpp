@@ -5,8 +5,8 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -126,19 +126,22 @@ namespace {
   }
 
   template<typename T, std::size_t N>
-  class FixedSizeArrayValueToListModel : public ListModel<T> {
+  class FixedSizeArrayValueToListModel :
+      public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = typename ListModel<T>::OperationSignal;
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
       explicit FixedSizeArrayValueToListModel(
-        std::shared_ptr<ValueModel<std::array<Type, N>>> source)
-        : m_source(std::move(source)),
-          m_data(m_source->get()),
-          m_connection(m_source->connect_update_signal(
-            std::bind_front(&FixedSizeArrayValueToListModel::on_update,
-              this))) {}
+          std::shared_ptr<ValueModel<std::array<Type, N>>> source)
+          : m_source(std::move(source)),
+            m_data(m_source->get()) {
+        this->m_transaction.set_size(get_size());
+        m_connection = m_source->connect_update_signal(
+          std::bind_front(&FixedSizeArrayValueToListModel::on_update,
+            this));
+      }
 
       int get_size() const override {
         return static_cast<int>(m_data.size());
@@ -159,32 +162,23 @@ namespace {
         m_data[index] = value;
         auto blocker = shared_connection_block(m_connection);
         m_source->set(m_data);
-        m_transaction.push(UpdateOperation(index, std::move(previous), value));
+        this->m_transaction.push(
+          UpdateOperation(index, std::move(previous), value));
         return QValidator::Acceptable;
-      }
-
-      connection connect_operation_signal(
-          const typename OperationSignal::slot_type& slot) const override {
-        return m_transaction.connect_operation_signal(slot);
-      }
-
-      void transact(const std::function<void ()>& transaction) override {
-        m_transaction.transact(transaction);
       }
 
     private:
       std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
       std::array<Type, N> m_data;
-      ListModelTransactionLog<Type> m_transaction;
       scoped_connection m_connection;
 
       void on_update(const std::array<Type, N>& data) {
-        m_transaction.transact([&] {
+        this->m_transaction.transact([&] {
           for(auto i = 0; i != get_size(); ++i) {
             if(m_data[i] != data[i]) {
               auto previous = m_data[i];
               m_data[i] = data[i];
-              m_transaction.push(
+              this->m_transaction.push(
                 UpdateOperation(i, std::move(previous), m_data[i]));
             }
           }

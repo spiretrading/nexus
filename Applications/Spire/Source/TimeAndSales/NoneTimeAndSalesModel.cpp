@@ -20,7 +20,6 @@ connection NoneTimeAndSalesModel::connect_operation_signal(
   return {};
 }
 
-void NoneTimeAndSalesModel::transact(
-    const std::function<void ()>& transaction) {
-  transaction();
-}
+void NoneTimeAndSalesModel::start_transaction() {}
+
+void NoneTimeAndSalesModel::end_transaction() {}

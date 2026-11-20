@@ -1,12 +1,10 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
@@ -97,104 +95,6 @@ namespace {
     widths.push_back(scale_width(130));
     return widths;
   }
-
-  struct ScopeKeyHash {
-    std::size_t operator()(
-        const std::pair<Scope, QKeySequence>& scope_key) const noexcept {
-      auto seed = std::size_t(0);
-      hash_combine(seed, scope_key.first);
-      hash_combine(seed, qHash(scope_key.second));
-      return seed;
-    }
-  };
-
-  struct UniqueTaskKeyTableModel : TableModel {
-    static const auto KEY_INDEX = static_cast<int>(OrderTaskColumns::KEY);
-    static const auto SCOPE_INDEX = static_cast<int>(OrderTaskColumns::SCOPE);
-    std::shared_ptr<TableModel> m_source;
-    TableModelTransactionLog m_transaction;
-    std::unordered_set<std::pair<Scope, QKeySequence>, ScopeKeyHash>
-      m_scope_keys;
-    scoped_connection m_source_connection;
-
-    explicit UniqueTaskKeyTableModel(std::shared_ptr<TableModel> source)
-        : m_source(std::move(source)),
-          m_source_connection(m_source->connect_operation_signal(
-            std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
-      for(auto row = 0; row < get_row_size(); ++row) {
-        if(auto& key = get<QKeySequence>(row, KEY_INDEX); !key.isEmpty()) {
-          m_scope_keys.insert({get<Scope>(row, SCOPE_INDEX), key});
-        }
-      }
-    }
-
-    int get_row_size() const override {
-      return m_source->get_row_size();
-    }
-
-    int get_column_size() const override {
-      return m_source->get_column_size();
-    }
-
-    AnyRef at(int row, int column) const override {
-      return m_source->at(row, column);
-    }
-
-    QValidator::State set(int row, int column, const std::any& value) override {
-      auto find_conflicting_row =
-        [&] (const Scope& scope, const QKeySequence& key) {
-          if(key.isEmpty() || m_scope_keys.insert({scope, key}).second) {
-            return -1;
-          }
-          for(auto i = 0; i < get_row_size(); ++i) {
-            if(i != row && get<Scope>(i, SCOPE_INDEX) == scope &&
-                get<QKeySequence>(i, KEY_INDEX) == key) {
-              return i;
-            }
-          }
-          return -1;
-        };
-      auto result = QValidator::State::Acceptable;
-      m_transaction.transact([&] {
-        if(column == SCOPE_INDEX) {
-          auto& key = get<QKeySequence>(row, KEY_INDEX);
-          m_scope_keys.erase({get<Scope>(row, SCOPE_INDEX), key});
-          auto row =
-            find_conflicting_row(std::any_cast<const Scope&>(value), key);
-          if(row != -1) {
-            result = m_source->set(row, KEY_INDEX, QKeySequence());
-          }
-        } else if(column == KEY_INDEX) {
-          auto& scope = get<Scope>(row, SCOPE_INDEX);
-          m_scope_keys.erase({scope, get<QKeySequence>(row, KEY_INDEX)});
-          auto row = find_conflicting_row(
-            scope, std::any_cast<const QKeySequence&>(value));
-          if(row != -1) {
-            result = m_source->set(row, KEY_INDEX, QKeySequence());
-          }
-        }
-        if(result != QValidator::Invalid) {
-          result = m_source->set(row, column, value);
-        }
-      });
-      return result;
-    }
-
-    QValidator::State remove(int row) override {
-      m_scope_keys.erase(
-        {get<Scope>(row, SCOPE_INDEX), get<QKeySequence>(row, KEY_INDEX)});
-      return m_source->remove(row);
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
-    void on_operation(const Operation& operation) {
-      m_transaction.push(operation);
-    }
-  };
 
   struct ItemState {
     virtual ~ItemState() = default;
@@ -484,8 +384,7 @@ TableView* Spire::make_task_keys_table_view(
     AdditionalTagDatabase additional_tags, QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
-  auto builder = EditableTableViewBuilder(
-    std::make_shared<UniqueTaskKeyTableModel>(std::move(table))).
+  auto builder = EditableTableViewBuilder(std::move(table)).
     set_header(make_header_model()).
     set_item_builder(RecycledTableViewItemBuilder(
       TaskKeysTableViewItemBuilder(scopes, additional_tags))).

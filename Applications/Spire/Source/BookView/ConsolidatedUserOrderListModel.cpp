@@ -65,11 +65,12 @@ connection ConsolidatedUserOrderListModel::connect_operation_signal(
   return m_model.connect_operation_signal(slot);
 }
 
-void ConsolidatedUserOrderListModel::transact(
-    const std::function<void ()>& transaction) {
-  m_model.transact([&] {
-    transaction();
-  });
+void ConsolidatedUserOrderListModel::start_transaction() {
+  m_model.start_transaction();
+}
+
+void ConsolidatedUserOrderListModel::end_transaction() {
+  m_model.end_transaction();
 }
 
 ConsolidatedUserOrderListModel::iterator

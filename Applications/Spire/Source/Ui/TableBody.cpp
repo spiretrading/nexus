@@ -652,8 +652,9 @@ TableBody::TableBody(
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current_controller(std::move(current), 0, widths->get_size() + 1),
-      m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
+      m_current_controller(std::move(current), 0, widths->get_size()),
+      m_selection_controller(std::move(selection), 0, widths->get_size()),
+      m_row_selection_transaction(RowSelectionTransaction::NONE),
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
@@ -1072,10 +1073,10 @@ void TableBody::pre_remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+  m_current_controller.remove_row(index);
 }
 
 void TableBody::remove_row(int index) {
-  m_current_controller.remove_row(index);
   auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
@@ -1113,17 +1114,19 @@ void TableBody::move_row(int source, int destination) {
     }
   } else if(layout.is_visible(destination)) {
     mount_row(destination);
+    auto hidden_row = source;
     if(destination < source) {
-      ++source;
+      ++hidden_row;
     }
-    layout.remove_hidden_row(source);
+    layout.remove_hidden_row(hidden_row);
   } else {
     auto height = layout.get_row_height(source);
     layout.remove_hidden_row(source);
+    auto hidden_row = destination;
     if(source < destination) {
-      --destination;
+      --hidden_row;
     }
-    layout.add_hidden_row(destination, height);
+    layout.add_hidden_row(hidden_row, height);
   }
   m_selection_controller.move_row(source, destination);
 }
@@ -1423,8 +1426,10 @@ bool TableBody::navigate_previous() {
 }
 
 void TableBody::on_item_activated(TableItem& item) {
-  auto& row_widget = *item.parentWidget();
   auto index = get_index(item);
+  if(index.m_column == m_widths->get_size()) {
+    return;
+  }
   if(m_current_controller.get_current()->get() != index) {
     m_current_controller.get_current()->set(index);
     if(auto current = m_current_controller.get_current()->get()) {
@@ -1491,6 +1496,20 @@ void TableBody::on_current(const optional<Index>& current) {
 
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
+    [&] (const AnyListModel::StartTransaction&) {
+      m_row_selection_transaction = RowSelectionTransaction::OPEN;
+    },
+    [&] (const AnyListModel::EndTransaction&) {
+      if(std::exchange(m_row_selection_transaction,
+          RowSelectionTransaction::NONE) != RowSelectionTransaction::UPDATED) {
+        return;
+      }
+      for(auto index : std::as_const(*get_selection()->get_row_selection())) {
+        if(auto row = find_row(index)) {
+          match(*row, Selected());
+        }
+      }
+    },
     [&] (const ListModel<int>::AddOperation& operation) {
       auto& selection =
         m_selection_controller.get_selection()->get_row_selection();
@@ -1508,6 +1527,9 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(auto previous = find_row(operation.get_previous())) {
         unmatch(*previous, Selected());
+        if(m_row_selection_transaction == RowSelectionTransaction::OPEN) {
+          m_row_selection_transaction = RowSelectionTransaction::UPDATED;
+        }
       }
       if(auto row = find_row(operation.get_value())) {
         match(*row, Selected());
@@ -1662,11 +1684,11 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         operation.m_destination);
       move_element(
         m_column_covers, operation.m_source, operation.m_destination);
-      auto& layout = get_layout();
-      for(auto i = 0; i < layout.count(); ++i) {
-        layout.get_row(i).move_column(
-          operation.m_source, operation.m_destination);
-      }
+      m_selection_controller.move_column(
+        operation.m_source, operation.m_destination);
+      for_each_row([&] (auto& row) {
+        row.move_column(operation.m_source, operation.m_destination);
+      });
       for(auto& row_cover : m_recycled_rows) {
         row_cover->move_column(operation.m_source, operation.m_destination);
       }

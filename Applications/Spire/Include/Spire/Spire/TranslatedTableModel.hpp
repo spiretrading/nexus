@@ -3,7 +3,7 @@
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -12,7 +12,7 @@ namespace Spire {
    * translating its rows. Translation in this sense refers to the Euclidean
    * notion of translation, where points are moved about an origin.
    */
-  class TranslatedTableModel : public TableModel {
+  class TranslatedTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /** 
@@ -20,14 +20,6 @@ namespace Spire {
        * @param source The table to translate.
        */
       explicit TranslatedTableModel(std::shared_ptr<TableModel> source);
-
-      /**
-       * Performs a transaction that consists of a series of operations.
-       * @param transaction The transaction to perform.
-       * @return The result of the transaction.
-       */
-      template<typename F>
-      decltype(auto) transact(F&& transaction);
 
       /**
        * Moves a row by performing a translation.
@@ -60,24 +52,16 @@ namespace Spire {
       QValidator::State set(
         int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       std::vector<int> m_translation;
       std::vector<int> m_reverse_translation;
-      TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       void translate(int direction, int row);
       void on_operation(const Operation& operation);
   };
-
-  template<typename F>
-  decltype(auto) TranslatedTableModel::transact(F&& transaction) {
-    return m_transaction.transact(std::forward<F>(transaction));
-  }
 }
 
 #endif

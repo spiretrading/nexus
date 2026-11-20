@@ -8,15 +8,6 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  template<typename... F>
-  decltype(auto) test_operation(
-      const ListModel<int>::Operation& operation, F&&... f) {
-    return visit(
-      operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
-  }
-}
-
 TEST_SUITE("TranslatedListModel") {
   TEST_CASE("translate") {
     auto source = std::make_shared<ArrayListModel<int>>();
@@ -30,14 +21,10 @@ TEST_SUITE("TranslatedListModel") {
       operations.push_back(operation);
     });
     REQUIRE_NOTHROW(translation.move(3, 0));
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::MoveOperation& operation) {
-        REQUIRE(operation.m_source == 3);
-        REQUIRE(operation.m_destination == 0);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(3, 0)});
+    operations.clear();
     REQUIRE(translation.get(0) == 1);
     REQUIRE(translation.get(1) == 4);
     REQUIRE(translation.get(2) == 2);
@@ -45,14 +32,9 @@ TEST_SUITE("TranslatedListModel") {
     REQUIRE_THROWS(translation.move(6, 2));
     REQUIRE(operations.empty());
     REQUIRE_NOTHROW(translation.move(1, 2));
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::MoveOperation& operation) {
-        REQUIRE(operation.m_source == 1);
-        REQUIRE(operation.m_destination == 2);
-      });
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(1, 2)});
     REQUIRE(translation.get(0) == 1);
     REQUIRE(translation.get(1) == 2);
     REQUIRE(translation.get(2) == 4);
@@ -166,17 +148,13 @@ TEST_SUITE("TranslatedListModel") {
     REQUIRE(translation.get(1) == 2);
     REQUIRE(translation.get(2) == 4);
     REQUIRE(translation.get(3) == 9);
-    auto signal_count = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        auto add_operation =
-          std::get_if<ListModel<int>::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == 3);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->insert(6, 2);
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(3)});
     REQUIRE(translation.get(0) == 1);
     REQUIRE(translation.get(1) == 2);
     REQUIRE(translation.get(2) == 4);
@@ -420,17 +398,17 @@ TEST_SUITE("TranslatedListModel") {
     REQUIRE(translation.get(0) == 4);
     REQUIRE(translation.get(1) == 2);
     REQUIRE_NOTHROW(translation.move(1, 0));
-    REQUIRE(signal_count == 3);
+    REQUIRE(signal_count == 5);
     REQUIRE(move_count == 1);
     REQUIRE(translation.get(0) == 2);
     REQUIRE(translation.get(1) == 4);
     source->set(1, 0);
-    REQUIRE(signal_count == 4);
+    REQUIRE(signal_count == 6);
     REQUIRE(update_count == 1);
     REQUIRE(translation.get(0) == 0);
     REQUIRE(translation.get(1) == 4);
     source->remove(0);
-    REQUIRE(signal_count == 8);
+    REQUIRE(signal_count == 10);
     REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(translation.get(0) == 0);

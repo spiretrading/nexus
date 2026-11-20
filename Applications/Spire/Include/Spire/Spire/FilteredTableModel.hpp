@@ -3,8 +3,8 @@
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/TableToListModel.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -12,7 +12,7 @@ namespace Spire {
    * Implements a TableModel that provides a view over a source model by
    * filtering out some rows.
    */
-  class FilteredTableModel : public TableModel {
+  class FilteredTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /**
@@ -59,15 +59,12 @@ namespace Spire {
       QValidator::State set(
         int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       std::shared_ptr<TableToListModel> m_list;
       FilteredListModel<RowView> m_filtered_list;
       boost::signals2::scoped_connection m_connection;
-      TableModelTransactionLog m_transaction;
 
       void on_operation(const ListModel<RowView>::Operation& operation);
   };

@@ -173,9 +173,12 @@ namespace {
         return m_names.connect_operation_signal(slot);
       }
 
-    protected:
-      void transact(const std::function<void()>& transaction) override {
-        m_names.transact([&] { transaction(); });
+      void start_transaction() override {
+        m_names.start_transaction();
+      }
+
+      void end_transaction() override {
+        m_names.end_transaction();
       }
 
     private:

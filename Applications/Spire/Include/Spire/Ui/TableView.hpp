@@ -19,10 +19,12 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
+      /** Signals a change to a source column's sort order. */
+      using SortSignal = TableHeader::SortSignal;
+
       using Index = TableBody::Index;
       using CurrentModel = TableBody::CurrentModel;
       using SelectionModel = TableBody::SelectionModel;
-      using SortSignal = TableHeader::SortSignal;
       using Comparator = SortedTableModel::Comparator;
       using ValueComparator = SortedTableModel::ValueComparator;
 
@@ -55,10 +57,10 @@ namespace Spire {
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
 
-      /** Returns the current value. */
+      /** Returns the current index in source table coordinates. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
-      /** Returns the selection. */
+      /** Returns the selection in source table coordinates. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns the table header. */
@@ -84,26 +86,28 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      class SourceToViewIndexModel;
+      template<typename T> class DisplayedSelection;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
+      std::shared_ptr<SelectionModel> m_selection;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
       std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<HeaderModel> m_header;
-      std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
       TableBody* m_body;
       int m_horizontal_spacing;
       int m_vertical_spacing;
       ScrollBox* m_scroll_box;
-      boost::signals2::scoped_connection m_filter_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_body_style_connection;
+      boost::signals2::scoped_connection m_selection_filter_connection;
 
-      bool is_filtered(const TableModel& model, int row);
+      void initialize_body(TableViewItemBuilder item_builder,
+        boost::signals2::connection tracking);
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
-      void on_filter(int column, TableFilter::Filter filter);
       void on_current(const boost::optional<Index>& current);
       void on_body_style();
       void on_scroll_position(int position);

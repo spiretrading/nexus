@@ -4,7 +4,7 @@
 #include <vector>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Spire/TranslatedTableModel.hpp"
 
 namespace Spire {
@@ -13,7 +13,7 @@ namespace Spire {
    * Implements a TableModel that provides a view over a source model by sorting
    * a column in ascending order, descending order or without any order.
    */
-  class SortedTableModel : public TableModel {
+  class SortedTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /**
@@ -156,15 +156,12 @@ namespace Spire {
       QValidator::State set(
         int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
       TranslatedTableModel m_translation;
       std::vector<ColumnOrder> m_order;
       Comparator m_comparator;
-      TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       bool is_sorted(int column) const;

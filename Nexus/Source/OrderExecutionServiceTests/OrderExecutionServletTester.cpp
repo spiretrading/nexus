@@ -234,12 +234,11 @@ TEST_SUITE("OrderExecutionServlet") {
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
     auto live_order = fixture.m_client->submit(
       make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 50, 2 * Money::ONE));
-    fixture.m_submissions->pop();
+    auto driver_order = fixture.m_submissions->pop();
     submit_and_fill(fixture,
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE),
       base + hours(6));
-    submit_and_fill(fixture,
-      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::ONE),
+    fill(*driver_order, live_order->get_info().m_fields.m_quantity,
       base + hours(7));
     fixture.m_container->close();
     auto snapshot =
@@ -267,6 +266,7 @@ TEST_SUITE("OrderExecutionServlet") {
     excluded_order->get_publisher().monitor(reports);
     fill(*driver_order, 200, base + hours(6) + minutes(1));
     while(reports->pop().m_status != OrderStatus::FILLED) {}
+    fixture.m_client.reset();
     fixture.m_container->close();
     auto stored =
       fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
@@ -690,9 +690,7 @@ TEST_SUITE("OrderExecutionServlet") {
               TestOrderExecutionDataStore::StoreOrderInfoOperation>(
                 &*operation)) {
             data_store.store(store_operation->m_info);
-            if(client) {
-              client->close();
-            }
+            client->close();
             store_operation->m_result.set();
           } else {
             service(*operation, data_store);
@@ -703,16 +701,16 @@ TEST_SUITE("OrderExecutionServlet") {
     auto fixture = Fixture<TestOrderExecutionDataStore>(operations);
     fixture.start();
     client = fixture.make_client("client", "1234");
-    auto parameters = NewOrderSingleService::Parameters();
-    parameters.fields =
+    auto fields =
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE);
-    client->send(NewOrderSingleService::Request<TestServiceProtocolClient>(
-      1, parameters));
-    auto driver_order = fixture.m_submissions->pop();
-    fill(*driver_order, 100);
-    submit_and_fill(fixture,
-      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
-    auto record = data_store.load_order_record(driver_order->get_info().m_id);
+    REQUIRE_THROWS_AS(client->send_request<NewOrderSingleService>(fields),
+      ServiceRequestException);
+    auto driver_order = fixture.m_submissions->try_pop();
+    REQUIRE(driver_order);
+    fill(**driver_order, fields.m_quantity);
+    fixture.m_container->close();
+    auto record =
+      data_store.load_order_record((*driver_order)->get_info().m_id);
     REQUIRE(record);
     auto& reports = (**record)->m_execution_reports;
     REQUIRE(reports.size() == 3);

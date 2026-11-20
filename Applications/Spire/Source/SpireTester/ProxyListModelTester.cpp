@@ -21,9 +21,11 @@ namespace {
     auto operations = std::deque<ProxyListModel<int>::Operation>();
     auto connection = scoped_connection(proxy.connect_operation_signal(
       [&] (const auto& operation) {
-        if(is_throwing && std::get_if<T>(&operation)) {
-          throw std::runtime_error("Failed.");
-        }
+        visit(operation, [&] (const T&) {
+          if(is_throwing) {
+            throw std::runtime_error("Failed.");
+          }
+        });
         operations.push_back(operation);
       }));
     REQUIRE_THROWS_AS(proxy.set_source(second), std::runtime_error);
@@ -37,6 +39,7 @@ namespace {
     REQUIRE(operations.empty());
     REQUIRE(proxy.get_size() == 2);
     second->push(9);
+    REQUIRE(operations.size() == 1);
     require_list_transaction<int>(operations,
       {
         ListModel<int>::AddOperation(2)
@@ -168,7 +171,80 @@ TEST_SUITE("ProxyListModel") {
     REQUIRE(proxy.get(2) == 9);
   }
 
+  TEST_CASE("set_source_during_transaction") {
+    using Model = ListModel<int>;
+    auto first = std::make_shared<ArrayListModel<int>>();
+    auto second = std::make_shared<ArrayListModel<int>>(std::vector<int>{7});
+    auto proxy = ProxyListModel(first);
+    auto operations = std::deque<Model::Operation>();
+    auto connection = scoped_connection(proxy.connect_operation_signal(
+      [&] (const auto& operation) {
+        operations.push_back(operation);
+      }));
+    first->start_transaction();
+    first->push(1);
+    SUBCASE("source_transaction") {
+      proxy.set_source(second);
+      REQUIRE(operations.size() == 8);
+      REQUIRE(std::get_if<Model::StartTransaction>(&operations.front()));
+      REQUIRE(std::get_if<Model::AddOperation>(&operations[1]));
+      REQUIRE(std::get_if<Model::EndTransaction>(&operations[2]));
+      operations.erase(operations.begin(), operations.begin() + 3);
+      require_list_transaction<int>(operations, {Model::PreRemoveOperation(0),
+        Model::RemoveOperation(0), Model::AddOperation(0)});
+    }
+    SUBCASE("proxy_transaction") {
+      proxy.transact([&] {
+        proxy.set_source(second);
+        second->set(0, 8);
+      });
+      require_list_transaction<int>(operations, {Model::AddOperation(0),
+        Model::PreRemoveOperation(0), Model::RemoveOperation(0),
+        Model::AddOperation(0), Model::UpdateOperation(0, 7, 8)});
+    }
+    operations.clear();
+    first->push(2);
+    first->end_transaction();
+    REQUIRE(operations.empty());
+    second->push(9);
+    REQUIRE(operations.size() == 1);
+    require_list_transaction<int>(operations, {Model::AddOperation(1)});
+  }
+
+  TEST_CASE("edit_from_replacement_end") {
+    using Model = ListModel<int>;
+    auto first = std::make_shared<ArrayListModel<int>>();
+    auto second = std::make_shared<ArrayListModel<int>>(std::vector{1});
+    auto proxy = ProxyListModel(first);
+    auto is_throwing = false;
+    auto operations = std::deque<Model::Operation>();
+    auto connection = scoped_connection(proxy.connect_operation_signal(
+      [&] (const auto& operation) {
+        operations.push_back(operation);
+        visit(operation,
+          [&] (const Model::AddOperation& add) {
+            if(is_throwing && add.m_index == 0) {
+              throw std::runtime_error("Failed.");
+            }
+          },
+          [&] (const Model::EndTransaction&) {
+            second->push(2);
+          });
+      }));
+    SUBCASE("replacement") {
+      proxy.set_source(second);
+    }
+    SUBCASE("throwing_subscriber") {
+      is_throwing = true;
+      REQUIRE_THROWS_AS(proxy.set_source(second), std::runtime_error);
+    }
+    REQUIRE(proxy.get_size() == 2);
+    REQUIRE(operations.size() == 4);
+    REQUIRE(std::get<Model::AddOperation>(operations.back()).m_index == 1);
+  }
+
   TEST_CASE("set_source_remove_exception") {
+    require_set_source_exception<ListModel<int>::PreRemoveOperation>();
     require_set_source_exception<ListModel<int>::RemoveOperation>();
   }
 
