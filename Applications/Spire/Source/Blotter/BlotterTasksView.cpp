@@ -1,7 +1,6 @@
 #include "Spire/Blotter/BlotterTasksView.hpp"
 #include <QKeyEvent>
 #include "Spire/Blotter/BlotterTasksCommandBar.hpp"
-#include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
@@ -28,6 +27,11 @@ BlotterTasksView::BlotterTasksView(std::shared_ptr<BlotterModel> model,
   m_table =
     new BlotterTasksTableView(m_tasks, model->get_task_monitors(), m_selection);
   layout->addWidget(m_table, 1);
+}
+
+const std::shared_ptr<TableView::CurrentModel>&
+    BlotterTasksView::get_current() const {
+  return m_table->get_current();
 }
 
 connection BlotterTasksView::connect_run_signal(

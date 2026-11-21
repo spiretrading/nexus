@@ -7,6 +7,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -192,10 +193,16 @@ BlotterTasksTableView::BlotterTasksTableView(
       m_selection(std::move(selection)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_table_view = make_table();
+  m_current = make_proxy_value_model(m_table_view->get_current());
   enclose(*this, *m_table_view);
   setFocusProxy(m_table_view);
   m_monitor_connection = m_monitors->connect_operation_signal(
     std::bind_front(&BlotterTasksTableView::on_monitor, this));
+}
+
+const std::shared_ptr<TableView::CurrentModel>&
+    BlotterTasksTableView::get_current() const {
+  return m_current;
 }
 
 TableView* BlotterTasksTableView::make_table() const {
@@ -310,8 +317,16 @@ void BlotterTasksTableView::on_monitor(
   if(std::holds_alternative<TaskMonitorsModel::AddOperation>(operation) ||
       std::holds_alternative<TaskMonitorsModel::RemoveOperation>(operation) ||
       std::holds_alternative<TaskMonitorsModel::MoveOperation>(operation)) {
+    auto current = m_current->get();
     delete m_table_view;
     m_table_view = make_table();
+    if(current) {
+      current->m_column = std::min(
+        current->m_column, m_table_view->get_table()->get_column_size() - 1);
+      m_table_view->get_current()->set(current);
+    }
+    std::static_pointer_cast<ProxyValueModel<TableView::CurrentModel::Type>>(
+      m_current)->set_source(m_table_view->get_current());
     layout()->addWidget(m_table_view);
     setFocusProxy(m_table_view);
   }

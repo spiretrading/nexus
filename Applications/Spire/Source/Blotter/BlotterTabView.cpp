@@ -12,6 +12,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 BlotterTabView::BlotterTabView(std::shared_ptr<TasksModel> tasks,
+    std::shared_ptr<TableView::CurrentModel> current,
     std::shared_ptr<CancelKeyBindingsModel> bindings, QWidget* parent)
     : QWidget(parent) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -21,13 +22,14 @@ BlotterTabView::BlotterTabView(std::shared_ptr<TasksModel> tasks,
     std::vector{tr("Positions"), tr("Pos")}, *new BlotterPositionsView());
   tab_view->add(
     std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
-  auto orders = std::make_shared<TaskOrdersModel>(std::move(tasks));
+  auto orders = std::make_shared<TaskOrdersModel>(tasks);
   m_order_log = new OrderLogView(orders, std::move(bindings));
   tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);
   tab_view->add(
     std::vector{tr("Executions"), tr("Exec")}, *new BlotterExecutionsView(
       std::make_shared<OrderExecutionReportsModel>(orders)));
-  tab_view->add(tr("Task"), *new BlotterTaskView());
+  tab_view->add(
+    tr("Task"), *new BlotterTaskView(std::move(tasks), std::move(current)));
   enclose(*this, *tab_view);
   setFocusProxy(tab_view);
 }

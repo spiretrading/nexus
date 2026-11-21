@@ -17,7 +17,8 @@ BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   m_tasks_view = new BlotterTasksView(m_model, bindings);
-  m_tab_view = new BlotterTabView(m_model->get_tasks(), std::move(bindings));
+  m_tab_view = new BlotterTabView(
+    m_model->get_tasks(), m_tasks_view->get_current(), std::move(bindings));
   auto split_view = new SplitView(*m_tasks_view, *m_tab_view);
   update_style(*split_view, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Vertical);

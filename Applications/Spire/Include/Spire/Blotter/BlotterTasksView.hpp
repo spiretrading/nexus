@@ -1,8 +1,8 @@
 #ifndef SPIRE_BLOTTER_TASKS_VIEW_HPP
 #define SPIRE_BLOTTER_TASKS_VIEW_HPP
 #include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include "Spire/Ui/TableSelectionModel.hpp"
 
 namespace Spire {
 
@@ -41,6 +41,9 @@ namespace Spire {
         std::shared_ptr<CancelKeyBindingsModel> bindings,
         QWidget* parent = nullptr);
 
+      /** Returns the current index in source table coordinates. */
+      const std::shared_ptr<TableView::CurrentModel>& get_current() const;
+
       /** Connects a slot to the RunSignal. */
       boost::signals2::connection connect_run_signal(
         const RunSignal::slot_type& slot) const;
@@ -63,7 +66,7 @@ namespace Spire {
       std::shared_ptr<CancelKeyBindingsModel> m_bindings;
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<TableSelectionModel> m_selection;
-      QWidget* m_table;
+      BlotterTasksTableView* m_table;
 
       std::vector<std::shared_ptr<Task>> get_selected_tasks() const;
       void on_run();

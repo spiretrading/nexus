@@ -23,10 +23,14 @@ namespace Spire {
         std::shared_ptr<TableSelectionModel> selection,
         QWidget* parent = nullptr);
 
+      /** Returns the current index in source table coordinates. */
+      const std::shared_ptr<TableView::CurrentModel>& get_current() const;
+
     private:
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<TaskMonitorsModel> m_monitors;
       std::shared_ptr<TableSelectionModel> m_selection;
+      std::shared_ptr<TableView::CurrentModel> m_current;
       TableView* m_table_view;
       boost::signals2::scoped_connection m_monitor_connection;
 

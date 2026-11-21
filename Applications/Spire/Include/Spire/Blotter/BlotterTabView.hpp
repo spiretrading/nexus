@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Blotter/BlotterTaskEntry.hpp"
 #include "Spire/Blotter/OrderLogView.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
 
@@ -13,10 +14,12 @@ namespace Spire {
       /**
        * Constructs a BlotterTabView.
        * @param tasks The blotter's tasks.
+       * @param current The current task index in source table coordinates.
        * @param bindings The user's cancel key bindings.
        * @param parent The parent widget.
        */
       BlotterTabView(std::shared_ptr<TasksModel> tasks,
+        std::shared_ptr<TableView::CurrentModel> current,
         std::shared_ptr<CancelKeyBindingsModel> bindings,
         QWidget* parent = nullptr);
 
