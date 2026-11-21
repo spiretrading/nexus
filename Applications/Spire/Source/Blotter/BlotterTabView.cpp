@@ -3,6 +3,7 @@
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
+#include "Spire/Blotter/OrderExecutionReportsModel.hpp"
 #include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TabView.hpp"
@@ -20,11 +21,12 @@ BlotterTabView::BlotterTabView(std::shared_ptr<TasksModel> tasks,
     std::vector{tr("Positions"), tr("Pos")}, *new BlotterPositionsView());
   tab_view->add(
     std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
-  m_order_log = new OrderLogView(
-    std::make_shared<TaskOrdersModel>(std::move(tasks)), std::move(bindings));
+  auto orders = std::make_shared<TaskOrdersModel>(std::move(tasks));
+  m_order_log = new OrderLogView(orders, std::move(bindings));
   tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);
   tab_view->add(
-    std::vector{tr("Executions"), tr("Exec")}, *new BlotterExecutionsView());
+    std::vector{tr("Executions"), tr("Exec")}, *new BlotterExecutionsView(
+      std::make_shared<OrderExecutionReportsModel>(orders)));
   tab_view->add(tr("Task"), *new BlotterTaskView());
   enclose(*this, *tab_view);
   setFocusProxy(tab_view);

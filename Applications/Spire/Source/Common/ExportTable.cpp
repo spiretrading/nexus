@@ -13,7 +13,7 @@ void Spire::export_as_csv(const TableModel& table,
   auto locale = QLocale();
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
   for(auto i = headers.begin(); i != headers.end(); ++i) {
-    out << '\"' << i->toStdString() << '\"';
+    out << '\"' << QString(*i).replace('\"', "\"\"").toStdString() << '\"';
     if(i == headers.end() - 1) {
       out << '\n';
     } else {
@@ -39,7 +39,8 @@ void Spire::export_as_csv(const TableModel& table,
           value_type == typeid(Quantity)) {
         out << to_text(value, locale).toStdString();
       } else {
-        out << '\"' << to_text(value, locale).toStdString() << '\"';
+        out << '\"' <<
+          to_text(value, locale).replace('\"', "\"\"").toStdString() << '\"';
       }
     }
   }

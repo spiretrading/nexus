@@ -563,6 +563,11 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<PositionSideToken>(value), locale);
   } else if(value.type() == typeid(Quantity)) {
     return to_text(std::any_cast<Quantity>(value), locale);
+  } else if(value.type() == typeid(optional<Quantity>)) {
+    if(auto& quantity = std::any_cast<const optional<Quantity>&>(value)) {
+      return to_text(*quantity, locale);
+    }
+    return QString();
   } else if(value.type() == typeid(Scope)) {
     return to_text(std::any_cast<Scope>(value), locale);
   } else if(value.type() == typeid(Side)) {
