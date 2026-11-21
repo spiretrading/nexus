@@ -8,6 +8,7 @@
 #include <QSpinBox>
 #include <QTextEdit>
 #include <QWidget>
+#include "Nexus/Accounting/Position.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Blotter/BlotterTaskEntry.hpp"
@@ -63,6 +64,12 @@ namespace Spire {
        */
       void on_cancel_order_operation(
         CancelKeyBindingsModel::Operation operation);
+
+      /**
+       * Logs a request to flatten positions.
+       * @param positions The positions selected for flattening.
+       */
+      void on_flatten_positions(const std::vector<Nexus::Position>& positions);
 
     private:
       struct Entry {

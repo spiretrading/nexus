@@ -14,15 +14,18 @@ namespace Spire {
       using CancelTaskOperationSignal = BlotterTasksView::CancelOperationSignal;
       using CancelOrdersSignal = OrderLogView::CancelSignal;
       using CancelOrderOperationSignal = OrderLogView::CancelOperationSignal;
+      using FlattenPositionsSignal = BlotterPositionsView::FlattenSignal;
 
       /**
        * Constructs a BlotterWindow.
        * @param model The blotter to display.
-       * @param bindings The user's cancel key bindings.
+       * @param cancel_bindings The user's cancel key bindings.
+       * @param position_bindings The user's position key bindings.
        * @param parent The parent widget.
        */
       BlotterWindow(std::shared_ptr<BlotterModel> model,
-        std::shared_ptr<CancelKeyBindingsModel> bindings,
+        std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
+        std::shared_ptr<PositionKeyBindingsModel> position_bindings,
         QWidget* parent = nullptr);
 
       /** Returns the displayed blotter's model. */
@@ -47,6 +50,10 @@ namespace Spire {
       /** Connects a slot to the CancelOrderOperationSignal. */
       boost::signals2::connection connect_cancel_order_operation_signal(
         const CancelOrderOperationSignal::slot_type& slot) const;
+
+      /** Connects a slot to the FlattenPositionsSignal. */
+      boost::signals2::connection connect_flatten_positions_signal(
+        const FlattenPositionsSignal::slot_type& slot) const;
 
     private:
       std::shared_ptr<BlotterModel> m_model;

@@ -15,12 +15,14 @@ namespace Spire {
        * @param is_pinned Whether the blotter is pinned for saving on exit.
        * @param tasks The blotter's order execution task entries.
        * @param monitors The monitor definitions for those tasks.
+       * @param portfolio The blotter's portfolio.
        */
       CompositeBlotterModel(std::shared_ptr<TextModel> name,
         std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
         std::shared_ptr<TasksModel> tasks,
-        std::shared_ptr<TaskMonitorsModel> monitors) noexcept;
+        std::shared_ptr<TaskMonitorsModel> monitors,
+        std::shared_ptr<PortfolioModel> portfolio) noexcept;
 
       const std::shared_ptr<TextModel>& get_name() const override;
       const std::shared_ptr<BooleanModel>& is_active() const override;
@@ -28,6 +30,7 @@ namespace Spire {
       const std::shared_ptr<TasksModel>& get_tasks() const override;
       const std::shared_ptr<TaskMonitorsModel>&
         get_task_monitors() const override;
+      const std::shared_ptr<PortfolioModel>& get_portfolio() const override;
 
     private:
       std::shared_ptr<TextModel> m_name;
@@ -35,6 +38,7 @@ namespace Spire {
       std::shared_ptr<BooleanModel> m_is_pinned;
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<TaskMonitorsModel> m_monitors;
+      std::shared_ptr<PortfolioModel> m_portfolio;
   };
 }
 

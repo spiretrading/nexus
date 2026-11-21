@@ -5,7 +5,6 @@
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QStandardPaths>
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
@@ -107,11 +106,6 @@ namespace {
     export_as_csv(*view.get_table(), headers, out);
   }
 }
-
-BlotterPositionsView::BlotterPositionsView(QWidget* parent)
-  : BlotterPositionsView(
-      std::make_shared<ArrayListModel<PortfolioUpdateEntry>>(),
-      std::make_shared<PositionKeyBindingsModel>(), parent) {}
 
 BlotterPositionsView::BlotterPositionsView(
     std::shared_ptr<PortfolioModel> portfolio,

@@ -1,7 +1,7 @@
 #ifndef SPIRE_BLOTTER_TAB_VIEW_HPP
 #define SPIRE_BLOTTER_TAB_VIEW_HPP
-#include <QWidget>
-#include "Spire/Blotter/BlotterTaskEntry.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/OrderLogView.hpp"
 #include "Spire/Ui/TableView.hpp"
 
@@ -13,14 +13,16 @@ namespace Spire {
 
       /**
        * Constructs a BlotterTabView.
-       * @param tasks The blotter's tasks.
+       * @param model The blotter to display.
        * @param current The current task index in source table coordinates.
-       * @param bindings The user's cancel key bindings.
+       * @param cancel_bindings The user's cancel key bindings.
+       * @param position_bindings The user's position key bindings.
        * @param parent The parent widget.
        */
-      BlotterTabView(std::shared_ptr<TasksModel> tasks,
+      BlotterTabView(std::shared_ptr<BlotterModel> model,
         std::shared_ptr<TableView::CurrentModel> current,
-        std::shared_ptr<CancelKeyBindingsModel> bindings,
+        std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
+        std::shared_ptr<PositionKeyBindingsModel> position_bindings,
         QWidget* parent = nullptr);
 
       /** Connects a slot to the order log's CancelSignal. */
@@ -31,7 +33,12 @@ namespace Spire {
       boost::signals2::connection connect_cancel_order_operation_signal(
         const OrderLogView::CancelOperationSignal::slot_type& slot) const;
 
+      /** Connects a slot to the positions view's FlattenSignal. */
+      boost::signals2::connection connect_flatten_positions_signal(
+        const BlotterPositionsView::FlattenSignal::slot_type& slot) const;
+
     private:
+      BlotterPositionsView* m_positions;
       OrderLogView* m_order_log;
   };
 }

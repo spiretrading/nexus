@@ -15,12 +15,6 @@ namespace Spire {
         Signal<void (const std::vector<Nexus::Position>& positions)>;
 
       /**
-       * Constructs an empty BlotterPositionsView.
-       * @param parent The parent widget.
-       */
-      explicit BlotterPositionsView(QWidget* parent = nullptr);
-
-      /**
        * Constructs a BlotterPositionsView.
        * @param portfolio The portfolio whose open positions are displayed.
        * @param bindings The user's position key bindings.

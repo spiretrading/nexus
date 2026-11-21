@@ -6,12 +6,14 @@ CompositeBlotterModel::CompositeBlotterModel(
   std::shared_ptr<TextModel> name, std::shared_ptr<BooleanModel> is_active,
   std::shared_ptr<BooleanModel> is_pinned,
   std::shared_ptr<TasksModel> tasks,
-  std::shared_ptr<TaskMonitorsModel> monitors) noexcept
+  std::shared_ptr<TaskMonitorsModel> monitors,
+  std::shared_ptr<PortfolioModel> portfolio) noexcept
   : m_name(std::move(name)),
     m_is_active(std::move(is_active)),
     m_is_pinned(std::move(is_pinned)),
     m_tasks(std::move(tasks)),
-    m_monitors(std::move(monitors)) {}
+    m_monitors(std::move(monitors)),
+    m_portfolio(std::move(portfolio)) {}
 
 const std::shared_ptr<TextModel>& CompositeBlotterModel::get_name() const {
   return m_name;
@@ -32,4 +34,9 @@ const std::shared_ptr<TasksModel>& CompositeBlotterModel::get_tasks() const {
 const std::shared_ptr<TaskMonitorsModel>&
     CompositeBlotterModel::get_task_monitors() const {
   return m_monitors;
+}
+
+const std::shared_ptr<PortfolioModel>&
+    CompositeBlotterModel::get_portfolio() const {
+  return m_portfolio;
 }

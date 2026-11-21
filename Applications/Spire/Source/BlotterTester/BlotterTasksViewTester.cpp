@@ -37,7 +37,8 @@ TEST_SUITE("BlotterTasksView") {
       std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false), tasks,
-      std::make_shared<ArrayListModel<BlotterTaskMonitor>>()),
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
+      std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()),
       profile.GetKeyBindings()->get_cancel_key_bindings());
     view.resize(640, 240);
     view.show();

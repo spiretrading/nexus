@@ -9,16 +9,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
-    std::shared_ptr<CancelKeyBindingsModel> bindings, QWidget* parent)
+    std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
+    std::shared_ptr<PositionKeyBindingsModel> position_bindings,
+    QWidget* parent)
     : Window(parent),
       m_model(std::move(model)) {
   set_svg_icon(":/Icons/blotter.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/blotter.png"));
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
-  m_tasks_view = new BlotterTasksView(m_model, bindings);
-  m_tab_view = new BlotterTabView(
-    m_model->get_tasks(), m_tasks_view->get_current(), std::move(bindings));
+  m_tasks_view = new BlotterTasksView(m_model, cancel_bindings);
+  m_tab_view = new BlotterTabView(m_model, m_tasks_view->get_current(),
+    std::move(cancel_bindings), std::move(position_bindings));
   auto split_view = new SplitView(*m_tasks_view, *m_tab_view);
   update_style(*split_view, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Vertical);
@@ -58,6 +60,11 @@ connection BlotterWindow::connect_cancel_orders_signal(
 connection BlotterWindow::connect_cancel_order_operation_signal(
     const CancelOrderOperationSignal::slot_type& slot) const {
   return m_tab_view->connect_cancel_order_operation_signal(slot);
+}
+
+connection BlotterWindow::connect_flatten_positions_signal(
+    const FlattenPositionsSignal::slot_type& slot) const {
+  return m_tab_view->connect_flatten_positions_signal(slot);
 }
 
 void BlotterWindow::on_name(const QString& name) {

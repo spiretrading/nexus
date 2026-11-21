@@ -190,6 +190,16 @@ void BlotterController::on_cancel_order_operation(
   m_output->append(tr("Cancel Orders: %1").arg(to_text(operation)));
 }
 
+void BlotterController::on_flatten_positions(
+    const std::vector<Position>& positions) {
+  auto entries = QStringList();
+  for(auto& position : positions) {
+    entries.push_back(tr("%1 %2 %3").arg(to_text(position.m_ticker)).
+      arg(to_text(position.m_quantity)).arg(to_text(position.m_currency)));
+  }
+  m_output->append(tr("Flatten Positions: [%1]").arg(entries.join(", ")));
+}
+
 OrderFields BlotterController::make_fields() const {
   auto fields = OrderFields();
   fields.m_account =
