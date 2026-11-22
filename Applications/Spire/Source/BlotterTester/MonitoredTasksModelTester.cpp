@@ -10,9 +10,12 @@
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/UnionListModel.hpp"
+#include "Spire/SpireTester/ListModelTester.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Beam;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -121,5 +124,147 @@ TEST_SUITE("MonitoredTasksModel") {
     monitors->remove(0);
     REQUIRE(tasks.get(0).m_monitors.empty());
     REQUIRE(tasks.get(1).m_monitors.empty());
+    auto replacement = tasks.get(1).m_task;
+    REQUIRE(tasks.move(1, 0) == QValidator::Acceptable);
+    REQUIRE(tasks.get(0).m_task == replacement);
+    REQUIRE(tasks.remove(0) == QValidator::Acceptable);
+    REQUIRE(tasks.get_size() == 1);
+    REQUIRE(tasks.get(0).m_task == next.m_task);
+  }
+
+  UI_TEST_CASE("source_pins_and_monitors") {
+    auto fixture = Fixture();
+    auto source =
+      std::make_shared<MonitoredTasksModel>(make_default_task_monitors());
+    auto entry = fixture.make_entry();
+    entry.m_is_pinned = true;
+    entry.m_state = Task::State::ACTIVE;
+    source->push(entry);
+    auto monitors = std::make_shared<ArrayListModel<BlotterTaskMonitor>>();
+    monitors->push(BlotterTaskMonitor(
+      "Local", std::make_shared<IntegerNode>(11)));
+    auto tasks = MonitoredTasksModel(source, monitors);
+    REQUIRE(tasks.get_size() == 1);
+    REQUIRE(tasks.get(0).m_task == entry.m_task);
+    REQUIRE(tasks.get(0).m_state == Task::State::ACTIVE);
+    REQUIRE_FALSE(tasks.get(0).m_is_pinned);
+    REQUIRE(tasks.get(0).m_monitors.size() == 1);
+    auto observer = tasks.get(0).m_monitors.front();
+    REQUIRE(std::any_cast<Quantity>(observer->get()) == 11);
+    entry.m_is_pinned = false;
+    source->set(0, entry);
+    auto local = tasks.get(0);
+    local.m_is_pinned = true;
+    REQUIRE(tasks.set(0, local) == QValidator::Acceptable);
+    REQUIRE(tasks.get(0).m_is_pinned);
+    REQUIRE_FALSE(source->get(0).m_is_pinned);
+    entry.m_state = Task::State::COMPLETE;
+    source->set(0, entry);
+    REQUIRE(tasks.get(0).m_is_pinned);
+    REQUIRE(tasks.get(0).m_state == Task::State::COMPLETE);
+    REQUIRE(tasks.get(0).m_monitors.front() == observer);
+    local = tasks.get(0);
+    local.m_state = Task::State::READY;
+    REQUIRE(tasks.set(0, local) == QValidator::Invalid);
+    REQUIRE(tasks.get(0).m_state == Task::State::COMPLETE);
+    auto replacement = fixture.make_entry();
+    REQUIRE(tasks.set(0, replacement) == QValidator::Invalid);
+    REQUIRE(tasks.insert(replacement, 0) == QValidator::Invalid);
+    REQUIRE(tasks.push(replacement) == QValidator::Invalid);
+    REQUIRE(tasks.move(0, 0) == QValidator::Invalid);
+    REQUIRE(tasks.remove(0) == QValidator::Invalid);
+    REQUIRE(tasks.get_size() == 1);
+    monitors->set(0, BlotterTaskMonitor(
+      "Local", std::make_shared<IntegerNode>(12)));
+    REQUIRE(std::any_cast<Quantity>(
+      tasks.get(0).m_monitors.front()->get()) == 12);
+    REQUIRE(source->get(0).m_monitors.size() == 5);
+    observer = tasks.get(0).m_monitors.front();
+    replacement.m_is_pinned = true;
+    source->set(0, replacement);
+    REQUIRE(tasks.get(0).m_task == replacement.m_task);
+    REQUIRE_FALSE(tasks.get(0).m_is_pinned);
+    REQUIRE(tasks.get(0).m_state == Task::State::READY);
+    REQUIRE(tasks.get(0).m_monitors.front() != observer);
+  }
+
+  UI_TEST_CASE("source_operations") {
+    auto fixture = Fixture();
+    auto source = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
+    auto tasks = MonitoredTasksModel(source, make_default_task_monitors());
+    auto first = fixture.make_entry();
+    auto second = fixture.make_entry();
+    auto operations = std::deque<TasksModel::Operation>();
+    auto connection = scoped_connection(tasks.connect_operation_signal(
+      [&] (const auto& operation) {
+        operations.push_back(operation);
+        visit(operation, [&] (const TasksModel::PreRemoveOperation& remove) {
+          REQUIRE(tasks.get(remove.m_index).m_task == second.m_task);
+        });
+      }));
+    source->transact([&] {
+      source->push(first);
+      source->insert(second, 0);
+    });
+    require_list_transaction<BlotterTaskEntry>(operations,
+      {TasksModel::AddOperation(0), TasksModel::AddOperation(0)});
+    REQUIRE(tasks.get(0).m_task == second.m_task);
+    REQUIRE(tasks.get(1).m_task == first.m_task);
+    auto local = tasks.get(0);
+    auto observers = local.m_monitors;
+    local.m_is_pinned = true;
+    tasks.set(0, local);
+    operations.clear();
+    source->move(0, 1);
+    require_list_transaction<BlotterTaskEntry>(operations,
+      {TasksModel::MoveOperation(0, 1)});
+    REQUIRE(tasks.get(1).m_task == second.m_task);
+    REQUIRE(tasks.get(1).m_is_pinned);
+    REQUIRE(tasks.get(1).m_monitors == observers);
+    operations.clear();
+    source->remove(1);
+    require_list_transaction<BlotterTaskEntry>(operations,
+      {TasksModel::PreRemoveOperation(1), TasksModel::RemoveOperation(1)});
+    REQUIRE(tasks.get_size() == 1);
+    REQUIRE(tasks.get(0).m_task == first.m_task);
+  }
+
+  UI_TEST_CASE("union_sources") {
+    auto fixture = Fixture();
+    auto hash = [] (const auto& entry) {
+      return std::hash<int>()(entry.m_task->GetId());
+    };
+    auto is_equal = [] (const auto& left, const auto& right) {
+      return left.m_task->GetId() == right.m_task->GetId();
+    };
+    auto source = std::make_shared<UnionListModel<
+      BlotterTaskEntry, decltype(hash), decltype(is_equal)>>();
+    auto first = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
+    auto second = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
+    auto entry = fixture.make_entry();
+    first->push(entry);
+    second->push(entry);
+    source->add_source(first);
+    source->add_source(second);
+    auto tasks = MonitoredTasksModel(source, make_default_task_monitors());
+    auto other = MonitoredTasksModel(source, make_default_task_monitors());
+    REQUIRE(tasks.get_size() == 1);
+    auto local = tasks.get(0);
+    auto observers = local.m_monitors;
+    local.m_is_pinned = true;
+    tasks.set(0, local);
+    REQUIRE_FALSE(other.get(0).m_is_pinned);
+    entry.m_state = Task::State::ACTIVE;
+    second->set(0, entry);
+    source->remove_source(first);
+    REQUIRE(tasks.get_size() == 1);
+    REQUIRE(tasks.get(0).m_is_pinned);
+    REQUIRE(tasks.get(0).m_state == Task::State::ACTIVE);
+    REQUIRE(tasks.get(0).m_monitors == observers);
+    REQUIRE(other.get(0).m_state == Task::State::ACTIVE);
+    REQUIRE_FALSE(other.get(0).m_is_pinned);
+    source->remove_source(second);
+    REQUIRE(tasks.get_size() == 0);
+    REQUIRE(other.get_size() == 0);
   }
 }
