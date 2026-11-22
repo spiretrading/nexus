@@ -209,4 +209,157 @@ TEST_SUITE("ControllerPortfolioModel") {
     require_list_transaction<PortfolioUpdateEntry>(
       operations, {PortfolioModel::AddOperation(1)});
   }
+
+  UI_TEST_CASE("order_list") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("RY.TSX");
+    fixture.publish(ticker, Money(12), Money(13),
+      time_from_string("2026-11-21 10:00:00"));
+    auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
+    auto first = make_order(1, ticker, Side::BID, 100, Money(10));
+    accept(*first);
+    fill(*first, 40);
+    orders->push(first);
+    orders->push(first);
+    auto model = ControllerPortfolioModel(
+      orders, fixture.m_market_data.get_registry_client());
+    REQUIRE(model.get_size() == 1);
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 40);
+    REQUIRE(model.get(0).m_inventory.m_position.m_cost_basis == Money(400));
+    wait_for(model, [&] {
+      fill(*first, 20);
+    }, [&] {
+      return model.get(0).m_inventory.m_position.m_quantity == 60;
+    });
+    orders->remove(0);
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 60);
+    auto second = make_order(2, ticker, Side::ASK, 20, Money(11));
+    wait_for(model, [&] {
+      orders->push(second);
+      accept(*second);
+      fill(*second, 20);
+    }, [&] {
+      return model.get(0).m_inventory.m_position.m_quantity == 40;
+    });
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(20));
+    wait_for(model, [&] {
+      fixture.publish(ticker, Money(14), Money(15),
+        time_from_string("2026-11-21 10:01:00"));
+    }, [&] {
+      return model.get(0).m_unrealized == Money(160);
+    });
+    auto operations = std::deque<PortfolioModel::Operation>();
+    model.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    orders->move(0, 1);
+    orders->set(0, second);
+    REQUIRE(operations.empty());
+    fill(*first, 40);
+    orders->transact([&] {
+      orders->remove(1);
+      orders->remove(0);
+    });
+    REQUIRE(model.get_size() == 0);
+    require_list_transaction<PortfolioUpdateEntry>(operations,
+      {PortfolioModel::PreRemoveOperation(0),
+       PortfolioModel::RemoveOperation(0)});
+    QApplication::processEvents();
+    REQUIRE(model.get_size() == 0);
+    auto third = make_order(3, ticker, Side::BID, 10, Money(12));
+    wait_for(model, [&] {
+      orders->push(third);
+      accept(*third);
+      fill(*third, 10);
+    }, [&] {
+      return model.get_size() == 1 &&
+        model.get(0).m_inventory.m_position.m_quantity == 10;
+    });
+    REQUIRE(model.get(0).m_inventory.m_position.m_cost_basis == Money(120));
+  }
+
+  UI_TEST_CASE("historical_orders") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("RY.TSX");
+    fixture.publish(ticker, Money(15), Money(16),
+      time_from_string("2026-11-21 10:00:00"));
+    auto opening = make_order(1, ticker, Side::BID, 100, Money(10));
+    auto increase = make_order(2, ticker, Side::BID, 100, Money(20));
+    auto closing = make_order(3, ticker, Side::ASK, 100, Money(30));
+    accept(*opening);
+    accept(*increase);
+    accept(*closing);
+    fill(*opening, 100, time_from_string("2026-11-21 10:01:00"));
+    fill(*increase, 100, time_from_string("2026-11-21 10:02:00"));
+    fill(*closing, 100, time_from_string("2026-11-21 10:03:00"));
+    auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
+    orders->push(closing);
+    orders->push(opening);
+    auto model = ControllerPortfolioModel(
+      orders, fixture.m_market_data.get_registry_client());
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 0);
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(2000));
+    orders->push(increase);
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 100);
+    REQUIRE(model.get(0).m_inventory.m_position.m_cost_basis == Money(1500));
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(1500));
+    orders->remove(2);
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 0);
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(2000));
+    auto replacement = make_order(4, ticker, Side::BID, 100, Money(12));
+    accept(*replacement);
+    fill(*replacement, 100, time_from_string("2026-11-21 10:01:00"));
+    orders->set(1, replacement);
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 0);
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(1800));
+  }
+
+  UI_TEST_CASE("order_list_snapshot") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("RY.TSX");
+    fixture.publish(ticker, Money(12), Money(13),
+      time_from_string("2026-11-21 10:00:00"));
+    auto inventory = Inventory(Position(ticker, CAD, 100, Money(1000)),
+      Money::ZERO, Money::ZERO, 100, 1);
+    auto initial = Portfolio(TrueAverageBookkeeper(std::vector{inventory}));
+    auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
+    auto model = ControllerPortfolioModel(
+      orders, initial, fixture.m_market_data.get_registry_client());
+    REQUIRE(model.get(0).m_inventory == inventory);
+    auto closing = make_order(1, ticker, Side::ASK, 20, Money(11));
+    auto opening = make_order(2, ticker, Side::BID, 10, Money(12));
+    accept(*closing);
+    accept(*opening);
+    fill(*closing, 20, time_from_string("2026-11-21 10:01:00"));
+    fill(*opening, 10, time_from_string("2026-11-21 10:02:00"));
+    auto operations = std::deque<PortfolioModel::Operation>();
+    model.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    orders->transact([&] {
+      orders->push(opening);
+      orders->transact([&] {
+        orders->push(closing);
+      });
+      REQUIRE(model.get(0).m_inventory == inventory);
+    });
+    REQUIRE(model.get(0).m_inventory.m_position.m_quantity == 90);
+    REQUIRE(model.get(0).m_inventory.m_position.m_cost_basis == Money(920));
+    REQUIRE(model.get(0).m_inventory.m_gross_profit_and_loss == Money(20));
+    require_list_transaction<PortfolioUpdateEntry>(operations,
+      {PortfolioModel::PreRemoveOperation(0),
+       PortfolioModel::RemoveOperation(0), PortfolioModel::AddOperation(0)});
+    operations.clear();
+    orders->transact([&] {
+      orders->remove(1);
+      orders->remove(0);
+    });
+    REQUIRE(model.get(0).m_inventory == inventory);
+    require_list_transaction<PortfolioUpdateEntry>(operations,
+      {PortfolioModel::PreRemoveOperation(0),
+       PortfolioModel::RemoveOperation(0), PortfolioModel::AddOperation(0)});
+    QApplication::processEvents();
+    REQUIRE(model.get(0).m_inventory == inventory);
+    REQUIRE(initial.get_bookkeeper().get_inventory(ticker) == inventory);
+  }
 }
