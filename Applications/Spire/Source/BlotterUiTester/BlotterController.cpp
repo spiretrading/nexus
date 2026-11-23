@@ -1,11 +1,17 @@
 #include "Spire/BlotterUiTester/BlotterController.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <QApplication>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <QScreen>
 #include <QVBoxLayout>
+#include "Spire/Blotter/CompositeBlotterModel.hpp"
+#include "Spire/Blotter/ControllerPortfolioModel.hpp"
+#include "Spire/Blotter/MonitoredTasksModel.hpp"
+#include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
@@ -33,11 +39,17 @@ namespace {
   }
 }
 
-BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
+BlotterController::BlotterController(
     Ref<TestEnvironment> environment, Ref<UserProfile> profile)
-    : m_tasks(std::move(tasks)),
-      m_environment(environment.get()),
+    : m_environment(environment.get()),
       m_profile(profile.get()),
+      m_collection(std::make_shared<BlotterCollection>(
+        profile->GetClients().get_market_data_client())),
+      m_orders(std::make_shared<UnionListModel<std::shared_ptr<Order>>>()),
+      m_portfolio(std::make_shared<ControllerPortfolioModel>(
+        m_orders, profile->GetClients().get_market_data_client())),
+      m_active(-1),
+      m_blotter_selection(new QComboBox()),
       m_name(new QLineEdit(tr("Single Order"))),
       m_ticker(new QLineEdit("MRU.TSX")),
       m_currency(new QLineEdit("CAD")),
@@ -59,6 +71,16 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
       m_output(new QTextEdit()) {
   setWindowTitle(tr("Blotter Controller"));
   auto layout = new QVBoxLayout(this);
+  auto blotters = new QHBoxLayout();
+  blotters->addWidget(new QLabel(tr("Active blotter")));
+  blotters->addWidget(m_blotter_selection, 1);
+  auto open = new QPushButton(tr("New Blotter"));
+  blotters->addWidget(open);
+  layout->addLayout(blotters);
+  connect(open, &QPushButton::clicked,
+    this, &BlotterController::on_new_blotter);
+  connect(m_blotter_selection, qOverload<int>(&QComboBox::activated),
+    this, &BlotterController::on_blotter_selection);
   auto control_row = new QHBoxLayout();
   layout->addLayout(control_row);
   auto creation = new QGroupBox(tr("Create Task"));
@@ -140,6 +162,11 @@ BlotterController::BlotterController(std::shared_ptr<TasksModel> tasks,
       std::bind_front(&BlotterController::on_submission, this)));
   refresh();
   resize(scale(660, 540));
+  on_new_blotter();
+  auto screen = QApplication::primaryScreen()->availableGeometry();
+  move(screen.left(), std::min(
+    m_blotters.front().m_window->frameGeometry().bottom() + scale_height(20),
+    screen.bottom() - frameGeometry().height()));
 }
 
 BlotterController::~BlotterController() {
@@ -276,6 +303,84 @@ void BlotterController::refresh() {
   }
 }
 
+void BlotterController::set_active(int index) {
+  if(m_active == index) {
+    return;
+  }
+  m_active = index;
+  m_blotter_selection->setCurrentIndex(index);
+  for(auto i = 0; i != static_cast<int>(m_blotters.size()); ++i) {
+    auto active = m_blotters[i].m_window->get_model()->is_active();
+    auto is_active = i == index;
+    if(active->get() != is_active) {
+      active->set(is_active);
+    }
+  }
+}
+
+void BlotterController::on_new_blotter() {
+  auto index = static_cast<int>(m_blotters.size());
+  auto is_consolidated = index == 0;
+  auto name = [&] {
+    if(is_consolidated) {
+      return tr("Consolidated");
+    }
+    return tr("Blotter %1").arg(index);
+  }();
+  auto monitors = make_default_task_monitors();
+  auto tasks = std::make_shared<MonitoredTasksModel>(monitors);
+  auto orders = std::shared_ptr<OrdersModel>(
+    std::make_shared<TaskOrdersModel>(tasks));
+  m_orders->add_source(orders);
+  if(is_consolidated) {
+    orders = m_orders;
+  }
+  auto model = m_collection->add(std::make_shared<CompositeBlotterModel>(
+    m_profile->GetClients().get_service_locator_client().get_account(),
+    is_consolidated, std::make_shared<LocalTextModel>(name),
+    std::make_shared<LocalBooleanModel>(false),
+    std::make_shared<LocalBooleanModel>(false), tasks, monitors, orders,
+    m_portfolio));
+  auto window = std::make_unique<BlotterWindow>(model, m_collection,
+    m_profile->GetKeyBindings()->get_cancel_key_bindings(),
+    std::make_shared<PositionKeyBindingsModel>());
+  window->connect_run_tasks_signal(
+    std::bind_front(&BlotterController::on_run_tasks, this));
+  window->connect_cancel_tasks_signal(
+    std::bind_front(&BlotterController::on_cancel_tasks, this));
+  window->connect_cancel_orders_signal(
+    std::bind_front(&BlotterController::on_cancel_orders, this));
+  window->connect_cancel_task_operation_signal(
+    std::bind_front(&BlotterController::on_cancel_task_operation, this));
+  window->connect_cancel_order_operation_signal(
+    std::bind_front(&BlotterController::on_cancel_order_operation, this));
+  window->connect_flatten_positions_signal(
+    std::bind_front(&BlotterController::on_flatten_positions, this));
+  auto connection = model->is_active()->connect_update_signal(
+    std::bind_front(&BlotterController::on_active, this, index));
+  m_blotters.emplace_back(tasks, std::move(window), std::move(connection));
+  m_blotter_selection->addItem(name);
+  auto screen = QApplication::primaryScreen()->availableGeometry();
+  auto offset = scale_width(40) * (index % 8);
+  m_blotters.back().m_window->move(
+    screen.topLeft() + QPoint(offset, offset));
+  on_blotter_selection(index);
+}
+
+void BlotterController::on_blotter_selection(int index) {
+  set_active(index);
+  auto& window = *m_blotters[index].m_window;
+  window.show();
+  window.raise();
+  window.activateWindow();
+}
+
+void BlotterController::on_active(int index, bool is_active) {
+  if(is_active) {
+    set_active(index);
+  }
+}
+
 void BlotterController::on_create() {
   try {
     auto fields = make_fields();
@@ -306,16 +411,18 @@ void BlotterController::on_create() {
     auto index = static_cast<int>(m_entries.size());
     auto entry = Entry();
     entry.m_task = task;
+    entry.m_tasks = m_blotters[m_active].m_tasks;
     m_entries.push_back(std::move(entry));
     auto blotter_entry = BlotterTaskEntry();
     blotter_entry.m_task = task;
-    m_tasks->push(blotter_entry);
+    m_entries[index].m_tasks->push(blotter_entry);
     task->GetPublisher().monitor(m_events.get_slot<Task::StateEntry>(
       std::bind_front(&BlotterController::on_state, this, index)));
     task->GetContext().GetOrderPublisher().monitor(
       m_events.get_slot<std::shared_ptr<Order>>(
         std::bind_front(&BlotterController::on_order, this, index)));
-    m_selection->addItem(tr("%1: %2").arg(task->GetId()).arg(name));
+    m_selection->addItem(tr("%1 - %2: %3").
+      arg(m_blotter_selection->currentText()).arg(task->GetId()).arg(name));
     m_selection->setCurrentIndex(index);
   } catch(const std::exception& e) {
     QMessageBox::warning(this, tr("Unable to Create Task"), e.what());
@@ -355,11 +462,12 @@ void BlotterController::on_report(int index, const ExecutionReport& report) {
 
 void BlotterController::on_state(int index, const Task::StateEntry& state) {
   m_entries[index].m_state = state;
-  for(auto i = 0; i < m_tasks->get_size(); ++i) {
-    auto entry = m_tasks->get(i);
+  auto& tasks = *m_entries[index].m_tasks;
+  for(auto i = 0; i < tasks.get_size(); ++i) {
+    auto entry = tasks.get(i);
     if(entry.m_task == m_entries[index].m_task) {
       entry.m_state = state.m_state;
-      m_tasks->set(i, entry);
+      tasks.set(i, entry);
       break;
     }
   }

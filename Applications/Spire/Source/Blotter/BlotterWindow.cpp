@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include <QIcon>
+#include "Spire/Blotter/BlotterLinkMenu.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -9,16 +10,21 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
+    std::shared_ptr<BlotterCollection> collection,
     std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
     std::shared_ptr<PositionKeyBindingsModel> position_bindings,
     QWidget* parent)
     : Window(parent),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_collection(std::move(collection)) {
   set_svg_icon(":/Icons/blotter.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/blotter.png"));
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   m_tasks_view = new BlotterTasksView(m_model, cancel_bindings);
+  m_tasks_view->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(m_tasks_view, &QWidget::customContextMenuRequested, this,
+    &BlotterWindow::on_context_menu);
   m_tab_view = new BlotterTabView(m_model, m_tasks_view->get_current(),
     std::move(cancel_bindings), std::move(position_bindings));
   auto split_view = new SplitView(*m_tasks_view, *m_tab_view);
@@ -69,4 +75,13 @@ connection BlotterWindow::connect_flatten_positions_signal(
 
 void BlotterWindow::on_name(const QString& name) {
   setWindowTitle(tr("Blotter \xE2\x80\x93 %1").arg(name));
+}
+
+void BlotterWindow::on_context_menu(const QPoint& position) {
+  auto menu = new ContextMenu(*m_tasks_view);
+  auto links = new BlotterLinkMenu(m_model, m_collection, *menu);
+  menu->add_menu(tr("Links"), *links);
+  menu->window()->setAttribute(Qt::WA_DeleteOnClose);
+  menu->window()->move(m_tasks_view->mapToGlobal(position));
+  menu->window()->show();
 }

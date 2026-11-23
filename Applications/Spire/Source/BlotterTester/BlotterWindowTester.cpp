@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <QContextMenuEvent>
 #include <QEventLoop>
 #include <QTimer>
 #include <QtTest/qtestkeyboard.h>
@@ -15,6 +16,9 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TabView.hpp"
 
@@ -58,7 +62,10 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<LocalBooleanModel>(false), tasks, monitors,
       std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
-    auto window = BlotterWindow(model,
+    auto clients = TestClients(Ref(environment));
+    auto collection =
+      std::make_shared<BlotterCollection>(clients.get_market_data_client());
+    auto window = BlotterWindow(model, collection,
       std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();
@@ -160,10 +167,14 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
       std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
+    auto environment = TestEnvironment();
+    auto clients = TestClients(Ref(environment));
+    auto collection =
+      std::make_shared<BlotterCollection>(clients.get_market_data_client());
     auto bindings = std::make_shared<CancelKeyBindingsModel>();
     bindings->get_binding(Operation::OLDEST)->set(Qt::Key_Escape);
-    auto window = BlotterWindow(
-      model, bindings, std::make_shared<PositionKeyBindingsModel>());
+    auto window = BlotterWindow(model, collection, bindings,
+      std::make_shared<PositionKeyBindingsModel>());
     auto task_requests = std::vector<Operation>();
     window.connect_cancel_task_operation_signal([&] (auto operation) {
       task_requests.push_back(operation);
@@ -202,6 +213,7 @@ TEST_SUITE("BlotterWindow") {
 
   UI_TEST_CASE("orders") {
     initialize_resources();
+    auto environment = TestEnvironment();
     auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
     auto make_order = [] (OrderId id) {
       auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
@@ -222,7 +234,10 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
       std::make_shared<ArrayListModel<BlotterTaskMonitor>>(), orders,
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
-    auto window = BlotterWindow(model,
+    auto clients = TestClients(Ref(environment));
+    auto collection =
+      std::make_shared<BlotterCollection>(clients.get_market_data_client());
+    auto window = BlotterWindow(model, collection,
       std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();
@@ -288,8 +303,10 @@ TEST_SUITE("BlotterWindow") {
       portfolio);
     auto bindings = std::make_shared<PositionKeyBindingsModel>();
     bindings->get_binding(Operation::FLATTEN)->set(Qt::CTRL | Qt::Key_G);
+    auto collection =
+      std::make_shared<BlotterCollection>(clients.get_market_data_client());
     auto window = BlotterWindow(
-      model, std::make_shared<CancelKeyBindingsModel>(), bindings);
+      model, collection, std::make_shared<CancelKeyBindingsModel>(), bindings);
     REQUIRE(window.get_model()->get_portfolio() == portfolio);
     auto& view = find_widget<BlotterPositionsView>(window);
     REQUIRE(view.get_portfolio() == portfolio);
@@ -369,5 +386,131 @@ TEST_SUITE("BlotterWindow") {
     QTest::keyClick(handle, Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
     REQUIRE(requests.size() == 4);
     REQUIRE(requests.back() == std::vector{inventories[1].m_position});
+  }
+
+  UI_TEST_CASE("links_menu") {
+    initialize_resources();
+    auto environment = TestEnvironment();
+    auto clients = TestClients(Ref(environment));
+    auto collection = std::make_shared<BlotterCollection>(
+      clients.get_market_data_client());
+    auto account = DirectoryEntry::make_account(1, "one");
+    auto add = [&] (DirectoryEntry account, bool consolidated, QString name) {
+      return collection->add(std::make_shared<CompositeBlotterModel>(
+        std::move(account), consolidated,
+        std::make_shared<LocalTextModel>(std::move(name)),
+        std::make_shared<LocalBooleanModel>(false),
+        std::make_shared<LocalBooleanModel>(false),
+        std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
+        std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
+        std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
+        std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()));
+    };
+    auto first = add(account, false, "First");
+    auto second = add(account, false, "Second");
+    auto consolidated = add(account, true, "Consolidated");
+    add(DirectoryEntry::make_account(2, "two"), false, "Other Account");
+    auto model = first;
+    SUBCASE("ordinary") {}
+    SUBCASE("consolidated") {
+      model = consolidated;
+    }
+    auto window = BlotterWindow(
+      model, collection, std::make_shared<CancelKeyBindingsModel>(),
+      std::make_shared<PositionKeyBindingsModel>());
+    window.show();
+    QApplication::processEvents();
+    auto& tasks = find_widget<BlotterTasksView>(window);
+    auto& body = find_widget<TableView>(tasks).get_body();
+    auto position = body.rect().center();
+    auto event = QContextMenuEvent(
+      QContextMenuEvent::Mouse, position, body.mapToGlobal(position));
+    QApplication::sendEvent(&body, &event);
+    QApplication::processEvents();
+    auto& menu = find_widget<ContextMenu>(window);
+    REQUIRE(menu.get_count() == 1);
+    auto& links =
+      find_widget<SubmenuItem>(*menu.get_menu_item(0)).get_context_menu();
+    dynamic_cast<OverlayPanel&>(*menu.window()).set_closed_on_focus_out(false);
+    dynamic_cast<OverlayPanel&>(*links.window()).set_closed_on_focus_out(false);
+    REQUIRE(links.get_count() == 2);
+    auto& navigation = find_widget<ListView>(menu);
+    auto open = [&] {
+      if(!menu.isVisible()) {
+        menu.window()->show();
+      }
+      if(!links.isVisible()) {
+        navigation.get_current()->set(0);
+        auto right = QKeyEvent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
+        QApplication::sendEvent(&navigation, &right);
+      }
+      QApplication::processEvents();
+    };
+    auto checked = [&] (int index) {
+      open();
+      return find_widget<CheckBox>(*links.get_menu_item(index)).
+        get_current()->get();
+    };
+    auto label = [&] (int index) {
+      open();
+      return find_widget<TextBox>(*links.get_menu_item(index)).
+        get_current()->get();
+    };
+    auto submit = [&] (int index) {
+      open();
+      auto enter = QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+      QApplication::sendEvent(links.get_menu_item(index), &enter);
+    };
+    if(model->is_consolidated()) {
+      REQUIRE(label(0) == "First");
+      REQUIRE(label(1) == "Second");
+      REQUIRE(checked(0));
+      REQUIRE(checked(1));
+      REQUIRE_FALSE(links.get_menu_item(0)->isEnabled());
+      REQUIRE_FALSE(links.get_menu_item(1)->isEnabled());
+      submit(0);
+      REQUIRE(collection->get_links(*model)->get_size() == 2);
+      REQUIRE(checked(0));
+      return;
+    }
+    REQUIRE(label(0) == "Second");
+    REQUIRE(label(1) == "Consolidated");
+    REQUIRE_FALSE(checked(0));
+    REQUIRE_FALSE(checked(1));
+    submit(0);
+    REQUIRE(collection->get_links(*first)->get_size() == 1);
+    REQUIRE(collection->get_links(*first)->get(0) == second);
+    REQUIRE(checked(0));
+    collection->link(*second, *consolidated);
+    REQUIRE_FALSE(checked(1));
+    collection->link(*first, *consolidated);
+    REQUIRE(checked(1));
+    collection->unlink(*first, *second);
+    REQUIRE_FALSE(checked(0));
+    submit(1);
+    REQUIRE(collection->get_links(*first)->get_size() == 0);
+    REQUIRE_FALSE(checked(1));
+    second->get_name()->set("Renamed");
+    REQUIRE(label(0) == "Renamed");
+    consolidated->get_name()->set("Renamed");
+    REQUIRE(label(1) == "Renamed");
+    submit(1);
+    REQUIRE(collection->get_links(*first)->get(0) == consolidated);
+    add(account, false, "Third");
+    REQUIRE(links.get_count() == 3);
+    REQUIRE(label(2) == "Third");
+    REQUIRE(checked(1));
+    collection->remove(1);
+    REQUIRE(links.get_count() == 2);
+    REQUIRE(label(0) == "Renamed");
+    REQUIRE(checked(0));
+    collection->remove(1);
+    REQUIRE(links.get_count() == 1);
+    REQUIRE(label(0) == "Third");
+    REQUIRE_FALSE(checked(0));
+    collection->remove(2);
+    REQUIRE(links.get_count() == 1);
+    REQUIRE_FALSE(links.get_menu_item(0)->isEnabled());
+    REQUIRE(label(0) == "No blotters available");
   }
 }
