@@ -1,8 +1,11 @@
 #include "Spire/CanvasView/OrderTaskView.hpp"
 #include <QKeyEvent>
+#include <QMessageBox>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
@@ -65,7 +68,29 @@ void OrderTaskView::RemoveTaskEntry() {
 }
 
 void OrderTaskView::ExecuteTask(const CanvasNode& node) {
-  // TODO: Submit the task through the new active blotter.
+  auto errors = Validate(node);
+  if(!errors.empty()) {
+    QMessageBox::warning(m_parent, QObject::tr("Unable to Submit Task"),
+      QString::fromStdString(errors.front().GetErrorMessage()));
+    return;
+  }
+  try {
+    auto& registry = m_userProfile->GetBlotterRegistry();
+    auto& controller = registry.get(*registry.get_active()->get());
+    if(!controller.is_open()->get()) {
+      controller.open();
+      m_parent->raise();
+      m_parent->activateWindow();
+    }
+    auto task = controller.submit(node);
+    m_tasks_executed[*m_state->m_ticker].push_back(task);
+    task->GetPublisher().monitor(m_events.get_slot<Task::StateEntry>(
+      std::bind_front(&OrderTaskView::OnTaskState, this, std::weak_ptr(task),
+        *m_state->m_ticker)));
+  } catch(const std::exception& e) {
+    QMessageBox::warning(m_parent, QObject::tr("Unable to Submit Task"),
+      QString::fromStdString(e.what()));
+  }
 }
 
 std::unique_ptr<CanvasNode>
@@ -206,6 +231,13 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 
 bool OrderTaskView::HandleCancelBindingEvent(
     const CancelKeyBindingsModel::Operation& operation) {
-  // TODO: Cancel tasks through the new active blotter.
+  execute(operation, out(m_tasks_executed[*m_state->m_ticker]));
   return true;
+}
+
+void OrderTaskView::OnTaskState(const std::weak_ptr<Task>& task,
+    const Ticker& ticker, const Task::StateEntry& state) {
+  if(IsTerminal(state.m_state)) {
+    std::erase(m_tasks_executed[ticker], task.lock());
+  }
 }

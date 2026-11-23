@@ -2,7 +2,6 @@
 #include <QContextMenuEvent>
 #include <QEventLoop>
 #include <QInputDialog>
-#include <QTimer>
 #include <QtTest/qtestkeyboard.h>
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
@@ -354,7 +353,6 @@ TEST_SUITE("BlotterWindow") {
             loop.quit();
           }
         }));
-      QTimer::singleShot(5000, &loop, &QEventLoop::quit);
       action();
       if(!condition()) {
         loop.exec();

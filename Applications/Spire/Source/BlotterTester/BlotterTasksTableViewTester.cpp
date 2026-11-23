@@ -1,6 +1,5 @@
 #include <QEventLoop>
 #include <QLayout>
-#include <QTimer>
 #include <QtTest/qtestkeyboard.h>
 #include <QtTest/qtestmouse.h>
 #include "Nexus/TestEnvironment/TestClients.hpp"
@@ -236,7 +235,6 @@ TEST_SUITE("BlotterTasksTableView") {
         }
       }));
     entry.m_task->Execute();
-    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
     loop.exec();
     REQUIRE(std::any_cast<Quantity>(value) == 7);
     REQUIRE(table->get<Quantity>(0, column) == 7);

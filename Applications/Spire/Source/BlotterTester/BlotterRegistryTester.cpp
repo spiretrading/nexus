@@ -1,7 +1,6 @@
 #include <QEvent>
 #include <QEventLoop>
 #include <QPointer>
-#include <QTimer>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterRegistry.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -54,7 +53,6 @@ namespace {
           loop.quit();
         }
       }));
-    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
     action();
     if(!condition()) {
       loop.exec();

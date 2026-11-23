@@ -2,7 +2,6 @@
 #include <thread>
 #include <Beam/Queues/Queue.hpp>
 #include <QEventLoop>
-#include <QTimer>
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
@@ -72,7 +71,6 @@ namespace {
           loop.quit();
         }
       }));
-    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
     action();
     if(!condition()) {
       loop.exec();

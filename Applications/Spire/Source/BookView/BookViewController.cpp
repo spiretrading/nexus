@@ -1,5 +1,8 @@
 #include "Spire/BookView/BookViewController.hpp"
+#include <QMessageBox>
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -86,12 +89,32 @@ void BookViewController::set_window(BookViewWindow& window) {
 
 void BookViewController::on_submit_task(
     const std::shared_ptr<CanvasNode>& task) {
-  // TODO: Submit the task through the new active blotter.
+  auto errors = Validate(*task);
+  if(!errors.empty()) {
+    QMessageBox::warning(m_window, QObject::tr("Unable to Submit Task"),
+      QString::fromStdString(errors.front().GetErrorMessage()));
+    return;
+  }
+  try {
+    auto& registry = m_user_profile->GetBlotterRegistry();
+    auto& controller = registry.get(*registry.get_active()->get());
+    if(!controller.is_open()->get()) {
+      controller.open();
+      m_window->raise();
+      m_window->activateWindow();
+    }
+    controller.submit(*task);
+  } catch(const std::exception& e) {
+    QMessageBox::warning(m_window, QObject::tr("Unable to Submit Task"),
+      QString::fromStdString(e.what()));
+  }
 }
 
 void BookViewController::on_cancel_operation(
     CancelKeyBindingsModel::Operation operation, const Ticker& ticker,
     const std::unordered_map<OrderId, Money>& prices,
     const optional<std::vector<OrderId>>& ids) {
-  // TODO: Cancel tasks through the new active blotter.
+  auto& registry = m_user_profile->GetBlotterRegistry();
+  registry.get(*registry.get_active()->get()).cancel(
+    operation, ticker, prices, ids);
 }

@@ -231,8 +231,9 @@ BlotterController& BlotterRegistry::add(
     monitors, std::move(orders), std::move(portfolio));
   auto model = m_collection->add(entry->m_source);
   entry->m_controller = std::make_unique<BlotterController>(
-    model, m_collection, m_profile->GetKeyBindings()->get_cancel_key_bindings(),
-    m_position_bindings);
+    model, tasks, m_collection,
+    m_profile->GetKeyBindings()->get_cancel_key_bindings(), m_position_bindings,
+    Ref(*m_profile));
   entry->m_open_connection =
     entry->m_controller->is_open()->connect_update_signal(
       std::bind_front(&BlotterRegistry::on_open, this, std::cref(*model)));

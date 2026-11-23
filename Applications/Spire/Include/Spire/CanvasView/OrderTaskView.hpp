@@ -2,7 +2,9 @@
 #define SPIRE_ORDER_TASK_VIEW_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <QKeyEvent>
+#include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
@@ -69,6 +71,9 @@ namespace Spire {
       CondensedCanvasWidget* m_taskEntryWidget;
       DisplayWidgetSlot m_displayWidgetSlot;
       RemoveWidgetSlot m_removeWidgetSlot;
+      std::unordered_map<Nexus::Ticker, std::vector<std::shared_ptr<Task>>>
+        m_tasks_executed;
+      QtTaskQueue m_events;
 
       void RemoveTaskEntry();
       void ExecuteTask(const CanvasNode& node);
@@ -79,6 +84,8 @@ namespace Spire {
       void HandleInteractionsPropertiesEvent();
       bool HandleCancelBindingEvent(
         const CancelKeyBindingsModel::Operation& operation);
+      void OnTaskState(const std::weak_ptr<Task>& task,
+        const Nexus::Ticker& ticker, const Task::StateEntry& state);
   };
 }
 
