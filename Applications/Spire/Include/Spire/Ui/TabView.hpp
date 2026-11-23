@@ -4,10 +4,11 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
+  template<typename T> class ArrayListModel;
   class ListView;
 
   /**
@@ -24,6 +25,10 @@ namespace Spire {
        * @param parent The parent widget.
        */
       explicit TabView(QWidget* parent = nullptr);
+
+      /** Returns the current tab index. */
+      const std::shared_ptr<ValueModel<boost::optional<int>>>&
+        get_current() const;
 
       /**
        * Adds a new tab to the end of the tab bar.

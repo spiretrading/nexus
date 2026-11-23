@@ -104,6 +104,10 @@ TabView::TabView(QWidget* parent)
     std::bind_front(&TabView::on_current, this));
 }
 
+const std::shared_ptr<ValueModel<optional<int>>>& TabView::get_current() const {
+  return m_tab_list->get_current();
+}
+
 void TabView::add(const QString& label, QWidget& body) {
   add(std::vector{label}, body);
 }
