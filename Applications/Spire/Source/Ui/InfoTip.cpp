@@ -76,10 +76,12 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   auto container_layout = make_hbox_layout(m_container);
   container_layout->addWidget(body);
   const auto DEFAULT_SHOW_DELAY_MS = 500;
+  m_show_timer.setParent(this);
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
   connect(&m_show_timer, &QTimer::timeout, this, &InfoTip::on_show_timeout);
   const auto INTERACTIVE_PERIOD_MS = 300;
+  m_interactive_timer.setParent(this);
   m_interactive_timer.setInterval(INTERACTIVE_PERIOD_MS);
   connect(&m_interactive_timer, &QTimer::timeout, this,
     &InfoTip::on_interactive_timeout);

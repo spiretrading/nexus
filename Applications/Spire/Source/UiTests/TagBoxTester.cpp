@@ -1,6 +1,5 @@
 #include <memory>
 #include <doctest/doctest.h>
-#include <QElapsedTimer>
 #include <QWidget>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
@@ -12,14 +11,6 @@ using namespace Spire;
 using namespace Spire::Tests;
 
 namespace {
-  void wait(int milliseconds) {
-    auto timer = QElapsedTimer();
-    timer.start();
-    while(timer.elapsed() < milliseconds) {
-      QApplication::processEvents(QEventLoop::AllEvents, 10);
-    }
-  }
-
   TextAreaBox* find_visible_tip() {
     for(auto widget : QApplication::topLevelWidgets()) {
       auto tip = dynamic_cast<InfoTip*>(widget);
@@ -48,16 +39,17 @@ namespace {
     return text;
   }
 
-  void hover(QWidget& window, QWidget& box) {
+  void hover(InfoTipTestDriver& driver, QWidget& window, QWidget& box) {
     move_cursor(window, QPoint(390, 190));
-    wait(400);
+    driver.advance();
     move_cursor(box, QPoint(5, 5));
-    wait(800);
+    driver.advance();
   }
 }
 
 TEST_SUITE("TagBox") {
   UI_TEST_CASE("tip") {
+    auto driver = InfoTipTestDriver();
     auto window = QWidget();
     window.setGeometry(100, 100, 400, 200);
     auto tags = std::make_shared<ArrayListModel<QString>>();
@@ -70,26 +62,27 @@ TEST_SUITE("TagBox") {
     box->setFixedSize(80, box->minimumSizeHint().height());
     window.show();
     QApplication::processEvents();
-    hover(window, *box);
+    hover(driver, window, *box);
     auto tip = find_visible_tip();
     REQUIRE(tip);
     REQUIRE(tip->get_current()->get() == join(*tags));
     move_cursor(window, QPoint(390, 190));
-    wait(400);
+    driver.advance();
     REQUIRE(!find_visible_tip());
     tags->push("Coral");
-    hover(window, *box);
+    hover(driver, window, *box);
     tip = find_visible_tip();
     REQUIRE(tip);
     REQUIRE(tip->get_current()->get() == join(*tags));
     move_cursor(window, QPoint(390, 190));
-    wait(400);
+    driver.advance();
     box->setEnabled(false);
-    hover(window, *box);
+    hover(driver, window, *box);
     REQUIRE(!find_visible_tip());
   }
 
   UI_TEST_CASE("tip_on_overflow") {
+    auto driver = InfoTipTestDriver();
     auto window = QWidget();
     window.setGeometry(100, 100, 400, 200);
     auto tags = std::make_shared<ArrayListModel<QString>>();
@@ -98,13 +91,13 @@ TEST_SUITE("TagBox") {
     box->setGeometry(10, 10, 80, 30);
     window.show();
     QApplication::processEvents();
-    hover(window, *box);
+    hover(driver, window, *box);
     REQUIRE(!find_visible_tip());
     move_cursor(window, QPoint(390, 190));
-    wait(400);
+    driver.advance();
     tags->push("A tag wider than the entire box");
     QApplication::processEvents();
-    hover(window, *box);
+    hover(driver, window, *box);
     auto tip = find_visible_tip();
     REQUIRE(tip);
     REQUIRE(tip->get_current()->get() == join(*tags));

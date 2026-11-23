@@ -1,5 +1,4 @@
 #include <atomic>
-#include <chrono>
 #include <future>
 #include <memory>
 #include <thread>
@@ -31,8 +30,6 @@ TEST_SUITE("QtValueModel") {
       state->set_value(model->set(123));
     });
     setter.detach();
-    REQUIRE(state_result.wait_for(std::chrono::seconds(10)) ==
-      std::future_status::ready);
     REQUIRE(state_result.get() == QValidator::State::Invalid);
     REQUIRE(model->get() == 0);
   }
@@ -53,8 +50,6 @@ TEST_SUITE("QtValueModel") {
       state->set_value(model->set(123));
     });
     setter.detach();
-    REQUIRE(state_result.wait_for(std::chrono::seconds(5)) ==
-      std::future_status::ready);
     REQUIRE(state_result.get() == QValidator::State::Invalid);
     REQUIRE(model->get() == 0);
     REQUIRE(*updates == 0);

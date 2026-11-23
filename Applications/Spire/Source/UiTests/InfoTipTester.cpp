@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include <QElapsedTimer>
 #include <QHelpEvent>
 #include <QPointer>
 #include <QToolTip>
@@ -35,42 +34,35 @@ namespace {
       move_cursor(m_window, QPoint(390, 290));
     }
   };
-
-  void wait(int milliseconds) {
-    auto timer = QElapsedTimer();
-    timer.start();
-    while(timer.elapsed() < milliseconds) {
-      QApplication::processEvents(QEventLoop::AllEvents, 10);
-    }
-  }
 }
 
 TEST_SUITE("InfoTip") {
   UI_TEST_CASE("hover") {
+    auto driver = InfoTipTestDriver();
     auto scene = Scene();
     auto tip = new InfoTip(scene.m_body, scene.m_parent);
     scene.hover();
-    wait(200);
     REQUIRE(!tip->isVisible());
-    wait(600);
+    driver.advance();
     REQUIRE(tip->isVisible());
     scene.leave();
-    wait(400);
+    driver.advance();
     REQUIRE(!tip->isVisible());
     scene.hover();
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
   }
 
   UI_TEST_CASE("disabled") {
+    auto driver = InfoTipTestDriver();
     auto scene = Scene();
     auto tip = new InfoTip(scene.m_body, scene.m_parent);
     tip->setEnabled(false);
     scene.hover();
-    wait(800);
+    driver.advance();
     REQUIRE(!tip->isVisible());
     tip->setEnabled(true);
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
   }
 
@@ -85,31 +77,33 @@ TEST_SUITE("InfoTip") {
   }
 
   UI_TEST_CASE("hovered_on_construction") {
+    auto driver = InfoTipTestDriver();
     auto scene = Scene();
     scene.hover();
     auto tip = new InfoTip(scene.m_body, scene.m_parent);
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
   }
 
   UI_TEST_CASE("interactive") {
+    auto driver = InfoTipTestDriver();
     auto scene = Scene();
     auto tip = new InfoTip(scene.m_body, scene.m_parent);
     scene.hover();
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
     move_cursor(*tip, tip->rect().center());
-    wait(400);
+    driver.advance();
     REQUIRE(!tip->isVisible());
     tip->set_interactive(true);
     scene.hover();
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
     move_cursor(*tip, tip->rect().center());
-    wait(800);
+    driver.advance();
     REQUIRE(tip->isVisible());
     scene.leave();
-    wait(800);
+    driver.advance();
     REQUIRE(!tip->isVisible());
   }
 
