@@ -11,22 +11,45 @@
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
+#include "Spire/Spire/ProxyListModel.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
+  class ActiveOrdersModel : public ProxyListModel<std::shared_ptr<Order>> {
+    public:
+      explicit ActiveOrdersModel(
+          std::shared_ptr<const BlotterRegistry::ActiveModel> active)
+          : ProxyListModel(active->get()->get_orders()),
+            m_active(std::move(active)) {
+        m_connection = m_active->connect_update_signal(
+          std::bind_front(&ActiveOrdersModel::on_active, this));
+      }
+
+    private:
+      std::shared_ptr<const BlotterRegistry::ActiveModel> m_active;
+      scoped_connection m_connection;
+
+      void on_active(const std::shared_ptr<BlotterModel>& blotter) {
+        set_source(blotter->get_orders());
+      }
+  };
+
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
-      MarketDataClient market_data_client) {
+      MarketDataClient market_data_client,
+      std::shared_ptr<const BlotterRegistry::ActiveModel> active) {
     return std::make_unique<ServiceBookViewModel>(
-      ticker, std::move(market_data_client));
+      ticker, std::move(market_data_client),
+      std::make_shared<ActiveOrdersModel>(std::move(active)));
   }
 }
 
@@ -60,7 +83,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             std::move(book_view_properties)))),
       m_book_view_models([this] (const auto& ticker) {
         return book_view_model_builder(
-          ticker, m_clients.get_market_data_client());
+          ticker, m_clients.get_market_data_client(),
+          m_blotter_registry->get_active());
       }),
       m_book_view_model_builder([this] (const auto& ticker) {
         return m_book_view_models.load(ticker);

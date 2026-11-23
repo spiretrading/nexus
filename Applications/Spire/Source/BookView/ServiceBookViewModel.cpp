@@ -1,4 +1,6 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
+#include <algorithm>
+#include <Beam/Queues/ScopedBaseQueue.hpp>
 
 using namespace Beam;
 using namespace boost;
@@ -9,10 +11,21 @@ namespace {
   const auto RETRY_INTERVAL = 3000;
 }
 
+struct ServiceBookViewModel::OrderEntry {
+  std::shared_ptr<Order> m_order;
+  ScopedBaseQueue<> m_subscription;
+
+  explicit OrderEntry(std::shared_ptr<Order> order)
+    : m_order(std::move(order)),
+      m_subscription(nullptr) {}
+};
+
 ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
-    MarketDataClient market_data_client)
+    MarketDataClient market_data_client,
+    std::shared_ptr<const OrdersModel> orders)
     : m_ticker(std::move(ticker)),
       m_market_data_client(std::move(market_data_client)),
+      m_orders(std::move(orders)),
       m_model(m_ticker) {
   if(!m_ticker) {
     return;
@@ -29,7 +42,13 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
   query_book_quotes();
   query_time_and_sales();
-  // TODO: Monitor the new active blotter's orders.
+  m_model.transact([&] {
+    for(auto i = 0; i != m_orders->get_size(); ++i) {
+      add(i, m_orders->get(i));
+    }
+  });
+  m_orders_connection = m_orders->connect_operation_signal(
+    std::bind_front(&ServiceBookViewModel::on_order_operation, this));
 }
 
 const std::shared_ptr<BookQuoteListModel>&
@@ -65,6 +84,45 @@ const std::shared_ptr<BboQuoteModel>&
 const std::shared_ptr<SessionTechnicalsModel>&
     ServiceBookViewModel::get_session_technicals() const {
   return m_model.get_session_technicals();
+}
+
+void ServiceBookViewModel::add(int index, std::shared_ptr<Order> order) {
+  if(order->get_info().m_fields.m_ticker != m_ticker) {
+    m_order_entries.insert(m_order_entries.begin() + index, nullptr);
+    return;
+  }
+  auto entry = std::make_shared<OrderEntry>(std::move(order));
+  m_order_entries.insert(m_order_entries.begin() + index, entry);
+  auto subscription = std::make_shared<ScopedQueueWriter<ExecutionReport>>(
+    m_order_events.get_slot<ExecutionReport>(
+      [=, this, weak_entry = std::weak_ptr(entry)] (const auto& report) {
+        if(weak_entry.lock()) {
+          m_model.update(report);
+        }
+      }));
+  entry->m_subscription = ScopedBaseQueue(subscription);
+  auto snapshot = optional<std::vector<ExecutionReport>>();
+  entry->m_order->get_publisher().monitor(
+    std::move(subscription), out(snapshot));
+  auto quantity = entry->m_order->get_info().m_fields.m_quantity;
+  auto status = OrderStatus::PENDING_NEW;
+  if(snapshot) {
+    for(auto& report : *snapshot) {
+      quantity -= report.m_last_quantity;
+      status = report.m_status;
+    }
+  }
+  if(!is_terminal(status)) {
+    m_model.add(entry->m_order, quantity, status);
+  }
+}
+
+void ServiceBookViewModel::remove(int index) {
+  auto entry = std::move(m_order_entries[index]);
+  m_order_entries.erase(m_order_entries.begin() + index);
+  if(entry) {
+    m_model.remove(entry->m_order);
+  }
 }
 
 void ServiceBookViewModel::query_book_quotes() {
@@ -114,6 +172,38 @@ void ServiceBookViewModel::buffer_book_quote(const BookQuote& quote) {
     m_event_handler.push(
       std::bind_front(&ServiceBookViewModel::on_end_book_quote_buffer, this));
   }
+}
+
+void ServiceBookViewModel::on_order_operation(
+    const OrdersModel::Operation& operation) {
+  visit(operation,
+    [&] (const OrdersModel::AddOperation& operation) {
+      m_model.transact([&] {
+        add(operation.m_index, m_orders->get(operation.m_index));
+      });
+    },
+    [&] (const OrdersModel::RemoveOperation& operation) {
+      m_model.transact([&] {
+        remove(operation.m_index);
+      });
+    },
+    [&] (const OrdersModel::MoveOperation& operation) {
+      auto first = m_order_entries.begin() + operation.m_source;
+      auto last = m_order_entries.begin() + operation.m_destination;
+      if(first < last) {
+        std::ranges::rotate(first, first + 1, last + 1);
+      } else {
+        std::ranges::rotate(last, first, first + 1);
+      }
+    },
+    [&] (const OrdersModel::UpdateOperation& operation) {
+      if(operation.get_previous() != operation.get_value()) {
+        m_model.transact([&] {
+          remove(operation.m_index);
+          add(operation.m_index, operation.get_value());
+        });
+      }
+    });
 }
 
 void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {

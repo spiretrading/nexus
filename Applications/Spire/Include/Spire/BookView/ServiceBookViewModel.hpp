@@ -4,6 +4,8 @@
 #include <QTimer>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
+#include "Spire/Async/QtTaskQueue.hpp"
+#include "Spire/Blotter/OrdersModel.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
 
 namespace Spire {
@@ -16,9 +18,11 @@ namespace Spire {
        * Constructs a ServiceBookViewModel for a given ticker.
        * @param ticker The Ticker whose order book is to be modeled.
        * @param market_data_client The client used to access market data.
+       * @param orders The orders to display.
        */
       ServiceBookViewModel(Nexus::Ticker ticker,
-        Nexus::MarketDataClient market_data_client);
+        Nexus::MarketDataClient market_data_client,
+        std::shared_ptr<const OrdersModel> orders);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
       const std::shared_ptr<BookQuoteListModel>& get_asks() const override;
@@ -33,17 +37,25 @@ namespace Spire {
         get_session_technicals() const override;
 
     private:
+      struct OrderEntry;
       Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_market_data_client;
+      std::shared_ptr<const OrdersModel> m_orders;
       LocalBookViewModel m_model;
+      std::vector<std::shared_ptr<OrderEntry>> m_order_entries;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
       QTimer m_book_quote_retry_timer;
       QTimer m_time_and_sale_retry_timer;
       EventHandler m_event_handler;
+      QtTaskQueue m_order_events;
+      boost::signals2::scoped_connection m_orders_connection;
 
+      void add(int index, std::shared_ptr<Nexus::Order> order);
+      void remove(int index);
       void query_book_quotes();
       void query_time_and_sales();
       void buffer_book_quote(const Nexus::BookQuote& quote);
+      void on_order_operation(const OrdersModel::Operation& operation);
       void on_bbo(const Nexus::BboQuote& bbo);
       void on_end_book_quote_buffer();
       void on_book_quote_interruption(const std::exception_ptr& e);
