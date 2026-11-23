@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "Nexus/TestEnvironment/TestClients.hpp"
-#include "Spire/BlotterUiTester/BlotterController.hpp"
+#include "Spire/BlotterUiTester/BlotterUiController.hpp"
 #include "Spire/Spire/Resources.hpp"
 
 using namespace Beam;
@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   auto profile = UserProfile("root", true, true, {}, {},
     get_default_additional_tag_database(), {}, {}, {},
     Clients(std::in_place_type<TestClients>, Ref(environment)));
-  auto controller = BlotterController(Ref(environment), Ref(profile));
+  auto controller = BlotterUiController(Ref(environment), Ref(profile));
   controller.show();
   return application.exec();
 }

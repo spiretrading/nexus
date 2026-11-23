@@ -1,4 +1,4 @@
-#include "Spire/BlotterUiTester/BlotterController.hpp"
+#include "Spire/BlotterUiTester/BlotterUiController.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include <QApplication>
@@ -39,7 +39,7 @@ namespace {
   }
 }
 
-BlotterController::BlotterController(
+BlotterUiController::BlotterUiController(
     Ref<TestEnvironment> environment, Ref<UserProfile> profile)
     : m_environment(environment.get()),
       m_profile(profile.get()),
@@ -78,9 +78,9 @@ BlotterController::BlotterController(
   blotters->addWidget(open);
   layout->addLayout(blotters);
   connect(open, &QPushButton::clicked,
-    this, &BlotterController::on_new_blotter);
+    this, &BlotterUiController::on_new_blotter);
   connect(m_blotter_selection, qOverload<int>(&QComboBox::activated),
-    this, &BlotterController::on_blotter_selection);
+    this, &BlotterUiController::on_blotter_selection);
   auto control_row = new QHBoxLayout();
   layout->addLayout(control_row);
   auto creation = new QGroupBox(tr("Create Task"));
@@ -114,7 +114,7 @@ BlotterController::BlotterController(
   form->addRow(
     tr("Account"), new QLabel(QString::fromStdString(account.m_name)));
   auto create = new QPushButton(tr("Create Task"));
-  connect(create, &QPushButton::clicked, this, &BlotterController::on_create);
+  connect(create, &QPushButton::clicked, this, &BlotterUiController::on_create);
   form->addRow(create);
   control_row->addWidget(creation);
   auto execution = new QGroupBox(tr("Control Order"));
@@ -141,7 +141,7 @@ BlotterController::BlotterController(
   m_output->setPlaceholderText(tr("Signal output"));
   layout->addWidget(m_output, 1);
   connect(m_selection, qOverload<int>(&QComboBox::currentIndexChanged), this,
-    &BlotterController::on_selection);
+    &BlotterUiController::on_selection);
   connect(m_accept, &QPushButton::clicked, this, [=, this] {
     on_action(OrderStatus::NEW);
   });
@@ -159,7 +159,7 @@ BlotterController::BlotterController(
   });
   m_environment->monitor_order_submissions(
     m_events.get_slot<std::shared_ptr<Order>>(
-      std::bind_front(&BlotterController::on_submission, this)));
+      std::bind_front(&BlotterUiController::on_submission, this)));
   refresh();
   resize(scale(660, 540));
   on_new_blotter();
@@ -169,7 +169,7 @@ BlotterController::BlotterController(
     screen.bottom() - frameGeometry().height()));
 }
 
-BlotterController::~BlotterController() {
+BlotterUiController::~BlotterUiController() {
   m_events.close();
   for(auto& entry : m_entries) {
     entry.m_task->GetExecutor().Close();
@@ -177,7 +177,7 @@ BlotterController::~BlotterController() {
   flush_pending_routines();
 }
 
-void BlotterController::on_run_tasks(
+void BlotterUiController::on_run_tasks(
     const std::vector<std::shared_ptr<Task>>& tasks) {
   m_output->append(tr("Run Tasks: [%1]").arg(format_task_ids(tasks)));
   for(auto& task : tasks) {
@@ -193,12 +193,12 @@ void BlotterController::on_run_tasks(
   }
 }
 
-void BlotterController::on_cancel_tasks(
+void BlotterUiController::on_cancel_tasks(
     const std::vector<std::shared_ptr<Task>>& tasks) {
   m_output->append(tr("Cancel Tasks: [%1]").arg(format_task_ids(tasks)));
 }
 
-void BlotterController::on_cancel_orders(
+void BlotterUiController::on_cancel_orders(
     const std::vector<std::shared_ptr<Order>>& orders) {
   auto ids = QStringList();
   for(auto& order : orders) {
@@ -207,17 +207,17 @@ void BlotterController::on_cancel_orders(
   m_output->append(tr("Cancel Orders: [%1]").arg(ids.join(", ")));
 }
 
-void BlotterController::on_cancel_task_operation(
+void BlotterUiController::on_cancel_task_operation(
     CancelKeyBindingsModel::Operation operation) {
   m_output->append(tr("Cancel Tasks: %1").arg(to_text(operation)));
 }
 
-void BlotterController::on_cancel_order_operation(
+void BlotterUiController::on_cancel_order_operation(
     CancelKeyBindingsModel::Operation operation) {
   m_output->append(tr("Cancel Orders: %1").arg(to_text(operation)));
 }
 
-void BlotterController::on_flatten_positions(
+void BlotterUiController::on_flatten_positions(
     const std::vector<Position>& positions) {
   auto entries = QStringList();
   for(auto& position : positions) {
@@ -227,12 +227,12 @@ void BlotterController::on_flatten_positions(
   m_output->append(tr("Flatten Positions: [%1]").arg(entries.join(", ")));
 }
 
-void BlotterController::closeEvent(QCloseEvent* event) {
+void BlotterUiController::closeEvent(QCloseEvent* event) {
   QWidget::closeEvent(event);
   QApplication::quit();
 }
 
-OrderFields BlotterController::make_fields() const {
+OrderFields BlotterUiController::make_fields() const {
   auto fields = OrderFields();
   fields.m_account =
     m_profile->GetClients().get_service_locator_client().get_account();
@@ -263,7 +263,7 @@ OrderFields BlotterController::make_fields() const {
   return fields;
 }
 
-void BlotterController::refresh() {
+void BlotterUiController::refresh() {
   m_accept->setEnabled(false);
   m_reject->setEnabled(false);
   m_fill->setEnabled(false);
@@ -308,7 +308,7 @@ void BlotterController::refresh() {
   }
 }
 
-void BlotterController::set_active(int index) {
+void BlotterUiController::set_active(int index) {
   if(m_active == index) {
     return;
   }
@@ -323,7 +323,7 @@ void BlotterController::set_active(int index) {
   }
 }
 
-void BlotterController::on_new_blotter() {
+void BlotterUiController::on_new_blotter() {
   auto index = static_cast<int>(m_blotters.size());
   auto is_consolidated = index == 0;
   auto name = [&] {
@@ -350,19 +350,19 @@ void BlotterController::on_new_blotter() {
     m_profile->GetKeyBindings()->get_cancel_key_bindings(),
     std::make_shared<PositionKeyBindingsModel>());
   window->connect_run_tasks_signal(
-    std::bind_front(&BlotterController::on_run_tasks, this));
+    std::bind_front(&BlotterUiController::on_run_tasks, this));
   window->connect_cancel_tasks_signal(
-    std::bind_front(&BlotterController::on_cancel_tasks, this));
+    std::bind_front(&BlotterUiController::on_cancel_tasks, this));
   window->connect_cancel_orders_signal(
-    std::bind_front(&BlotterController::on_cancel_orders, this));
+    std::bind_front(&BlotterUiController::on_cancel_orders, this));
   window->connect_cancel_task_operation_signal(
-    std::bind_front(&BlotterController::on_cancel_task_operation, this));
+    std::bind_front(&BlotterUiController::on_cancel_task_operation, this));
   window->connect_cancel_order_operation_signal(
-    std::bind_front(&BlotterController::on_cancel_order_operation, this));
+    std::bind_front(&BlotterUiController::on_cancel_order_operation, this));
   window->connect_flatten_positions_signal(
-    std::bind_front(&BlotterController::on_flatten_positions, this));
+    std::bind_front(&BlotterUiController::on_flatten_positions, this));
   auto connection = model->is_active()->connect_update_signal(
-    std::bind_front(&BlotterController::on_active, this, index));
+    std::bind_front(&BlotterUiController::on_active, this, index));
   m_blotters.emplace_back(tasks, std::move(window), std::move(connection));
   m_blotter_selection->addItem(name);
   auto screen = QApplication::primaryScreen()->availableGeometry();
@@ -372,7 +372,7 @@ void BlotterController::on_new_blotter() {
   on_blotter_selection(index);
 }
 
-void BlotterController::on_blotter_selection(int index) {
+void BlotterUiController::on_blotter_selection(int index) {
   set_active(index);
   auto& window = *m_blotters[index].m_window;
   window.show();
@@ -380,13 +380,13 @@ void BlotterController::on_blotter_selection(int index) {
   window.activateWindow();
 }
 
-void BlotterController::on_active(int index, bool is_active) {
+void BlotterUiController::on_active(int index, bool is_active) {
   if(is_active) {
     set_active(index);
   }
 }
 
-void BlotterController::on_create() {
+void BlotterUiController::on_create() {
   try {
     auto fields = make_fields();
     auto name = m_name->text().trimmed();
@@ -422,10 +422,10 @@ void BlotterController::on_create() {
     blotter_entry.m_task = task;
     m_entries[index].m_tasks->push(blotter_entry);
     task->GetPublisher().monitor(m_events.get_slot<Task::StateEntry>(
-      std::bind_front(&BlotterController::on_state, this, index)));
+      std::bind_front(&BlotterUiController::on_state, this, index)));
     task->GetContext().GetOrderPublisher().monitor(
       m_events.get_slot<std::shared_ptr<Order>>(
-        std::bind_front(&BlotterController::on_order, this, index)));
+        std::bind_front(&BlotterUiController::on_order, this, index)));
     m_selection->addItem(tr("%1 - %2: %3").
       arg(m_blotter_selection->currentText()).arg(task->GetId()).arg(name));
     m_selection->setCurrentIndex(index);
@@ -434,7 +434,7 @@ void BlotterController::on_create() {
   }
 }
 
-void BlotterController::on_selection(int index) {
+void BlotterUiController::on_selection(int index) {
   if(index >= 0 && m_entries[index].m_order) {
     m_fill_price->setText(
       to_text(m_entries[index].m_order->get_info().m_fields.m_price));
@@ -442,22 +442,22 @@ void BlotterController::on_selection(int index) {
   refresh();
 }
 
-void BlotterController::on_submission(const std::shared_ptr<Order>& order) {
+void BlotterUiController::on_submission(const std::shared_ptr<Order>& order) {
   m_submissions.emplace(order->get_info().m_id, order);
   refresh();
 }
 
-void BlotterController::on_order(
+void BlotterUiController::on_order(
     int index, const std::shared_ptr<Order>& order) {
   m_entries[index].m_order = order;
   order->get_publisher().monitor(m_events.get_slot<ExecutionReport>(
-    std::bind_front(&BlotterController::on_report, this, index)));
+    std::bind_front(&BlotterUiController::on_report, this, index)));
   if(index == m_selection->currentIndex()) {
     on_selection(index);
   }
 }
 
-void BlotterController::on_report(int index, const ExecutionReport& report) {
+void BlotterUiController::on_report(int index, const ExecutionReport& report) {
   auto& entry = m_entries[index];
   entry.m_status = report.m_status;
   entry.m_filled += report.m_last_quantity;
@@ -465,7 +465,7 @@ void BlotterController::on_report(int index, const ExecutionReport& report) {
   refresh();
 }
 
-void BlotterController::on_state(int index, const Task::StateEntry& state) {
+void BlotterUiController::on_state(int index, const Task::StateEntry& state) {
   m_entries[index].m_state = state;
   auto& tasks = *m_entries[index].m_tasks;
   for(auto i = 0; i < tasks.get_size(); ++i) {
@@ -479,7 +479,7 @@ void BlotterController::on_state(int index, const Task::StateEntry& state) {
   refresh();
 }
 
-void BlotterController::on_action(OrderStatus status) {
+void BlotterUiController::on_action(OrderStatus status) {
   auto& entry = m_entries[m_selection->currentIndex()];
   auto& order = *m_submissions.at(entry.m_order->get_info().m_id);
   try {

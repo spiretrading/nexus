@@ -1,5 +1,5 @@
-#ifndef SPIRE_BLOTTER_CONTROLLER_HPP
-#define SPIRE_BLOTTER_CONTROLLER_HPP
+#ifndef SPIRE_BLOTTER_UI_CONTROLLER_HPP
+#define SPIRE_BLOTTER_UI_CONTROLLER_HPP
 #include <unordered_map>
 #include <QComboBox>
 #include <QLabel>
@@ -18,18 +18,18 @@
 namespace Spire {
 
   /** Creates single order tasks and controls their simulated executions. */
-  class BlotterController : public QWidget {
+  class BlotterUiController : public QWidget {
     public:
 
       /**
-       * Constructs a BlotterController.
+       * Constructs a BlotterUiController.
        * @param environment The simulated market environment.
        * @param profile The profile used to execute tasks.
        */
-      BlotterController(Beam::Ref<Nexus::TestEnvironment> environment,
+      BlotterUiController(Beam::Ref<Nexus::TestEnvironment> environment,
         Beam::Ref<UserProfile> profile);
 
-      ~BlotterController();
+      ~BlotterUiController();
 
       /**
        * Runs the selected tasks and logs the request.
