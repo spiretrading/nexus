@@ -83,7 +83,7 @@ namespace Beam {
   };
 
   template<>
-  constexpr unsigned int shuttle_version<QFont> = 2;
+  constexpr unsigned int shuttle_version<QFont> = 3;
 
   template<>
   struct Send<QFont> {
@@ -94,7 +94,10 @@ namespace Beam {
       sender.send("point_size", value.pointSize());
       sender.send("weight", value.weight());
       sender.send("italic", value.italic());
-      if(version >= 2) {
+      if(version >= 3) {
+        sender.send(
+          "pixel_size", value.pixelSize() / Spire::scale_width(1.0));
+      } else if(version >= 2) {
         sender.send("pixel_size", value.pixelSize());
       }
     }
@@ -109,7 +112,10 @@ namespace Beam {
       auto weight = receive<int>(receiver, "weight");
       auto italic = receive<bool>(receiver, "italic");
       auto pixel_size = [&] {
-        if(version >= 2) {
+        if(version >= 3) {
+          return static_cast<int>(std::round(
+            Spire::scale_width(receive<double>(receiver, "pixel_size"))));
+        } else if(version >= 2) {
           return receive<int>(receiver, "pixel_size");
         }
         return -1;
