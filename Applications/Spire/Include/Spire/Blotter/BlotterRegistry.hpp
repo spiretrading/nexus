@@ -1,6 +1,8 @@
 #ifndef SPIRE_BLOTTER_REGISTRY_HPP
 #define SPIRE_BLOTTER_REGISTRY_HPP
+#include <filesystem>
 #include "Spire/Blotter/BlotterController.hpp"
+#include "Spire/Blotter/BlotterSettings.hpp"
 
 namespace Spire {
   class UserProfile;
@@ -11,6 +13,19 @@ namespace Spire {
 
       /** The active blotter. */
       using ActiveModel = ValueModel<std::shared_ptr<BlotterModel>>;
+
+      /** Stores persistent blotters and the active selection. */
+      struct State {
+
+        /** The saved blotters. */
+        std::vector<BlotterSettings> m_blotters;
+
+        /** The active blotter's ID, or nil for the default. */
+        boost::uuids::uuid m_active;
+
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
+      };
 
       /**
        * Constructs a BlotterRegistry.
@@ -55,6 +70,15 @@ namespace Spire {
       /** Makes a managed blotter active. */
       void set_active(const BlotterModel& blotter);
 
+      /** Returns the persistent blotters and active selection. */
+      State save_state() const;
+
+      /**
+       * Restores a newly initialized registry.
+       * @param state The saved configuration.
+       */
+      void restore(const State& state);
+
       /** Closes all blotter windows. */
       void close();
 
@@ -84,6 +108,27 @@ namespace Spire {
       void on_pinned(const BlotterModel& blotter, bool is_pinned);
       void on_active(const BlotterModel& blotter, bool is_active);
   };
+
+  /**
+   * Loads blotter settings, using defaults when no file exists.
+   * @param path The profile directory.
+   */
+  BlotterRegistry::State load_blotter_settings(
+    const std::filesystem::path& path);
+
+  /**
+   * Saves blotter settings.
+   * @param state The saved configuration.
+   * @param path The profile directory.
+   */
+  void save_blotter_settings(
+    const BlotterRegistry::State& state, const std::filesystem::path& path);
+
+  template<Beam::IsShuttle S>
+  void BlotterRegistry::State::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("blotters", m_blotters);
+    shuttle.shuttle("active", m_active);
+  }
 }
 
 #endif

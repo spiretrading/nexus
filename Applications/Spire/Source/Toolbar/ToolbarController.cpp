@@ -187,6 +187,8 @@ void ToolbarController::close() {
     return;
   }
   WindowSettings::Save(*m_user_profile);
+  save_blotter_settings(m_user_profile->GetBlotterRegistry().save_state(),
+    m_user_profile->GetProfilePath());
   m_user_profile->GetBlotterRegistry().close();
   auto book_view_controllers = std::move(m_book_view_controllers);
   for(auto& controller : book_view_controllers) {

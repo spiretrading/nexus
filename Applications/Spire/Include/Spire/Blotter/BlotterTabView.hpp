@@ -6,6 +6,8 @@
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
+  class BlotterExecutionsView;
+  class TabView;
 
   /** Displays a blotter's secondary views. */
   class BlotterTabView : public QWidget {
@@ -38,8 +40,11 @@ namespace Spire {
         const BlotterPositionsView::FlattenSignal::slot_type& slot) const;
 
     private:
+      friend class BlotterWindowSettings;
+      TabView* m_tab_view;
       BlotterPositionsView* m_positions;
       OrderLogView* m_order_log;
+      BlotterExecutionsView* m_executions;
   };
 }
 

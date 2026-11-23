@@ -16,23 +16,23 @@ BlotterTabView::BlotterTabView(std::shared_ptr<BlotterModel> model,
     QWidget* parent)
     : QWidget(parent) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto tab_view = new TabView();
-  tab_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_tab_view = new TabView();
+  m_tab_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_positions = new BlotterPositionsView(
     model->get_portfolio(), std::move(position_bindings));
-  tab_view->add(std::vector{tr("Positions"), tr("Pos")}, *m_positions);
-  tab_view->add(
+  m_tab_view->add(std::vector{tr("Positions"), tr("Pos")}, *m_positions);
+  m_tab_view->add(
     std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
   auto orders = model->get_orders();
   m_order_log = new OrderLogView(orders, std::move(cancel_bindings));
-  tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);
-  tab_view->add(
-    std::vector{tr("Executions"), tr("Exec")}, *new BlotterExecutionsView(
-      std::make_shared<OrderExecutionReportsModel>(orders)));
-  tab_view->add(
+  m_tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);
+  m_executions = new BlotterExecutionsView(
+    std::make_shared<OrderExecutionReportsModel>(orders));
+  m_tab_view->add(std::vector{tr("Executions"), tr("Exec")}, *m_executions);
+  m_tab_view->add(
     tr("Task"), *new BlotterTaskView(model->get_tasks(), std::move(current)));
-  enclose(*this, *tab_view);
-  setFocusProxy(tab_view);
+  enclose(*this, *m_tab_view);
+  setFocusProxy(m_tab_view);
 }
 
 connection BlotterTabView::connect_cancel_orders_signal(

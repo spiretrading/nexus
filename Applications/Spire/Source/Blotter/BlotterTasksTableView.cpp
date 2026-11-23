@@ -314,8 +314,12 @@ void BlotterTasksTableView::on_monitor(
   if(auto update =
       std::get_if<TaskMonitorsModel::UpdateOperation>(&operation)) {
     if(update->get_previous().m_name != update->get_value().m_name) {
-      auto& items = *m_table_view->get_header().get_items();
-      auto index = FIXED_COLUMNS + update->m_index;
+      auto& header = m_table_view->get_header();
+      auto& items = *header.get_items();
+      auto order = header.get_column_order();
+      auto i = std::ranges::find(
+        std::as_const(*order), FIXED_COLUMNS + update->m_index);
+      auto index = static_cast<int>(i - order->cbegin());
       auto item = items.get(index);
       item.m_name = update->get_value().m_name;
       items.set(index, item);

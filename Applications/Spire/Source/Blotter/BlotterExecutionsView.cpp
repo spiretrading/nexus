@@ -99,8 +99,8 @@ namespace {
 
   class ExecutionReportsFilter : public TableFilter {
     public:
-      ExecutionReportsFilter()
-          : m_statuses(std::make_shared<ArrayListModel<OrderStatus>>()) {
+      ExecutionReportsFilter(std::shared_ptr<OrderStatusListModel> statuses)
+          : m_statuses(std::move(statuses)) {
         m_connection = m_statuses->connect_operation_signal(
           std::bind_front(&ExecutionReportsFilter::on_operation, this));
       }
@@ -208,11 +208,12 @@ namespace {
 BlotterExecutionsView::BlotterExecutionsView(
     std::shared_ptr<ExecutionReportsModel> reports, QWidget* parent)
     : QWidget(parent),
-      m_reports(std::move(reports)) {
+      m_reports(std::move(reports)),
+      m_statuses(std::make_shared<ArrayListModel<OrderStatus>>()) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto table = std::make_shared<ListToTableModel<ExecutionReportEntry>>(
     m_reports, static_cast<int>(ExecutionColumn::MESSAGE) + 1, &extract);
-  auto table_view = TableViewBuilder(table).
+  m_table = TableViewBuilder(table).
     add_header_item(tr("Time"), TableHeaderItem::Order::DESCENDING).
     add_header_item(tr("ID")).
     add_header_item(tr("Side")).
@@ -228,7 +229,7 @@ BlotterExecutionsView::BlotterExecutionsView(
     add_header_item(tr("Processing Fee"), tr("Proc Fee")).
     add_header_item(tr("Miscellaneous Fee"), tr("Misc Fee")).
     add_header_item(tr("Message")).
-    set_filter(std::make_shared<ExecutionReportsFilter>()).
+    set_filter(std::make_shared<ExecutionReportsFilter>(m_statuses)).
     set_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListMultiSelectionModel>(),
@@ -251,17 +252,16 @@ BlotterExecutionsView::BlotterExecutionsView(
   const auto DEFAULT_WIDTHS = std::array{
     110, 100, 50, 90, 100, 60, 75, 70, 75, 70, 50, 75, 75, 75, 180};
   for(auto i = 0; i != table->get_column_size(); ++i) {
-    table_view->get_header().get_widths()->set(
-      i, scale_width(DEFAULT_WIDTHS[i]));
-    update_style(*table_view->get_header().get_item(i), [=] (auto& style) {
+    m_table->get_header().get_widths()->set(i, scale_width(DEFAULT_WIDTHS[i]));
+    update_style(*m_table->get_header().get_item(i), [=] (auto& style) {
       style.get(Any() > TableHeaderItem::Label()).
         set(TextAlign(get_alignment(static_cast<ExecutionColumn>(i))));
     });
   }
-  initialize_menus(*table_view);
-  table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  enclose(*this, *table_view);
-  setFocusProxy(table_view);
+  initialize_menus(*m_table);
+  m_table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  enclose(*this, *m_table);
+  setFocusProxy(m_table);
 }
 
 const std::shared_ptr<ExecutionReportsModel>&

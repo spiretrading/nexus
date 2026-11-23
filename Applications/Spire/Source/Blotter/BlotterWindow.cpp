@@ -3,6 +3,8 @@
 #include <QInputDialog>
 #include "Spire/Blotter/BlotterLinkMenu.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
+#include "Spire/Blotter/BlotterTabView.hpp"
+#include "Spire/Blotter/BlotterWindowSettings.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SplitView.hpp"
 
@@ -28,11 +30,11 @@ BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
     &BlotterWindow::on_context_menu);
   m_tab_view = new BlotterTabView(m_model, m_tasks_view->get_current(),
     std::move(cancel_bindings), std::move(position_bindings));
-  auto split_view = new SplitView(*m_tasks_view, *m_tab_view);
-  update_style(*split_view, [] (auto& style) {
+  m_split_view = new SplitView(*m_tasks_view, *m_tab_view);
+  update_style(*m_split_view, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Vertical);
   });
-  layout->addWidget(split_view, 1);
+  layout->addWidget(m_split_view, 1);
   layout->addWidget(new BlotterStatusBar());
   set_body(body);
   m_name_connection = m_model->get_name()->connect_update_signal(
@@ -72,6 +74,11 @@ connection BlotterWindow::connect_cancel_order_operation_signal(
 connection BlotterWindow::connect_flatten_positions_signal(
     const FlattenPositionsSignal::slot_type& slot) const {
   return m_tab_view->connect_flatten_positions_signal(slot);
+}
+
+std::unique_ptr<LegacyUI::WindowSettings>
+    BlotterWindow::GetWindowSettings() const {
+  return std::make_unique<BlotterWindowSettings>(*this);
 }
 
 void BlotterWindow::on_name(const QString& name) {

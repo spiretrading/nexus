@@ -1,10 +1,11 @@
 #ifndef SPIRE_BLOTTER_TASKS_VIEW_HPP
 #define SPIRE_BLOTTER_TASKS_VIEW_HPP
 #include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
+  class BlotterTasksTableView;
 
   /** Displays a blotter's order execution tasks. */
   class BlotterTasksView : public QWidget {
@@ -60,6 +61,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      friend class BlotterWindowSettings;
       mutable RunSignal m_run_signal;
       mutable CancelSignal m_cancel_signal;
       mutable CancelOperationSignal m_cancel_operation_signal;

@@ -3,9 +3,10 @@
 #include <QWidget>
 #include "Spire/Blotter/OrdersModel.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include "Spire/Ui/TableSelectionModel.hpp"
 
 namespace Spire {
+  class TableSelectionModel;
+  class TableView;
 
   /** Displays an order log. */
   class OrderLogView : public QWidget {
@@ -50,11 +51,13 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      friend class BlotterWindowSettings;
       mutable CancelSignal m_cancel_signal;
       mutable CancelOperationSignal m_cancel_operation_signal;
       std::shared_ptr<CancelKeyBindingsModel> m_bindings;
       std::shared_ptr<OrdersModel> m_orders;
       std::shared_ptr<TableSelectionModel> m_selection;
+      TableView* m_table;
   };
 }
 

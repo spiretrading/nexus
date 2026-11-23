@@ -35,6 +35,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      friend class BlotterWindowSettings;
       mutable FlattenSignal m_flatten_signal;
       std::shared_ptr<PortfolioModel> m_portfolio;
       std::shared_ptr<PortfolioModel> m_positions;

@@ -253,7 +253,8 @@ int main(int argc, char* argv[]) {
       } catch(const std::exception&) {
         throw std::runtime_error("Unable to create profile path.");
       }
-      // TODO: Load the new blotter settings.
+      user_profile->GetBlotterRegistry().restore(
+        load_blotter_settings(user_profile->GetProfilePath()));
       CatalogSettings::Load(out(*user_profile));
       loaded_settings.insert("CatalogSettings");
       RiskTimerProperties::Load(out(*user_profile));
@@ -341,7 +342,6 @@ int main(int argc, char* argv[]) {
   if(loaded_settings.contains("CatalogSettings")) {
     CatalogSettings::Save(*user_profile);
   }
-  // TODO: Save the new blotter settings.
   toolbar_controller->close();
   return 0;
 }

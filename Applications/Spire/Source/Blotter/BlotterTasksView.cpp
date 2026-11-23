@@ -1,6 +1,7 @@
 #include "Spire/Blotter/BlotterTasksView.hpp"
 #include <QKeyEvent>
 #include "Spire/Blotter/BlotterTasksCommandBar.hpp"
+#include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"

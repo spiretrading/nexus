@@ -1,14 +1,20 @@
 #ifndef SPIRE_BLOTTER_WINDOW_HPP
 #define SPIRE_BLOTTER_WINDOW_HPP
+#include <boost/uuid/uuid.hpp>
 #include "Spire/Blotter/BlotterCollection.hpp"
-#include "Spire/Blotter/BlotterTabView.hpp"
+#include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/BlotterTasksView.hpp"
+#include "Spire/Blotter/OrderLogView.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
+  class BlotterTabView;
+  class SplitView;
 
   /** Displays a blotter. */
-  class BlotterWindow : public Window {
+  class BlotterWindow : public Window, public LegacyUI::PersistentWindow {
     public:
       using RunTasksSignal = BlotterTasksView::RunSignal;
       using CancelTasksSignal = BlotterTasksView::CancelSignal;
@@ -58,11 +64,18 @@ namespace Spire {
       boost::signals2::connection connect_flatten_positions_signal(
         const FlattenPositionsSignal::slot_type& slot) const;
 
+      std::unique_ptr<LegacyUI::WindowSettings> GetWindowSettings() const
+        override;
+
     private:
+      friend class BlotterController;
+      friend class BlotterWindowSettings;
+      boost::uuids::uuid m_id;
       std::shared_ptr<BlotterModel> m_model;
       std::shared_ptr<BlotterCollection> m_collection;
       BlotterTasksView* m_tasks_view;
       BlotterTabView* m_tab_view;
+      SplitView* m_split_view;
       boost::signals2::scoped_connection m_name_connection;
 
       void on_name(const QString& name);

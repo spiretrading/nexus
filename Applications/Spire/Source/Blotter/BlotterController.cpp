@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterController.hpp"
 #include <algorithm>
+#include <boost/uuid/uuid_generators.hpp>
 #include <QEvent>
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 
@@ -30,7 +31,8 @@ BlotterController::BlotterController(std::shared_ptr<BlotterModel> model,
   std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
   std::shared_ptr<PositionKeyBindingsModel> position_bindings,
   Ref<UserProfile> profile)
-  : m_model(std::move(model)),
+  : m_id(boost::uuids::random_generator()()),
+    m_model(std::move(model)),
     m_tasks(std::move(tasks)),
     m_collection(std::move(collection)),
     m_cancel_bindings(std::move(cancel_bindings)),
@@ -134,6 +136,10 @@ BlotterWindow& BlotterController::open() {
     }
     m_window = std::make_unique<BlotterWindow>(
       m_model, m_collection, m_cancel_bindings, m_position_bindings);
+    m_window->m_id = m_id;
+    if(m_window_settings) {
+      m_window_settings->Apply(Ref(*m_profile), out(*m_window));
+    }
     m_window->installEventFilter(m_event_filter.get());
   }
   m_window->show();
@@ -168,6 +174,7 @@ void BlotterController::on_state(
 }
 
 void BlotterController::on_close() {
+  m_window_settings.emplace(*m_window);
   auto window = m_window.release();
   window->removeEventFilter(m_event_filter.get());
   window->deleteLater();

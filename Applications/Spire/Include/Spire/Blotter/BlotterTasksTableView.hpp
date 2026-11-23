@@ -1,6 +1,5 @@
 #ifndef SPIRE_BLOTTER_TASKS_TABLE_VIEW_HPP
 #define SPIRE_BLOTTER_TASKS_TABLE_VIEW_HPP
-#include <QWidget>
 #include "Spire/Blotter/BlotterTaskEntry.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -27,6 +26,7 @@ namespace Spire {
       const std::shared_ptr<TableView::CurrentModel>& get_current() const;
 
     private:
+      friend class BlotterWindowSettings;
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<TaskMonitorsModel> m_monitors;
       std::shared_ptr<TableSelectionModel> m_selection;

@@ -2,6 +2,7 @@
 #define SPIRE_BLOTTER_CONTROLLER_HPP
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
+#include "Spire/Blotter/BlotterWindowSettings.hpp"
 
 namespace Spire {
 
@@ -64,7 +65,11 @@ namespace Spire {
       void close();
 
     private:
+      friend class BlotterRegistry;
+      friend class BlotterSettings;
+      friend class BlotterWindowSettings;
       class EventFilter;
+      boost::uuids::uuid m_id;
       std::shared_ptr<BlotterModel> m_model;
       std::shared_ptr<TasksModel> m_tasks;
       std::shared_ptr<BlotterCollection> m_collection;
@@ -74,6 +79,7 @@ namespace Spire {
       std::shared_ptr<LocalBooleanModel> m_is_open;
       std::shared_ptr<const BooleanModel> m_read_only_is_open;
       std::unique_ptr<BlotterWindow> m_window;
+      boost::optional<BlotterWindowSettings> m_window_settings;
       std::unique_ptr<EventFilter> m_event_filter;
       QtTaskQueue m_events;
 

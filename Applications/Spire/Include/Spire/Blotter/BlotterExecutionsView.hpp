@@ -4,6 +4,7 @@
 #include "Spire/Blotter/ExecutionReportsModel.hpp"
 
 namespace Spire {
+  class TableView;
 
   /** Displays a blotter's executions. */
   class BlotterExecutionsView : public QWidget {
@@ -22,7 +23,10 @@ namespace Spire {
       const std::shared_ptr<ExecutionReportsModel>& get_reports() const;
 
     private:
+      friend class BlotterWindowSettings;
       std::shared_ptr<ExecutionReportsModel> m_reports;
+      std::shared_ptr<ListModel<Nexus::OrderStatus>> m_statuses;
+      TableView* m_table;
   };
 }
 

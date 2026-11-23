@@ -1,16 +1,23 @@
 #include "Spire/Blotter/BlotterRegistry.hpp"
 #include <algorithm>
+#include <fstream>
 #include <unordered_set>
+#include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
+#include <QSaveFile>
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/Blotter/TaskOrdersModel.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
+using namespace boost::uuids;
 using namespace Nexus;
 using namespace Spire;
 
@@ -71,6 +78,41 @@ namespace {
     } else if(!is_included && i != list.cend()) {
       list.remove(i);
     }
+  }
+}
+
+BlotterRegistry::State Spire::load_blotter_settings(
+    const std::filesystem::path& path) {
+  auto file = path / "blotters.json";
+  if(!std::filesystem::exists(file)) {
+    return BlotterRegistry::State();
+  }
+  auto reader = BasicIStreamReader<std::ifstream>(init(file));
+  auto buffer = SharedBuffer();
+  reader.read(out(buffer));
+  auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+  RegisterSpireTypes(out(registry));
+  auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+  receiver.set(Ref(buffer));
+  auto state = BlotterRegistry::State();
+  receiver.shuttle(state);
+  return state;
+}
+
+void Spire::save_blotter_settings(
+    const BlotterRegistry::State& state, const std::filesystem::path& path) {
+  auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+  RegisterSpireTypes(out(registry));
+  auto sender = JsonSender<SharedBuffer>(Ref(registry));
+  auto buffer = SharedBuffer();
+  sender.set(Ref(buffer));
+  sender.shuttle(state);
+  auto file = QSaveFile(QString::fromStdWString(
+    (path / "blotters.json").wstring()));
+  if(!file.open(QIODevice::WriteOnly) ||
+      file.write(buffer.get_data(), buffer.get_size()) !=
+        static_cast<qint64>(buffer.get_size()) || !file.commit()) {
+    throw std::runtime_error("Unable to save blotters.");
   }
 }
 
@@ -167,6 +209,71 @@ void BlotterRegistry::set_active(const BlotterModel& blotter) {
   model->is_active()->set(true);
   m_active->set(model);
   m_is_updating_active = false;
+}
+
+BlotterRegistry::State BlotterRegistry::save_state() const {
+  auto saved = std::unordered_set<const BlotterModel*>();
+  for(auto& model : std::as_const(*m_blotters)) {
+    if(model->is_pinned()->get()) {
+      saved.insert(model.get());
+      for(auto& link : std::as_const(*m_collection->get_links(*model))) {
+        if(link->is_consolidated()) {
+          saved.insert(link.get());
+        }
+      }
+    }
+  }
+  auto state = State();
+  for(auto& model : std::as_const(*m_blotters)) {
+    if(!saved.contains(model.get())) {
+      continue;
+    }
+    auto& controller = get(*model);
+    auto settings = BlotterSettings(controller);
+    for(auto& link : std::as_const(*m_collection->get_links(*model))) {
+      if(saved.contains(link.get())) {
+        settings.m_links.push_back(get(*link).m_id);
+      }
+    }
+    state.m_blotters.push_back(std::move(settings));
+    if(m_active->get() == model) {
+      state.m_active = controller.m_id;
+    }
+  }
+  return state;
+}
+
+void BlotterRegistry::restore(const State& state) {
+  auto models = std::unordered_map<uuid, std::shared_ptr<BlotterModel>>();
+  for(auto& settings : state.m_blotters) {
+    if(settings.m_id.is_nil() || models.contains(settings.m_id)) {
+      throw std::runtime_error("Invalid blotter identity.");
+    }
+    auto& controller = [&] () -> BlotterController& {
+      if(settings.m_is_consolidated) {
+        return get_consolidated(settings.m_account);
+      }
+      return create(settings.m_name, settings.m_account);
+    }();
+    settings.apply(controller);
+    auto model = controller.get_model();
+    if(!model->is_consolidated()) {
+      model->is_pinned()->set(true);
+    }
+    models.emplace(settings.m_id, std::move(model));
+  }
+  for(auto& settings : state.m_blotters) {
+    for(auto& id : settings.m_links) {
+      auto source = models.find(id);
+      if(source != models.end()) {
+        m_collection->link(*models.at(settings.m_id), *source->second);
+      }
+    }
+  }
+  auto active = models.find(state.m_active);
+  if(active != models.end()) {
+    set_active(*active->second);
+  }
 }
 
 void BlotterRegistry::close() {

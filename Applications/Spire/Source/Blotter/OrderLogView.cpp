@@ -212,7 +212,7 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders,
         std::make_shared<ListEmptySelectionModel>())) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto table = std::make_shared<OrderLogTableModel>(m_orders);
-  auto table_view = TableViewBuilder(table).
+  m_table = TableViewBuilder(table).
     add_header_item(tr("Time"), TableHeaderItem::Order::DESCENDING).
     add_header_item(tr("ID")).
     add_header_item(tr("Status")).
@@ -242,17 +242,17 @@ OrderLogView::OrderLogView(std::shared_ptr<OrdersModel> orders,
   const auto DEFAULT_WIDTHS =
     std::array{110, 100, 100, 90, 50, 70, 60, 71, 75, 70, 90};
   for(auto i = 0; i < table->get_column_size(); ++i) {
-    table_view->get_header().get_widths()->set(
+    m_table->get_header().get_widths()->set(
       i, scale_width(DEFAULT_WIDTHS[i]));
     auto column = static_cast<OrderColumn>(i);
-    update_style(*table_view->get_header().get_item(i), [=] (auto& style) {
+    update_style(*m_table->get_header().get_item(i), [=] (auto& style) {
       style.get(Any() > TableHeaderItem::Label()).
         set(TextAlign(get_alignment(column)));
     });
   }
-  table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  enclose(*this, *table_view);
-  setFocusProxy(table_view);
+  m_table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  enclose(*this, *m_table);
+  setFocusProxy(m_table);
 }
 
 const std::shared_ptr<OrdersModel>& OrderLogView::get_orders() const {
