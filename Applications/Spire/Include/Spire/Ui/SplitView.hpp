@@ -33,6 +33,15 @@ namespace Spire {
       SplitView(
         QWidget& primary, QWidget& secondary, QWidget* parent = nullptr);
 
+      /** Returns the preferred fraction of space for the primary panel. */
+      double get_primary_ratio() const;
+
+      /**
+       * Sets the primary panel's share of the available space.
+       * @param ratio A value from 0 to 1; either endpoint collapses a panel.
+       */
+      void set_primary_ratio(double ratio);
+
       QSize minimumSizeHint() const override;
 
     protected:
