@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
   auto portfolio = std::make_shared<ControllerPortfolioModel>(
     orders, profile.GetClients().get_market_data_client());
   auto model = std::make_shared<CompositeBlotterModel>(
+    profile.GetClients().get_service_locator_client().get_account(), false,
     std::make_shared<LocalTextModel>(QObject::tr("New Blotter")),
     std::make_shared<LocalBooleanModel>(false),
     std::make_shared<LocalBooleanModel>(false), tasks, monitors, orders,

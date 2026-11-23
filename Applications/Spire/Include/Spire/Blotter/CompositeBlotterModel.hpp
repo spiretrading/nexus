@@ -10,6 +10,8 @@ namespace Spire {
 
       /**
        * Constructs a CompositeBlotterModel.
+       * @param account The executing account.
+       * @param is_consolidated Whether the blotter consolidates its account.
        * @param name The blotter's name model.
        * @param is_active Whether the blotter is active.
        * @param is_pinned Whether the blotter is pinned for saving on exit.
@@ -18,7 +20,8 @@ namespace Spire {
        * @param orders The blotter's orders.
        * @param portfolio The blotter's portfolio.
        */
-      CompositeBlotterModel(std::shared_ptr<TextModel> name,
+      CompositeBlotterModel(Beam::DirectoryEntry account, bool is_consolidated,
+        std::shared_ptr<TextModel> name,
         std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
         std::shared_ptr<TasksModel> tasks,
@@ -26,6 +29,8 @@ namespace Spire {
         std::shared_ptr<OrdersModel> orders,
         std::shared_ptr<PortfolioModel> portfolio) noexcept;
 
+      const Beam::DirectoryEntry& get_account() const override;
+      bool is_consolidated() const override;
       const std::shared_ptr<TextModel>& get_name() const override;
       const std::shared_ptr<BooleanModel>& is_active() const override;
       const std::shared_ptr<BooleanModel>& is_pinned() const override;
@@ -36,6 +41,8 @@ namespace Spire {
       const std::shared_ptr<PortfolioModel>& get_portfolio() const override;
 
     private:
+      Beam::DirectoryEntry m_account;
+      bool m_is_consolidated;
       std::shared_ptr<TextModel> m_name;
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;

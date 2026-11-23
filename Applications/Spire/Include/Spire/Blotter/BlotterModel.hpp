@@ -13,6 +13,12 @@ namespace Spire {
     public:
       virtual ~BlotterModel() = default;
 
+      /** Returns the executing account. */
+      virtual const Beam::DirectoryEntry& get_account() const = 0;
+
+      /** Returns whether the blotter consolidates its account. */
+      virtual bool is_consolidated() const = 0;
+
       /** Returns the blotter's name. */
       virtual const std::shared_ptr<TextModel>& get_name() const = 0;
 

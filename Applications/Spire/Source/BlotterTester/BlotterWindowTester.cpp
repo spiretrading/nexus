@@ -53,7 +53,7 @@ TEST_SUITE("BlotterWindow") {
     tasks->push(make_entry(2));
     auto monitors = std::make_shared<ArrayListModel<BlotterTaskMonitor>>();
     auto model = std::make_shared<CompositeBlotterModel>(
-      std::make_shared<LocalTextModel>("Test"),
+      DirectoryEntry(), false, std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false), tasks, monitors,
       std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
@@ -152,6 +152,7 @@ TEST_SUITE("BlotterWindow") {
     using Operation = CancelKeyBindingsModel::Operation;
     initialize_resources();
     auto model = std::make_shared<CompositeBlotterModel>(
+      DirectoryEntry(), false,
       std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false),
@@ -214,6 +215,7 @@ TEST_SUITE("BlotterWindow") {
     auto first = make_order(1);
     orders->push(first);
     auto model = std::make_shared<CompositeBlotterModel>(
+      DirectoryEntry(), false,
       std::make_shared<LocalTextModel>("Orders"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false),
@@ -277,6 +279,7 @@ TEST_SUITE("BlotterWindow") {
       orders, Portfolio(TrueAverageBookkeeper(inventories)),
       clients.get_market_data_client());
     auto model = std::make_shared<CompositeBlotterModel>(
+      DirectoryEntry(), false,
       std::make_shared<LocalTextModel>("Positions"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false),

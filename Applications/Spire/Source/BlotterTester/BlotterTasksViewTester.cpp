@@ -34,7 +34,7 @@ TEST_SUITE("BlotterTasksView") {
       tasks->insert(entry, 0);
     }
     auto view = BlotterTasksView(std::make_shared<CompositeBlotterModel>(
-      std::make_shared<LocalTextModel>("Test"),
+      DirectoryEntry(), false, std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false), tasks,
       std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
