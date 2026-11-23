@@ -715,8 +715,7 @@ namespace Details {
         if(fields.m_side != side ||
             fields.m_time_in_force.get_type() == TimeInForce::Type::MOC ||
             !is_market && (fields.m_type != OrderType::LIMIT ||
-              direction * time_and_sale.m_price >=
-                direction * fields.m_price)) {
+              direction * time_and_sale.m_price > direction * fields.m_price)) {
           continue;
         }
         auto i = m_entries.find(order->get_info().m_id);
