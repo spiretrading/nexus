@@ -149,6 +149,7 @@ TEST_SUITE("DefinitionsClient") {
     auto saved_currencies = CURRENCIES;
     auto saved_destinations = DESTINATIONS;
     auto saved_venues = VENUES;
+    auto saved_trading_schedule = TRADING_SCHEDULE;
     auto test_country = CountryDatabase::Entry();
     test_country.m_code = CountryCode(999);
     test_country.m_name = "Testland";
@@ -185,13 +186,19 @@ TEST_SUITE("DefinitionsClient") {
       database.load_from_stream(stream);
       return database;
     }();
+    auto test_rule = TradingSchedule::Rule();
+    test_rule.m_venues.push_back(Venue("XTSE"));
+    test_rule.m_events.push_back(TradingSchedule::Event(
+      "OPEN", time_from_string("1900-01-01 09:30:00")));
+    auto test_trading_schedule = TradingSchedule({test_rule});
     auto operations = std::make_shared<TestDefinitionsClient::Queue>();
     auto client = DefinitionsClient(
       std::in_place_type<TestDefinitionsClient>, operations);
     auto future = std::async(std::launch::async, [&] {
       load_definitions(client);
     });
-    for(auto i = 0; i < 5; ++i) {
+    const auto DEFINITION_COUNT = 6;
+    for(auto i = 0; i < DEFINITION_COUNT; ++i) {
       auto operation = operations->pop();
       std::visit([&] (auto& op) {
         using Operation = std::decay_t<decltype(op)>;
@@ -210,6 +217,9 @@ TEST_SUITE("DefinitionsClient") {
         } else if constexpr(std::is_same_v<Operation,
             TestDefinitionsClient::LoadVenueDatabaseOperation>) {
           op.m_result.set(test_venues);
+        } else if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadTradingScheduleOperation>) {
+          op.m_result.set(test_trading_schedule);
         } else {
           FAIL("Unexpected operation.");
         }
@@ -221,11 +231,17 @@ TEST_SUITE("DefinitionsClient") {
     REQUIRE(CURRENCIES.from("TST").m_id == CurrencyId(999));
     REQUIRE(DESTINATIONS.from("TEST_DEST").m_id == "TEST_DEST");
     REQUIRE(VENUES.from("XTST").m_display_name == "TST");
+    auto loaded_trading_schedule = TRADING_SCHEDULE;
     set_countries(saved_countries);
     set_time_zones(saved_time_zones);
     set_currencies(saved_currencies);
     set_destinations(saved_destinations);
     set_venues(saved_venues);
+    set_trading_schedule(saved_trading_schedule);
+    auto events = loaded_trading_schedule.find(
+      time_from_string("2026-09-21 15:00:00"), Venue("XTSE"));
+    REQUIRE(events == std::vector{TradingSchedule::Event(
+      "OPEN", time_from_string("2026-09-21 13:30:00"))});
   }
 
   TEST_CASE("load_trading_schedule") {
