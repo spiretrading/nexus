@@ -247,6 +247,17 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
     connect_style_signal(*this, std::bind_front(&SplitView::on_style, this));
 }
 
+double SplitView::get_primary_ratio() const {
+  return m_primary_ratio;
+}
+
+void SplitView::set_primary_ratio(double ratio) {
+  m_primary_ratio = ratio;
+  m_primary->setVisible(ratio != 0);
+  m_secondary->setVisible(ratio != 1);
+  update_split();
+}
+
 QSize SplitView::minimumSizeHint() const {
   auto primary = m_primary->minimumSizeHint();
   auto secondary = m_secondary->minimumSizeHint();
