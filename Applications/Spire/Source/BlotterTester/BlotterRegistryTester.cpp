@@ -1,8 +1,10 @@
 #include <QEvent>
 #include <QEventLoop>
 #include <QPointer>
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterRegistry.hpp"
+#include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -10,6 +12,7 @@
 using namespace Beam;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 using namespace Spire;
 
 namespace {
@@ -215,6 +218,71 @@ TEST_SUITE("BlotterRegistry") {
       fixture.get_account());
     REQUIRE(registry.get_consolidated(account).get_model()->is_consolidated());
     REQUIRE(registry.get_blotters()->get_size() == 3);
+  }
+
+  UI_TEST_CASE("default_order_quantity") {
+    auto fixture = Fixture();
+    auto& registry = fixture.m_profile.GetBlotterRegistry();
+    auto ticker = parse_ticker("RY.TSX");
+    auto interactions = fixture.m_profile.GetKeyBindings()->
+      get_interactions_key_bindings(ticker);
+    interactions->get_default_quantity()->set(100);
+    auto quantity = [&] (Side side) {
+      return get_default_order_quantity(fixture.m_profile, ticker, side);
+    };
+    REQUIRE(quantity(Side::BID) == 100);
+    REQUIRE(quantity(Side::ASK) == 100);
+    auto& first = registry.create("First", fixture.get_account());
+    auto& second = registry.create("Second", fixture.get_account());
+    auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(ticker, Currencies::CAD, Side::BID, "TSX", 300,
+        Money(10)), 1, time_from_string("2026-11-23 15:00:00")));
+    accept(*order);
+    fill(*order, 40);
+    auto task = first.add(IntegerNode(0));
+    wait_for(*first.get_model()->get_portfolio(), [&] {
+      task->GetContext().GetOrderPublisher().push(order);
+    }, [&] {
+      return get_quantity(*first.get_model()) == 40;
+    });
+    registry.set_active(*first.get_model());
+    REQUIRE(quantity(Side::BID) == 60);
+    REQUIRE(quantity(Side::ASK) == 40);
+    REQUIRE(get_default_order_quantity(fixture.m_profile,
+      parse_ticker("BMO.TSX"), Side::ASK) == 100);
+    wait_for(*first.get_model()->get_portfolio(), [&] {
+      fill(*order, 100);
+    }, [&] {
+      return get_quantity(*first.get_model()) == 140;
+    });
+    REQUIRE(quantity(Side::BID) == 60);
+    REQUIRE(quantity(Side::ASK) == 100);
+    registry.set_active(*second.get_model());
+    REQUIRE(quantity(Side::BID) == 100);
+    REQUIRE(quantity(Side::ASK) == 100);
+    auto short_order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(ticker, Currencies::CAD, Side::ASK, "TSX", 100,
+        Money(10)), 2, time_from_string("2026-11-23 15:00:00")));
+    accept(*short_order);
+    fill(*short_order, 25);
+    auto other_task = second.add(IntegerNode(0));
+    wait_for(*second.get_model()->get_portfolio(), [&] {
+      other_task->GetContext().GetOrderPublisher().push(short_order);
+    }, [&] {
+      return get_quantity(*second.get_model()) == -25;
+    });
+    REQUIRE(quantity(Side::BID) == 25);
+    REQUIRE(quantity(Side::ASK) == 75);
+    registry.set_active(*first.get_model());
+    REQUIRE(quantity(Side::BID) == 60);
+    REQUIRE(quantity(Side::ASK) == 100);
+    interactions->get_default_quantity()->set(200);
+    REQUIRE(quantity(Side::BID) == 60);
+    REQUIRE(quantity(Side::ASK) == 140);
+    interactions->get_default_quantity()->set(0);
+    REQUIRE(quantity(Side::BID) == 0);
+    REQUIRE(quantity(Side::ASK) == 0);
+    flush_pending_routines();
   }
 
   UI_TEST_CASE("account_orders_and_positions") {

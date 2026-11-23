@@ -343,10 +343,18 @@ std::filesystem::path Spire::get_profile_path(const std::string& username) {
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
     const Ticker& ticker, Side side) {
-  // TODO: Read the position from the new active blotter.
+  auto& portfolio =
+    *userProfile.GetBlotterRegistry().get_active()->get()->get_portfolio();
+  auto position = Quantity(0);
+  for(auto& entry : std::as_const(portfolio)) {
+    if(entry.m_inventory.m_position.m_ticker == ticker) {
+      position = entry.m_inventory.m_position.m_quantity;
+      break;
+    }
+  }
   return get_default_order_quantity(
     *userProfile.GetKeyBindings()->get_interactions_key_bindings(ticker),
-    ticker, Quantity(0), side);
+    ticker, position, side);
 }
 
 void Spire::open_web_portal(
