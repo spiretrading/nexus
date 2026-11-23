@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include <concepts>
 #include <QTimer>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -150,6 +151,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   toolbar_layout->addWidget(m_duplicate_button);
   toolbar_layout->addSpacing(scale_width(4));
   m_delete_button = make_button(":/Icons/delete3.svg", tr("Delete"));
+  m_delete_button->setAccessibleName(tr("Delete"));
   m_delete_button->connect_click_signal(
     std::bind_front(&TaskKeysPage::on_delete_task_action, this));
   update_style(*m_delete_button, [] (auto& style) {
@@ -176,11 +178,11 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto layout = make_vbox_layout(body);
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
-  auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
+  m_filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
     additional_tags);
   m_table_view = make_task_keys_table_view(
-    std::move(filtered_tasks), std::make_shared<ConsolidatedScopeQueryModel>(
+    m_filtered_tasks, std::make_shared<ConsolidatedScopeQueryModel>(
       std::move(tickers), populate_scope_query_model()), additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
@@ -212,8 +214,8 @@ void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
 }
 
 void TaskKeysPage::update_button_state() {
-  auto is_enabled =
-    m_table_view->get_selection()->get_row_selection()->get_size() > 0;
+  auto& selection = m_table_view->get_selection();
+  auto is_enabled = selection->get_row_selection()->get_size() > 0;
   m_duplicate_button->setEnabled(is_enabled);
   m_delete_button->setEnabled(is_enabled);
 }
@@ -230,44 +232,38 @@ void TaskKeysPage::on_new_task_action() {
 }
 
 void TaskKeysPage::on_duplicate_task_action() {
-  auto& selection = m_table_view->get_selection()->get_row_selection();
-  if(selection->get_size() == 0) {
+  auto& selection = *m_table_view->get_selection()->get_row_selection();
+  if(selection.get_size() == 0) {
     return;
   }
-  auto last_current_row = m_table_view->get_body().get_current()->get()->m_row;
-  auto sorted_selection =
-    std::vector<int>(selection->begin(), selection->end());
-  std::sort(sorted_selection.begin(), sorted_selection.end(),
-    std::greater<int>());
-  for(auto index : sorted_selection) {
-    auto order_task = m_key_bindings->get_order_task_arguments()->get(
-      any_cast<int>(m_table_view->get_body().get_table()->at(index, 0)));
-    order_task.m_key = QKeySequence();
-    m_key_bindings->get_order_task_arguments()->insert(order_task,
-      m_table_view->get_body().get_current()->get()->m_row);
+  auto row = selection.get(0);
+  auto task = m_filtered_tasks->get(row);
+  task.m_key = QKeySequence();
+  auto size = m_filtered_tasks->get_size();
+  if(m_filtered_tasks->insert(task, row) == QValidator::Invalid) {
+    return;
+  } else if(m_filtered_tasks->get_size() == size) {
+    clear(selection);
+    m_table_view->get_current()->set(none);
+    return;
   }
-  QTimer::singleShot(0, this, [=] {
-    m_table_view->get_body().get_current()->set(
-      TableView::Index(last_current_row, 1));
-  });
+  m_table_view->get_current()->set(TableIndex(row, 1));
+  selection.push(row);
 }
 
 void TaskKeysPage::on_delete_task_action() {
-  auto current = m_table_view->get_body().get_current()->get();
-  m_key_bindings->get_order_task_arguments()->transact([&] {
-    for(auto i : *m_table_view->get_selection()->get_row_selection()) {
-      m_key_bindings->get_order_task_arguments()->remove(
-        any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
-    }
-  });
-  auto row_size = m_table_view->get_body().get_table()->get_row_size();
-  if(row_size > 0) {
-    if(current->m_row >= row_size) {
-      --current->m_row;
-    }
-    m_table_view->get_body().get_current()->set(*current);
-    m_table_view->get_body().get_selection()->get_row_selection()->push(
-      current->m_row);
+  auto& selection = *m_table_view->get_selection()->get_row_selection();
+  if(selection.get_size() == 0) {
+    return;
+  }
+  auto& body = m_table_view->get_body();
+  auto current = body.get_current()->get();
+  m_table_view->get_table()->remove(selection.get(0));
+  auto size = body.get_table()->get_row_size();
+  if(current && size != 0) {
+    current->m_row = std::min(current->m_row, size - 1);
+    body.get_current()->set(*current);
+    body.get_selection()->get_row_selection()->push(current->m_row);
   }
 }
 
@@ -278,29 +274,28 @@ void TaskKeysPage::on_reset() {
 void TaskKeysPage::on_new_task_submission(const QString& name) {
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
-  auto current = [&] {
-    if(auto current = m_table_view->get_current()->get()) {
-      m_key_bindings->get_order_task_arguments()->insert(
-        order_task, current->m_row);
-      return TableIndex(current->m_row, 1);
-    } else {
-      m_key_bindings->get_order_task_arguments()->push(order_task);
-      return TableIndex(
-        m_key_bindings->get_order_task_arguments()->get_size() - 1, 1);
+  auto size = m_filtered_tasks->get_size();
+  auto row = [&] {
+    if(auto& current = m_table_view->get_current()->get()) {
+      return current->m_row;
     }
+    return size;
   }();
-  QTimer::singleShot(0, this, [=] {
-    m_table_view->get_current()->set(current);
+  if(m_filtered_tasks->insert(order_task, row) == QValidator::Invalid ||
+      m_filtered_tasks->get_size() == size) {
+    return;
+  }
+  m_table_view->get_selection()->get_row_selection()->push(row);
+  QTimer::singleShot(0, this, [=, this] {
+    m_table_view->get_current()->set(TableIndex(row, 1));
   });
 }
 
 void TaskKeysPage::on_row_selection(
     const ListModel<int>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<int>::AddOperation& operation) {
-      update_button_state();
-    },
-    [&] (const ListModel<int>::RemoveOperation& operation) {
-      update_button_state();
-    });
+  visit(operation, [&] <typename T> (const T&) requires
+      (std::same_as<T, AnyListModel::AddOperation> ||
+        std::same_as<T, AnyListModel::RemoveOperation>) {
+    update_button_state();
+  });
 }

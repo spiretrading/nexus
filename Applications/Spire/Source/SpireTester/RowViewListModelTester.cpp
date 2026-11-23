@@ -1,5 +1,6 @@
 #include <deque>
 #include <doctest/doctest.h>
+#include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/RowViewListModel.hpp"
 
@@ -62,6 +63,48 @@ TEST_SUITE("RowViewListModel") {
         REQUIRE(operation.get_previous() == 6);
         REQUIRE(operation.get_value() == 0);
       });
+  }
+
+  TEST_CASE("any_ref_update") {
+    using Model = RowViewListModel<AnyRef>;
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10, std::string("first")});
+    auto row = Model(table, 0);
+    auto updates = std::vector<Model::UpdateOperation>();
+    row.connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const Model::UpdateOperation& update) {
+        updates.push_back(update);
+      });
+    });
+    table->set(0, 0, 11);
+    REQUIRE(
+      row.set(1, AnyRef(std::string("second"))) == QValidator::Acceptable);
+    REQUIRE(updates.size() == 2);
+    REQUIRE(any_cast<int>(updates[0].get_previous()) == 10);
+    REQUIRE(any_cast<int>(updates[0].get_value()) == 11);
+    REQUIRE(any_cast<std::string>(updates[1].get_previous()) == "first");
+    REQUIRE(any_cast<std::string>(row.get(1)) == "second");
+    REQUIRE(any_cast<std::string>(updates[1].get_value()) == "second");
+  }
+
+  TEST_CASE("erased_any_ref_update") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({10});
+    auto row = std::shared_ptr<AnyListModel>(
+      std::make_shared<RowViewListModel<AnyRef>>(table, 0));
+    auto cell = AnyListValueModel(row, 0);
+    REQUIRE(std::any_cast<int>(cell.get()) == 10);
+    auto updates = std::vector<AnyListModel::UpdateOperation>();
+    row->connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const AnyListModel::UpdateOperation& update) {
+        updates.push_back(update);
+      });
+    });
+    table->set(0, 0, 20);
+    REQUIRE(std::any_cast<int>(cell.get()) == 20);
+    REQUIRE(updates.size() == 1);
+    REQUIRE(std::any_cast<int>(updates.front().m_previous) == 10);
+    REQUIRE(std::any_cast<int>(updates.front().m_value) == 20);
   }
 
   TEST_CASE("source_add") {
@@ -132,6 +175,52 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(signal_count == 0);
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get(0));
+  }
+
+  TEST_CASE("source_transaction_removes_viewed_row") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1});
+    source->push({2});
+    auto model = RowViewListModel<int>(source, 0);
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    source->transact([&] {
+      source->set(0, 0, 3);
+      source->remove(0);
+      source->set(0, 0, 4);
+      REQUIRE(model.get_size() == 0);
+      REQUIRE(operations.size() == 2);
+      REQUIRE(std::get_if<ListModel<int>::StartTransaction>(&operations[0]));
+      auto& update = std::get<ListModel<int>::UpdateOperation>(operations[1]);
+      REQUIRE(update.get_previous() == 1);
+      REQUIRE(update.get_value() == 3);
+    });
+    REQUIRE(operations.size() == 3);
+    REQUIRE(std::get_if<ListModel<int>::EndTransaction>(&operations.back()));
+    source->set(0, 0, 5);
+    REQUIRE(operations.size() == 3);
+    auto weak_source = std::weak_ptr(source);
+    source.reset();
+    REQUIRE(weak_source.expired());
+  }
+
+  TEST_CASE("attach_during_source_transaction") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1});
+    source->start_transaction();
+    source->set(0, 0, 2);
+    auto model = RowViewListModel<int>(source, 0);
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
+    model.transact([&] {
+      source->set(0, 0, 3);
+      source->end_transaction();
+      REQUIRE(operations.size() == 2);
+    });
+    REQUIRE(operations.size() == 3);
+    REQUIRE(std::get_if<ListModel<int>::EndTransaction>(&operations.back()));
   }
 
   TEST_CASE("source_move") {

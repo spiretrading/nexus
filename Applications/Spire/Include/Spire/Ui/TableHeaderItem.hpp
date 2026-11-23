@@ -12,7 +12,6 @@
 #include "Spire/Ui/TableFilter.hpp"
 
 namespace Spire {
-  class ResponsiveLabel;
 
   /** Displays a single item within a TableViewHeader. */
   class TableHeaderItem : public QWidget {
@@ -36,6 +35,9 @@ namespace Spire {
 
       /** Identifies styling for the container sub-component.  */
       using Container = Styles::StateSelector<void, struct ContainerTag>;
+
+      /** Identifies styling for the column separator. */
+      using Separator = Styles::StateSelector<void, struct SeparatorTag>;
 
       /** Specifies whether and how the column is sorted. */
       enum class Order {
@@ -87,6 +89,13 @@ namespace Spire {
       const std::shared_ptr<ValueModel<Model>>& get_model() const;
 
       /**
+       * Replaces the label displayed by this header item.
+       * @param label The label widget, whose ownership is transferred to this
+       *        item. The previous label is deleted.
+       */
+      void set_label(QWidget& label);
+
+      /**
        * Returns the boolean model used to track whether the filter panel is
        * currently open.
        */
@@ -114,13 +123,14 @@ namespace Spire {
       std::shared_ptr<BooleanModel> m_is_filter_open;
       ClickObserver m_click_observer;
       bool m_is_resizeable;
-      ResponsiveLabel* m_name_label;
+      QWidget* m_label;
       QPointer<QWidget> m_filter_control;
       QWidget* m_active_element;
       QWidget* m_active_indicator;
       QWidget* m_active_container;
       QWidget* m_sort_indicator;
       QPointer<QWidget> m_sash;
+      QVBoxLayout* m_content_layout;
       QHBoxLayout* m_controls_layout;
       bool m_is_resizing;
       QFont m_font;
@@ -131,7 +141,7 @@ namespace Spire {
       void on_click();
       void on_filter_checked(bool checked);
       void on_update(const Model& model);
-      void on_label_name_update(const QString& name);
+      void on_label_update();
       void on_label_style();
   };
 }

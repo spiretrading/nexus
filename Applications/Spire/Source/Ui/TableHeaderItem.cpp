@@ -1,5 +1,7 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
+#include <algorithm>
 #include <unordered_map>
+#include <QCoreApplication>
 #include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -21,7 +23,6 @@ using namespace Spire::Styles;
 namespace {
   using FilterActive = Styles::StateSelector<void, struct FilterActiveTag>;
   using FilterControl = Styles::StateSelector<void, struct FilterControlTag>;
-  using ResizeHandle = Styles::StateSelector<void, struct ResizeHandleTag>;
   using Resizeable = Styles::StateSelector<void, struct ResizeableTag>;
   using Sash = Styles::StateSelector<void, struct SashTag>;
 
@@ -35,7 +36,7 @@ namespace {
     style.get(Any() > TableHeaderItem::ActiveElement()).
       set(Visibility::INVISIBLE);
     style.get(Any() > FilterControl()).set(Visibility::NONE);
-    style.get(Any() > (ResizeHandle() || Sash())).
+    style.get(Any() > (TableHeaderItem::Separator() || Sash())).
       set(Visibility::NONE);
     style.get(highlight_selector > TableHeaderItem::Label()).
       set(TextColor(QColor(0x4B23A0)));
@@ -50,9 +51,10 @@ namespace {
       set(Fill(QColor(0x4B23A0)));
     style.get(FocusVisible() > is_a<Box>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Resizeable() > (ResizeHandle() || Sash())).
+    style.get(Resizeable() > (TableHeaderItem::Separator() || Sash())).
       set(Visibility::VISIBLE);
-    style.get(Any() > (Sash() && Drag()) < Any() > ResizeHandle()).
+    style.get(Any() > (Sash() && Drag()) < Any() >
+        TableHeaderItem::Separator()).
       set(BackgroundColor(QColor(0x4B23A0)));
     return style;
   }
@@ -171,9 +173,12 @@ namespace {
         return m_names.connect_operation_signal(slot);
       }
 
-    protected:
-      void transact(const std::function<void()>& transaction) override {
-        m_names.transact([&] { transaction(); });
+      void start_transaction() override {
+        m_names.start_transaction();
+      }
+
+      void end_transaction() override {
+        m_names.end_transaction();
       }
 
     private:
@@ -224,7 +229,6 @@ namespace {
         set(PaddingBottom(scale_height(4))).
         set(PaddingTop(scale_height(6)));
     });
-    match(*label, TableHeaderItem::Label());
     return label;
   }
 
@@ -268,15 +272,15 @@ namespace {
     return {indicator, box};
   }
 
-  auto make_resize_handle() {
-    auto resize_handle = new Box(nullptr);
-    resize_handle->setFixedWidth(scale_width(1));
-    resize_handle->setFixedHeight(scale_width(14));
-    update_style(*resize_handle, [] (auto& style) {
+  auto make_separator() {
+    auto separator = new Box(nullptr);
+    separator->setFixedWidth(scale_width(1));
+    separator->setFixedHeight(scale_width(14));
+    update_style(*separator, [] (auto& style) {
       style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
     });
-    match(*resize_handle, ResizeHandle());
-    return resize_handle;
+    match(*separator, TableHeaderItem::Separator());
+    return separator;
   }
 
   auto make_outline() {
@@ -297,11 +301,9 @@ TableHeaderItem::TableHeaderItem(
       m_is_filter_open(std::make_shared<LocalBooleanModel>(false)),
       m_click_observer(*this),
       m_is_resizeable(true),
+      m_label(nullptr),
       m_is_resizing(false) {
   setFocusPolicy(Qt::StrongFocus);
-  m_name_label =
-    make_name_label(std::make_shared<HeaderNameListModel>(m_model));
-  link(*this, *m_name_label);
   m_sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   link(*this, *m_sort_indicator);
@@ -309,23 +311,23 @@ TableHeaderItem::TableHeaderItem(
   link(*this, *m_active_element);
   m_active_container = new QWidget();
   enclose(*m_active_container, *m_active_indicator);
-  auto content_layout = make_vbox_layout();
-  content_layout->addWidget(m_name_label);
-  content_layout->addWidget(m_active_container);
+  m_content_layout = make_vbox_layout();
+  m_content_layout->addWidget(m_active_container);
   auto body = new QWidget();
-  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto body_layout = make_hbox_layout(body);
   body_layout->setSpacing(scale_width(5));
-  body_layout->addLayout(content_layout, 1);
+  body_layout->addLayout(m_content_layout, 1);
   m_controls_layout = make_hbox_layout();
   m_controls_layout->setSpacing(scale_width(3));
   m_controls_layout->addWidget(m_sort_indicator, 0, Qt::AlignVCenter);
-  auto resize_handle = make_resize_handle();
-  link(*this, *resize_handle);
-  m_controls_layout->addWidget(resize_handle, 0, Qt::AlignVCenter);
+  auto separator = make_separator();
+  link(*this, *separator);
+  m_controls_layout->addWidget(separator, 0, Qt::AlignVCenter);
   body_layout->addLayout(m_controls_layout);
+  set_label(*make_name_label(std::make_shared<HeaderNameListModel>(m_model)));
   auto container_body = new LayeredWidget();
-  container_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  container_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   container_body->add(body);
   auto sash_layer = new SashLayer();
   sash_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -350,9 +352,6 @@ TableHeaderItem::TableHeaderItem(
   layers->add(outline);
   enclose(*this, *layers);
   set_style(*this, DEFAULT_STYLE());
-  on_update(m_model->get());
-  on_label_style();
-  on_label_name_update(m_name_label->get_current()->get());
   on_filter_checked(m_is_filter_open->get());
   if(m_is_resizeable) {
     match(*this, Resizeable());
@@ -361,10 +360,6 @@ TableHeaderItem::TableHeaderItem(
     std::bind_front(&TableHeaderItem::on_filter_checked, this));
   m_connection = m_model->connect_update_signal(
     std::bind_front(&TableHeaderItem::on_update, this));
-  m_label_style_connection = connect_style_signal(*m_name_label,
-    std::bind_front(&TableHeaderItem::on_label_style, this));
-  m_label_name_connection = m_name_label->get_current()->connect_update_signal(
-    std::bind_front(&TableHeaderItem::on_label_name_update, this));
   m_click_observer.connect_click_signal(
     std::bind_front(&TableHeaderItem::on_click, this));
 }
@@ -372,6 +367,49 @@ TableHeaderItem::TableHeaderItem(
 const std::shared_ptr<ValueModel<TableHeaderItem::Model>>&
     TableHeaderItem::get_model() const {
   return m_model;
+}
+
+void TableHeaderItem::set_label(QWidget& label) {
+  if(m_label == &label) {
+    return;
+  }
+  m_label_name_connection.disconnect();
+  m_label_style_connection.disconnect();
+  if(m_label) {
+    m_label->removeEventFilter(this);
+    m_content_layout->removeWidget(m_label);
+    unlink(*this, *m_label);
+    delete m_label;
+  }
+  m_label = &label;
+  match(*m_label, Label());
+  link(*this, *m_label);
+  m_content_layout->insertWidget(0, m_label);
+  m_label->installEventFilter(this);
+  m_active_container->layout()->setAlignment(Qt::AlignLeft);
+  m_label_style_connection = connect_style_signal(*m_label,
+    std::bind_front(&TableHeaderItem::on_label_style, this));
+  if(auto name_label = dynamic_cast<ResponsiveLabel*>(m_label)) {
+    m_label_name_connection = name_label->get_current()->connect_update_signal(
+      [=, this] (const auto&) {
+        on_label_update();
+      });
+  }
+  on_label_style();
+  on_label_update();
+  on_update(m_model->get());
+  m_controls_layout->invalidate();
+  for(auto widget = m_label->parentWidget(); widget;
+      widget = widget->parentWidget()) {
+    if(auto layout = widget->layout()) {
+      layout->invalidate();
+    }
+    auto event = QEvent(QEvent::LayoutRequest);
+    QCoreApplication::sendEvent(widget, &event);
+    if(widget == this) {
+      break;
+    }
+  }
 }
 
 const std::shared_ptr<BooleanModel>& TableHeaderItem::is_filter_open() const {
@@ -408,7 +446,10 @@ QSize TableHeaderItem::minimumSizeHint() const {
 }
 
 bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_sash && isEnabled()) {
+  if(watched == m_label && (event->type() == QEvent::Resize ||
+      event->type() == QEvent::LayoutRequest)) {
+    on_label_update();
+  } else if(watched == m_sash && isEnabled()) {
     if(event->type() == QEvent::MouseButtonPress) {
       match(*m_sash, Drag());
       m_is_resizing = true;
@@ -487,7 +528,7 @@ void TableHeaderItem::on_update(const Model& model) {
     m_controls_layout->insertWidget(1, m_filter_control);
   }
   m_sort_indicator->setVisible(model.m_order != Order::UNORDERED &&
-    model.m_order != Order::NONE);
+    (model.m_order != Order::NONE || !dynamic_cast<ResponsiveLabel*>(m_label)));
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
     stylist.match(Sortable());
@@ -502,20 +543,27 @@ void TableHeaderItem::on_update(const Model& model) {
   updateGeometry();
 }
 
-void TableHeaderItem::on_label_name_update(const QString& name) {
-  m_active_indicator->setFixedWidth(
-    QFontMetrics(m_font).horizontalAdvance(name));
+void TableHeaderItem::on_label_update() {
+  auto width = [&] {
+    if(auto label = dynamic_cast<ResponsiveLabel*>(m_label)) {
+      return QFontMetrics(m_font).horizontalAdvance(
+        label->get_current()->get());
+    }
+    return std::clamp(m_label->sizeHint().width(), 0, m_label->width());
+  }();
+  m_active_indicator->setFixedWidth(width);
+  m_active_container->layout()->activate();
 }
 
 void TableHeaderItem::on_label_style() {
-  auto& stylist = find_stylist(*m_name_label);
+  auto& stylist = find_stylist(*m_label);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const Font& font) {
         stylist.evaluate(font, [=] (const auto& font) {
           if(m_font != font) {
             m_font = font;
-            on_label_name_update(m_name_label->get_current()->get());
+            on_label_update();
           }
         });
       },

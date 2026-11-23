@@ -48,8 +48,8 @@ namespace Nexus {
 
     private:
       Beam::SequencePublisher<ExecutionReportEntry> m_publisher;
-      boost::optional<Beam::QueuePipe<std::shared_ptr<Order>>> m_pipe;
       Beam::ScopedQueueGroup m_callbacks;
+      boost::optional<Beam::QueuePipe<std::shared_ptr<Order>>> m_pipe;
   };
 
   inline ExecutionReportPublisher::ExecutionReportPublisher(

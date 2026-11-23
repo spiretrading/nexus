@@ -37,10 +37,8 @@ namespace Spire {
       QValidator::State remove(int index) override;
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
+      void start_transaction() override;
+      void end_transaction() override;
   };
 
   /** The type of empty selection model used for ListViews. */
@@ -91,10 +89,10 @@ namespace Spire {
   }
 
   template<typename T>
-  void EmptySelectionModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    transaction();
-  }
+  void EmptySelectionModel<T>::start_transaction() {}
+
+  template<typename T>
+  void EmptySelectionModel<T>::end_transaction() {}
 }
 
 #endif

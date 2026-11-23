@@ -5,7 +5,7 @@
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -14,7 +14,7 @@ namespace Spire {
    * translating its indicies.
    */
   template<typename T>
-  class TranslatedListModel : public ListModel<T> {
+  class TranslatedListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using Operation = typename ListModel<T>::Operation;
@@ -56,20 +56,13 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       std::vector<int> m_translation;
       std::vector<int> m_reverse_translation;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
       void translate(int direction, int index);
@@ -86,6 +79,7 @@ namespace Spire {
       : m_source(std::move(source)),
         m_translation(m_source->get_size()),
         m_reverse_translation(m_source->get_size()) {
+    this->m_transaction.set_size(get_size());
     std::iota(m_translation.begin(), m_translation.end(), 0);
     m_reverse_translation = m_translation;
     m_source_connection = m_source->connect_operation_signal(
@@ -157,25 +151,13 @@ namespace Spire {
       m_reverse_translation[m_translation[index]] -= direction;
     }
     m_translation[destination] = source_index;
-    m_transaction.push(MoveOperation(source, destination));
+    this->m_transaction.push(MoveOperation(source, destination));
     return QValidator::State::Acceptable;
   }
 
   template<typename T>
   QValidator::State TranslatedListModel<T>::remove(int index) {
     return m_source->remove(m_translation[index]);
-  }
-
-  template<typename T>
-  boost::signals2::connection TranslatedListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void TranslatedListModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact(transaction);
   }
 
   template<typename T>
@@ -195,16 +177,16 @@ namespace Spire {
   void TranslatedListModel<T>::on_operation(const Operation& operation) {
     visit(operation,
       [&] (const StartTransaction&) {
-        m_transaction.start();
+        this->m_transaction.start();
       },
       [&] (const EndTransaction&) {
-        m_transaction.end();
+        this->m_transaction.end();
       },
       [&] (const AddOperation& operation) {
         if(operation.m_index >= static_cast<int>(m_translation.size())) {
           m_reverse_translation.push_back(operation.m_index);
           m_translation.push_back(operation.m_index);
-          m_transaction.push(operation);
+          this->m_transaction.push(operation);
           return;
         }
         auto reverse_index = m_reverse_translation[operation.m_index];
@@ -213,7 +195,7 @@ namespace Spire {
           m_translation.begin() + reverse_index, operation.m_index);
         m_reverse_translation.insert(
           m_reverse_translation.begin() + operation.m_index, reverse_index);
-        m_transaction.push(AddOperation(reverse_index));
+        this->m_transaction.push(AddOperation(reverse_index));
       },
       [&] (const MoveOperation& operation) {
         auto direction = [&] {
@@ -237,7 +219,7 @@ namespace Spire {
       },
       [&] (const PreRemoveOperation& operation) {
         auto reverse_index = m_reverse_translation[operation.m_index];
-        m_transaction.push(PreRemoveOperation(reverse_index));
+        this->m_transaction.push(PreRemoveOperation(reverse_index));
       },
       [&] (const RemoveOperation& operation) {
         auto reverse_index = m_reverse_translation[operation.m_index];
@@ -245,11 +227,11 @@ namespace Spire {
         m_translation.erase(m_translation.begin() + reverse_index);
         m_reverse_translation.erase(
           m_reverse_translation.begin() + operation.m_index);
-        m_transaction.push(RemoveOperation(reverse_index));
+        this->m_transaction.push(RemoveOperation(reverse_index));
       },
       [&] (const UpdateOperation& operation) {
         auto translated_index = m_reverse_translation[operation.m_index];
-        m_transaction.push(UpdateOperation(
+        this->m_transaction.push(UpdateOperation(
           translated_index, operation.get_previous(), operation.get_value()));
       });
   }

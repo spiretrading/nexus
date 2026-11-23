@@ -2,28 +2,16 @@
 #define SPIRE_ARRAY_TABLE_MODEL_HPP
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
   /** Implements a TableModel using an array as its backing data structure. */
-  class ArrayTableModel : public TableModel {
+  class ArrayTableModel : public TransactionLogModel<TableModel> {
     public:
 
       /** Constructs an empty ArrayTableModel. */
       ArrayTableModel() = default;
-
-      /**
-       * Takes a callable function and invokes it. All operations performed on
-       * this model during the transaction get appended to a
-       * <code>Transaction</code> that is signalled at the end of the
-       * transaction. If a transaction is already being invoked, then all
-       * operations are appened into the parent transaction.
-       * @param transaction The transaction to perform.
-       * @return The result of the transaction.
-       */
-      template<typename F>
-      decltype(auto) transact(F&& transaction);
 
       /**
        * Appends a row represented by a <code>std::vector</code>.
@@ -59,18 +47,10 @@ namespace Spire {
       QValidator::State set(
         int row, int column, const std::any& value) override;
       QValidator::State remove(int row) override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
 
     private:
       std::vector<std::vector<std::any>> m_data;
-      TableModelTransactionLog m_transaction;
   };
-
-  template<typename F>
-  decltype(auto) ArrayTableModel::transact(F&& transaction) {
-    return m_transaction.transact(std::forward<F>(transaction));
-  }
 }
 
 #endif

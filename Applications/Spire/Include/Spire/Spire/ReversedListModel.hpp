@@ -1,8 +1,8 @@
 #ifndef SPIRE_REVERSED_LIST_MODEL_HPP
 #define SPIRE_REVERSED_LIST_MODEL_HPP
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
 
@@ -11,7 +11,7 @@ namespace Spire {
    * rows in reversed order.
    */
   template<typename T>
-  class ReversedListModel : public ListModel<T> {
+  class ReversedListModel : public TransactionLogModel<ListModel<T>> {
     public:
       using Type = typename ListModel<T>::Type;
       using OperationSignal = typename ListModel<T>::OperationSignal;
@@ -55,18 +55,11 @@ namespace Spire {
       QValidator::State insert(const Type& value, int index) override;
       QValidator::State move(int source, int destination) override;
       QValidator::State remove(int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
       using ListModel<T>::insert;
       using ListModel<T>::remove;
-      using ListModel<T>::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<ListModel<Type>> m_source;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const Operation& operation);
@@ -79,6 +72,7 @@ namespace Spire {
   ReversedListModel<T>::ReversedListModel(
       std::shared_ptr<ListModel<Type>> source)
       : m_source(std::move(source)) {
+    this->m_transaction.set_size(get_size());
     m_connection = m_source->connect_operation_signal(
       std::bind_front(&ReversedListModel::on_operation, this));
   }
@@ -132,45 +126,34 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection ReversedListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  template<typename T>
-  void ReversedListModel<T>::transact(
-      const std::function<void ()>& transaction) {
-    m_transaction.transact([&] {
-      transaction();
-    });
-  }
-
-  template<typename T>
   void ReversedListModel<T>::on_operation(const Operation& operation) {
     visit(operation,
       [&] (StartTransaction) {
-        m_transaction.start();
+        this->m_transaction.start();
       },
       [&] (EndTransaction) {
-        m_transaction.end();
+        this->m_transaction.end();
       },
       [&] (const AddOperation& operation) {
-        m_transaction.push(AddOperation(index_from_source(operation.m_index)));
+        this->m_transaction.push(
+          AddOperation(index_from_source(operation.m_index)));
       },
       [&] (const PreRemoveOperation& operation) {
-        m_transaction.push(
+        this->m_transaction.push(
           PreRemoveOperation(index_from_source(operation.m_index)));
       },
       [&] (const RemoveOperation& operation) {
-        m_transaction.push(
+        this->m_transaction.push(
           RemoveOperation(index_from_source(operation.m_index) + 1));
       },
       [&] (const MoveOperation& operation) {
-        m_transaction.push(MoveOperation(index_from_source(operation.m_source),
+        this->m_transaction.push(MoveOperation(
+          index_from_source(operation.m_source),
           index_from_source(operation.m_destination)));
       },
       [&] (const UpdateOperation& operation) {
-        m_transaction.push(UpdateOperation(index_from_source(operation.m_index),
+        this->m_transaction.push(UpdateOperation(
+          index_from_source(operation.m_index),
           operation.get_previous(), operation.get_value()));
       });
   }

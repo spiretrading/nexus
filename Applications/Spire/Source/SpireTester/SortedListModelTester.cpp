@@ -176,13 +176,22 @@ TEST_SUITE("SortedListModel") {
     source->push(9);
     source->push(6);
     auto sorted_model = SortedListModel(source, &reverse_comparator);
-    auto signal_count = 0;
-    sorted_model.connect_operation_signal(
-      [&] (const auto& operation) { ++signal_count; });
+    auto operations = std::deque<ListModel<int>::Operation>();
+    auto connection = scoped_connection(sorted_model.connect_operation_signal(
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->push(2);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(4)});
+    operations.clear();
     source->set(3, 1);
+    require_list_transaction<int>(operations,
+      {ListModel<int>::MoveOperation(1, 4),
+        ListModel<int>::UpdateOperation(4, 6, 1)});
+    operations.clear();
     source->insert(6, 2);
-    REQUIRE(signal_count == 6);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(1)});
     REQUIRE(span(sorted_model) == std::vector{9, 6, 4, 2, 2, 1});
   }
 

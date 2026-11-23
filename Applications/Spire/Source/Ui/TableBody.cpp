@@ -106,10 +106,14 @@ QWidget* TableBody::default_item_builder(
 
 struct TableBody::Cover : QWidget {
   QColor m_background_color;
+  QColor m_horizontal_grid_color;
+  QColor m_vertical_grid_color;
 
   Cover(QWidget* parent)
       : QWidget(parent),
-        m_background_color(Qt::transparent) {
+        m_background_color(Qt::transparent),
+        m_horizontal_grid_color(Qt::transparent),
+        m_vertical_grid_color(Qt::transparent) {
     update_style(*this, [] (auto& style) {
       style.get(CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
     });
@@ -594,6 +598,32 @@ struct TableBody::Painter {
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
 
+  static void paint_row_borders(TableBody& body, QPainter& painter) {
+    auto& layout = body.get_layout();
+    for(auto i = 0; i != layout.count(); ++i) {
+      auto& row = layout.get_row(i);
+      if(row.m_horizontal_grid_color.alpha() == 0 &&
+          row.m_vertical_grid_color.alpha() == 0) {
+        continue;
+      }
+      auto bounds = row.geometry();
+      if(bounds.isEmpty()) {
+        continue;
+      }
+      if(body.m_styles.m_vertical_spacing > 0) {
+        bounds.adjust(0, -1, 0, 1);
+      }
+      painter.fillRect(bounds.left(), bounds.top(), bounds.width(), 1,
+        row.m_horizontal_grid_color);
+      painter.fillRect(bounds.left(), bounds.bottom(), bounds.width(), 1,
+        row.m_horizontal_grid_color);
+      painter.fillRect(bounds.left(), bounds.top(), 1, bounds.height(),
+        row.m_vertical_grid_color);
+      painter.fillRect(bounds.right(), bounds.top(), 1, bounds.height(),
+        row.m_vertical_grid_color);
+    }
+  }
+
   static void paint_item_borders(
       TableBody& body, QPainter& painter, const optional<Index>& index) {
     auto item = body.find_item(index);
@@ -652,8 +682,9 @@ TableBody::TableBody(
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current_controller(std::move(current), 0, widths->get_size() + 1),
-      m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
+      m_current_controller(std::move(current), 0, widths->get_size()),
+      m_selection_controller(std::move(selection), 0, widths->get_size()),
+      m_row_selection_transaction(RowSelectionTransaction::NONE),
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
@@ -921,6 +952,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   Painter::paint_horizontal_borders(*this, painter);
   Painter::paint_vertical_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_hover_index);
+  Painter::paint_row_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_current_index);
   QWidget::paintEvent(event);
 }
@@ -991,8 +1023,8 @@ int TableBody::estimate_row_height() const {
   if(m_table->get_row_size() == 0) {
     return 0;
   }
-  auto layout_height =
-    height() - m_styles.m_padding.top() - m_styles.m_padding.bottom();
+  auto layout_height = sizeHint().height() - m_styles.m_padding.top() -
+    m_styles.m_padding.bottom();
   return (layout_height + m_styles.m_vertical_spacing) /
     m_table->get_row_size();
 }
@@ -1072,10 +1104,10 @@ void TableBody::pre_remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+  m_current_controller.remove_row(index);
 }
 
 void TableBody::remove_row(int index) {
-  m_current_controller.remove_row(index);
   auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
@@ -1113,17 +1145,19 @@ void TableBody::move_row(int source, int destination) {
     }
   } else if(layout.is_visible(destination)) {
     mount_row(destination);
+    auto hidden_row = source;
     if(destination < source) {
-      ++source;
+      ++hidden_row;
     }
-    layout.remove_hidden_row(source);
+    layout.remove_hidden_row(hidden_row);
   } else {
     auto height = layout.get_row_height(source);
     layout.remove_hidden_row(source);
+    auto hidden_row = destination;
     if(source < destination) {
-      --destination;
+      --hidden_row;
     }
-    layout.add_hidden_row(destination, height);
+    layout.add_hidden_row(hidden_row, height);
   }
   m_selection_controller.move_row(source, destination);
 }
@@ -1237,6 +1271,7 @@ void TableBody::initialize_visible_region() {
     m_current_index = m_current_controller.get();
     m_current_row = make_row_cover();
     m_current_row->mount(m_current_index->m_row);
+    match(*m_current_row, CurrentRow());
     on_cover_style(*m_current_row);
   }
   mount_row(0);
@@ -1423,8 +1458,10 @@ bool TableBody::navigate_previous() {
 }
 
 void TableBody::on_item_activated(TableItem& item) {
-  auto& row_widget = *item.parentWidget();
   auto index = get_index(item);
+  if(index.m_column == m_widths->get_size()) {
+    return;
+  }
   if(m_current_controller.get_current()->get() != index) {
     m_current_controller.get_current()->set(index);
     if(auto current = m_current_controller.get_current()->get()) {
@@ -1491,6 +1528,20 @@ void TableBody::on_current(const optional<Index>& current) {
 
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
+    [&] (const AnyListModel::StartTransaction&) {
+      m_row_selection_transaction = RowSelectionTransaction::OPEN;
+    },
+    [&] (const AnyListModel::EndTransaction&) {
+      if(std::exchange(m_row_selection_transaction,
+          RowSelectionTransaction::NONE) != RowSelectionTransaction::UPDATED) {
+        return;
+      }
+      for(auto index : std::as_const(*get_selection()->get_row_selection())) {
+        if(auto row = find_row(index)) {
+          match(*row, Selected());
+        }
+      }
+    },
     [&] (const ListModel<int>::AddOperation& operation) {
       auto& selection =
         m_selection_controller.get_selection()->get_row_selection();
@@ -1508,6 +1559,9 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(auto previous = find_row(operation.get_previous())) {
         unmatch(*previous, Selected());
+        if(m_row_selection_transaction == RowSelectionTransaction::OPEN) {
+          m_row_selection_transaction = RowSelectionTransaction::UPDATED;
+        }
       }
       if(auto row = find_row(operation.get_value())) {
         match(*row, Selected());
@@ -1596,12 +1650,24 @@ void TableBody::on_style() {
 void TableBody::on_cover_style(Cover& cover) {
   auto& stylist = find_stylist(cover);
   cover.m_background_color = Qt::transparent;
+  cover.m_horizontal_grid_color = Qt::transparent;
+  cover.m_vertical_grid_color = Qt::transparent;
+  auto assign = [&] (QColor& target) {
+    return [&, this] (auto color) {
+      target = color;
+      update();
+    };
+  };
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=, &cover] (auto color) {
-          cover.m_background_color = color;
-        });
+        stylist.evaluate(color, assign(cover.m_background_color));
+      },
+      [&] (const HorizontalGridColor& color) {
+        stylist.evaluate(color, assign(cover.m_horizontal_grid_color));
+      },
+      [&] (const VerticalGridColor& color) {
+        stylist.evaluate(color, assign(cover.m_vertical_grid_color));
       });
   }
   update();
@@ -1662,11 +1728,11 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         operation.m_destination);
       move_element(
         m_column_covers, operation.m_source, operation.m_destination);
-      auto& layout = get_layout();
-      for(auto i = 0; i < layout.count(); ++i) {
-        layout.get_row(i).move_column(
-          operation.m_source, operation.m_destination);
-      }
+      m_selection_controller.move_column(
+        operation.m_source, operation.m_destination);
+      for_each_row([&] (auto& row) {
+        row.move_column(operation.m_source, operation.m_destination);
+      });
       for(auto& row_cover : m_recycled_rows) {
         row_cover->move_column(operation.m_source, operation.m_destination);
       }

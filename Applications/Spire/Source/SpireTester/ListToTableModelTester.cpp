@@ -61,5 +61,9 @@ TEST_SUITE("ListToTableModel") {
           0, 0, std::string("Skylar"), std::string("Joe")),
         TableModel::UpdateOperation(0, 1, 44, 55)
       });
+    operations.clear();
+    source->insert({"Kevin", 33}, 0);
+    REQUIRE(operations.size() == 3);
+    require_transaction(operations, {TableModel::AddOperation(0)});
   }
 }

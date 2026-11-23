@@ -5,7 +5,6 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -86,16 +85,6 @@ const ServiceTimeAndSalesModel::Type&
     throw std::out_of_range("The index is out of range.");
   }
   return m_entries[index + m_offset];
-}
-
-connection ServiceTimeAndSalesModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
-}
-
-void ServiceTimeAndSalesModel::transact(
-    const std::function<void ()>& transaction) {
-  m_transaction.transact(transaction);
 }
 
 void ServiceTimeAndSalesModel::on_bbo(const SequencedBboQuote& bbo) {

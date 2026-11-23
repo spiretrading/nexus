@@ -9,6 +9,34 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("FilteredListModel") {
+  TEST_CASE("attach_at_transaction_start") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{2});
+    auto filtered = std::unique_ptr<FilteredListModel<int>>();
+    auto connection = scoped_connection(source->connect_operation_signal(
+      [&] (const ListModel<int>::Operation& operation) {
+        visit(operation, [&] (const AnyListModel::StartTransaction&) {
+          if(!filtered) {
+            filtered = std::make_unique<FilteredListModel<int>>(source,
+              [] (const auto&, int) { return false; });
+          }
+        });
+      }));
+    SUBCASE("insertion") {
+      source->transact([&] {
+        source->insert(1, 0);
+        source->push(3);
+      });
+    }
+    SUBCASE("removal") {
+      source->remove(0);
+    }
+    REQUIRE(filtered);
+    REQUIRE(filtered->get_size() == source->get_size());
+    for(auto i = 0; i != source->get_size(); ++i) {
+      REQUIRE(filtered->get(i) == source->get(i));
+    }
+  }
+
   TEST_CASE("filter") {
     auto source = std::make_shared<ArrayListModel<int>>();
     source->push(4);
@@ -93,18 +121,11 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(0) == 1);
     REQUIRE(source->get(1) == 4);
     REQUIRE(source->get(2) == 2);
-    auto signal_count = 0;
-    auto added_index = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        auto add_operation =
-          std::get_if<ListModel<int>::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
-        REQUIRE(add_operation->m_index == added_index);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->insert(9, 1);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 1);
     REQUIRE(filtered_list.get(1) == 2);
     REQUIRE(filtered_list.get_size() == 2);
@@ -112,9 +133,11 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(1) == 9);
     REQUIRE(source->get(2) == 4);
     REQUIRE(source->get(3) == 2);
-    added_index = 1;
     source->insert(0, 2);
-    REQUIRE(signal_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(1)});
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 1);
     REQUIRE(filtered_list.get(1) == 0);
     REQUIRE(filtered_list.get(2) == 2);
@@ -124,9 +147,10 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(2) == 0);
     REQUIRE(source->get(3) == 4);
     REQUIRE(source->get(4) == 2);
-    added_index = 3;
     source->insert(0, 5);
-    REQUIRE(signal_count == 2);
+    REQUIRE(operations.size() == 1);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(3)});
     REQUIRE(filtered_list.get(0) == 1);
     REQUIRE(filtered_list.get(1) == 0);
     REQUIRE(filtered_list.get(2) == 2);
@@ -210,20 +234,11 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 6);
     REQUIRE(source->get(4) == 1);
     REQUIRE(source->get(5) == 3);
-    auto signal_count = 0;
-    auto source_row = 0;
-    auto destination_row = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        auto move_operation =
-          std::get_if<ListModel<int>::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
-        REQUIRE(move_operation->m_source == source_row);
-        REQUIRE(move_operation->m_destination == destination_row);
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->move(3, 0);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 2);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 3);
@@ -234,7 +249,7 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(4) == 1);
     REQUIRE(source->get(5) == 3);
     source->move(0, 4);
-    REQUIRE(signal_count == 0);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 2);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 3);
@@ -244,10 +259,10 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 1);
     REQUIRE(source->get(4) == 6);
     REQUIRE(source->get(5) == 3);
-    source_row = 0;
-    destination_row = 2;
     source->move(1, 5);
-    REQUIRE(signal_count == 1);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(0, 2)});
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 1);
     REQUIRE(filtered_list.get(1) == 3);
     REQUIRE(filtered_list.get(2) == 2);
@@ -257,10 +272,9 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(3) == 6);
     REQUIRE(source->get(4) == 3);
     REQUIRE(source->get(5) == 2);
-    source_row = 1;
-    destination_row = 0;
     source->move(4, 0);
-    REQUIRE(signal_count == 2);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::MoveOperation(1, 0)});
     REQUIRE(filtered_list.get(0) == 3);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get(2) == 2);
@@ -288,38 +302,14 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(1) == 2);
     REQUIRE(source->get(2) == 9);
     REQUIRE(source->get(3) == 1);
-    auto signal_count = 0;
-    auto add_count = 0;
-    auto pre_remove_count = 0;
-    auto remove_count = 0;
-    auto update_count = 0;
+    auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(filtered_list.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        ++signal_count;
-        visit(operation,
-          [&] (const ListModel<int>::AddOperation& operation) {
-            ++add_count;
-            REQUIRE(operation.m_index == 0);
-          },
-          [&] (const ListModel<int>::PreRemoveOperation& operation) {
-            ++pre_remove_count;
-            REQUIRE(operation.m_index == 2);
-          },
-          [&] (const ListModel<int>::RemoveOperation& operation) {
-            ++remove_count;
-            REQUIRE(operation.m_index == 2);
-          },
-          [&] (const ListModel<int>::UpdateOperation& operation) {
-            ++update_count;
-            REQUIRE(operation.m_index == 1);
-          },
-          [] (const auto&) {
-            REQUIRE(false);
-          });
-      }));
+      [&] (const auto& operation) { operations.push_back(operation); }));
     source->set(0, 0);
-    REQUIRE(signal_count == 1);
-    REQUIRE(add_count == 1);
+    REQUIRE(operations.size() == 3);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::AddOperation(0)});
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 2);
     REQUIRE(filtered_list.get(2) == 1);
@@ -329,9 +319,12 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(2) == 9);
     REQUIRE(source->get(3) == 1);
     source->set(3, 10);
-    REQUIRE(signal_count == 3);
-    REQUIRE(pre_remove_count == 1);
-    REQUIRE(remove_count == 1);
+    REQUIRE(operations.size() == 2);
+    REQUIRE(std::get<ListModel<int>::PreRemoveOperation>(
+      operations.front()).m_index == 2);
+    REQUIRE(std::get<ListModel<int>::RemoveOperation>(
+      operations.back()).m_index == 2);
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 2);
     REQUIRE(filtered_list.get_size() == 2);
@@ -340,8 +333,10 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(2) == 9);
     REQUIRE(source->get(3) == 10);
     source->set(1, 1);
-    REQUIRE(signal_count == 4);
-    REQUIRE(update_count == 1);
+    REQUIRE(operations.size() == 1);
+    require_list_transaction<int>(
+      operations, {ListModel<int>::UpdateOperation(1, 2, 1)});
+    operations.clear();
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get_size() == 2);
@@ -350,7 +345,7 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(2) == 9);
     REQUIRE(source->get(3) == 10);
     source->set(3, 6);
-    REQUIRE(signal_count == 4);
+    REQUIRE(operations.empty());
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 1);
     REQUIRE(filtered_list.get_size() == 2);

@@ -55,6 +55,9 @@ namespace Nexus {
       BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
       BacktesterMarketDataClient& operator =(
         const BacktesterMarketDataClient&) = delete;
+      template<typename Q, typename T>
+      void submit(const Q& query, Beam::ScopedQueueWriter<T> queue,
+        void (BacktesterMarketDataService::*start_replay)(const Q&));
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
@@ -69,62 +72,62 @@ namespace Nexus {
 
   inline void BacktesterMarketDataClient::query(const VenueQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    m_service->query_order_imbalances(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_order_imbalances);
   }
 
   inline void BacktesterMarketDataClient::query(
       const VenueQuery& query, Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    m_service->query_order_imbalances(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_order_imbalances);
   }
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    m_service->query_bbo_quotes(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_bbo_quotes);
   }
 
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue) {
-    m_service->query_bbo_quotes(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_bbo_quotes);
   }
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    m_service->query_book_quotes(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_book_quotes);
   }
 
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
-    m_service->query_book_quotes(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_book_quotes);
   }
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    m_service->query_time_and_sales(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_time_and_sales);
   }
 
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    m_service->query_time_and_sales(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_time_and_sales);
   }
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
-    m_service->query_ticker_statuses(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_ticker_statuses);
   }
 
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
-    m_service->query_ticker_statuses(query);
-    m_market_data_client.query(query, std::move(queue));
+    submit(query, std::move(queue),
+      &BacktesterMarketDataService::query_ticker_statuses);
   }
 
   inline std::vector<TickerInfo> BacktesterMarketDataClient::query(
@@ -154,6 +157,14 @@ namespace Nexus {
     }
     m_market_data_client.close();
     m_open_state.close();
+  }
+
+  template<typename Q, typename T>
+  void BacktesterMarketDataClient::submit(const Q& query,
+      Beam::ScopedQueueWriter<T> queue,
+      void (BacktesterMarketDataService::*start_replay)(const Q&)) {
+    m_market_data_client.query(query, std::move(queue));
+    (m_service->*start_replay)(query);
   }
 }
 
