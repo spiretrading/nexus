@@ -82,6 +82,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.add(exchangeRate);
   }
+  m_blotter_registry = std::make_unique<BlotterRegistry>(Ref(*this));
 }
 
 UserProfile::~UserProfile() = default;
@@ -197,6 +198,10 @@ const AdditionalTagDatabase& UserProfile::GetAdditionalTagDatabase() const {
 
 const std::shared_ptr<KeyBindingsModel>& UserProfile::GetKeyBindings() const {
   return m_keyBindings;
+}
+
+BlotterRegistry& UserProfile::GetBlotterRegistry() const {
+  return *m_blotter_registry;
 }
 
 const CatalogSettings& UserProfile::GetCatalogSettings() const {

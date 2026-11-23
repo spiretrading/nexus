@@ -10,6 +10,7 @@
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Spire/Blotter/BlotterRegistry.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
@@ -164,6 +165,9 @@ namespace Spire {
       /** Returns the key bindings. */
       const std::shared_ptr<KeyBindingsModel>& GetKeyBindings() const;
 
+      /** Returns the user's blotter registry. */
+      BlotterRegistry& GetBlotterRegistry() const;
+
       /** Returns the CatalogSettings. */
       const CatalogSettings& GetCatalogSettings() const;
 
@@ -275,6 +279,7 @@ namespace Spire {
         m_initialOrderImbalanceIndicatorWindowSettings;
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
+      std::unique_ptr<BlotterRegistry> m_blotter_registry;
 
       void CollectPropertyHubs();
       void MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
