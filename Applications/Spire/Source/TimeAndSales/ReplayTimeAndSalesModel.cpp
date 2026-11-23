@@ -7,7 +7,6 @@
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -130,16 +129,6 @@ const ReplayTimeAndSalesModel::Type&
     throw std::out_of_range("The index is out of range.");
   }
   return m_entries[index];
-}
-
-connection ReplayTimeAndSalesModel::connect_operation_signal(
-    const OperationSignal::slot_type& slot) const {
-  return m_transaction.connect_operation_signal(slot);
-}
-
-void ReplayTimeAndSalesModel::transact(
-    const std::function<void ()>& transaction) {
-  m_transaction.transact(transaction);
 }
 
 const ptime& ReplayTimeAndSalesModel::get_start() const {

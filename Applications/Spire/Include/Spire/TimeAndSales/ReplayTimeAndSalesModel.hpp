@@ -7,7 +7,7 @@
 #include "Spire/Playback/PlaybackState.hpp"
 #include "Spire/Playback/Timeline.hpp"
 #include "Spire/Spire/Decimal.hpp"
-#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
@@ -18,7 +18,8 @@ namespace Spire {
    * replay, ending at its position and never earlier than its timeline's
    * start.
    */
-  class ReplayTimeAndSalesModel : public TimeAndSalesModel {
+  class ReplayTimeAndSalesModel :
+      public TransactionLogModel<TimeAndSalesModel> {
     public:
 
       /**
@@ -34,12 +35,6 @@ namespace Spire {
       QtPromise<void> load_older(int max_count) override;
       int get_size() const override;
       const Type& get(int index) const override;
-      boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
-      using TimeAndSalesModel::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override;
 
     private:
       enum class SeekState {
@@ -67,7 +62,6 @@ namespace Spire {
       QTimer m_seek_timer;
       QtPromise<void> m_read_promise;
       QtPromise<void> m_seek_promise;
-      ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_timeline_connection;
       boost::signals2::scoped_connection m_position_connection;
       boost::signals2::scoped_connection m_speed_connection;

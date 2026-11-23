@@ -1,15 +1,16 @@
 #include "Spire/Playback/ReplayAttachmentMap.hpp"
 #include <algorithm>
 #include <boost/optional/optional.hpp>
-#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
+#include "Spire/Spire/TransactionLogModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  class AttachedHubListModel : public PropertyHubListModel {
+  class AttachedHubListModel :
+      public TransactionLogModel<PropertyHubListModel> {
     public:
       AttachedHubListModel(std::shared_ptr<ReplayAttachmentMap> attachment_map,
           std::shared_ptr<ReplaySession> session)
@@ -55,26 +56,14 @@ namespace {
         return QValidator::State::Acceptable;
       }
 
-      connection connect_operation_signal(
-          const OperationSignal::slot_type& slot) const override {
-        return m_transaction.connect_operation_signal(slot);
-      }
-
       using PropertyHubListModel::insert;
       using PropertyHubListModel::remove;
-      using PropertyHubListModel::transact;
-
-    protected:
-      void transact(const std::function<void ()>& transaction) override {
-        m_transaction.transact(transaction);
-      }
 
     private:
       std::shared_ptr<ReplayAttachmentMap> m_attachment_map;
       std::shared_ptr<ReplaySession> m_session;
       std::vector<std::shared_ptr<PropertyHub>> m_hubs;
       optional<std::pair<std::shared_ptr<PropertyHub>, int>> m_pending;
-      ListModelTransactionLog<std::shared_ptr<PropertyHub>> m_transaction;
       scoped_connection m_connection;
 
       void on_update(const std::shared_ptr<PropertyHub>& hub,
