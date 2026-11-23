@@ -1,0 +1,262 @@
+#include <QEvent>
+#include <QEventLoop>
+#include <QPointer>
+#include <QTimer>
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Spire/Blotter/BlotterRegistry.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
+
+using namespace Beam;
+using namespace boost::posix_time;
+using namespace Nexus;
+using namespace Spire;
+
+namespace {
+  struct Fixture {
+    TestEnvironment m_environment;
+    UserProfile m_profile;
+    std::shared_ptr<Queue<std::shared_ptr<Order>>> m_submissions;
+
+    Fixture()
+        : m_environment(time_from_string("2026-11-23 15:00:00")),
+          m_profile("", false, false, {}, {},
+            get_default_additional_tag_database(), {}, {}, {},
+            Clients(std::in_place_type<TestClients>, Ref(m_environment))),
+          m_submissions(std::make_shared<Queue<std::shared_ptr<Order>>>()) {
+      initialize_resources();
+      m_environment.monitor_order_submissions(m_submissions);
+    }
+
+    auto get_account() {
+      return m_profile.GetClients().get_service_locator_client().get_account();
+    }
+
+    auto submit() {
+      auto ticker = parse_ticker("RY.TSX");
+      m_environment.publish(ticker, BboQuote(make_bid(Money(10), 100),
+        make_ask(Money(11), 100), time_from_string("2026-11-23 15:00:00")));
+      m_profile.GetClients().get_order_execution_client().submit(
+        make_limit_order_fields(get_account(), ticker, Currencies::CAD,
+          Side::BID, "TSX", 100, Money(10)));
+      auto order = m_submissions->pop();
+      m_environment.accept(*order);
+      return order;
+    }
+  };
+
+  void wait_for(auto& model, const auto& action, const auto& condition) {
+    auto loop = QEventLoop();
+    auto connection = boost::signals2::scoped_connection(
+      model.connect_operation_signal([&] (const auto&) {
+        if(condition()) {
+          loop.quit();
+        }
+      }));
+    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+    action();
+    if(!condition()) {
+      loop.exec();
+    }
+    REQUIRE(condition());
+  }
+
+  auto get_quantity(const BlotterModel& model) {
+    auto quantity = Quantity();
+    for(auto& entry : std::as_const(*model.get_portfolio())) {
+      quantity += entry.m_inventory.m_position.m_quantity;
+    }
+    return quantity;
+  }
+}
+
+TEST_SUITE("BlotterRegistry") {
+  UI_TEST_CASE("initial_blotter") {
+    auto fixture = Fixture();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto& controller = registry.get_consolidated();
+    auto model = controller.get_model();
+    REQUIRE(registry.get_blotters()->get_size() == 1);
+    REQUIRE(registry.get_available()->get_size() == 1);
+    REQUIRE(registry.get_pinned()->get_size() == 0);
+    REQUIRE(model->is_consolidated());
+    REQUIRE(model->is_pinned()->get());
+    REQUIRE(model->get_account() == fixture.get_account());
+    REQUIRE(model->get_name()->get() == "Global");
+    REQUIRE(registry.get_active()->get() == model);
+    REQUIRE(model->is_active()->get());
+    REQUIRE_FALSE(controller.is_open()->get());
+    REQUIRE(&registry.get(*model) == &controller);
+    REQUIRE(&registry.get_consolidated(fixture.get_account()) == &controller);
+    REQUIRE(model->is_pinned()->set(false) == QValidator::Invalid);
+    controller.open();
+    controller.close();
+    REQUIRE(registry.get_blotters()->get_size() == 1);
+    REQUIRE(registry.get_active()->get() == model);
+  }
+
+  UI_TEST_CASE("create_and_activate") {
+    auto fixture = Fixture();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto global = registry.get_active()->get();
+    auto first = registry.create(" Orders ", fixture.get_account()).get_model();
+    auto second = registry.create("Orders", fixture.get_account()).get_model();
+    REQUIRE(first->get_name()->get() == "Orders");
+    REQUIRE(second->get_name()->get() == "Orders (2)");
+    REQUIRE_FALSE(first->is_consolidated());
+    REQUIRE_FALSE(first->is_pinned()->get());
+    REQUIRE(registry.get_available()->get_size() == 1);
+    REQUIRE(registry.get_blotters()->get_size() == 3);
+    registry.set_active(*first);
+    REQUIRE(registry.get_active()->get() == first);
+    REQUIRE(first->is_active()->get());
+    REQUIRE_FALSE(global->is_active()->get());
+    second->is_active()->set(true);
+    REQUIRE(registry.get_active()->get() == second);
+    REQUIRE_FALSE(first->is_active()->get());
+    second->is_active()->set(false);
+    REQUIRE(second->is_active()->get());
+    REQUIRE(registry.get_active()->get() == second);
+    second->get_name()->set("Changed");
+    REQUIRE(registry.create("Orders", fixture.get_account()).get_model()->
+      get_name()->get() == "Orders (2)");
+  }
+
+  UI_TEST_CASE("close_unpinned") {
+    auto fixture = Fixture();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto global = registry.get_active()->get();
+    auto& controller = registry.create("Temporary", fixture.get_account());
+    auto model = std::weak_ptr(controller.get_model());
+    auto window = QPointer(&controller.open());
+    registry.set_active(*controller.get_model());
+    REQUIRE(registry.get_available()->get_size() == 2);
+    REQUIRE(window->close());
+    REQUIRE(registry.get_blotters()->get_size() == 1);
+    REQUIRE(registry.get_available()->get_size() == 1);
+    REQUIRE(registry.get_active()->get() == global);
+    REQUIRE(global->is_active()->get());
+    QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    REQUIRE(window.isNull());
+    REQUIRE(model.expired());
+  }
+
+  UI_TEST_CASE("close_pinned") {
+    auto fixture = Fixture();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto& controller = registry.create("Pinned", fixture.get_account());
+    auto model = controller.get_model();
+    model->is_pinned()->set(true);
+    registry.set_active(*model);
+    REQUIRE(registry.get_pinned()->get_size() == 1);
+    REQUIRE(registry.get_available()->get_size() == 2);
+    controller.open();
+    controller.close();
+    REQUIRE_FALSE(controller.is_open()->get());
+    REQUIRE(registry.get_blotters()->get_size() == 2);
+    REQUIRE(registry.get_available()->get_size() == 2);
+    REQUIRE(registry.get_active()->get() == model);
+    REQUIRE(&registry.get(*model) == &controller);
+    SUBCASE("reopen") {
+      REQUIRE(controller.open().get_model() == model);
+      model->is_pinned()->set(false);
+      REQUIRE(registry.get_pinned()->get_size() == 0);
+      REQUIRE(registry.get_available()->get_size() == 2);
+      controller.close();
+    }
+    SUBCASE("unpin_closed") {
+      model->is_pinned()->set(false);
+    }
+    REQUIRE(registry.get_blotters()->get_size() == 1);
+    REQUIRE(registry.get_available()->get_size() == 1);
+    REQUIRE(registry.get_pinned()->get_size() == 0);
+    REQUIRE(registry.get_active()->get()->is_consolidated());
+  }
+
+  UI_TEST_CASE("close_all") {
+    auto fixture = Fixture();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto& pinned = registry.create("Pinned", fixture.get_account());
+    pinned.get_model()->is_pinned()->set(true);
+    pinned.open();
+    registry.get_consolidated().open();
+    registry.create("First", fixture.get_account()).open();
+    auto& last = registry.create("Last", fixture.get_account());
+    last.open();
+    registry.set_active(*last.get_model());
+    registry.close();
+    REQUIRE(registry.get_blotters()->get_size() == 2);
+    REQUIRE(registry.get_available()->get_size() == 2);
+    REQUIRE(registry.get_pinned()->get_size() == 1);
+    REQUIRE(registry.get_active()->get()->is_consolidated());
+    REQUIRE_FALSE(pinned.is_open()->get());
+    REQUIRE_FALSE(registry.get_consolidated().is_open()->get());
+    registry.close();
+    REQUIRE(registry.get_blotters()->get_size() == 2);
+  }
+
+  UI_TEST_CASE("account_consolidation") {
+    auto fixture = Fixture();
+    auto account = fixture.m_profile.GetClients().get_service_locator_client().
+      make_account("other", "", DirectoryEntry::STAR_DIRECTORY);
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    registry.create("Other", account);
+    auto& controller = registry.get_consolidated(account);
+    REQUIRE(registry.get_blotters()->get_size() == 3);
+    REQUIRE(controller.get_model()->get_account() == account);
+    REQUIRE(controller.get_model()->is_consolidated());
+    REQUIRE_FALSE(controller.get_model()->is_pinned()->get());
+    REQUIRE(&registry.get_consolidated(account) == &controller);
+    REQUIRE(&registry.get_consolidated() != &controller);
+    controller.open();
+    registry.set_active(*controller.get_model());
+    controller.close();
+    REQUIRE(registry.get_blotters()->get_size() == 2);
+    REQUIRE(registry.get_active()->get()->get_account() ==
+      fixture.get_account());
+    REQUIRE(registry.get_consolidated(account).get_model()->is_consolidated());
+    REQUIRE(registry.get_blotters()->get_size() == 3);
+  }
+
+  UI_TEST_CASE("account_orders_and_positions") {
+    auto fixture = Fixture();
+    auto completed = fixture.submit();
+    fixture.m_environment.fill(*completed, 100);
+    flush_pending_routines();
+    auto snapshot = fixture.m_profile.GetClients().get_risk_client().
+      load_inventory_snapshot(fixture.get_account());
+    REQUIRE(snapshot.m_inventories.size() == 1);
+    REQUIRE(snapshot.m_inventories.front().m_position.m_quantity == 100);
+    auto initial = fixture.submit();
+    fixture.m_environment.set(initial->get_info().m_timestamp);
+    fixture.m_environment.fill(*initial, 40);
+    flush_pending_routines();
+    auto registry = BlotterRegistry(Ref(fixture.m_profile));
+    auto model = registry.get_consolidated().get_model();
+    wait_for(*model->get_orders(), [] {
+    }, [&] {
+      return model->get_orders()->get_size() == 2;
+    });
+    wait_for(*model->get_portfolio(), [] {
+    }, [&] {
+      return get_quantity(*model) == 140;
+    });
+    wait_for(*model->get_portfolio(), [&] {
+      fixture.m_environment.fill(*initial, 60);
+    }, [&] {
+      return get_quantity(*model) == 200;
+    });
+    auto next = std::shared_ptr<Order>();
+    wait_for(*model->get_orders(), [&] {
+      next = fixture.submit();
+    }, [&] {
+      return model->get_orders()->get_size() == 3;
+    });
+    wait_for(*model->get_portfolio(), [&] {
+      fixture.m_environment.fill(*next, 25);
+    }, [&] {
+      return get_quantity(*model) == 225;
+    });
+  }
+}
