@@ -30,6 +30,7 @@ namespace Spire {
       void on_open(ToolbarWindow::WindowType window);
       void on_new_blotter(
         const QString& name, const Beam::DirectoryEntry& account);
+      void on_open_blotter(const std::shared_ptr<BlotterModel>& blotter);
       void on_minimize_all();
       void on_restore_all();
       void on_settings(SettingsPanel::Mode mode,

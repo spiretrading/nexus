@@ -60,6 +60,7 @@ namespace Spire {
         UserSettings::Categories categories, const std::filesystem::path& path);
       void on_new_blotter(
         const QString& name, const Beam::DirectoryEntry& account);
+      void on_open_blotter(const std::shared_ptr<BlotterModel>& blotter);
       void on_book_view_closed(BookViewController& controller);
       void on_key_bindings_window_closed();
       void on_time_and_sales_closed(TimeAndSalesController& controller);

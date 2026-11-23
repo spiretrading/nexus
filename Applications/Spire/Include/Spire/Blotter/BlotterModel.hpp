@@ -41,6 +41,9 @@ namespace Spire {
       /** Returns the blotter's portfolio. */
       virtual const std::shared_ptr<PortfolioModel>& get_portfolio() const = 0;
   };
+
+  /** A list of blotters. */
+  using BlottersModel = ListModel<std::shared_ptr<BlotterModel>>;
 }
 
 #endif

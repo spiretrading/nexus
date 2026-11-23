@@ -89,7 +89,8 @@ void ToolbarUiTester::on_toolbar_click() {
     std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>();
   auto account_query_model = make_test_account_query_model();
   m_toolbar_window = new ToolbarWindow(account, roles, account_query_model,
-    recently_closed_windows);
+    recently_closed_windows,
+    std::make_shared<ArrayListModel<BlottersModel::Type>>());
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarUiTester::on_open, this));
   m_toolbar_window->connect_minimize_all_signal(
@@ -102,6 +103,8 @@ void ToolbarUiTester::on_toolbar_click() {
     &ToolbarUiTester::on_settings, this, SettingsPanel::Mode::EXPORT));
   m_toolbar_window->connect_new_blotter_signal(
     std::bind_front(&ToolbarUiTester::on_new_blotter, this));
+  m_toolbar_window->connect_open_blotter_signal(
+    std::bind_front(&ToolbarUiTester::on_open_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarUiTester::on_sign_out, this));
   m_toolbar_window->show();
@@ -116,6 +119,11 @@ void ToolbarUiTester::on_new_blotter(
     const QString& name, const DirectoryEntry& account) {
   m_output->append(QString("New Blotter: %1 (account: %2)").
     arg(name).arg(QString::fromStdString(account.m_name)));
+}
+
+void ToolbarUiTester::on_open_blotter(
+    const std::shared_ptr<BlotterModel>& blotter) {
+  m_output->append(QString("Open Blotter: %1").arg(blotter->get_name()->get()));
 }
 
 void ToolbarUiTester::on_minimize_all() {

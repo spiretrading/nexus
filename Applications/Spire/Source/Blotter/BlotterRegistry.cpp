@@ -102,17 +102,17 @@ BlotterRegistry::~BlotterRegistry() {
   m_entries.clear();
 }
 
-const std::shared_ptr<const BlotterRegistry::BlottersModel>&
+const std::shared_ptr<const BlottersModel>&
     BlotterRegistry::get_blotters() const {
   return m_blotters;
 }
 
-const std::shared_ptr<const BlotterRegistry::BlottersModel>&
+const std::shared_ptr<const BlottersModel>&
     BlotterRegistry::get_available() const {
   return m_read_only_available;
 }
 
-const std::shared_ptr<const BlotterRegistry::BlottersModel>&
+const std::shared_ptr<const BlottersModel>&
     BlotterRegistry::get_pinned() const {
   return m_read_only_pinned;
 }

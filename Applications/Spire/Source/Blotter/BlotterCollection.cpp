@@ -142,7 +142,7 @@ BlotterCollection::Type BlotterCollection::add(Type source) {
   return model;
 }
 
-std::shared_ptr<const ListModel<BlotterCollection::Type>>
+std::shared_ptr<const BlottersModel>
     BlotterCollection::get_links(const BlotterModel& blotter) const {
   auto entry = find(blotter);
   if(!entry) {

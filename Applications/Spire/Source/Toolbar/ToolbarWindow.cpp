@@ -79,12 +79,13 @@ namespace {
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     std::shared_ptr<AccountQueryModel> account_query_model,
     std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
-    QWidget* parent)
+    std::shared_ptr<const BlottersModel> pinned_blotters, QWidget* parent)
     : Window(parent),
       m_account(std::move(account)),
       m_roles(roles),
       m_account_query_model(std::move(account_query_model)),
-      m_recently_closed_windows(std::move(recently_closed_windows)) {
+      m_recently_closed_windows(std::move(recently_closed_windows)),
+      m_pinned_blotters(std::move(pinned_blotters)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
@@ -124,6 +125,8 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   auto blotter_button = make_blotter_button();
   m_blotter_menu = &blotter_button->get_menu();
   populate_blotter_menu();
+  m_pinned_blotters_connection = m_pinned_blotters->connect_operation_signal(
+    std::bind_front(&ToolbarWindow::on_pinned_blotter_operation, this));
   bottom_layout->addWidget(blotter_button);
   if(roles.test(AccountRole::MANAGER) ||
       roles.test(AccountRole::ADMINISTRATOR)) {
@@ -203,6 +206,11 @@ connection ToolbarWindow::connect_export_signal(
 connection ToolbarWindow::connect_new_blotter_signal(
     const NewBlotterSignal::slot_type& slot) const {
   return m_new_blotter_signal.connect(slot);
+}
+
+connection ToolbarWindow::connect_open_blotter_signal(
+    const OpenBlotterSignal::slot_type& slot) const {
+  return m_open_blotter_signal.connect(slot);
 }
 
 connection ToolbarWindow::connect_sign_out_signal(
@@ -286,6 +294,7 @@ void ToolbarWindow::populate_recently_closed_menu() {
 }
 
 void ToolbarWindow::populate_blotter_menu() {
+  m_blotter_name_connections.disconnect();
   m_blotter_menu->reset();
   m_blotter_menu->add_action(
     tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
@@ -293,12 +302,27 @@ void ToolbarWindow::populate_blotter_menu() {
   m_blotter_menu->add_action(tr("Global"), [=] {
     m_open_signal(WindowType::BLOTTER);
   });
-  // TODO: Populate the menu with the new pinned blotters.
+  for(auto& blotter : *m_pinned_blotters) {
+    m_blotter_menu->add_action(blotter->get_name()->get(), [=, this] {
+      m_open_blotter_signal(blotter);
+    });
+    m_blotter_name_connections.add(blotter->get_name()->connect_update_signal(
+      std::bind_front(&ToolbarWindow::on_blotter_name, this)));
+  }
 }
 
 void ToolbarWindow::on_recently_closed_window_operation(
     const RecentlyClosedWindowListModel::Operation& operation) {
   populate_recently_closed_menu();
+}
+
+void ToolbarWindow::on_pinned_blotter_operation(
+    const BlottersModel::Operation& operation) {
+  populate_blotter_menu();
+}
+
+void ToolbarWindow::on_blotter_name(const QString& name) {
+  populate_blotter_menu();
 }
 
 void ToolbarWindow::on_import() {

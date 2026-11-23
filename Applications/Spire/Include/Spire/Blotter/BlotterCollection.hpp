@@ -8,7 +8,7 @@
 namespace Spire {
 
   /** Owns blotters and coordinates their links. */
-  class BlotterCollection : public ListModel<std::shared_ptr<BlotterModel>> {
+  class BlotterCollection : public BlottersModel {
     public:
 
       /**
@@ -28,7 +28,7 @@ namespace Spire {
       Type add(Type source);
 
       /** Returns a blotter's direct links. */
-      std::shared_ptr<const ListModel<Type>>
+      std::shared_ptr<const BlottersModel>
         get_links(const BlotterModel& blotter) const;
 
       /** Links a receiving blotter to a source blotter. */
@@ -42,7 +42,7 @@ namespace Spire {
       int get_size() const override;
       const Type& get(int index) const override;
       QValidator::State remove(int index) override;
-      using ListModel::remove;
+      using BlottersModel::remove;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
       void start_transaction() override;

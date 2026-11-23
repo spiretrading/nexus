@@ -27,7 +27,7 @@ namespace Spire {
       };
       std::shared_ptr<BlotterModel> m_model;
       std::shared_ptr<BlotterCollection> m_collection;
-      std::shared_ptr<const ListModel<BlotterCollection::Type>> m_links;
+      std::shared_ptr<const BlottersModel> m_links;
       std::vector<Entry> m_entries;
       boost::signals2::scoped_connection m_collection_connection;
       boost::signals2::scoped_connection m_links_connection;

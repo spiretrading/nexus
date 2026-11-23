@@ -1,6 +1,7 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_HPP
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
@@ -101,6 +102,10 @@ namespace Spire {
       using NewBlotterSignal =
         Signal<void (const QString& name, const Beam::DirectoryEntry& account)>;
 
+      /** Signals a request to open a pinned blotter. */
+      using OpenBlotterSignal =
+        Signal<void (const std::shared_ptr<BlotterModel>& blotter)>;
+
       /** Signals that the user has signed out of the account. */
       using SignOutSignal = Signal<void ()>;
 
@@ -110,11 +115,13 @@ namespace Spire {
        * @param roles The account's roles.
        * @param account_query_model The model used to query accounts.
        * @param recently_closed_windows The list of recently closed windows.
+       * @param pinned_blotters The pinned blotters to list in the menu.
        * @param parent The parent widget.
        */
       ToolbarWindow(Beam::DirectoryEntry account, Nexus::AccountRoles roles,
         std::shared_ptr<AccountQueryModel> account_query_model,
         std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
+        std::shared_ptr<const BlottersModel> pinned_blotters,
         QWidget* parent = nullptr);
 
       /** Returns the list of recently closed window. */
@@ -149,6 +156,10 @@ namespace Spire {
       boost::signals2::connection connect_new_blotter_signal(
         const NewBlotterSignal::slot_type& slot) const;
 
+      /** Connects a slot to the OpenBlotterSignal. */
+      boost::signals2::connection connect_open_blotter_signal(
+        const OpenBlotterSignal::slot_type& slot) const;
+
       /** Connects a slot to the SignOutSignal. */
       boost::signals2::connection connect_sign_out_signal(
         const SignOutSignal::slot_type& slot) const;
@@ -168,6 +179,7 @@ namespace Spire {
       mutable ExportSignal m_export_signal;
       mutable SignOutSignal m_sign_out_signal;
       mutable NewBlotterSignal m_new_blotter_signal;
+      mutable OpenBlotterSignal m_open_blotter_signal;
       Beam::DirectoryEntry m_account;
       Nexus::AccountRoles m_roles;
       std::shared_ptr<AccountQueryModel> m_account_query_model;
@@ -176,7 +188,10 @@ namespace Spire {
       NewBlotterForm* m_new_blotter_form;
       SettingsPanel* m_settings_panel;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
+      std::shared_ptr<const BlottersModel> m_pinned_blotters;
       boost::signals2::scoped_connection m_recently_closed_windows_connection;
+      boost::signals2::scoped_connection m_pinned_blotters_connection;
+      Beam::ConnectionGroup m_blotter_name_connections;
 
       MenuButton* make_window_manager_button();
       MenuButton* make_recently_closed_button() const;
@@ -188,6 +203,9 @@ namespace Spire {
         QColor hover_color, QColor press_color) const;
       void on_recently_closed_window_operation(
         const RecentlyClosedWindowListModel::Operation& operation);
+      void on_pinned_blotter_operation(
+        const BlottersModel::Operation& operation);
+      void on_blotter_name(const QString& name);
       void on_import();
       void on_export();
       void on_new_blotter_action();

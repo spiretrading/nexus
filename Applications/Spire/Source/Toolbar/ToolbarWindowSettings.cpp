@@ -22,7 +22,8 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
     profile->GetClients().get_administration_client().load_account_roles(
       account);
   auto window = new ToolbarWindow(account, roles,
-    profile->GetAccountQueryModel(), profile->GetRecentlyClosedWindows());
+    profile->GetAccountQueryModel(), profile->GetRecentlyClosedWindows(),
+    profile->GetBlotterRegistry().get_pinned());
   Apply(Ref(profile), out(*window));
   return window;
 }

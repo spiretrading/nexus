@@ -76,7 +76,10 @@ namespace {
     next_position.setY(next_height);
     toolbar_window.move(next_position);
     toolbar_window.show();
-    // TODO: Add the new global blotter to the default layout.
+    auto& blotter = user_profile.GetBlotterRegistry().get_consolidated().open();
+    blotter.move(
+      next_position + QPoint(0, toolbar_window.frameSize().height()));
+    windows.push_back(&blotter);
     return windows;
   }
 }
@@ -172,6 +175,8 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_export, this));
   m_toolbar_window->connect_new_blotter_signal(
     std::bind_front(&ToolbarController::on_new_blotter, this));
+  m_toolbar_window->connect_open_blotter_signal(
+    std::bind_front(&ToolbarController::on_open_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarController::on_sign_out, this));
   m_toolbar_window->show();
@@ -182,6 +187,7 @@ void ToolbarController::close() {
     return;
   }
   WindowSettings::Save(*m_user_profile);
+  m_user_profile->GetBlotterRegistry().close();
   auto book_view_controllers = std::move(m_book_view_controllers);
   for(auto& controller : book_view_controllers) {
     controller->close();
@@ -288,7 +294,7 @@ void ToolbarController::open_profile_window() {
 
 void ToolbarController::on_open(ToolbarWindow::WindowType window) {
   if(window == ToolbarWindow::WindowType::BLOTTER) {
-    // TODO: Open the new global blotter.
+    m_user_profile->GetBlotterRegistry().get_consolidated().open();
   } else if(window == ToolbarWindow::WindowType::CHART) {
     open_chart_window();
   } else if(window == ToolbarWindow::WindowType::BOOK_VIEW) {
@@ -390,7 +396,21 @@ void ToolbarController::on_export(
 
 void ToolbarController::on_new_blotter(
     const QString& name, const DirectoryEntry& account) {
-  // TODO: Assign a unique name, create the new blotter, and open its window.
+  try {
+    auto& registry = m_user_profile->GetBlotterRegistry();
+    auto& controller = registry.create(name, account);
+    controller.open();
+    registry.set_active(*controller.get_model());
+  } catch(const std::exception& e) {
+    QMessageBox::warning(
+      m_toolbar_window.get(), QObject::tr("Unable to Create Blotter"),
+      QString::fromStdString(e.what()));
+  }
+}
+
+void ToolbarController::on_open_blotter(
+    const std::shared_ptr<BlotterModel>& blotter) {
+  m_user_profile->GetBlotterRegistry().get(*blotter).open();
 }
 
 void ToolbarController::on_book_view_closed(BookViewController& controller) {

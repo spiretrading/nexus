@@ -9,9 +9,6 @@ namespace Spire {
   class BlotterRegistry {
     public:
 
-      /** A list of blotters. */
-      using BlottersModel = ListModel<std::shared_ptr<BlotterModel>>;
-
       /** The active blotter. */
       using ActiveModel = ValueModel<std::shared_ptr<BlotterModel>>;
 
