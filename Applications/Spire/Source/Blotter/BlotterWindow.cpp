@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include <QIcon>
+#include <QInputDialog>
 #include "Spire/Blotter/BlotterLinkMenu.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -80,8 +81,47 @@ void BlotterWindow::on_name(const QString& name) {
 void BlotterWindow::on_context_menu(const QPoint& position) {
   auto menu = new ContextMenu(*m_tasks_view);
   auto links = new BlotterLinkMenu(m_model, m_collection, *menu);
-  menu->add_menu(tr("Links"), *links);
+  auto update = [=, this] {
+    auto count = 1;
+    if(links->get_count() != 0) {
+      ++count;
+    }
+    if(menu->get_count() == count) {
+      return;
+    }
+    menu->reset();
+    menu->add_action(tr("Rename"),
+      std::bind_front(&BlotterWindow::on_rename, this));
+    menu->get_menu_item(0)->setEnabled(!m_model->is_consolidated());
+    if(links->get_count() != 0) {
+      menu->add_menu(tr("Links"), *links);
+    }
+  };
+  update();
+  auto connection = std::make_shared<scoped_connection>(
+    m_collection->connect_operation_signal([=] (const auto&) {
+      update();
+    }));
+  connect(menu, &QObject::destroyed, [=] {
+    connection->disconnect();
+  });
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
   menu->window()->move(m_tasks_view->mapToGlobal(position));
   menu->window()->show();
+}
+
+void BlotterWindow::on_rename() {
+  auto dialog = new QInputDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setWindowTitle(tr("Rename Blotter"));
+  dialog->setLabelText(tr("Name"));
+  dialog->setOkButtonText(tr("Rename"));
+  dialog->setTextValue(m_model->get_name()->get());
+  connect(dialog, &QInputDialog::textValueSelected, this,
+    [=, this] (const auto& name) {
+      if(!name.trimmed().isEmpty()) {
+        m_model->get_name()->set(name);
+      }
+    });
+  dialog->open();
 }

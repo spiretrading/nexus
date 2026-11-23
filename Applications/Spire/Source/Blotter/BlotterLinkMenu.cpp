@@ -49,9 +49,6 @@ void BlotterLinkMenu::rebuild() {
     m_entries.emplace_back(model, std::move(checked),
       std::move(name_connection), std::move(checked_connection));
   }
-  if(m_entries.empty()) {
-    add_disabled_action(tr("No blotters available"));
-  }
 }
 
 void BlotterLinkMenu::on_collection(

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <QContextMenuEvent>
 #include <QEventLoop>
+#include <QInputDialog>
 #include <QTimer>
 #include <QtTest/qtestkeyboard.h>
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -428,9 +429,11 @@ TEST_SUITE("BlotterWindow") {
     QApplication::sendEvent(&body, &event);
     QApplication::processEvents();
     auto& menu = find_widget<ContextMenu>(window);
-    REQUIRE(menu.get_count() == 1);
+    REQUIRE(menu.get_count() == 2);
+    REQUIRE(find_widget<TextBox>(*menu.get_menu_item(0)).
+      get_current()->get() == "Rename");
     auto& links =
-      find_widget<SubmenuItem>(*menu.get_menu_item(0)).get_context_menu();
+      find_widget<SubmenuItem>(*menu.get_menu_item(1)).get_context_menu();
     dynamic_cast<OverlayPanel&>(*menu.window()).set_closed_on_focus_out(false);
     dynamic_cast<OverlayPanel&>(*links.window()).set_closed_on_focus_out(false);
     REQUIRE(links.get_count() == 2);
@@ -440,7 +443,7 @@ TEST_SUITE("BlotterWindow") {
         menu.window()->show();
       }
       if(!links.isVisible()) {
-        navigation.get_current()->set(0);
+        navigation.get_current()->set(1);
         auto right = QKeyEvent(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
         QApplication::sendEvent(&navigation, &right);
       }
@@ -462,6 +465,7 @@ TEST_SUITE("BlotterWindow") {
       QApplication::sendEvent(links.get_menu_item(index), &enter);
     };
     if(model->is_consolidated()) {
+      REQUIRE_FALSE(menu.get_menu_item(0)->isEnabled());
       REQUIRE(label(0) == "First");
       REQUIRE(label(1) == "Second");
       REQUIRE(checked(0));
@@ -473,6 +477,7 @@ TEST_SUITE("BlotterWindow") {
       REQUIRE(checked(0));
       return;
     }
+    REQUIRE(menu.get_menu_item(0)->isEnabled());
     REQUIRE(label(0) == "Second");
     REQUIRE(label(1) == "Consolidated");
     REQUIRE_FALSE(checked(0));
@@ -509,8 +514,85 @@ TEST_SUITE("BlotterWindow") {
     REQUIRE(label(0) == "Third");
     REQUIRE_FALSE(checked(0));
     collection->remove(2);
+    REQUIRE(links.get_count() == 0);
+    REQUIRE(menu.get_count() == 1);
+    REQUIRE(find_widget<TextBox>(*menu.get_menu_item(0)).
+      get_current()->get() == "Rename");
+    add(account, false, "Fourth");
+    REQUIRE(menu.get_count() == 2);
     REQUIRE(links.get_count() == 1);
-    REQUIRE_FALSE(links.get_menu_item(0)->isEnabled());
-    REQUIRE(label(0) == "No blotters available");
+    REQUIRE(label(0) == "Fourth");
+  }
+
+  UI_TEST_CASE("rename") {
+    initialize_resources();
+    auto environment = TestEnvironment();
+    auto clients = TestClients(Ref(environment));
+    auto collection = std::make_shared<BlotterCollection>(
+      clients.get_market_data_client());
+    auto is_consolidated = false;
+    auto is_cancelled = false;
+    auto name = QString("Renamed");
+    auto expected = name;
+    SUBCASE("submit") {}
+    SUBCASE("cancel") {
+      is_cancelled = true;
+      expected = "Original";
+    }
+    SUBCASE("empty") {
+      name = "   ";
+      expected = "Original";
+    }
+    SUBCASE("consolidated") {
+      is_consolidated = true;
+    }
+    auto model = collection->add(std::make_shared<CompositeBlotterModel>(
+      DirectoryEntry::make_account(1, "one"), is_consolidated,
+      std::make_shared<LocalTextModel>("Original"),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
+      std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
+      std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()));
+    auto window = BlotterWindow(model, collection,
+      std::make_shared<CancelKeyBindingsModel>(),
+      std::make_shared<PositionKeyBindingsModel>());
+    window.show();
+    QApplication::processEvents();
+    auto& tasks = find_widget<BlotterTasksView>(window);
+    auto& body = find_widget<TableView>(tasks).get_body();
+    auto position = body.rect().center();
+    auto event = QContextMenuEvent(
+      QContextMenuEvent::Mouse, position, body.mapToGlobal(position));
+    QApplication::sendEvent(&body, &event);
+    QApplication::processEvents();
+    auto& menu = find_widget<ContextMenu>(window);
+    REQUIRE(menu.get_count() == 1);
+    REQUIRE(find_widget<TextBox>(*menu.get_menu_item(0)).
+      get_current()->get() == "Rename");
+    auto enter = QKeyEvent(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+    QApplication::sendEvent(menu.get_menu_item(0), &enter);
+    auto dialog = window.findChild<QInputDialog*>();
+    if(is_consolidated) {
+      REQUIRE_FALSE(menu.get_menu_item(0)->isEnabled());
+      REQUIRE_FALSE(dialog);
+      REQUIRE(model->get_name()->get() == "Original");
+      return;
+    }
+    REQUIRE(dialog);
+    REQUIRE(dialog->isVisible());
+    REQUIRE(dialog->textValue() == "Original");
+    REQUIRE(dialog->okButtonText() == "Rename");
+    dialog->setTextValue(name);
+    REQUIRE(model->get_name()->get() == "Original");
+    if(is_cancelled) {
+      dialog->reject();
+    } else {
+      dialog->accept();
+    }
+    REQUIRE(model->get_name()->get() == expected);
+    REQUIRE(window.windowTitle() ==
+      QString("Blotter \xE2\x80\x93 %1").arg(expected));
   }
 }

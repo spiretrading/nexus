@@ -288,7 +288,7 @@ TableView* BlotterTasksTableView::make_table() const {
       set(Fill(QColor(0x4B23A0)));
   });
   pin_header->set_label(*pin_label);
-  const auto DEFAULT_WIDTHS = std::array{30, 150, 65, 85};
+  const auto DEFAULT_WIDTHS = std::array{36, 150, 65, 85};
   auto& widths = *header.get_widths();
   for(auto i = 0; i < FIXED_COLUMNS; ++i) {
     widths.set(i, scale_width(DEFAULT_WIDTHS[i]));

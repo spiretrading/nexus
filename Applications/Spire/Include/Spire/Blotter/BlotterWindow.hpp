@@ -67,6 +67,7 @@ namespace Spire {
 
       void on_name(const QString& name);
       void on_context_menu(const QPoint& position);
+      void on_rename();
   };
 }
 
