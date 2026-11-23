@@ -70,6 +70,9 @@ namespace Spire {
        */
       void on_flatten_positions(const std::vector<Nexus::Position>& positions);
 
+    protected:
+      void closeEvent(QCloseEvent* event) override;
+
     private:
       struct Blotter {
         std::shared_ptr<TasksModel> m_tasks;

@@ -11,10 +11,12 @@
 #include "Spire/Canvas/StandardNodes/FirstNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
 
 using namespace Beam;
@@ -56,6 +58,53 @@ namespace {
 }
 
 TEST_SUITE("BlotterTasksTableView") {
+  UI_TEST_CASE("pin_alignment") {
+    auto environment = TestEnvironment();
+    auto profile = UserProfile("", false, false, {}, {},
+      get_default_additional_tag_database(), {}, {}, {},
+      Clients(std::in_place_type<TestClients>, Ref(environment)));
+    auto fixture = Fixture();
+    auto entry = BlotterTaskEntry();
+    entry.m_task =
+      std::make_shared<Task>(IntegerNode(1), DirectoryEntry(), Ref(profile));
+    fixture.m_tasks->push(entry);
+    fixture.m_view->resize(640, 240);
+    fixture.m_view->show();
+    QApplication::processEvents();
+    auto find_pin = [] (QWidget& parent) -> Icon& {
+      for(auto child : parent.findChildren<QWidget*>()) {
+        auto icon = dynamic_cast<Icon*>(child);
+        if(icon && icon->sizeHint() == scale(10, 10)) {
+          return *icon;
+        }
+      }
+      throw std::runtime_error("Pin icon not found.");
+    };
+    auto& table = fixture.table();
+    auto& header = *table.get_header().get_item(0);
+    INFO("Pinned column width: ", header.width());
+    for(auto order : {TableHeaderItem::Order::NONE,
+        TableHeaderItem::Order::ASCENDING,
+        TableHeaderItem::Order::DESCENDING}) {
+      auto model = header.get_model()->get();
+      model.m_order = order;
+      header.get_model()->set(model);
+      QApplication::processEvents();
+      auto row = table.get_body().find_item(TableIndex(0, 0));
+      REQUIRE(row);
+      auto& header_pin = find_pin(header);
+      auto& row_pin = find_pin(*row);
+      auto row_image = QRect(QPoint(
+        (row_pin.width() - row_pin.sizeHint().width()) / 2,
+        (row_pin.height() - row_pin.sizeHint().height()) / 2),
+        row_pin.sizeHint());
+      REQUIRE(header_pin.mapToGlobal(QPoint()).x() ==
+        row_pin.mapToGlobal(row_image.topLeft()).x());
+      REQUIRE(header_pin.visibleRegion().boundingRect() == header_pin.rect());
+      REQUIRE(row_pin.visibleRegion().contains(row_image));
+    }
+  }
+
   UI_TEST_CASE("row_multi_selection") {
     auto environment = TestEnvironment();
     auto profile = UserProfile("", false, false, {}, {},

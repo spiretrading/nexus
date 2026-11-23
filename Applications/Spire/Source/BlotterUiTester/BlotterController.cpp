@@ -227,6 +227,11 @@ void BlotterController::on_flatten_positions(
   m_output->append(tr("Flatten Positions: [%1]").arg(entries.join(", ")));
 }
 
+void BlotterController::closeEvent(QCloseEvent* event) {
+  QWidget::closeEvent(event);
+  QApplication::quit();
+}
+
 OrderFields BlotterController::make_fields() const {
   auto fields = OrderFields();
   fields.m_account =

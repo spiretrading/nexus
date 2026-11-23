@@ -233,7 +233,10 @@ TableView* BlotterTasksTableView::make_table() const {
             set(BackgroundColor(Qt::transparent));
           style.get(Any() > is_a<Icon>()).set(Fill(QColor(0xB8B8B8)));
         });
-        return pin;
+        auto body = new QWidget();
+        auto layout = make_hbox_layout(body);
+        layout->addWidget(pin, 0, Qt::AlignLeft);
+        return body;
       } else if(column == TaskColumn::STATE) {
         auto entry = make_list_value_model(tasks, row);
         auto state = make_task_state_box(
@@ -280,7 +283,11 @@ TableView* BlotterTasksTableView::make_table() const {
   auto pin_header = header.get_item(pinned_column);
   pin_header->set_is_resizeable(false);
   pin_header->setAccessibleName(tr("Pinned"));
-  update_style(*pin_header, [] (auto& style) {
+  auto pin_offset =
+    scale_width(1) + (scale_width(26) - pin_image.width()) / 2;
+  update_style(*pin_header, [=] (auto& style) {
+    style.get(Any() > TableHeaderItem::Container()).
+      set(PaddingLeft(pin_offset));
     style.get(Any() > TableHeaderItem::Separator()).set(Visibility::VISIBLE);
     style.get(Any() > TableHeaderItem::Label() > is_a<Icon>()).
       set(Fill(QColor(0xB8B8B8)));
@@ -288,10 +295,11 @@ TableView* BlotterTasksTableView::make_table() const {
       set(Fill(QColor(0x4B23A0)));
   });
   pin_header->set_label(*pin_label);
-  const auto DEFAULT_WIDTHS = std::array{36, 150, 65, 85};
+  auto default_widths = std::array{pin_header->sizeHint().width(),
+    scale_width(150), scale_width(65), scale_width(85)};
   auto& widths = *header.get_widths();
   for(auto i = 0; i < FIXED_COLUMNS; ++i) {
-    widths.set(i, scale_width(DEFAULT_WIDTHS[i]));
+    widths.set(i, default_widths[i]);
   }
   for(auto i = 0; i < m_monitors->get_size(); ++i) {
     if(auto width = m_monitors->get(i).m_default_width) {
