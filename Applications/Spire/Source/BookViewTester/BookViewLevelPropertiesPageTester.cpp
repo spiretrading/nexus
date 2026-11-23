@@ -1,7 +1,5 @@
 #include <vector>
 #include <doctest/doctest.h>
-#include <QEventLoop>
-#include <QTimer>
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/ColorBox.hpp"
@@ -27,12 +25,6 @@ namespace {
       }
     }
     return boxes;
-  }
-
-  void wait() {
-    auto loop = QEventLoop();
-    QTimer::singleShot(200, &loop, &QEventLoop::quit);
-    loop.exec();
   }
 }
 
@@ -74,7 +66,7 @@ TEST_SUITE("BookViewLevelPropertiesPage") {
     properties.m_fill_type = FillType::SOLID;
     current->set(properties);
     auto scheme = current->get().m_color_scheme;
-    wait();
+    page.flush();
     REQUIRE(current->get().m_color_scheme == scheme);
   }
 
@@ -90,7 +82,7 @@ TEST_SUITE("BookViewLevelPropertiesPage") {
     auto scheme = current->get().m_color_scheme;
     REQUIRE(scheme[0] == QColor(0xFF0000));
     REQUIRE(scheme[1] != initial[1]);
-    wait();
+    page.flush();
     REQUIRE(current->get().m_color_scheme == scheme);
   }
 }
