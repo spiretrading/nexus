@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <Beam/Queues/Queue.hpp>
 #include <QApplication>
 #include <QScreen>
 #include "Nexus/TestEnvironment/TestClients.hpp"
@@ -7,6 +6,7 @@
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
+#include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/BlotterUiTester/BlotterController.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -28,16 +28,14 @@ int main(int argc, char** argv) {
     Clients(std::in_place_type<TestClients>, Ref(environment)));
   auto monitors = make_default_task_monitors();
   auto tasks = std::make_shared<MonitoredTasksModel>(monitors);
-  auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
-  environment.monitor_order_submissions(orders);
+  auto orders = std::make_shared<TaskOrdersModel>(tasks);
   auto portfolio = std::make_shared<ControllerPortfolioModel>(
-    std::make_shared<ControllerPortfolioModel::Controller>(
-      Portfolio(TrueAverageBookkeeper()),
-      profile.GetClients().get_market_data_client(), orders));
+    orders, profile.GetClients().get_market_data_client());
   auto model = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>(QObject::tr("New Blotter")),
     std::make_shared<LocalBooleanModel>(false),
-    std::make_shared<LocalBooleanModel>(false), tasks, monitors, portfolio);
+    std::make_shared<LocalBooleanModel>(false), tasks, monitors, orders,
+    portfolio);
   auto controller = BlotterController(tasks, Ref(environment), Ref(profile));
   auto window = BlotterWindow(model,
     profile.GetKeyBindings()->get_cancel_key_bindings(),

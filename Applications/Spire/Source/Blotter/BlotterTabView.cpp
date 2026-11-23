@@ -3,7 +3,6 @@
 #include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Blotter/OrderExecutionReportsModel.hpp"
-#include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TabView.hpp"
 
@@ -24,7 +23,7 @@ BlotterTabView::BlotterTabView(std::shared_ptr<BlotterModel> model,
   tab_view->add(std::vector{tr("Positions"), tr("Pos")}, *m_positions);
   tab_view->add(
     std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
-  auto orders = std::make_shared<TaskOrdersModel>(model->get_tasks());
+  auto orders = model->get_orders();
   m_order_log = new OrderLogView(orders, std::move(cancel_bindings));
   tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);
   tab_view->add(

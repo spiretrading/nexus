@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <Beam/Queues/Queue.hpp>
 #include <QEventLoop>
 #include <QTimer>
 #include <QtTest/qtestkeyboard.h>
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Spire/Blotter/BlotterExecutionsView.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
@@ -56,6 +56,7 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<LocalTextModel>("Test"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false), tasks, monitors,
+      std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
     auto window = BlotterWindow(model,
       std::make_shared<CancelKeyBindingsModel>(),
@@ -156,6 +157,7 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
       std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
+      std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
     auto bindings = std::make_shared<CancelKeyBindingsModel>();
     bindings->get_binding(Operation::OLDEST)->set(Qt::Key_Escape);
@@ -197,6 +199,62 @@ TEST_SUITE("BlotterWindow") {
     REQUIRE(order_requests == std::vector{Operation::OLDEST});
   }
 
+  UI_TEST_CASE("orders") {
+    initialize_resources();
+    auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
+    auto make_order = [] (OrderId id) {
+      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
+        make_limit_order_fields(parse_ticker("RY.TSX"), Currencies::CAD,
+          Side::BID, "TSX", 10, Money(10)), id,
+        time_from_string("2026-11-22 10:00:00")));
+      Nexus::Tests::accept(*order);
+      Nexus::Tests::fill(*order, 10);
+      return order;
+    };
+    auto first = make_order(1);
+    orders->push(first);
+    auto model = std::make_shared<CompositeBlotterModel>(
+      std::make_shared<LocalTextModel>("Orders"),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(), orders,
+      std::make_shared<ArrayListModel<PortfolioUpdateEntry>>());
+    auto window = BlotterWindow(model,
+      std::make_shared<CancelKeyBindingsModel>(),
+      std::make_shared<PositionKeyBindingsModel>());
+    window.show();
+    QApplication::processEvents();
+    auto& tabs = find_widget<TabView>(window);
+    tabs.setFocus();
+    QTest::keyClick(window.windowHandle(), Qt::Key_Tab, Qt::ControlModifier);
+    QTest::keyClick(window.windowHandle(), Qt::Key_Tab, Qt::ControlModifier);
+    auto& log = find_widget<OrderLogView>(window);
+    QTest::keyClick(window.windowHandle(), Qt::Key_Tab, Qt::ControlModifier);
+    auto& executions = find_widget<BlotterExecutionsView>(window);
+    auto& reports = *executions.get_reports();
+    REQUIRE(model->get_tasks()->get_size() == 0);
+    REQUIRE(model->get_orders() == orders);
+    REQUIRE(log.get_orders() == orders);
+    auto& table = find_widget<TableView>(log);
+    REQUIRE(table.get_table()->get_row_size() == 1);
+    REQUIRE(reports.get_size() == 3);
+    REQUIRE(reports.get(0).m_order == first);
+    auto second = make_order(2);
+    orders->push(second);
+    REQUIRE(table.get_table()->get_row_size() == 2);
+    REQUIRE(reports.get_size() == 6);
+    orders->remove(0);
+    REQUIRE(table.get_table()->get_row_size() == 1);
+    REQUIRE(reports.get_size() == 3);
+    for(auto& report : std::as_const(reports)) {
+      REQUIRE(report.m_order == second);
+    }
+    orders->remove(0);
+    REQUIRE(table.get_table()->get_row_size() == 0);
+    REQUIRE(reports.get_size() == 0);
+  }
+
   UI_TEST_CASE("positions") {
     using Operation = PositionKeyBindingsModel::Operation;
     initialize_resources();
@@ -214,17 +272,17 @@ TEST_SUITE("BlotterWindow") {
         Money::ZERO, Money::ZERO, 100, 1),
       Inventory(Position(second, Currencies::CAD, -50, Money(-500)),
         Money::ZERO, Money::ZERO, 50, 1)};
-    auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
+    auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
     auto portfolio = std::make_shared<ControllerPortfolioModel>(
-      std::make_shared<ControllerPortfolioModel::Controller>(
-        Portfolio(TrueAverageBookkeeper(inventories)),
-        clients.get_market_data_client(), orders));
+      orders, Portfolio(TrueAverageBookkeeper(inventories)),
+      clients.get_market_data_client());
     auto model = std::make_shared<CompositeBlotterModel>(
       std::make_shared<LocalTextModel>("Positions"),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<LocalBooleanModel>(false),
       std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
-      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(), portfolio);
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(), orders,
+      portfolio);
     auto bindings = std::make_shared<PositionKeyBindingsModel>();
     bindings->get_binding(Operation::FLATTEN)->set(Qt::CTRL | Qt::Key_G);
     auto window = BlotterWindow(
