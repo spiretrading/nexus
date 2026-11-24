@@ -285,6 +285,35 @@ TEST_SUITE("BlotterRegistry") {
     flush_pending_routines();
   }
 
+  UI_TEST_CASE("shared_flatten_controller") {
+    auto fixture = Fixture();
+    auto& registry = fixture.m_profile.GetBlotterRegistry();
+    auto& consolidated = registry.get_consolidated();
+    auto& source = registry.create("Source", fixture.get_account());
+    auto ticker = parse_ticker("RY.TSX");
+    auto initial = fixture.submit();
+    fixture.m_environment.fill(*initial, 100);
+    auto order =
+      fixture.m_profile.GetClients().get_order_execution_client().load_order(
+        initial->get_info().m_id);
+    auto task = source.add(IntegerNode(0));
+    wait_for(*source.get_model()->get_orders(), [&] {
+      task->GetContext().GetOrderPublisher().push(order);
+    }, [&] {
+      return source.get_model()->get_orders()->get_size() == 1;
+    });
+    source.flatten(ticker);
+    auto flatten = fixture.m_submissions->pop();
+    auto pending = source.get_model()->get_tasks()->get(1).m_task;
+    consolidated.flatten(ticker);
+    source.flatten(ticker);
+    pending->GetExecutor().Close();
+    REQUIRE(flatten->get_info().m_fields.m_side == Side::ASK);
+    REQUIRE(flatten->get_info().m_fields.m_quantity == 100);
+    REQUIRE(source.get_model()->get_tasks()->get_size() == 2);
+    REQUIRE(!fixture.m_submissions->try_pop());
+  }
+
   UI_TEST_CASE("account_orders_and_positions") {
     auto fixture = Fixture();
     auto completed = fixture.submit();

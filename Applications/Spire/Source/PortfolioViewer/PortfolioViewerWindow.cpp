@@ -180,10 +180,10 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
       for(auto& entry : positions) {
         try {
           m_userProfile->GetBlotterRegistry().get_consolidated(entry.m_account).
-            flatten(entry.m_inventory.m_position);
+            flatten(entry.m_inventory.m_position.m_ticker);
         } catch(const std::exception& e) {
-          QMessageBox::warning(this, tr("Unable to flatten"),
-            QString::fromUtf8(e.what()));
+          QMessageBox::warning(
+            this, tr("Unable to flatten"), QString::fromUtf8(e.what()));
         }
       }
     });

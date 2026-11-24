@@ -13,7 +13,6 @@
 #include <QSaveFile>
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
-#include "Spire/Blotter/LegacyBlotterSettings.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
@@ -211,6 +210,8 @@ BlotterRegistry::BlotterRegistry(Ref<UserProfile> profile)
       m_active(std::make_shared<LocalValueModel<ActiveModel::Type>>()),
       m_read_only_active(m_active),
       m_position_bindings(std::make_shared<PositionKeyBindingsModel>()),
+      m_flatten_controller(
+        std::make_unique<FlattenController>(profile, m_collection)),
       m_is_updating_active(false) {
   set_active(*get_consolidated().get_model());
 }
@@ -415,7 +416,7 @@ BlotterController& BlotterRegistry::add(
   entry->m_controller = std::make_unique<BlotterController>(
     model, tasks, m_collection,
     m_profile->GetKeyBindings()->get_cancel_key_bindings(), m_position_bindings,
-    Ref(*m_profile));
+    Ref(*m_flatten_controller), Ref(*m_profile));
   entry->m_open_connection =
     entry->m_controller->is_open()->connect_update_signal(
       std::bind_front(&BlotterRegistry::on_open, this, std::cref(*model)));

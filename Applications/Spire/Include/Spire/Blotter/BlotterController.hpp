@@ -4,6 +4,7 @@
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
+#include "Spire/Blotter/FlattenController.hpp"
 
 namespace Spire {
 
@@ -18,6 +19,7 @@ namespace Spire {
        * @param collection The blotters available for linking.
        * @param cancel_bindings The user's cancel key bindings.
        * @param position_bindings The user's position key bindings.
+       * @param flatten_controller Coordinates outstanding flatten orders.
        * @param profile Supplies task execution services.
        */
       BlotterController(std::shared_ptr<BlotterModel> model,
@@ -25,6 +27,7 @@ namespace Spire {
         std::shared_ptr<BlotterCollection> collection,
         std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
         std::shared_ptr<PositionKeyBindingsModel> position_bindings,
+        Beam::Ref<FlattenController> flatten_controller,
         Beam::Ref<UserProfile> profile);
 
       ~BlotterController();
@@ -60,10 +63,10 @@ namespace Spire {
         const boost::optional<std::vector<Nexus::OrderId>>& ids);
 
       /**
-       * Submits a market order to flatten a position in this blotter's account.
-       * @param position The position to flatten.
+       * Flattens a position, accounting for outstanding flatten orders.
+       * @param ticker The position to flatten.
        */
-      void flatten(const Nexus::Position& position);
+      void flatten(const Nexus::Ticker& ticker);
 
       /** Opens or raises the window. */
       BlotterWindow& open();
@@ -82,6 +85,7 @@ namespace Spire {
       std::shared_ptr<BlotterCollection> m_collection;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_bindings;
       std::shared_ptr<PositionKeyBindingsModel> m_position_bindings;
+      FlattenController* m_flatten_controller;
       UserProfile* m_profile;
       std::shared_ptr<LocalBooleanModel> m_is_open;
       std::shared_ptr<const BooleanModel> m_read_only_is_open;

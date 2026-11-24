@@ -3,9 +3,9 @@
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Spire/Blotter/BlotterCollection.hpp"
 
 namespace Spire {
-  class BlotterCollection;
   class BlotterController;
   class UserProfile;
 

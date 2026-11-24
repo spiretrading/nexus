@@ -3,9 +3,9 @@
 #include <filesystem>
 #include "Spire/Blotter/BlotterController.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
+#include "Spire/Blotter/LegacyBlotterSettings.hpp"
 
 namespace Spire {
-  struct LegacyBlotterSettings;
   class UserProfile;
 
   /** Owns blotter controllers and manages the active blotter. */
@@ -104,6 +104,7 @@ namespace Spire {
       std::shared_ptr<ActiveModel> m_active;
       std::shared_ptr<const ActiveModel> m_read_only_active;
       std::shared_ptr<PositionKeyBindingsModel> m_position_bindings;
+      std::unique_ptr<FlattenController> m_flatten_controller;
       std::unordered_map<const BlotterModel*, std::unique_ptr<Entry>> m_entries;
       bool m_is_updating_active;
 

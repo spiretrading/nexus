@@ -4,7 +4,6 @@
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterController.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
-#include "Spire/Blotter/FlattenController.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -69,7 +68,8 @@ namespace {
 
     Blotter(UserProfile& profile,
         const std::shared_ptr<BlotterCollection>& collection,
-        const DirectoryEntry& account, bool is_consolidated)
+        FlattenController& flatten_controller, const DirectoryEntry& account,
+        bool is_consolidated)
         : m_tasks(std::make_shared<ArrayListModel<BlotterTaskEntry>>()),
           m_orders(std::make_shared<ArrayListModel<std::shared_ptr<Order>>>()),
           m_model(collection->add(std::make_shared<CompositeBlotterModel>(
@@ -80,7 +80,8 @@ namespace {
             std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()))),
           m_controller(std::make_unique<BlotterController>(m_model, m_tasks,
             collection, std::make_shared<CancelKeyBindingsModel>(),
-            std::make_shared<PositionKeyBindingsModel>(), Ref(profile))) {}
+            std::make_shared<PositionKeyBindingsModel>(),
+            Ref(flatten_controller), Ref(profile))) {}
   };
 
   struct Fixture {
@@ -125,6 +126,7 @@ namespace {
           entry.m_task->GetExecutor().Close();
         }
       }
+      m_blotters.clear();
       m_controller.reset();
       flush_pending_routines();
     }
@@ -135,7 +137,7 @@ namespace {
 
     Blotter& add(const DirectoryEntry& account, bool is_consolidated) {
       m_blotters.push_back(std::make_unique<Blotter>(
-        m_profile, m_collection, account, is_consolidated));
+        m_profile, m_collection, *m_controller, account, is_consolidated));
       return *m_blotters.back();
     }
 

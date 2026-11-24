@@ -4,8 +4,6 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <QEvent>
 #include <QMessageBox>
-#include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -66,13 +64,14 @@ BlotterController::BlotterController(std::shared_ptr<BlotterModel> model,
   std::shared_ptr<BlotterCollection> collection,
   std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
   std::shared_ptr<PositionKeyBindingsModel> position_bindings,
-  Ref<UserProfile> profile)
+  Ref<FlattenController> flatten_controller, Ref<UserProfile> profile)
   : m_id(boost::uuids::random_generator()()),
     m_model(std::move(model)),
     m_tasks(std::move(tasks)),
     m_collection(std::move(collection)),
     m_cancel_bindings(std::move(cancel_bindings)),
     m_position_bindings(std::move(position_bindings)),
+    m_flatten_controller(flatten_controller.get()),
     m_profile(profile.get()),
     m_is_open(std::make_shared<LocalBooleanModel>(false)),
     m_read_only_is_open(m_is_open) {}
@@ -166,15 +165,8 @@ void BlotterController::cancel(CancelKeyBindingsModel::Operation operation,
   execute(operation, task_prices, out(tasks));
 }
 
-void BlotterController::flatten(const Position& position) {
-  if(position.m_quantity == 0) {
-    return;
-  }
-  auto fields = make_market_order_fields(m_model->get_account(),
-    position.m_ticker, position.m_currency, get_opposite(get_side(position)),
-    DESTINATIONS.get_preferred_destination(position.m_ticker.get_venue()).m_id,
-    abs(position.m_quantity));
-  submit(*MakeOrderTaskNodeFromOrderFields(fields, *m_profile));
+void BlotterController::flatten(const Ticker& ticker) {
+  m_flatten_controller->flatten(*this, ticker);
 }
 
 BlotterWindow& BlotterController::open() {
@@ -319,7 +311,7 @@ void BlotterController::on_flatten_positions(
     const std::vector<Position>& positions) {
   for(auto& position : positions) {
     try {
-      flatten(position);
+      flatten(position.m_ticker);
     } catch(const std::exception& e) {
       QMessageBox::warning(m_window.get(), QObject::tr("Unable to flatten"),
         QString::fromUtf8(e.what()));

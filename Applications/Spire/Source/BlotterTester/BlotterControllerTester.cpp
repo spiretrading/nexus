@@ -37,6 +37,7 @@ namespace {
     TestEnvironment m_environment;
     UserProfile m_profile;
     std::shared_ptr<BlotterCollection> m_collection;
+    FlattenController m_flatten_controller;
     std::shared_ptr<TasksModel> m_tasks;
     std::shared_ptr<ArrayListModel<std::shared_ptr<Order>>> m_orders;
     std::shared_ptr<ArrayListModel<PortfolioUpdateEntry>> m_portfolio;
@@ -54,6 +55,7 @@ namespace {
             Clients(std::in_place_type<TestClients>, Ref(m_environment))),
           m_collection(std::make_shared<BlotterCollection>(
             m_profile.GetClients().get_market_data_client())),
+          m_flatten_controller(Ref(m_profile), m_collection),
           m_tasks(std::make_shared<ArrayListModel<BlotterTaskEntry>>()),
           m_orders(std::make_shared<ArrayListModel<std::shared_ptr<Order>>>()),
           m_portfolio(std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()),
@@ -80,7 +82,8 @@ namespace {
 
     auto make_controller() {
       return std::make_unique<BlotterController>(m_model, m_tasks, m_collection,
-        m_cancel_bindings, m_position_bindings, Ref(m_profile));
+        m_cancel_bindings, m_position_bindings,
+        Ref(m_flatten_controller), Ref(m_profile));
     }
 
     auto submit(Side side, Money price) {
@@ -91,6 +94,19 @@ namespace {
       m_environment.accept(*submission);
       m_orders->push(order);
       return submission;
+    }
+
+    void trade(const Position& position) {
+      if(position.m_quantity == 0) {
+        return;
+      }
+      auto order = m_profile.GetClients().get_order_execution_client().submit(
+        make_limit_order_fields(m_model->get_account(), position.m_ticker,
+          position.m_currency, get_side(position), "TSX",
+          abs(position.m_quantity), Money(10)));
+      auto submission = m_submissions->pop();
+      m_environment.fill(*submission, abs(position.m_quantity));
+      m_orders->push(order);
     }
   };
 
@@ -437,8 +453,9 @@ TEST_SUITE("BlotterController") {
       side = Side::BID;
     }
     SUBCASE("long") {}
-    controller->flatten(Position(parse_ticker("RY.TSX"), Currencies::CAD,
+    fixture.trade(Position(parse_ticker("RY.TSX"), Currencies::CAD,
       quantity, quantity * Money(10)));
+    controller->flatten(parse_ticker("RY.TSX"));
     wait_for_order(*fixture.m_tasks->get(0).m_task);
     auto order = fixture.m_submissions->pop();
     auto& fields = order->get_info().m_fields;
@@ -452,7 +469,7 @@ TEST_SUITE("BlotterController") {
       DESTINATIONS.get_preferred_destination(Venues::TSX).m_id);
     REQUIRE_FALSE(controller->is_open()->get());
     REQUIRE(fixture.m_tasks->get_size() == 1);
-    controller->flatten(Position(parse_ticker("RY.TSX"), Currencies::CAD));
+    controller->flatten(parse_ticker("RY.TSX"));
     REQUIRE(fixture.m_tasks->get_size() == 1);
     REQUIRE(!fixture.m_submissions->try_pop());
   }
@@ -464,6 +481,7 @@ TEST_SUITE("BlotterController") {
       Position(parse_ticker("TD.TSX"), Currencies::CAD, -50, Money(-500)),
       Position(parse_ticker("BMO.TSX"), Currencies::CAD, 0, Money::ZERO)};
     for(auto& position : positions) {
+      fixture.trade(position);
       auto entry = PortfolioUpdateEntry();
       entry.m_inventory.m_position = position;
       fixture.m_portfolio->push(entry);
@@ -483,11 +501,13 @@ TEST_SUITE("BlotterController") {
       key(view, Qt::Key_F, Qt::ControlModifier | Qt::ShiftModifier);
     }
     REQUIRE(fixture.m_tasks->get_size() == count);
-    for(auto i = 0; i != count; ++i) {
+    key(view, Qt::Key_F, Qt::ControlModifier | Qt::ShiftModifier);
+    REQUIRE(fixture.m_tasks->get_size() == 2);
+    for(auto i = 0; i != 2; ++i) {
       wait_for_order(*fixture.m_tasks->get(i).m_task);
       auto order = fixture.m_submissions->pop();
       REQUIRE(order->get_info().m_fields.m_type == OrderType::MARKET);
-      if(count == 1) {
+      if(count == 1 && i == 0) {
         REQUIRE(order->get_info().m_fields.m_side == Side::BID);
         REQUIRE(order->get_info().m_fields.m_quantity == 50);
       }
@@ -555,6 +575,9 @@ TEST_SUITE("BlotterController") {
     REQUIRE(fields.m_side == Side::ASK);
     REQUIRE(fields.m_quantity == 100);
     REQUIRE(controller.get_model()->get_tasks()->get_size() == 1);
+    activate("Flatten Position");
+    REQUIRE(controller.get_model()->get_tasks()->get_size() == 1);
+    REQUIRE(!fixture.m_submissions->try_pop());
     controller.get_model()->get_tasks()->get(0).m_task->GetExecutor().Close();
   }
 
