@@ -1,72 +1,113 @@
 #include "Spire/Canvas/Tasks/Executor.hpp"
+#include <condition_variable>
+#include <mutex>
+#include <Aspen/CommitFlag.hpp>
+#include <Aspen/Concur.hpp>
+#include <Aspen/Queue.hpp>
+#include <Aspen/Shared.hpp>
+#include <Aspen/Trigger.hpp>
+#include <Beam/IO/OpenState.hpp>
+#include <Beam/Routines/Scheduler.hpp>
 
+using namespace Aspen;
 using namespace Beam;
 using namespace Spire;
 
+struct Executor::State {
+  mutable std::mutex m_mutex;
+  std::condition_variable m_condition;
+  OpenState m_open_state;
+  Trigger m_trigger;
+  CommitFlag m_flag;
+  bool m_has_update;
+  Shared<Queue<SharedBox<void>>> m_producer;
+  Concur<Shared<Queue<SharedBox<void>>>> m_reactor;
+
+  State();
+
+  Aspen::State commit(int sequence);
+  void run();
+  void close();
+  void on_update();
+};
+
 Executor::Executor()
-    : m_trigger([=] { OnUpdate(); }),
-      m_reactor(m_producer) {
-  m_flag.set_trigger(&m_trigger);
-}
+  : m_state(std::make_shared<State>()) {}
 
 Executor::~Executor() {
   Close();
 }
 
-void Executor::Add(Aspen::Box<void> reactor) {
-  m_producer->push(Aspen::Shared(std::move(reactor)));
+void Executor::Add(Box<void> reactor) {
+  m_state->m_producer->push(Shared(std::move(reactor)));
 }
 
 void Executor::Open() {
-  m_reactorLoop = spawn([=] {
-    RunLoop();
-  });
+  Open(std::shared_ptr<void>());
 }
 
 void Executor::Close() {
-  if(m_openState.set_closing()) {
-    return;
-  }
-  {
-    auto lock = std::unique_lock(m_mutex);
-    m_updateCondition.notify_all();
-  }
-  m_openState.close();
+  m_state->close();
 }
 
-Aspen::State Executor::Commit(int sequence) {
+void Executor::Open(std::shared_ptr<void> lifetime) {
+  spawn([state = m_state, lifetime = std::move(lifetime)] {
+    state->run();
+  });
+}
+
+Executor::State::State()
+    : m_trigger([=, this] {
+        on_update();
+      }),
+      m_has_update(false),
+      m_reactor(m_producer) {
+  m_flag.set_trigger(&m_trigger);
+}
+
+Aspen::State Executor::State::commit(int sequence) {
   m_flag.clear();
-  auto scope = Aspen::CommitFlagScope(m_flag);
-  auto previous = Aspen::Trigger::get_trigger();
-  Aspen::Trigger::set_trigger(m_trigger);
+  auto scope = CommitFlagScope(m_flag);
+  auto previous = Trigger::get_trigger();
+  Trigger::set_trigger(m_trigger);
   auto state = m_reactor.commit(sequence);
-  Aspen::Trigger::set_trigger(previous);
+  Trigger::set_trigger(previous);
   return state;
 }
 
-void Executor::RunLoop() {
-  m_has_update = false;
+void Executor::State::run() {
   auto sequence = 0;
-  while(m_openState.is_open()) {
-    auto state = Commit(sequence);
+  while(m_open_state.is_open()) {
+    auto state = commit(sequence);
     ++sequence;
-    if(Aspen::is_complete(state)) {
+    if(is_complete(state)) {
       break;
-    } else if(!Aspen::has_continuation(state)) {
+    } else if(!has_continuation(state)) {
       auto lock = std::unique_lock(m_mutex);
-      while(!m_has_update && m_openState.is_open()) {
-        m_updateCondition.wait(lock);
+      while(!m_has_update && m_open_state.is_open()) {
+        m_condition.wait(lock);
       }
       m_has_update = false;
     }
   }
-  Close();
+  close();
 }
 
-void Executor::OnUpdate() {
+void Executor::State::close() {
+  if(m_open_state.set_closing()) {
+    return;
+  }
+  {
+    auto lock = std::lock_guard(m_mutex);
+    m_condition.notify_all();
+  }
+  m_open_state.close();
+}
+
+void Executor::State::on_update() {
   {
     auto lock = std::lock_guard(m_mutex);
     m_has_update = true;
   }
-  m_updateCondition.notify_one();
+  m_condition.notify_one();
 }

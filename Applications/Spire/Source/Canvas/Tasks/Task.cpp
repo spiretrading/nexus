@@ -1,4 +1,6 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
+#include <atomic>
+#include <Aspen/Aspen.hpp>
 #include <Beam/Queues/PublisherReactor.hpp>
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
@@ -7,6 +9,7 @@
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
+using namespace Aspen;
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
@@ -14,6 +17,25 @@ using namespace Spire;
 namespace {
   std::atomic_int nextId = 0;
 }
+
+struct Task::Execution {
+  std::unique_ptr<CanvasNode> m_node;
+  Spire::Executor m_executor;
+  CanvasNodeTranslationContext m_context;
+  bool m_isExecutable;
+  bool m_isFailed;
+  std::atomic_bool m_isCancelable;
+  State m_state;
+  Shared<Cell<bool>> m_cancelToken;
+  int m_id;
+  SequencePublisher<StateEntry> m_publisher;
+
+  Execution(const CanvasNode& node, DirectoryEntry account,
+    Ref<UserProfile> profile);
+
+  void execute(std::shared_ptr<Execution> lifetime);
+  void cancel();
+};
 
 Task::StateEntry::StateEntry(State state)
   : m_state(state) {}
@@ -24,59 +46,80 @@ Task::StateEntry::StateEntry(State state, const std::string& message)
 
 Task::Task(const CanvasNode& node, DirectoryEntry executingAccount,
   Ref<UserProfile> userProfile)
+  : m_execution(std::make_shared<Execution>(
+      node, std::move(executingAccount), userProfile)) {}
+
+Task::~Task() {
+  m_execution->m_executor.Close();
+}
+
+const CanvasNode& Task::GetNode() const {
+  return *m_execution->m_node;
+}
+
+CanvasNodeTranslationContext& Task::GetContext() {
+  return m_execution->m_context;
+}
+
+const CanvasNodeTranslationContext& Task::GetContext() const {
+  return m_execution->m_context;
+}
+
+Spire::Executor& Task::GetExecutor() {
+  return m_execution->m_executor;
+}
+
+const Spire::Executor& Task::GetExecutor() const {
+  return m_execution->m_executor;
+}
+
+int Task::GetId() const {
+  return m_execution->m_id;
+}
+
+void Task::Execute() {
+  m_execution->execute(m_execution);
+}
+
+void Task::Cancel() {
+  m_execution->cancel();
+}
+
+const Publisher<Task::StateEntry>& Task::GetPublisher() const {
+  return m_execution->m_publisher;
+}
+
+Task::Execution::Execution(const CanvasNode& node, DirectoryEntry account,
+  Ref<UserProfile> profile)
   : m_node(
       [&] {
         auto n = PreprocessTranslation(node);
-        if(n == nullptr) {
+        if(!n) {
           return CanvasNode::Clone(node);
         }
         return n;
       }()),
-    m_context(Ref(userProfile), Ref(m_executor), std::move(executingAccount)),
+    m_context(profile, Ref(m_executor), std::move(account)),
     m_isExecutable(true),
     m_isFailed(false),
     m_isCancelable(true),
-    m_id(++nextId),
-    m_state(State::READY) {}
+    m_state(State::READY),
+    m_id(++nextId) {}
 
-const CanvasNode& Task::GetNode() const {
-  return *m_node;
-}
-
-CanvasNodeTranslationContext& Task::GetContext() {
-  return m_context;
-}
-
-const CanvasNodeTranslationContext& Task::GetContext() const {
-  return m_context;
-}
-
-Executor& Task::GetExecutor() {
-  return m_executor;
-}
-
-const Executor& Task::GetExecutor() const {
-  return m_executor;
-}
-
-int Task::GetId() const {
-  return m_id;
-}
-
-void Task::Execute() {
+void Task::Execution::execute(std::shared_ptr<Execution> lifetime) {
   if(!m_isExecutable) {
     return;
   }
   m_isExecutable = false;
   auto translation = Translate(m_context, *m_node).Extract<Aspen::Box<void>>();
-  m_executor.Add(Aspen::box(
-    Aspen::chain(
-      Aspen::lift([=] {
+  m_executor.Add(box(
+    chain(
+      lift([=, this] {
         m_state = State::INITIALIZING;
         m_publisher.push(StateEntry(m_state));
       }),
-      Aspen::until(m_cancelToken,
-        Aspen::lift([=] (const Aspen::Maybe<void>& value) {
+      until(m_cancelToken,
+        lift([=, this] (const Maybe<void>& value) {
           if(m_state == State::INITIALIZING) {
             m_state = State::ACTIVE;
             m_publisher.push(StateEntry(m_state));
@@ -88,18 +131,18 @@ void Task::Execute() {
             m_cancelToken->set_complete(true);
           }
         }, std::move(translation))),
-      Aspen::lift([=] {
+      lift([=, this] {
         if(!m_isCancelable) {
           m_state = State::PENDING_CANCEL;
           m_publisher.push(StateEntry(m_state));
         }
         m_context.GetOrderPublisher().close();
       }),
-      Aspen::until(!m_cancelToken,
+      until(!m_cancelToken,
         Aspen::Box<void>(OrderCancellationReactor(Ref(
           m_context.GetUserProfile().GetClients().get_order_execution_client()),
           publisher_reactor(m_context.GetOrderPublisher())))),
-      Aspen::lift([=] {
+      lift([=, this] {
         if(m_isFailed) {
           m_state = State::FAILED;
         } else if(m_state == State::PENDING_CANCEL) {
@@ -109,10 +152,10 @@ void Task::Execute() {
         }
         m_publisher.push(StateEntry(m_state));
       }))));
-  m_executor.Open();
+  m_executor.Open(std::move(lifetime));
 }
 
-void Task::Cancel() {
+void Task::Execution::cancel() {
   if(m_isExecutable) {
     m_isExecutable = false;
     m_publisher.push(StateEntry(State::PENDING_CANCEL));
@@ -121,10 +164,6 @@ void Task::Cancel() {
   } else if(m_isCancelable.exchange(false)) {
     m_cancelToken->set_complete(true);
   }
-}
-
-const Publisher<Task::StateEntry>& Task::GetPublisher() const {
-  return m_publisher;
 }
 
 std::ostream& Spire::operator <<(std::ostream& out, Task::State state) {
