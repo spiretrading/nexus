@@ -1,5 +1,7 @@
 #include "Spire/SpireTester/TableModelTester.hpp"
 #include <doctest/doctest.h>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 
 using namespace boost;
@@ -90,6 +92,39 @@ void Spire::require_transaction(
 }
 
 TEST_SUITE("TableModel") {
+  TEST_CASE("get_owned_value") {
+    auto source = std::make_shared<ArrayListModel<int>>();
+    source->push(41);
+    source->push(42);
+    auto observer = std::weak_ptr<int>();
+    {
+      auto table = ListToTableModel(source, 2,
+        [&] (auto& value, auto column) -> AnyRef {
+          if(column == 1) {
+            return value;
+          }
+          auto result = std::make_shared<int>(value);
+          observer = result;
+          return AnyRef(std::move(result));
+        });
+      auto& first = table.get<std::shared_ptr<int>>(0, 0);
+      auto previous = observer;
+      REQUIRE(!previous.expired());
+      REQUIRE(*first == 41);
+      auto& second = table.get<std::shared_ptr<int>>(1, 0);
+      REQUIRE(previous.expired());
+      REQUIRE(!observer.expired());
+      REQUIRE(*second == 42);
+      auto& reference = table.get<int>(0, 1);
+      REQUIRE(observer.expired());
+      REQUIRE(&reference == &source->get(0));
+      table.get<std::shared_ptr<int>>(1, 0);
+      REQUIRE(reference == 41);
+      REQUIRE(!observer.expired());
+    }
+    REQUIRE(observer.expired());
+  }
+
   TEST_CASE("visit_all_operations") {
     auto start_count = 0;
     auto end_count = 0;
