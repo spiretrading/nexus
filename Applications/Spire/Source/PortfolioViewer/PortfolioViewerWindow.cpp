@@ -146,8 +146,10 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
   auto contextMenu = std::make_unique<QMenu>();
   if(!selectedAccounts.empty()) {
     auto blotterAction = new FunctionalAction(contextMenu.get());
-    blotterAction->SetFunction([] {
-      // TODO: Open the selected accounts' new blotters.
+    blotterAction->SetFunction([&] {
+      for(auto& account : selectedAccounts) {
+        m_userProfile->GetBlotterRegistry().get_consolidated(account).open();
+      }
     });
     QString blotterText;
     if(selectedAccounts.size() == 1) {
@@ -174,8 +176,16 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
     profileAction->setText(profileText);
     contextMenu->addAction(profileAction);
     auto flattenAction = new FunctionalAction(contextMenu.get());
-    flattenAction->SetFunction([] {
-      // TODO: Flatten the selected positions through the new blotter.
+    flattenAction->SetFunction([&] {
+      for(auto& entry : positions) {
+        try {
+          m_userProfile->GetBlotterRegistry().get_consolidated(entry.m_account).
+            flatten(entry.m_inventory.m_position);
+        } catch(const std::exception& e) {
+          QMessageBox::warning(this, tr("Unable to flatten"),
+            QString::fromUtf8(e.what()));
+        }
+      }
     });
     QString flattenText;
     if(positions.size() == 1) {

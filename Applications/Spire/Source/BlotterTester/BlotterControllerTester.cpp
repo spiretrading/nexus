@@ -1,10 +1,16 @@
 #include <QEvent>
 #include <QEventLoop>
+#include <QKeyEvent>
+#include <QMenu>
 #include <QPointer>
+#include <QTableView>
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterController.hpp"
+#include "Spire/Blotter/BlotterPositionsView.hpp"
+#include "Spire/Blotter/BlotterTasksView.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
+#include "Spire/Blotter/OrderLogView.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
@@ -12,9 +18,12 @@
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/TabView.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -29,23 +38,37 @@ namespace {
     UserProfile m_profile;
     std::shared_ptr<BlotterCollection> m_collection;
     std::shared_ptr<TasksModel> m_tasks;
+    std::shared_ptr<ArrayListModel<std::shared_ptr<Order>>> m_orders;
+    std::shared_ptr<ArrayListModel<PortfolioUpdateEntry>> m_portfolio;
+    std::shared_ptr<CancelKeyBindingsModel> m_cancel_bindings;
+    std::shared_ptr<PositionKeyBindingsModel> m_position_bindings;
+    std::shared_ptr<Queue<std::shared_ptr<Order>>> m_submissions;
     std::shared_ptr<BlotterModel> m_model;
 
     Fixture()
+      : Fixture(false) {}
+
+    explicit Fixture(bool is_consolidated)
         : m_profile("", false, false, {}, {},
             get_default_additional_tag_database(), {}, {}, {},
             Clients(std::in_place_type<TestClients>, Ref(m_environment))),
           m_collection(std::make_shared<BlotterCollection>(
             m_profile.GetClients().get_market_data_client())),
-          m_tasks(std::make_shared<ArrayListModel<BlotterTaskEntry>>()) {
+          m_tasks(std::make_shared<ArrayListModel<BlotterTaskEntry>>()),
+          m_orders(std::make_shared<ArrayListModel<std::shared_ptr<Order>>>()),
+          m_portfolio(std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()),
+          m_cancel_bindings(std::make_shared<CancelKeyBindingsModel>()),
+          m_position_bindings(std::make_shared<PositionKeyBindingsModel>()),
+          m_submissions(std::make_shared<Queue<std::shared_ptr<Order>>>()) {
       initialize_resources();
+      m_environment.monitor_order_submissions(m_submissions);
       m_model = m_collection->add(std::make_shared<CompositeBlotterModel>(
-        DirectoryEntry(), false, std::make_shared<LocalTextModel>("Test"),
+        m_profile.GetClients().get_service_locator_client().get_account(),
+        is_consolidated, std::make_shared<LocalTextModel>("Test"),
         std::make_shared<LocalBooleanModel>(false),
         std::make_shared<LocalBooleanModel>(false), m_tasks,
         std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
-        std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
-        std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()));
+        m_orders, m_portfolio));
     }
 
     ~Fixture() {
@@ -57,10 +80,81 @@ namespace {
 
     auto make_controller() {
       return std::make_unique<BlotterController>(m_model, m_tasks, m_collection,
-        std::make_shared<CancelKeyBindingsModel>(),
-        std::make_shared<PositionKeyBindingsModel>(), Ref(m_profile));
+        m_cancel_bindings, m_position_bindings, Ref(m_profile));
+    }
+
+    auto submit(Side side, Money price) {
+      auto order = m_profile.GetClients().get_order_execution_client().submit(
+        make_limit_order_fields(m_model->get_account(), parse_ticker("RY.TSX"),
+          Currencies::CAD, side, "TSX", 100, price));
+      auto submission = m_submissions->pop();
+      m_environment.accept(*submission);
+      m_orders->push(order);
+      return submission;
     }
   };
+
+  template<typename T>
+  T& find_widget(QWidget& parent) {
+    for(auto widget : parent.findChildren<QWidget*>()) {
+      if(auto result = dynamic_cast<T*>(widget)) {
+        return *result;
+      }
+    }
+    throw std::runtime_error("Widget not found.");
+  }
+
+  void key(QWidget& widget, Qt::Key key, Qt::KeyboardModifiers modifiers) {
+    auto event = QKeyEvent(QEvent::KeyPress, key, modifiers);
+    QApplication::sendEvent(&widget, &event);
+    QApplication::processEvents();
+  }
+
+  void wait_for(auto& model, const auto& action, const auto& condition) {
+    auto loop = QEventLoop();
+    auto connection = scoped_connection(
+      model.connect_operation_signal([&] (const auto&) {
+        if(condition()) {
+          loop.quit();
+        }
+      }));
+    action();
+    if(!condition()) {
+      loop.exec();
+    }
+    REQUIRE(condition());
+  }
+
+  auto get_status(const Order& order) {
+    return order.get_publisher().with([] (const auto& reports) {
+      return reports->back().m_status;
+    });
+  }
+
+  void wait_for_order(Task& task) {
+    auto loop = QEventLoop();
+    auto events = QtTaskQueue();
+    auto order = std::shared_ptr<Order>();
+    task.GetContext().GetOrderPublisher().monitor(
+      events.get_slot<std::shared_ptr<Order>>([&] (const auto& update) {
+        order = update;
+        loop.quit();
+      }));
+    task.GetPublisher().monitor(
+      events.get_slot<Task::StateEntry>([&] (const auto& update) {
+        if(IsTerminal(update.m_state)) {
+          loop.quit();
+        }
+      }));
+    loop.exec();
+    REQUIRE(order);
+    order->get_publisher().with([] (const auto& reports) {
+      for(auto& report : *reports) {
+        INFO(report.m_text);
+        REQUIRE(report.m_status != OrderStatus::REJECTED);
+      }
+    });
+  }
 
   auto make_node(const Ticker& ticker, Side side, Money price) {
     auto builder = CanvasNodeBuilder(SingleOrderTaskNode());
@@ -162,6 +256,306 @@ TEST_SUITE("BlotterController") {
     REQUIRE(fixture.m_tasks->get(0).m_state == Task::State::READY);
     REQUIRE(fixture.m_tasks->get(1).m_state == Task::State::CANCELED);
     REQUIRE(fixture.m_tasks->get(2).m_state == Task::State::READY);
+  }
+
+  UI_TEST_CASE("window_task_actions") {
+    auto fixture = Fixture();
+    auto controller = fixture.make_controller();
+    controller->add(IntegerNode(1));
+    controller->add(IntegerNode(2));
+    SUBCASE("reopened") {
+      controller->open();
+      controller->close();
+      QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+    auto& window = controller->open();
+    QApplication::processEvents();
+    auto& view = find_widget<BlotterTasksView>(window);
+    auto& table = find_widget<TableView>(view);
+    auto rows = table.get_selection()->get_row_selection();
+    clear(*rows);
+    rows->push(0);
+    table.get_body().setFocus();
+    wait_for(*fixture.m_tasks, [&] {
+      key(view, Qt::Key_Return, Qt::NoModifier);
+    }, [&] {
+      return fixture.m_tasks->get(0).m_state == Task::State::COMPLETE;
+    });
+    REQUIRE(fixture.m_tasks->get(1).m_state == Task::State::READY);
+    clear(*rows);
+    rows->push(1);
+    key(view, Qt::Key_Escape, Qt::NoModifier);
+    REQUIRE(fixture.m_tasks->get(1).m_state == Task::State::CANCELED);
+  }
+
+  UI_TEST_CASE("window_task_cancel_operation") {
+    auto fixture = Fixture();
+    auto controller = fixture.make_controller();
+    controller->add(IntegerNode(1));
+    controller->add(IntegerNode(2));
+    fixture.m_cancel_bindings->get_binding(
+      CancelKeyBindingsModel::Operation::MOST_RECENT)->set(Qt::Key_F8);
+    auto& window = controller->open();
+    QApplication::processEvents();
+    auto& view = find_widget<BlotterTasksView>(window);
+    find_widget<TableView>(view).get_body().setFocus();
+    key(view, Qt::Key_F8, Qt::NoModifier);
+    REQUIRE(fixture.m_tasks->get(0).m_state == Task::State::READY);
+    REQUIRE(fixture.m_tasks->get(1).m_state == Task::State::CANCELED);
+    key(view, Qt::Key_F8, Qt::NoModifier);
+    REQUIRE(fixture.m_tasks->get(0).m_state == Task::State::CANCELED);
+  }
+
+  UI_TEST_CASE("window_cancel_selected_orders") {
+    auto fixture = Fixture();
+    auto first = fixture.submit(Side::BID, Money(10));
+    auto second = fixture.submit(Side::ASK, Money(11));
+    auto controller = fixture.make_controller();
+    auto& window = controller->open();
+    find_widget<TabView>(window).get_current()->set(2);
+    auto& view = find_widget<OrderLogView>(window);
+    auto rows = find_widget<TableView>(view).
+      get_selection()->get_row_selection();
+    clear(*rows);
+    rows->push(1);
+    key(view, Qt::Key_Escape, Qt::NoModifier);
+    flush_pending_routines();
+    REQUIRE(get_status(*first) == OrderStatus::NEW);
+    REQUIRE(get_status(*second) == OrderStatus::PENDING_CANCEL);
+    REQUIRE(fixture.m_tasks->get_size() == 0);
+  }
+
+  UI_TEST_CASE("window_cancel_order_operations") {
+    using Operation = CancelKeyBindingsModel::Operation;
+    auto fixture = Fixture();
+    auto orders = std::vector<std::shared_ptr<Order>>{
+      fixture.submit(Side::ASK, Money(12)),
+      fixture.submit(Side::BID, Money(9)),
+      fixture.submit(Side::ASK, Money(11)),
+      fixture.submit(Side::BID, Money(10)),
+      fixture.submit(Side::ASK, Money(11)),
+      fixture.submit(Side::BID, Money(10)),
+      fixture.submit(Side::ASK, Money(12)),
+      fixture.submit(Side::BID, Money(9))};
+    auto operation = Operation::ALL;
+    auto expected = std::vector<int>();
+    SUBCASE("all") {
+      expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    }
+    SUBCASE("all_asks") {
+      operation = Operation::ALL_ASKS;
+      expected = {0, 2, 4, 6};
+    }
+    SUBCASE("all_bids") {
+      operation = Operation::ALL_BIDS;
+      expected = {1, 3, 5, 7};
+    }
+    SUBCASE("most_recent") {
+      operation = Operation::MOST_RECENT;
+      expected = {7};
+    }
+    SUBCASE("most_recent_ask") {
+      operation = Operation::MOST_RECENT_ASK;
+      expected = {6};
+    }
+    SUBCASE("most_recent_bid") {
+      operation = Operation::MOST_RECENT_BID;
+      expected = {7};
+    }
+    SUBCASE("oldest") {
+      operation = Operation::OLDEST;
+      expected = {0};
+    }
+    SUBCASE("oldest_ask") {
+      operation = Operation::OLDEST_ASK;
+      expected = {0};
+    }
+    SUBCASE("oldest_bid") {
+      operation = Operation::OLDEST_BID;
+      expected = {1};
+    }
+    SUBCASE("closest_ask") {
+      operation = Operation::CLOSEST_ASK;
+      expected = {4};
+    }
+    SUBCASE("closest_bid") {
+      operation = Operation::CLOSEST_BID;
+      expected = {5};
+    }
+    SUBCASE("furthest_ask") {
+      operation = Operation::FURTHEST_ASK;
+      expected = {0};
+    }
+    SUBCASE("furthest_bid") {
+      operation = Operation::FURTHEST_BID;
+      expected = {1};
+    }
+    fixture.m_cancel_bindings->get_binding(operation)->set(Qt::Key_F8);
+    auto controller = fixture.make_controller();
+    auto& window = controller->open();
+    find_widget<TabView>(window).get_current()->set(2);
+    auto& view = find_widget<OrderLogView>(window);
+    key(view, Qt::Key_F8, Qt::NoModifier);
+    flush_pending_routines();
+    for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
+      if(std::ranges::find(expected, i) != expected.end()) {
+        REQUIRE(get_status(*orders[i]) == OrderStatus::PENDING_CANCEL);
+      } else {
+        REQUIRE(get_status(*orders[i]) == OrderStatus::NEW);
+      }
+    }
+  }
+
+  UI_TEST_CASE("window_cancel_skips_terminal_and_pending") {
+    auto fixture = Fixture();
+    auto first = fixture.submit(Side::BID, Money(10));
+    auto pending = fixture.submit(Side::BID, Money(10));
+    auto terminal = fixture.submit(Side::BID, Money(10));
+    fixture.m_profile.GetClients().get_order_execution_client().cancel(pending);
+    fixture.m_profile.GetClients().get_order_execution_client().cancel(terminal);
+    fixture.m_environment.cancel(*terminal);
+    fixture.m_cancel_bindings->get_binding(
+      CancelKeyBindingsModel::Operation::MOST_RECENT)->set(Qt::Key_F8);
+    auto controller = fixture.make_controller();
+    auto& window = controller->open();
+    find_widget<TabView>(window).get_current()->set(2);
+    auto& view = find_widget<OrderLogView>(window);
+    key(view, Qt::Key_F8, Qt::NoModifier);
+    flush_pending_routines();
+    REQUIRE(get_status(*first) == OrderStatus::PENDING_CANCEL);
+    REQUIRE(get_status(*pending) == OrderStatus::PENDING_CANCEL);
+    REQUIRE(get_status(*terminal) == OrderStatus::CANCELED);
+  }
+
+  UI_TEST_CASE("flatten") {
+    auto fixture = Fixture();
+    auto controller = fixture.make_controller();
+    auto quantity = Quantity(100);
+    auto side = Side::ASK;
+    SUBCASE("short") {
+      quantity = -50;
+      side = Side::BID;
+    }
+    SUBCASE("long") {}
+    controller->flatten(Position(parse_ticker("RY.TSX"), Currencies::CAD,
+      quantity, quantity * Money(10)));
+    wait_for_order(*fixture.m_tasks->get(0).m_task);
+    auto order = fixture.m_submissions->pop();
+    auto& fields = order->get_info().m_fields;
+    REQUIRE(fields.m_account == fixture.m_model->get_account());
+    REQUIRE(fields.m_ticker == parse_ticker("RY.TSX"));
+    REQUIRE(fields.m_currency == Currencies::CAD);
+    REQUIRE(fields.m_type == OrderType::MARKET);
+    REQUIRE(fields.m_side == side);
+    REQUIRE(fields.m_quantity == abs(quantity));
+    REQUIRE(fields.m_destination ==
+      DESTINATIONS.get_preferred_destination(Venues::TSX).m_id);
+    REQUIRE_FALSE(controller->is_open()->get());
+    REQUIRE(fixture.m_tasks->get_size() == 1);
+    controller->flatten(Position(parse_ticker("RY.TSX"), Currencies::CAD));
+    REQUIRE(fixture.m_tasks->get_size() == 1);
+    REQUIRE(!fixture.m_submissions->try_pop());
+  }
+
+  UI_TEST_CASE("window_flatten_positions") {
+    auto fixture = Fixture(true);
+    auto positions = std::vector{
+      Position(parse_ticker("RY.TSX"), Currencies::CAD, 100, Money(1000)),
+      Position(parse_ticker("TD.TSX"), Currencies::CAD, -50, Money(-500)),
+      Position(parse_ticker("BMO.TSX"), Currencies::CAD, 0, Money::ZERO)};
+    for(auto& position : positions) {
+      auto entry = PortfolioUpdateEntry();
+      entry.m_inventory.m_position = position;
+      fixture.m_portfolio->push(entry);
+    }
+    auto controller = fixture.make_controller();
+    auto& view = find_widget<BlotterPositionsView>(controller->open());
+    auto count = 1;
+    SUBCASE("selected") {
+      auto rows = find_widget<TableView>(view).
+        get_selection()->get_row_selection();
+      clear(*rows);
+      rows->push(1);
+      key(view, Qt::Key_F, Qt::ControlModifier);
+    }
+    SUBCASE("all") {
+      count = 2;
+      key(view, Qt::Key_F, Qt::ControlModifier | Qt::ShiftModifier);
+    }
+    REQUIRE(fixture.m_tasks->get_size() == count);
+    for(auto i = 0; i != count; ++i) {
+      wait_for_order(*fixture.m_tasks->get(i).m_task);
+      auto order = fixture.m_submissions->pop();
+      REQUIRE(order->get_info().m_fields.m_type == OrderType::MARKET);
+      if(count == 1) {
+        REQUIRE(order->get_info().m_fields.m_side == Side::BID);
+        REQUIRE(order->get_info().m_fields.m_quantity == 50);
+      }
+    }
+    REQUIRE(!fixture.m_submissions->try_pop());
+  }
+
+  UI_TEST_CASE("portfolio_viewer_actions") {
+    auto fixture = Fixture();
+    fixture.m_environment.publish(parse_ticker("RY.TSX"),
+      BboQuote(make_bid(Money(10), 100), make_ask(Money(11), 100),
+        time_from_string("2026-11-23 15:00:00")));
+    auto properties = PortfolioViewerProperties::GetDefault();
+    properties.SetSelectingAllGroups(false);
+    properties.GetSelectedGroups().insert(DirectoryEntry());
+    auto viewer = PortfolioViewerWindow(Ref(fixture.m_profile), properties);
+    viewer.show();
+    auto table = viewer.findChild<QTableView*>("m_portfolioTableView");
+    REQUIRE(table);
+    auto loop = QEventLoop();
+    QObject::connect(table->model(), &QAbstractItemModel::rowsInserted,
+      &loop, &QEventLoop::quit);
+    auto initial = fixture.submit(Side::BID, Money(10));
+    fixture.m_environment.fill(*initial, 100);
+    if(table->model()->rowCount() == 0) {
+      loop.exec();
+    }
+    REQUIRE(table->model()->rowCount() == 1);
+    table->selectRow(0);
+    auto activate = [&] (const QString& action) {
+      auto activated = false;
+      QMetaObject::invokeMethod(&viewer, [&] {
+        for(auto widget : QApplication::topLevelWidgets()) {
+          if(auto menu = dynamic_cast<QMenu*>(widget)) {
+            for(auto item : menu->actions()) {
+              if(item->text() == action) {
+                activated = true;
+                menu->setActiveAction(item);
+                auto event = QKeyEvent(
+                  QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+                QApplication::sendEvent(menu, &event);
+                return;
+              }
+            }
+            menu->close();
+          }
+        }
+      }, Qt::QueuedConnection);
+      table->customContextMenuRequested(QPoint());
+      REQUIRE(activated);
+    };
+    activate("Open Blotter");
+    auto& controller =
+      fixture.m_profile.GetBlotterRegistry().get_consolidated();
+    REQUIRE(controller.is_open()->get());
+    controller.close();
+    activate("Flatten Position");
+    REQUIRE_FALSE(controller.is_open()->get());
+    wait_for_order(*controller.get_model()->get_tasks()->get(0).m_task);
+    auto order = fixture.m_submissions->pop();
+    auto& fields = order->get_info().m_fields;
+    REQUIRE(fields.m_account == fixture.m_model->get_account());
+    REQUIRE(fields.m_ticker == parse_ticker("RY.TSX"));
+    REQUIRE(fields.m_type == OrderType::MARKET);
+    REQUIRE(fields.m_side == Side::ASK);
+    REQUIRE(fields.m_quantity == 100);
+    REQUIRE(controller.get_model()->get_tasks()->get_size() == 1);
+    controller.get_model()->get_tasks()->get(0).m_task->GetExecutor().Close();
   }
 
   UI_TEST_CASE("open_close") {

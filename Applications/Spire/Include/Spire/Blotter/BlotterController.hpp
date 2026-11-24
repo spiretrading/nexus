@@ -1,5 +1,6 @@
 #ifndef SPIRE_BLOTTER_CONTROLLER_HPP
 #define SPIRE_BLOTTER_CONTROLLER_HPP
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include "Spire/Async/QtTaskQueue.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
@@ -58,6 +59,12 @@ namespace Spire {
         const std::unordered_map<Nexus::OrderId, Nexus::Money>& prices,
         const boost::optional<std::vector<Nexus::OrderId>>& ids);
 
+      /**
+       * Submits a market order to flatten a position in this blotter's account.
+       * @param position The position to flatten.
+       */
+      void flatten(const Nexus::Position& position);
+
       /** Opens or raises the window. */
       BlotterWindow& open();
 
@@ -82,9 +89,19 @@ namespace Spire {
       boost::optional<BlotterWindowSettings> m_window_settings;
       std::unique_ptr<EventFilter> m_event_filter;
       QtTaskQueue m_events;
+      Beam::ConnectionGroup m_window_connections;
 
       BlotterController(const BlotterController&) = delete;
       BlotterController& operator =(const BlotterController&) = delete;
+      void on_run_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
+      void on_cancel_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
+      void on_cancel_task_operation(
+        CancelKeyBindingsModel::Operation operation);
+      void on_cancel_orders(
+        const std::vector<std::shared_ptr<Nexus::Order>>& orders);
+      void on_cancel_order_operation(
+        CancelKeyBindingsModel::Operation operation);
+      void on_flatten_positions(const std::vector<Nexus::Position>& positions);
       void on_state(
         const std::weak_ptr<Task>& task, const Task::StateEntry& state);
       void on_close();

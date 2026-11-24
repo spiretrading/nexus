@@ -1,13 +1,49 @@
 #include "Spire/Blotter/BlotterController.hpp"
 #include <algorithm>
+#include <tuple>
 #include <boost/uuid/uuid_generators.hpp>
 #include <QEvent>
+#include <QMessageBox>
+#include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  bool is_cancelable(const Order& order) {
+    return order.get_publisher().with([] (const auto& reports) {
+      if(!reports || reports->empty()) {
+        return true;
+      }
+      auto status = reports->back().m_status;
+      return !is_terminal(status) && status != OrderStatus::PENDING_CANCEL;
+    });
+  }
+
+  Side get_side(CancelKeyBindingsModel::Operation operation) {
+    using Operation = CancelKeyBindingsModel::Operation;
+    if(operation == Operation::MOST_RECENT_ASK ||
+        operation == Operation::OLDEST_ASK ||
+        operation == Operation::ALL_ASKS ||
+        operation == Operation::CLOSEST_ASK ||
+        operation == Operation::FURTHEST_ASK) {
+      return Side::ASK;
+    } else if(operation == Operation::MOST_RECENT_BID ||
+        operation == Operation::OLDEST_BID ||
+        operation == Operation::ALL_BIDS ||
+        operation == Operation::CLOSEST_BID ||
+        operation == Operation::FURTHEST_BID) {
+      return Side::BID;
+    } else {
+      return Side::NONE;
+    }
+  }
+}
 
 class BlotterController::EventFilter : public QObject {
   public:
@@ -42,6 +78,7 @@ BlotterController::BlotterController(std::shared_ptr<BlotterModel> model,
     m_read_only_is_open(m_is_open) {}
 
 BlotterController::~BlotterController() {
+  m_window_connections.disconnect();
   m_events.close();
   if(m_window) {
     m_window->removeEventFilter(m_event_filter.get());
@@ -129,6 +166,17 @@ void BlotterController::cancel(CancelKeyBindingsModel::Operation operation,
   execute(operation, task_prices, out(tasks));
 }
 
+void BlotterController::flatten(const Position& position) {
+  if(position.m_quantity == 0) {
+    return;
+  }
+  auto fields = make_market_order_fields(m_model->get_account(),
+    position.m_ticker, position.m_currency, get_opposite(get_side(position)),
+    DESTINATIONS.get_preferred_destination(position.m_ticker.get_venue()).m_id,
+    abs(position.m_quantity));
+  submit(*MakeOrderTaskNodeFromOrderFields(fields, *m_profile));
+}
+
 BlotterWindow& BlotterController::open() {
   if(!m_window) {
     if(!m_event_filter) {
@@ -137,6 +185,18 @@ BlotterWindow& BlotterController::open() {
     m_window = std::make_unique<BlotterWindow>(
       m_model, m_collection, m_cancel_bindings, m_position_bindings);
     m_window->m_id = m_id;
+    m_window_connections.add(m_window->connect_run_tasks_signal(
+      std::bind_front(&BlotterController::on_run_tasks, this)));
+    m_window_connections.add(m_window->connect_cancel_tasks_signal(
+      std::bind_front(&BlotterController::on_cancel_tasks, this)));
+    m_window_connections.add(m_window->connect_cancel_task_operation_signal(
+      std::bind_front(&BlotterController::on_cancel_task_operation, this)));
+    m_window_connections.add(m_window->connect_cancel_orders_signal(
+      std::bind_front(&BlotterController::on_cancel_orders, this)));
+    m_window_connections.add(m_window->connect_cancel_order_operation_signal(
+      std::bind_front(&BlotterController::on_cancel_order_operation, this)));
+    m_window_connections.add(m_window->connect_flatten_positions_signal(
+      std::bind_front(&BlotterController::on_flatten_positions, this)));
     if(m_window_settings) {
       m_window_settings->Apply(Ref(*m_profile), out(*m_window));
     }
@@ -158,6 +218,115 @@ void BlotterController::close() {
   }
 }
 
+void BlotterController::on_run_tasks(
+    const std::vector<std::shared_ptr<Task>>& tasks) {
+  for(auto& task : tasks) {
+    try {
+      task->Execute();
+    } catch(const std::exception& e) {
+      on_state(task, Task::StateEntry(Task::State::FAILED, e.what()));
+      QMessageBox::warning(m_window.get(), QObject::tr("Unable to run task"),
+        QString::fromUtf8(e.what()));
+    }
+  }
+}
+
+void BlotterController::on_cancel_tasks(
+    const std::vector<std::shared_ptr<Task>>& tasks) {
+  for(auto& task : tasks) {
+    task->Cancel();
+  }
+}
+
+void BlotterController::on_cancel_task_operation(
+    CancelKeyBindingsModel::Operation operation) {
+  auto tasks = std::vector<std::shared_ptr<Task>>();
+  for(auto& entry : std::as_const(*m_model->get_tasks())) {
+    if(!IsTerminal(entry.m_state) &&
+        entry.m_state != Task::State::PENDING_CANCEL) {
+      tasks.push_back(entry.m_task);
+    }
+  }
+  std::ranges::sort(tasks, {}, &Task::GetId);
+  execute(operation, out(tasks));
+}
+
+void BlotterController::on_cancel_orders(
+    const std::vector<std::shared_ptr<Order>>& orders) {
+  for(auto& order : orders) {
+    if(!is_cancelable(*order)) {
+      continue;
+    }
+    try {
+      m_profile->GetClients().get_order_execution_client().cancel(order);
+    } catch(const std::exception& e) {
+      QMessageBox::warning(m_window.get(),
+        QObject::tr("Unable to cancel order"), QString::fromUtf8(e.what()));
+    }
+  }
+}
+
+void BlotterController::on_cancel_order_operation(
+    CancelKeyBindingsModel::Operation operation) {
+  using Operation = CancelKeyBindingsModel::Operation;
+  auto side = get_side(operation);
+  auto orders = std::vector<std::shared_ptr<Order>>();
+  for(auto& order : std::as_const(*m_model->get_orders())) {
+    if(is_cancelable(*order) &&
+        (side == Side::NONE || order->get_info().m_fields.m_side == side)) {
+      orders.push_back(order);
+    }
+  }
+  if(orders.empty()) {
+    return;
+  }
+  std::ranges::sort(orders, [] (const auto& left, const auto& right) {
+    auto& a = left->get_info();
+    auto& b = right->get_info();
+    return std::tie(a.m_timestamp, a.m_id) < std::tie(b.m_timestamp, b.m_id);
+  });
+  auto selected = orders.begin();
+  if(operation == Operation::ALL || operation == Operation::ALL_ASKS ||
+      operation == Operation::ALL_BIDS) {
+    on_cancel_orders(orders);
+    return;
+  } else if(operation == Operation::MOST_RECENT ||
+      operation == Operation::MOST_RECENT_ASK ||
+      operation == Operation::MOST_RECENT_BID) {
+    selected = std::prev(orders.end());
+  } else if(operation == Operation::CLOSEST_ASK ||
+      operation == Operation::CLOSEST_BID ||
+      operation == Operation::FURTHEST_ASK ||
+      operation == Operation::FURTHEST_BID) {
+    auto is_minimum = operation == Operation::CLOSEST_ASK ||
+      operation == Operation::FURTHEST_BID;
+    auto is_closest = operation == Operation::CLOSEST_ASK ||
+      operation == Operation::CLOSEST_BID;
+    for(auto i = std::next(orders.begin()); i != orders.end(); ++i) {
+      auto price = (*i)->get_info().m_fields.m_price;
+      auto selected_price = (*selected)->get_info().m_fields.m_price;
+      if((is_minimum && price < selected_price) ||
+          (!is_minimum && price > selected_price) ||
+          (is_closest && price == selected_price)) {
+        selected = i;
+      }
+    }
+  }
+  on_cancel_orders({*selected});
+}
+
+void BlotterController::on_flatten_positions(
+    const std::vector<Position>& positions) {
+  for(auto& position : positions) {
+    try {
+      flatten(position);
+    } catch(const std::exception& e) {
+      QMessageBox::warning(m_window.get(), QObject::tr("Unable to flatten"),
+        QString::fromUtf8(e.what()));
+    }
+  }
+}
+
 void BlotterController::on_state(
     const std::weak_ptr<Task>& task, const Task::StateEntry& state) {
   auto current = task.lock();
@@ -174,6 +343,7 @@ void BlotterController::on_state(
 }
 
 void BlotterController::on_close() {
+  m_window_connections.disconnect();
   m_window_settings.emplace(*m_window);
   auto window = m_window.release();
   window->removeEventFilter(m_event_filter.get());
