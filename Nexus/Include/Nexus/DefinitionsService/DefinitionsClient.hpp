@@ -146,6 +146,7 @@ namespace Nexus {
     set_currencies(client.load_currency_database());
     set_destinations(client.load_destination_database());
     set_venues(client.load_venue_database());
+    set_trading_schedule(client.load_trading_schedule());
   }
 
   template<IsDefinitionsClient T, typename... Args>
