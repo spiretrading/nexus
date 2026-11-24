@@ -1694,7 +1694,8 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
-  if(!m_is_transaction) {
+  if(!m_is_transaction &&
+      !std::holds_alternative<TableModel::PreRemoveOperation>(operation)) {
     if(m_operation_counter >= OPERATION_THRESHOLD) {
       m_operation_counter = 0;
       on_current(m_current_controller.get());

@@ -72,6 +72,34 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("filtered_row_removal") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({100});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Quantity").
+      set_filter(std::make_shared<MinimumFilter>()).make());
+    view->resize(240, 160);
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto index = TableIndex(0, 0);
+    REQUIRE(body.find_item(index));
+    SUBCASE("unselected") {}
+    SUBCASE("selected") {
+      view->get_current()->set(index);
+      view->get_selection()->get_row_selection()->push(0);
+    }
+    table->set(0, 0, 0);
+    QApplication::processEvents();
+    REQUIRE(body.get_table()->get_row_size() == 0);
+    REQUIRE_FALSE(body.find_item(index));
+    table->set(0, 0, 50);
+    QApplication::processEvents();
+    REQUIRE(body.get_table()->get_row_size() == 1);
+    REQUIRE(body.find_item(index));
+    REQUIRE(body.get_table()->get<int>(0, 0) == 50);
+  }
+
   UI_TEST_CASE("focus_colors") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({1});
