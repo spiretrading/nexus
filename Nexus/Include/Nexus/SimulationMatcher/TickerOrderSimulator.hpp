@@ -225,6 +225,7 @@ namespace Details {
       bool update_session(
         boost::posix_time::ptime timestamp, bool is_listing_print = false);
       bool is_opening_cross(const TimeAndSale& time_and_sale, bool is_listing);
+      bool is_trade(const TimeAndSale::Condition& condition) const;
       void evaluate_orders();
       void evaluate_held_orders();
       void cross(const TimeAndSale& time_and_sale);
@@ -645,23 +646,42 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   bool TickerOrderSimulator<T>::is_opening_cross(
       const TimeAndSale& time_and_sale, bool is_listing) {
-    if(m_phase == Phase::CONTINUOUS || !is_listing ||
-        time_and_sale.m_timestamp < m_session.m_open) {
+    if(!is_listing) {
       return false;
     }
-    if(!m_cross_time.is_special()) {
-      return time_and_sale.m_timestamp == m_cross_time;
+    auto is_open =
+      time_and_sale.m_condition.m_type == TimeAndSale::Condition::Type::OPEN;
+    if(m_phase == Phase::CONTINUOUS) {
+      return is_open;
     }
-    if(m_uncross_time.is_special()) {
-      if(!is_crossed()) {
+    if(!is_open) {
+      if(time_and_sale.m_timestamp < m_session.m_open) {
         return false;
       }
-    } else if(time_and_sale.m_timestamp > m_uncross_time) {
-      return false;
+      if(!m_cross_time.is_special()) {
+        return time_and_sale.m_timestamp == m_cross_time;
+      }
+      if(m_uncross_time.is_special()) {
+        if(!is_crossed()) {
+          return false;
+        }
+      } else if(time_and_sale.m_timestamp > m_uncross_time) {
+        return false;
+      }
     }
     m_phase = Phase::OPENING;
     m_cross_time = time_and_sale.m_timestamp;
     return true;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::is_trade(
+      const TimeAndSale::Condition& condition) const {
+    if(condition.m_type == TimeAndSale::Condition::Type::NONE) {
+      return condition.m_code == REGULAR_SALE;
+    }
+    return condition.m_type != TimeAndSale::Condition::Type::CORRECTION &&
+      condition.m_type != TimeAndSale::Condition::Type::CANCELLATION;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -683,7 +703,7 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::cross(const TimeAndSale& time_and_sale) {
     auto size = time_and_sale.m_size - time_and_sale.m_size % BOARD_LOT;
-    if(time_and_sale.m_condition.m_code != REGULAR_SALE || size <= 0) {
+    if(!is_trade(time_and_sale.m_condition) || size <= 0) {
       return;
     }
     auto has_update = false;
@@ -1079,7 +1099,7 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale) {
     auto size = time_and_sale.m_size - time_and_sale.m_size % BOARD_LOT;
-    if(time_and_sale.m_condition.m_code != REGULAR_SALE || size <= 0) {
+    if(!is_trade(time_and_sale.m_condition) || size <= 0) {
       return;
     }
     auto has_update = false;

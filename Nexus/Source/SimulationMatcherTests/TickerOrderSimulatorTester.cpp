@@ -105,12 +105,19 @@ namespace {
   }
 
   void publish_time_and_sale(Fixture& fixture, auto& simulator, Money price,
-      Quantity size, const std::string& code = "@",
+      Quantity size, TimeAndSale::Condition condition,
       const std::string& market_center = "TSE") {
     simulator.update(TimeAndSale(
       fixture.m_environment.get_time_environment().get_time(), price, size,
+      std::move(condition), market_center));
+  }
+
+  void publish_time_and_sale(Fixture& fixture, auto& simulator, Money price,
+      Quantity size, const std::string& code = "@",
+      const std::string& market_center = "TSE") {
+    publish_time_and_sale(fixture, simulator, price, size,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, code),
-      market_center));
+      market_center);
   }
 
   void publish_book_quote(Fixture& fixture, auto& simulator,
@@ -857,21 +864,44 @@ TEST_SUITE("TickerOrderSimulator") {
     auto reports = monitor_reports(order);
     fixture.m_environment.advance(minutes(1));
 
-    SUBCASE("no_fill_on_irregular_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "X");
+    SUBCASE("no_fill_on_untyped_irregular_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "X"));
       REQUIRE(!reports->try_pop());
     }
 
-    SUBCASE("no_fill_on_empty_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "");
+    SUBCASE("no_fill_on_untyped_empty_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, ""));
       REQUIRE(!reports->try_pop());
     }
 
-    SUBCASE("fill_on_regular_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "@");
+    SUBCASE("fill_on_untyped_regular_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "@"));
       auto report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_quantity == 100);
+    }
+
+    SUBCASE("fill_on_regular_type_with_any_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "X");
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_quantity == 100);
+    }
+
+    SUBCASE("no_fill_on_correction") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::CORRECTION, "@"));
+      REQUIRE(!reports->try_pop());
+    }
+
+    SUBCASE("no_fill_on_cancellation") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(
+          TimeAndSale::Condition::Type::CANCELLATION, "@"));
+      REQUIRE(!reports->try_pop());
     }
   }
 
@@ -1508,6 +1538,51 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture, simulator, parse_money("1.01"), parse_money("1.03"));
     publish_time_and_sale(fixture, simulator, parse_money("1.01"), 100);
     REQUIRE(!reports->try_pop());
+  }
+
+  TEST_CASE("opening_print_is_the_cross_without_a_crossed_quote") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.05")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.04"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    auto open =
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::OPEN, "O");
+
+    SUBCASE("first_at_the_open") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100, open);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.02"));
+    }
+
+    SUBCASE("after_a_quote_at_the_open") {
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.00"), parse_money("1.05"));
+      REQUIRE(!reports->try_pop());
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100, open);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.02"));
+    }
+
+    SUBCASE("regular_print") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
+
+    SUBCASE("other_venue") {
+      publish_time_and_sale(
+        fixture, simulator, parse_money("1.02"), 100, open, "OMG");
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
   }
 
   TEST_CASE("opening_cross_fills_market_orders_first") {
