@@ -1,10 +1,7 @@
 #ifndef SPIRE_EXECUTOR_HPP
 #define SPIRE_EXECUTOR_HPP
-#include <condition_variable>
-#include <mutex>
-#include <Aspen/Aspen.hpp>
-#include <Beam/IO/OpenState.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
+#include <memory>
+#include <Aspen/Box.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -29,20 +26,13 @@ namespace Spire {
       void Close();
 
     private:
-      std::mutex m_mutex;
-      Aspen::Trigger m_trigger;
-      Aspen::CommitFlag m_flag;
-      Beam::RoutineHandler m_reactorLoop;
-      bool m_has_update;
-      Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;
-      Aspen::Concur<Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>>>
-        m_reactor;
-      std::condition_variable m_updateCondition;
-      Beam::OpenState m_openState;
+      friend class Task;
+      struct State;
+      std::shared_ptr<State> m_state;
 
-      Aspen::State Commit(int sequence);
-      void RunLoop();
-      void OnUpdate();
+      Executor(const Executor&) = delete;
+      Executor& operator =(const Executor&) = delete;
+      void Open(std::shared_ptr<void> lifetime);
   };
 }
 
