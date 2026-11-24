@@ -118,10 +118,8 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
   auto minimum = minimumSize();
   auto body_minimum = body.minimumSizeHint().expandedTo(body.minimumSize());
   auto tab_minimum = m_tab_list->minimumSizeHint();
-  setMinimumSize(
-    std::max(minimum.width(), body_minimum.width()),
-    std::max(minimum.height(),
-      tab_minimum.height() + body_minimum.height()));
+  setMinimumSize(std::max(minimum.width(), body_minimum.width()),
+    std::max(minimum.height(), tab_minimum.height() + body_minimum.height()));
   if(!m_tab_list->get_current()->get()) {
     m_tab_list->get_current()->set(0);
   }
@@ -136,7 +134,6 @@ QSize TabView::sizeHint() const {
   }
   return m_tab_list->sizeHint() + max_hint;
 }
-
 
 void TabView::keyPressEvent(QKeyEvent* event) {
   auto direction = [&] {
