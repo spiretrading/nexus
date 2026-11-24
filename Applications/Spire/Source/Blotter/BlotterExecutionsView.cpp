@@ -4,11 +4,13 @@
 #include <concepts>
 #include <filesystem>
 #include <fstream>
+#include <tuple>
 #include <QFileDialog>
 #include <QStandardPaths>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -214,7 +216,7 @@ BlotterExecutionsView::BlotterExecutionsView(
   auto table = std::make_shared<ListToTableModel<ExecutionReportEntry>>(
     m_reports, static_cast<int>(ExecutionColumn::MESSAGE) + 1, &extract);
   m_table = TableViewBuilder(table).
-    add_header_item(tr("Time"), TableHeaderItem::Order::DESCENDING).
+    add_header_item(tr("Time")).
     add_header_item(tr("ID")).
     add_header_item(tr("Side")).
     add_header_item(tr("Ticker")).
@@ -229,6 +231,21 @@ BlotterExecutionsView::BlotterExecutionsView(
     add_header_item(tr("Processing Fee"), tr("Proc Fee")).
     add_header_item(tr("Miscellaneous Fee"), tr("Misc Fee")).
     add_header_item(tr("Message")).
+    set_comparator([=, this] (const AnyRef& left, int left_row,
+        const AnyRef& right, int right_row, int column) {
+      if(column != static_cast<int>(ExecutionColumn::TIME)) {
+        return compare(left, right);
+      }
+      auto& sorted =
+        static_cast<SortedTableModel&>(*m_table->get_body().get_table());
+      auto& filtered = static_cast<FilteredTableModel&>(*sorted.get_source());
+      auto& a = m_reports->get(
+        filtered.index_to_source(sorted.index_to_source(left_row))).m_report;
+      auto& b = m_reports->get(
+        filtered.index_to_source(sorted.index_to_source(right_row))).m_report;
+      return std::tie(a.m_timestamp, a.m_sequence) <
+        std::tie(b.m_timestamp, b.m_sequence);
+    }).
     set_filter(std::make_shared<ExecutionReportsFilter>(m_statuses)).
     set_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
@@ -249,6 +266,12 @@ BlotterExecutionsView::BlotterExecutionsView(
       return item;
     }).
     make();
+  auto time_column = static_cast<int>(ExecutionColumn::TIME);
+  auto header = m_table->get_header().get_items()->get(time_column);
+  header.m_order = TableHeaderItem::Order::DESCENDING;
+  m_table->get_header().get_items()->set(time_column, header);
+  static_cast<SortedTableModel&>(*m_table->get_body().get_table()).
+    set_column_order({{time_column, SortedTableModel::Ordering::DESCENDING}});
   const auto DEFAULT_WIDTHS = std::array{
     110, 100, 50, 90, 100, 60, 75, 70, 75, 70, 50, 75, 75, 75, 180};
   for(auto i = 0; i != table->get_column_size(); ++i) {

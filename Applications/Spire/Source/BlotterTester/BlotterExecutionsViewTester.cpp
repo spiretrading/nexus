@@ -124,6 +124,61 @@ TEST_SUITE("BlotterExecutionsView") {
     REQUIRE(displayed.get<ptime>(0, 0) == first.m_timestamp);
   }
 
+  UI_TEST_CASE("time_sort_sequence") {
+    initialize_resources();
+    auto reports = std::make_shared<ArrayListModel<ExecutionReportEntry>>();
+    auto order = make_order(1, OrderType::LIMIT);
+    auto timestamp = time_from_string("2026-11-20 10:01:00");
+    auto append = [&] (int sequence, ptime time, OrderStatus status) {
+      auto report = ExecutionReport(1, time);
+      report.m_sequence = sequence;
+      report.m_status = status;
+      report.m_last_quantity = sequence;
+      reports->push(ExecutionReportEntry(order, report));
+    };
+    append(8, timestamp - seconds(1), OrderStatus::NEW);
+    append(3, timestamp, OrderStatus::PARTIALLY_FILLED);
+    append(1, timestamp, OrderStatus::PARTIALLY_FILLED);
+    append(1, timestamp + seconds(1), OrderStatus::NEW);
+    append(2, timestamp, OrderStatus::PARTIALLY_FILLED);
+    auto view = BlotterExecutionsView(reports);
+    auto& table = *static_cast<TableView*>(view.focusProxy());
+    auto& displayed = *table.get_body().get_table();
+    auto quantities = [&] {
+      auto values = std::vector<Quantity>();
+      for(auto i = 0; i != displayed.get_row_size(); ++i) {
+        values.push_back(*displayed.get<optional<Quantity>>(i, 6));
+      }
+      return values;
+    };
+    REQUIRE(quantities() == std::vector<Quantity>{1, 3, 2, 1, 8});
+    auto& sorted = static_cast<SortedTableModel&>(displayed);
+    sorted.set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
+    REQUIRE(quantities() == std::vector<Quantity>{8, 1, 2, 3, 1});
+    view.show();
+    QApplication::processEvents();
+    auto& header = table.get_header();
+    header.get_item(4)->is_filter_open()->set(true);
+    auto panel = static_cast<OrderStatusFilterPanel*>(nullptr);
+    for(auto child : header.findChildren<QWidget*>()) {
+      if(auto filter = dynamic_cast<OrderStatusFilterPanel*>(child)) {
+        panel = filter;
+        break;
+      }
+    }
+    REQUIRE(panel);
+    panel->get_current()->push(OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(quantities() == std::vector<Quantity>{1, 2, 3});
+    append(4, timestamp, OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(quantities() == std::vector<Quantity>{1, 2, 3, 4});
+    reports->remove(4);
+    REQUIRE(quantities() == std::vector<Quantity>{1, 3, 4});
+    sorted.set_column_order({{0, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(quantities() == std::vector<Quantity>{4, 3, 1});
+    clear(*panel->get_current());
+    REQUIRE(quantities() == std::vector<Quantity>{1, 4, 3, 1, 8});
+  }
+
   UI_TEST_CASE("status_filter") {
     auto fixture = Fixture();
     auto order = make_order(1, OrderType::LIMIT);
