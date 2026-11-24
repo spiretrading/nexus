@@ -11,9 +11,6 @@
 #include <QApplication>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
-#include "Spire/Canvas/Types/TickerType.hpp"
-#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/KeyBindings/LegacyKeyBindings.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
@@ -80,10 +77,7 @@ namespace {
       load(current_registry);
     } catch(const std::exception&) {
       auto legacy_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      legacy_registry.add<TickerNode>("Spire.SecurityNode");
-      legacy_registry.add<TickerType>("Spire.SecurityType");
-      legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-      RegisterSpireTypes(out(legacy_registry));
+      RegisterLegacySpireTypes(out(legacy_registry));
       load(legacy_registry);
     }
     if(legacy.m_book_view_properties) {
@@ -147,10 +141,7 @@ namespace {
       return;
     } catch(const std::exception&) {}
     auto legacy_registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    legacy_registry.add<TickerNode>("Spire.SecurityNode");
-    legacy_registry.add<TickerType>("Spire.SecurityType");
-    legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-    RegisterSpireTypes(out(legacy_registry));
+    RegisterLegacySpireTypes(out(legacy_registry));
     auto text = std::string(buffer.get_data(), buffer.get_size());
     replace_all(text, "\"region\":", "\"scope\":");
     replace_all(text, "\"securities\":", "\"tickers\":");

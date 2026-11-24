@@ -20,9 +20,6 @@
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
-#include "Spire/Canvas/Types/TickerType.hpp"
-#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/KeyBindings/LegacyKeyBindings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/HashQtTypes.hpp"
@@ -229,10 +226,7 @@ namespace {
       return load(current_registry);
     } catch(const std::exception&) {}
     auto legacy_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-    legacy_registry.add<TickerNode>("Spire.SecurityNode");
-    legacy_registry.add<TickerType>("Spire.SecurityType");
-    legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-    RegisterSpireTypes(out(legacy_registry));
+    RegisterLegacySpireTypes(out(legacy_registry));
     try {
       return load(legacy_registry);
     } catch(const std::exception&) {

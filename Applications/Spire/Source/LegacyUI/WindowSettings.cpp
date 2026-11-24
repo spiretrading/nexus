@@ -11,9 +11,6 @@
 #include <QDesktopWidget>
 #include <QScreen>
 #include <QWindow>
-#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
-#include "Spire/Canvas/Types/TickerType.hpp"
-#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -47,10 +44,7 @@ namespace {
       return true;
     }
     auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
-    legacyRegistry.add<TickerType>("Spire.SecurityType");
-    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-    RegisterSpireTypes(out(legacyRegistry));
+    RegisterLegacySpireTypes(out(legacyRegistry));
     return attempt(legacyRegistry);
   }
 
@@ -111,10 +105,7 @@ std::vector<std::unique_ptr<WindowSettings>>
   } catch(const std::exception&) {}
   try {
     auto legacyRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
-    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
-    legacyRegistry.add<TickerType>("Spire.SecurityType");
-    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-    RegisterSpireTypes(out(legacyRegistry));
+    RegisterLegacySpireTypes(out(legacyRegistry));
     auto text = std::string(buffer.get_data(), buffer.get_size());
     replace_all(text, "\"region\":", "\"scope\":");
     replace_all(text, "\"securities\":", "\"tickers\":");
