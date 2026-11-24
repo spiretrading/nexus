@@ -1,9 +1,49 @@
-#include <doctest/doctest.h>
+#include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/MoneyBox.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 TEST_SUITE("DecimalBox") {
+  UI_TEST_CASE("money_label_formatting") {
+    auto current = std::make_shared<LocalMoneyModel>(Money(84.2));
+    auto label = std::unique_ptr<MoneyBox>(make_money_label(current));
+    label->show();
+    QApplication::processEvents();
+    auto text = label->get_text();
+    REQUIRE(text->get() == "84.20");
+    auto verify = [&] (Money value, const QString& expected) {
+      current->set(value);
+      REQUIRE(text->get() == expected);
+      REQUIRE(current->get() == value);
+    };
+    verify(Money(-1.000000000000001), "-1.00");
+    verify(Money(1.000000000000001), "1.00");
+    verify(parse_money("1.234567"), "1.234567");
+    verify(parse_money("-1.234567"), "-1.234567");
+    verify(Money::CENT, "0.01");
+    verify(Money::ZERO, "0.00");
+  }
+
+  UI_TEST_CASE("display_precision") {
+    auto current = std::make_shared<LocalOptionalDecimalModel>(Decimal("1.8"));
+    current->set_increment(Decimal(1));
+    auto box = DecimalBox(current);
+    REQUIRE(box.get_text()->get() == "2");
+    REQUIRE(*current->get() == Decimal("1.8"));
+    current->set_increment(Decimal("0.01"));
+    current->set(Decimal("1.239"));
+    REQUIRE(box.get_text()->get() == "1.24");
+    current->set_increment(Decimal("0.000001"));
+    current->set(Decimal("1.9999999"));
+    REQUIRE(box.get_text()->get() == "2");
+    current->set(Decimal("-1.9999999"));
+    REQUIRE(box.get_text()->get() == "-2");
+    current->set(boost::none);
+    REQUIRE(box.get_text()->get().isEmpty());
+  }
+
   TEST_CASE("validate_narrow_range") {
     CHECK(DecimalBox::validate(1, Decimal(29), Decimal(31)) ==
       QValidator::Invalid);
