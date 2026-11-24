@@ -322,7 +322,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return {};
     }
     auto s = QString::fromStdString(value->str(
-      std::max(m_trailing_zeros, m_decimal_places), std::ios_base::fixed));
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::fixed));
     auto decimal_point_pos = s.indexOf(".");
     if(decimal_point_pos >= 0) {
       auto trailing_zeros = 0;
