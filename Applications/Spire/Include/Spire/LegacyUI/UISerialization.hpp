@@ -300,6 +300,19 @@ namespace Spire {
     RegisterDashboardTypes(Beam::out(registry));
     RegisterWindowSettingsTypes(Beam::out(registry));
   }
+
+  /**
+   * Registers Spire types using legacy security names.
+   * @tparam S The sender type.
+   * @param registry The registry to populate.
+   */
+  template<Beam::IsSender S>
+  void RegisterLegacySpireTypes(Beam::Out<Beam::TypeRegistry<S>> registry) {
+    registry->template add<TickerNode>("Spire.SecurityNode");
+    registry->template add<TickerType>("Spire.SecurityType");
+    registry->template add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(Beam::out(registry));
+  }
 }
 
 #endif

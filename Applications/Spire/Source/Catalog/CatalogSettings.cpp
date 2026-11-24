@@ -8,9 +8,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <QMessageBox>
-#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
-#include "Spire/Canvas/Types/TickerType.hpp"
-#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
@@ -81,10 +78,7 @@ namespace {
       return entry;
     }
     auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
-    legacyRegistry.add<TickerType>("Spire.SecurityType");
-    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
-    RegisterSpireTypes(out(legacyRegistry));
+    RegisterLegacySpireTypes(out(legacyRegistry));
     return attempt(legacyRegistry);
   }
 
