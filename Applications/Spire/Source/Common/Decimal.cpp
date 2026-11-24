@@ -1,5 +1,5 @@
 #include "Spire/Spire/Decimal.hpp"
-#include <boost/lexical_cast.hpp>
+#include <format>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
@@ -19,7 +19,7 @@ int Spire::from_decimal(const Decimal& value) {
 
 template<>
 Decimal Spire::to_decimal(const Money& value) {
-  return Decimal(static_cast<float64_t>(static_cast<Quantity>(value)));
+  return Decimal(std::format("{}", value));
 }
 
 template<>
@@ -30,7 +30,7 @@ Money Spire::from_decimal(const Decimal& value) {
 
 template<>
 Decimal Spire::to_decimal(const Quantity& value) {
-  return Decimal(static_cast<float64_t>(value));
+  return Decimal(std::format("{}", value));
 }
 
 template<>
