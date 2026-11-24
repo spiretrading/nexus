@@ -4,11 +4,16 @@
 #include <unordered_set>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Serialization/BinaryReceiver.hpp>
+#include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <QMessageBox>
 #include <QSaveFile>
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
+#include "Spire/Blotter/LegacyBlotterSettings.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
 #include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
@@ -22,6 +27,28 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  auto load_legacy_settings(const std::filesystem::path& path) {
+    auto reader =
+      BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
+    auto buffer = SharedBuffer();
+    reader.read(out(buffer));
+    auto load = [&] (auto& registry) {
+      auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
+      receiver.set(Ref(buffer));
+      auto settings = LegacyBlotterSettings();
+      receiver.shuttle(settings);
+      return BlotterRegistry::State(settings);
+    };
+    auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(registry));
+    try {
+      return load(registry);
+    } catch(const std::exception&) {}
+    auto legacy_registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterLegacySpireTypes(out(legacy_registry));
+    return load(legacy_registry);
+  }
+
   class AccountOrdersModel : public ArrayListModel<std::shared_ptr<Order>> {
     public:
       AccountOrdersModel(const DirectoryEntry& account, Clients& clients) {
@@ -83,20 +110,30 @@ namespace {
 
 BlotterRegistry::State Spire::load_blotter_settings(
     const std::filesystem::path& path) {
-  auto file = path / "blotters.json";
-  if(!std::filesystem::exists(file)) {
+  try {
+    auto file = path / "blotters.json";
+    if(!std::filesystem::exists(file)) {
+      auto legacy = path / "blotters.dat";
+      if(std::filesystem::exists(legacy)) {
+        return load_legacy_settings(legacy);
+      }
+      return BlotterRegistry::State();
+    }
+    auto reader = BasicIStreamReader<std::ifstream>(init(file));
+    auto buffer = SharedBuffer();
+    reader.read(out(buffer));
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(out(registry));
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+    receiver.set(Ref(buffer));
+    auto state = BlotterRegistry::State();
+    receiver.shuttle(state);
+    return state;
+  } catch(const std::exception&) {
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to load blotters, using defaults."));
     return BlotterRegistry::State();
   }
-  auto reader = BasicIStreamReader<std::ifstream>(init(file));
-  auto buffer = SharedBuffer();
-  reader.read(out(buffer));
-  auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-  RegisterSpireTypes(out(registry));
-  auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-  receiver.set(Ref(buffer));
-  auto state = BlotterRegistry::State();
-  receiver.shuttle(state);
-  return state;
 }
 
 void Spire::save_blotter_settings(
@@ -123,6 +160,44 @@ struct BlotterRegistry::Entry {
   boost::signals2::scoped_connection m_pinned_connection;
   boost::signals2::scoped_connection m_active_connection;
 };
+
+BlotterRegistry::State::State(const LegacyBlotterSettings& settings) {
+  auto names = std::unordered_map<std::string, uuid>();
+  for(auto& legacy : settings.m_blotters) {
+    if(names.contains(legacy.m_name)) {
+      continue;
+    }
+    auto blotter = BlotterSettings();
+    blotter.m_id = random_generator()();
+    blotter.m_name = QString::fromStdString(legacy.m_name);
+    blotter.m_account = legacy.m_account;
+    blotter.m_is_consolidated = legacy.m_is_consolidated;
+    for(auto& monitor : legacy.m_task_properties.m_task_monitors) {
+      auto converted = BlotterSettings::Monitor();
+      converted.m_name = QString::fromStdString(monitor.m_name);
+      if(monitor.m_monitor) {
+        converted.m_expression = CanvasNode::Clone(*monitor.m_monitor);
+      }
+      blotter.m_monitors.push_back(std::move(converted));
+    }
+    names.emplace(legacy.m_name, blotter.m_id);
+    m_blotters.push_back(std::move(blotter));
+  }
+  for(auto& blotter : m_blotters) {
+    auto legacy = std::ranges::find(settings.m_blotters,
+      blotter.m_name.toStdString(), &LegacyBlotterSettings::Properties::m_name);
+    for(auto& name : legacy->m_links) {
+      auto source = names.find(name);
+      if(source != names.end()) {
+        blotter.m_links.push_back(source->second);
+      }
+    }
+  }
+  auto active = names.find(settings.m_active_blotter);
+  if(active != names.end()) {
+    m_active = active->second;
+  }
+}
 
 BlotterRegistry::BlotterRegistry(Ref<UserProfile> profile)
     : m_profile(profile.get()),

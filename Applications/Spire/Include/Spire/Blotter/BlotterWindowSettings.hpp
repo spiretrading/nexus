@@ -31,6 +31,7 @@ namespace Spire {
 
     private:
       friend struct Beam::DataShuttle;
+      friend class LegacyBlotterWindowSettings;
       struct Column {
         int m_index = 0;
         int m_width = 0;

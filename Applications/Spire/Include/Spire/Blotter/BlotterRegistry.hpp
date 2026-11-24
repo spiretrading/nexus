@@ -5,6 +5,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 
 namespace Spire {
+  struct LegacyBlotterSettings;
   class UserProfile;
 
   /** Owns blotter controllers and manages the active blotter. */
@@ -22,6 +23,15 @@ namespace Spire {
 
         /** The active blotter's ID, or nil for the default. */
         boost::uuids::uuid m_active;
+
+        /** Constructs empty registry settings. */
+        State() = default;
+
+        /**
+         * Converts legacy blotter settings.
+         * @param settings The saved legacy configuration.
+         */
+        explicit State(const LegacyBlotterSettings& settings);
 
         template<Beam::IsShuttle S>
         void shuttle(S& shuttle, unsigned int version);
@@ -110,7 +120,7 @@ namespace Spire {
   };
 
   /**
-   * Loads blotter settings, using defaults when no file exists.
+   * Loads blotter settings, falling back to legacy settings or defaults.
    * @param path The profile directory.
    */
   BlotterRegistry::State load_blotter_settings(
