@@ -22,7 +22,6 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -68,7 +67,6 @@ namespace {
           m_cancel_bindings(std::make_shared<CancelKeyBindingsModel>()),
           m_position_bindings(std::make_shared<PositionKeyBindingsModel>()),
           m_submissions(std::make_shared<Queue<std::shared_ptr<Order>>>()) {
-      initialize_resources();
       m_environment.monitor_order_submissions(m_submissions);
       m_model = m_collection->add(std::make_shared<CompositeBlotterModel>(
         m_profile.GetClients().get_service_locator_client().get_account(),

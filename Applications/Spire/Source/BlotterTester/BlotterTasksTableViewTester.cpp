@@ -11,7 +11,6 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -32,7 +31,6 @@ namespace {
     Fixture()
         : m_monitors(make_default_task_monitors()),
           m_tasks(std::make_shared<MonitoredTasksModel>(m_monitors)) {
-      initialize_resources();
       auto selection = std::make_shared<TableSelectionModel>(
         std::make_shared<TableEmptySelectionModel>(),
         std::make_shared<ListMultiSelectionModel>(),

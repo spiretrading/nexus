@@ -5,7 +5,6 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Spire/Blotter/OrderLogView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -24,9 +23,7 @@ namespace {
     std::shared_ptr<TableModel> m_table;
 
     Fixture()
-        : m_orders(std::make_shared<ArrayListModel<OrdersModel::Type>>()) {
-      initialize_resources();
-    }
+      : m_orders(std::make_shared<ArrayListModel<OrdersModel::Type>>()) {}
 
     void open() {
       m_view = std::make_unique<OrderLogView>(

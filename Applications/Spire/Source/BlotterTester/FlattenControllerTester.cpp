@@ -6,7 +6,6 @@
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Beam;
@@ -108,7 +107,6 @@ namespace {
           m_controller(std::make_unique<FlattenController>(
             Ref(m_profile), m_collection)),
           m_submissions(std::make_shared<Queue<std::shared_ptr<Order>>>()) {
-      initialize_resources();
       m_environment.monitor_order_submissions(m_submissions);
       m_environment.publish(parse_ticker("RY.TSX"),
         BboQuote(make_bid(Money(10), 100), make_ask(Money(11), 100),

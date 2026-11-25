@@ -1,6 +1,5 @@
 #include <QtTest/qtestmouse.h>
 #include "Spire/Blotter/BlotterPositionsCommandBar.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -21,7 +20,6 @@ namespace {
     explicit Fixture(FlattenState state)
         : m_can_flatten(std::make_shared<LocalValueModel<FlattenState>>(state)),
           m_bindings(std::make_shared<PositionKeyBindingsModel>()) {
-      initialize_resources();
       m_bar = std::make_unique<BlotterPositionsCommandBar>(
         m_can_flatten, m_bindings);
       m_bar->resize(300, m_bar->sizeHint().height());

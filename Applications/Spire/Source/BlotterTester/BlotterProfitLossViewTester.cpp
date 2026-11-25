@@ -1,7 +1,6 @@
 #include <boost/optional/optional_io.hpp>
 #include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -11,7 +10,6 @@ using namespace Spire;
 
 TEST_SUITE("BlotterProfitLossView") {
   UI_TEST_CASE("portfolio_columns") {
-    initialize_resources();
     auto portfolio = std::make_shared<ArrayListModel<PortfolioUpdateEntry>>();
     auto first = PortfolioUpdateEntry();
     first.m_inventory = Inventory(
@@ -48,7 +46,6 @@ TEST_SUITE("BlotterProfitLossView") {
   }
 
   UI_TEST_CASE("live_profit_loss") {
-    initialize_resources();
     auto portfolio = std::make_shared<ArrayListModel<PortfolioUpdateEntry>>();
     auto view = BlotterProfitLossView(portfolio);
     auto& widget = static_cast<TableView&>(*view.focusProxy());

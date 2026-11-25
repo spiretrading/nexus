@@ -9,7 +9,6 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/TableView.hpp"
 
@@ -19,7 +18,6 @@ using namespace Spire;
 
 TEST_SUITE("BlotterTasksView") {
   UI_TEST_CASE("selected_task_commands") {
-    initialize_resources();
     auto environment = TestEnvironment();
     auto profile = UserProfile("", false, false, {}, {},
       get_default_additional_tag_database(), {}, {}, {},

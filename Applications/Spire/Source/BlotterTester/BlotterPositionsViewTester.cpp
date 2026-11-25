@@ -5,7 +5,6 @@
 #include <QtTest/qtestmouse.h>
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -39,7 +38,6 @@ namespace {
         m_table(nullptr) {}
 
     void open() {
-      initialize_resources();
       m_view = std::make_unique<BlotterPositionsView>(m_portfolio, m_bindings);
       m_table = static_cast<TableView*>(m_view->focusProxy());
       m_connection = m_view->connect_flatten_signal(

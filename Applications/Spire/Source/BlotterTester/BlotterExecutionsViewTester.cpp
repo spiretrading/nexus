@@ -4,7 +4,6 @@
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
 #include "Spire/Blotter/OrderExecutionReportsModel.hpp"
 #include "Spire/Spire/ExportTable.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/OrderStatusFilterPanel.hpp"
@@ -23,7 +22,6 @@ namespace {
 
     Fixture()
         : m_reports(std::make_shared<ArrayListModel<ExecutionReportEntry>>()) {
-      initialize_resources();
       m_view = std::make_unique<BlotterExecutionsView>(m_reports);
       m_table = static_cast<TableView*>(m_view->focusProxy());
     }
@@ -125,7 +123,6 @@ TEST_SUITE("BlotterExecutionsView") {
   }
 
   UI_TEST_CASE("time_sort_sequence") {
-    initialize_resources();
     auto reports = std::make_shared<ArrayListModel<ExecutionReportEntry>>();
     auto order = make_order(1, OrderType::LIMIT);
     auto timestamp = time_from_string("2026-11-20 10:01:00");
@@ -215,7 +212,6 @@ TEST_SUITE("BlotterExecutionsView") {
   }
 
   UI_TEST_CASE("live_reports") {
-    initialize_resources();
     auto order = make_order(1, OrderType::LIMIT);
     auto orders = std::make_shared<ArrayListModel<OrdersModel::Type>>(
       std::vector<OrdersModel::Type>{order});

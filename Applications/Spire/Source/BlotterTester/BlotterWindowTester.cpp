@@ -18,7 +18,6 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -46,7 +45,6 @@ namespace {
 
 TEST_SUITE("BlotterWindow") {
   UI_TEST_CASE("portfolio_summary") {
-    initialize_resources();
     auto portfolio = std::make_shared<ArrayListModel<PortfolioUpdateEntry>>();
     auto entry = PortfolioUpdateEntry();
     entry.m_inventory = Inventory(
@@ -110,7 +108,6 @@ TEST_SUITE("BlotterWindow") {
   }
 
   UI_TEST_CASE("task_canvas") {
-    initialize_resources();
     auto environment = TestEnvironment();
     auto profile = UserProfile("", false, false, {}, {},
       get_default_additional_tag_database(), {}, {}, {},
@@ -228,7 +225,6 @@ TEST_SUITE("BlotterWindow") {
 
   UI_TEST_CASE("cancel_key_bindings") {
     using Operation = CancelKeyBindingsModel::Operation;
-    initialize_resources();
     auto model = std::make_shared<CompositeBlotterModel>(
       DirectoryEntry(), false,
       std::make_shared<LocalTextModel>("Test"),
@@ -285,7 +281,6 @@ TEST_SUITE("BlotterWindow") {
   }
 
   UI_TEST_CASE("orders") {
-    initialize_resources();
     auto environment = TestEnvironment();
     auto orders = std::make_shared<ArrayListModel<std::shared_ptr<Order>>>();
     auto make_order = [] (OrderId id) {
@@ -349,7 +344,6 @@ TEST_SUITE("BlotterWindow") {
 
   UI_TEST_CASE("positions") {
     using Operation = PositionKeyBindingsModel::Operation;
-    initialize_resources();
     auto environment = TestEnvironment();
     auto clients = TestClients(Ref(environment));
     auto ticker = parse_ticker("RY.TSX");
@@ -465,7 +459,6 @@ TEST_SUITE("BlotterWindow") {
   }
 
   UI_TEST_CASE("links_menu") {
-    initialize_resources();
     auto environment = TestEnvironment();
     auto clients = TestClients(Ref(environment));
     auto collection = std::make_shared<BlotterCollection>(
@@ -602,7 +595,6 @@ TEST_SUITE("BlotterWindow") {
   }
 
   UI_TEST_CASE("rename") {
-    initialize_resources();
     auto environment = TestEnvironment();
     auto clients = TestClients(Ref(environment));
     auto collection = std::make_shared<BlotterCollection>(

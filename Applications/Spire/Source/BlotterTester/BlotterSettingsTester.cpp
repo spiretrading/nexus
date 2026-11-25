@@ -19,7 +19,6 @@
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/OrderStatusFilterPanel.hpp"
@@ -110,11 +109,9 @@ namespace {
     UserProfile m_profile;
 
     Fixture()
-        : m_profile("", false, false, {}, {},
-            get_default_additional_tag_database(), {}, {}, {},
-            Clients(std::in_place_type<TestClients>, Ref(m_environment))) {
-      initialize_resources();
-    }
+      : m_profile("", false, false, {}, {},
+          get_default_additional_tag_database(), {}, {}, {},
+          Clients(std::in_place_type<TestClients>, Ref(m_environment))) {}
 
     ~Fixture() {
       flush_pending_routines();

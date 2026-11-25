@@ -6,7 +6,6 @@
 #include "Spire/Blotter/BlotterRegistry.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Beam;
@@ -27,7 +26,6 @@ namespace {
             get_default_additional_tag_database(), {}, {}, {},
             Clients(std::in_place_type<TestClients>, Ref(m_environment))),
           m_submissions(std::make_shared<Queue<std::shared_ptr<Order>>>()) {
-      initialize_resources();
       m_environment.monitor_order_submissions(m_submissions);
     }
 
