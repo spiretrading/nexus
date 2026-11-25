@@ -3,6 +3,7 @@
 #include <QLayout>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -16,6 +17,7 @@
 #include "Spire/UiTests/UiTests.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 using namespace Spire::Tests;
 
 TEST_SUITE("GroupedTableView") {
@@ -189,6 +191,81 @@ TEST_SUITE("GroupedTableView") {
     table->set_grouping({});
     REQUIRE(header.get_items()->get(0).m_name == "Shares");
     REQUIRE(header.get_items()->get(2).m_name == "Currency");
+  }
+
+  UI_TEST_CASE("aggregate_row_style") {
+    auto source = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != 32; ++i) {
+      source->push({QString::number(i), QString("CAD"), i});
+    }
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Shares").
+      set_grouping({0, 1}).make());
+    view->resize(scale(500, 185));
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto row = [&] (int index) {
+      auto item = body.find_item(TableIndex(index, 0));
+      REQUIRE(item);
+      return item->parentWidget();
+    };
+    auto check = [&] (int index, bool aggregate) {
+      REQUIRE(is_match(*row(index), AggregateRow()) == aggregate);
+    };
+    check(0, true);
+    check(1, true);
+    check(2, false);
+    REQUIRE((find<BackgroundColor>(get_computed_block(*row(1))) ==
+      BackgroundColor(QColor(0, 0, 0, 16))));
+    auto fill = QColor(0xB9DAFF);
+    auto selected = QColor(0xE7CAFF);
+    auto grid = QColor(0x37618C);
+    update_style(*view, [&] (auto& style) {
+      auto body = Any() > is_a<TableBody>();
+      style.get(body > AggregateRow()).
+        set(BackgroundColor(fill)).
+        set(HorizontalGridColor(grid));
+      style.get(body > (AggregateRow() && Selected())).
+        set(BackgroundColor(selected));
+    });
+    auto color = [&] (int index) {
+      QApplication::processEvents();
+      auto widget = row(index);
+      auto point = QPoint(widget->width() - scale_width(5),
+        widget->height() / 2);
+      auto area = QRect(widget->mapTo(&body, point), QSize(1, 1));
+      return body.grab(area).toImage().pixelColor(0, 0);
+    };
+    REQUIRE(color(0) == fill);
+    REQUIRE(color(1) == fill);
+    REQUIRE((find<HorizontalGridColor>(get_computed_block(*row(1))) ==
+      HorizontalGridColor(grid)));
+    REQUIRE(color(2) != fill);
+    view->get_selection()->get_row_selection()->push(1);
+    REQUIRE(color(1) == selected);
+    auto toggle = dynamic_cast<ToggleButton*>(
+      body.find_item(TableIndex(0, 0))->get_body().focusProxy());
+    REQUIRE(toggle);
+    toggle->get_current()->set(false);
+    QApplication::processEvents();
+    check(1, true);
+    check(2, true);
+    check(3, false);
+    auto& scroll = view->get_scroll_box().get_vertical_scroll_bar();
+    scroll.set_position(scroll.get_range().m_end);
+    QApplication::processEvents();
+    auto last = body.get_table()->get_row_size() - 1;
+    check(last - 2, true);
+    check(last - 1, true);
+    check(last, false);
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    table->set_grouping({});
+    scroll.set_position(0);
+    QApplication::processEvents();
+    check(0, false);
+    check(1, false);
+    REQUIRE(color(0) != fill);
   }
 
   UI_TEST_CASE("grouped_column_visibility") {

@@ -131,6 +131,7 @@ struct TableBody::ColumnCover : Cover {
 };
 
 struct TableBody::RowCover : Cover {
+  std::optional<Selector> m_selector;
   bool m_is_pending_layout;
 
   RowCover(TableBody& body)
@@ -180,6 +181,10 @@ struct TableBody::RowCover : Cover {
 
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
+    m_selector = body.m_item_builder.get_row_selector(index);
+    if(m_selector) {
+      match(*this, *m_selector);
+    }
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       get_item(i)->mount(*body.m_item_builder.mount(
         body.m_table, index, body.m_visual_to_logical_columns[i]));
@@ -193,6 +198,10 @@ struct TableBody::RowCover : Cover {
       if(auto item = get_item(i)) {
         body.m_item_builder.unmount(item->unmount());
       }
+    }
+    if(m_selector) {
+      unmatch(*this, *m_selector);
+      m_selector.reset();
     }
     unmatch(*this, CurrentRow());
     unmatch(*this, Selected());

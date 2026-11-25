@@ -11,6 +11,7 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   class GroupColumns : public QObject {
@@ -149,40 +150,33 @@ namespace {
         auto label = TableView::default_item_builder(table, row, column);
         auto& grouping = table->get_grouping();
         auto heading = table->index_to_source(row) == -1;
-        if(heading) {
-          auto palette = this->palette();
-          palette.setColor(QPalette::Window, QColor(0, 0, 0, 16));
-          setPalette(palette);
-          setAutoFillBackground(true);
-          if(column == grouping.front()) {
-            auto depth = 0;
-            for(auto i = table->get_parent(row); i != -1;
-                i = table->get_parent(i)) {
-              ++depth;
-            }
-            layout->setContentsMargins(
-              scale_width(8 + 16 * depth), 0, scale_width(8), 0);
-            static auto closed = image_from_svg(
-              ":/Icons/blotter/profit_and_loss/expand_arrow.svg", scale(6, 8));
-            static auto open = image_from_svg(
-              ":/Icons/blotter/profit_and_loss/collapse_arrow.svg",
-              scale(8, 6));
-            auto button =
-              make_icon_toggle_button(closed, open, filter.is_expanded(row));
-            button->setFixedSize(scale(20, 20));
-            auto description = [&] {
-              auto name = table->get_group_name(row);
-              if(name.isEmpty()) {
-                return tr("Expand or collapse group");
-              }
-              return tr("Expand or collapse %1").arg(name);
-            }();
-            button->setAccessibleName(description);
-            button->focusProxy()->setAccessibleName(description);
-            layout->addWidget(button);
-            setFocusPolicy(Qt::StrongFocus);
-            setFocusProxy(button);
+        if(heading && column == grouping.front()) {
+          auto depth = 0;
+          for(auto i = table->get_parent(row); i != -1;
+              i = table->get_parent(i)) {
+            ++depth;
           }
+          layout->setContentsMargins(
+            scale_width(8 + 16 * depth), 0, scale_width(8), 0);
+          static const auto EXPAND_ARROW =
+            image_from_svg(":/Icons/expand-arrow.svg", scale(6, 8));
+          static const auto COLLAPSE_ARROW =
+            image_from_svg(":/Icons/collapse-arrow.svg", scale(8, 6));
+          auto button = make_icon_toggle_button(
+            EXPAND_ARROW, COLLAPSE_ARROW, filter.is_expanded(row));
+          button->setFixedSize(scale(20, 20));
+          auto description = [&] {
+            auto name = table->get_group_name(row);
+            if(name.isEmpty()) {
+              return tr("Expand or collapse group");
+            }
+            return tr("Expand or collapse %1").arg(name);
+          }();
+          button->setAccessibleName(description);
+          button->focusProxy()->setAccessibleName(description);
+          layout->addWidget(button);
+          setFocusPolicy(Qt::StrongFocus);
+          setFocusProxy(button);
         }
         layout->addWidget(label);
         if(!heading) {
@@ -196,6 +190,26 @@ namespace {
 
     private:
       scoped_connection m_connection;
+  };
+
+  struct GroupItemBuilder {
+    std::shared_ptr<GroupedTableModel> m_table;
+    std::shared_ptr<GroupFilter> m_filter;
+
+    std::optional<Selector> get_row_selector(int row) const {
+      if(m_table->index_to_source(row) == -1) {
+        return AggregateRow();
+      }
+      return std::nullopt;
+    }
+
+    QWidget* mount(const std::shared_ptr<TableModel>&, int row, int column) {
+      return new GroupCell(m_table, row, column, *m_filter);
+    }
+
+    void unmount(QWidget* widget) {
+      delete widget;
+    }
   };
 }
 
@@ -258,10 +272,12 @@ TableView* GroupedTableViewBuilder::make() const {
     builder.add_header_item(column.m_name, column.m_short_name, column.m_order,
       TableFilter::Filter::NONE);
   }
-  auto view = builder.set_filter(filter).set_item_builder(
-    [=] (const auto&, int row, int column) {
-      return new GroupCell(table, row, column, *filter);
-    }).make();
+  auto view = builder.set_filter(filter).
+    set_item_builder(GroupItemBuilder(table, filter)).make();
+  update_style(*view, [] (auto& style) {
+    style.get(Any() > is_a<TableBody>() > (AggregateRow() && !Selected())).
+      set(BackgroundColor(QColor(0, 0, 0, 16)));
+  });
   new GroupColumns(*view, *table);
   if(!m_grouping) {
     auto names = QStringList();

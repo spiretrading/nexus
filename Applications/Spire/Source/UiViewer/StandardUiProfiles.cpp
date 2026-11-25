@@ -2828,6 +2828,12 @@ UiProfile Spire::make_grouped_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("AR.TSX shares", 1200));
+  auto default_style = R"(
+    any > TableBody > (:aggregate_row and !:selected) {
+      background_color: 0xEFEFEF;
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet", default_style));
   return UiProfile("GroupedTableView", properties, [] (auto& profile) {
     auto positions = std::make_shared<ArrayTableModel>();
     auto& shares = get<int>("AR.TSX shares", profile.get_properties());
@@ -2849,6 +2855,13 @@ UiProfile Spire::make_grouped_table_view_profile() {
     apply_widget_properties(view, profile.get_properties());
     get<int>("width", profile.get_properties()).set(545);
     get<int>("height", profile.get_properties()).set(350);
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      if(styles) {
+        set_style(*view, *styles);
+      }
+    });
     shares.connect_changed_signal([=] (int value) {
       positions->set(0, 4, value);
     });

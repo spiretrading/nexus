@@ -5,6 +5,12 @@
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the rows that display group headings and their aggregates. */
+  using AggregateRow = StateSelector<void, struct AggregateRowTag>;
+}
+
 namespace Details {
   template<typename T>
   concept TableAccumulator = std::is_object_v<T> && requires(T& value) {

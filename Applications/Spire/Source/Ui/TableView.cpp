@@ -231,6 +231,10 @@ void TableView::initialize_body(
     TableViewItemBuilder m_builder;
     Rows m_rows;
 
+    std::optional<Selector> get_row_selector(int row) const {
+      return m_builder.get_row_selector(m_rows.index_to_source(row));
+    }
+
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       return m_builder.mount(
