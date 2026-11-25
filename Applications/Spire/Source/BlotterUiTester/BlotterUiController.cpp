@@ -243,6 +243,9 @@ void BlotterUiController::on_run_tasks(
 void BlotterUiController::on_cancel_tasks(
     const std::vector<std::shared_ptr<Task>>& tasks) {
   m_output->append(tr("Cancel Tasks: [%1]").arg(format_task_ids(tasks)));
+  for(auto& task : tasks) {
+    task->Cancel();
+  }
 }
 
 void BlotterUiController::on_cancel_orders(
