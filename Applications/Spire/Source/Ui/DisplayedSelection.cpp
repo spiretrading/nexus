@@ -136,23 +136,21 @@ void TableView::DisplayedSelection<T>::end_transaction() {
 
 template<typename T>
 bool TableView::DisplayedSelection<T>::is_tail_append(int row) const {
-  if(row != m_sorted->get_row_size() - 1) {
+  if(row != m_rows.get_table()->get_row_size() - 1) {
     return false;
   }
-  auto filtered = m_sorted->index_to_source(row);
-  return m_filtered->index_to_source(filtered) ==
-    m_filtered->get_source()->get_row_size() - 1;
+  return m_rows.index_to_source(row) ==
+    m_rows.get_filtered_table()->get_source()->get_row_size() - 1;
 }
 
 template<typename T>
 optional<T> TableView::DisplayedSelection<T>::from_source(T value) const {
-  if(m_filtered) {
+  if(m_rows.get_filtered_table()) {
     auto& row = row_of(value);
-    row = m_filtered->index_from_source(row);
-    if(row < 0 || row >= m_sorted->get_row_size()) {
+    row = m_rows.index_from_source(row);
+    if(row < 0 || row >= m_rows.get_table()->get_row_size()) {
       return none;
     }
-    row = m_sorted->index_from_source(row);
   }
   if(m_columns) {
     auto& column = column_of(value);
@@ -278,12 +276,12 @@ optional<T> TableView::DisplayedSelection<T>::to_source(T value) const {
   if(!m_tracking_connection.connected()) {
     return none;
   }
-  if(m_filtered) {
+  if(m_rows.get_filtered_table()) {
     auto& row = row_of(value);
-    if(row < 0 || row >= m_sorted->get_row_size()) {
+    if(row < 0 || row >= m_rows.get_table()->get_row_size()) {
       return none;
     }
-    row = m_filtered->index_to_source(m_sorted->index_to_source(row));
+    row = m_rows.index_to_source(row);
   }
   if(m_columns) {
     auto& column = column_of(value);

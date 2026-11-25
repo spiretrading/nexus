@@ -73,6 +73,53 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("source_sort_handler") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 30});
+    source->push({0, 500});
+    source->push({2, 10});
+    auto requests = std::vector<std::vector<SortedTableModel::ColumnOrder>>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Account", TableHeaderItem::Order::DESCENDING).
+      add_header_item("Quantity").set_filter(std::make_shared<MinimumFilter>()).
+      set_sort_handler([&] (const auto& order) {
+        requests.push_back(order);
+        if(requests.size() == 2) {
+          source->move(2, 0);
+        }
+      }).make());
+    REQUIRE(requests.size() == 1);
+    REQUIRE(requests[0].size() == 1);
+    REQUIRE(requests[0][0].m_index == 0);
+    REQUIRE(requests[0][0].m_order == SortedTableModel::Ordering::DESCENDING);
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto& rows = *body.get_table();
+    REQUIRE(rows.get_row_size() == 2);
+    REQUIRE(rows.get<int>(0, 1) == 30);
+    view->get_current()->set(TableIndex(2, 1));
+    view->get_selection()->get_row_selection()->push(2);
+    auto& header = view->get_header();
+    header.get_items()->move(1, 0);
+    QApplication::processEvents();
+    REQUIRE(body.get_current()->get().value() == TableIndex(1, 0));
+    auto item = header.get_item(0);
+    move_cursor(*item, item->rect().center());
+    press_mouse(*item, Qt::LeftButton);
+    release_mouse(*item, Qt::LeftButton);
+    REQUIRE(requests.size() == 2);
+    REQUIRE(requests[1].size() == 2);
+    REQUIRE(requests[1][0].m_index == 1);
+    REQUIRE(requests[1][0].m_order == SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(requests[1][1].m_index == 0);
+    REQUIRE(rows.get<int>(0, 1) == 10);
+    REQUIRE(body.get_current()->get().value() == TableIndex(0, 0));
+    REQUIRE(body.get_selection()->get_row_selection()->get(0) == 0);
+    REQUIRE(view->get_current()->get().value() == TableIndex(0, 1));
+  }
+
   UI_TEST_CASE("filtered_row_removal") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({100});
