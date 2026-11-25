@@ -1,4 +1,6 @@
 #include "Spire/Ui/GroupedTableView.hpp"
+#include <algorithm>
+#include <map>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
@@ -11,6 +13,69 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  class GroupColumns : public QObject {
+    public:
+      GroupColumns(TableView& view, const GroupedTableModel& table)
+          : QObject(&view),
+            m_view(view) {
+        on_grouping(table.get_grouping());
+        m_connection = table.connect_grouping_signal(
+          std::bind_front(&GroupColumns::on_grouping, this));
+      }
+
+    private:
+      struct Column {
+        QString m_name;
+        QString m_short_name;
+        bool m_is_hidden;
+      };
+      TableView& m_view;
+      std::map<int, Column> m_originals;
+      scoped_connection m_connection;
+
+      void on_grouping(const std::vector<int>& grouping) {
+        auto& header = m_view.get_header();
+        auto& items = *header.get_items();
+        auto& order = *header.get_column_order();
+        for(auto i = 0; i != items.get_size(); ++i) {
+          auto column = order.get(i);
+          auto grouped = std::ranges::contains(grouping, column);
+          auto original = m_originals.find(column);
+          if(!grouped && original == m_originals.end()) {
+            continue;
+          }
+          auto& item = items.get(i);
+          auto hidden = header.get_item(i)->isHidden();
+          if(original == m_originals.end()) {
+            original = m_originals.try_emplace(
+              column, item.m_name, item.m_short_name, hidden).first;
+          }
+          auto display = original->second;
+          if(grouped) {
+            display.m_is_hidden = column != grouping.front();
+            if(!display.m_is_hidden) {
+              display.m_name = tr("Group");
+              display.m_short_name.clear();
+            }
+          } else {
+            m_originals.erase(original);
+          }
+          if(display.m_name != item.m_name ||
+              display.m_short_name != item.m_short_name) {
+            auto revised = item;
+            revised.m_name = std::move(display.m_name);
+            revised.m_short_name = std::move(display.m_short_name);
+            items.set(i, revised);
+          }
+          if(display.m_is_hidden && !hidden) {
+            m_view.hide_column(i);
+          } else if(!display.m_is_hidden && hidden) {
+            m_view.show_column(i);
+          }
+        }
+      }
+  };
+
   class GroupFilter : public EmptyTableFilter {
     public:
       explicit GroupFilter(const GroupedTableModel& table)
@@ -83,7 +148,8 @@ namespace {
         layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
         auto label = TableView::default_item_builder(table, row, column);
         auto& grouping = table->get_grouping();
-        if(table->index_to_source(row) == -1) {
+        auto heading = table->index_to_source(row) == -1;
+        if(heading) {
           auto palette = this->palette();
           palette.setColor(QPalette::Window, QColor(0, 0, 0, 16));
           setPalette(palette);
@@ -117,18 +183,15 @@ namespace {
             setFocusPolicy(Qt::StrongFocus);
             setFocusProxy(button);
           }
-        } else {
-          auto indent = [=] (const auto& columns) {
-            auto padding = scale_width(8);
-            if(!columns.empty() && column == columns.front()) {
-              padding = scale_width(28 + 16 * static_cast<int>(columns.size()));
-            }
-            layout->setContentsMargins(padding, 0, scale_width(8), 0);
-          };
-          indent(grouping);
-          m_connection = table->connect_grouping_signal(indent);
         }
         layout->addWidget(label);
+        if(!heading) {
+          auto on_grouping = [=] (const auto& columns) {
+            label->setVisible(columns.empty() || column != columns.front());
+          };
+          on_grouping(grouping);
+          m_connection = table->connect_grouping_signal(on_grouping);
+        }
       }
 
     private:
@@ -199,6 +262,7 @@ TableView* GroupedTableViewBuilder::make() const {
     [=] (const auto&, int row, int column) {
       return new GroupCell(table, row, column, *filter);
     }).make();
+  new GroupColumns(*view, *table);
   if(!m_grouping) {
     auto names = QStringList();
     for(auto& column : m_columns) {

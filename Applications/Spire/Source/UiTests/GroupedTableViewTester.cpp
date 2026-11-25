@@ -58,7 +58,11 @@ TEST_SUITE("GroupedTableView") {
       return item->get_body().layout()->contentsMargins().left();
     };
     REQUIRE(indent(0) < indent(1));
-    REQUIRE(indent(1) < indent(2));
+    auto leaf = body.find_item(TableIndex(2, 0));
+    REQUIRE(leaf);
+    REQUIRE(leaf->get_body().layout()->itemAt(0)->widget()->isHidden());
+    REQUIRE(view->get_header().get_items()->get(0).m_name == "Group");
+    REQUIRE(view->get_header().get_item(1)->isHidden());
     toggle(1, 0, "CAD");
     REQUIRE(visible.get_row_size() == 7);
     REQUIRE(visible.get<QString>(2, 0) == "USD (1)");
@@ -145,8 +149,8 @@ TEST_SUITE("GroupedTableView") {
     auto receiver = QApplication::widgetAt(QCursor::pos());
     REQUIRE(receiver);
     press_mouse(*receiver, Qt::LeftButton);
-    auto currency = header.get_item(1);
-    move_cursor(*currency, currency->rect().center());
+    auto group = header.get_item(0);
+    move_cursor(*group, group->rect().center());
     auto position = QCursor::pos();
     auto move = QMouseEvent(QEvent::MouseMove,
       receiver->mapFromGlobal(position), position, Qt::NoButton,
@@ -154,13 +158,13 @@ TEST_SUITE("GroupedTableView") {
     QApplication::sendEvent(receiver, &move);
     release_mouse(*receiver, Qt::LeftButton);
     QApplication::processEvents();
-    REQUIRE(header.get_item(1) == shares);
-    REQUIRE(header.get_column_order()->get(1) == 2);
+    REQUIRE(header.get_item(0) == shares);
+    REQUIRE(header.get_column_order()->get(0) == 2);
     REQUIRE(rows.get<QString>(0, 0) == "A (2)");
     move_cursor(*shares, shares->rect().center());
     press_mouse(*shares, Qt::LeftButton);
     release_mouse(*shares, Qt::LeftButton);
-    REQUIRE(header.get_items()->get(1).m_order ==
+    REQUIRE(header.get_items()->get(0).m_order ==
       TableHeaderItem::Order::ASCENDING);
     REQUIRE(rows.get_row_size() == 6);
     REQUIRE(rows.get<QString>(0, 0) == "B (2)");
@@ -178,6 +182,64 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(second);
     REQUIRE(first->get_label()->get() == "Account");
     REQUIRE(second->get_label()->get() == "Currency");
+    table->set_grouping({1});
+    REQUIRE(header.get_items()->get(1).m_name == "Account");
+    REQUIRE(header.get_items()->get(2).m_name == "Group");
+    REQUIRE_FALSE(header.get_item(2)->isHidden());
+    table->set_grouping({});
+    REQUIRE(header.get_items()->get(0).m_name == "Shares");
+    REQUIRE(header.get_items()->get(2).m_name == "Currency");
+  }
+
+  UI_TEST_CASE("grouped_column_visibility") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({"A", "Long"});
+    source->push({"B", "Short"});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account", "Acct").add_column("Side").make());
+    view->resize(400, 300);
+    view->show();
+    QApplication::processEvents();
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    auto& header = view->get_header();
+    auto& items = *header.get_items();
+    auto leaf = [&] (int column) {
+      QApplication::processEvents();
+      auto item = view->get_body().find_item(
+        TableIndex(table->index_from_source(0), column));
+      REQUIRE(item);
+      return item;
+    };
+    auto label = [&] (int column) {
+      return leaf(column)->get_body().layout()->itemAt(0)->widget();
+    };
+    table->set_grouping({1});
+    REQUIRE(items.get(1).m_name == "Group");
+    REQUIRE(table->get_group_name(0) == "Long");
+    REQUIRE(label(1)->isHidden());
+    REQUIRE(label(0)->isVisible());
+    table->set_grouping({1, 0});
+    REQUIRE(header.get_item(0)->isHidden());
+    REQUIRE_FALSE(header.get_item(1)->isHidden());
+    REQUIRE(leaf(0)->width() == 0);
+    REQUIRE(table->get_group_name(1) == "A");
+    table->set_grouping({0, 1});
+    REQUIRE_FALSE(header.get_item(0)->isHidden());
+    REQUIRE(header.get_item(1)->isHidden());
+    REQUIRE(items.get(0).m_name == "Group");
+    table->set_grouping({});
+    REQUIRE(items.get(0).m_name == "Account");
+    REQUIRE(items.get(0).m_short_name == "Acct");
+    REQUIRE(items.get(1).m_name == "Side");
+    REQUIRE_FALSE(header.get_item(1)->isHidden());
+    REQUIRE(label(0)->isVisible());
+    REQUIRE(label(1)->isVisible());
+    REQUIRE(leaf(0)->width() > 0);
+    view->hide_column(0);
+    table->set_grouping({0});
+    REQUIRE_FALSE(header.get_item(0)->isHidden());
+    table->set_grouping({});
+    REQUIRE(header.get_item(0)->isHidden());
   }
 
   UI_TEST_CASE("column_order_settings") {
