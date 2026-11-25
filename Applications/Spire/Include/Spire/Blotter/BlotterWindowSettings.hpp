@@ -66,6 +66,7 @@ namespace Spire {
       int m_tab;
       TableState m_tasks;
       TableState m_positions;
+      TableState m_profit_loss;
       TableState m_orders;
       TableState m_executions;
       std::vector<Nexus::OrderStatus> m_statuses;
@@ -104,6 +105,7 @@ namespace Spire {
     shuttle.shuttle("tab", m_tab);
     shuttle.shuttle("tasks", m_tasks);
     shuttle.shuttle("positions", m_positions);
+    shuttle.shuttle("profit_loss", m_profit_loss);
     shuttle.shuttle("orders", m_orders);
     shuttle.shuttle("executions", m_executions);
     shuttle.shuttle("statuses", m_statuses);

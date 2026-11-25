@@ -7,6 +7,7 @@
 
 namespace Spire {
   class BlotterExecutionsView;
+  class BlotterProfitLossView;
   class TabView;
 
   /** Displays a blotter's secondary views. */
@@ -43,6 +44,7 @@ namespace Spire {
       friend class BlotterWindowSettings;
       TabView* m_tab_view;
       BlotterPositionsView* m_positions;
+      BlotterProfitLossView* m_profit_loss;
       OrderLogView* m_order_log;
       BlotterExecutionsView* m_executions;
   };

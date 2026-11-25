@@ -21,8 +21,8 @@ BlotterTabView::BlotterTabView(std::shared_ptr<BlotterModel> model,
   m_positions = new BlotterPositionsView(
     model->get_portfolio(), std::move(position_bindings));
   m_tab_view->add(std::vector{tr("Positions"), tr("Pos")}, *m_positions);
-  m_tab_view->add(
-    std::vector{tr("Profit/Loss"), tr("P/L")}, *new BlotterProfitLossView());
+  m_profit_loss = new BlotterProfitLossView(model->get_portfolio());
+  m_tab_view->add(std::vector{tr("Profit/Loss"), tr("P/L")}, *m_profit_loss);
   auto orders = model->get_orders();
   m_order_log = new OrderLogView(orders, std::move(cancel_bindings));
   m_tab_view->add(std::vector{tr("Order Log"), tr("Orders")}, *m_order_log);

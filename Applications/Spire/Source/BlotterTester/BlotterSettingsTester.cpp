@@ -12,6 +12,7 @@
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
 #include "Spire/Blotter/BlotterLinkMenu.hpp"
+#include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/LegacyBlotterSettings.hpp"
 #include "Spire/Blotter/LegacyBlotterWindowSettings.hpp"
@@ -422,11 +423,14 @@ TEST_SUITE("BlotterSettings") {
     split.set_primary_ratio(0.65);
     configure_table(
       find_widget<TableView>(find_widget<BlotterTasksView>(window)));
-    for(auto tab : {0, 2, 3}) {
+    for(auto tab : {0, 1, 2, 3}) {
       tabs.get_current()->set(tab);
       if(tab == 0) {
         configure_table(
           find_widget<TableView>(find_widget<BlotterPositionsView>(window)));
+      } else if(tab == 1) {
+        configure_table(
+          find_widget<TableView>(find_widget<BlotterProfitLossView>(window)));
       } else if(tab == 2) {
         configure_table(
           find_widget<TableView>(find_widget<OrderLogView>(window)));
@@ -470,6 +474,9 @@ TEST_SUITE("BlotterSettings") {
       find_widget<TableView>(find_widget<BlotterPositionsView>(*restored)));
     restored_tabs.get_current()->set(2);
     require_table(find_widget<TableView>(find_widget<OrderLogView>(*restored)));
+    restored_tabs.get_current()->set(1);
+    require_table(
+      find_widget<TableView>(find_widget<BlotterProfitLossView>(*restored)));
     REQUIRE(settings.Reopen(Ref(fixture.m_profile)) == restored);
   }
 

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
+#include "Spire/Blotter/BlotterProfitLossView.hpp"
 #include "Spire/Blotter/BlotterTabView.hpp"
 #include "Spire/Blotter/BlotterTasksTableView.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -85,6 +86,7 @@ BlotterWindowSettings::BlotterWindowSettings(const BlotterWindow& window)
     m_tab(window.m_tab_view->m_tab_view->get_current()->get().value_or(0)),
     m_tasks(*window.m_tasks_view->m_table->m_table_view),
     m_positions(*window.m_tab_view->m_positions->m_table),
+    m_profit_loss(*window.m_tab_view->m_profit_loss->m_table),
     m_orders(*window.m_tab_view->m_order_log->m_table),
     m_executions(*window.m_tab_view->m_executions->m_table),
     m_statuses(window.m_tab_view->m_executions->m_statuses->cbegin(),
@@ -116,6 +118,7 @@ void BlotterWindowSettings::Apply(
   }
   m_tasks.apply(*window.m_tasks_view->m_table->m_table_view);
   m_positions.apply(*window.m_tab_view->m_positions->m_table);
+  m_profit_loss.apply(*window.m_tab_view->m_profit_loss->m_table);
   m_orders.apply(*window.m_tab_view->m_order_log->m_table);
   m_executions.apply(*window.m_tab_view->m_executions->m_table);
   auto& statuses = *window.m_tab_view->m_executions->m_statuses;
