@@ -63,31 +63,73 @@ TEST_SUITE("GroupedTableView") {
     toggle(0, 0);
     REQUIRE(visible.get_row_size() == 4);
     REQUIRE(visible.get<QString>(1, 0) == "B (1)");
-    source->set(0, 2, 12);
-    source->push({QString("A"), QString("CAD"), 5});
-    REQUIRE(visible.get_row_size() == 4);
-    REQUIRE(visible.get<QString>(0, 0) == "A (3)");
-    REQUIRE(visible.get<std::int64_t>(0, 2) == 47);
-    toggle(0, 0);
-    REQUIRE(visible.get_row_size() == 7);
-    REQUIRE(visible.get<QString>(1, 0) == "CAD (2)");
-    REQUIRE(visible.get<std::int64_t>(1, 2) == 17);
-    toggle(1, 0);
-    REQUIRE(visible.get_row_size() == 9);
-    REQUIRE(visible.get<int>(2, 2) == 12);
-    REQUIRE(visible.get<int>(3, 2) == 5);
-    toggle(0, 0);
-    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
-    table->set_grouping({0});
-    REQUIRE(visible.get_row_size() == 3);
-    table->set_grouping({1});
-    REQUIRE(visible.get_row_size() == 6);
-    toggle(0, 1);
-    REQUIRE(visible.get_row_size() == 3);
-    REQUIRE(visible.get<QString>(1, 1) == "USD (1)");
-    table->set_grouping({});
-    REQUIRE(visible.get_row_size() == 4);
-    REQUIRE(visible.get<int>(0, 2) == 12);
+    SUBCASE("sort_collapsed_groups") {
+      auto header = view->get_header().get_item(2);
+      move_cursor(*header, header->rect().center());
+      press_mouse(*header, Qt::LeftButton);
+      release_mouse(*header, Qt::LeftButton);
+      QApplication::processEvents();
+      REQUIRE(visible.get_row_size() == 4);
+      REQUIRE(visible.get<QString>(0, 0) == "B (1)");
+      REQUIRE(visible.get<QString>(3, 0) == "A (2)");
+      source->set(1, 2, 60);
+      REQUIRE(visible.get_row_size() == 4);
+      REQUIRE(visible.get<QString>(0, 0) == "A (2)");
+      toggle(0, 0);
+      REQUIRE(visible.get_row_size() == 7);
+      REQUIRE(visible.get<QString>(1, 0) == "CAD (1)");
+      REQUIRE(visible.get<QString>(2, 0) == "USD (1)");
+    }
+    SUBCASE("edit_and_regroup_collapsed_groups") {
+      source->set(0, 2, 12);
+      source->push({QString("A"), QString("CAD"), 5});
+      REQUIRE(visible.get_row_size() == 4);
+      REQUIRE(visible.get<QString>(0, 0) == "A (3)");
+      REQUIRE(visible.get<std::int64_t>(0, 2) == 47);
+      toggle(0, 0);
+      REQUIRE(visible.get_row_size() == 7);
+      REQUIRE(visible.get<QString>(1, 0) == "CAD (2)");
+      REQUIRE(visible.get<std::int64_t>(1, 2) == 17);
+      toggle(1, 0);
+      REQUIRE(visible.get_row_size() == 9);
+      REQUIRE(visible.get<int>(2, 2) == 12);
+      REQUIRE(visible.get<int>(3, 2) == 5);
+      toggle(0, 0);
+      auto table =
+        std::static_pointer_cast<GroupedTableModel>(view->get_table());
+      table->set_grouping({0});
+      REQUIRE(visible.get_row_size() == 3);
+      table->set_grouping({1});
+      REQUIRE(visible.get_row_size() == 6);
+      toggle(0, 1);
+      REQUIRE(visible.get_row_size() == 3);
+      REQUIRE(visible.get<QString>(1, 1) == "USD (1)");
+      table->set_grouping({});
+      REQUIRE(visible.get_row_size() == 4);
+      REQUIRE(visible.get<int>(0, 2) == 12);
+    }
+  }
+
+  UI_TEST_CASE("column_order_settings") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({"A", 3});
+    source->push({"B", 8});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").set_order(TableHeaderItem::Order::UNORDERED).
+      add_column("Shares").set_order(TableHeaderItem::Order::DESCENDING).
+      set_grouping({0}).make());
+    view->resize(320, 240);
+    view->show();
+    QApplication::processEvents();
+    auto& rows = *view->get_body().get_table();
+    REQUIRE(rows.get<QString>(0, 0) == "B (1)");
+    auto header = view->get_header().get_item(0);
+    move_cursor(*header, header->rect().center());
+    press_mouse(*header, Qt::LeftButton);
+    release_mouse(*header, Qt::LeftButton);
+    REQUIRE(rows.get<QString>(0, 0) == "B (1)");
+    REQUIRE(view->get_header().get_items()->get(0).m_order ==
+      TableHeaderItem::Order::UNORDERED);
   }
 
   UI_TEST_CASE("grouping_bar") {

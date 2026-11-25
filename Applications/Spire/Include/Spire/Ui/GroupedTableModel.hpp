@@ -1,7 +1,8 @@
 #ifndef SPIRE_GROUPED_TABLE_MODEL_HPP
 #define SPIRE_GROUPED_TABLE_MODEL_HPP
 #include <map>
-#include "Spire/Spire/TableModel.hpp"
+#include <set>
+#include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/TableAggregation.hpp"
 
@@ -45,8 +46,11 @@ namespace Spire {
       /** Returns the grouping columns, from outermost to innermost. */
       const std::vector<int>& get_grouping() const;
 
-      /** Sets the grouping columns. An empty list restores source order. */
+      /** Sets the grouping columns. */
       void set_grouping(std::vector<int> columns);
+
+      /** Sorts siblings by column priority. An empty order clears sorting. */
+      void set_column_order(std::vector<SortedTableModel::ColumnOrder> order);
 
       /** Connects a slot to changes in the grouping columns. */
       boost::signals2::connection connect_grouping_signal(
@@ -76,6 +80,9 @@ namespace Spire {
       std::shared_ptr<TableModel> m_source;
       std::vector<int> m_columns;
       std::vector<TableAggregationFactory> m_aggregations;
+      std::vector<SortedTableModel::ColumnOrder> m_order;
+      std::set<std::shared_ptr<Group>> m_unsorted;
+      std::size_t m_next_group;
       std::vector<Row> m_rows;
       std::vector<int> m_indices;
       std::vector<std::pair<std::shared_ptr<Group>, int>> m_dirty;
@@ -84,7 +91,15 @@ namespace Spire {
       boost::signals2::scoped_connection m_connection;
 
       void validate_columns(const std::vector<int>& columns) const;
-      void index_rows(int first);
+      bool is_identity() const;
+      void materialize_rows();
+      void restore_source_order();
+      void index_rows(int first, int end);
+      bool is_sorted(int column) const;
+      AnyRef sort_value(const Row& row, int column) const;
+      void sort_siblings(const std::shared_ptr<Group>& parent);
+      void sort_all();
+      void sort_pending();
       void touch(const std::shared_ptr<Group>& group, int column);
       std::unique_ptr<TableAggregation> make_aggregation(
         const Group& group, int column) const;

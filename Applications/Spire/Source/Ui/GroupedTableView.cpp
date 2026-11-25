@@ -134,7 +134,17 @@ GroupedTableViewBuilder::GroupedTableViewBuilder(
     m_parent(parent) {}
 
 GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(QString name) {
-  m_columns.emplace_back(std::move(name), TableAggregationFactory());
+  m_columns.emplace_back(
+    std::move(name), TableHeaderItem::Order::NONE, TableAggregationFactory());
+  return *this;
+}
+
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_order(
+    TableHeaderItem::Order order) {
+  if(m_columns.empty()) {
+    throw std::logic_error("Add a column before setting its order.");
+  }
+  m_columns.back().m_order = order;
   return *this;
 }
 
@@ -166,9 +176,10 @@ TableView* GroupedTableViewBuilder::make() const {
     m_source, m_grouping.value_or(std::vector<int>()), std::move(factories));
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
-  builder.set_sort_handler([] (const auto&) {});
+  builder.set_sort_handler(
+    std::bind_front(&GroupedTableModel::set_column_order, table));
   for(auto& column : m_columns) {
-    builder.add_header_item(column.m_name, TableHeaderItem::Order::UNORDERED);
+    builder.add_header_item(column.m_name, column.m_order);
   }
   auto view = builder.set_filter(filter).set_item_builder(
     [=] (const auto&, int row, int column) {

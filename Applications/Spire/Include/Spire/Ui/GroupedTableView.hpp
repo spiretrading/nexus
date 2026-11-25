@@ -17,6 +17,9 @@ namespace Spire {
       /** Adds a named column in source order. */
       GroupedTableViewBuilder& add_column(QString name);
 
+      /** Sets the last column's initial order. UNORDERED disables sorting. */
+      GroupedTableViewBuilder& set_order(TableHeaderItem::Order order);
+
       /** Sets the last column's aggregation factory. */
       GroupedTableViewBuilder& set_aggregation(TableAggregationFactory factory);
 
@@ -29,6 +32,7 @@ namespace Spire {
     private:
       struct Column {
         QString m_name;
+        TableHeaderItem::Order m_order;
         TableAggregationFactory m_aggregation;
       };
       std::shared_ptr<TableModel> m_source;

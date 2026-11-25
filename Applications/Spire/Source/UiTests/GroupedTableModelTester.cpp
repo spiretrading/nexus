@@ -1,3 +1,4 @@
+#include <limits>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -126,6 +127,142 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get<int>(2, 2) == 10);
     REQUIRE(model.set(2, 2, 50) == QValidator::Acceptable);
     REQUIRE(source->get<int>(2, 2) == 50);
+  }
+
+  TEST_CASE("sibling_sort_order") {
+    using enum SortedTableModel::Ordering;
+    auto source = make_positions();
+    source->push({QString("A"), QString("CAD"), 5});
+    auto model = GroupedTableModel(source, {0, 1});
+    auto commits = 0;
+    auto moves = 0;
+    observe(model, commits, moves);
+    model.set_column_order({{2, ASCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    REQUIRE(model.get<QString>(3, 0) == "A (3)");
+    REQUIRE(model.get<QString>(4, 0) == "CAD (2)");
+    REQUIRE(model.index_to_source(5) == 3);
+    REQUIRE(model.index_to_source(6) == 0);
+    source->set(0, 2, 50);
+    REQUIRE(model.get<QString>(4, 0) == "USD (1)");
+    REQUIRE(model.get<std::int64_t>(6, 2) == 55);
+    source->set(1, 2, 100);
+    REQUIRE(model.get<QString>(0, 0) == "A (3)");
+    REQUIRE(model.get<int>(2, 2) == 30);
+    source->remove(0);
+    REQUIRE(model.get<QString>(1, 0) == "CAD (1)");
+    source->insert({QString("A"), QString("USD"), 90}, 0);
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    model.set_column_order({{2, DESCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "A (3)");
+    REQUIRE(model.get<QString>(1, 0) == "USD (2)");
+    REQUIRE(model.get<int>(2, 2) == 90);
+    model.set_column_order({});
+    REQUIRE(model.get<QString>(0, 0) == "A (3)");
+    REQUIRE(model.get<QString>(1, 0) == "CAD (1)");
+    REQUIRE(model.get<int>(4, 2) == 90);
+    REQUIRE(moves > 0);
+  }
+
+  TEST_CASE("group_sort_values") {
+    using enum SortedTableModel::Ordering;
+    auto source = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != 10; ++i) {
+      source->push({2, QString::number(i)});
+    }
+    source->push({10, QString("CAD")});
+    source->push({10, QString("USD")});
+    auto model = GroupedTableModel(source, {0});
+    model.set_column_order({{0, DESCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "10 (2)");
+    model.set_column_order({{1, DESCENDING}});
+    REQUIRE(model.get<QString>(0, 1) == "(10)");
+    REQUIRE(model.get<QString>(11, 1) == "(2)");
+  }
+
+  TEST_CASE("sort_by_custom_aggregate") {
+    using enum SortedTableModel::Ordering;
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 4});
+    source->push({QString("A"), 4});
+    source->push({QString("B"), 7});
+    auto model = GroupedTableModel(source, {0}, {{}, [] {
+      return std::make_unique<SumOfSquares>();
+    }});
+    auto commits = 0;
+    auto moves = 0;
+    observe(model, commits, moves);
+    model.set_column_order({{1, DESCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    source->transact([&] {
+      source->set(2, 1, 1);
+      source->set(0, 0, QString("B"));
+      source->set(1, 1, 8);
+    });
+    REQUIRE(model.get<QString>(0, 0) == "A (1)");
+    REQUIRE(model.get<int>(0, 1) == 64);
+    REQUIRE(model.get<QString>(2, 0) == "B (2)");
+    REQUIRE(model.get<int>(2, 1) == 17);
+    REQUIRE(model.index_to_source(3) == 0);
+    REQUIRE(model.index_to_source(4) == 2);
+  }
+
+  TEST_CASE("mixed_numeric_sort_keys") {
+    using enum SortedTableModel::Ordering;
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 20});
+    source->push({QString("B"), 5.5});
+    source->push({QString("A"), 3.5f});
+    auto model = GroupedTableModel(source, {0});
+    model.set_column_order({{1, ASCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    REQUIRE(model.index_to_source(3) == 2);
+    source->remove(2);
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    source->set(0, 1, 3);
+    REQUIRE(model.get<QString>(0, 0) == "A (1)");
+  }
+
+  TEST_CASE("large_integer_sort_keys") {
+    using enum SortedTableModel::Ordering;
+    auto source = std::make_shared<ArrayTableModel>();
+    auto maximum = std::numeric_limits<std::uint64_t>::max();
+    source->push({QString("A"), maximum});
+    source->push({QString("B"), maximum - 1});
+    source->push({QString("B"), std::uint64_t(2)});
+    auto model = GroupedTableModel(source, {0});
+    model.set_column_order({{1, DESCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "B (2)");
+    source->set(2, 1, boost::optional<std::uint64_t>());
+    REQUIRE(model.get<QString>(0, 0) == "A (1)");
+    REQUIRE(model.index_to_source(3) == 1);
+  }
+
+  TEST_CASE("sort_order_across_regrouping") {
+    using enum SortedTableModel::Ordering;
+    auto source = make_positions();
+    auto model = GroupedTableModel(source, {});
+    auto commits = 0;
+    auto moves = 0;
+    observe(model, commits, moves);
+    model.set_column_order({{0, ASCENDING}, {2, DESCENDING}});
+    REQUIRE(model.index_to_source(0) == 2);
+    REQUIRE(model.index_to_source(1) == 0);
+    model.set_grouping({0});
+    REQUIRE(model.get<QString>(0, 0) == "A (2)");
+    REQUIRE(model.index_to_source(1) == 2);
+    model.set_grouping({0, 1});
+    REQUIRE(model.get<QString>(1, 0) == "CAD (1)");
+    model.set_grouping({});
+    REQUIRE(model.index_to_source(0) == 2);
+    source->set(0, 2, 30);
+    REQUIRE(model.index_to_source(0) == 0);
+    source->move(0, 2);
+    REQUIRE(model.index_to_source(0) == 1);
+    REQUIRE(model.index_to_source(1) == 2);
+    model.set_column_order({{2, NONE}});
+    REQUIRE(model.index_to_source(0) == 0);
+    REQUIRE(model.get<int>(0, 2) == 20);
   }
 
   TEST_CASE("group_membership_notifications") {
