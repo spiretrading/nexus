@@ -1,9 +1,16 @@
+#include <algorithm>
 #include <QApplication>
 #include <QLayout>
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/TableGroupingBar.hpp"
 #include "Spire/Ui/TableItem.hpp"
+#include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
@@ -19,6 +26,8 @@ TEST_SUITE("GroupedTableView") {
     auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
       add_column("Account").add_column("Currency").add_column("Shares").
       set_grouping({0, 1}).make());
+    REQUIRE_FALSE(
+      dynamic_cast<TableGroupingBar*>(view->layout()->itemAt(0)->widget()));
     view->resize(500, 400);
     view->show();
     QApplication::processEvents();
@@ -79,5 +88,96 @@ TEST_SUITE("GroupedTableView") {
     table->set_grouping({});
     REQUIRE(visible.get_row_size() == 4);
     REQUIRE(visible.get<int>(0, 2) == 12);
+  }
+
+  UI_TEST_CASE("grouping_bar") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD"), 10});
+    source->push({QString("B"), QString("CAD"), 20});
+    source->push({QString("A"), QString("USD"), 30});
+    auto builder = GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Shares");
+    auto view = std::unique_ptr<TableView>(builder.make());
+    view->resize(550, 360);
+    view->show();
+    QApplication::processEvents();
+    auto bar =
+      dynamic_cast<TableGroupingBar*>(view->layout()->itemAt(0)->widget());
+    REQUIRE(bar);
+    auto tags = bar->layout()->itemAt(0)->layout();
+    auto button = dynamic_cast<MenuButton*>(bar->layout()->itemAt(1)->widget());
+    REQUIRE(button);
+    auto& menu = button->get_menu();
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    auto& rows = *view->get_body().get_table();
+    auto select = [&] (int column) {
+      press_key(*button, Qt::Key_Space);
+      release_key(*button, Qt::Key_Space);
+      QApplication::processEvents();
+      REQUIRE(menu.isVisible());
+      auto item = dynamic_cast<ListItem*>(menu.get_menu_item(column));
+      REQUIRE(item);
+      auto check = dynamic_cast<CheckBox*>(&item->get_body());
+      REQUIRE(check);
+      REQUIRE(check->get_current()->get() ==
+        std::ranges::contains(table->get_grouping(), column));
+      press_key(*item, Qt::Key_Return);
+      QApplication::processEvents();
+      REQUIRE_FALSE(menu.isVisible());
+    };
+    auto tag_at = [&] (int index) {
+      auto item = tags->itemAt(index);
+      REQUIRE(item);
+      auto tag = dynamic_cast<Tag*>(item->widget());
+      REQUIRE(tag);
+      return tag;
+    };
+    auto remove = [&] (int index) {
+      auto tag = tag_at(index);
+      move_cursor(
+        *tag, QPoint(tag->width() - scale_width(9), tag->rect().center().y()));
+      press_mouse(*tag, Qt::LeftButton);
+      release_mouse(*tag, Qt::LeftButton);
+      QApplication::processEvents();
+    };
+    REQUIRE(tags->count() == 0);
+    REQUIRE(menu.get_count() == 3);
+    REQUIRE(rows.get_row_size() == 3);
+    select(0);
+    REQUIRE(rows.get<int>(2, 2) == 30);
+    select(1);
+    REQUIRE(table->get_grouping() == std::vector{0, 1});
+    REQUIRE(rows.get_row_size() == 8);
+    REQUIRE(rows.get<QString>(0, 0) == "A (2)");
+    REQUIRE(rows.get<QString>(1, 0) == "CAD (1)");
+    REQUIRE(rows.get<QString>(3, 0) == "USD (1)");
+    REQUIRE(rows.get<int>(4, 2) == 30);
+    REQUIRE(rows.get<int>(7, 2) == 20);
+    REQUIRE(tags->count() == 3);
+    REQUIRE(tag_at(0)->get_label()->get() == "Account");
+    REQUIRE(dynamic_cast<Icon*>(tags->itemAt(1)->widget()));
+    REQUIRE(tag_at(2)->get_label()->get() == "Currency");
+    remove(0);
+    REQUIRE(table->get_grouping() == std::vector{1});
+    REQUIRE(tags->count() == 1);
+    REQUIRE(tag_at(0)->get_label()->get() == "Currency");
+    REQUIRE(rows.get<QString>(0, 1) == "CAD (2)");
+    REQUIRE(rows.get<std::int64_t>(0, 2) == 30);
+    select(0);
+    REQUIRE(table->get_grouping() == std::vector{1, 0});
+    remove(2);
+    REQUIRE(tags->count() == 1);
+    select(1);
+    REQUIRE(table->get_grouping().empty());
+    REQUIRE(tags->count() == 0);
+    REQUIRE(rows.get_row_size() == 3);
+    table->set_grouping({2, 1});
+    REQUIRE(tag_at(0)->get_label()->get() == "Shares");
+    REQUIRE(tag_at(2)->get_label()->get() == "Currency");
+    select(2);
+    REQUIRE(table->get_grouping() == std::vector{1});
+    auto fixed = std::unique_ptr<TableView>(builder.set_grouping({}).make());
+    REQUIRE_FALSE(
+      dynamic_cast<TableGroupingBar*>(fixed->layout()->itemAt(0)->widget()));
   }
 }

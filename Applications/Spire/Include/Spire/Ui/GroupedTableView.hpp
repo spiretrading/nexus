@@ -1,5 +1,6 @@
 #ifndef SPIRE_GROUPED_TABLE_VIEW_HPP
 #define SPIRE_GROUPED_TABLE_VIEW_HPP
+#include <optional>
 #include "Spire/Ui/TableAggregation.hpp"
 #include "Spire/Ui/TableView.hpp"
 
@@ -9,7 +10,7 @@ namespace Spire {
   class GroupedTableViewBuilder {
     public:
 
-      /** Starts a view over the source table. */
+      /** Starts an ungrouped view with a Group by menu. */
       explicit GroupedTableViewBuilder(
         std::shared_ptr<TableModel> source, QWidget* parent = nullptr);
 
@@ -19,7 +20,7 @@ namespace Spire {
       /** Sets the last column's aggregation factory. */
       GroupedTableViewBuilder& set_aggregation(TableAggregationFactory factory);
 
-      /** Sets the grouping columns, from outermost to innermost. */
+      /** Fixes the grouping columns in order and hides the grouping bar. */
       GroupedTableViewBuilder& set_grouping(std::vector<int> columns);
 
       /** Builds the configured table view. */
@@ -33,7 +34,7 @@ namespace Spire {
       std::shared_ptr<TableModel> m_source;
       QWidget* m_parent;
       std::vector<Column> m_columns;
-      std::vector<int> m_grouping;
+      std::optional<std::vector<int>> m_grouping;
   };
 }
 

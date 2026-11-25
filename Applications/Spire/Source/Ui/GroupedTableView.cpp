@@ -3,6 +3,7 @@
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/TableGroupingBar.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -162,14 +163,24 @@ TableView* GroupedTableViewBuilder::make() const {
     factories.push_back(column.m_aggregation);
   }
   auto table = std::make_shared<GroupedTableModel>(
-    m_source, m_grouping, std::move(factories));
+    m_source, m_grouping.value_or(std::vector<int>()), std::move(factories));
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
+  builder.set_sort_handler([] (const auto&) {});
   for(auto& column : m_columns) {
     builder.add_header_item(column.m_name, TableHeaderItem::Order::UNORDERED);
   }
-  return builder.set_filter(filter).set_item_builder(
+  auto view = builder.set_filter(filter).set_item_builder(
     [=] (const auto&, int row, int column) {
       return new GroupCell(table, row, column, *filter);
     }).make();
+  if(!m_grouping) {
+    auto names = QStringList();
+    for(auto& column : m_columns) {
+      names.push_back(column.m_name);
+    }
+    static_cast<QVBoxLayout*>(view->layout())->insertWidget(
+      0, new TableGroupingBar(table, names, view));
+  }
+  return view;
 }
