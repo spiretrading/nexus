@@ -1,6 +1,8 @@
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include <vector>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ScalarValueModelDecorator.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -46,7 +48,10 @@ namespace {
   }
 }
 
-BlotterStatusBar::BlotterStatusBar(QWidget* parent)
+BlotterStatusBar::BlotterStatusBar(
+    std::shared_ptr<ValueModel<PortfolioUpdateEntry>> summary,
+    std::shared_ptr<ValueModel<RiskParameters>> risk_parameters,
+    QWidget* parent)
     : QWidget(parent) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFixedHeight(scale_height(22));
@@ -56,6 +61,29 @@ BlotterStatusBar::BlotterStatusBar(QWidget* parent)
   auto labels = std::vector<TextBox*>();
   auto short_labels = std::vector<TextBox*>();
   auto values = std::vector<MoneyBox*>();
+  auto models = std::vector<std::shared_ptr<ValueModel<Money>>>{
+    make_transform_value_model(summary, [] (const auto& value) {
+      return get_realized_profit_and_loss(value.m_currency_inventory) +
+        value.m_currency_unrealized;
+    }),
+    make_transform_value_model(summary, [] (const auto& value) {
+      return value.m_currency_unrealized;
+    }),
+    make_transform_value_model(summary, [] (const auto& value) {
+      return get_realized_profit_and_loss(value.m_currency_inventory);
+    }),
+    make_transform_value_model(summary, [] (const auto& value) {
+      return value.m_currency_inventory.m_fees;
+    }),
+    make_transform_value_model(summary, [] (const auto& value) {
+      return value.m_currency_inventory.m_position.m_cost_basis;
+    }),
+    make_transform_value_model(risk_parameters, [] (const auto& value) {
+      return value.m_buying_power;
+    }),
+    make_transform_value_model(risk_parameters, [] (const auto& value) {
+      return value.m_net_loss;
+    })};
   for(auto& [name, short_name] :
       std::initializer_list<std::pair<QString, QString>>{
         {tr("Total P/L"), tr("Total P/L")},
@@ -75,8 +103,8 @@ BlotterStatusBar::BlotterStatusBar(QWidget* parent)
     }();
     add_tooltip(tooltip, *labels.back());
     add_tooltip(tooltip, *short_labels.back());
-    auto value =
-      make_money_label(std::make_shared<LocalMoneyModel>(Money::ZERO));
+    auto value = make_money_label(
+      make_scalar_value_model_decorator(models[values.size()]));
     value->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     update_style(*value, [&] (auto& style) {
       style.get(Any()).set(Font(font));

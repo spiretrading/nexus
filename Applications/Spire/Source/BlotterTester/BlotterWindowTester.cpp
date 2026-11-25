@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <boost/optional/optional_io.hpp>
 #include <QContextMenuEvent>
 #include <QEventLoop>
 #include <QInputDialog>
@@ -6,17 +7,21 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
+#include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
+#include "Spire/Blotter/PortfolioSummaryModel.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/CanvasView/CanvasTableWidget.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -40,6 +45,70 @@ namespace {
 }
 
 TEST_SUITE("BlotterWindow") {
+  UI_TEST_CASE("portfolio_summary") {
+    initialize_resources();
+    auto portfolio = std::make_shared<ArrayListModel<PortfolioUpdateEntry>>();
+    auto entry = PortfolioUpdateEntry();
+    entry.m_inventory = Inventory(
+      Position(parse_ticker("RY.TSX"), Currencies::CAD, 100, Money(1000)),
+      Money(20), Money(3), 100, 1);
+    entry.m_unrealized = Money(-25);
+    portfolio->push(entry);
+    auto model = std::make_shared<CompositeBlotterModel>(
+      DirectoryEntry(), false, std::make_shared<LocalTextModel>("Test"),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<LocalBooleanModel>(false),
+      std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
+      std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
+      std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(), portfolio);
+    auto environment = TestEnvironment();
+    auto clients = TestClients(Ref(environment));
+    auto collection =
+      std::make_shared<BlotterCollection>(clients.get_market_data_client());
+    auto summary = std::make_shared<PortfolioSummaryModel>(
+      portfolio, Currencies::CAD, ExchangeRateTable());
+    auto risk_parameters = std::make_shared<LocalValueModel<RiskParameters>>(
+      RiskParameters(Currencies::CAD, Money(100000), RiskState::Type::ACTIVE,
+        Money(1000), seconds(10)));
+    auto window = BlotterWindow(model, summary, risk_parameters, collection,
+      std::make_shared<CancelKeyBindingsModel>(),
+      std::make_shared<PositionKeyBindingsModel>());
+    auto& bar = find_widget<BlotterStatusBar>(window);
+    auto values = std::vector<MoneyBox*>();
+    for(auto child : bar.findChildren<QWidget*>()) {
+      if(auto value = dynamic_cast<MoneyBox*>(child)) {
+        values.push_back(value);
+      }
+    }
+    REQUIRE(values.size() == 7);
+    auto require_values = [&] (const std::vector<Money>& expected) {
+      for(auto i = 0; i < std::ssize(expected); ++i) {
+        REQUIRE(values[i]->get_current()->get() == expected[i]);
+        REQUIRE(values[i]->is_read_only());
+      }
+    };
+    require_values({Money(-8), Money(-25), Money(17), Money(3), Money(1000)});
+    entry.m_unrealized = Money(10);
+    portfolio->set(0, entry);
+    require_values({Money(27), Money(10), Money(17), Money(3), Money(1000)});
+    entry.m_inventory.m_position.m_quantity = 0;
+    entry.m_inventory.m_position.m_cost_basis = Money::ZERO;
+    entry.m_inventory.m_gross_profit_and_loss = Money(30);
+    entry.m_inventory.m_fees = Money(4);
+    entry.m_unrealized = Money::ZERO;
+    portfolio->set(0, entry);
+    require_values({Money(26), Money::ZERO, Money(26), Money(4), Money::ZERO});
+    portfolio->remove(0);
+    require_values({Money::ZERO, Money::ZERO, Money::ZERO, Money::ZERO,
+      Money::ZERO, Money(100000), Money(1000)});
+    risk_parameters->set(RiskParameters(Currencies::CAD, Money(50000),
+      RiskState::Type::ACTIVE, Money(500), seconds(10)));
+    require_values({Money::ZERO, Money::ZERO, Money::ZERO, Money::ZERO,
+      Money::ZERO, Money(50000), Money(500)});
+    risk_parameters->set(RiskParameters());
+    require_values(std::vector<Money>(7, Money::ZERO));
+  }
+
   UI_TEST_CASE("task_canvas") {
     initialize_resources();
     auto environment = TestEnvironment();
@@ -65,7 +134,9 @@ TEST_SUITE("BlotterWindow") {
     auto clients = TestClients(Ref(environment));
     auto collection =
       std::make_shared<BlotterCollection>(clients.get_market_data_client());
-    auto window = BlotterWindow(model, collection,
+    auto window = BlotterWindow(model,
+      make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection,
       std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();
@@ -173,7 +244,9 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<BlotterCollection>(clients.get_market_data_client());
     auto bindings = std::make_shared<CancelKeyBindingsModel>();
     bindings->get_binding(Operation::OLDEST)->set(Qt::Key_Escape);
-    auto window = BlotterWindow(model, collection, bindings,
+    auto window = BlotterWindow(
+      model, make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection, bindings,
       std::make_shared<PositionKeyBindingsModel>());
     auto task_requests = std::vector<Operation>();
     window.connect_cancel_task_operation_signal([&] (auto operation) {
@@ -237,7 +310,9 @@ TEST_SUITE("BlotterWindow") {
     auto clients = TestClients(Ref(environment));
     auto collection =
       std::make_shared<BlotterCollection>(clients.get_market_data_client());
-    auto window = BlotterWindow(model, collection,
+    auto window = BlotterWindow(
+      model, make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection,
       std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();
@@ -306,7 +381,9 @@ TEST_SUITE("BlotterWindow") {
     auto collection =
       std::make_shared<BlotterCollection>(clients.get_market_data_client());
     auto window = BlotterWindow(
-      model, collection, std::make_shared<CancelKeyBindingsModel>(), bindings);
+      model, make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection,
+      std::make_shared<CancelKeyBindingsModel>(), bindings);
     REQUIRE(window.get_model()->get_portfolio() == portfolio);
     auto& view = find_widget<BlotterPositionsView>(window);
     REQUIRE(view.get_portfolio() == portfolio);
@@ -415,7 +492,9 @@ TEST_SUITE("BlotterWindow") {
       model = consolidated;
     }
     auto window = BlotterWindow(
-      model, collection, std::make_shared<CancelKeyBindingsModel>(),
+      model, make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection,
+      std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();
     QApplication::processEvents();
@@ -553,7 +632,9 @@ TEST_SUITE("BlotterWindow") {
       std::make_shared<ArrayListModel<BlotterTaskMonitor>>(),
       std::make_shared<ArrayListModel<std::shared_ptr<Order>>>(),
       std::make_shared<ArrayListModel<PortfolioUpdateEntry>>()));
-    auto window = BlotterWindow(model, collection,
+    auto window = BlotterWindow(
+      model, make_constant_value_model(PortfolioUpdateEntry()),
+      make_constant_value_model(RiskParameters()), collection,
       std::make_shared<CancelKeyBindingsModel>(),
       std::make_shared<PositionKeyBindingsModel>());
     window.show();

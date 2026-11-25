@@ -11,6 +11,7 @@
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
+#include "Spire/Blotter/PortfolioSummaryModel.hpp"
 #include "Spire/Blotter/TaskOrdersModel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
@@ -48,6 +49,7 @@ BlotterUiController::BlotterUiController(
       m_orders(std::make_shared<UnionListModel<std::shared_ptr<Order>>>()),
       m_portfolio(std::make_shared<ControllerPortfolioModel>(
         m_orders, profile->GetClients().get_market_data_client())),
+      m_risk_parameters(std::make_shared<LocalValueModel<RiskParameters>>()),
       m_active(-1),
       m_blotter_selection(new QComboBox()),
       m_name(new QLineEdit(tr("Single Order"))),
@@ -111,6 +113,10 @@ BlotterUiController::BlotterUiController(
   form->addRow(tr("Time in Force"), m_time_in_force);
   auto account =
     m_profile->GetClients().get_service_locator_client().get_account();
+  m_profile->GetClients().get_administration_client().
+    get_risk_parameters_publisher(account).monitor(
+      m_events.get_slot<RiskParameters>(std::bind_front(
+        &LocalValueModel<RiskParameters>::set, m_risk_parameters)));
   form->addRow(
     tr("Account"), new QLabel(QString::fromStdString(account.m_name)));
   auto create = new QPushButton(tr("Create Task"));
@@ -346,7 +352,10 @@ void BlotterUiController::on_new_blotter() {
     std::make_shared<LocalBooleanModel>(false),
     std::make_shared<LocalBooleanModel>(false), tasks, monitors, orders,
     m_portfolio));
-  auto window = std::make_unique<BlotterWindow>(model, m_collection,
+  auto summary = std::make_shared<PortfolioSummaryModel>(
+    model->get_portfolio(), Currencies::CAD, m_profile->GetExchangeRates());
+  auto window = std::make_unique<BlotterWindow>(
+    model, summary, m_risk_parameters, m_collection,
     m_profile->GetKeyBindings()->get_cancel_key_bindings(),
     std::make_shared<PositionKeyBindingsModel>());
   window->connect_run_tasks_signal(

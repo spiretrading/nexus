@@ -1,3 +1,4 @@
+#include <boost/optional/optional_io.hpp>
 #include <QEvent>
 #include <QEventLoop>
 #include <QKeyEvent>
@@ -8,6 +9,7 @@
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterController.hpp"
 #include "Spire/Blotter/BlotterPositionsView.hpp"
+#include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterTasksView.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/OrderLogView.hpp"
@@ -22,6 +24,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TabView.hpp"
 
@@ -50,7 +53,10 @@ namespace {
       : Fixture(false) {}
 
     explicit Fixture(bool is_consolidated)
-        : m_profile("", false, false, {}, {},
+      : Fixture(is_consolidated, {}) {}
+
+    Fixture(bool is_consolidated, const std::vector<ExchangeRate>& rates)
+        : m_profile("", false, false, rates, {},
             get_default_additional_tag_database(), {}, {}, {},
             Clients(std::in_place_type<TestClients>, Ref(m_environment))),
           m_collection(std::make_shared<BlotterCollection>(
@@ -185,6 +191,75 @@ namespace {
 }
 
 TEST_SUITE("BlotterController") {
+  UI_TEST_CASE("portfolio_summary") {
+    auto fixture = Fixture(true,
+      {ExchangeRate(CurrencyPair(Currencies::CAD, Currencies::USD),
+        rational<int>(2, 1))});
+    auto entry = PortfolioUpdateEntry();
+    entry.m_inventory = Inventory(
+      Position(parse_ticker("RY.TSX"), Currencies::CAD, 100, Money(1000)),
+      Money(20), Money(3), 100, 1);
+    entry.m_unrealized = Money(5);
+    fixture.m_portfolio->push(entry);
+    auto controller = fixture.make_controller();
+    auto find_values = [&] {
+      auto& bar = find_widget<BlotterStatusBar>(controller->open());
+      auto values = std::vector<MoneyBox*>();
+      for(auto child : bar.findChildren<QWidget*>()) {
+        if(auto value = dynamic_cast<MoneyBox*>(child)) {
+          values.push_back(value);
+        }
+      }
+      REQUIRE(values.size() == 7);
+      return values;
+    };
+    auto values = find_values();
+    auto& total = *values[0];
+    auto set_parameters = [&] (CurrencyId currency, Money buying_power,
+        Money net_loss, Money expected) {
+      auto loop = QEventLoop();
+      auto is_updated = [&] {
+        return total.get_current()->get() == expected &&
+          values[5]->get_current()->get() == buying_power &&
+          values[6]->get_current()->get() == net_loss;
+      };
+      auto connections = ConnectionGroup();
+      for(auto index : {0, 5, 6}) {
+        connections.add(values[index]->get_current()->connect_update_signal(
+          [&] (const auto&) {
+            if(is_updated()) {
+              loop.quit();
+            }
+          }));
+      }
+      auto parameters = RiskParameters(
+        currency, buying_power, RiskState::Type::ACTIVE, net_loss,
+        seconds(10));
+      fixture.m_profile.GetClients().get_administration_client().submit(
+        fixture.m_model->get_account(), RiskModification(parameters),
+        ptime(), Nexus::Message());
+      if(!is_updated()) {
+        loop.exec();
+      }
+      REQUIRE(total.get_current()->get() == expected);
+      REQUIRE(values[5]->get_current()->get() == buying_power);
+      REQUIRE(values[6]->get_current()->get() == net_loss);
+    };
+    set_parameters(Currencies::CAD, Money(100000), Money(1000), Money(22));
+    set_parameters(Currencies::USD, Money(200000), Money(2000), Money(44));
+    set_parameters(Currencies::USD, Money(300000), Money(3000), Money(44));
+    entry.m_unrealized = Money(-25);
+    fixture.m_portfolio->set(0, entry);
+    REQUIRE(total.get_current()->get() == Money(-16));
+    controller->close();
+    entry.m_unrealized = Money(10);
+    fixture.m_portfolio->set(0, entry);
+    values = find_values();
+    REQUIRE(values[0]->get_current()->get() == Money(54));
+    REQUIRE(values[5]->get_current()->get() == Money(300000));
+    REQUIRE(values[6]->get_current()->get() == Money(3000));
+  }
+
   UI_TEST_CASE("add_and_observe") {
     auto fixture = Fixture();
     auto controller = fixture.make_controller();

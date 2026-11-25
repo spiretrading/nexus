@@ -7,6 +7,7 @@
 #include "Spire/Blotter/FlattenController.hpp"
 
 namespace Spire {
+  template<typename T> class ProxyValueModel;
 
   /** Controls a blotter's tasks and window. */
   class BlotterController {
@@ -87,6 +88,8 @@ namespace Spire {
       std::shared_ptr<PositionKeyBindingsModel> m_position_bindings;
       FlattenController* m_flatten_controller;
       UserProfile* m_profile;
+      std::shared_ptr<ProxyValueModel<Nexus::PortfolioUpdateEntry>> m_summary;
+      std::shared_ptr<LocalValueModel<Nexus::RiskParameters>> m_risk_parameters;
       std::shared_ptr<LocalBooleanModel> m_is_open;
       std::shared_ptr<const BooleanModel> m_read_only_is_open;
       std::unique_ptr<BlotterWindow> m_window;
@@ -97,6 +100,7 @@ namespace Spire {
 
       BlotterController(const BlotterController&) = delete;
       BlotterController& operator =(const BlotterController&) = delete;
+      void on_risk_parameters(const Nexus::RiskParameters& parameters);
       void on_run_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
       void on_cancel_tasks(const std::vector<std::shared_ptr<Task>>& tasks);
       void on_cancel_task_operation(

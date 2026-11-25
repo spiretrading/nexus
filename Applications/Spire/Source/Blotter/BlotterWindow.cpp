@@ -13,6 +13,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
+    std::shared_ptr<ValueModel<Nexus::PortfolioUpdateEntry>> summary,
+    std::shared_ptr<ValueModel<Nexus::RiskParameters>> risk_parameters,
     std::shared_ptr<BlotterCollection> collection,
     std::shared_ptr<CancelKeyBindingsModel> cancel_bindings,
     std::shared_ptr<PositionKeyBindingsModel> position_bindings,
@@ -35,7 +37,8 @@ BlotterWindow::BlotterWindow(std::shared_ptr<BlotterModel> model,
     style.get(Any()).set(Qt::Orientation::Vertical);
   });
   layout->addWidget(m_split_view, 1);
-  layout->addWidget(new BlotterStatusBar());
+  layout->addWidget(
+    new BlotterStatusBar(std::move(summary), std::move(risk_parameters)));
   set_body(body);
   m_name_connection = m_model->get_name()->connect_update_signal(
     std::bind_front(&BlotterWindow::on_name, this));

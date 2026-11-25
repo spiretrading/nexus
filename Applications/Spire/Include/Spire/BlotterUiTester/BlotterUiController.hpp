@@ -93,6 +93,7 @@ namespace Spire {
       std::shared_ptr<BlotterCollection> m_collection;
       std::shared_ptr<UnionListModel<std::shared_ptr<Nexus::Order>>> m_orders;
       std::shared_ptr<PortfolioModel> m_portfolio;
+      std::shared_ptr<LocalValueModel<Nexus::RiskParameters>> m_risk_parameters;
       std::vector<Blotter> m_blotters;
       int m_active;
       std::vector<Entry> m_entries;

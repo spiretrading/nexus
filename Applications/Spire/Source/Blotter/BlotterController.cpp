@@ -4,8 +4,11 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <QEvent>
 #include <QMessageBox>
+#include "Spire/Blotter/PortfolioSummaryModel.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ConstantValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -73,8 +76,16 @@ BlotterController::BlotterController(std::shared_ptr<BlotterModel> model,
     m_position_bindings(std::move(position_bindings)),
     m_flatten_controller(flatten_controller.get()),
     m_profile(profile.get()),
+    m_summary(make_proxy_value_model(
+      make_constant_value_model(PortfolioUpdateEntry()))),
+    m_risk_parameters(std::make_shared<LocalValueModel<RiskParameters>>()),
     m_is_open(std::make_shared<LocalBooleanModel>(false)),
-    m_read_only_is_open(m_is_open) {}
+    m_read_only_is_open(m_is_open) {
+  m_profile->GetClients().get_administration_client().
+    get_risk_parameters_publisher(
+      m_model->get_account()).monitor(m_events.get_slot<RiskParameters>(
+        std::bind_front(&BlotterController::on_risk_parameters, this)));
+}
 
 BlotterController::~BlotterController() {
   m_window_connections.disconnect();
@@ -175,7 +186,8 @@ BlotterWindow& BlotterController::open() {
       m_event_filter = std::make_unique<EventFilter>(*this);
     }
     m_window = std::make_unique<BlotterWindow>(
-      m_model, m_collection, m_cancel_bindings, m_position_bindings);
+      m_model, m_summary, m_risk_parameters, m_collection, m_cancel_bindings,
+      m_position_bindings);
     m_window->m_id = m_id;
     m_window_connections.add(m_window->connect_run_tasks_signal(
       std::bind_front(&BlotterController::on_run_tasks, this)));
@@ -207,6 +219,21 @@ BlotterWindow& BlotterController::open() {
 void BlotterController::close() {
   if(m_window) {
     m_window->close();
+  }
+}
+
+void BlotterController::on_risk_parameters(const RiskParameters& parameters) {
+  m_risk_parameters->set(parameters);
+  if(parameters.m_currency ==
+      m_summary->get().m_currency_inventory.m_position.m_currency) {
+    return;
+  }
+  if(parameters.m_currency == CurrencyId::NONE) {
+    m_summary->set_source(make_constant_value_model(PortfolioUpdateEntry()));
+  } else {
+    m_summary->set_source(std::make_shared<PortfolioSummaryModel>(
+      m_model->get_portfolio(), parameters.m_currency,
+      m_profile->GetExchangeRates()));
   }
 }
 
