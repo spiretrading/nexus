@@ -71,7 +71,7 @@ namespace Nexus::Tests {
         Beam::init("1", "Spire Trading Inc.",
           Nexus::Details::get_base_time_zone_table(), COUNTRIES, CURRENCIES,
           DESTINATIONS, VENUES, std::vector<ExchangeRate>(),
-          std::vector<ComplianceRuleSchema>(), TradingSchedule())),
+          std::vector<ComplianceRuleSchema>(), TRADING_SCHEDULE)),
         &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 

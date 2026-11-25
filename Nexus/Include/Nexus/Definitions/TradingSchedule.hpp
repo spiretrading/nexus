@@ -329,4 +329,6 @@ namespace Nexus {
   }
 }
 
+#include "Nexus/Definitions/StandardTradingSchedule.hpp"
+
 #endif
