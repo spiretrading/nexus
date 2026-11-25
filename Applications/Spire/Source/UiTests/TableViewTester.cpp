@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
