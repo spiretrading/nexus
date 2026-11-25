@@ -472,4 +472,38 @@ TEST_SUITE("TradingSchedule") {
           "O", time_from_string("2025-07-01 05:30:00"))}));
     });
   }
+
+  TEST_CASE("standard_trading_schedule") {
+    using Event = TradingSchedule::Event;
+    auto timestamp = time_from_string("2026-09-21 15:00:00");
+    REQUIRE(TRADING_SCHEDULE.find(timestamp, TSX) == std::vector{
+      Event("PRE_OPEN", time_from_string("2026-09-21 11:00:00")),
+      Event("OPEN", time_from_string("2026-09-21 13:30:00")),
+      Event("CLOSE", time_from_string("2026-09-21 20:00:00"))});
+    REQUIRE(TRADING_SCHEDULE.find(timestamp, OMGA) == std::vector{
+      Event("OPEN", time_from_string("2026-09-21 12:00:00")),
+      Event("CLOSE", time_from_string("2026-09-21 21:00:00"))});
+    REQUIRE(TRADING_SCHEDULE.find(timestamp, XATS) == std::vector{
+      Event("PRE_OPEN", time_from_string("2026-09-21 11:00:00")),
+      Event("OPEN", time_from_string("2026-09-21 12:00:00")),
+      Event("CLOSE", time_from_string("2026-09-21 21:00:00"))});
+    REQUIRE(TRADING_SCHEDULE.find(
+      time_from_string("2026-09-19 15:00:00"), TSX).empty());
+    REQUIRE(TRADING_SCHEDULE.find(
+      time_from_string("2026-07-01 15:00:00"), TSX).empty());
+    REQUIRE(TRADING_SCHEDULE.find(
+      time_from_string("2026-12-24 15:00:00"), TSX) == std::vector{
+        Event("PRE_OPEN", time_from_string("2026-12-24 12:00:00")),
+        Event("OPEN", time_from_string("2026-12-24 14:30:00")),
+        Event("CLOSE", time_from_string("2026-12-24 18:00:00"))});
+  }
+
+  TEST_CASE("set_trading_schedule") {
+    auto saved_schedule = TRADING_SCHEDULE;
+    auto timestamp = time_from_string("2026-09-21 15:00:00");
+    set_trading_schedule(TradingSchedule());
+    REQUIRE(TRADING_SCHEDULE.find(timestamp, TSX).empty());
+    set_trading_schedule(saved_schedule);
+    REQUIRE(TRADING_SCHEDULE.find(timestamp, TSX).size() == 3);
+  }
 }

@@ -20,6 +20,7 @@
 #include "Nexus/Definitions/StandardDestinations.hpp"
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SimulationExecutionReportQueue.hpp"
@@ -170,6 +171,17 @@ namespace Details {
         Venue m_venue;
         Quantity m_queue_quantity;
         Quantity m_trailing_quantity;
+        Venue m_session_venue;
+      };
+      struct Session {
+        boost::posix_time::ptime m_pre_open;
+        boost::posix_time::ptime m_open;
+        boost::posix_time::ptime m_close;
+      };
+      enum class Phase {
+        CONTINUOUS,
+        PRE_OPEN,
+        OPENING
       };
       struct PeggedOrderEntry {
         std::string m_exec_inst;
@@ -177,13 +189,24 @@ namespace Details {
         Money m_effective_price;
       };
       static constexpr auto REGULAR_SALE = std::string_view("@");
+      static constexpr auto PRE_OPEN_EVENT = std::string_view("PRE_OPEN");
+      static constexpr auto OPEN_EVENT = std::string_view("OPEN");
+      static constexpr auto CLOSE_EVENT = std::string_view("CLOSE");
       static constexpr auto BOARD_LOT = 100;
+      static inline const auto CLOSING_PERIOD = boost::posix_time::minutes(15);
       Beam::local_ptr_t<T> m_time_client;
       std::shared_ptr<SimulationExecutionReportQueue> m_reports;
       Ticker m_ticker;
       boost::gregorian::date m_date;
+      boost::posix_time::ptime m_session_timestamp;
+      Session m_session;
+      std::unordered_map<Venue, Session> m_sessions;
+      Phase m_phase;
+      boost::posix_time::ptime m_cross_time;
+      boost::posix_time::ptime m_uncross_time;
       boost::posix_time::ptime m_venue_close_time;
-      bool m_is_moc_pending;
+      boost::posix_time::ptime m_closing_cross_time;
+      bool m_is_closed;
       std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
       std::unordered_map<OrderId, OrderEntry> m_entries;
       std::unordered_map<OrderId, PeggedOrderEntry> m_pegged_entries;
@@ -195,6 +218,23 @@ namespace Details {
       TickerOrderSimulator(const TickerOrderSimulator&) = delete;
       TickerOrderSimulator& operator =(const TickerOrderSimulator&) = delete;
       void set_session_timestamps(boost::posix_time::ptime timestamp);
+      boost::gregorian::date get_session_date(
+        boost::posix_time::ptime timestamp) const;
+      const Session& load_session(Venue venue);
+      Phase get_phase(boost::posix_time::ptime timestamp) const;
+      bool is_crossed() const;
+      bool is_held(const OrderEntry& entry);
+      bool update_session(
+        boost::posix_time::ptime timestamp, bool is_listing_print = false);
+      bool is_opening_cross(const TimeAndSale& time_and_sale, bool is_listing);
+      bool is_trade(const TimeAndSale::Condition& condition) const;
+      bool expire_market_on_close_orders();
+      bool expire_market_on_close_orders(boost::posix_time::ptime timestamp);
+      void evaluate_orders();
+      void evaluate_held_orders();
+      void cross(const TimeAndSale& time_and_sale, bool is_closing);
+      bool cross(const TimeAndSale& time_and_sale, Side side, Quantity size,
+        bool is_closing);
       void submit_pegged(const PrimitiveOrder& order);
       void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
         OrderStatus status, boost::posix_time::ptime timestamp,
@@ -248,6 +288,9 @@ namespace Details {
       apply(*quote);
     }
     m_bbo = *snapshot.m_bbo_quote;
+    m_phase = get_phase(m_time_client->get_time());
+    m_cross_time = boost::posix_time::not_a_date_time;
+    m_uncross_time = boost::posix_time::not_a_date_time;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -264,6 +307,9 @@ namespace Details {
       });
     if(is_terminal(status)) {
       return;
+    }
+    if(update_session(m_time_client->get_time())) {
+      evaluate_held_orders();
     }
     m_entries[order->get_info().m_id] = make_entry(*order, status, remaining);
     auto next_status = evaluate(order, status);
@@ -289,6 +335,16 @@ namespace Details {
           m_bbo.m_ask.m_price == Money::ZERO)) {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
         Money::ZERO, "No BBO quote available.");
+      return;
+    }
+    if(update_session(m_time_client->get_time())) {
+      evaluate_held_orders();
+    }
+    expire_market_on_close_orders(m_time_client->get_time());
+    if(m_is_closed && order->get_info().m_fields.m_time_in_force.get_type() ==
+        TimeInForce::Type::MOC) {
+      enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
+        Money::ZERO, "Market closed.");
       return;
     }
     enqueue(
@@ -362,18 +418,37 @@ namespace Details {
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::update(const BboQuote& bbo) {
+    auto has_expired = false;
+    auto is_evaluating = false;
     {
       auto lock = std::lock_guard(m_mutex);
-      if(bbo.m_timestamp.date() != m_date) {
+      if(get_session_date(bbo.m_timestamp) != m_date) {
+        has_expired = expire_market_on_close_orders();
         set_session_timestamps(bbo.m_timestamp);
       }
+      if(expire_market_on_close_orders(bbo.m_timestamp)) {
+        has_expired = true;
+      }
+      auto has_opened = update_session(bbo.m_timestamp);
       auto is_price_unchanged = bbo.m_bid.m_price == m_bbo.m_bid.m_price &&
         bbo.m_ask.m_price == m_bbo.m_ask.m_price;
       m_bbo = bbo;
-      if(is_price_unchanged) {
-        return;
+      if(m_phase == Phase::OPENING && m_cross_time.is_special() &&
+          m_uncross_time.is_special() && !is_crossed()) {
+        m_uncross_time = bbo.m_timestamp;
       }
+      is_evaluating = !is_price_unchanged || has_opened;
     }
+    if(has_expired) {
+      m_reports->flush();
+    }
+    if(is_evaluating) {
+      evaluate_orders();
+    }
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::evaluate_orders() {
     auto index = std::size_t(0);
     while(true) {
       auto has_update = false;
@@ -401,50 +476,41 @@ namespace Details {
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::update(const TimeAndSale& time_and_sale) {
-    auto closing_price = Money();
-    auto is_triggered = false;
+    auto is_closing = false;
+    auto is_cross = false;
+    auto has_opened = false;
+    auto has_expired = false;
     {
       auto lock = std::lock_guard(m_mutex);
-      if(time_and_sale.m_timestamp.date() != m_date) {
+      if(get_session_date(time_and_sale.m_timestamp) != m_date) {
+        has_expired = expire_market_on_close_orders();
         set_session_timestamps(time_and_sale.m_timestamp);
       }
-      if(m_is_moc_pending && time_and_sale.m_timestamp >= m_venue_close_time &&
-          from_market_center(time_and_sale.m_market_center,
-            m_ticker.get_venue()).m_venue == m_ticker.get_venue()) {
-        m_is_moc_pending = false;
-        is_triggered = true;
-        closing_price = time_and_sale.m_price;
+      auto is_listing = from_market_center(time_and_sale.m_market_center,
+        m_ticker.get_venue()).m_venue == m_ticker.get_venue();
+      is_closing = is_listing && time_and_sale.m_condition.m_type ==
+        TimeAndSale::Condition::Type::CLOSE;
+      if(is_closing) {
+        m_closing_cross_time = time_and_sale.m_timestamp;
+      } else {
+        if(expire_market_on_close_orders(time_and_sale.m_timestamp)) {
+          has_expired = true;
+        }
+        is_cross = is_opening_cross(time_and_sale, is_listing);
+      }
+      if(!is_cross) {
+        has_opened = update_session(time_and_sale.m_timestamp, is_listing);
       }
     }
-    if(is_triggered) {
-      auto index = std::size_t(0);
-      while(true) {
-        auto has_update = false;
-        auto is_moc = false;
-        {
-          auto lock = std::lock_guard(m_mutex);
-          if(index >= m_orders.size()) {
-            break;
-          }
-          auto order = m_orders[index];
-          is_moc = order->get_info().m_fields.m_time_in_force.get_type() ==
-            TimeInForce::Type::MOC;
-          if(is_moc) {
-            auto& entry = m_entries[order->get_info().m_id];
-            if(!is_terminal(entry.m_status)) {
-              entry.m_status = fill(order, closing_price);
-              has_update = true;
-            }
-            erase(order);
-          }
-        }
-        if(has_update) {
-          m_reports->flush();
-        }
-        if(!is_moc) {
-          ++index;
-        }
-      }
+    if(has_expired) {
+      m_reports->flush();
+    }
+    if(is_closing || is_cross) {
+      cross(time_and_sale, is_closing);
+      return;
+    }
+    if(has_opened) {
+      evaluate_orders();
     }
     match(time_and_sale);
   }
@@ -463,14 +529,280 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
-    m_date = timestamp.date();
+    m_date = get_session_date(timestamp);
+    m_session_timestamp = timestamp;
     m_listings.clear();
     m_levels.clear();
+    m_sessions.clear();
     auto venue = m_ticker.get_venue();
-    m_venue_close_time = venue_to_utc(venue, boost::posix_time::ptime(
-      utc_to_venue(venue, timestamp).date(), boost::posix_time::hours(16)));
-    m_is_moc_pending =
-      !m_venue_close_time.is_special() && timestamp < m_venue_close_time;
+    m_session = load_session(venue);
+    m_venue_close_time = m_session.m_close;
+    if(m_venue_close_time.is_special()) {
+      m_venue_close_time = venue_to_utc(
+        venue, boost::posix_time::ptime(m_date, boost::posix_time::hours(16)));
+    }
+    m_closing_cross_time = boost::posix_time::not_a_date_time;
+    m_is_closed = timestamp >= m_venue_close_time + CLOSING_PERIOD;
+    m_phase = get_phase(timestamp);
+    m_cross_time = boost::posix_time::not_a_date_time;
+    m_uncross_time = boost::posix_time::not_a_date_time;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  boost::gregorian::date TickerOrderSimulator<T>::get_session_date(
+      boost::posix_time::ptime timestamp) const {
+    return utc_to_venue(m_ticker.get_venue(), timestamp).date();
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  const typename TickerOrderSimulator<T>::Session&
+      TickerOrderSimulator<T>::load_session(Venue venue) {
+    auto i = m_sessions.find(venue);
+    if(i != m_sessions.end()) {
+      return i->second;
+    }
+    auto session = Session();
+    for(auto& event : TRADING_SCHEDULE.find(m_session_timestamp, venue)) {
+      if(event.m_code == PRE_OPEN_EVENT) {
+        session.m_pre_open = event.m_timestamp;
+      } else if(event.m_code == OPEN_EVENT) {
+        session.m_open = event.m_timestamp;
+      } else if(event.m_code == CLOSE_EVENT) {
+        session.m_close = event.m_timestamp;
+      }
+    }
+    return m_sessions.emplace(venue, session).first->second;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  typename TickerOrderSimulator<T>::Phase TickerOrderSimulator<T>::get_phase(
+      boost::posix_time::ptime timestamp) const {
+    if(m_session.m_open.is_special()) {
+      return Phase::CONTINUOUS;
+    }
+    if(timestamp < m_session.m_open) {
+      if(!m_session.m_pre_open.is_special() &&
+          timestamp >= m_session.m_pre_open) {
+        return Phase::PRE_OPEN;
+      }
+      return Phase::CONTINUOUS;
+    }
+    if(is_crossed() && timestamp < m_venue_close_time) {
+      return Phase::OPENING;
+    }
+    return Phase::CONTINUOUS;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::is_crossed() const {
+    return m_bbo.m_bid.m_price != Money::ZERO &&
+      m_bbo.m_ask.m_price != Money::ZERO &&
+      m_bbo.m_bid.m_price >= m_bbo.m_ask.m_price;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::is_held(const OrderEntry& entry) {
+    if(entry.m_session_venue == m_ticker.get_venue()) {
+      return m_phase != Phase::CONTINUOUS;
+    }
+    auto& session = load_session(entry.m_session_venue);
+    if(session.m_pre_open.is_special() || session.m_open.is_special()) {
+      return false;
+    }
+    auto timestamp = m_time_client->get_time();
+    return timestamp >= session.m_pre_open && timestamp < session.m_open;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::update_session(
+      boost::posix_time::ptime timestamp, bool is_listing_print) {
+    if(m_phase == Phase::CONTINUOUS) {
+      if(get_phase(timestamp) == Phase::PRE_OPEN) {
+        m_phase = Phase::PRE_OPEN;
+      }
+      return false;
+    }
+    auto has_opened = [&] {
+      if(m_phase == Phase::PRE_OPEN) {
+        if(timestamp < m_session.m_open) {
+          return false;
+        }
+        m_phase = Phase::OPENING;
+        return !is_crossed();
+      } else if(!m_cross_time.is_special()) {
+        return timestamp > m_cross_time;
+      }
+      return is_listing_print && !m_uncross_time.is_special() &&
+        timestamp > m_uncross_time;
+    }();
+    if(has_opened) {
+      m_phase = Phase::CONTINUOUS;
+    }
+    return has_opened;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::is_opening_cross(
+      const TimeAndSale& time_and_sale, bool is_listing) {
+    if(!is_listing) {
+      return false;
+    }
+    auto is_open =
+      time_and_sale.m_condition.m_type == TimeAndSale::Condition::Type::OPEN;
+    if(m_phase == Phase::CONTINUOUS) {
+      return is_open;
+    }
+    if(!is_open) {
+      if(time_and_sale.m_timestamp < m_session.m_open) {
+        return false;
+      }
+      if(!m_cross_time.is_special()) {
+        return time_and_sale.m_timestamp == m_cross_time;
+      }
+      if(m_uncross_time.is_special()) {
+        if(!is_crossed()) {
+          return false;
+        }
+      } else if(time_and_sale.m_timestamp > m_uncross_time) {
+        return false;
+      }
+    }
+    m_phase = Phase::OPENING;
+    m_cross_time = time_and_sale.m_timestamp;
+    return true;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::is_trade(
+      const TimeAndSale::Condition& condition) const {
+    if(condition.m_type == TimeAndSale::Condition::Type::NONE) {
+      return condition.m_code == REGULAR_SALE;
+    }
+    return condition.m_type != TimeAndSale::Condition::Type::CORRECTION &&
+      condition.m_type != TimeAndSale::Condition::Type::CANCELLATION;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::expire_market_on_close_orders() {
+    auto has_update = false;
+    auto index = std::size_t(0);
+    while(index < m_orders.size()) {
+      auto order = m_orders[index];
+      if(order->get_info().m_fields.m_time_in_force.get_type() ==
+          TimeInForce::Type::MOC) {
+        enqueue(order, OrderStatus::EXPIRED, m_time_client->get_time(), 0,
+          Money::ZERO);
+        erase(order);
+        has_update = true;
+      } else {
+        ++index;
+      }
+    }
+    return has_update;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::expire_market_on_close_orders(
+      boost::posix_time::ptime timestamp) {
+    if(m_is_closed) {
+      return false;
+    }
+    if(m_closing_cross_time.is_special()) {
+      if(timestamp < m_venue_close_time + CLOSING_PERIOD) {
+        return false;
+      }
+    } else if(timestamp <= m_closing_cross_time) {
+      return false;
+    }
+    m_is_closed = true;
+    return expire_market_on_close_orders();
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::evaluate_held_orders() {
+    auto index = std::size_t(0);
+    while(index < m_orders.size()) {
+      auto order = m_orders[index];
+      auto& entry = m_entries[order->get_info().m_id];
+      auto next_status = evaluate(order, entry.m_status);
+      if(is_terminal(next_status)) {
+        entry.m_status = next_status;
+        erase(order);
+      } else {
+        ++index;
+      }
+    }
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::cross(
+      const TimeAndSale& time_and_sale, bool is_closing) {
+    auto size = time_and_sale.m_size - time_and_sale.m_size % BOARD_LOT;
+    if(!is_trade(time_and_sale.m_condition) || size <= 0) {
+      return;
+    }
+    auto has_update = false;
+    {
+      auto lock = std::lock_guard(m_mutex);
+      if(cross(time_and_sale, Side::ASK, size, is_closing)) {
+        has_update = true;
+      }
+      if(cross(time_and_sale, Side::BID, size, is_closing)) {
+        has_update = true;
+      }
+    }
+    if(has_update) {
+      m_reports->flush();
+    }
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::cross(const TimeAndSale& time_and_sale,
+      Side side, Quantity size, bool is_closing) {
+    auto direction = get_direction(side);
+    auto available = size;
+    auto has_update = false;
+    while(available > 0) {
+      auto selection = std::shared_ptr<PrimitiveOrder>();
+      for(auto& order : m_orders) {
+        auto& fields = order->get_info().m_fields;
+        auto is_market = fields.m_type == OrderType::MARKET;
+        if(fields.m_side != side || !is_closing &&
+            fields.m_time_in_force.get_type() == TimeInForce::Type::MOC ||
+            !is_market && (fields.m_type != OrderType::LIMIT ||
+              direction * time_and_sale.m_price > direction * fields.m_price)) {
+          continue;
+        }
+        auto i = m_entries.find(order->get_info().m_id);
+        if(i == m_entries.end() ||
+            i->second.m_status == OrderStatus::PENDING_NEW ||
+            is_terminal(i->second.m_status) ||
+            i->second.m_session_venue != m_ticker.get_venue()) {
+          continue;
+        }
+        if(selection) {
+          auto& selected_fields = selection->get_info().m_fields;
+          if(selected_fields.m_type == OrderType::MARKET || !is_market &&
+              direction * selected_fields.m_price >=
+                direction * fields.m_price) {
+            continue;
+          }
+        }
+        selection = order;
+      }
+      if(!selection) {
+        break;
+      }
+      auto& entry = m_entries[selection->get_info().m_id];
+      auto quantity = std::min(entry.m_remaining_quantity, available);
+      entry.m_status = fill(selection, time_and_sale.m_price, quantity);
+      if(is_terminal(entry.m_status)) {
+        erase(selection);
+      }
+      available -= quantity;
+      has_update = true;
+    }
+    return has_update;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -578,6 +910,10 @@ namespace Details {
         m_bbo.m_ask.m_price == Money::ZERO) {
       return status;
     }
+    if(m_phase != Phase::CONTINUOUS ||
+        is_held(m_entries[order->get_info().m_id])) {
+      return status;
+    }
     if(fields.m_type == OrderType::MARKET) {
       auto price =
         pick(fields.m_side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
@@ -638,8 +974,13 @@ namespace Details {
   typename TickerOrderSimulator<T>::OrderEntry
       TickerOrderSimulator<T>::make_entry(const PrimitiveOrder& order,
         OrderStatus status, Quantity remaining_quantity) {
-    auto entry = OrderEntry(status, remaining_quantity, Venue(), 0, 0);
+    auto entry = OrderEntry(status, remaining_quantity, Venue(), 0, 0, Venue());
     auto& fields = order.get_info().m_fields;
+    entry.m_session_venue =
+      Details::get_posting_venue(fields.m_destination, m_ticker.get_venue());
+    if(!entry.m_session_venue) {
+      entry.m_session_venue = m_ticker.get_venue();
+    }
     if(fields.m_type != OrderType::LIMIT ||
         fields.m_time_in_force.get_type() == TimeInForce::Type::MOC) {
       return entry;
@@ -743,7 +1084,7 @@ namespace Details {
         auto i = m_entries.find(order->get_info().m_id);
         if(i == m_entries.end() ||
             i->second.m_status == OrderStatus::PENDING_NEW ||
-            is_terminal(i->second.m_status)) {
+            is_terminal(i->second.m_status) || is_held(i->second)) {
           continue;
         }
         if(selection && direction * selection->get_info().m_fields.m_price >=
@@ -771,7 +1112,7 @@ namespace Details {
         if(i == m_entries.end() ||
             i->second.m_status == OrderStatus::PENDING_NEW ||
             is_terminal(i->second.m_status) || !i->second.m_venue ||
-            i->second.m_queue_quantity > 0) {
+            i->second.m_queue_quantity > 0 || is_held(i->second)) {
           continue;
         }
         if(VENUES.from(i->second.m_venue).m_market_center !=
@@ -793,7 +1134,7 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale) {
     auto size = time_and_sale.m_size - time_and_sale.m_size % BOARD_LOT;
-    if(time_and_sale.m_condition.m_code != REGULAR_SALE || size <= 0) {
+    if(!is_trade(time_and_sale.m_condition) || size <= 0) {
       return;
     }
     auto has_update = false;
