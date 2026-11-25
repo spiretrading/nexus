@@ -8,6 +8,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableGroupingBar.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/Tag.hpp"
@@ -108,6 +109,74 @@ TEST_SUITE("GroupedTableView") {
       REQUIRE(visible.get_row_size() == 4);
       REQUIRE(visible.get<int>(0, 2) == 12);
     }
+  }
+
+  UI_TEST_CASE("drag_column_with_collapsed_group") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD"), 10});
+    source->push({QString("A"), QString("CAD"), 30});
+    source->push({QString("B"), QString("CAD"), 5});
+    source->push({QString("B"), QString("USD"), 20});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Shares").make());
+    auto controller = TableColumnReorderController(*view);
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    table->set_grouping({0, 1});
+    auto& header = view->get_header();
+    for(auto i = 0; i != 3; ++i) {
+      header.get_widths()->set(i, scale_width(100));
+    }
+    view->resize(scale_width(400), scale_height(360));
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto& rows = *body.get_table();
+    auto account = body.find_item(TableIndex(0, 0));
+    REQUIRE(account);
+    auto toggle =
+      dynamic_cast<ToggleButton*>(account->get_body().focusProxy());
+    REQUIRE(toggle);
+    toggle->get_current()->set(false);
+    REQUIRE(rows.get_row_size() == 6);
+    REQUIRE(rows.get<QString>(0, 0) == "A (2)");
+    auto shares = header.get_item(2);
+    move_cursor(*shares, shares->rect().center());
+    auto receiver = QApplication::widgetAt(QCursor::pos());
+    REQUIRE(receiver);
+    press_mouse(*receiver, Qt::LeftButton);
+    auto currency = header.get_item(1);
+    move_cursor(*currency, currency->rect().center());
+    auto position = QCursor::pos();
+    auto move = QMouseEvent(QEvent::MouseMove,
+      receiver->mapFromGlobal(position), position, Qt::NoButton,
+      Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(receiver, &move);
+    release_mouse(*receiver, Qt::LeftButton);
+    QApplication::processEvents();
+    REQUIRE(header.get_item(1) == shares);
+    REQUIRE(header.get_column_order()->get(1) == 2);
+    REQUIRE(rows.get<QString>(0, 0) == "A (2)");
+    move_cursor(*shares, shares->rect().center());
+    press_mouse(*shares, Qt::LeftButton);
+    release_mouse(*shares, Qt::LeftButton);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(rows.get_row_size() == 6);
+    REQUIRE(rows.get<QString>(0, 0) == "B (2)");
+    REQUIRE(rows.get<QString>(1, 0) == "CAD (1)");
+    REQUIRE(rows.get<QString>(5, 0) == "A (2)");
+    REQUIRE(table->get_grouping() == std::vector{0, 1});
+    auto bar =
+      dynamic_cast<TableGroupingBar*>(view->layout()->itemAt(0)->widget());
+    REQUIRE(bar);
+    auto tags = bar->layout()->itemAt(0)->layout();
+    REQUIRE(tags->count() == 3);
+    auto first = dynamic_cast<Tag*>(tags->itemAt(0)->widget());
+    auto second = dynamic_cast<Tag*>(tags->itemAt(2)->widget());
+    REQUIRE(first);
+    REQUIRE(second);
+    REQUIRE(first->get_label()->get() == "Account");
+    REQUIRE(second->get_label()->get() == "Currency");
   }
 
   UI_TEST_CASE("column_order_settings") {

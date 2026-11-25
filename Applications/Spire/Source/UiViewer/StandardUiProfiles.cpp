@@ -123,6 +123,7 @@
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -2838,6 +2839,7 @@ UiProfile Spire::make_grouped_table_view_profile() {
     auto view = GroupedTableViewBuilder(positions).
       add_column("Account").add_column("Currency").add_column("Ticker").
       add_column("Side").add_column("Shares").make();
+    new TableColumnReorderController(*view);
     auto& widths = *view->get_header().get_widths();
     widths.set(0, scale_width(180));
     widths.set(1, scale_width(85));
