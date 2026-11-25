@@ -50,14 +50,7 @@ GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
       m_columns(std::move(columns)),
       m_aggregations(std::move(aggregations)),
       m_is_source_transaction(false) {
-  for(auto i = m_columns.begin(); i != m_columns.end(); ++i) {
-    if(*i < 0 || std::ranges::find(m_columns.begin(), i, *i) != i) {
-      throw std::invalid_argument("Invalid grouping column.");
-    }
-  }
-  if(m_source->get_row_size() != 0 || get_column_size() != 0) {
-    validate_width();
-  }
+  validate_columns(m_columns);
   if(m_columns.empty()) {
     m_transaction.set_size(m_source->get_row_size());
   } else {
@@ -79,6 +72,51 @@ const std::shared_ptr<TableModel>& GroupedTableModel::get_source() const {
 
 const std::vector<int>& GroupedTableModel::get_grouping() const {
   return m_columns;
+}
+
+void GroupedTableModel::set_grouping(std::vector<int> columns) {
+  if(columns == m_columns) {
+    return;
+  }
+  validate_columns(columns);
+  auto common = std::ranges::mismatch(m_columns, columns);
+  auto shared_depth = static_cast<int>(common.in1 - m_columns.begin());
+  transact([&] {
+    flush_updates(nullptr);
+    if(m_columns.empty()) {
+      for(auto i = 0; i != m_source->get_row_size(); ++i) {
+        m_rows.emplace_back(nullptr, TableRowIndexTracker(i));
+        m_indices.push_back(i);
+      }
+    } else {
+      for(auto i = get_row_size() - 1; i >= 0; --i) {
+        auto& row = m_rows[i];
+        if(!row.is_heading()) {
+          row.m_group.reset();
+        } else if(row.m_group->m_depth >= shared_depth) {
+          for(auto group = row.m_group->m_parent; group;
+              group = group->m_parent) {
+            --group->m_descendant_count;
+          }
+          remove_row(i);
+        }
+      }
+    }
+    if(columns.empty()) {
+      for(auto i = 0; i != m_source->get_row_size(); ++i) {
+        move_row(m_indices[i], i);
+      }
+      m_rows.clear();
+      m_indices.clear();
+      m_columns.clear();
+    } else {
+      m_columns = std::move(columns);
+      for(auto i = 0; i != m_source->get_row_size(); ++i) {
+        insert(i, shared_depth);
+      }
+    }
+    refresh_aggregates();
+  });
 }
 
 int GroupedTableModel::index_to_source(int row) const {
@@ -143,12 +181,17 @@ QValidator::State GroupedTableModel::remove(int row) {
   return m_source->remove(source);
 }
 
-void GroupedTableModel::validate_width() const {
+void GroupedTableModel::validate_columns(
+    const std::vector<int>& columns) const {
   auto width = get_column_size();
-  auto exceeds_width = std::ranges::any_of(m_columns, [=] (auto column) {
-    return column >= width;
-  });
-  if(exceeds_width || std::ssize(m_aggregations) > width) {
+  auto has_width = width != 0 || m_source->get_row_size() != 0;
+  for(auto i = columns.begin(); i != columns.end(); ++i) {
+    if(*i < 0 || (has_width && *i >= width) ||
+        std::ranges::find(columns.begin(), i, *i) != i) {
+      throw std::invalid_argument("Invalid grouping column.");
+    }
+  }
+  if(has_width && std::ssize(m_aggregations) > width) {
     throw std::invalid_argument("Grouping exceeds the source column count.");
   }
 }
@@ -195,10 +238,11 @@ void GroupedTableModel::insert(int source, int shared_depth) {
   for(auto depth = 0; depth != std::ssize(m_columns); ++depth) {
     auto column = m_columns[depth];
     auto key = to_text(m_source->at(source, column));
-    while(first != end && m_rows[first].m_group->m_key != key) {
+    while(first != end && m_rows[first].is_heading() &&
+        m_rows[first].m_group->m_key != key) {
       first += 1 + m_rows[first].m_group->m_descendant_count;
     }
-    if(first == end) {
+    if(first == end || !m_rows[first].is_heading()) {
       auto group = std::make_shared<Group>(std::move(key), parent, depth, first,
         0, 0, std::vector<AggregateCell>(get_column_size()));
       for(auto i = 0; i != get_column_size(); ++i) {
@@ -217,16 +261,24 @@ void GroupedTableModel::insert(int source, int shared_depth) {
     ++first;
     end = first + parent->m_descendant_count;
   }
-  auto position = std::ranges::lower_bound(m_rows.begin() + first,
-    m_rows.begin() + end, source, {}, [] (const Row& row) {
-      return row.m_source.get_index();
+  auto position = std::ranges::partition_point(m_rows.begin() + first,
+    m_rows.begin() + end, [=] (const Row& row) {
+      return row.m_group && row.m_source.get_index() < source;
     });
   auto index = static_cast<int>(position - m_rows.begin());
-  m_rows.emplace(position, parent, TableRowIndexTracker(source));
-  index_rows(index);
-  m_transaction.push(AddOperation(index));
+  auto previous_row = m_indices[source];
+  if(previous_row == -1) {
+    m_rows.emplace(position, parent, TableRowIndexTracker(source));
+    index_rows(index);
+    m_transaction.push(AddOperation(index));
+  } else {
+    m_rows[previous_row].m_group = parent;
+    move_row(previous_row, index);
+  }
   for(auto group = parent; group; group = group->m_parent) {
-    ++group->m_descendant_count;
+    if(previous_row == -1 || group->m_depth >= shared_depth) {
+      ++group->m_descendant_count;
+    }
     if(group->m_depth < shared_depth) {
       continue;
     }
@@ -253,6 +305,14 @@ void GroupedTableModel::remove_row(int row) {
   m_rows.erase(m_rows.begin() + row);
   index_rows(row);
   m_transaction.push(RemoveOperation(row));
+}
+
+void GroupedTableModel::move_row(int source, int destination) {
+  if(source != destination) {
+    move_element(m_rows, source, destination);
+    index_rows(std::min(source, destination));
+    m_transaction.push(MoveOperation(source, destination));
+  }
 }
 
 void GroupedTableModel::erase(
@@ -370,19 +430,14 @@ void GroupedTableModel::move_leaf(int source) {
       m_rows[destination + 1].m_source.get_index() < source) {
     ++destination;
   }
-  if(destination == row) {
-    return;
-  }
-  move_element(m_rows, row, destination);
-  index_rows(std::min(row, destination));
-  m_transaction.push(MoveOperation(row, destination));
+  move_row(row, destination);
 }
 
 void GroupedTableModel::apply(const Operation& operation) {
   visit(operation,
     [&] (const AddOperation& add) {
       if(m_indices.empty()) {
-        validate_width();
+        validate_columns(m_columns);
       }
       m_indices.insert(m_indices.begin() + add.m_index, -1);
       if(add.m_index + 1 != m_source->get_row_size()) {
@@ -410,10 +465,6 @@ void GroupedTableModel::apply(const Operation& operation) {
 }
 
 void GroupedTableModel::on_operation(const Operation& operation) {
-  if(m_columns.empty()) {
-    m_transaction.push(operation);
-    return;
-  }
   visit(operation,
     [&] (const StartTransaction&) {
       m_is_source_transaction = true;
@@ -428,7 +479,9 @@ void GroupedTableModel::on_operation(const Operation& operation) {
       refresh_aggregates();
     },
     [&] (const auto&) {
-      if(m_is_source_transaction) {
+      if(m_columns.empty()) {
+        m_transaction.push(operation);
+      } else if(m_is_source_transaction) {
         apply(operation);
       } else {
         transact([&] {

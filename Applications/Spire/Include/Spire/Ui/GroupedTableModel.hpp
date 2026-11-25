@@ -42,6 +42,9 @@ namespace Spire {
       /** Returns the grouping columns, from outermost to innermost. */
       const std::vector<int>& get_grouping() const;
 
+      /** Sets the grouping columns. An empty list restores source order. */
+      void set_grouping(std::vector<int> columns);
+
       /** Returns the source index, or -1 for a heading or an invalid row. */
       int index_to_source(int row) const;
 
@@ -69,13 +72,14 @@ namespace Spire {
       bool m_is_source_transaction;
       boost::signals2::scoped_connection m_connection;
 
-      void validate_width() const;
+      void validate_columns(const std::vector<int>& columns) const;
       void index_rows(int first);
       void touch(const std::shared_ptr<Group>& group, int column);
       std::unique_ptr<TableAggregation> make_aggregation(
         const Group& group, int column) const;
       void insert(int source, int shared_depth);
       void remove_row(int row);
+      void move_row(int source, int destination);
       void erase(int row, int shared_depth, const Changes& changes);
       void track(const Operation& operation);
       void flush_updates(const Operation* shift);
