@@ -14,6 +14,9 @@ namespace Spire {
   class GroupedTableModel : public TransactionLogModel<TableModel> {
     public:
 
+      /** Signals the new grouping columns after regrouping. */
+      using GroupingSignal = Signal<void (const std::vector<int>&)>;
+
       /**
        * Groups a table using the default column aggregations.
        * @param source The table containing the leaves.
@@ -45,6 +48,13 @@ namespace Spire {
       /** Sets the grouping columns. An empty list restores source order. */
       void set_grouping(std::vector<int> columns);
 
+      /** Connects a slot to changes in the grouping columns. */
+      boost::signals2::connection connect_grouping_signal(
+        const GroupingSignal::slot_type& slot) const;
+
+      /** Returns the parent heading's row, or -1 for a top-level row. */
+      int get_parent(int row) const;
+
       /** Returns the source index, or -1 for a heading or an invalid row. */
       int index_to_source(int row) const;
 
@@ -62,6 +72,7 @@ namespace Spire {
       struct Group;
       struct Row;
       using Changes = std::map<int, std::any>;
+      mutable GroupingSignal m_grouping_signal;
       std::shared_ptr<TableModel> m_source;
       std::vector<int> m_columns;
       std::vector<TableAggregationFactory> m_aggregations;

@@ -116,7 +116,28 @@ void GroupedTableModel::set_grouping(std::vector<int> columns) {
       }
     }
     refresh_aggregates();
+    m_grouping_signal(m_columns);
   });
+}
+
+boost::signals2::connection GroupedTableModel::connect_grouping_signal(
+    const GroupingSignal::slot_type& slot) const {
+  return m_grouping_signal.connect(slot);
+}
+
+int GroupedTableModel::get_parent(int row) const {
+  if(m_columns.empty()) {
+    return -1;
+  }
+  auto& entry = m_rows.at(row);
+  auto group = entry.m_group.get();
+  if(entry.is_heading()) {
+    group = group->m_parent.get();
+  }
+  if(group) {
+    return group->m_row;
+  }
+  return -1;
 }
 
 int GroupedTableModel::index_to_source(int row) const {

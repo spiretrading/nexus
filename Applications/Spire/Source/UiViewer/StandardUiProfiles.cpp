@@ -69,6 +69,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/HexColorBox.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 #include "Spire/Ui/HighlightPicker.hpp"
@@ -2820,6 +2821,37 @@ UiProfile Spire::make_font_style_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_grouped_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("AR.TSX shares", 1200));
+  return UiProfile("GroupedTableView", properties, [] (auto& profile) {
+    auto positions = std::make_shared<ArrayTableModel>();
+    auto& shares = get<int>("AR.TSX shares", profile.get_properties());
+    positions->push({"conglg15", "CAD", "AR.TSX", "Long", shares.get()});
+    positions->push({"conglg15", "USD", "MSFT.NASDAQ", "Long", 600});
+    positions->push({"dichch10", "CAD", "AGRA.CSE", "Long", 800});
+    positions->push({"conglg15", "CAD", "BHS.TSXV", "Long", 400});
+    positions->push({"dichch10", "CAD", "ATMO.CSE", "Short", 300});
+    auto view = GroupedTableViewBuilder(positions).
+      add_column("Account").add_column("Currency").add_column("Ticker").
+      add_column("Side").add_column("Shares").set_grouping({0, 1}).make();
+    auto& widths = *view->get_header().get_widths();
+    widths.set(0, scale_width(180));
+    widths.set(1, scale_width(85));
+    widths.set(2, scale_width(115));
+    widths.set(3, scale_width(70));
+    widths.set(4, scale_width(80));
+    apply_widget_properties(view, profile.get_properties());
+    get<int>("width", profile.get_properties()).set(545);
+    get<int>("height", profile.get_properties()).set(350);
+    shares.connect_changed_signal([=] (int value) {
+      positions->set(0, 4, value);
+    });
+    return view;
+  });
 }
 
 UiProfile Spire::make_hex_color_box_profile() {
