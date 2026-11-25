@@ -209,11 +209,11 @@ BlotterUiController::BlotterUiController(
       std::bind_front(&BlotterUiController::on_submission, this)));
   refresh();
   resize(scale(660, 540));
-  on_new_blotter();
+  winId();
   auto screen = QApplication::primaryScreen()->availableGeometry();
-  move(screen.left(), std::min(
-    m_blotters.front().m_window->frameGeometry().bottom() + scale_height(20),
-    screen.bottom() - frameGeometry().height()));
+  move(screen.left() + (screen.width() - frameGeometry().width()) / 2,
+    screen.bottom() + 1 - frameGeometry().height() - scale_height(4));
+  on_new_blotter();
 }
 
 BlotterUiController::~BlotterUiController() {
@@ -425,10 +425,14 @@ void BlotterUiController::on_new_blotter() {
   m_blotters.emplace_back(tasks, std::move(window), std::move(connection));
   m_blotter_selection->addItem(name);
   auto screen = QApplication::primaryScreen()->availableGeometry();
-  auto offset = scale_width(40) * (index % 8);
-  m_blotters.back().m_window->move(
-    screen.topLeft() + QPoint(offset, offset));
+  m_blotters.back().m_window->resize(scale(900, 650));
   on_blotter_selection(index);
+  m_blotters.back().m_window->move(
+    screen.left() +
+      (screen.width() -
+        m_blotters.back().m_window->frameGeometry().width()) / 2,
+    frameGeometry().top() -
+      m_blotters.back().m_window->frameGeometry().height() - scale_height(4));
 }
 
 void BlotterUiController::on_blotter_selection(int index) {
