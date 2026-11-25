@@ -2,6 +2,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
+#include <QLabel>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewTableModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
@@ -21,8 +22,8 @@ namespace {
     return column_order;
   }
 
-  auto make_header_model(const ListModel<TableHeaderItem::Model>& model,
-      int column) {
+  auto make_header_model(
+      const ListModel<TableHeaderItem::Model>& model, int column) {
     auto column_model =
       std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     column_model->push(model.get(column));
@@ -58,10 +59,11 @@ namespace {
   }
 
   template <typename Widths>
-  std::tuple<bool, int, int> find_column_at_position(TableHeader& header,
-      const Widths& widths, int x) {
+  std::tuple<bool, int, int> find_column_at_position(
+      TableHeader& header, const Widths& widths, int x) {
     auto last_visible_column = -1;
-    auto left = 0;
+    auto left =
+      -header.get_scroll_box().get_horizontal_scroll_bar().get_position();
     auto index = 0;
     for(auto i = std::begin(widths); i != std::end(widths); ++i, ++index) {
       auto item = header.get_item(index);
@@ -78,50 +80,8 @@ namespace {
     return {false, last_visible_column, left};
   }
 
-  struct ColumnTableViewItemBuilder {
-    TableViewItemBuilder m_builder;
-    std::shared_ptr<TableModel> m_source;
-    int m_column;
-
-    ColumnTableViewItemBuilder(TableViewItemBuilder builder,
-      std::shared_ptr<TableModel> source, int column)
-      : m_builder(std::move(builder)),
-        m_source(std::move(source)),
-        m_column(column) {}
-
-    QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
-        int column) {
-      return m_builder.mount(m_source, row, m_column);
-    }
-
-    void unmount(QWidget* widget) {
-      m_builder.unmount(widget);
-    }
-  };
-
-  QWidget* make_column_preview(TableView& table_view,
-      const TableViewItemBuilder& m_item_builder,
-      int visual_index, int logical_index) {
-    auto& table_header = table_view.get_header();
-    auto table_view_preview = TableViewBuilder(
-      std::make_shared<ColumnViewTableModel>(
-        table_view.get_table(), logical_index)).
-      set_header(make_header_model(*table_header.get_items(), visual_index)).
-      set_item_builder(ColumnTableViewItemBuilder(
-        m_item_builder, table_view.get_table(), logical_index)).
-      set_current(
-        std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
-      make();
-    table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-    auto& float_table_header = table_view_preview->get_header();
-    float_table_header.get_widths()->set(0,
-      table_header.get_widths()->get(visual_index));
-    set_style(*table_view_preview, get_style(table_view));
-    set_style(float_table_header, get_style(table_header));
-    set_style(*float_table_header.get_item(0),
-      get_style(*table_header.get_item(visual_index)));
-    set_style(table_view_preview->get_body(), get_style(table_view.get_body()));
-    auto preview = new Box(table_view_preview, table_view.window());
+  QWidget* make_preview(QWidget& column, QWidget& parent) {
+    auto preview = new Box(&column, &parent);
     preview->setAttribute(Qt::WA_TransparentForMouseEvents);
     update_style(*preview, [] (auto& style) {
       style.get(Any()).
@@ -134,6 +94,53 @@ namespace {
     effect->setOpacity(0.5);
     preview->setGraphicsEffect(effect);
     preview->show();
+    return preview;
+  }
+
+  struct ColumnTableViewItemBuilder {
+    TableViewItemBuilder m_builder;
+    std::shared_ptr<TableModel> m_source;
+    int m_column;
+
+    ColumnTableViewItemBuilder(TableViewItemBuilder builder,
+      std::shared_ptr<TableModel> source, int column)
+      : m_builder(std::move(builder)),
+        m_source(std::move(source)),
+        m_column(column) {}
+
+    QWidget* mount(
+        const std::shared_ptr<TableModel>& table, int row, int column) {
+      return m_builder.mount(m_source, row, m_column);
+    }
+
+    void unmount(QWidget* widget) {
+      m_builder.unmount(widget);
+    }
+  };
+
+  QWidget* make_column_preview(
+      TableView& table_view, const TableViewItemBuilder& m_item_builder,
+      int visual_index, int logical_index) {
+    auto& table_header = table_view.get_header();
+    auto table_view_preview =
+      TableViewBuilder(std::make_shared<ColumnViewTableModel>(
+        table_view.get_table(), logical_index)).
+      set_header(make_header_model(*table_header.get_items(), visual_index)).
+      set_item_builder(ColumnTableViewItemBuilder(
+        m_item_builder, table_view.get_table(), logical_index)).
+      set_current(
+        std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
+      make();
+    table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
+    auto& float_table_header = table_view_preview->get_header();
+    float_table_header.get_widths()->set(
+      0, table_header.get_widths()->get(visual_index));
+    set_style(*table_view_preview, get_style(table_view));
+    set_style(float_table_header, get_style(table_header));
+    set_style(*float_table_header.get_item(0),
+      get_style(*table_header.get_item(visual_index)));
+    set_style(table_view_preview->get_body(), get_style(table_view.get_body()));
+    auto preview = make_preview(*table_view_preview, *table_view.window());
     for(auto& selector : find_stylist(table_view).get_matches()) {
       match(*table_view_preview, selector);
     };
@@ -148,18 +155,11 @@ namespace {
 }
 
 TableColumnReorderController::TableColumnReorderController(
-  TableView& table_view, TableViewItemBuilder item_builder)
-  : TableColumnReorderController(table_view, std::move(item_builder),
-      make_default_column_order(
-        table_view.get_header().get_widths()->get_size())) {}
-
-TableColumnReorderController::TableColumnReorderController(
-    TableView& table_view, TableViewItemBuilder item_builder,
-    std::vector<int> column_order)
+    TableView& table_view)
     : QObject(&table_view),
       m_table_view(&table_view),
-      m_item_builder(std::move(item_builder)),
-      m_column_order(std::move(column_order)),
+      m_column_order(make_default_column_order(
+        table_view.get_header().get_widths()->get_size())),
       m_column_preview(nullptr),
       m_column_cover(nullptr),
       m_horizontal_scroll_bar_parent(nullptr),
@@ -179,6 +179,19 @@ TableColumnReorderController::TableColumnReorderController(
     std::bind_front(&TableColumnReorderController::on_operation, this));
 }
 
+TableColumnReorderController::TableColumnReorderController(
+    TableView& table_view, TableViewItemBuilder item_builder)
+    : TableColumnReorderController(table_view) {
+  m_item_builder.emplace(std::move(item_builder));
+}
+
+TableColumnReorderController::TableColumnReorderController(
+    TableView& table_view, TableViewItemBuilder item_builder,
+    std::vector<int> column_order)
+    : TableColumnReorderController(table_view, std::move(item_builder)) {
+  m_column_order = std::move(column_order);
+}
+
 connection TableColumnReorderController::connect_column_moved_signal(
     const ColumnMoved::slot_type& slot) const {
   return m_column_moved_signal.connect(slot);
@@ -194,59 +207,90 @@ bool TableColumnReorderController::eventFilter(QObject* watched,
     if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(mouse_event.button() == Qt::LeftButton) {
-        start_drag(mouse_event);
+        auto& header = m_table_view->get_header();
+        auto [found, index, left] = find_column_at_position(
+          header, *header.get_widths(), mouse_event.x());
+        if(found && header.get_item(index)->rect().contains(
+            header.get_item(index)->mapFromGlobal(mouse_event.globalPos()))) {
+          m_source_index = index;
+          m_press_position = mouse_event.globalPos();
+        }
       }
     } else if(event->type() == QEvent::MouseButtonRelease) {
-      stop_drag();
-    } else if(event->type() == QEvent::MouseMove) {
-      drag_move(*static_cast<QMouseEvent*>(event));
+      if(static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton) {
+        if(m_column_preview) {
+          stop_drag();
+        }
+        m_source_index = -1;
+      }
+    } else if(event->type() == QEvent::MouseMove && m_source_index >= 0) {
+      auto& mouse = *static_cast<QMouseEvent*>(event);
+      if(!m_column_preview && (mouse.buttons() & Qt::LeftButton) &&
+          (mouse.globalPos() - m_press_position).manhattanLength() >=
+            QApplication::startDragDistance()) {
+        start_drag();
+      }
+      drag_move(mouse);
+    } else if(event->type() == QEvent::Hide) {
+      if(m_column_preview) {
+        stop_drag();
+      }
+      m_source_index = -1;
     }
   }
   return QObject::eventFilter(watched, event);
 }
 
-void TableColumnReorderController::start_drag(const QMouseEvent& mouse_event) {
-  if(m_column_preview) {
-    return;
-  }
+void TableColumnReorderController::start_drag() {
   auto& header = m_table_view->get_header();
-  auto [is_found, index, _] = find_column_at_position(
-    header, *header.get_widths(), mouse_event.x());
-  if(!is_found) {
-    return;
-  }
+  auto index = m_source_index;
+  m_current_index = index;
+  m_last_mouse_x = header.mapFromGlobal(m_press_position).x();
+  match(*header.get_item(index), Drag());
   QApplication::setOverrideCursor(Qt::ClosedHandCursor);
-  header.grabMouse();
-  auto& header_stylist = find_stylist(header);
-  auto header_proxies = header_stylist.get_proxies();
-  for(auto& property : header_proxies[0]->get_computed_block()) {
-    property.visit(
-      [&] (const PaddingLeft& padding) {
+  if(m_item_builder) {
+    auto& header_stylist = find_stylist(header);
+    auto header_proxies = header_stylist.get_proxies();
+    for(auto& property : header_proxies[0]->get_computed_block()) {
+      property.visit([&] (const PaddingLeft& padding) {
         header_stylist.evaluate(padding, [&] (auto padding) {
           m_left_padding = padding;
         });
       });
+    }
   }
   header.get_item(index)->installEventFilter(this);
   auto& widths = header.get_widths();
   m_widths.assign(widths->begin(), widths->end());
+  auto top = header.get_item(index)->mapTo(m_table_view, QPoint(0, 0));
+  auto column = QRect(top, QSize(widths->get(index) + m_left_padding,
+    m_table_view->height() - top.y()));
+  column.translate(-m_left_padding, 0);
+  auto& horizontal_scroll_bar =
+    m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+  if(m_item_builder) {
+    m_column_preview = make_column_preview(*m_table_view, *m_item_builder,
+      index, m_column_order[index]);
+  } else {
+    if(horizontal_scroll_bar.isVisible()) {
+      auto bottom = horizontal_scroll_bar.mapTo(m_table_view, QPoint()).y();
+      column.setBottom(bottom - 1);
+    }
+    auto label = new QLabel();
+    label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    label->setPixmap(m_table_view->grab(column));
+    m_column_preview = make_preview(*label, *m_table_view);
+  }
   m_column_cover = make_column_cover(*m_table_view);
-  m_column_cover->setFixedSize(
-    widths->get(index) + m_left_padding, m_table_view->height());
-  move_column_cover(index);
-  m_column_preview = make_column_preview(*m_table_view, m_item_builder,
-    index, m_column_order[index]);
+  m_column_cover->setGeometry(column);
+  m_column_preview->raise();
   m_column_preview->setFixedSize(m_column_cover->width() + scale_width(1),
     m_column_cover->height() + scale_height(1));
   auto parent = m_column_preview->parentWidget();
-  auto position = m_column_cover->mapTo(parent, QPoint(0, 0));
-  m_column_preview->move(position.x() - scale_width(1),
-    position.y() - scale_height(1));
-  auto& horizontal_scroll_bar =
-    m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+  m_column_preview->move(m_column_cover->mapTo(parent, QPoint(0, 0)));
   auto original_horizontal_scroll_bar_position =
     horizontal_scroll_bar.mapToGlobal(QPoint(0, 0));
-  if(horizontal_scroll_bar.isVisible()) {
+  if(m_item_builder && horizontal_scroll_bar.isVisible()) {
     m_horizontal_scroll_bar_parent =
       raise_scroll_bar(horizontal_scroll_bar, *parent);
   }
@@ -254,32 +298,32 @@ void TableColumnReorderController::start_drag(const QMouseEvent& mouse_event) {
     m_table_view->get_scroll_box().get_vertical_scroll_bar();
   auto original_vertical_scroll_bar_position =
     vertical_scroll_bar.mapToGlobal(QPoint(0, 0));
-  if(vertical_scroll_bar.isVisible()) {
+  if(m_item_builder && vertical_scroll_bar.isVisible()) {
     m_vertical_scroll_bar_parent =
       raise_scroll_bar(vertical_scroll_bar, *parent);
   }
-  if(horizontal_scroll_bar.isVisible()) {
+  if(m_horizontal_scroll_bar_parent) {
     horizontal_scroll_bar.move(
       parent->mapFromGlobal(original_horizontal_scroll_bar_position));
   }
-  if(vertical_scroll_bar.isVisible()) {
+  if(m_vertical_scroll_bar_parent) {
     vertical_scroll_bar.move(
       parent->mapFromGlobal(original_vertical_scroll_bar_position));
   }
   m_preview_x_offset =
-    m_column_preview->mapFromGlobal(mouse_event.globalPos()).x();
-  m_source_index = index;
-  m_current_index = index;
+    m_column_preview->mapFromGlobal(m_press_position).x();
 }
 
 void TableColumnReorderController::stop_drag() {
   QApplication::restoreOverrideCursor();
   m_widths.clear();
   if(m_column_preview) {
+    m_column_preview->hide();
     m_column_preview->deleteLater();
     m_column_preview = nullptr;
   }
   if(m_column_cover) {
+    m_column_cover->hide();
     m_column_cover->deleteLater();
     m_column_cover = nullptr;
   }
@@ -296,9 +340,10 @@ void TableColumnReorderController::stop_drag() {
     m_vertical_scroll_bar_parent = nullptr;
   }
   auto& header = m_table_view->get_header();
-  header.releaseMouse();
   if(m_current_index >= 0) {
-    header.get_item(m_current_index)->removeEventFilter(this);
+    auto item = header.get_item(m_current_index);
+    unmatch(*item, Drag());
+    item->removeEventFilter(this);
     m_column_moved_signal(m_source_index, m_current_index);
     m_source_index = -1;
     m_current_index = -1;
@@ -314,61 +359,43 @@ void TableColumnReorderController::drag_move(const QMouseEvent& mouse_event) {
   }
   m_last_mouse_x = mouse_event.pos().x();
   auto mouse_x = std::max(0, mouse_event.x());
+  update_horizontal_scroll_position(mouse_x);
   auto& header = m_table_view->get_header();
   auto [is_found, index, item_left] =
     find_column_at_position(header, m_widths, mouse_x);
-  auto should_move_column = [&] {
-    if(is_found) {
-      if(index != m_current_index) {
-        return true;
-      }
-    } else if(mouse_x >= item_left && index != m_current_index) {
-      return true;
-    }
-    return false;
-  }();
-  if(should_move_column) {
+  if(index >= 0 && index != m_current_index &&
+      (is_found || mouse_x >= item_left)) {
     auto blocker = shared_connection_block(m_connection);
     header.get_items()->move(m_current_index, index);
     move_element(m_column_order, m_current_index, index);
     m_current_index = index;
   }
-  auto& horizontal_scroll_bar =
-    m_table_view->get_scroll_box().get_horizontal_scroll_bar();
-  if(horizontal_scroll_bar.isVisible()) {
-    update_horizontal_scroll_position(mouse_x);
-    if(m_column_cover) {
-      move_column_cover(m_current_index);
-    }
-  }
-  auto x = std::max(m_table_view->x(),
-    std::min(m_table_view->width() - m_column_preview->width() +
-      2 * scale_width(1),
-      m_column_preview->parentWidget()->mapFromGlobal(
-        mouse_event.globalPos()).x() - m_preview_x_offset));
+  move_column_cover(m_current_index);
+  auto parent = m_column_preview->parentWidget();
+  auto left = m_table_view->mapTo(parent, QPoint(0, 0)).x();
+  auto x = std::clamp(parent->mapFromGlobal(
+    mouse_event.globalPos()).x() - m_preview_x_offset, left,
+    left + std::max(0, m_table_view->width() - m_column_preview->width()));
   m_column_preview->move(x, m_column_preview->y());
 }
 
 void TableColumnReorderController::move_column_cover(int index) {
   m_column_cover->move(m_table_view->get_header().get_item(index)->mapTo(
-    m_table_view, QPoint(0, 0)).x() - m_left_padding, 0);
+    m_table_view, QPoint(0, 0)) - QPoint(m_left_padding, 0));
 }
 
 void TableColumnReorderController::update_horizontal_scroll_position(
     int mouse_x) {
-  auto preview_x = std::max(0, mouse_x - m_preview_x_offset);
-  auto preview_right = preview_x + m_column_preview->width();
+  auto left = mouse_x - m_preview_x_offset;
+  auto right = left + m_column_preview->width();
   auto& horizontal_scroll_bar =
     m_table_view->get_scroll_box().get_horizontal_scroll_bar();
   auto scroll_position = horizontal_scroll_bar.get_position();
-  auto scroll_right =
-    scroll_position + horizontal_scroll_bar.get_page_size();
-  if(preview_x < scroll_position) {
-    horizontal_scroll_bar.set_position(preview_x);
-  } else if(preview_right >= scroll_right) {
-    horizontal_scroll_bar.set_position(std::min(
-      horizontal_scroll_bar.get_range().m_end,
-      preview_right - horizontal_scroll_bar.get_page_size()));
+  if(left < 0) {
+    horizontal_scroll_bar.set_position(scroll_position + left);
+  } else if(right > horizontal_scroll_bar.get_page_size()) {
+    horizontal_scroll_bar.set_position(
+      scroll_position + right - horizontal_scroll_bar.get_page_size());
   }
 }
 

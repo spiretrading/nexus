@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <QApplication>
+#include <QLabel>
+#include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -9,6 +11,7 @@
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/UiTests/UiTests.hpp"
@@ -73,6 +76,85 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("drag_displayed_column") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, "A", 10});
+    source->push({0, "B", 90});
+    source->push({2, "C", 30});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Desk").add_header_item("Account").
+      add_header_item("Shares", TableHeaderItem::Order::DESCENDING).
+      set_filter(std::make_shared<MinimumFilter>()).make());
+    auto controller = TableColumnReorderController(*view);
+    auto moves = std::vector<std::pair<int, int>>();
+    controller.connect_column_moved_signal([&] (int from, int to) {
+      moves.emplace_back(from, to);
+    });
+    auto& header = view->get_header();
+    header.get_widths()->set(0, 230);
+    header.get_widths()->set(1, 120);
+    header.get_widths()->set(2, 90);
+    view->resize(300, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& scroll = view->get_scroll_box().get_horizontal_scroll_bar();
+    scroll.set_position(scroll.get_range().m_end);
+    QApplication::processEvents();
+    auto offset = scroll.get_position();
+    REQUIRE(offset > 0);
+    auto& body = view->get_body();
+    auto& rows = *body.get_table();
+    REQUIRE(rows.get_row_size() == 2);
+    REQUIRE(rows.get<int>(0, 2) == 30);
+    REQUIRE(rows.get<int>(1, 2) == 10);
+    auto shares = header.get_item(2);
+    move_cursor(*shares, shares->rect().center());
+    auto receiver = QApplication::widgetAt(QCursor::pos());
+    REQUIRE(receiver);
+    REQUIRE((receiver == shares || shares->isAncestorOf(receiver)));
+    press_mouse(*receiver, Qt::LeftButton);
+    auto top = shares->mapTo(view.get(), QPoint());
+    auto last = body.find_item(TableIndex(1, 2));
+    REQUIRE(last);
+    auto bottom = last->mapTo(view.get(), last->rect().bottomRight());
+    auto displayed = view->grab(QRect(top, QSize(shares->width(),
+      bottom.y() - top.y() + 1)));
+    auto account = header.get_item(1);
+    move_cursor(*account, account->rect().center());
+    auto position = QCursor::pos();
+    auto move = QMouseEvent(QEvent::MouseMove,
+      receiver->mapFromGlobal(position), position, Qt::NoButton,
+      Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(receiver, &move);
+    REQUIRE(header.get_item(1) == shares);
+    auto area = displayed.rect();
+    area.setTop(qRound(shares->height() * displayed.devicePixelRatio()));
+    auto cells = displayed.copy(area).toImage();
+    auto matches = std::ranges::any_of(view->findChildren<QLabel*>(),
+      [&] (auto label) {
+        auto preview = label->pixmap(Qt::ReturnByValue);
+        return preview.rect().contains(area) &&
+          preview.copy(area).toImage() == cells;
+      });
+    REQUIRE(matches);
+    release_mouse(*receiver, Qt::LeftButton);
+    QApplication::processEvents();
+    REQUIRE(moves == std::vector{std::pair(2, 1)});
+    REQUIRE(scroll.get_position() == offset);
+    REQUIRE(header.get_column_order()->get(1) == 2);
+    REQUIRE(header.get_widths()->get(1) == 90);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::DESCENDING);
+    move_cursor(*shares, shares->rect().center());
+    press_mouse(*shares, Qt::LeftButton);
+    release_mouse(*shares, Qt::LeftButton);
+    REQUIRE(moves.size() == 1);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(rows.get<int>(0, 2) == 10);
+    REQUIRE(rows.get<int>(1, 2) == 30);
+  }
+
   UI_TEST_CASE("source_sort_handler") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({1, 30});
