@@ -104,7 +104,15 @@ namespace {
             auto button =
               make_icon_toggle_button(closed, open, filter.is_expanded(row));
             button->setFixedSize(scale(20, 20));
-            button->setAccessibleName(tr("Expand or collapse group"));
+            auto description = [&] {
+              auto name = table->get_group_name(row);
+              if(name.isEmpty()) {
+                return tr("Expand or collapse group");
+              }
+              return tr("Expand or collapse %1").arg(name);
+            }();
+            button->setAccessibleName(description);
+            button->focusProxy()->setAccessibleName(description);
             layout->addWidget(button);
             setFocusPolicy(Qt::StrongFocus);
             setFocusProxy(button);
@@ -134,8 +142,13 @@ GroupedTableViewBuilder::GroupedTableViewBuilder(
     m_parent(parent) {}
 
 GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(QString name) {
-  m_columns.emplace_back(
-    std::move(name), TableHeaderItem::Order::NONE, TableAggregationFactory());
+  return add_column(std::move(name), QString());
+}
+
+GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(
+    QString name, QString short_name) {
+  m_columns.emplace_back(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, TableAggregationFactory());
   return *this;
 }
 
@@ -179,7 +192,8 @@ TableView* GroupedTableViewBuilder::make() const {
   builder.set_sort_handler(
     std::bind_front(&GroupedTableModel::set_column_order, table));
   for(auto& column : m_columns) {
-    builder.add_header_item(column.m_name, column.m_order);
+    builder.add_header_item(column.m_name, column.m_short_name, column.m_order,
+      TableFilter::Filter::NONE);
   }
   auto view = builder.set_filter(filter).set_item_builder(
     [=] (const auto&, int row, int column) {

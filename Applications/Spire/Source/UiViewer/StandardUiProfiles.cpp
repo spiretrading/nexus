@@ -2837,8 +2837,8 @@ UiProfile Spire::make_grouped_table_view_profile() {
     positions->push({"conglg15", "CAD", "BHS.TSXV", "Long", 400});
     positions->push({"dichch10", "CAD", "ATMO.CSE", "Short", 300});
     auto view = GroupedTableViewBuilder(positions).
-      add_column("Account").add_column("Currency").add_column("Ticker").
-      add_column("Side").add_column("Shares").make();
+      add_column("Account", "Acct").add_column("Currency", "Ccy").
+      add_column("Ticker").add_column("Side").add_column("Shares").make();
     new TableColumnReorderController(*view);
     auto& widths = *view->get_header().get_widths();
     widths.set(0, scale_width(180));

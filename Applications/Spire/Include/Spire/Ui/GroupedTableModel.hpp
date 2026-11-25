@@ -59,6 +59,9 @@ namespace Spire {
       /** Returns the parent heading's row, or -1 for a top-level row. */
       int get_parent(int row) const;
 
+      /** Returns the name of a group heading, or an empty string for a leaf. */
+      QString get_group_name(int row) const;
+
       /** Returns the source index, or -1 for a heading or an invalid row. */
       int index_to_source(int row) const;
 

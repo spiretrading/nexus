@@ -216,6 +216,13 @@ int GroupedTableModel::get_parent(int row) const {
   return -1;
 }
 
+QString GroupedTableModel::get_group_name(int row) const {
+  if(index_to_source(row) != -1) {
+    return {};
+  }
+  return m_rows.at(row).m_group->m_key;
+}
+
 int GroupedTableModel::index_to_source(int row) const {
   if(row < 0 || row >= get_row_size()) {
     return -1;

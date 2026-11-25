@@ -34,7 +34,7 @@ TEST_SUITE("GroupedTableView") {
     QApplication::processEvents();
     auto& body = view->get_body();
     auto& visible = *body.get_table();
-    auto toggle = [&] (int row, int column) {
+    auto toggle = [&] (int row, int column, const QString& name) {
       QApplication::processEvents();
       auto item = body.find_item(TableIndex(row, column));
       REQUIRE(item);
@@ -42,6 +42,7 @@ TEST_SUITE("GroupedTableView") {
       REQUIRE(button);
       auto target = button->focusProxy();
       REQUIRE(target);
+      REQUIRE(target->accessibleName() == "Expand or collapse " + name);
       auto current = button->get_current();
       auto previous = current->get();
       move_cursor(*target, target->rect().center());
@@ -58,10 +59,10 @@ TEST_SUITE("GroupedTableView") {
     };
     REQUIRE(indent(0) < indent(1));
     REQUIRE(indent(1) < indent(2));
-    toggle(1, 0);
+    toggle(1, 0, "CAD");
     REQUIRE(visible.get_row_size() == 7);
     REQUIRE(visible.get<QString>(2, 0) == "USD (1)");
-    toggle(0, 0);
+    toggle(0, 0, "A");
     REQUIRE(visible.get_row_size() == 4);
     REQUIRE(visible.get<QString>(1, 0) == "B (1)");
     SUBCASE("sort_collapsed_groups") {
@@ -76,7 +77,7 @@ TEST_SUITE("GroupedTableView") {
       source->set(1, 2, 60);
       REQUIRE(visible.get_row_size() == 4);
       REQUIRE(visible.get<QString>(0, 0) == "A (2)");
-      toggle(0, 0);
+      toggle(0, 0, "A");
       REQUIRE(visible.get_row_size() == 7);
       REQUIRE(visible.get<QString>(1, 0) == "CAD (1)");
       REQUIRE(visible.get<QString>(2, 0) == "USD (1)");
@@ -87,22 +88,22 @@ TEST_SUITE("GroupedTableView") {
       REQUIRE(visible.get_row_size() == 4);
       REQUIRE(visible.get<QString>(0, 0) == "A (3)");
       REQUIRE(visible.get<std::int64_t>(0, 2) == 47);
-      toggle(0, 0);
+      toggle(0, 0, "A");
       REQUIRE(visible.get_row_size() == 7);
       REQUIRE(visible.get<QString>(1, 0) == "CAD (2)");
       REQUIRE(visible.get<std::int64_t>(1, 2) == 17);
-      toggle(1, 0);
+      toggle(1, 0, "CAD");
       REQUIRE(visible.get_row_size() == 9);
       REQUIRE(visible.get<int>(2, 2) == 12);
       REQUIRE(visible.get<int>(3, 2) == 5);
-      toggle(0, 0);
+      toggle(0, 0, "A");
       auto table =
         std::static_pointer_cast<GroupedTableModel>(view->get_table());
       table->set_grouping({0});
       REQUIRE(visible.get_row_size() == 3);
       table->set_grouping({1});
       REQUIRE(visible.get_row_size() == 6);
-      toggle(0, 1);
+      toggle(0, 1, "CAD");
       REQUIRE(visible.get_row_size() == 3);
       REQUIRE(visible.get<QString>(1, 1) == "USD (1)");
       table->set_grouping({});
@@ -201,14 +202,64 @@ TEST_SUITE("GroupedTableView") {
       TableHeaderItem::Order::UNORDERED);
   }
 
+  UI_TEST_CASE("accumulator_factory") {
+    class Total {
+      public:
+        explicit Total(int opening) noexcept
+          : m_total(opening) {}
+
+        void add(const AnyRef& value) {
+          m_total += any_cast<int>(value);
+        }
+
+        void remove(const AnyRef& value) {
+          m_total -= any_cast<int>(value);
+        }
+
+        void update(const AnyRef& previous, const AnyRef& current) {
+          m_total += any_cast<int>(current) - any_cast<int>(previous);
+        }
+
+        int get() const {
+          return m_total;
+        }
+
+      private:
+        int m_total;
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({"A", 10, 5});
+    source->push({"B", 30, 9});
+    source->push({"A", 20, 2});
+    auto builder = GroupedTableViewBuilder(source);
+    auto opening = 100;
+    auto view = std::unique_ptr<TableView>(builder.add_column("Account").
+      add_column("Balance").set_aggregation([=] {
+        return Total(opening);
+      }).add_column("Shares").set_aggregation(make_default_table_aggregation).
+      set_grouping({0}).make());
+    auto& table = *view->get_table();
+    REQUIRE(table.get<int>(0, 1) == 130);
+    REQUIRE(table.get<int>(3, 1) == 130);
+    REQUIRE(table.get<std::int64_t>(0, 2) == 7);
+    source->set(0, 1, 25);
+    REQUIRE(table.get<int>(0, 1) == 145);
+    source->remove(2);
+    REQUIRE(table.get<int>(0, 1) == 125);
+    REQUIRE(table.get<int>(2, 1) == 130);
+  }
+
   UI_TEST_CASE("grouping_bar") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD"), 10});
     source->push({QString("B"), QString("CAD"), 20});
     source->push({QString("A"), QString("USD"), 30});
     auto builder = GroupedTableViewBuilder(source).
-      add_column("Account").add_column("Currency").add_column("Shares");
+      add_column("Account", "Acct").add_column("Currency").add_column("Shares");
     auto view = std::unique_ptr<TableView>(builder.make());
+    auto& account = view->get_header().get_items()->get(0);
+    REQUIRE(account.m_name == "Account");
+    REQUIRE(account.m_short_name == "Acct");
     view->resize(550, 360);
     view->show();
     QApplication::processEvents();
@@ -254,7 +305,12 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(tags->count() == 0);
     REQUIRE(menu.get_count() == 3);
     REQUIRE(rows.get_row_size() == 3);
+    auto submitted = QString();
+    menu.connect_submit_signal([&] (const auto&, const QString& name) {
+      submitted = name;
+    });
     select(0);
+    REQUIRE(submitted == "Account");
     REQUIRE(rows.get<int>(2, 2) == 30);
     select(1);
     REQUIRE(table->get_grouping() == std::vector{0, 1});
