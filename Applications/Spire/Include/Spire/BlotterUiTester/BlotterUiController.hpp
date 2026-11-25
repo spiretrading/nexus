@@ -15,9 +15,11 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/UnionListModel.hpp"
 
+class QTableWidget;
+
 namespace Spire {
 
-  /** Creates single order tasks and controls their simulated executions. */
+  /** Controls simulated tasks, orders, and quotes. */
   class BlotterUiController : public QWidget {
     public:
 
@@ -118,16 +120,21 @@ namespace Spire {
       QPushButton* m_fill;
       QPushButton* m_partial_fill;
       QPushButton* m_cancel;
+      QTableWidget* m_quotes;
       QTextEdit* m_output;
       QtTaskQueue m_events;
 
       Nexus::OrderFields make_fields() const;
       void refresh();
       void set_active(int index);
+      void add_quote_row();
       void on_new_blotter();
       void on_blotter_selection(int index);
       void on_active(int index, bool is_active);
       void on_create();
+      void on_quote_changed(int row, int column);
+      void on_remove_quotes();
+      void on_publish_quotes();
       void on_selection(int index);
       void on_submission(const std::shared_ptr<Nexus::Order>& order);
       void on_order(int index, const std::shared_ptr<Nexus::Order>& order);

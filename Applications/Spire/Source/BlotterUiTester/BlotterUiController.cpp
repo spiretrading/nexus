@@ -1,12 +1,17 @@
 #include "Spire/BlotterUiTester/BlotterUiController.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <tuple>
 #include <QApplication>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QMessageBox>
 #include <QScreen>
+#include <QSignalBlocker>
+#include <QTableWidget>
+#include <QTabWidget>
 #include <QVBoxLayout>
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
@@ -31,6 +36,10 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  constexpr auto TICKER_COLUMN = 0;
+  constexpr auto BID_COLUMN = 1;
+  constexpr auto ASK_COLUMN = 2;
+
   QString format_task_ids(const std::vector<std::shared_ptr<Task>>& tasks) {
     auto ids = QStringList();
     for(auto& task : tasks) {
@@ -70,6 +79,7 @@ BlotterUiController::BlotterUiController(
       m_fill(new QPushButton(tr("Fill Remaining"))),
       m_partial_fill(new QPushButton(tr("Partial Fill"))),
       m_cancel(new QPushButton(tr("Cancel"))),
+      m_quotes(new QTableWidget(0, ASK_COLUMN + 1)),
       m_output(new QTextEdit()) {
   setWindowTitle(tr("Blotter Controller"));
   auto layout = new QVBoxLayout(this);
@@ -83,8 +93,11 @@ BlotterUiController::BlotterUiController(
     this, &BlotterUiController::on_new_blotter);
   connect(m_blotter_selection, qOverload<int>(&QComboBox::activated),
     this, &BlotterUiController::on_blotter_selection);
-  auto control_row = new QHBoxLayout();
-  layout->addLayout(control_row);
+  auto tabs = new QTabWidget();
+  layout->addWidget(tabs);
+  auto tasks = new QWidget();
+  tabs->addTab(tasks, tr("Tasks"));
+  auto control_row = new QHBoxLayout(tasks);
   auto creation = new QGroupBox(tr("Create Task"));
   auto form = new QFormLayout(creation);
   form->addRow(tr("Name"), m_name);
@@ -143,6 +156,34 @@ BlotterUiController::BlotterUiController(
   controls->addWidget(m_cancel);
   controls->addStretch();
   control_row->addWidget(execution);
+  auto quotes = new QWidget();
+  tabs->addTab(quotes, tr("Quotes"));
+  auto quote_layout = new QVBoxLayout(quotes);
+  m_quotes->setHorizontalHeaderLabels(
+    {tr("Ticker"), tr("Bid Price"), tr("Ask Price")});
+  m_quotes->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  m_quotes->verticalHeader()->hide();
+  m_quotes->setSelectionBehavior(QAbstractItemView::SelectRows);
+  m_quotes->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  connect(m_quotes, &QTableWidget::cellChanged,
+    this, &BlotterUiController::on_quote_changed);
+  add_quote_row();
+  m_quotes->item(0, TICKER_COLUMN)->setText("MRU.TSX");
+  m_quotes->item(0, BID_COLUMN)->setText("10.00");
+  m_quotes->item(0, ASK_COLUMN)->setText("10.01");
+  quote_layout->addWidget(m_quotes);
+  auto quote_actions = new QHBoxLayout();
+  auto remove = new QPushButton(tr("Remove Row"));
+  quote_actions->addWidget(remove);
+  quote_actions->addWidget(new QLabel(tr("Quantity: 100 per side")));
+  quote_actions->addStretch();
+  auto publish = new QPushButton(tr("Publish"));
+  quote_actions->addWidget(publish);
+  quote_layout->addLayout(quote_actions);
+  connect(remove, &QPushButton::clicked,
+    this, &BlotterUiController::on_remove_quotes);
+  connect(publish, &QPushButton::clicked,
+    this, &BlotterUiController::on_publish_quotes);
   m_output->setReadOnly(true);
   m_output->setPlaceholderText(tr("Signal output"));
   layout->addWidget(m_output, 1);
@@ -329,6 +370,15 @@ void BlotterUiController::set_active(int index) {
   }
 }
 
+void BlotterUiController::add_quote_row() {
+  auto blocker = QSignalBlocker(m_quotes);
+  auto row = m_quotes->rowCount();
+  m_quotes->insertRow(row);
+  for(auto column = 0; column != m_quotes->columnCount(); ++column) {
+    m_quotes->setItem(row, column, new QTableWidgetItem());
+  }
+}
+
 void BlotterUiController::on_new_blotter() {
   auto index = static_cast<int>(m_blotters.size());
   auto is_consolidated = index == 0;
@@ -440,6 +490,83 @@ void BlotterUiController::on_create() {
     m_selection->setCurrentIndex(index);
   } catch(const std::exception& e) {
     QMessageBox::warning(this, tr("Unable to Create Task"), e.what());
+  }
+}
+
+void BlotterUiController::on_quote_changed(int row, int column) {
+  if(column != TICKER_COLUMN) {
+    return;
+  }
+  auto item = m_quotes->item(row, column);
+  auto ticker = parse_ticker(item->text().trimmed().toUpper().toStdString());
+  if(!ticker) {
+    return;
+  }
+  for(auto i = 0; i != m_quotes->rowCount(); ++i) {
+    if(i != row && m_quotes->item(i, TICKER_COLUMN)->
+        data(Qt::UserRole).value<Ticker>() == ticker) {
+      return;
+    }
+  }
+  auto blocker = QSignalBlocker(m_quotes);
+  item->setText(to_text(ticker));
+  item->setData(Qt::UserRole, QVariant::fromValue(ticker));
+  item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+  if(row == m_quotes->rowCount() - 1) {
+    add_quote_row();
+  }
+}
+
+void BlotterUiController::on_remove_quotes() {
+  auto rows = m_quotes->selectionModel()->selectedRows();
+  std::sort(rows.begin(), rows.end(), [] (const auto& left, const auto& right) {
+    return left.row() > right.row();
+  });
+  for(auto& row : rows) {
+    m_quotes->removeRow(row.row());
+  }
+  if(m_quotes->rowCount() == 0 ||
+      !m_quotes->item(m_quotes->rowCount() - 1, TICKER_COLUMN)->
+        text().isEmpty()) {
+    add_quote_row();
+  }
+}
+
+void BlotterUiController::on_publish_quotes() {
+  try {
+    auto quotes = std::vector<std::tuple<Ticker, Money, Money>>();
+    for(auto row = 0; row != m_quotes->rowCount(); ++row) {
+      auto item = m_quotes->item(row, TICKER_COLUMN);
+      auto bid_text = m_quotes->item(row, BID_COLUMN)->text().trimmed();
+      auto ask_text = m_quotes->item(row, ASK_COLUMN)->text().trimmed();
+      if(item->text().trimmed().isEmpty() && bid_text.isEmpty() &&
+          ask_text.isEmpty()) {
+        continue;
+      }
+      auto ticker = item->data(Qt::UserRole).value<Ticker>();
+      if(!ticker) {
+        throw std::runtime_error(tr("Enter a valid, unique ticker in row %1.").
+          arg(row + 1).toStdString());
+      }
+      auto bid = try_parse_money(bid_text.toStdString());
+      if(!bid || *bid < Money::ZERO) {
+        throw std::runtime_error(tr("Enter a non-negative bid price for %1.").
+          arg(to_text(ticker)).toStdString());
+      }
+      auto ask = try_parse_money(ask_text.toStdString());
+      if(!ask || *ask < Money::ZERO) {
+        throw std::runtime_error(tr("Enter a non-negative ask price for %1.").
+          arg(to_text(ticker)).toStdString());
+      }
+      quotes.emplace_back(ticker, *bid, *ask);
+    }
+    for(auto& [ticker, bid, ask] : quotes) {
+      m_environment->update_bbo_price(ticker, bid, ask);
+      m_output->append(tr("BBO: %1  Bid: %2 x 100  Ask: %3 x 100").
+        arg(to_text(ticker)).arg(to_text(bid)).arg(to_text(ask)));
+    }
+  } catch(const std::exception& e) {
+    QMessageBox::warning(this, tr("Unable to Publish Quote"), e.what());
   }
 }
 
