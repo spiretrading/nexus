@@ -50,6 +50,17 @@ namespace Details {
         Details::TableAccumulator<std::invoke_result_t<F&>>
       GroupedTableViewBuilder& set_aggregation(F factory);
 
+      /** Sets the leaf cell builder, which receives source coordinates. */
+      GroupedTableViewBuilder& set_item_builder(
+        const TableViewItemBuilder& item_builder);
+
+      /**
+       * Sets the builder for aggregate cells. It receives the grouped table,
+       * the heading's row in that table, and the logical column index.
+       */
+      GroupedTableViewBuilder& set_aggregate_item_builder(
+        const TableViewItemBuilder& item_builder);
+
       /** Fixes the grouping columns in order and hides the grouping bar. */
       GroupedTableViewBuilder& set_grouping(std::vector<int> columns);
 
@@ -67,6 +78,8 @@ namespace Details {
       QWidget* m_parent;
       std::vector<Column> m_columns;
       std::optional<std::vector<int>> m_grouping;
+      TableViewItemBuilder m_item_builder;
+      TableViewItemBuilder m_aggregate_item_builder;
   };
 
   template<std::copy_constructible F> requires

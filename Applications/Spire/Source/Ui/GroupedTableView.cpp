@@ -140,17 +140,39 @@ namespace {
       scoped_connection m_grouping_connection;
   };
 
+  struct GroupItemBuilder {
+    std::shared_ptr<GroupedTableModel> m_table;
+    std::shared_ptr<GroupFilter> m_filter;
+    TableViewItemBuilder m_item_builder;
+    TableViewItemBuilder m_aggregate_item_builder;
+
+    std::optional<Selector> get_row_selector(int row) const {
+      auto source = m_table->index_to_source(row);
+      if(source == -1) {
+        return AggregateRow();
+      }
+      return m_item_builder.get_row_selector(source);
+    }
+
+    QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
+      int column);
+
+    void unmount(QWidget* widget) {
+      delete widget;
+    }
+  };
+
   class GroupCell : public QWidget {
     public:
-      GroupCell(const std::shared_ptr<GroupedTableModel>& table, int row,
-          int column, GroupFilter& filter) {
+      GroupCell(GroupItemBuilder& builder, int row, int column)
+          : m_item(nullptr) {
+        auto& table = builder.m_table;
         setMinimumHeight(scale_height(28));
         auto layout = make_hbox_layout(this);
         layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
-        auto label = TableView::default_item_builder(table, row, column);
         auto& grouping = table->get_grouping();
-        auto heading = table->index_to_source(row) == -1;
-        if(heading && column == grouping.front()) {
+        auto source = table->index_to_source(row);
+        if(source == -1 && column == grouping.front()) {
           auto depth = 0;
           for(auto i = table->get_parent(row); i != -1;
               i = table->get_parent(i)) {
@@ -163,7 +185,7 @@ namespace {
           static const auto COLLAPSE_ARROW =
             image_from_svg(":/Icons/collapse-arrow.svg", scale(8, 6));
           auto button = make_icon_toggle_button(
-            EXPAND_ARROW, COLLAPSE_ARROW, filter.is_expanded(row));
+            EXPAND_ARROW, COLLAPSE_ARROW, builder.m_filter->is_expanded(row));
           button->setFixedSize(scale(20, 20));
           auto description = [&] {
             auto name = table->get_group_name(row);
@@ -177,46 +199,56 @@ namespace {
           layout->addWidget(button);
           setFocusPolicy(Qt::StrongFocus);
           setFocusProxy(button);
+          layout->addWidget(
+            TableView::default_item_builder(table, row, column));
+          return;
         }
-        layout->addWidget(label);
-        if(!heading) {
-          auto on_grouping = [=] (const auto& columns) {
-            label->setVisible(columns.empty() || column != columns.front());
+        if(source == -1) {
+          m_builder = builder.m_aggregate_item_builder;
+          m_item = m_builder->mount(table, row, column);
+        } else {
+          m_builder = builder.m_item_builder;
+          m_item = m_builder->mount(table->get_source(), source, column);
+        }
+        layout->addWidget(m_item);
+        setFocusPolicy(m_item->focusPolicy());
+        setFocusProxy(m_item);
+        if(source != -1) {
+          auto on_grouping = [=, this] (const auto& columns) {
+            m_item->setVisible(columns.empty() || column != columns.front());
           };
           on_grouping(grouping);
           m_connection = table->connect_grouping_signal(on_grouping);
         }
       }
 
+      ~GroupCell() override {
+        if(m_builder) {
+          m_connection.disconnect();
+          setFocusProxy(nullptr);
+          m_item->setParent(nullptr);
+          m_builder->unmount(m_item);
+        }
+      }
+
     private:
+      std::optional<TableViewItemBuilder> m_builder;
+      QWidget* m_item;
       scoped_connection m_connection;
   };
 
-  struct GroupItemBuilder {
-    std::shared_ptr<GroupedTableModel> m_table;
-    std::shared_ptr<GroupFilter> m_filter;
-
-    std::optional<Selector> get_row_selector(int row) const {
-      if(m_table->index_to_source(row) == -1) {
-        return AggregateRow();
-      }
-      return std::nullopt;
-    }
-
-    QWidget* mount(const std::shared_ptr<TableModel>&, int row, int column) {
-      return new GroupCell(m_table, row, column, *m_filter);
-    }
-
-    void unmount(QWidget* widget) {
-      delete widget;
-    }
-  };
+  QWidget* GroupItemBuilder::mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    return new GroupCell(*this, row, column);
+  }
 }
 
 GroupedTableViewBuilder::GroupedTableViewBuilder(
   std::shared_ptr<TableModel> source, QWidget* parent)
   : m_source(std::move(source)),
-    m_parent(parent) {}
+    m_parent(parent),
+    m_item_builder(&TableView::default_item_builder),
+    m_aggregate_item_builder(&TableView::default_item_builder) {}
 
 GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(QString name) {
   return add_column(std::move(name), QString());
@@ -247,6 +279,18 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregation(
   return *this;
 }
 
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_item_builder = item_builder;
+  return *this;
+}
+
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregate_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_aggregate_item_builder = item_builder;
+  return *this;
+}
+
 GroupedTableViewBuilder& GroupedTableViewBuilder::set_grouping(
     std::vector<int> columns) {
   m_grouping = std::move(columns);
@@ -272,8 +316,8 @@ TableView* GroupedTableViewBuilder::make() const {
     builder.add_header_item(column.m_name, column.m_short_name, column.m_order,
       TableFilter::Filter::NONE);
   }
-  auto view = builder.set_filter(filter).
-    set_item_builder(GroupItemBuilder(table, filter)).make();
+  auto view = builder.set_filter(filter).set_item_builder(GroupItemBuilder(
+    table, filter, m_item_builder, m_aggregate_item_builder)).make();
   update_style(*view, [] (auto& style) {
     style.get(Any() > is_a<TableBody>() > (AggregateRow() && !Selected())).
       set(BackgroundColor(QColor(0, 0, 0, 16)));

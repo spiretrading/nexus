@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <QApplication>
+#include <QLabel>
 #include <QLayout>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -9,10 +10,12 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableGroupingBar.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/Tag.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
@@ -317,6 +320,125 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE_FALSE(header.get_item(0)->isHidden());
     table->set_grouping({});
     REQUIRE(header.get_item(0)->isHidden());
+  }
+
+  UI_TEST_CASE("item_builders") {
+    struct LeafBuilder {
+      std::shared_ptr<TableModel> m_source;
+      int& m_reused;
+
+      QWidget* mount(
+          const std::shared_ptr<TableModel>& table, int row, int column) {
+        auto label = new QLabel();
+        bind(*label, table, row, column);
+        return label;
+      }
+
+      void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
+          int row, int column) {
+        ++m_reused;
+        bind(static_cast<QLabel&>(widget), table, row, column);
+      }
+
+      void unmount(QWidget* widget) {
+        delete widget;
+      }
+
+      void bind(QLabel& label, const std::shared_ptr<TableModel>& table,
+          int row, int column) {
+        REQUIRE(table == m_source);
+        if(column == 2) {
+          label.setNum(table->get<int>(row, column));
+        } else {
+          label.setText(table->get<QString>(row, column));
+        }
+      }
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD"), 10});
+    source->push({QString("B"), QString("USD"), 40});
+    source->push({QString("A"), QString("USD"), 20});
+    auto reused = 0;
+    auto leaves = RecycledTableViewItemBuilder(LeafBuilder(source, reused));
+    auto builder = GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Shares").
+      set_item_builder(std::move(leaves)).set_grouping({0});
+    auto custom = false;
+    SUBCASE("default_aggregates") {}
+    SUBCASE("custom_aggregates") {
+      custom = true;
+      builder.set_aggregate_item_builder(
+        [=] (const std::shared_ptr<TableModel>& table, int row, int column) {
+          auto grouped = std::dynamic_pointer_cast<GroupedTableModel>(table);
+          REQUIRE(grouped);
+          REQUIRE(grouped->get_source() == source);
+          REQUIRE(grouped->index_to_source(row) == -1);
+          REQUIRE(column != 0);
+          auto item = TableView::default_item_builder(table, row, column);
+          item->setToolTip(grouped->get_group_name(row));
+          return item;
+        });
+    }
+    auto view = std::unique_ptr<TableView>(builder.make());
+    view->resize(500, 350);
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto cell = [&] (int row, int column) {
+      auto item = body.find_item(TableIndex(row, column));
+      REQUIRE(item);
+      return item->get_body().layout()->itemAt(0)->widget();
+    };
+    auto text = [&] (int row, int column) {
+      auto widget = cell(row, column);
+      if(auto label = dynamic_cast<QLabel*>(widget)) {
+        return label->text();
+      }
+      auto label = dynamic_cast<TextBox*>(widget);
+      REQUIRE(label);
+      return label->get_current()->get();
+    };
+    REQUIRE(text(2, 2) == "20");
+    REQUIRE(text(0, 1) == "(2)");
+    REQUIRE(text(0, 2) == "30");
+    if(custom) {
+      REQUIRE(cell(0, 2)->toolTip() == "A");
+    }
+    auto toggle = dynamic_cast<ToggleButton*>(cell(0, 0));
+    REQUIRE(toggle);
+    auto expanded = toggle->get_current();
+    expanded->set(false);
+    QApplication::processEvents();
+    REQUIRE(text(2, 2) == "40");
+    REQUIRE(text(1, 2) == "40");
+    if(custom) {
+      REQUIRE(cell(1, 2)->toolTip() == "B");
+    }
+    auto shares = cell(0, 2);
+    source->set(2, 2, 25);
+    REQUIRE(cell(0, 2) == shares);
+    REQUIRE(text(0, 2) == "35");
+    source->set(2, 1, QString("CAD"));
+    REQUIRE(text(0, 1) == "(1)");
+    expanded->set(true);
+    QApplication::processEvents();
+    REQUIRE(reused > 0);
+    REQUIRE(text(2, 2) == "25");
+    auto grouped =
+      std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    grouped->set_column_order({{2, SortedTableModel::Ordering::DESCENDING}});
+    QApplication::processEvents();
+    REQUIRE(text(0, 2) == "40");
+    if(custom) {
+      REQUIRE(cell(0, 2)->toolTip() == "B");
+    }
+    source->set(1, 2, 45);
+    REQUIRE(text(0, 2) == "45");
+    grouped->set_column_order({});
+    grouped->set_grouping({});
+    QApplication::processEvents();
+    REQUIRE(text(1, 0) == "B");
+    REQUIRE(text(2, 2) == "25");
   }
 
   UI_TEST_CASE("column_order_settings") {
