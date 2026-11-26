@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <map>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ReadOnlyTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
@@ -165,6 +166,7 @@ namespace {
 
   struct GroupItemBuilder {
     std::shared_ptr<GroupedTableModel> m_table;
+    std::shared_ptr<TableModel> m_heading_source;
     std::shared_ptr<GroupFilter> m_filter;
     TableViewItemBuilder m_item_builder;
     TableViewItemBuilder m_aggregate_item_builder;
@@ -197,7 +199,8 @@ namespace {
         auto& grouping = table->get_grouping();
         auto source = table->index_to_source(row);
         if(source == -1 && column == grouping.front()) {
-          initialize_heading(table, row, *builder.m_filter, layout);
+          initialize_heading(
+            table, builder.m_heading_source, row, *builder.m_filter, layout);
           return;
         }
         if(source == -1) {
@@ -238,7 +241,8 @@ namespace {
       }
 
       void initialize_heading(const std::shared_ptr<GroupedTableModel>& table,
-          int row, GroupFilter& filter, QHBoxLayout* layout) {
+          const std::shared_ptr<TableModel>& source, int row,
+          GroupFilter& filter, QHBoxLayout* layout) {
         auto depth = 0;
         for(auto i = table->get_parent(row); i != -1;
             i = table->get_parent(i)) {
@@ -276,7 +280,7 @@ namespace {
           release_item();
           if(leaf != -1) {
             m_item = m_builder.mount(
-              table->get_source(), table->index_to_source(leaf), column);
+              source, table->index_to_source(leaf), column);
             layout->insertWidget(1, m_item);
             m_item->show();
           }
@@ -404,7 +408,8 @@ TableView* GroupedTableViewBuilder::make() const {
       TableFilter::Filter::NONE);
   }
   auto view = builder.set_filter(filter).set_item_builder(GroupItemBuilder(
-    table, filter, m_item_builder, m_aggregate_item_builder)).make();
+    table, std::make_shared<ReadOnlyTableModel>(m_source), filter,
+    m_item_builder, m_aggregate_item_builder)).make();
   update_style(*view, [] (auto& style) {
     style.get(Any() > is_a<TableBody>() > (AggregateRow() && !Selected())).
       set(BackgroundColor(QColor(0, 0, 0, 16)));

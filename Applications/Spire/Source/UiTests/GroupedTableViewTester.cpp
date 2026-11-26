@@ -4,6 +4,7 @@
 #include <QLayout>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
@@ -469,6 +470,50 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(header.get_item(0)->isHidden());
   }
 
+  UI_TEST_CASE("heading_edits") {
+    struct Editor : TextBox {
+      std::shared_ptr<TableModel> m_table;
+
+      Editor(const std::shared_ptr<TableModel>& table, int row, int column)
+        : TextBox(make_table_value_model<QString>(table, row, column)),
+          m_table(table) {}
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("Account"), QString("CAD")});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").set_grouping({0}).
+      set_item_builder([] (const auto& table, int row, int column) {
+        return new Editor(table, row, column);
+      }).make());
+    view->show();
+    QApplication::processEvents();
+    auto editor = [&] (int row, int column, int index) {
+      auto item = view->get_body().find_item(TableIndex(row, column));
+      REQUIRE(item);
+      auto widget = item->get_body().layout()->itemAt(index)->widget();
+      auto editor = dynamic_cast<Editor*>(widget);
+      REQUIRE(editor);
+      return editor;
+    };
+    auto heading = editor(0, 0, 1);
+    auto table = heading->m_table;
+    auto key = heading->get_current();
+    REQUIRE(key->set(QString("Other")) == QValidator::Invalid);
+    REQUIRE(table->remove(0) == QValidator::Invalid);
+    REQUIRE(source->get<QString>(0, 0) == "Account");
+    auto leaf = editor(1, 1, 0);
+    REQUIRE(leaf->m_table == source);
+    auto currency = make_table_value_model<QString>(table, 0, 1);
+    auto updates = 0;
+    auto connection = currency->connect_update_signal([&] (const QString&) {
+      ++updates;
+    });
+    REQUIRE(
+      leaf->get_current()->set(QString("USD")) == QValidator::Acceptable);
+    REQUIRE(currency->get() == "USD");
+    REQUIRE(updates == 1);
+  }
+
   UI_TEST_CASE("heading_item_builder") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CA"), 10});
@@ -478,10 +523,11 @@ TEST_SUITE("GroupedTableView") {
       add_column("Account").add_column("Country").add_column("Shares").
       set_item_builder([=] (const std::shared_ptr<TableModel>& table, int row,
           int column) -> QWidget* {
-        REQUIRE(table == source);
         if(column != 1) {
           return TableView::default_item_builder(table, row, column);
         }
+        REQUIRE(table->get<QString>(row, column) ==
+          source->get<QString>(row, column));
         auto flag = new Icon(QImage());
         flag->setAccessibleName(table->get<QString>(row, column));
         flag->setToolTip(QString::number(table->get<int>(row, 2)));
@@ -561,7 +607,9 @@ TEST_SUITE("GroupedTableView") {
 
       void bind(QLabel& label, const std::shared_ptr<TableModel>& table,
           int row, int column) {
-        REQUIRE(table == m_source);
+        if(column != 0) {
+          REQUIRE(table == m_source);
+        }
         if(column == 2) {
           label.setNum(table->get<int>(row, column));
         } else {
