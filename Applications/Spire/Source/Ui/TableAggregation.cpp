@@ -240,3 +240,8 @@ std::unique_ptr<TableAggregation>
       std::function<void (const TableValueVisitor&)> visit) {
   return std::make_unique<DefaultAggregation>(std::move(visit));
 }
+
+bool Spire::Details::is_default_table_aggregation(
+    const TableAggregation* aggregation) {
+  return dynamic_cast<const DefaultAggregation*>(aggregation);
+}

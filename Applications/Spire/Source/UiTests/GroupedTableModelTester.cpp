@@ -253,7 +253,15 @@ TEST_SUITE("GroupedTableModel") {
     }
     source->push({10, QString("CAD")});
     source->push({10, QString("USD")});
-    auto model = GroupedTableModel(source, {0});
+    auto factories = std::vector<TableAggregationFactory>();
+    SUBCASE("implicit_default") {}
+    SUBCASE("explicit_default") {
+      factories = {{}, make_default_table_aggregation};
+    }
+    SUBCASE("wrapped_default") {
+      factories = {{}, [] { return make_default_table_aggregation(); }};
+    }
+    auto model = GroupedTableModel(source, {0}, factories);
     model.set_column_order({{0, DESCENDING}});
     REQUIRE(model.get<QString>(0, 0) == "10 (2)");
     model.set_column_order({{1, DESCENDING}});

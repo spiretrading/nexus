@@ -423,15 +423,15 @@ AnyRef GroupedTableModel::sort_value(const Row& row, int column) const {
     return m_source->at(
       m_rows[leaf].m_source.get_index(), m_columns[group.m_depth]);
   }
-  auto& value = group.m_aggregates[column].m_value;
-  if(column >= std::ssize(m_aggregations) || !m_aggregations[column]) {
-    if(auto count = std::any_cast<QString>(&value)) {
+  auto& cell = group.m_aggregates[column];
+  if(Details::is_default_table_aggregation(cell.m_accumulator.get())) {
+    if(auto count = std::any_cast<QString>(&cell.m_value)) {
       return QStringView(*count).mid(1, count->size() - 2).toLongLong();
-    } else if(auto sum = std::any_cast<std::string>(&value)) {
+    } else if(auto sum = std::any_cast<std::string>(&cell.m_value)) {
       return cpp_bin_float_quad(*sum);
     }
   }
-  return value;
+  return cell.m_value;
 }
 
 void GroupedTableModel::sort_siblings(const std::shared_ptr<Group>& parent) {
