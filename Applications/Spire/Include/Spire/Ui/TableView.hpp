@@ -97,6 +97,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      friend class TableColumnReorderController;
       friend class TableViewBuilder;
       class Rows;
       class SourceToViewIndexModel;
@@ -126,6 +127,8 @@ namespace Spire {
         TableViewItemBuilder item_builder, Comparator comparator,
         SortHandler sort_handler, QWidget* parent);
 
+      TableViewItemBuilder make_displayed_item_builder(
+        TableViewItemBuilder item_builder) const;
       void initialize_body(TableViewItemBuilder item_builder,
         boost::signals2::connection tracking);
       void update_scroll_sizes();

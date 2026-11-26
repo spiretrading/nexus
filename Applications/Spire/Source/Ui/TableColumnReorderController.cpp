@@ -88,14 +88,7 @@ namespace {
 
   struct ColumnTableViewItemBuilder {
     TableViewItemBuilder m_builder;
-    std::shared_ptr<TableModel> m_source;
     int m_column;
-
-    ColumnTableViewItemBuilder(TableViewItemBuilder builder,
-      std::shared_ptr<TableModel> source, int column)
-      : m_builder(std::move(builder)),
-        m_source(std::move(source)),
-        m_column(column) {}
 
     std::optional<Selector> get_row_selector(int row) const {
       return m_builder.get_row_selector(row);
@@ -103,7 +96,7 @@ namespace {
 
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
-      return m_builder.mount(m_source, row, m_column);
+      return m_builder.mount(table, row, m_column);
     }
 
     void unmount(QWidget* widget) {
@@ -112,16 +105,16 @@ namespace {
   };
 
   QWidget* make_column_preview(
-      TableView& table_view, const TableViewItemBuilder& m_item_builder,
+      TableView& table_view, const TableViewItemBuilder& item_builder,
       int visual_index, int logical_index) {
     auto& table_header = table_view.get_header();
     auto table_view_preview =
       TableViewBuilder(std::make_shared<ColumnViewTableModel>(
-        table_view.get_table(), logical_index)).
+        table_view.get_body().get_table(), logical_index)).
       set_header(make_header_model(*table_header.get_items(), visual_index)).
-      set_item_builder(ColumnTableViewItemBuilder(
-        m_item_builder, table_view.get_table(), logical_index)).
-      set_current(
+      set_item_builder(item_builder).
+      set_sort_handler([] (const auto&) {
+      }).set_current(
         std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
       make();
     table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
@@ -251,8 +244,11 @@ void TableColumnReorderController::start_drag() {
     m_table_view->get_scroll_box().get_horizontal_scroll_bar();
   if(m_item_builder) {
     auto index = header.get_index(m_pressed_item).value();
-    m_column_preview = make_column_preview(*m_table_view, *m_item_builder,
-      index, m_column_order[index]);
+    auto logical_index = m_column_order[index];
+    auto builder = m_table_view->make_displayed_item_builder(
+      ColumnTableViewItemBuilder(*m_item_builder, logical_index));
+    m_column_preview =
+      make_column_preview(*m_table_view, builder, index, logical_index);
   } else {
     if(horizontal_scroll_bar.isVisible()) {
       auto bottom = horizontal_scroll_bar.mapTo(m_table_view, QPoint()).y();

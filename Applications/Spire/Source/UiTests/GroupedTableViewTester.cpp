@@ -6,6 +6,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -408,6 +409,85 @@ TEST_SUITE("GroupedTableView") {
     table->set_grouping({});
     REQUIRE(header.get_items()->get(0).m_name == "Shares");
     REQUIRE(header.get_items()->get(1).m_name == "Currency");
+  }
+
+  UI_TEST_CASE("custom_drag_preview") {
+    struct Builder {
+      std::shared_ptr<GroupedTableModel> m_table;
+
+      std::optional<Selector> get_row_selector(int row) const {
+        if(m_table->index_to_source(row) == -1) {
+          return AggregateRow();
+        }
+        return {};
+      }
+
+      QWidget* mount(
+          const std::shared_ptr<TableModel>& table, int row, int column) {
+        REQUIRE(table == m_table);
+        REQUIRE(column == 1);
+        return new QLabel(QString::number(row));
+      }
+
+      void unmount(QWidget* widget) {
+        delete widget;
+      }
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 5});
+    source->push({QString("A"), 10});
+    source->push({QString("B"), 7});
+    source->push({QString("B"), 20});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Shares").
+      set_order(TableHeaderItem::Order::ASCENDING).set_grouping({0}).make());
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    auto controller = TableColumnReorderController(*view, Builder(table));
+    view->resize(400, 300);
+    view->show();
+    QApplication::processEvents();
+    auto item = view->get_body().find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    auto toggle = dynamic_cast<ToggleButton*>(item->get_body().focusProxy());
+    REQUIRE(toggle);
+    toggle->get_current()->set(false);
+    auto& header = view->get_header();
+    auto shares = header.get_item(1);
+    move_cursor(*shares, shares->rect().center());
+    press_mouse(header, Qt::LeftButton);
+    auto position = header.mapFromGlobal(QCursor::pos()) +
+      QPoint(QApplication::startDragDistance(), 0);
+    auto move = QMouseEvent(QEvent::MouseMove, position,
+      header.mapToGlobal(position), Qt::NoButton, Qt::LeftButton,
+      Qt::NoModifier);
+    QApplication::sendEvent(&header, &move);
+    QApplication::processEvents();
+    auto preview = static_cast<TableView*>(nullptr);
+    for(auto widget : view->findChildren<QWidget*>()) {
+      if(auto child = dynamic_cast<TableView*>(widget)) {
+        preview = child;
+        break;
+      }
+    }
+    REQUIRE(preview);
+    auto& body = preview->get_body();
+    auto& rows = *view->get_body().get_table();
+    REQUIRE(body.get_table()->get_row_size() == rows.get_row_size());
+    auto indices = std::vector{0, 3, 4, 5};
+    for(auto i = 0; i != std::ssize(indices); ++i) {
+      REQUIRE(is_equal(body.get_table()->at(i, 0), rows.at(i, 1)));
+      auto cell = body.find_item(TableIndex(i, 0));
+      REQUIRE(cell);
+      auto label = dynamic_cast<QLabel*>(&cell->get_body());
+      REQUIRE(label);
+      REQUIRE(label->text() == QString::number(indices[i]));
+      REQUIRE(is_match(*cell->parentWidget(), AggregateRow()) ==
+        (table->index_to_source(indices[i]) == -1));
+    }
+    toggle->get_current()->set(true);
+    REQUIRE(body.get_table()->get_row_size() == 6);
+    REQUIRE(is_equal(body.get_table()->at(1, 0), rows.at(1, 1)));
+    release_mouse(header, Qt::LeftButton);
   }
 
   UI_TEST_CASE("aggregate_row_style") {

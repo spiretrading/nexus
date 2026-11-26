@@ -256,8 +256,8 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void TableView::initialize_body(
-    TableViewItemBuilder item_builder, connection tracking) {
+TableViewItemBuilder TableView::make_displayed_item_builder(
+    TableViewItemBuilder item_builder) const {
   struct TranslatedItemBuilder {
     TableViewItemBuilder m_builder;
     Rows m_rows;
@@ -277,6 +277,12 @@ void TableView::initialize_body(
       m_builder.unmount(widget);
     }
   };
+  return TranslatedItemBuilder(
+    std::move(item_builder), Rows(m_filtered_table, m_sorted_table));
+}
+
+void TableView::initialize_body(
+    TableViewItemBuilder item_builder, connection tracking) {
   if(!m_current) {
     m_current = std::make_shared<TableCurrentIndexModel>(m_table);
   }
@@ -296,7 +302,7 @@ void TableView::initialize_body(
   body_selection->m_source_tracking = tracking;
   m_body = new TableBody(mapping.get_table(), body_current, body_selection,
     m_header_view->get_widths(),
-    TranslatedItemBuilder(std::move(item_builder), mapping));
+    make_displayed_item_builder(std::move(item_builder)));
   auto refresh = [selection = std::weak_ptr(body_selection)] (
       auto& list, const auto&... operation) {
     if(auto model = selection.lock()) {
