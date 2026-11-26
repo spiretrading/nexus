@@ -649,6 +649,54 @@ TEST_SUITE("GroupedTableModel") {
     }
   }
 
+  TEST_CASE("first_grouping_row_mapping") {
+    auto source = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != 120; ++i) {
+      source->push({i % 12, i % 5, i});
+    }
+    auto model = GroupedTableModel(source, {});
+    SUBCASE("source_order") {}
+    SUBCASE("sorted_leaves") {
+      model.set_column_order({{2, SortedTableModel::Ordering::DESCENDING}});
+    }
+    auto tracked = TableRowIndexTracker(model.index_from_source(37));
+    model.connect_operation_signal([&] (const TableModel::Operation& op) {
+      tracked.update(op);
+      if(std::holds_alternative<TableModel::StartTransaction>(op)) {
+        return;
+      }
+      REQUIRE(model.index_to_source(tracked.get_index()) == 37);
+      REQUIRE(model.index_from_source(37) == tracked.get_index());
+      REQUIRE(model.get<int>(tracked.get_index(), 2) == 37);
+    });
+    model.set_grouping({0, 1});
+    REQUIRE(model.get_row_size() == 192);
+    for(auto i = 0; i != source->get_row_size(); ++i) {
+      REQUIRE(model.index_to_source(model.index_from_source(i)) == i);
+    }
+  }
+
+  TEST_CASE("first_grouping_factory_failure") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 2});
+    source->push({QString("B"), 3});
+    auto attempts = 0;
+    auto model = GroupedTableModel(source, {}, {{}, [&] {
+      ++attempts;
+      if(attempts == 2) {
+        throw std::runtime_error("Aggregation unavailable.");
+      }
+      return std::make_unique<SumOfSquares>();
+    }});
+    REQUIRE_THROWS_AS(model.set_grouping({0}), std::runtime_error);
+    REQUIRE(model.get_grouping().empty());
+    REQUIRE(model.get_row_size() == 2);
+    REQUIRE(model.get<QString>(1, 0) == "B");
+    model.set_grouping({0});
+    REQUIRE(model.get_row_size() == 4);
+    REQUIRE(model.get<int>(2, 1) == 9);
+  }
+
   TEST_CASE("grouping_during_source_transaction") {
     auto source = std::make_shared<ArrayTableModel>();
     auto factories = std::vector<TableAggregationFactory>(3);

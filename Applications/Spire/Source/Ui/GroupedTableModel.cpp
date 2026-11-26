@@ -1,6 +1,10 @@
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include <algorithm>
+#include <numeric>
 #include <optional>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/ranked_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/scope/scope_exit.hpp>
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -121,6 +125,13 @@ struct GroupedTableModel::Row {
   }
 };
 
+struct GroupedTableModel::PendingRows {
+  std::vector<Row> m_rows;
+  multi_index_container<int, multi_index::indexed_by<
+    multi_index::ranked_unique<multi_index::identity<int>>>> m_order;
+  int m_placed = 0;
+};
+
 GroupedTableModel::GroupedTableModel(
   std::shared_ptr<TableModel> source, std::vector<int> columns)
   : GroupedTableModel(std::move(source), std::move(columns), {}) {}
@@ -149,6 +160,7 @@ GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
       m_uses_default_comparator(!comparator),
       m_comparator(std::move(comparator)),
       m_next_group(0),
+      m_pending_rows(nullptr),
       m_is_source_transaction(false) {
   if(!m_comparator) {
     m_comparator = &compare_siblings;
@@ -158,9 +170,9 @@ GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
     m_transaction.set_size(m_source->get_row_size());
   } else {
     m_indices.resize(m_source->get_row_size(), -1);
-    for(auto i = 0; i != m_source->get_row_size(); ++i) {
-      insert(i, nullptr);
-    }
+    m_rows = make_grouped_rows(m_columns);
+    index_rows(0, get_row_size());
+    m_transaction.set_size(get_row_size());
     refresh_aggregates();
   }
   m_connection = m_source->connect_operation_signal(
@@ -190,8 +202,8 @@ void GroupedTableModel::set_grouping(std::vector<int> columns) {
   auto shared_depth = static_cast<int>(common.in1 - m_columns.begin());
   transact([&] {
     flush_updates(nullptr);
-    if(is_identity()) {
-      materialize_rows();
+    if(m_columns.empty()) {
+      group_leaves(std::move(columns));
     } else {
       for(auto i = get_row_size() - 1; i >= 0; --i) {
         auto& row = m_rows[i];
@@ -207,16 +219,16 @@ void GroupedTableModel::set_grouping(std::vector<int> columns) {
           remove_row(i);
         }
       }
-    }
-    if(columns.empty()) {
-      if(m_order.empty()) {
-        restore_source_order();
-      }
-      m_columns.clear();
-    } else {
-      m_columns = std::move(columns);
-      for(auto i = 0; i != get_source_row_size(); ++i) {
-        insert(i, m_rows[m_indices[i]].m_group);
+      if(columns.empty()) {
+        if(m_order.empty()) {
+          restore_source_order();
+        }
+        m_columns.clear();
+      } else {
+        m_columns = std::move(columns);
+        for(auto i = 0; i != get_source_row_size(); ++i) {
+          insert(i, m_rows[m_indices[i]].m_group);
+        }
       }
     }
     refresh_aggregates();
@@ -269,7 +281,7 @@ int GroupedTableModel::get_parent(int row) const {
   if(m_columns.empty()) {
     return -1;
   }
-  auto& entry = m_rows.at(row);
+  auto& entry = get_row(row);
   auto group = entry.m_group.get();
   if(entry.is_heading()) {
     group = group->m_parent.get();
@@ -320,7 +332,7 @@ int GroupedTableModel::index_to_source(int row) const {
   } else if(is_identity()) {
     return row;
   }
-  return m_rows[row].m_source.get_index();
+  return get_row(row).m_source.get_index();
 }
 
 int GroupedTableModel::index_from_source(int row) const {
@@ -329,12 +341,21 @@ int GroupedTableModel::index_from_source(int row) const {
   } else if(row < 0 || row >= std::ssize(m_indices)) {
     return -1;
   }
-  return m_indices[row];
+  auto index = m_indices[row];
+  if(m_pending_rows && index < 0) {
+    return static_cast<int>(m_pending_rows->m_placed +
+      m_pending_rows->m_order.lower_bound_rank(-index - 1));
+  }
+  return index;
 }
 
 int GroupedTableModel::get_row_size() const {
   if(is_identity()) {
     return get_source_row_size();
+  }
+  if(m_pending_rows) {
+    return static_cast<int>(
+      m_pending_rows->m_placed + m_pending_rows->m_order.size());
   }
   return static_cast<int>(m_rows.size());
 }
@@ -353,7 +374,7 @@ AnyRef GroupedTableModel::at(int row, int column) const {
     }
     return m_source->at(row, column);
   }
-  auto& entry = m_rows.at(row);
+  auto& entry = get_row(row);
   if(!entry.is_heading()) {
     return m_source->at(entry.m_source.get_index(), column);
   } else if(column == m_columns.front()) {
@@ -414,10 +435,123 @@ bool GroupedTableModel::is_identity() const {
   return m_columns.empty() && m_order.empty();
 }
 
+const GroupedTableModel::Row& GroupedTableModel::get_row(int index) const {
+  if(m_pending_rows && index >= m_pending_rows->m_placed) {
+    auto i = m_pending_rows->m_order.nth(index - m_pending_rows->m_placed);
+    if(i == m_pending_rows->m_order.end()) {
+      throw std::out_of_range("The row is out of range.");
+    }
+    return m_pending_rows->m_rows[*i];
+  }
+  return m_rows.at(index);
+}
+
 void GroupedTableModel::materialize_rows() {
   for(auto i = 0; i != get_source_row_size(); ++i) {
     m_rows.emplace_back(nullptr, TableRowIndexTracker(i));
     m_indices.push_back(i);
+  }
+}
+
+void GroupedTableModel::group_leaves(std::vector<int> columns) {
+  auto pending = PendingRows();
+  for(auto i = 0; i != get_row_size(); ++i) {
+    pending.m_order.insert(pending.m_order.end(), i);
+  }
+  auto rows = make_grouped_rows(columns);
+  if(is_identity()) {
+    materialize_rows();
+  }
+  pending.m_rows.swap(m_rows);
+  m_rows = std::move(rows);
+  for(auto i = 0; i != std::ssize(pending.m_rows); ++i) {
+    m_indices[pending.m_rows[i].m_source.get_index()] = -i - 1;
+  }
+  m_pending_rows = &pending;
+  auto restore = scope_exit([&] {
+    m_pending_rows = nullptr;
+  });
+  m_columns = std::move(columns);
+  for(auto& entry : m_rows) {
+    auto row = pending.m_placed;
+    ++pending.m_placed;
+    auto group = entry.m_group.get();
+    if(entry.is_heading()) {
+      group->m_row = row;
+      group->m_descendant_count = 0;
+      group = group->m_parent.get();
+    }
+    for(; group; group = group->m_parent.get()) {
+      ++group->m_descendant_count;
+    }
+    if(entry.is_heading()) {
+      m_transaction.push(AddOperation(row));
+    } else {
+      auto source = entry.m_source.get_index();
+      auto previous = pending.m_order.find(-m_indices[source] - 1);
+      auto from = row + static_cast<int>(pending.m_order.rank(previous));
+      pending.m_order.erase(previous);
+      m_indices[source] = row;
+      if(from != row) {
+        m_transaction.push(MoveOperation(from, row));
+      }
+    }
+  }
+}
+
+std::vector<GroupedTableModel::Row> GroupedTableModel::make_grouped_rows(
+    const std::vector<int>& columns) {
+  auto sources = std::vector<int>(get_source_row_size());
+  std::iota(sources.begin(), sources.end(), 0);
+  auto rows = std::vector<Row>();
+  try {
+    append_groups(rows, sources, columns, nullptr, 0);
+  } catch(...) {
+    m_groups.clear();
+    m_dirty.clear();
+    throw;
+  }
+  return rows;
+}
+
+void GroupedTableModel::append_groups(std::vector<Row>& rows,
+    const std::vector<int>& sources, const std::vector<int>& columns,
+    const std::shared_ptr<Group>& parent, int depth) {
+  struct Bucket {
+    std::shared_ptr<Group> m_group;
+    std::vector<int> m_sources;
+  };
+  auto buckets = std::vector<Bucket>();
+  auto sequence = m_next_group;
+  for(auto source : sources) {
+    auto value = m_source->at(source, columns[depth]);
+    auto key = make_key(value);
+    auto hash = group_hash(key, parent.get());
+    auto group = find_group(key, parent.get(), hash);
+    if(!group) {
+      auto& bucket = buckets.emplace_back();
+      bucket.m_group = make_group(
+        key, to_text(value), parent, depth, columns.front(), hash);
+      group = bucket.m_group.get();
+    }
+    buckets[group->m_sequence - sequence].m_sources.push_back(source);
+  }
+  for(auto& bucket : buckets) {
+    auto& group = bucket.m_group;
+    auto start = rows.size();
+    rows.emplace_back(group, TableRowIndexTracker(-1));
+    group->m_leaf_count = static_cast<int>(bucket.m_sources.size());
+    for(auto source : bucket.m_sources) {
+      accumulate(group, source);
+    }
+    if(depth + 1 < std::ssize(columns)) {
+      append_groups(rows, bucket.m_sources, columns, group, depth + 1);
+    } else {
+      for(auto source : bucket.m_sources) {
+        rows.emplace_back(group, TableRowIndexTracker(source));
+      }
+    }
+    group->m_descendant_count = static_cast<int>(rows.size() - start - 1);
   }
 }
 
@@ -585,6 +719,48 @@ std::unique_ptr<TableAggregation> GroupedTableModel::make_aggregation(
   return accumulator;
 }
 
+GroupedTableModel::Group* GroupedTableModel::find_group(const AnyRef& key,
+    const Group* parent, std::optional<std::size_t> hash) const {
+  if(hash) {
+    auto [i, end] = m_groups.equal_range(*hash);
+    for(; i != end; ++i) {
+      auto group = i->second;
+      if(group->m_parent.get() == parent && equal_keys(group->m_key, key)) {
+        return group;
+      }
+    }
+  }
+  return nullptr;
+}
+
+std::shared_ptr<GroupedTableModel::Group> GroupedTableModel::make_group(
+    const AnyRef& key, QString name, const std::shared_ptr<Group>& parent,
+    int depth, int heading_column, std::optional<std::size_t> hash) {
+  auto group = std::make_shared<Group>(to_any(key), std::move(name), parent,
+    m_next_group, depth, -1, 0, 0,
+    std::vector<AggregateCell>(get_column_size()));
+  ++m_next_group;
+  for(auto i = 0; i != get_column_size(); ++i) {
+    if(i != heading_column) {
+      group->m_aggregates[i].m_accumulator = make_aggregation(*group, i);
+    }
+  }
+  if(hash) {
+    m_groups.emplace(*hash, group.get());
+  }
+  return group;
+}
+
+void GroupedTableModel::accumulate(
+    const std::shared_ptr<Group>& group, int source) {
+  for(auto column = 0; column != get_column_size(); ++column) {
+    if(auto& accumulator = group->m_aggregates[column].m_accumulator) {
+      accumulator->add(m_source->at(source, column));
+      touch(group, column);
+    }
+  }
+}
+
 void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
   auto first = 0;
   auto end = get_row_size();
@@ -599,17 +775,7 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
     auto value = m_source->at(source, column);
     auto key = make_key(value);
     auto hash = group_hash(key, parent.get());
-    auto match = static_cast<Group*>(nullptr);
-    if(hash) {
-      auto [i, last] = m_groups.equal_range(*hash);
-      for(; i != last; ++i) {
-        auto group = i->second;
-        if(group->m_parent == parent && equal_keys(group->m_key, key)) {
-          match = group;
-          break;
-        }
-      }
-    }
+    auto match = find_group(key, parent.get(), hash);
     if(match) {
       first = match->m_row;
     } else {
@@ -623,22 +789,13 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
           m_rows.begin() + first, m_rows.begin() + end, grouped);
         first = static_cast<int>(position - m_rows.begin());
       }
-      auto group = std::make_shared<Group>(to_any(key), to_text(value), parent,
-        m_next_group, depth, first, 0, 0,
-        std::vector<AggregateCell>(get_column_size()));
-      ++m_next_group;
+      auto group = make_group(
+        key, to_text(value), parent, depth, m_columns.front(), hash);
+      group->m_row = first;
       if(!m_order.empty()) {
         m_unsorted.insert(parent);
       }
-      for(auto i = 0; i != get_column_size(); ++i) {
-        if(i != m_columns.front()) {
-          group->m_aggregates[i].m_accumulator = make_aggregation(*group, i);
-        }
-      }
       m_rows.emplace(m_rows.begin() + first, group, TableRowIndexTracker(-1));
-      if(hash) {
-        m_groups.emplace(*hash, group.get());
-      }
       index_rows(first + 1, get_row_size());
       for(auto ancestor = parent; ancestor; ancestor = ancestor->m_parent) {
         ++ancestor->m_descendant_count;
@@ -684,12 +841,7 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
     }
     auto previous = group->label();
     ++group->m_leaf_count;
-    for(auto column = 0; column != get_column_size(); ++column) {
-      if(auto& accumulator = group->m_aggregates[column].m_accumulator) {
-        accumulator->add(m_source->at(source, column));
-        touch(group, column);
-      }
-    }
+    accumulate(group, source);
     m_transaction.push(UpdateOperation(
       group->m_row, m_columns.front(), std::move(previous), group->label()));
   }

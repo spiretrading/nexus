@@ -43,6 +43,29 @@ TEST_SUITE("FilteredListModel") {
       {0, 1, 5, 6}, {0, 1, 2, 5, 6}, {0, 1, 2, 4, 5, 6}});
   }
 
+  TEST_CASE("updates_after_range_refresh") {
+    auto source = std::make_shared<ArrayListModel<int>>(
+      std::vector{0, 1, 2, 3, 4, 5});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    filtered.refresh(0, 2);
+    auto updates = std::vector<int>();
+    filtered.connect_operation_signal([&] (const ListModel<int>::Operation& op) {
+      visit(op, [&] (const ListModel<int>::UpdateOperation& update) {
+        updates.push_back(update.m_index);
+      });
+    });
+    source->set(4, 40);
+    source->set(1, -1);
+    source->set(1, -2);
+    source->set(4, 41);
+    source->set(1, 10);
+    REQUIRE(updates == std::vector{4, 3});
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{0, 10, 2, 3, 41, 5});
+  }
+
   TEST_CASE("range_refresh_with_source_edit") {
     auto source = std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2});
     auto hide = false;
@@ -66,6 +89,27 @@ TEST_SUITE("FilteredListModel") {
       AnyListModel::RemoveOperation(0)});
     REQUIRE(
       std::vector(filtered.cbegin(), filtered.cend()) == std::vector{2, 3});
+  }
+
+  TEST_CASE("update_during_filter_removal") {
+    auto source = std::make_shared<ArrayListModel<int>>(
+      std::vector{-1, 1, 2, 3, 4});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      visit(operation,
+        [&] (const AnyListModel::PreRemoveOperation& removal) {
+          REQUIRE(removal.m_index == 2);
+          source->set(0, 0);
+        },
+        [&] (const AnyListModel::RemoveOperation& removal) {
+          REQUIRE(removal.m_index == 3);
+        });
+    });
+    source->set(3, -3);
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{0, 1, 2, 4});
   }
 
   TEST_CASE("attach_at_transaction_start") {

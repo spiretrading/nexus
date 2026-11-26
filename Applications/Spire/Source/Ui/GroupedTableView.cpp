@@ -217,6 +217,9 @@ namespace {
     std::optional<Selector> get_row_selector(int row) const {
       auto source = m_table->index_to_source(row);
       if(source == -1) {
+        if(auto selector = m_aggregate_item_builder.get_row_selector(row)) {
+          return AggregateRow() && *selector;
+        }
         return AggregateRow();
       }
       return m_item_builder.get_row_selector(source);
@@ -249,18 +252,15 @@ namespace {
         if(source == -1) {
           m_builder = builder.m_aggregate_item_builder;
           m_item = m_builder.mount(table, row, column);
+          layout->addWidget(m_item);
+          setFocusPolicy(m_item->focusPolicy());
+          setFocusProxy(m_item);
+        } else if(grouping.empty() || column != grouping.front()) {
+          mount_leaf(table, source, column);
         } else {
-          m_item = m_builder.mount(table->get_source(), source, column);
-        }
-        layout->addWidget(m_item);
-        setFocusPolicy(m_item->focusPolicy());
-        setFocusProxy(m_item);
-        if(source != -1) {
-          auto on_grouping = [=, this] (const auto& columns) {
-            m_item->setVisible(columns.empty() || column != columns.front());
-          };
-          on_grouping(grouping);
-          m_connection = table->connect_grouping_signal(on_grouping);
+          m_connection = table->connect_operation_signal(
+            std::bind_front(&GroupCell::on_leaf_operation, this, table,
+              TableRowIndexTracker(row), column));
         }
       }
 
@@ -286,6 +286,19 @@ namespace {
       TableViewItemBuilder m_builder;
       QWidget* m_item;
       scoped_connection m_connection;
+
+      void mount_leaf(const std::shared_ptr<GroupedTableModel>& table,
+          int source, int column) {
+        m_item = m_builder.mount(table->get_source(), source, column);
+        layout()->addWidget(m_item);
+        setFocusPolicy(m_item->focusPolicy());
+        setFocusProxy(m_item);
+        m_item->show();
+        m_connection = table->connect_grouping_signal(
+          [=, this] (const auto& columns) {
+            m_item->setVisible(columns.empty() || columns.front() != column);
+          });
+      }
 
       void release_item() {
         if(m_item) {
@@ -328,7 +341,7 @@ namespace {
         update_name(heading);
         bind_item(heading);
         m_connection = table->connect_operation_signal(std::bind_front(
-          &GroupCell::on_table_operation, this, std::move(heading)));
+          &GroupCell::on_heading_operation, this, std::move(heading)));
       }
 
       void update_name(const Heading& heading) {
@@ -353,7 +366,22 @@ namespace {
         }
       }
 
-      void on_table_operation(
+      void on_leaf_operation(const std::shared_ptr<GroupedTableModel>& table,
+          TableRowIndexTracker& index, int column,
+          const TableModel::Operation& operation) {
+        index.update(operation);
+        auto row = index.get_index();
+        if(row == -1 ||
+            !std::holds_alternative<TableModel::EndTransaction>(operation)) {
+          return;
+        }
+        auto& grouping = table->get_grouping();
+        if(grouping.empty() || grouping.front() != column) {
+          mount_leaf(table, table->index_to_source(row), column);
+        }
+      }
+
+      void on_heading_operation(
           Heading& heading, const TableModel::Operation& operation) {
         heading.m_row.update(operation);
         heading.m_leaf.update(operation);

@@ -260,14 +260,11 @@ namespace Spire {
     if(removal.get_index() == -1) {
       return;
     }
-    if(!m_suffix.empty()) {
-      m_suffix.pop_back();
-    } else {
-      if(m_refresh_pending) {
-        index = index_from_source(removal.get_index());
-      }
-      m_filtered_data.erase(m_filtered_data.begin() + index);
+    if(m_refresh_pending) {
+      split_at(removal.get_index());
+      index = static_cast<int>(m_filtered_data.size());
     }
+    m_suffix.pop_back();
     this->m_transaction.push(RemoveOperation(index));
   }
 
@@ -283,7 +280,8 @@ namespace Spire {
     if(m_is_refreshing || m_filter_removal) {
       m_refresh_pending = true;
     }
-    if(!m_suffix.empty()) {
+    if(!m_suffix.empty() &&
+        !std::holds_alternative<UpdateOperation>(operation)) {
       m_filtered_data.insert(
         m_filtered_data.end(), m_suffix.rbegin(), m_suffix.rend());
       m_suffix.clear();
@@ -368,19 +366,19 @@ namespace Spire {
         }
       },
       [&] (const UpdateOperation& operation) {
-        auto [is_found, i] = find(operation.m_index);
+        auto index = index_from_source(operation.m_index);
         if(!m_filter(*m_source, operation.m_index)) {
-          if(is_found) {
+          if(index != -1) {
             this->m_transaction.push(UpdateOperation(
-              static_cast<int>(i - m_filtered_data.begin()),
-              operation.get_previous(), operation.get_value()));
+              index, operation.get_previous(), operation.get_value()));
           } else {
-            auto filtered_index = static_cast<int>(m_filtered_data.insert(
-              i, operation.m_index) - m_filtered_data.begin());
-            this->m_transaction.push(AddOperation(filtered_index));
+            split_at(operation.m_index);
+            auto added = static_cast<int>(m_filtered_data.size());
+            m_filtered_data.push_back(operation.m_index);
+            this->m_transaction.push(AddOperation(added));
           }
-        } else if(is_found && !m_filter_removal) {
-          auto index = static_cast<int>(i - m_filtered_data.begin());
+        } else if(index != -1 && !m_filter_removal) {
+          split_at(operation.m_index);
           remove_visible(operation.m_index, index);
         }
       });

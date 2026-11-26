@@ -7,6 +7,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
+#include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -22,6 +23,15 @@ using namespace Spire::Styles;
 namespace {
   const auto OPERATION_THRESHOLD = 10;
   const auto SCROLL_BUFFER = 1;
+
+  void visit_row_states(const Selector& selector, const auto& function) {
+    if(selector.get_type() == typeid(AndSelector)) {
+      auto& conjunction = selector.as<AndSelector>();
+      visit_row_states(conjunction.get_left(), function);
+      visit_row_states(conjunction.get_right(), function);
+    }
+    function(selector);
+  }
 
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
@@ -184,11 +194,15 @@ struct TableBody::RowCover : Cover {
       return;
     }
     if(m_selector) {
-      unmatch(*this, *m_selector);
+      visit_row_states(*m_selector, [&] (const auto& state) {
+        unmatch(*this, state);
+      });
     }
     m_selector = std::move(selector);
     if(m_selector) {
-      match(*this, *m_selector);
+      visit_row_states(*m_selector, [&] (const auto& state) {
+        match(*this, state);
+      });
     }
   }
 

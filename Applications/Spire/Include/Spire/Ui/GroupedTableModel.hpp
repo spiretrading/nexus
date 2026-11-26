@@ -122,6 +122,7 @@ namespace Spire {
       friend class GroupedTableViewBuilder;
       struct Group;
       struct Row;
+      struct PendingRows;
       using Changes = std::map<int, std::any>;
       mutable GroupingSignal m_grouping_signal;
       std::shared_ptr<TableModel> m_source;
@@ -136,6 +137,7 @@ namespace Spire {
       std::size_t m_next_group;
       std::unordered_multimap<std::size_t, Group*> m_groups;
       std::vector<Row> m_rows;
+      PendingRows* m_pending_rows;
       std::vector<int> m_indices;
       std::vector<std::pair<std::shared_ptr<Group>, int>> m_dirty;
       std::map<int, Changes> m_updates;
@@ -146,7 +148,13 @@ namespace Spire {
       void set_column_count(int count);
       void validate_columns(const std::vector<int>& columns) const;
       bool is_identity() const;
+      const Row& get_row(int index) const;
       void materialize_rows();
+      void group_leaves(std::vector<int> columns);
+      std::vector<Row> make_grouped_rows(const std::vector<int>& columns);
+      void append_groups(std::vector<Row>& rows,
+        const std::vector<int>& sources, const std::vector<int>& columns,
+        const std::shared_ptr<Group>& parent, int depth);
       void restore_source_order();
       void index_rows(int first, int end);
       bool is_sorted(int column) const;
@@ -157,6 +165,12 @@ namespace Spire {
       void touch(const std::shared_ptr<Group>& group, int column);
       std::unique_ptr<TableAggregation> make_aggregation(
         const Group& group, int column) const;
+      Group* find_group(const AnyRef& key, const Group* parent,
+        std::optional<std::size_t> hash) const;
+      std::shared_ptr<Group> make_group(const AnyRef& key, QString name,
+        const std::shared_ptr<Group>& parent, int depth, int heading_column,
+        std::optional<std::size_t> hash);
+      void accumulate(const std::shared_ptr<Group>& group, int source);
       void insert(int source, std::shared_ptr<Group> parent);
       void remove_row(int row);
       void move_row(int source, int destination);

@@ -226,7 +226,7 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(indent(0) < indent(1));
     auto leaf = body.find_item(TableIndex(2, 0));
     REQUIRE(leaf);
-    REQUIRE(leaf->get_body().layout()->itemAt(0)->widget()->isHidden());
+    REQUIRE(leaf->get_body().layout()->count() == 0);
     REQUIRE(view->get_header().get_items()->get(0).m_name == "Account (+1)");
     REQUIRE(view->get_header().get_item(1)->isHidden());
     auto ranges = std::vector<std::pair<int, int>>();
@@ -611,13 +611,17 @@ TEST_SUITE("GroupedTableView") {
       return item;
     };
     auto label = [&] (int column) {
-      return leaf(column)->get_body().layout()->itemAt(0)->widget();
+      auto item = leaf(column)->get_body().layout()->itemAt(0);
+      if(!item) {
+        return static_cast<QWidget*>(nullptr);
+      }
+      return item->widget();
     };
     table->set_grouping({1});
     REQUIRE(items.get(0).m_name == "Side");
     REQUIRE(header.get_column_order()->get(0) == 1);
     REQUIRE(table->get_group_name(0) == "Long");
-    REQUIRE(label(0)->isHidden());
+    REQUIRE((!label(0) || label(0)->isHidden()));
     REQUIRE(label(1)->isVisible());
     items.move(0, 1);
     table->set_grouping({1, 0});
@@ -819,6 +823,7 @@ TEST_SUITE("GroupedTableView") {
     struct LeafBuilder {
       std::shared_ptr<TableModel> m_source;
       int& m_reused;
+      int& m_account_cells;
 
       std::optional<Selector> get_row_selector(int row) const {
         if(row == 2) {
@@ -846,7 +851,9 @@ TEST_SUITE("GroupedTableView") {
 
       void bind(QLabel& label, const std::shared_ptr<TableModel>& table,
           int row, int column) {
-        if(column != 0) {
+        if(column == 0 && table == m_source) {
+          ++m_account_cells;
+        } else if(column != 0) {
           REQUIRE(table == m_source);
         }
         if(column == 2) {
@@ -861,7 +868,9 @@ TEST_SUITE("GroupedTableView") {
     source->push({QString("B"), QString("USD"), 40});
     source->push({QString("A"), QString("USD"), 20});
     auto reused = 0;
-    auto leaves = RecycledTableViewItemBuilder(LeafBuilder(source, reused));
+    auto account_cells = 0;
+    auto leaves = RecycledTableViewItemBuilder(
+      LeafBuilder(source, reused, account_cells));
     auto builder = GroupedTableViewBuilder(source).
       add_column("Account").add_column("Currency").add_column("Shares").
       set_item_builder(std::move(leaves)).set_grouping({0});
@@ -869,17 +878,33 @@ TEST_SUITE("GroupedTableView") {
     SUBCASE("default_aggregates") {}
     SUBCASE("custom_aggregates") {
       custom = true;
-      builder.set_aggregate_item_builder(
-        [=] (const std::shared_ptr<TableModel>& table, int row, int column) {
+      struct AggregateBuilder {
+        std::shared_ptr<TableModel> m_source;
+
+        std::optional<Selector> get_row_selector(int row) const {
+          if(row == 0) {
+            return Highlight();
+          }
+          return {};
+        }
+
+        QWidget* mount(
+            const std::shared_ptr<TableModel>& table, int row, int column) {
           auto grouped = std::dynamic_pointer_cast<GroupedTableModel>(table);
           REQUIRE(grouped);
-          REQUIRE(grouped->get_source() == source);
+          REQUIRE(grouped->get_source() == m_source);
           REQUIRE(grouped->index_to_source(row) == -1);
           REQUIRE(column != 0);
           auto item = TableView::default_item_builder(table, row, column);
           item->setToolTip(grouped->get_group_name(row));
           return item;
-        });
+        }
+
+        void unmount(QWidget* widget) {
+          delete widget;
+        }
+      };
+      builder.set_aggregate_item_builder(AggregateBuilder(source));
     }
     auto view = std::unique_ptr<TableView>(builder.make());
     view->resize(500, 350);
@@ -901,8 +926,12 @@ TEST_SUITE("GroupedTableView") {
       return label->get_current()->get();
     };
     REQUIRE(text(2, 2) == "20");
+    REQUIRE(account_cells == 0);
     auto leaf = body.find_item(TableIndex(2, 2));
     REQUIRE(is_match(*leaf->parentWidget(), Highlight()));
+    auto heading = body.find_item(TableIndex(0, 0))->parentWidget();
+    REQUIRE(is_match(*heading, AggregateRow()));
+    REQUIRE(is_match(*heading, Highlight()) == custom);
     REQUIRE(text(0, 1) == "(2)");
     REQUIRE(text(0, 2) == "30");
     if(custom) {
@@ -915,6 +944,9 @@ TEST_SUITE("GroupedTableView") {
     QApplication::processEvents();
     REQUIRE(text(2, 2) == "40");
     REQUIRE(text(1, 2) == "40");
+    auto second = body.find_item(TableIndex(1, 0))->parentWidget();
+    REQUIRE(is_match(*second, AggregateRow()));
+    REQUIRE_FALSE(is_match(*second, Highlight()));
     if(custom) {
       REQUIRE(cell(1, 2)->toolTip() == "B");
     }
@@ -942,6 +974,7 @@ TEST_SUITE("GroupedTableView") {
     grouped->set_grouping({});
     QApplication::processEvents();
     REQUIRE(text(1, 0) == "B");
+    REQUIRE(account_cells > 0);
     REQUIRE(text(2, 2) == "25");
   }
 
