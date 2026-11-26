@@ -2,7 +2,7 @@
 #define SPIRE_FILTERED_LIST_MODEL_HPP
 #include <boost/scope/scope_exit.hpp>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
 
 namespace Spire {
@@ -73,15 +73,17 @@ namespace Spire {
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
-      int m_filter_count;
       bool m_is_refreshing;
+      bool m_refresh_pending;
       bool m_has_pending_removal;
+      ListIndexTracker* m_filter_removal;
       std::vector<int> m_filtered_data;
       std::vector<int> m_suffix;
       boost::signals2::scoped_connection m_source_connection;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
       void split_at(int source);
+      void remove_visible(int source, int index);
       void on_operation(const Operation& operation);
   };
 
@@ -95,9 +97,10 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> source, Filter filter)
       : m_source(std::move(source)),
         m_filter(std::move(filter)),
-        m_filter_count(0),
         m_is_refreshing(false),
-        m_has_pending_removal(false) {
+        m_refresh_pending(false),
+        m_has_pending_removal(false),
+        m_filter_removal(nullptr) {
     for(auto i = 0; i != m_source->get_size(); ++i) {
       if(!m_filter(*m_source, i)) {
         m_filtered_data.push_back(i);
@@ -116,39 +119,37 @@ namespace Spire {
 
   template<typename T>
   void FilteredListModel<T>::refresh(int first, int end) {
-    ++m_filter_count;
-    auto count = m_filter_count;
-    auto was_refreshing = std::exchange(m_is_refreshing, true);
-    auto restore = boost::scope::scope_exit([&] {
-      m_is_refreshing = was_refreshing;
-    });
-    if(was_refreshing) {
-      first = 0;
-      end = m_source->get_size();
+    if(m_is_refreshing || m_filter_removal || m_has_pending_removal) {
+      m_refresh_pending = true;
+      return;
     }
     this->m_transaction.transact([&] {
-      split_at(first);
-      for(auto row = first; row < end && count == m_filter_count; ++row) {
-        auto visible = !m_suffix.empty() && m_suffix.back() == row;
-        auto index = static_cast<int>(m_filtered_data.size());
-        if(!m_filter(*m_source, row)) {
-          m_filtered_data.push_back(row);
-          if(visible) {
-            m_suffix.pop_back();
-          } else {
-            this->m_transaction.push(AddOperation(index));
+      m_is_refreshing = true;
+      auto restore = boost::scope::scope_exit([&] {
+        m_is_refreshing = false;
+      });
+      while(true) {
+        m_refresh_pending = false;
+        split_at(first);
+        for(auto row = first; row < end && !m_refresh_pending; ++row) {
+          auto visible = !m_suffix.empty() && m_suffix.back() == row;
+          auto index = static_cast<int>(m_filtered_data.size());
+          if(!m_filter(*m_source, row)) {
+            m_filtered_data.push_back(row);
+            if(visible) {
+              m_suffix.pop_back();
+            } else {
+              this->m_transaction.push(AddOperation(index));
+            }
+          } else if(visible) {
+            remove_visible(row, index);
           }
-        } else if(visible) {
-          this->m_transaction.push(PreRemoveOperation(index));
-          if(count != m_filter_count) {
-            break;
-          }
-          m_suffix.pop_back();
-          this->m_transaction.push(RemoveOperation(index));
         }
-      }
-      if(count != m_filter_count) {
-        refresh(0, m_source->get_size());
+        if(!m_refresh_pending) {
+          return;
+        }
+        first = 0;
+        end = m_source->get_size();
       }
     });
   }
@@ -247,6 +248,30 @@ namespace Spire {
   }
 
   template<typename T>
+  void FilteredListModel<T>::remove_visible(int source, int index) {
+    auto removal = ListIndexTracker(source);
+    {
+      m_filter_removal = &removal;
+      auto restore = boost::scope::scope_exit([&] {
+        m_filter_removal = nullptr;
+      });
+      this->m_transaction.push(PreRemoveOperation(index));
+    }
+    if(removal.get_index() == -1) {
+      return;
+    }
+    if(!m_suffix.empty()) {
+      m_suffix.pop_back();
+    } else {
+      if(m_refresh_pending) {
+        index = index_from_source(removal.get_index());
+      }
+      m_filtered_data.erase(m_filtered_data.begin() + index);
+    }
+    this->m_transaction.push(RemoveOperation(index));
+  }
+
+  template<typename T>
   void FilteredListModel<T>::on_operation(const Operation& operation) {
     if(std::holds_alternative<StartTransaction>(operation)) {
       this->m_transaction.start();
@@ -255,8 +280,8 @@ namespace Spire {
       this->m_transaction.end();
       return;
     }
-    if(m_is_refreshing) {
-      ++m_filter_count;
+    if(m_is_refreshing || m_filter_removal) {
+      m_refresh_pending = true;
     }
     if(!m_suffix.empty()) {
       m_filtered_data.insert(
@@ -265,6 +290,9 @@ namespace Spire {
     }
     visit(operation,
       [&] (const AddOperation& operation) {
+        if(m_filter_removal) {
+          m_filter_removal->update(operation);
+        }
         if(operation.m_index >= m_source->get_size() - 1) {
           if(!m_filter(*m_source, operation.m_index)) {
             m_filtered_data.push_back(operation.m_index);
@@ -282,6 +310,9 @@ namespace Spire {
         }
       },
       [&] (const MoveOperation& operation) {
+        if(m_filter_removal) {
+          m_filter_removal->update(operation);
+        }
         auto [is_found, source] = find(operation.m_source);
         if(is_found) {
           auto destination = source;
@@ -315,8 +346,8 @@ namespace Spire {
       [&] (const PreRemoveOperation& operation) {
         auto [is_found, i] = find(operation.m_index);
         m_has_pending_removal = true;
-        if(is_found) {
-          ++m_filter_count;
+        if(is_found && (!m_filter_removal ||
+            operation.m_index != m_filter_removal->get_index())) {
           this->m_transaction.push(PreRemoveOperation(
             static_cast<int>(i - m_filtered_data.begin())));
         }
@@ -324,6 +355,9 @@ namespace Spire {
       [&] (const RemoveOperation& operation) {
         if(!std::exchange(m_has_pending_removal, false)) {
           return;
+        }
+        if(m_filter_removal) {
+          m_filter_removal->update(PreRemoveOperation(operation.m_index));
         }
         auto [is_found, i] = find(operation.m_index);
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
@@ -345,18 +379,15 @@ namespace Spire {
               i, operation.m_index) - m_filtered_data.begin());
             this->m_transaction.push(AddOperation(filtered_index));
           }
-        } else if(is_found) {
+        } else if(is_found && !m_filter_removal) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
-          ++m_filter_count;
-          auto count = m_filter_count;
-          this->m_transaction.push(PreRemoveOperation(index));
-          if(count != m_filter_count) {
-            return;
-          }
-          m_filtered_data.erase(i);
-          this->m_transaction.push(RemoveOperation(index));
+          remove_visible(operation.m_index, index);
         }
       });
+    if(m_refresh_pending && !m_is_refreshing && !m_filter_removal &&
+        !m_has_pending_removal) {
+      refresh(0, m_source->get_size());
+    }
   }
 }
 

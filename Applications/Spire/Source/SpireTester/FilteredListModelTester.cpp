@@ -49,7 +49,9 @@ TEST_SUITE("FilteredListModel") {
     auto filtered = FilteredListModel(source, [&] (const auto&, int row) {
       return hide && row < 2;
     });
+    auto operations = std::deque<ListModel<int>::Operation>();
     filtered.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
       visit(operation, [&] (const AnyListModel::PreRemoveOperation&) {
         if(source->get_size() == 3) {
           source->push(3);
@@ -58,6 +60,10 @@ TEST_SUITE("FilteredListModel") {
     });
     hide = true;
     filtered.refresh(0, 2);
+    require_list_transaction<int>(operations, {
+      AnyListModel::PreRemoveOperation(0), AnyListModel::AddOperation(3),
+      AnyListModel::RemoveOperation(0), AnyListModel::PreRemoveOperation(0),
+      AnyListModel::RemoveOperation(0)});
     REQUIRE(
       std::vector(filtered.cbegin(), filtered.cend()) == std::vector{2, 3});
   }
@@ -633,7 +639,9 @@ TEST_SUITE("FilteredListModel") {
       });
     REQUIRE(filtered_list.get_size() == 4);
     auto is_filter_reset = false;
+    auto operations = std::deque<ListModel<int>::Operation>();
     filtered_list.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
       visit(operation,
         [&] (const ListModel<int>::PreRemoveOperation& operation) {
           if(std::exchange(is_filter_reset, true)) {
@@ -647,6 +655,11 @@ TEST_SUITE("FilteredListModel") {
     filtered_list.set_filter([] (const auto& list, auto index) {
       return list.get(index) % 2 == 0;
     });
+    require_list_transaction<int>(operations, {
+      AnyListModel::PreRemoveOperation(0), AnyListModel::RemoveOperation(0),
+      AnyListModel::AddOperation(0), AnyListModel::PreRemoveOperation(1),
+      AnyListModel::RemoveOperation(1), AnyListModel::PreRemoveOperation(2),
+      AnyListModel::RemoveOperation(2)});
     REQUIRE(filtered_list.get_size() == 2);
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 2);
