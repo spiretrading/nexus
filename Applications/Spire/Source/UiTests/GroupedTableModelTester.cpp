@@ -369,17 +369,19 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get<std::int64_t>(0, 2) == 30);
     REQUIRE(model.get<QString>(2, 0) == "B (2)");
     REQUIRE(model.get<std::int64_t>(2, 2) == 35);
+    REQUIRE(moves == 1);
     model.set(model.index_from_source(2), 0, QString("B"));
     REQUIRE(model.get_row_size() == 4);
     REQUIRE(model.get<QString>(0, 0) == "B (3)");
     REQUIRE(model.get<std::int64_t>(0, 2) == 65);
+    REQUIRE(moves == 2);
     source->transact([&] {
       source->set(2, 2, 40);
       source->move(2, 0);
       source->set(1, 2, 5);
       source->insert({QString("C"), QString("USD"), 18}, 0);
     });
-    REQUIRE(moves == 1);
+    REQUIRE(moves == 3);
     REQUIRE(model.get<std::int64_t>(0, 2) == 65);
     REQUIRE(model.get<int>(1, 2) == 40);
     REQUIRE(model.get<int>(2, 2) == 5);

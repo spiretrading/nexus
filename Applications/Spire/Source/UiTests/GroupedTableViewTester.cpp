@@ -55,6 +55,42 @@ TEST_SUITE("GroupedTableView") {
     }
   }
 
+  UI_TEST_CASE("selection_across_groups") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD"), 10});
+    source->push({QString("B"), QString("USD"), 20});
+    source->push({QString("A"), QString("CAD"), 30});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Shares").
+      set_grouping({0, 1}).make());
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    SUBCASE("source_order") {}
+    SUBCASE("sorted") {
+      table->set_column_order({{2, SortedTableModel::Ordering::DESCENDING}});
+    }
+    auto& rows = *view->get_body().get_selection()->get_row_selection();
+    auto& current = *view->get_body().get_current();
+    auto& visible = *view->get_body().get_table();
+    auto row = table->index_from_source(0);
+    REQUIRE(rows.push(row) == QValidator::Acceptable);
+    REQUIRE(current.set(TableIndex(row, 2)) == QValidator::Acceptable);
+    auto check_selection = [&] {
+      auto row = table->index_from_source(0);
+      REQUIRE(rows.get_size() == 1);
+      REQUIRE(rows.get(0) == row);
+      REQUIRE((current.get() == TableIndex(row, 2)));
+      REQUIRE(visible.get<int>(row, 2) == 10);
+    };
+    source->set(0, 0, QString("B"));
+    check_selection();
+    source->set(0, 1, QString("USD"));
+    check_selection();
+    source->set(0, 0, QString("A"));
+    check_selection();
+    source->remove(0);
+    REQUIRE(rows.get_size() == 0);
+  }
+
   UI_TEST_CASE("nested_disclosure") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD"), 10});

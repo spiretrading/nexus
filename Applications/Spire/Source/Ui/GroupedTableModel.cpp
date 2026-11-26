@@ -582,7 +582,7 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
     m_rows.begin() + end, [=, this] (const Row& row) {
       if(m_columns.empty()) {
         return true;
-      } else if(previous_row != -1) {
+      } else if(previous_row >= first && previous_row < end) {
         return row.m_source.get_index() < source;
       }
       return row.m_group && (!m_order.empty() ||
@@ -598,6 +598,9 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
     m_transaction.push(AddOperation(index));
   } else {
     m_rows[previous_row].m_group = parent;
+    if(previous_row < index) {
+      --index;
+    }
     move_row(previous_row, index);
   }
   for(auto group = parent; group; group = group->m_parent) {
@@ -641,19 +644,17 @@ void GroupedTableModel::move_row(int source, int destination) {
   }
 }
 
-void GroupedTableModel::erase(
-    int row, int shared_depth, const Changes& changes) {
-  auto group = m_rows[row].m_group;
-  auto source = m_rows[row].m_source.get_index();
-  remove_row(row);
-  auto removed = 1;
+void GroupedTableModel::remove_from_groups(int source,
+    std::shared_ptr<Group> group, int shared_depth, const Changes& changes) {
+  auto removed = 0;
   while(group) {
-    row = group->m_row;
+    auto row = group->m_row;
     group->m_descendant_count -= removed;
     if(group->m_depth < shared_depth) {
       group = group->m_parent;
       continue;
     }
+    --group->m_descendant_count;
     for(auto column = 0; column != get_column_size(); ++column) {
       auto& accumulator = group->m_aggregates[column].m_accumulator;
       if(accumulator) {
@@ -733,17 +734,16 @@ void GroupedTableModel::flush_updates(const Operation* shift) {
       }
     }
     if(depth != static_cast<int>(m_columns.size())) {
-      erase(row, depth, changes);
       insert(source.get_index(), std::move(parent));
-    } else {
-      for(auto& [column, previous] : changes) {
-        if(is_sorted(column)) {
-          m_unsorted.insert(group);
-        }
-        m_transaction.push(UpdateOperation(row, column,
-          std::move(previous),
-          to_any(m_source->at(source.get_index(), column))));
+      remove_from_groups(source.get_index(), std::move(group), depth, changes);
+      row = m_indices[source.get_index()];
+    }
+    for(auto& [column, previous] : changes) {
+      if(is_sorted(column)) {
+        m_unsorted.insert(m_rows[row].m_group);
       }
+      m_transaction.push(UpdateOperation(row, column, std::move(previous),
+        to_any(m_source->at(source.get_index(), column))));
     }
   }
 }
@@ -802,7 +802,10 @@ void GroupedTableModel::apply(const Operation& operation) {
     },
     [&] (const PreRemoveOperation& removal) {
       flush_updates(nullptr);
-      erase(m_indices[removal.m_index], 0, {});
+      auto row = m_indices[removal.m_index];
+      auto group = m_rows[row].m_group;
+      remove_row(row);
+      remove_from_groups(removal.m_index, std::move(group), 0, {});
     },
     [&] (const RemoveOperation& removal) {
       m_indices.erase(m_indices.begin() + removal.m_index);

@@ -121,7 +121,8 @@ namespace Spire {
       void insert(int source, std::shared_ptr<Group> parent);
       void remove_row(int row);
       void move_row(int source, int destination);
-      void erase(int row, int shared_depth, const Changes& changes);
+      void remove_from_groups(int source, std::shared_ptr<Group> group,
+        int shared_depth, const Changes& changes);
       void track(const Operation& operation);
       void flush_updates(const Operation* shift);
       void refresh_aggregates();

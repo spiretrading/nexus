@@ -298,9 +298,10 @@ namespace {
               size = current;
               count->set(QStringLiteral("(%1)").arg(size));
             }
-            if(leaf.get_index() == -1) {
-              leaf.set(table->get_first_leaf(index.get_index()));
-              bind(leaf.get_index());
+            auto first = table->get_first_leaf(index.get_index());
+            if(leaf.get_index() != first) {
+              leaf.set(first);
+              bind(first);
             }
           });
       }
