@@ -24,6 +24,37 @@ using namespace Spire::Styles;
 using namespace Spire::Tests;
 
 TEST_SUITE("GroupedTableView") {
+  UI_TEST_CASE("source_column_count") {
+    auto source = std::make_shared<ArrayTableModel>();
+    auto builder = GroupedTableViewBuilder(source);
+    builder.add_column("Account").add_column("Shares");
+    auto grouped = false;
+    SUBCASE("ungrouped") {}
+    SUBCASE("grouped") {
+      builder.set_grouping({1});
+      grouped = true;
+    }
+    auto view = std::unique_ptr<TableView>(builder.make());
+    view->show();
+    auto& visible = *view->get_body().get_table();
+    for(auto& row : std::vector<std::vector<std::any>>{
+        {1, 2, 3, 4}, {1}, {}}) {
+      source->push(row);
+      QApplication::processEvents();
+      REQUIRE(visible.get_row_size() == 0);
+      REQUIRE(visible.get_column_size() == 2);
+      REQUIRE(source->get_row_size() == 1);
+      source->remove(0);
+      source->push({QString("A"), 10});
+      QApplication::processEvents();
+      auto leaf = static_cast<int>(grouped);
+      REQUIRE(visible.get_row_size() == leaf + 1);
+      REQUIRE(visible.get<int>(leaf, 1) == 10);
+      REQUIRE(view->get_body().find_item(TableIndex(leaf, 1)));
+      source->remove(0);
+    }
+  }
+
   UI_TEST_CASE("nested_disclosure") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD"), 10});

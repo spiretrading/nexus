@@ -367,8 +367,9 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::set_grouping(
 }
 
 TableView* GroupedTableViewBuilder::make() const {
-  if(m_source->get_column_size() != 0 &&
-      m_source->get_column_size() != std::ssize(m_columns)) {
+  auto column_count = static_cast<int>(m_columns.size());
+  if((m_source->get_column_size() != 0 || m_source->get_row_size() != 0) &&
+      m_source->get_column_size() != column_count) {
     throw std::invalid_argument("Expected a header for each source column.");
   }
   auto factories = std::vector<TableAggregationFactory>();
@@ -377,6 +378,7 @@ TableView* GroupedTableViewBuilder::make() const {
   }
   auto table = std::make_shared<GroupedTableModel>(
     m_source, m_grouping.value_or(std::vector<int>()), std::move(factories));
+  table->set_column_count(column_count);
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
   builder.set_sort_handler(

@@ -1,6 +1,7 @@
 #ifndef SPIRE_GROUPED_TABLE_MODEL_HPP
 #define SPIRE_GROUPED_TABLE_MODEL_HPP
 #include <map>
+#include <optional>
 #include <set>
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
@@ -82,11 +83,14 @@ namespace Spire {
       QValidator::State remove(int row) override;
 
     private:
+      friend class GroupedTableViewBuilder;
       struct Group;
       struct Row;
       using Changes = std::map<int, std::any>;
       mutable GroupingSignal m_grouping_signal;
       std::shared_ptr<TableModel> m_source;
+      std::optional<int> m_column_count;
+      bool m_has_matching_columns;
       std::vector<int> m_columns;
       std::vector<TableAggregationFactory> m_aggregations;
       std::vector<SortedTableModel::ColumnOrder> m_order;
@@ -99,6 +103,8 @@ namespace Spire {
       bool m_is_source_transaction;
       boost::signals2::scoped_connection m_connection;
 
+      int get_source_row_size() const;
+      void set_column_count(int count);
       void validate_columns(const std::vector<int>& columns) const;
       bool is_identity() const;
       void materialize_rows();

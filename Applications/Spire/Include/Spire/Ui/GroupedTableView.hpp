@@ -64,7 +64,10 @@ namespace Details {
       /** Fixes the grouping columns in order and hides the grouping bar. */
       GroupedTableViewBuilder& set_grouping(std::vector<int> columns);
 
-      /** Builds the configured table view. */
+      /**
+       * Builds the view with one header per source column. If an empty source
+       * is populated with a different width, its rows are hidden.
+       */
       TableView* make() const;
 
     private:

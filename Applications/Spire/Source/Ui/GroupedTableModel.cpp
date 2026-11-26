@@ -91,6 +91,7 @@ GroupedTableModel::GroupedTableModel(
 GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
     std::vector<int> columns, std::vector<TableAggregationFactory> aggregations)
     : m_source(std::move(source)),
+      m_has_matching_columns(true),
       m_columns(std::move(columns)),
       m_aggregations(std::move(aggregations)),
       m_next_group(0),
@@ -151,7 +152,7 @@ void GroupedTableModel::set_grouping(std::vector<int> columns) {
       m_columns.clear();
     } else {
       m_columns = std::move(columns);
-      for(auto i = 0; i != m_source->get_row_size(); ++i) {
+      for(auto i = 0; i != get_source_row_size(); ++i) {
         insert(i, shared_depth);
       }
     }
@@ -263,17 +264,23 @@ int GroupedTableModel::index_from_source(int row) const {
 
 int GroupedTableModel::get_row_size() const {
   if(is_identity()) {
-    return m_source->get_row_size();
+    return get_source_row_size();
   }
   return static_cast<int>(m_rows.size());
 }
 
 int GroupedTableModel::get_column_size() const {
+  if(m_column_count) {
+    return *m_column_count;
+  }
   return m_source->get_column_size();
 }
 
 AnyRef GroupedTableModel::at(int row, int column) const {
   if(is_identity()) {
+    if(!m_has_matching_columns) {
+      throw std::out_of_range("The row is out of range.");
+    }
     return m_source->at(row, column);
   }
   auto& entry = m_rows.at(row);
@@ -305,10 +312,23 @@ QValidator::State GroupedTableModel::remove(int row) {
   return m_source->remove(source);
 }
 
+int GroupedTableModel::get_source_row_size() const {
+  if(!m_has_matching_columns) {
+    return 0;
+  }
+  return m_source->get_row_size();
+}
+
+void GroupedTableModel::set_column_count(int count) {
+  m_column_count = count;
+  validate_columns(m_columns);
+}
+
 void GroupedTableModel::validate_columns(
     const std::vector<int>& columns) const {
   auto width = get_column_size();
-  auto has_width = width != 0 || m_source->get_row_size() != 0;
+  auto has_width =
+    m_column_count || width != 0 || m_source->get_row_size() != 0;
   for(auto i = columns.begin(); i != columns.end(); ++i) {
     if(*i < 0 || (has_width && *i >= width) ||
         std::ranges::find(columns.begin(), i, *i) != i) {
@@ -325,14 +345,14 @@ bool GroupedTableModel::is_identity() const {
 }
 
 void GroupedTableModel::materialize_rows() {
-  for(auto i = 0; i != m_source->get_row_size(); ++i) {
+  for(auto i = 0; i != get_source_row_size(); ++i) {
     m_rows.emplace_back(nullptr, TableRowIndexTracker(i));
     m_indices.push_back(i);
   }
 }
 
 void GroupedTableModel::restore_source_order() {
-  for(auto i = 0; i != m_source->get_row_size(); ++i) {
+  for(auto i = 0; i != get_source_row_size(); ++i) {
     move_row(m_indices[i], i);
   }
   m_rows.clear();
@@ -758,6 +778,18 @@ void GroupedTableModel::on_operation(const Operation& operation) {
       sort_pending();
     },
     [&] (const auto&) {
+      if(m_column_count && std::holds_alternative<AddOperation>(operation) &&
+          m_source->get_row_size() == 1) {
+        auto count = m_source->get_column_size();
+        m_has_matching_columns = count == *m_column_count;
+        if(!m_has_matching_columns) {
+          qWarning(
+            "Expected %d source columns, received %d.", *m_column_count, count);
+        }
+      }
+      if(!m_has_matching_columns) {
+        return;
+      }
       if(is_identity()) {
         m_transaction.push(operation);
       } else if(m_is_source_transaction) {
