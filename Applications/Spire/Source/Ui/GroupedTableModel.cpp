@@ -223,6 +223,26 @@ QString GroupedTableModel::get_group_name(int row) const {
   return m_rows.at(row).m_group->m_key;
 }
 
+int GroupedTableModel::get_group_size(int row) const {
+  if(index_to_source(row) != -1) {
+    return 0;
+  }
+  return m_rows.at(row).m_group->m_leaf_count;
+}
+
+int GroupedTableModel::get_first_leaf(int row) const {
+  if(row < 0 || row >= get_row_size()) {
+    return -1;
+  }
+  while(row + 1 < get_row_size() && get_parent(row + 1) == row) {
+    ++row;
+    if(!m_rows[row].is_heading()) {
+      return row;
+    }
+  }
+  return -1;
+}
+
 int GroupedTableModel::index_to_source(int row) const {
   if(row < 0 || row >= get_row_size()) {
     return -1;
@@ -341,10 +361,7 @@ AnyRef GroupedTableModel::sort_value(const Row& row, int column) const {
   }
   auto& group = *row.m_group;
   if(column == m_columns.front() || column == m_columns[group.m_depth]) {
-    auto leaf = group.m_row + 1;
-    while(m_rows[leaf].is_heading()) {
-      ++leaf;
-    }
+    auto leaf = get_first_leaf(group.m_row);
     return m_source->at(
       m_rows[leaf].m_source.get_index(), m_columns[group.m_depth]);
   }

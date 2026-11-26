@@ -62,6 +62,12 @@ namespace Spire {
       /** Returns the name of a group heading, or an empty string for a leaf. */
       QString get_group_name(int row) const;
 
+      /** Returns the number of leaves in a group, or zero for a leaf row. */
+      int get_group_size(int row) const;
+
+      /** Returns the grouped index of the first leaf in a group, or -1. */
+      int get_first_leaf(int row) const;
+
       /** Returns the source index, or -1 for a heading or an invalid row. */
       int index_to_source(int row) const;
 

@@ -2837,14 +2837,34 @@ UiProfile Spire::make_grouped_table_view_profile() {
   return UiProfile("GroupedTableView", properties, [] (auto& profile) {
     auto positions = std::make_shared<ArrayTableModel>();
     auto& shares = get<int>("AR.TSX shares", profile.get_properties());
-    positions->push({"conglg15", "CAD", "AR.TSX", "Long", shares.get()});
-    positions->push({"conglg15", "USD", "MSFT.NASDAQ", "Long", 600});
-    positions->push({"dichch10", "CAD", "AGRA.CSE", "Long", 800});
-    positions->push({"conglg15", "CAD", "BHS.TSXV", "Long", 400});
-    positions->push({"dichch10", "CAD", "ATMO.CSE", "Short", 300});
+    positions->push(
+      {"conglg15", "CAD", "AR.TSX", "Long", shares.get(), Countries::CA});
+    positions->push(
+      {"conglg15", "USD", "MSFT.NASDAQ", "Long", 600, Countries::US});
+    positions->push(
+      {"dichch10", "CAD", "AGRA.CSE", "Long", 800, Countries::CA});
+    positions->push(
+      {"conglg15", "CAD", "BHS.TSXV", "Long", 400, Countries::CA});
+    positions->push(
+      {"dichch10", "CAD", "ATMO.CSE", "Short", 300, Countries::CA});
     auto view = GroupedTableViewBuilder(positions).
       add_column("Account", "Acct").add_column("Currency", "Ccy").
-      add_column("Ticker").add_column("Side").add_column("Shares").make();
+      add_column("Ticker").add_column("Side").add_column("Shares").
+      add_column("Country").set_item_builder(
+        [] (const std::shared_ptr<TableModel>& table, int row, int column) ->
+            QWidget* {
+          if(column != 5) {
+            return TableView::default_item_builder(table, row, column);
+          }
+          auto code = to_text(table->get<CountryCode>(row, column));
+          auto size = scale(16, 10);
+          auto flag = new Icon(image_from_svg(
+            QString(":/Icons/flag_icons/%1.svg").arg(code.toLower()), size));
+          flag->setFixedSize(size);
+          flag->setAccessibleName(code);
+          set_style(*flag, StyleSheet());
+          return flag;
+        }).make();
     new TableColumnReorderController(*view);
     auto& widths = *view->get_header().get_widths();
     widths.set(0, scale_width(180));
@@ -2852,8 +2872,9 @@ UiProfile Spire::make_grouped_table_view_profile() {
     widths.set(2, scale_width(115));
     widths.set(3, scale_width(70));
     widths.set(4, scale_width(80));
+    widths.set(5, scale_width(85));
     apply_widget_properties(view, profile.get_properties());
-    get<int>("width", profile.get_properties()).set(545);
+    get<int>("width", profile.get_properties()).set(630);
     get<int>("height", profile.get_properties()).set(350);
     auto& style_sheet =
       get<optional<StyleSheet>>("style_sheet", profile.get_properties());

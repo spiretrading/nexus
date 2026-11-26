@@ -50,7 +50,7 @@ namespace Details {
         Details::TableAccumulator<std::invoke_result_t<F&>>
       GroupedTableViewBuilder& set_aggregation(F factory);
 
-      /** Sets the leaf cell builder, which receives source coordinates. */
+      /** Builds leaf cells and group keys using source table coordinates. */
       GroupedTableViewBuilder& set_item_builder(
         const TableViewItemBuilder& item_builder);
 

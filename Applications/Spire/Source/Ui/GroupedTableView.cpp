@@ -2,10 +2,12 @@
 #include <algorithm>
 #include <map>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableGroupingBar.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -165,7 +167,8 @@ namespace {
   class GroupCell : public QWidget {
     public:
       GroupCell(GroupItemBuilder& builder, int row, int column)
-          : m_item(nullptr) {
+          : m_builder(builder.m_item_builder),
+            m_item(nullptr) {
         auto& table = builder.m_table;
         setMinimumHeight(scale_height(28));
         auto layout = make_hbox_layout(this);
@@ -173,42 +176,14 @@ namespace {
         auto& grouping = table->get_grouping();
         auto source = table->index_to_source(row);
         if(source == -1 && column == grouping.front()) {
-          auto depth = 0;
-          for(auto i = table->get_parent(row); i != -1;
-              i = table->get_parent(i)) {
-            ++depth;
-          }
-          layout->setContentsMargins(
-            scale_width(8 + 16 * depth), 0, scale_width(8), 0);
-          static const auto EXPAND_ARROW =
-            image_from_svg(":/Icons/expand-arrow.svg", scale(6, 8));
-          static const auto COLLAPSE_ARROW =
-            image_from_svg(":/Icons/collapse-arrow.svg", scale(8, 6));
-          auto button = make_icon_toggle_button(
-            EXPAND_ARROW, COLLAPSE_ARROW, builder.m_filter->is_expanded(row));
-          button->setFixedSize(scale(20, 20));
-          auto description = [&] {
-            auto name = table->get_group_name(row);
-            if(name.isEmpty()) {
-              return tr("Expand or collapse group");
-            }
-            return tr("Expand or collapse %1").arg(name);
-          }();
-          button->setAccessibleName(description);
-          button->focusProxy()->setAccessibleName(description);
-          layout->addWidget(button);
-          setFocusPolicy(Qt::StrongFocus);
-          setFocusProxy(button);
-          layout->addWidget(
-            TableView::default_item_builder(table, row, column));
+          initialize_heading(table, row, *builder.m_filter, layout);
           return;
         }
         if(source == -1) {
           m_builder = builder.m_aggregate_item_builder;
-          m_item = m_builder->mount(table, row, column);
+          m_item = m_builder.mount(table, row, column);
         } else {
-          m_builder = builder.m_item_builder;
-          m_item = m_builder->mount(table->get_source(), source, column);
+          m_item = m_builder.mount(table->get_source(), source, column);
         }
         layout->addWidget(m_item);
         setFocusPolicy(m_item->focusPolicy());
@@ -223,18 +198,91 @@ namespace {
       }
 
       ~GroupCell() override {
-        if(m_builder) {
-          m_connection.disconnect();
-          setFocusProxy(nullptr);
-          m_item->setParent(nullptr);
-          m_builder->unmount(m_item);
-        }
+        m_connection.disconnect();
+        setFocusProxy(nullptr);
+        release_item();
       }
 
     private:
-      std::optional<TableViewItemBuilder> m_builder;
+      TableViewItemBuilder m_builder;
       QWidget* m_item;
       scoped_connection m_connection;
+
+      void release_item() {
+        if(m_item) {
+          m_item->setParent(nullptr);
+          m_builder.unmount(m_item);
+          m_item = nullptr;
+        }
+      }
+
+      void initialize_heading(const std::shared_ptr<GroupedTableModel>& table,
+          int row, GroupFilter& filter, QHBoxLayout* layout) {
+        auto depth = 0;
+        for(auto i = table->get_parent(row); i != -1;
+            i = table->get_parent(i)) {
+          ++depth;
+        }
+        layout->setContentsMargins(
+          scale_width(8 + 16 * depth), 0, scale_width(8), 0);
+        static const auto EXPAND_ARROW =
+          image_from_svg(":/Icons/expand-arrow.svg", scale(6, 8));
+        static const auto COLLAPSE_ARROW =
+          image_from_svg(":/Icons/collapse-arrow.svg", scale(8, 6));
+        auto button = make_icon_toggle_button(
+          EXPAND_ARROW, COLLAPSE_ARROW, filter.is_expanded(row));
+        button->setFixedSize(scale(20, 20));
+        auto description = [&] {
+          auto name = table->get_group_name(row);
+          if(name.isEmpty()) {
+            return tr("Expand or collapse group");
+          }
+          return tr("Expand or collapse %1").arg(name);
+        }();
+        button->setAccessibleName(description);
+        button->focusProxy()->setAccessibleName(description);
+        layout->addWidget(button);
+        setFocusPolicy(Qt::StrongFocus);
+        setFocusProxy(button);
+        auto size = table->get_group_size(row);
+        auto count = std::make_shared<LocalTextModel>(
+          QStringLiteral("(%1)").arg(size));
+        layout->addSpacing(scale_width(4));
+        layout->addWidget(make_label(count));
+        layout->addStretch();
+        auto column = table->get_grouping()[depth];
+        auto bind = [=, this] (int leaf) {
+          release_item();
+          if(leaf != -1) {
+            m_item = m_builder.mount(
+              table->get_source(), table->index_to_source(leaf), column);
+            layout->insertWidget(1, m_item);
+            m_item->show();
+          }
+        };
+        auto leaf = TableRowIndexTracker(table->get_first_leaf(row));
+        bind(leaf.get_index());
+        m_connection = table->connect_operation_signal(
+          [=, index = TableRowIndexTracker(row)]
+              (const TableModel::Operation& operation) mutable {
+            index.update(operation);
+            leaf.update(operation);
+            using EndTransaction = TableModel::EndTransaction;
+            if(index.get_index() == -1 ||
+                !std::holds_alternative<EndTransaction>(operation)) {
+              return;
+            }
+            auto current = table->get_group_size(index.get_index());
+            if(current != size) {
+              size = current;
+              count->set(QStringLiteral("(%1)").arg(size));
+            }
+            if(leaf.get_index() == -1) {
+              leaf.set(table->get_first_leaf(index.get_index()));
+              bind(leaf.get_index());
+            }
+          });
+      }
   };
 
   QWidget* GroupItemBuilder::mount(

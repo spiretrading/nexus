@@ -322,6 +322,74 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(header.get_item(0)->isHidden());
   }
 
+  UI_TEST_CASE("heading_item_builder") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CA"), 10});
+    source->push({QString("B"), QString("US"), 20});
+    source->push({QString("A"), QString("CA"), 30});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Country").add_column("Shares").
+      set_item_builder([=] (const std::shared_ptr<TableModel>& table, int row,
+          int column) -> QWidget* {
+        REQUIRE(table == source);
+        if(column != 1) {
+          return TableView::default_item_builder(table, row, column);
+        }
+        auto flag = new Icon(QImage());
+        flag->setAccessibleName(table->get<QString>(row, column));
+        flag->setToolTip(QString::number(table->get<int>(row, 2)));
+        flag->setFixedSize(scale(16, 10));
+        return flag;
+      }).set_grouping({0, 1}).make());
+    view->get_header().get_widths()->set(0, scale_width(180));
+    view->resize(scale(500, 350));
+    view->show();
+    QApplication::processEvents();
+    auto heading = [&] (int row) {
+      auto item = view->get_body().find_item(TableIndex(row, 0));
+      REQUIRE(item);
+      return item->get_body().layout();
+    };
+    auto flag = [&] (int row) {
+      auto icon = dynamic_cast<Icon*>(heading(row)->itemAt(1)->widget());
+      REQUIRE(icon);
+      return icon;
+    };
+    auto count = [&] (int row) {
+      auto label = dynamic_cast<TextBox*>(heading(row)->itemAt(3)->widget());
+      REQUIRE(label);
+      return label->get_current()->get();
+    };
+    auto account = dynamic_cast<TextBox*>(heading(0)->itemAt(1)->widget());
+    REQUIRE(account);
+    REQUIRE(account->get_current()->get() == "A");
+    REQUIRE(count(0) == "(2)");
+    auto first = flag(1);
+    REQUIRE(first->accessibleName() == "CA");
+    REQUIRE(first->toolTip() == "10");
+    REQUIRE(first->isVisible());
+    auto count_label = heading(1)->itemAt(3)->widget();
+    REQUIRE(count_label->x() == first->x() + first->width() + scale_width(4));
+    REQUIRE(count(1) == "(2)");
+    auto toggle =
+      dynamic_cast<ToggleButton*>(heading(1)->itemAt(0)->widget());
+    REQUIRE(toggle);
+    toggle->get_current()->set(false);
+    source->push({QString("A"), QString("CA"), 40});
+    REQUIRE(flag(1) == first);
+    REQUIRE(count(0) == "(3)");
+    REQUIRE(count(1) == "(3)");
+    source->remove(0);
+    REQUIRE(flag(1)->accessibleName() == "CA");
+    REQUIRE(flag(1)->toolTip() == "30");
+    REQUIRE(flag(1)->isVisible());
+    REQUIRE(count(1) == "(2)");
+    source->set(1, 1, QString("US"));
+    REQUIRE(flag(1)->toolTip() == "40");
+    REQUIRE(count(1) == "(1)");
+    REQUIRE(count(0) == "(2)");
+  }
+
   UI_TEST_CASE("item_builders") {
     struct LeafBuilder {
       std::shared_ptr<TableModel> m_source;
