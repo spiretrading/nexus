@@ -67,6 +67,27 @@ namespace {
     optional<unsigned long>, optional<long long>, optional<unsigned long long>,
     T...>;
 
+  template<typename T>
+  QString format_number(const T& value, const QLocale& locale) {
+    if constexpr(std::signed_integral<T>) {
+      return to_text(static_cast<std::int64_t>(value), locale);
+    } else if constexpr(std::unsigned_integral<T>) {
+      return to_text(static_cast<std::uint64_t>(value), locale);
+    } else if constexpr(std::floating_point<T>) {
+      return to_text(static_cast<double>(value), locale);
+    } else {
+      return to_text(value, locale);
+    }
+  }
+
+  template<typename T>
+  QString format_number(const optional<T>& value, const QLocale& locale) {
+    if(value) {
+      return format_number(*value, locale);
+    }
+    return {};
+  }
+
   template<std::floating_point T>
   bool is_nan(const T& value) {
     return std::isnan(value);
@@ -609,11 +630,6 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<DirectoryEntry>(value), locale);
   } else if(value.type() == typeid(Money)) {
     return to_text(std::any_cast<Money>(value), locale);
-  } else if(value.type() == typeid(optional<Money>)) {
-    if(auto& price = std::any_cast<const optional<Money>&>(value)) {
-      return to_text(*price, locale);
-    }
-    return QString();
   } else if(value.type() == typeid(OrderStatus)) {
     return to_text(std::any_cast<OrderStatus>(value), locale);
   } else if(value.type() == typeid(OrderType)) {
@@ -652,20 +668,14 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return QString::fromUtf8(std::any_cast<const char*>(value));
   } else if(value.type() == typeid(bool)) {
     return to_text(std::any_cast<bool>(value), locale);
-  } else if(value.type() == typeid(unsigned int)) {
-    return to_text(std::any_cast<unsigned int>(value), locale);
-  } else if(value.type() == typeid(int)) {
-    return to_text(std::any_cast<int>(value), locale);
-  } else if(value.type() == typeid(std::uint64_t)) {
-    return to_text(std::any_cast<std::uint64_t>(value), locale);
-  } else if(value.type() == typeid(std::int64_t)) {
-    return to_text(std::any_cast<std::int64_t>(value), locale);
-  } else if(value.type() == typeid(float)) {
-    return to_text(static_cast<double>(std::any_cast<float>(value)), locale);
-  } else if(value.type() == typeid(double)) {
-    return to_text(std::any_cast<double>(value), locale);
   }
-  return QString();
+  auto text = QString();
+  ComparableTypes<optional<Money>, optional<Quantity>>()(value,
+    [&] (const auto& number) {
+      text = format_number(number, locale);
+      return true;
+    });
+  return text;
 }
 
 bool Spire::compare(const AnyRef& left, const AnyRef& right) {

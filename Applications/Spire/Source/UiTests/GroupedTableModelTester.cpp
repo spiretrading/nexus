@@ -8,6 +8,8 @@
 #include "Spire/Ui/GroupedTableModel.hpp"
 
 using namespace Beam;
+using namespace boost;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -62,7 +64,7 @@ namespace {
         [&] (const TableModel::UpdateOperation& update) {
           auto& cell = rows.at(update.m_row).at(update.m_column);
           if(cell.has_value() || update.m_previous.has_value()) {
-            REQUIRE(is_equal(cell, update.m_previous));
+            REQUIRE(Spire::is_equal(cell, update.m_previous));
           }
           cell = update.m_value;
         },
@@ -73,7 +75,8 @@ namespace {
           REQUIRE(std::ssize(rows) == model.get_row_size());
           for(auto row = 0; row != model.get_row_size(); ++row) {
             for(auto column = 0; column != model.get_column_size(); ++column) {
-              REQUIRE(is_equal(rows[row][column], model.at(row, column)));
+              REQUIRE(
+                Spire::is_equal(rows[row][column], model.at(row, column)));
             }
             auto index = model.index_to_source(row);
             if(index != -1) {
@@ -146,6 +149,27 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get_group_size(heading(0)) == 1);
     REQUIRE(model.get<std::int64_t>(heading(0), 1) == 10);
     REQUIRE(model.get<std::int64_t>(heading(1), 1) == 50);
+  }
+
+  TEST_CASE("numeric_group_names") {
+    auto check = [] (const std::any& first, const std::any& second,
+        const QString& first_name, const QString& second_name) {
+      auto source = std::make_shared<ArrayTableModel>();
+      source->push({first});
+      source->push({second});
+      source->push({first});
+      auto model = GroupedTableModel(source, {0});
+      REQUIRE(model.get<QString>(0, 0) == first_name + " (2)");
+      REQUIRE(model.get<QString>(3, 0) == second_name + " (1)");
+    };
+    check(short(7), short(8), "7", "8");
+    check(static_cast<signed char>(-7), static_cast<signed char>(8), "-7", "8");
+    auto maximum = std::numeric_limits<std::uint64_t>::max();
+    check(make_optional(maximum), optional<std::uint64_t>(0), to_text(maximum),
+      "0");
+    check(
+      make_optional(1.25L), optional<long double>(), to_text(1.25), QString());
+    check(make_optional(Quantity(7)), make_optional(Quantity(8)), "7", "8");
   }
 
   TEST_CASE("group_name_change") {
@@ -378,8 +402,8 @@ TEST_SUITE("GroupedTableModel") {
     auto model = GroupedTableModel(source, {0}, [&] (const AnyRef& left,
         int left_row, const AnyRef& right, int right_row, int column) {
       REQUIRE(column == 2);
-      REQUIRE(is_equal(table->at(left_row, column), left));
-      REQUIRE(is_equal(table->at(right_row, column), right));
+      REQUIRE(Spire::is_equal(table->at(left_row, column), left));
+      REQUIRE(Spire::is_equal(table->at(right_row, column), right));
       return compare(right, left);
     });
     table = &model;
