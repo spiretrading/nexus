@@ -56,6 +56,39 @@ TEST_SUITE("GroupedTableView") {
     }
   }
 
+  UI_TEST_CASE("header_sort_after_programmatic_sort") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("Long"), QString("A"), 20});
+    source->push({QString("Long"), QString("B"), 10});
+    source->push({QString("Long"), QString("C"), 20});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Side").add_column("Account").add_column("Shares").
+      set_grouping({0}).make());
+    view->resize(500, 200);
+    view->show();
+    auto& table = *view->get_table();
+    auto& header = view->get_header();
+    header.get_items()->move(2, 1);
+    view->set_column_order({{1, SortedTableModel::Ordering::DESCENDING}});
+    QApplication::processEvents();
+    REQUIRE(header.get_items()->get(2).m_order ==
+      TableHeaderItem::Order::DESCENDING);
+    REQUIRE(table.get<QString>(1, 1) == "C");
+    auto shares = header.get_item(1);
+    move_cursor(*shares, shares->rect().center());
+    press_mouse(*shares, Qt::LeftButton);
+    release_mouse(*shares, Qt::LeftButton);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(header.get_items()->get(2).m_order == TableHeaderItem::Order::NONE);
+    REQUIRE(table.get<QString>(1, 1) == "B");
+    REQUIRE(table.get<QString>(2, 1) == "C");
+    REQUIRE(table.get<QString>(3, 1) == "A");
+    view->set_column_order({});
+    REQUIRE(header.get_items()->get(1).m_order == TableHeaderItem::Order::NONE);
+    REQUIRE(table.get<QString>(1, 1) == "A");
+  }
+
   UI_TEST_CASE("grouped_comparator") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD")});

@@ -212,6 +212,34 @@ void TableView::hide_column(int column) {
   m_body->hide_column(column);
 }
 
+void TableView::set_column_order(
+    std::vector<SortedTableModel::ColumnOrder> order) {
+  std::erase_if(order, [] (const auto& key) {
+    return key.m_order == SortedTableModel::Ordering::NONE;
+  });
+  m_sort(order);
+  m_order = std::move(order);
+  auto& columns = *m_header_view->get_column_order();
+  for(auto i = 0; i != m_header->get_size(); ++i) {
+    auto item = m_header->get(i);
+    if(item.m_order == TableHeaderItem::Order::UNORDERED) {
+      continue;
+    }
+    auto direction = TableHeaderItem::Order::NONE;
+    if(!m_order.empty() && columns.get(i) == m_order.front().m_index) {
+      if(m_order.front().m_order == SortedTableModel::Ordering::ASCENDING) {
+        direction = TableHeaderItem::Order::ASCENDING;
+      } else {
+        direction = TableHeaderItem::Order::DESCENDING;
+      }
+    }
+    if(item.m_order != direction) {
+      item.m_order = direction;
+      m_header->set(i, item);
+    }
+  }
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
@@ -292,25 +320,15 @@ void TableView::update_scroll_sizes() {
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
-  auto header_item = m_header->get(index);
-  header_item.m_order = order;
   auto source = m_header_view->get_column_order()->get(index);
+  auto keys = std::vector<SortedTableModel::ColumnOrder>();
   if(m_sorted_table) {
-    m_order = m_sorted_table->get_column_order();
+    keys = m_sorted_table->get_column_order();
+  } else {
+    keys = m_order;
   }
-  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)), m_order);
-  m_sort(m_order);
-  for(auto i = 0; i != m_header->get_size(); ++i) {
-    if(i == index) {
-      m_header->set(i, header_item);
-    } else {
-      auto item = m_header->get(i);
-      if(item.m_order != TableHeaderItem::Order::UNORDERED) {
-        item.m_order = TableHeaderItem::Order::NONE;
-        m_header->set(i, item);
-      }
-    }
-  }
+  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)), keys);
+  set_column_order(std::move(keys));
   m_sort_signal(source, order);
 }
 

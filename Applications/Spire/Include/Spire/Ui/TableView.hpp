@@ -19,7 +19,7 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
-      /** Signals a change to a source column's sort order. */
+      /** Signals a header sort request in source-column coordinates. */
       using SortSignal = TableHeader::SortSignal;
 
       /** Applies the header's sort keys in source-column coordinates. */
@@ -81,6 +81,13 @@ namespace Spire {
 
       /** Hide the given column. */
       void hide_column(int column);
+
+      /**
+       * Sets the sort keys and marks the primary key in the header.
+       * @param order Source columns in priority order. An empty list clears
+       *        sorting.
+       */
+      void set_column_order(std::vector<SortedTableModel::ColumnOrder> order);
 
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
@@ -225,8 +232,8 @@ namespace Spire {
 
       /**
        * Displays rows in source order after filtering. Calls the handler at
-       * construction and when a header requests sorting, with the primary key
-       * first. The handler can reorder the source through model operations.
+       * construction and whenever the view applies a sort, with the primary
+       * key first. The handler can reorder the source through model operations.
        * An empty handler restores default sorting.
        */
       TableViewBuilder& set_sort_handler(TableView::SortHandler handler);
