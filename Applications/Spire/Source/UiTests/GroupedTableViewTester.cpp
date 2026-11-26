@@ -470,6 +470,35 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(header.get_item(0)->isHidden());
   }
 
+  UI_TEST_CASE("grouped_header_rename") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD"), 10});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account", "Acct").add_column("Currency", "Ccy").
+      add_column("Shares").set_grouping({0, 1}).make());
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    auto& items = *view->get_header().get_items();
+    auto account = items.get(0);
+    account.m_name = "Desk (+1)";
+    items.set(0, account);
+    auto currency = items.get(1);
+    currency.m_short_name = "FX";
+    items.set(1, currency);
+    table->set_grouping({0, 1, 2});
+    REQUIRE(items.get(0).m_name == "Desk (+1) (+2)");
+    REQUIRE(items.get(0).m_short_name == "Acct (+2)");
+    table->set_grouping({1, 0});
+    REQUIRE(items.get(0).m_short_name == "FX (+1)");
+    auto renamed = items.get(0);
+    renamed.m_short_name.clear();
+    items.set(0, renamed);
+    table->set_grouping({});
+    REQUIRE(items.get(0).m_name == "Currency");
+    REQUIRE(items.get(0).m_short_name.isEmpty());
+    REQUIRE(items.get(1).m_name == "Desk (+1)");
+    REQUIRE(items.get(1).m_short_name == "Acct");
+  }
+
   UI_TEST_CASE("heading_edits") {
     struct Editor : TextBox {
       std::shared_ptr<TableModel> m_table;
@@ -819,6 +848,11 @@ TEST_SUITE("GroupedTableView") {
     auto tags = bar->layout()->itemAt(0)->layout();
     auto button = dynamic_cast<MenuButton*>(bar->layout()->itemAt(1)->widget());
     REQUIRE(button);
+    auto enabled = button->grab().toImage();
+    bar->setDisabled(true);
+    REQUIRE(button->grab().toImage() != enabled);
+    bar->setEnabled(true);
+    REQUIRE(button->grab().toImage() == enabled);
     auto& menu = button->get_menu();
     auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
     auto& rows = *view->get_body().get_table();

@@ -30,9 +30,10 @@ namespace {
 
     private:
       struct Column {
-        QString m_name;
-        QString m_short_name;
-        bool m_is_hidden;
+        bool m_was_hidden;
+        int m_suffix_size;
+        QString m_display_name;
+        QString m_display_short_name;
       };
       TableView& m_view;
       int m_group_column;
@@ -61,32 +62,42 @@ namespace {
           auto& item = items.get(i);
           auto hidden = header.get_item(i)->isHidden();
           if(original == m_originals.end()) {
-            original = m_originals.try_emplace(
-              column, item.m_name, item.m_short_name, hidden).first;
+            original = m_originals.try_emplace(column, hidden, 0).first;
           }
-          auto display = original->second;
+          auto& state = original->second;
+          auto hide = state.m_was_hidden;
+          auto revised = item;
+          if(state.m_suffix_size != 0) {
+            if(revised.m_name == state.m_display_name) {
+              revised.m_name.chop(state.m_suffix_size);
+            }
+            if(revised.m_short_name == state.m_display_short_name) {
+              revised.m_short_name.chop(state.m_suffix_size);
+            }
+            state.m_suffix_size = 0;
+          }
           if(grouped) {
-            display.m_is_hidden = column != grouping.front();
-            if(!display.m_is_hidden && grouping.size() > 1) {
+            hide = column != grouping.front();
+            if(!hide && grouping.size() > 1) {
               auto suffix = tr(" (+%1)").arg(grouping.size() - 1);
-              display.m_name += suffix;
-              if(!display.m_short_name.isEmpty()) {
-                display.m_short_name += suffix;
+              revised.m_name += suffix;
+              if(!revised.m_short_name.isEmpty()) {
+                revised.m_short_name += suffix;
               }
+              state.m_suffix_size = suffix.size();
+              state.m_display_name = revised.m_name;
+              state.m_display_short_name = revised.m_short_name;
             }
           } else {
             m_originals.erase(original);
           }
-          if(display.m_name != item.m_name ||
-              display.m_short_name != item.m_short_name) {
-            auto revised = item;
-            revised.m_name = std::move(display.m_name);
-            revised.m_short_name = std::move(display.m_short_name);
+          if(revised.m_name != item.m_name ||
+              revised.m_short_name != item.m_short_name) {
             items.set(i, revised);
           }
-          if(display.m_is_hidden && !hidden) {
+          if(hide && !hidden) {
             m_view.hide_column(i);
-          } else if(!display.m_is_hidden && hidden) {
+          } else if(!hide && hidden) {
             m_view.show_column(i);
           }
         }

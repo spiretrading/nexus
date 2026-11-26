@@ -2825,9 +2825,11 @@ UiProfile Spire::make_font_style_box_profile() {
 }
 
 UiProfile Spire::make_grouped_table_view_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property("AR.TSX shares", 1200));
+  auto properties = std::vector<std::shared_ptr<UiProperty>>{
+    make_standard_property("enabled", true),
+    make_standard_property("width", 630),
+    make_standard_property("height", 350),
+    make_standard_property("AR.TSX shares", 1200)};
   auto default_style = R"(
     any > TableBody > (:aggregate_row and !:selected) {
       background_color: 0xEFEFEF;
@@ -2874,8 +2876,6 @@ UiProfile Spire::make_grouped_table_view_profile() {
     widths.set(4, scale_width(80));
     widths.set(5, scale_width(85));
     apply_widget_properties(view, profile.get_properties());
-    get<int>("width", profile.get_properties()).set(630);
-    get<int>("height", profile.get_properties()).set(350);
     auto& style_sheet =
       get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {

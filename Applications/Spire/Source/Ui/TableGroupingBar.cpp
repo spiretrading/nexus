@@ -44,17 +44,21 @@ namespace {
         auto background = QColor(0xF5F2FF);
         auto border = QColor(0xC7BAFF);
         auto text = QColor(0x684BC7);
-        if(underMouse()) {
+        if(isEnabled() && underMouse()) {
           background = QColor(0xE2E0FF);
           border = QColor(0x4B23A0);
           text = border;
         }
         auto pen = QPen(border, scale_width(1.0), Qt::DashLine);
-        if(m_focus.get_state() == FocusObserver::State::FOCUS_VISIBLE) {
+        if(isEnabled() &&
+            m_focus.get_state() == FocusObserver::State::FOCUS_VISIBLE) {
           pen.setColor(QColor(0x684BC7));
           pen.setStyle(Qt::SolidLine);
         }
         auto painter = QPainter(this);
+        if(!isEnabled()) {
+          painter.setOpacity(0.4);
+        }
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(pen);
         painter.setBrush(background);
@@ -74,15 +78,16 @@ namespace {
       FocusObserver m_focus;
 
       static const QImage& icon() {
-        static auto image =
+        static const auto ICON =
           image_from_svg(":/Icons/plus-circle.svg", scale(14, 14));
-        return image;
+        return ICON;
       }
   };
 
   Icon* make_separator() {
-    static auto image = image_from_svg(":/Icons/arrow-right.svg", scale(6, 8));
-    auto icon = new Icon(image);
+    static const auto ARROW =
+      image_from_svg(":/Icons/arrow-right.svg", scale(6, 8));
+    auto icon = new Icon(ARROW);
     icon->setFixedSize(icon->sizeHint());
     auto style = StyleSheet();
     style.get(Any()).set(Fill(QColor(0xA0A0A0)));
