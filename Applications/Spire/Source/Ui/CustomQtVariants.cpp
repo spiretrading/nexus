@@ -1,6 +1,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
+#include "Spire/Spire/Hash.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
 
 using namespace Beam;
@@ -182,8 +183,6 @@ namespace {
       auto hash = hash_item(value.m_type);
       hash_combine(hash, value.m_code);
       return hash;
-    } else if constexpr(std::same_as<T, QColor>) {
-      return value.rgba();
     } else {
       return qHash(value);
     }

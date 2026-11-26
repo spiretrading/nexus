@@ -2,6 +2,7 @@
 #include <limits>
 #include <set>
 #include <doctest/doctest.h>
+#include <QColor>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -149,6 +150,36 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get_group_size(heading(0)) == 1);
     REQUIRE(model.get<std::int64_t>(heading(0), 1) == 10);
     REQUIRE(model.get<std::int64_t>(heading(1), 1) == 50);
+  }
+
+  TEST_CASE("equal_color_group_keys") {
+    auto first = QColor();
+    auto second = QColor();
+    auto distinct = QColor();
+    SUBCASE("hsl_lightness") {
+      first = QColor::fromHslF(0, 0, 32767.0 / 65535);
+      second = QColor::fromHslF(0, 0, 32768.0 / 65535);
+      distinct = QColor::fromHslF(0, 0, 1);
+    }
+    SUBCASE("hsv_hue") {
+      first = QColor::fromHsvF(-1, 1, 1);
+      second = QColor::fromHsvF(295.35 / 360, 1, 1);
+      distinct = QColor::fromHsvF(0, 1, 1);
+    }
+    REQUIRE(first == second);
+    REQUIRE(first.rgba() != second.rgba());
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({first, 10});
+    auto model = GroupedTableModel(source, {0});
+    source->push({distinct, 30});
+    source->push({second, 20});
+    auto heading = [&] (int row) {
+      return model.get_parent(model.index_from_source(row));
+    };
+    REQUIRE(heading(0) == heading(2));
+    REQUIRE(heading(0) != heading(1));
+    REQUIRE(model.get_group_size(heading(0)) == 2);
+    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 30);
   }
 
   TEST_CASE("numeric_group_names") {
