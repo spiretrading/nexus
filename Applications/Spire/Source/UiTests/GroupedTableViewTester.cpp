@@ -188,6 +188,49 @@ TEST_SUITE("GroupedTableView") {
     }
   }
 
+  UI_TEST_CASE("drag_across_hidden_column") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({"A", "CAD", "Long", 10});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Currency").add_column("Side").
+      add_column("Shares").set_grouping({0, 1}).make());
+    auto controller = TableColumnReorderController(*view);
+    auto& header = view->get_header();
+    auto& widths = *header.get_widths();
+    widths.set(0, scale_width(80));
+    widths.set(1, scale_width(480));
+    widths.set(2, scale_width(160));
+    widths.set(3, scale_width(100));
+    view->resize(scale(400, 200));
+    view->show();
+    QApplication::processEvents();
+    auto account = header.get_item(0);
+    auto currency = header.get_item(1);
+    REQUIRE(currency->isHidden());
+    move_cursor(*account, account->rect().center());
+    auto receiver = QApplication::widgetAt(QCursor::pos());
+    REQUIRE(receiver);
+    press_mouse(*receiver, Qt::LeftButton);
+    auto positions = std::vector<int>();
+    auto drag_to = [&] (int x) {
+      move_cursor(header, QPoint(scale_width(x), header.rect().center().y()));
+      auto position = QCursor::pos();
+      auto move = QMouseEvent(QEvent::MouseMove,
+        receiver->mapFromGlobal(position), position, Qt::NoButton,
+        Qt::LeftButton, Qt::NoModifier);
+      QApplication::sendEvent(receiver, &move);
+      positions.push_back(header.get_index(account).value());
+    };
+    drag_to(100);
+    drag_to(110);
+    drag_to(280);
+    drag_to(60);
+    release_mouse(*receiver, Qt::LeftButton);
+    REQUIRE(positions == std::vector{2, 2, 3, 1});
+    REQUIRE(currency->isHidden());
+    REQUIRE(header.get_column_order()->get(1) == 0);
+  }
+
   UI_TEST_CASE("drag_column_with_collapsed_group") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD"), 10});

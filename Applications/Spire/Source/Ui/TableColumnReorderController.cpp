@@ -52,26 +52,22 @@ namespace {
       &scroll_bar, row, column);
   }
 
-  template <typename Widths>
-  std::tuple<bool, int, int> find_column_at_position(
-      TableHeader& header, const Widths& widths, int x) {
-    auto last_visible_column = -1;
-    auto left =
-      -header.get_scroll_box().get_horizontal_scroll_bar().get_position();
-    auto index = 0;
-    for(auto i = std::begin(widths); i != std::end(widths); ++i, ++index) {
-      auto item = header.get_item(index);
+  int find_column_at_position(TableHeader& header, int x) {
+    auto last = -1;
+    for(auto i = 0; i != header.get_items()->get_size(); ++i) {
+      auto item = header.get_item(i);
       if(!item->isVisible()) {
         continue;
       }
-      last_visible_column = index;
-      auto right = left + *i;
-      if(x >= left && x < right) {
-        return {true, index, left};
+      auto left = item->mapTo(&header, QPoint()).x();
+      if(x < left) {
+        return -1;
+      } else if(x < left + item->width()) {
+        return i;
       }
-      left = right;
+      last = i;
     }
-    return {false, last_visible_column, left};
+    return last;
   }
 
   QWidget* make_preview(QWidget& column, QWidget& parent) {
@@ -202,9 +198,8 @@ bool TableColumnReorderController::eventFilter(QObject* watched,
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(mouse_event.button() == Qt::LeftButton) {
         auto& header = m_table_view->get_header();
-        auto [found, index, left] = find_column_at_position(
-          header, *header.get_widths(), mouse_event.x());
-        if(found && header.get_item(index)->rect().contains(
+        auto index = find_column_at_position(header, mouse_event.x());
+        if(index != -1 && header.get_item(index)->rect().contains(
             header.get_item(index)->mapFromGlobal(mouse_event.globalPos()))) {
           m_source_index = index;
           m_press_position = mouse_event.globalPos();
@@ -253,12 +248,11 @@ void TableColumnReorderController::start_drag() {
       });
     }
   }
-  header.get_item(index)->installEventFilter(this);
-  auto& widths = header.get_widths();
-  m_widths.assign(widths->begin(), widths->end());
-  auto top = header.get_item(index)->mapTo(m_table_view, QPoint(0, 0));
-  auto column = QRect(top, QSize(widths->get(index) + m_left_padding,
-    m_table_view->height() - top.y()));
+  auto item = header.get_item(index);
+  item->installEventFilter(this);
+  auto top = item->mapTo(m_table_view, QPoint(0, 0));
+  auto column = QRect(top,
+    QSize(item->width() + m_left_padding, m_table_view->height() - top.y()));
   column.translate(-m_left_padding, 0);
   auto& horizontal_scroll_bar =
     m_table_view->get_scroll_box().get_horizontal_scroll_bar();
@@ -310,7 +304,6 @@ void TableColumnReorderController::start_drag() {
 
 void TableColumnReorderController::stop_drag() {
   QApplication::restoreOverrideCursor();
-  m_widths.clear();
   if(m_column_preview) {
     m_column_preview->hide();
     m_column_preview->deleteLater();
@@ -348,17 +341,17 @@ void TableColumnReorderController::drag_move(const QMouseEvent& mouse_event) {
   if(!m_column_preview) {
     return;
   }
-  if(m_last_mouse_x == mouse_event.pos().x()) {
+  if(m_last_mouse_x == mouse_event.x()) {
     return;
   }
-  m_last_mouse_x = mouse_event.pos().x();
+  auto moving_right = mouse_event.x() > m_last_mouse_x;
+  m_last_mouse_x = mouse_event.x();
   auto mouse_x = std::max(0, mouse_event.x());
   update_horizontal_scroll_position(mouse_x);
   auto& header = m_table_view->get_header();
-  auto [is_found, index, item_left] =
-    find_column_at_position(header, m_widths, mouse_x);
-  if(index >= 0 && index != m_current_index &&
-      (is_found || mouse_x >= item_left)) {
+  auto index = find_column_at_position(header, mouse_x);
+  if(index != -1 && ((moving_right && index > m_current_index) ||
+      (!moving_right && index < m_current_index))) {
     auto blocker = shared_connection_block(m_connection);
     header.get_items()->move(m_current_index, index);
     move_element(m_column_order, m_current_index, index);

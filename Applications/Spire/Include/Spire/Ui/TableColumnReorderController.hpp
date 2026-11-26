@@ -60,7 +60,6 @@ namespace Spire {
       int m_source_index;
       int m_current_index;
       int m_preview_x_offset;
-      std::vector<int> m_widths;
       boost::signals2::scoped_connection m_connection;
 
       void start_drag();
