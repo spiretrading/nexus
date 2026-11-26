@@ -642,9 +642,6 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   } else if(left.get_type() == typeid(DirectoryEntry)) {
     return DirectoryEntry::name_comparator(
       any_cast<DirectoryEntry>(left), any_cast<DirectoryEntry>(right));
-  } else if(left.get_type() == typeid(const char*)) {
-    return qstrcmp(
-      any_cast<const char*>(left), any_cast<const char*>(right)) < 0;
   }
   return compare_any<bool, Quantity, optional<Quantity>, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,

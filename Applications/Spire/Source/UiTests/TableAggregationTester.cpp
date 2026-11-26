@@ -5,6 +5,7 @@
 #include <doctest/doctest.h>
 #include <QString>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/Details/DefaultTableAggregation.hpp"
 #include "Spire/Ui/TableAggregation.hpp"
 
@@ -81,6 +82,31 @@ TEST_SUITE("TableAggregation") {
     first->remove(QString("USD"));
     REQUIRE_FALSE(first->get().has_value());
     REQUIRE(std::any_cast<QString>(second->get()) == "(1)");
+  }
+
+  TEST_CASE("optional_side_count") {
+    auto aggregate = make_default_table_aggregation();
+    auto missing = optional<Side>();
+    auto bid = optional<Side>(Side::BID);
+    auto ask = optional<Side>(Side::ASK);
+    SUBCASE("empty") {
+      aggregate->add(missing);
+      REQUIRE_FALSE(aggregate->get().has_value());
+      aggregate->update(missing, bid);
+      REQUIRE(std::any_cast<QString>(aggregate->get()) == "(1)");
+      aggregate->update(bid, missing);
+      REQUIRE_FALSE(aggregate->get().has_value());
+    }
+    SUBCASE("distinct_values") {
+      aggregate->add(bid);
+      aggregate->add(bid);
+      aggregate->add(ask);
+      REQUIRE(std::any_cast<QString>(aggregate->get()) == "(2)");
+      aggregate->remove(bid);
+      REQUIRE(std::any_cast<QString>(aggregate->get()) == "(2)");
+      aggregate->update(ask, bid);
+      REQUIRE(std::any_cast<QString>(aggregate->get()) == "(1)");
+    }
   }
 
   TEST_CASE("timestamp_distinct_count") {

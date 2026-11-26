@@ -42,11 +42,6 @@ namespace {
     if(value.get_type() == typeid(QString) ||
         value.get_type() == typeid(std::string)) {
       return value;
-    } else if(auto text = any_cast<const char*>(&std::as_const(value))) {
-      if(!*text) {
-        return AnyRef();
-      }
-      return std::string(*text);
     }
     return make_numeric_key<float, double, long double>(std::move(value));
   }

@@ -2837,16 +2837,16 @@ UiProfile Spire::make_grouped_table_view_profile() {
   return UiProfile("GroupedTableView", properties, [] (auto& profile) {
     auto positions = std::make_shared<ArrayTableModel>();
     auto& shares = get<int>("AR.TSX shares", profile.get_properties());
-    positions->push(
-      {"conglg15", "CAD", "AR.TSX", "Long", shares.get(), Countries::CA});
-    positions->push(
-      {"conglg15", "USD", "MSFT.NASDAQ", "Long", 600, Countries::US});
-    positions->push(
-      {"dichch10", "CAD", "AGRA.CSE", "Long", 800, Countries::CA});
-    positions->push(
-      {"conglg15", "CAD", "BHS.TSXV", "Long", 400, Countries::CA});
-    positions->push(
-      {"dichch10", "CAD", "ATMO.CSE", "Short", 300, Countries::CA});
+    positions->push({QString("conglg15"), QString("CAD"), QString("AR.TSX"),
+      QString("Long"), shares.get(), Countries::CA});
+    positions->push({QString("conglg15"), QString("USD"),
+      QString("MSFT.NASDAQ"), QString("Long"), 600, Countries::US});
+    positions->push({QString("dichch10"), QString("CAD"), QString("AGRA.CSE"),
+      QString("Long"), 800, Countries::CA});
+    positions->push({QString("conglg15"), QString("CAD"), QString("BHS.TSXV"),
+      QString("Long"), 400, Countries::CA});
+    positions->push({QString("dichch10"), QString("CAD"), QString("ATMO.CSE"),
+      QString("Short"), 300, Countries::CA});
     auto view = GroupedTableViewBuilder(positions).
       add_column("Account", "Acct").add_column("Currency", "Ccy").
       add_column("Ticker").add_column("Side").add_column("Shares").

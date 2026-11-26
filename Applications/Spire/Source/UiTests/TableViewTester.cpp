@@ -78,9 +78,9 @@ namespace {
 TEST_SUITE("TableView") {
   UI_TEST_CASE("drag_displayed_column") {
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({1, "A", 10});
-    source->push({0, "B", 90});
-    source->push({2, "C", 30});
+    source->push({1, QString("A"), 10});
+    source->push({0, QString("B"), 90});
+    source->push({2, QString("C"), 30});
     auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
       add_header_item("Desk").add_header_item("Account").
       add_header_item("Shares", TableHeaderItem::Order::DESCENDING).

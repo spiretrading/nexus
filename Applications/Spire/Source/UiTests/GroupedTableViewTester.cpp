@@ -224,7 +224,7 @@ TEST_SUITE("GroupedTableView") {
 
   UI_TEST_CASE("drag_across_hidden_column") {
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({"A", "CAD", "Long", 10});
+    source->push({QString("A"), QString("CAD"), QString("Long"), 10});
     auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
       add_column("Account").add_column("Currency").add_column("Side").
       add_column("Shares").set_grouping({0, 1}).make());
@@ -417,8 +417,8 @@ TEST_SUITE("GroupedTableView") {
 
   UI_TEST_CASE("grouped_column_visibility") {
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({"A", "Long"});
-    source->push({"B", "Short"});
+    source->push({QString("A"), QString("Long")});
+    source->push({QString("B"), QString("Short")});
     auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
       add_column("Account", "Acct").add_column("Side").make());
     view->resize(400, 300);
@@ -722,8 +722,8 @@ TEST_SUITE("GroupedTableView") {
 
   UI_TEST_CASE("column_order_settings") {
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({"A", 3});
-    source->push({"B", 8});
+    source->push({QString("A"), 3});
+    source->push({QString("B"), 8});
     auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
       add_column("Account").set_order(TableHeaderItem::Order::UNORDERED).
       add_column("Shares").set_order(TableHeaderItem::Order::DESCENDING).
@@ -768,9 +768,9 @@ TEST_SUITE("GroupedTableView") {
         int m_total;
     };
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({"A", 10, 5});
-    source->push({"B", 30, 9});
-    source->push({"A", 20, 2});
+    source->push({QString("A"), 10, 5});
+    source->push({QString("B"), 30, 9});
+    source->push({QString("A"), 20, 2});
     auto builder = GroupedTableViewBuilder(source);
     auto opening = 100;
     auto view = std::unique_ptr<TableView>(builder.add_column("Account").

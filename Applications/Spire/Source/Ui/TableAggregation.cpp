@@ -4,9 +4,13 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <QHash>
+#include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Details/DefaultTableAggregation.hpp"
 
+using namespace Beam;
+using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::multiprecision;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -17,11 +21,11 @@ namespace {
   template<typename... T>
   bool visit_as(const AnyRef& value, const auto& visit) {
     auto match = [&]<typename N> {
-      if(auto number = any_cast<N>(&value)) {
-        visit(*number);
-      } else if(auto number = any_cast<boost::optional<N>>(&value)) {
-        if(*number) {
-          visit(**number);
+      if(auto item = any_cast<N>(&value)) {
+        visit(*item);
+      } else if(auto item = any_cast<optional<N>>(&value)) {
+        if(*item) {
+          visit(**item);
         }
       } else {
         return false;
@@ -43,7 +47,11 @@ namespace {
     auto visit_text = [&] (const auto& text) {
       visit(AnyRef(text));
     };
-    if(!visit_as<QString, std::string>(value, visit_text)) {
+    if(!visit_as<QString, std::string, Side, PositionSide, TradeSide,
+        CurrencyId, Ticker, Venue, CountryCode, OrderStatus, OrderType,
+        TimeInForce, TimeAndSale::Condition, Scope, DirectoryEntry,
+        AccountListItem::Account, Task::State, PositionSideToken, date, ptime,
+        time_duration, QColor, QKeySequence, bool>(value, visit_text)) {
       visit(value);
     }
   }
