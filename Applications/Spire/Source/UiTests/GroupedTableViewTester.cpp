@@ -568,19 +568,35 @@ TEST_SUITE("GroupedTableView") {
       dynamic_cast<ToggleButton*>(heading(1)->itemAt(0)->widget());
     REQUIRE(toggle);
     toggle->get_current()->set(false);
-    source->push({QString("A"), QString("CA"), 40});
-    REQUIRE(flag(1) == first);
-    REQUIRE(count(0) == "(3)");
-    REQUIRE(count(1) == "(3)");
-    source->remove(0);
-    REQUIRE(flag(1)->accessibleName() == "CA");
-    REQUIRE(flag(1)->toolTip() == "30");
-    REQUIRE(flag(1)->isVisible());
-    REQUIRE(count(1) == "(2)");
-    source->set(1, 1, QString("US"));
-    REQUIRE(flag(1)->toolTip() == "40");
-    REQUIRE(count(1) == "(1)");
-    REQUIRE(count(0) == "(2)");
+    SUBCASE("insert_first_leaf") {
+      source->insert({QString("A"), QString("CA"), 5}, 0);
+      REQUIRE(flag(1)->toolTip() == "5");
+      REQUIRE(count(1) == "(3)");
+    }
+    SUBCASE("sort_first_leaf") {
+      auto table =
+        std::static_pointer_cast<GroupedTableModel>(view->get_table());
+      table->set_column_order({{2, SortedTableModel::Ordering::DESCENDING}});
+      REQUIRE(flag(1)->toolTip() == "30");
+      REQUIRE(count(1) == "(2)");
+      source->set(0, 2, 50);
+      REQUIRE(flag(1)->toolTip() == "50");
+    }
+    SUBCASE("remove_first_leaf") {
+      source->push({QString("A"), QString("CA"), 40});
+      REQUIRE(flag(1) == first);
+      REQUIRE(count(0) == "(3)");
+      REQUIRE(count(1) == "(3)");
+      source->remove(0);
+      REQUIRE(flag(1)->accessibleName() == "CA");
+      REQUIRE(flag(1)->toolTip() == "30");
+      REQUIRE(flag(1)->isVisible());
+      REQUIRE(count(1) == "(2)");
+      source->set(1, 1, QString("US"));
+      REQUIRE(flag(1)->toolTip() == "40");
+      REQUIRE(count(1) == "(1)");
+      REQUIRE(count(0) == "(2)");
+    }
   }
 
   UI_TEST_CASE("item_builders") {
