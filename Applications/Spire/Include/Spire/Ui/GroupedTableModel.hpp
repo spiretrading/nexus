@@ -10,8 +10,8 @@
 namespace Spire {
 
   /**
-   * Groups rows of a source table by one or more columns and displays aggregate
-   * values in each group heading.
+   * Groups source rows by value and displays aggregates in each heading.
+   * Values without a supported equality comparison form separate groups.
    */
   class GroupedTableModel : public TransactionLogModel<TableModel> {
     public:
@@ -118,7 +118,7 @@ namespace Spire {
       void touch(const std::shared_ptr<Group>& group, int column);
       std::unique_ptr<TableAggregation> make_aggregation(
         const Group& group, int column) const;
-      void insert(int source, int shared_depth);
+      void insert(int source, std::shared_ptr<Group> parent);
       void remove_row(int row);
       void move_row(int source, int destination);
       void erase(int row, int shared_depth, const Changes& changes);

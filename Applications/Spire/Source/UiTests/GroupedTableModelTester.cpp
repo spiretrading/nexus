@@ -1,3 +1,4 @@
+#include <cmath>
 #include <limits>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -5,6 +6,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 
+using namespace Beam;
 using namespace Spire;
 
 namespace {
@@ -108,6 +110,85 @@ namespace {
 }
 
 TEST_SUITE("GroupedTableModel") {
+  TEST_CASE("group_key_identity") {
+    auto first = std::any();
+    auto second = std::any();
+    SUBCASE("accounts_with_the_same_name") {
+      first = DirectoryEntry::make_account(10, "Trading");
+      second = DirectoryEntry::make_account(20, "Trading");
+    }
+    SUBCASE("floats_with_the_same_label") {
+      first = 1.0f;
+      second = std::nextafter(1.0f, 2.0f);
+    }
+    SUBCASE("number_and_text") {
+      first = 1;
+      second = QString("1");
+    }
+    SUBCASE("invalid_utf8") {
+      first = std::string("\xff");
+      second = std::string("\xfe");
+    }
+    REQUIRE(to_text(first) == to_text(second));
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({first, 10});
+    source->push({second, 20});
+    auto model = GroupedTableModel(source, {0});
+    source->push({first, 30});
+    auto heading = [&] (int source_row) {
+      return model.get_parent(model.index_from_source(source_row));
+    };
+    REQUIRE(heading(0) != heading(1));
+    REQUIRE(heading(0) == heading(2));
+    REQUIRE(
+      model.get_group_name(heading(0)) == model.get_group_name(heading(1)));
+    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 40);
+    REQUIRE(model.get<std::int64_t>(heading(1), 1) == 20);
+    source->set(2, 0, second);
+    REQUIRE(heading(1) == heading(2));
+    REQUIRE(model.get_group_size(heading(0)) == 1);
+    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 10);
+    REQUIRE(model.get<std::int64_t>(heading(1), 1) == 50);
+  }
+
+  TEST_CASE("group_name_change") {
+    auto account = DirectoryEntry::make_account(10, "A");
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({account});
+    source->push({DirectoryEntry::make_account(20, "B")});
+    auto model = GroupedTableModel(source, {0});
+    model.set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
+    auto commits = 0;
+    auto moves = 0;
+    observe(model, commits, moves);
+    account.m_name = "C";
+    source->set(0, 0, account);
+    REQUIRE(model.get_group_name(0) == "B");
+    REQUIRE(model.get_group_name(2) == "C");
+    REQUIRE(model.index_to_source(3) == 0);
+    REQUIRE(moves > 0);
+  }
+
+  TEST_CASE("unrecognized_group_key") {
+    struct Key {};
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({Key(), 10});
+    source->push({Key(), 20});
+    auto model = GroupedTableModel(source, {0});
+    REQUIRE(model.get_row_size() == 4);
+    model.set_grouping({0, 1});
+    REQUIRE(model.get_row_size() == 6);
+    REQUIRE(model.get_group_size(0) == 1);
+    REQUIRE(model.get_group_size(3) == 1);
+    source->set(0, 1, 11);
+    REQUIRE(model.get_row_size() == 6);
+    REQUIRE(model.get_group_size(0) == 1);
+    model.set_grouping({0});
+    REQUIRE(model.get_row_size() == 4);
+    REQUIRE(model.get<std::int64_t>(0, 1) == 11);
+    REQUIRE(model.get<std::int64_t>(2, 1) == 20);
+  }
+
   TEST_CASE("source_order_without_groups") {
     auto source = make_positions();
     auto model = GroupedTableModel(source, {});

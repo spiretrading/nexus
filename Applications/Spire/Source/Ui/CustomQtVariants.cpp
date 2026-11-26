@@ -599,6 +599,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<std::uint64_t>(value), locale);
   } else if(value.type() == typeid(std::int64_t)) {
     return to_text(std::any_cast<std::int64_t>(value), locale);
+  } else if(value.type() == typeid(float)) {
+    return to_text(static_cast<double>(std::any_cast<float>(value)), locale);
   } else if(value.type() == typeid(double)) {
     return to_text(std::any_cast<double>(value), locale);
   }
@@ -633,7 +635,9 @@ bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
     CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
     PositionSide, PositionSideToken, Side, Ticker, TimeInForce, TradeSide,
-    Venue, QColor, QKeySequence, QString>(left, right);
+    Venue, QColor, QKeySequence, QString, AccountListItem::Account,
+    TimeAndSale::Condition, Task::State, optional<Money>, optional<Quantity>,
+    optional<QString>, optional<std::string>>(left, right);
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {
