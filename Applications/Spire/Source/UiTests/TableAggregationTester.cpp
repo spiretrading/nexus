@@ -47,6 +47,27 @@ TEST_SUITE("TableAggregation") {
     REQUIRE(std::any_cast<double>(aggregate->get()) == 1.0);
   }
 
+  TEST_CASE("real_sum_after_cancellation") {
+    auto aggregate = make_default_table_aggregation();
+    auto large = std::ldexp(1.0, 240);
+    auto intermediate = std::ldexp(1.0, 120);
+    aggregate->add(large);
+    aggregate->add(intermediate);
+    aggregate->add(1.0);
+    aggregate->remove(large);
+    aggregate->remove(intermediate);
+    REQUIRE(std::any_cast<double>(aggregate->get()) == 1.0);
+    auto smallest = std::numeric_limits<double>::denorm_min();
+    auto maximum = std::numeric_limits<double>::max();
+    aggregate->update(1.0, -smallest);
+    aggregate->add(-maximum);
+    aggregate->add(maximum);
+    REQUIRE(std::any_cast<double>(aggregate->get()) == -smallest);
+    aggregate->remove(maximum);
+    aggregate->remove(-maximum);
+    REQUIRE(std::any_cast<double>(aggregate->get()) == -smallest);
+  }
+
   TEST_CASE("money_and_quantity_sums") {
     auto aggregate = make_default_table_aggregation();
     auto cent = Money::CENT;

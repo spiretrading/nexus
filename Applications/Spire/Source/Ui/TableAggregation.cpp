@@ -77,8 +77,8 @@ namespace {
   }
 
   struct RealSum {
-    cpp_bin_float_quad m_sum = 0;
-    cpp_bin_float_quad m_error = 0;
+    cpp_int m_significand = 0;
+    int m_exponent = 0;
     int m_nan = 0;
     int m_positive_infinity = 0;
     int m_negative_infinity = 0;
@@ -92,19 +92,25 @@ namespace {
         } else {
           m_negative_infinity += count;
         }
-      } else {
-        value *= count;
-        auto sum = m_sum + value;
-        if(abs(m_sum) >= std::abs(value)) {
-          m_error += (m_sum - sum) + value;
+      } else if(value != 0) {
+        constexpr auto DIGITS = std::numeric_limits<long double>::digits;
+        auto exponent = 0;
+        auto fraction = std::frexp(value * count, &exponent);
+        auto significand = cpp_int(std::ldexp(fraction, DIGITS));
+        exponent -= DIGITS;
+        if(m_significand == 0) {
+          m_exponent = exponent;
+        } else if(exponent < m_exponent) {
+          m_significand <<= m_exponent - exponent;
+          m_exponent = exponent;
         } else {
-          m_error += (value - sum) + m_sum;
+          significand <<= exponent - m_exponent;
         }
-        m_sum = sum;
+        m_significand += significand;
       }
     }
 
-    cpp_bin_float_quad get() const {
+    cpp_bin_float_50 get() const {
       if(m_nan != 0 || (m_positive_infinity != 0 && m_negative_infinity != 0)) {
         return std::numeric_limits<long double>::quiet_NaN();
       } else if(m_positive_infinity != 0) {
@@ -112,7 +118,7 @@ namespace {
       } else if(m_negative_infinity != 0) {
         return -std::numeric_limits<long double>::infinity();
       }
-      return m_sum + m_error;
+      return ldexp(cpp_bin_float_50(m_significand), m_exponent);
     }
   };
 
@@ -156,7 +162,7 @@ namespace {
           }
           return QStringLiteral("(%1)").arg(m_frequencies.size());
         } else if(m_money_count != 0 || m_quantity_count != 0) {
-          auto scalar = m_real.get() + cpp_bin_float_quad(m_integer);
+          auto scalar = m_real.get() + cpp_bin_float_50(m_integer);
           auto sum = Quantity::from_representation(static_cast<double>(
             m_quantity.get() + scalar * Quantity::MULTIPLIER));
           if(m_money_count != 0) {
@@ -165,7 +171,7 @@ namespace {
           return sum;
         } else if(m_real_count != 0) {
           return static_cast<double>(
-            m_real.get() + cpp_bin_float_quad(m_integer));
+            m_real.get() + cpp_bin_float_50(m_integer));
         } else if(m_integer_count == 0) {
           return {};
         } else if(m_integer >= std::numeric_limits<std::int64_t>::min() &&
