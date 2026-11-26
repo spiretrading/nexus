@@ -808,7 +808,7 @@ void GroupedTableModel::flush_updates(const Operation* shift) {
               }
             }
           }
-          if(cell.m_accumulator && !is_equal(previous, current)) {
+          if(cell.m_accumulator) {
             cell.m_accumulator->update(previous, current);
             touch(i, column);
           }
@@ -837,7 +837,8 @@ void GroupedTableModel::refresh_aggregates() {
     cell.m_is_dirty = false;
     if(group->m_row != -1) {
       auto value = cell.m_accumulator->get();
-      if(!is_equal(cell.m_value, value)) {
+      if(!Details::is_default_table_aggregation(cell.m_accumulator.get()) ||
+          !is_equal(cell.m_value, value)) {
         if(is_sorted(column)) {
           m_unsorted.insert(group->m_parent);
         }

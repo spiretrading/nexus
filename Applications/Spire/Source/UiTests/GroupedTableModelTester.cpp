@@ -1,5 +1,6 @@
 #include <cmath>
 #include <limits>
+#include <set>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -163,6 +164,64 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get_group_name(2) == "C");
     REQUIRE(model.index_to_source(3) == 0);
     REQUIRE(moves > 0);
+  }
+
+  TEST_CASE("aggregate_account_rename") {
+    auto account = DirectoryEntry::make_account(10, "A");
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("Desk"), account});
+    source->push({QString("Desk"), DirectoryEntry::make_account(20, "B")});
+    SUBCASE("distinct_names") {
+      auto model = GroupedTableModel(source, {0});
+      REQUIRE(model.get<QString>(0, 1) == "(2)");
+      account.m_name = "B";
+      source->set(0, 1, account);
+      REQUIRE(model.get<QString>(0, 1) == "(1)");
+    }
+    SUBCASE("custom_aggregate") {
+      struct FirstAccount : TableAggregation {
+        std::multiset<DirectoryEntry> m_accounts;
+
+        void add(const AnyRef& value) override {
+          m_accounts.insert(any_cast<DirectoryEntry>(value));
+        }
+
+        void remove(const AnyRef& value) override {
+          m_accounts.erase(m_accounts.find(any_cast<DirectoryEntry>(value)));
+        }
+
+        void update(const AnyRef& previous, const AnyRef& current) override {
+          remove(previous);
+          add(current);
+        }
+
+        std::any get() const override {
+          if(m_accounts.empty()) {
+            return {};
+          }
+          return *m_accounts.begin();
+        }
+      };
+      auto model = GroupedTableModel(source, {0}, {{}, [] {
+        return std::make_unique<FirstAccount>();
+      }});
+      auto updates = 0;
+      model.connect_operation_signal([&] (const TableModel::Operation& op) {
+        visit(op, [&] (const TableModel::UpdateOperation& update) {
+          if(update.m_row == 0 && update.m_column == 1) {
+            ++updates;
+            REQUIRE(
+              std::any_cast<DirectoryEntry>(update.m_previous).m_name == "A");
+            REQUIRE(
+              std::any_cast<DirectoryEntry>(update.m_value).m_name == "B");
+          }
+        });
+      });
+      account.m_name = "B";
+      source->set(0, 1, account);
+      REQUIRE(model.get<DirectoryEntry>(0, 1).m_name == "B");
+      REQUIRE(updates == 1);
+    }
   }
 
   TEST_CASE("unrecognized_group_key") {
