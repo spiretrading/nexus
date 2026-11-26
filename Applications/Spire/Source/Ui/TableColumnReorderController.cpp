@@ -16,12 +16,6 @@ using namespace Spire::Styles;
 namespace {
   const auto DRAG_DROP_INDICATOR_COLOR = QColor(0x4B23A0);
 
-  std::vector<int> make_default_column_order(int size) {
-    auto column_order = std::vector<int>(size);
-    std::iota(column_order.begin(), column_order.end(), 0);
-    return column_order;
-  }
-
   auto make_header_model(
       const ListModel<TableHeaderItem::Model>& model, int column) {
     auto column_model =
@@ -158,8 +152,8 @@ TableColumnReorderController::TableColumnReorderController(
     TableView& table_view)
     : QObject(&table_view),
       m_table_view(&table_view),
-      m_column_order(make_default_column_order(
-        table_view.get_header().get_widths()->get_size())),
+      m_column_order(
+        std::from_range, *table_view.get_header().get_column_order()),
       m_column_preview(nullptr),
       m_column_cover(nullptr),
       m_horizontal_scroll_bar_parent(nullptr),

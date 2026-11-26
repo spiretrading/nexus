@@ -20,7 +20,8 @@ namespace {
     public:
       GroupColumns(TableView& view, const GroupedTableModel& table)
           : QObject(&view),
-            m_view(view) {
+            m_view(view),
+            m_group_column(-1) {
         on_grouping(table.get_grouping());
         m_connection = table.connect_grouping_signal(
           std::bind_front(&GroupColumns::on_grouping, this));
@@ -33,6 +34,7 @@ namespace {
         bool m_is_hidden;
       };
       TableView& m_view;
+      int m_group_column;
       std::map<int, Column> m_originals;
       scoped_connection m_connection;
 
@@ -40,8 +42,16 @@ namespace {
         auto& header = m_view.get_header();
         auto& items = *header.get_items();
         auto& order = *header.get_column_order();
+        auto destination = 0;
+        auto source = -1;
         for(auto i = 0; i != items.get_size(); ++i) {
           auto column = order.get(i);
+          if(column == m_group_column) {
+            destination = i;
+          }
+          if(!grouping.empty() && column == grouping.front()) {
+            source = i;
+          }
           auto grouped = std::ranges::contains(grouping, column);
           auto original = m_originals.find(column);
           if(!grouped && original == m_originals.end()) {
@@ -74,6 +84,14 @@ namespace {
             m_view.hide_column(i);
           } else if(!display.m_is_hidden && hidden) {
             m_view.show_column(i);
+          }
+        }
+        if(source == -1) {
+          m_group_column = -1;
+        } else {
+          m_group_column = grouping.front();
+          if(source != destination) {
+            items.move(source, destination);
           }
         }
       }

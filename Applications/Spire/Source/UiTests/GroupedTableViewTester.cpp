@@ -112,7 +112,7 @@ TEST_SUITE("GroupedTableView") {
       REQUIRE(visible.get_row_size() == 3);
       table->set_grouping({1});
       REQUIRE(visible.get_row_size() == 6);
-      toggle(0, 1, "CAD");
+      toggle(0, 0, "CAD");
       REQUIRE(visible.get_row_size() == 3);
       REQUIRE(visible.get<QString>(1, 1) == "USD (1)");
       table->set_grouping({});
@@ -188,12 +188,12 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(first->get_label()->get() == "Account");
     REQUIRE(second->get_label()->get() == "Currency");
     table->set_grouping({1});
-    REQUIRE(header.get_items()->get(1).m_name == "Account");
-    REQUIRE(header.get_items()->get(2).m_name == "Group");
-    REQUIRE_FALSE(header.get_item(2)->isHidden());
+    REQUIRE(header.get_items()->get(1).m_name == "Group");
+    REQUIRE(header.get_items()->get(2).m_name == "Account");
+    REQUIRE_FALSE(header.get_item(1)->isHidden());
     table->set_grouping({});
     REQUIRE(header.get_items()->get(0).m_name == "Shares");
-    REQUIRE(header.get_items()->get(2).m_name == "Currency");
+    REQUIRE(header.get_items()->get(1).m_name == "Currency");
   }
 
   UI_TEST_CASE("aggregate_row_style") {
@@ -294,29 +294,32 @@ TEST_SUITE("GroupedTableView") {
       return leaf(column)->get_body().layout()->itemAt(0)->widget();
     };
     table->set_grouping({1});
-    REQUIRE(items.get(1).m_name == "Group");
+    REQUIRE(items.get(0).m_name == "Group");
+    REQUIRE(header.get_column_order()->get(0) == 1);
     REQUIRE(table->get_group_name(0) == "Long");
-    REQUIRE(label(1)->isHidden());
-    REQUIRE(label(0)->isVisible());
+    REQUIRE(label(0)->isHidden());
+    REQUIRE(label(1)->isVisible());
+    items.move(0, 1);
     table->set_grouping({1, 0});
     REQUIRE(header.get_item(0)->isHidden());
     REQUIRE_FALSE(header.get_item(1)->isHidden());
     REQUIRE(leaf(0)->width() == 0);
     REQUIRE(table->get_group_name(1) == "A");
     table->set_grouping({0, 1});
-    REQUIRE_FALSE(header.get_item(0)->isHidden());
-    REQUIRE(header.get_item(1)->isHidden());
-    REQUIRE(items.get(0).m_name == "Group");
+    REQUIRE(header.get_item(0)->isHidden());
+    REQUIRE_FALSE(header.get_item(1)->isHidden());
+    REQUIRE(items.get(1).m_name == "Group");
     table->set_grouping({});
-    REQUIRE(items.get(0).m_name == "Account");
-    REQUIRE(items.get(0).m_short_name == "Acct");
-    REQUIRE(items.get(1).m_name == "Side");
+    REQUIRE(items.get(0).m_name == "Side");
+    REQUIRE(items.get(1).m_name == "Account");
+    REQUIRE(items.get(1).m_short_name == "Acct");
     REQUIRE_FALSE(header.get_item(1)->isHidden());
     REQUIRE(label(0)->isVisible());
     REQUIRE(label(1)->isVisible());
     REQUIRE(leaf(0)->width() > 0);
-    view->hide_column(0);
+    view->hide_column(1);
     table->set_grouping({0});
+    REQUIRE(header.get_column_order()->get(0) == 0);
     REQUIRE_FALSE(header.get_item(0)->isHidden());
     table->set_grouping({});
     REQUIRE(header.get_item(0)->isHidden());
