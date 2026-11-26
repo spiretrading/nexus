@@ -271,6 +271,18 @@ namespace {
       }
 
     private:
+      struct Heading {
+        std::shared_ptr<GroupedTableModel> m_table;
+        std::shared_ptr<TableModel> m_source;
+        QHBoxLayout* m_layout;
+        ToggleButton* m_button;
+        std::shared_ptr<LocalTextModel> m_count;
+        int m_column;
+        TableRowIndexTracker m_row;
+        TableRowIndexTracker m_leaf;
+        QString m_name;
+        int m_size;
+      };
       TableViewItemBuilder m_builder;
       QWidget* m_item;
       scoped_connection m_connection;
@@ -300,15 +312,6 @@ namespace {
         auto button = make_icon_toggle_button(
           EXPAND_ARROW, COLLAPSE_ARROW, filter.is_expanded(row));
         button->setFixedSize(scale(20, 20));
-        auto description = [&] {
-          auto name = table->get_group_name(row);
-          if(name.isEmpty()) {
-            return tr("Expand or collapse group");
-          }
-          return tr("Expand or collapse %1").arg(name);
-        }();
-        button->setAccessibleName(description);
-        button->focusProxy()->setAccessibleName(description);
         layout->addWidget(button);
         setFocusPolicy(Qt::StrongFocus);
         setFocusProxy(button);
@@ -318,39 +321,62 @@ namespace {
         layout->addSpacing(scale_width(4));
         layout->addWidget(make_label(count));
         layout->addStretch();
-        auto column = table->get_grouping()[depth];
-        auto bind = [=, this] (int leaf) {
-          release_item();
-          if(leaf != -1) {
-            m_item = m_builder.mount(
-              source, table->index_to_source(leaf), column);
-            layout->insertWidget(1, m_item);
-            m_item->show();
-          }
-        };
-        auto leaf = TableRowIndexTracker(table->get_first_leaf(row));
-        bind(leaf.get_index());
-        m_connection = table->connect_operation_signal(
-          [=, index = TableRowIndexTracker(row)]
-              (const TableModel::Operation& operation) mutable {
-            index.update(operation);
-            leaf.update(operation);
-            using EndTransaction = TableModel::EndTransaction;
-            if(index.get_index() == -1 ||
-                !std::holds_alternative<EndTransaction>(operation)) {
-              return;
-            }
-            auto current = table->get_group_size(index.get_index());
-            if(current != size) {
-              size = current;
-              count->set(QStringLiteral("(%1)").arg(size));
-            }
-            auto first = table->get_first_leaf(index.get_index());
-            if(leaf.get_index() != first) {
-              leaf.set(first);
-              bind(first);
-            }
-          });
+        auto heading = Heading(table, source, layout, button, std::move(count),
+          table->get_grouping()[depth], TableRowIndexTracker(row),
+          TableRowIndexTracker(table->get_first_leaf(row)),
+          table->get_group_name(row), size);
+        update_name(heading);
+        bind_item(heading);
+        m_connection = table->connect_operation_signal(std::bind_front(
+          &GroupCell::on_table_operation, this, std::move(heading)));
+      }
+
+      void update_name(const Heading& heading) {
+        auto description = QString();
+        if(heading.m_name.isEmpty()) {
+          description = tr("Expand or collapse group");
+        } else {
+          description = tr("Expand or collapse %1").arg(heading.m_name);
+        }
+        heading.m_button->setAccessibleName(description);
+        heading.m_button->focusProxy()->setAccessibleName(description);
+      }
+
+      void bind_item(const Heading& heading) {
+        release_item();
+        auto leaf = heading.m_leaf.get_index();
+        if(leaf != -1) {
+          m_item = m_builder.mount(heading.m_source,
+            heading.m_table->index_to_source(leaf), heading.m_column);
+          heading.m_layout->insertWidget(1, m_item);
+          m_item->show();
+        }
+      }
+
+      void on_table_operation(
+          Heading& heading, const TableModel::Operation& operation) {
+        heading.m_row.update(operation);
+        heading.m_leaf.update(operation);
+        auto row = heading.m_row.get_index();
+        if(row == -1 ||
+            !std::holds_alternative<TableModel::EndTransaction>(operation)) {
+          return;
+        }
+        auto name = heading.m_table->get_group_name(row);
+        if(name != heading.m_name) {
+          heading.m_name = std::move(name);
+          update_name(heading);
+        }
+        auto size = heading.m_table->get_group_size(row);
+        if(size != heading.m_size) {
+          heading.m_size = size;
+          heading.m_count->set(QStringLiteral("(%1)").arg(size));
+        }
+        auto first = heading.m_table->get_first_leaf(row);
+        if(heading.m_leaf.get_index() != first) {
+          heading.m_leaf.set(first);
+          bind_item(heading);
+        }
       }
   };
 

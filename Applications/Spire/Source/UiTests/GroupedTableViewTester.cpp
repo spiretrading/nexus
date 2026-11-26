@@ -21,6 +21,7 @@
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
+using namespace Beam;
 using namespace Spire;
 using namespace Spire::Styles;
 using namespace Spire::Tests;
@@ -157,6 +158,31 @@ TEST_SUITE("GroupedTableView") {
     check_selection();
     source->remove(0);
     REQUIRE(rows.get_size() == 0);
+  }
+
+  UI_TEST_CASE("disclosure_name_after_account_rename") {
+    auto account = DirectoryEntry::make_account(10, "Trading");
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({account});
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").set_grouping({0}).make());
+    view->show();
+    QApplication::processEvents();
+    auto item = view->get_body().find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    auto button = dynamic_cast<ToggleButton*>(item->get_body().focusProxy());
+    REQUIRE(button);
+    auto target = button->focusProxy();
+    REQUIRE(target);
+    REQUIRE(target->accessibleName() == "Expand or collapse Trading");
+    account.m_name = "Risk";
+    source->set(0, 0, account);
+    REQUIRE(button->accessibleName() == "Expand or collapse Risk");
+    REQUIRE(target->accessibleName() == button->accessibleName());
+    account.m_name.clear();
+    source->set(0, 0, account);
+    REQUIRE(button->accessibleName() == "Expand or collapse group");
+    REQUIRE(target->accessibleName() == button->accessibleName());
   }
 
   UI_TEST_CASE("nested_disclosure") {
