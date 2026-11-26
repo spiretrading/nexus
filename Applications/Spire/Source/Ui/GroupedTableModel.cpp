@@ -60,6 +60,24 @@ namespace {
     return Spire::is_equal(left, right);
   }
 
+  std::optional<std::size_t> group_hash(const AnyRef& key, const void* parent) {
+    auto hash = [&] () -> std::optional<std::size_t> {
+      if(!key.has_value()) {
+        return 0;
+      } else if(auto number = any_cast<cpp_bin_float_quad>(&key)) {
+        if(*number == 0 || isnan(*number)) {
+          return 0;
+        }
+        return hash_value(*number);
+      }
+      return hash_value(key);
+    }();
+    if(hash) {
+      hash_combine(*hash, parent);
+    }
+    return hash;
+  }
+
   bool compare_siblings(const AnyRef& left, int left_row, const AnyRef& right,
       int right_row, int column) {
     if(!left.has_value() || !right.has_value()) {
@@ -274,6 +292,13 @@ int GroupedTableModel::get_group_size(int row) const {
     return 0;
   }
   return m_rows.at(row).m_group->m_leaf_count;
+}
+
+int GroupedTableModel::get_descendant_count(int row) const {
+  if(index_to_source(row) != -1) {
+    return 0;
+  }
+  return m_rows.at(row).m_group->m_descendant_count;
 }
 
 int GroupedTableModel::get_first_leaf(int row) const {
@@ -539,10 +564,16 @@ void GroupedTableModel::touch(const std::shared_ptr<Group>& group, int column) {
 
 std::unique_ptr<TableAggregation> GroupedTableModel::make_aggregation(
     const Group& group, int column) const {
-  if(column < std::ssize(m_aggregations) && m_aggregations[column]) {
-    return m_aggregations[column]();
+  auto accumulator = [&] {
+    if(column < std::ssize(m_aggregations) && m_aggregations[column]) {
+      return m_aggregations[column]();
+    }
+    return make_default_table_aggregation();
+  }();
+  if(!Details::is_default_table_aggregation(accumulator.get())) {
+    return accumulator;
   }
-  return Details::make_default_table_aggregation(
+  Details::set_table_value_visitor(*accumulator,
     [&, column, this] (const Details::TableValueVisitor& visit) {
       auto end = group.m_row + group.m_descendant_count;
       for(auto row = group.m_row + 1; row <= end; ++row) {
@@ -551,6 +582,7 @@ std::unique_ptr<TableAggregation> GroupedTableModel::make_aggregation(
         }
       }
     });
+  return accumulator;
 }
 
 void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
@@ -566,11 +598,31 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
     auto column = m_columns[depth];
     auto value = m_source->at(source, column);
     auto key = make_key(value);
-    while(first != end && m_rows[first].is_heading() &&
-        !equal_keys(m_rows[first].m_group->m_key, key)) {
-      first += 1 + m_rows[first].m_group->m_descendant_count;
+    auto hash = group_hash(key, parent.get());
+    auto match = static_cast<Group*>(nullptr);
+    if(hash) {
+      auto [i, last] = m_groups.equal_range(*hash);
+      for(; i != last; ++i) {
+        auto group = i->second;
+        if(group->m_parent == parent && equal_keys(group->m_key, key)) {
+          match = group;
+          break;
+        }
+      }
     }
-    if(first == end || !m_rows[first].is_heading()) {
+    if(match) {
+      first = match->m_row;
+    } else {
+      auto grouped = [=] (const Row& row) {
+        return row.m_group && row.m_group->m_depth >= depth;
+      };
+      if(first == end || grouped(m_rows[end - 1])) {
+        first = end;
+      } else {
+        auto position = std::partition_point(
+          m_rows.begin() + first, m_rows.begin() + end, grouped);
+        first = static_cast<int>(position - m_rows.begin());
+      }
       auto group = std::make_shared<Group>(to_any(key), to_text(value), parent,
         m_next_group, depth, first, 0, 0,
         std::vector<AggregateCell>(get_column_size()));
@@ -584,6 +636,9 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
         }
       }
       m_rows.emplace(m_rows.begin() + first, group, TableRowIndexTracker(-1));
+      if(hash) {
+        m_groups.emplace(*hash, group.get());
+      }
       index_rows(first + 1, get_row_size());
       for(auto ancestor = parent; ancestor; ancestor = ancestor->m_parent) {
         ++ancestor->m_descendant_count;
@@ -643,7 +698,17 @@ void GroupedTableModel::insert(int source, std::shared_ptr<Group> parent) {
 void GroupedTableModel::remove_row(int row) {
   m_transaction.push(PreRemoveOperation(row));
   if(m_rows[row].is_heading()) {
-    m_rows[row].m_group->m_row = -1;
+    auto& group = *m_rows[row].m_group;
+    if(auto hash = group_hash(group.m_key, group.m_parent.get())) {
+      auto [i, end] = m_groups.equal_range(*hash);
+      for(; i != end; ++i) {
+        if(i->second == &group) {
+          m_groups.erase(i);
+          break;
+        }
+      }
+    }
+    group.m_row = -1;
   } else {
     m_indices[m_rows[row].m_source.get_index()] = -1;
   }
@@ -826,7 +891,9 @@ void GroupedTableModel::apply(const Operation& operation) {
     },
     [&] (const RemoveOperation& removal) {
       m_indices.erase(m_indices.begin() + removal.m_index);
-      track(PreRemoveOperation(removal.m_index));
+      if(removal.m_index != std::ssize(m_indices)) {
+        track(PreRemoveOperation(removal.m_index));
+      }
     },
     [&] (const MoveOperation& move) {
       track(move);

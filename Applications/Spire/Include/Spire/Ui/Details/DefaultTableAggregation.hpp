@@ -4,7 +4,7 @@
 
 namespace Spire::Details {
   using TableValueVisitor = std::function<void (const AnyRef&)>;
-  std::unique_ptr<TableAggregation> make_default_table_aggregation(
+  void set_table_value_visitor(TableAggregation& aggregation,
     std::function<void (const TableValueVisitor&)> visit);
   bool is_default_table_aggregation(const TableAggregation* aggregation);
 }

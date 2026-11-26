@@ -169,10 +169,16 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(leaf->get_body().layout()->itemAt(0)->widget()->isHidden());
     REQUIRE(view->get_header().get_items()->get(0).m_name == "Account (+1)");
     REQUIRE(view->get_header().get_item(1)->isHidden());
+    auto ranges = std::vector<std::pair<int, int>>();
+    view->get_header().get_filter()->connect_rows_signal(
+      [&] (int first, int end) {
+        ranges.emplace_back(first, end);
+      });
     toggle(1, 0, "CAD");
     REQUIRE(visible.get_row_size() == 7);
     REQUIRE(visible.get<QString>(2, 0) == "USD (1)");
     toggle(0, 0, "A");
+    REQUIRE(ranges == std::vector{std::pair(2, 3), std::pair(1, 5)});
     REQUIRE(visible.get_row_size() == 4);
     REQUIRE(visible.get<QString>(1, 0) == "B (1)");
     SUBCASE("sort_collapsed_groups") {

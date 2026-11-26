@@ -185,6 +185,26 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get<std::int64_t>(2, 1) == 20);
   }
 
+  TEST_CASE("group_lookup_after_removal") {
+    auto source = std::make_shared<ArrayTableModel>();
+    auto nan = std::numeric_limits<double>::quiet_NaN();
+    source->push({0.0, 1});
+    source->push({nan, 2});
+    source->push({-0.0, 3});
+    auto model = GroupedTableModel(source, {0});
+    REQUIRE(model.get_row_size() == 5);
+    REQUIRE(model.get_group_size(0) == 2);
+    source->remove(2);
+    REQUIRE(model.index_from_source(1) == 3);
+    source->remove(0);
+    source->push({-0.0, 4});
+    source->push({nan, 5});
+    REQUIRE(model.get_group_size(0) == 2);
+    REQUIRE(model.get<std::int64_t>(0, 1) == 7);
+    REQUIRE(model.index_from_source(1) == 4);
+    REQUIRE(model.index_to_source(2) == 2);
+  }
+
   TEST_CASE("source_order_without_groups") {
     auto source = make_positions();
     auto model = GroupedTableModel(source, {});
@@ -578,7 +598,13 @@ TEST_SUITE("GroupedTableModel") {
 
   TEST_CASE("mixed_column_after_membership_change") {
     auto source = make_positions();
-    auto model = GroupedTableModel(source, {0});
+    auto factories = std::vector<TableAggregationFactory>();
+    SUBCASE("implicit_default") {}
+    SUBCASE("explicit_default") {
+      factories.resize(3);
+      factories[2] = &make_default_table_aggregation;
+    }
+    auto model = GroupedTableModel(source, {0}, std::move(factories));
     source->transact([&] {
       source->set(1, 2, QString("10"));
       source->set(1, 0, QString("A"));

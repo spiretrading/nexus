@@ -1,6 +1,6 @@
 #ifndef SPIRE_FILTERED_LIST_MODEL_HPP
 #define SPIRE_FILTERED_LIST_MODEL_HPP
-#include <boost/optional/optional.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
@@ -41,6 +41,9 @@ namespace Spire {
       /** Applies a new filter to this list. */
       void set_filter(const Filter& filter);
 
+      /** Reapplies the filter to source indices in [first, end). */
+      void refresh(int first, int end);
+
       /**
        * Maps an index from this list into the source list.
        * @param index An index into this table.
@@ -68,19 +71,17 @@ namespace Spire {
       using ListModel<T>::remove;
 
     private:
-      struct RemoveEntry {
-        bool m_is_found;
-        std::vector<int>::iterator m_iterator;
-        int m_index;
-      };
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
       int m_filter_count;
-      boost::optional<RemoveEntry> m_remove_entry;
+      bool m_is_refreshing;
+      bool m_has_pending_removal;
       std::vector<int> m_filtered_data;
+      std::vector<int> m_suffix;
       boost::signals2::scoped_connection m_source_connection;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
+      void split_at(int source);
       void on_operation(const Operation& operation);
   };
 
@@ -94,7 +95,9 @@ namespace Spire {
       std::shared_ptr<ListModel<Type>> source, Filter filter)
       : m_source(std::move(source)),
         m_filter(std::move(filter)),
-        m_filter_count(0) {
+        m_filter_count(0),
+        m_is_refreshing(false),
+        m_has_pending_removal(false) {
     for(auto i = 0; i != m_source->get_size(); ++i) {
       if(!m_filter(*m_source, i)) {
         m_filtered_data.push_back(i);
@@ -107,59 +110,45 @@ namespace Spire {
 
   template<typename T>
   void FilteredListModel<T>::set_filter(const Filter& filter) {
+    m_filter = filter;
+    refresh(0, m_source->get_size());
+  }
+
+  template<typename T>
+  void FilteredListModel<T>::refresh(int first, int end) {
     ++m_filter_count;
     auto count = m_filter_count;
-    m_filter = filter;
-    auto source_index = 0;
-    auto filtered_index = 0;
+    auto was_refreshing = std::exchange(m_is_refreshing, true);
+    auto restore = boost::scope::scope_exit([&] {
+      m_is_refreshing = was_refreshing;
+    });
+    if(was_refreshing) {
+      first = 0;
+      end = m_source->get_size();
+    }
     this->m_transaction.transact([&] {
-      while(source_index != m_source->get_size() &&
-          filtered_index != static_cast<int>(m_filtered_data.size())) {
-        if(!m_filter(*m_source, source_index)) {
-          if(m_filtered_data[filtered_index] != source_index) {
-            m_filtered_data.insert(
-              m_filtered_data.begin() + filtered_index, source_index);
-            this->m_transaction.push(AddOperation(filtered_index));
-            if(count != m_filter_count) {
-              return;
-            }
+      split_at(first);
+      for(auto row = first; row < end && count == m_filter_count; ++row) {
+        auto visible = !m_suffix.empty() && m_suffix.back() == row;
+        auto index = static_cast<int>(m_filtered_data.size());
+        if(!m_filter(*m_source, row)) {
+          m_filtered_data.push_back(row);
+          if(visible) {
+            m_suffix.pop_back();
+          } else {
+            this->m_transaction.push(AddOperation(index));
           }
-          ++filtered_index;
-        } else {
-          if(m_filtered_data[filtered_index] == source_index) {
-            this->m_transaction.push(PreRemoveOperation(filtered_index));
-            if(count != m_filter_count) {
-              return;
-            }
-            m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-            this->m_transaction.push(RemoveOperation(filtered_index));
-            if(count != m_filter_count) {
-              return;
-            }
-          }
-        }
-        ++source_index;
-      }
-      while(filtered_index != static_cast<int>(m_filtered_data.size())) {
-        this->m_transaction.push(PreRemoveOperation(filtered_index));
-        if(count != m_filter_count) {
-          return;
-        }
-        m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-        this->m_transaction.push(RemoveOperation(filtered_index));
-        if(count != m_filter_count) {
-          return;
-        }
-      }
-      while(source_index != m_source->get_size()) {
-        if(!m_filter(*m_source, source_index)) {
-          m_filtered_data.push_back(source_index);
-          this->m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+        } else if(visible) {
+          this->m_transaction.push(PreRemoveOperation(index));
           if(count != m_filter_count) {
-            return;
+            break;
           }
+          m_suffix.pop_back();
+          this->m_transaction.push(RemoveOperation(index));
         }
-        ++source_index;
+      }
+      if(count != m_filter_count) {
+        refresh(0, m_source->get_size());
       }
     });
   }
@@ -169,11 +158,21 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       return -1;
     }
-    return m_filtered_data[index];
+    if(index < std::ssize(m_filtered_data)) {
+      return m_filtered_data[index];
+    }
+    return m_suffix[get_size() - 1 - index];
   }
 
   template<typename T>
   int FilteredListModel<T>::index_from_source(int index) const {
+    if(!m_suffix.empty() && index >= m_suffix.back()) {
+      auto i = std::lower_bound(m_suffix.rbegin(), m_suffix.rend(), index);
+      if(i == m_suffix.rend() || *i != index) {
+        return -1;
+      }
+      return static_cast<int>(m_filtered_data.size() + (i - m_suffix.rbegin()));
+    }
     auto i = std::lower_bound(
       m_filtered_data.begin(), m_filtered_data.end(), index);
     if(i != m_filtered_data.end() && *i == index) {
@@ -184,7 +183,7 @@ namespace Spire {
 
   template<typename T>
   int FilteredListModel<T>::get_size() const {
-    return m_filtered_data.size();
+    return static_cast<int>(m_filtered_data.size() + m_suffix.size());
   }
 
   template<typename T>
@@ -193,7 +192,7 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    return m_source->get(m_filtered_data[index]);
+    return m_source->get(index_to_source(index));
   }
 
   template<typename T>
@@ -201,7 +200,7 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    return m_source->set(m_filtered_data[index], value);
+    return m_source->set(index_to_source(index), value);
   }
 
   template<typename T>
@@ -221,7 +220,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State FilteredListModel<T>::remove(int index) {
-    return m_source->remove(m_filtered_data[index]);
+    return m_source->remove(index_to_source(index));
   }
 
   template<typename T>
@@ -236,14 +235,35 @@ namespace Spire {
   }
 
   template<typename T>
+  void FilteredListModel<T>::split_at(int source) {
+    while(!m_filtered_data.empty() && m_filtered_data.back() >= source) {
+      m_suffix.push_back(m_filtered_data.back());
+      m_filtered_data.pop_back();
+    }
+    while(!m_suffix.empty() && m_suffix.back() < source) {
+      m_filtered_data.push_back(m_suffix.back());
+      m_suffix.pop_back();
+    }
+  }
+
+  template<typename T>
   void FilteredListModel<T>::on_operation(const Operation& operation) {
+    if(std::holds_alternative<StartTransaction>(operation)) {
+      this->m_transaction.start();
+      return;
+    } else if(std::holds_alternative<EndTransaction>(operation)) {
+      this->m_transaction.end();
+      return;
+    }
+    if(m_is_refreshing) {
+      ++m_filter_count;
+    }
+    if(!m_suffix.empty()) {
+      m_filtered_data.insert(
+        m_filtered_data.end(), m_suffix.rbegin(), m_suffix.rend());
+      m_suffix.clear();
+    }
     visit(operation,
-      [&] (const StartTransaction&) {
-        this->m_transaction.start();
-      },
-      [&] (const EndTransaction&) {
-        this->m_transaction.end();
-      },
       [&] (const AddOperation& operation) {
         if(operation.m_index >= m_source->get_size() - 1) {
           if(!m_filter(*m_source, operation.m_index)) {
@@ -294,29 +314,24 @@ namespace Spire {
       },
       [&] (const PreRemoveOperation& operation) {
         auto [is_found, i] = find(operation.m_index);
-        m_remove_entry.emplace(is_found, i, 0);
-        if(m_remove_entry->m_is_found) {
-          m_remove_entry->m_index = static_cast<int>(
-            m_remove_entry->m_iterator - m_filtered_data.begin());
+        m_has_pending_removal = true;
+        if(is_found) {
           ++m_filter_count;
-          auto count = m_filter_count;
-          this->m_transaction.push(PreRemoveOperation(m_remove_entry->m_index));
-          if(count != m_filter_count) {
-            m_remove_entry = boost::none;
-          }
+          this->m_transaction.push(PreRemoveOperation(
+            static_cast<int>(i - m_filtered_data.begin())));
         }
       },
       [&] (const RemoveOperation& operation) {
-        if(!m_remove_entry) {
+        if(!std::exchange(m_has_pending_removal, false)) {
           return;
         }
-        std::for_each(m_remove_entry->m_iterator, m_filtered_data.end(),
-          [] (int& value) { --value; });
-        if(m_remove_entry->m_is_found) {
-          m_filtered_data.erase(m_remove_entry->m_iterator);
-          this->m_transaction.push(RemoveOperation(m_remove_entry->m_index));
+        auto [is_found, i] = find(operation.m_index);
+        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
+        if(is_found) {
+          auto index = static_cast<int>(i - m_filtered_data.begin());
+          m_filtered_data.erase(i);
+          this->m_transaction.push(RemoveOperation(index));
         }
-        m_remove_entry = boost::none;
       },
       [&] (const UpdateOperation& operation) {
         auto [is_found, i] = find(operation.m_index);

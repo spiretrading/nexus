@@ -35,10 +35,13 @@ namespace {
           [=, this] (int, TableFilter::Filter) {
             set_filter(std::bind_front(&TableFilter::is_filtered, filter));
           });
+        m_rows_connection = filter->connect_rows_signal(
+          std::bind_front(&FilteredTableModel::refresh, this));
       }
 
     private:
       scoped_connection m_connection;
+      scoped_connection m_rows_connection;
   };
 
   SortedTableModel::Ordering to_table_order(TableHeaderItem::Order order) {

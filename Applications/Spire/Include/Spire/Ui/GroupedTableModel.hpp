@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <unordered_map>
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
 #include "Spire/Ui/TableAggregation.hpp"
@@ -98,6 +99,9 @@ namespace Spire {
       /** Returns the number of leaves in a group, or zero for a leaf row. */
       int get_group_size(int row) const;
 
+      /** Returns the number of rows beneath a heading, or zero for a leaf. */
+      int get_descendant_count(int row) const;
+
       /** Returns the grouped index of the first leaf in a group, or -1. */
       int get_first_leaf(int row) const;
 
@@ -130,6 +134,7 @@ namespace Spire {
       std::vector<SortedTableModel::ColumnOrder> m_order;
       std::set<std::shared_ptr<Group>> m_unsorted;
       std::size_t m_next_group;
+      std::unordered_multimap<std::size_t, Group*> m_groups;
       std::vector<Row> m_rows;
       std::vector<int> m_indices;
       std::vector<std::pair<std::shared_ptr<Group>, int>> m_dirty;

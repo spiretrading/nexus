@@ -124,16 +124,20 @@ namespace {
 
   class DefaultAggregation final : public TableAggregation {
     public:
-      explicit DefaultAggregation(
-        std::function<void (const TableValueVisitor&)> visit)
+      DefaultAggregation()
         : m_integer(0),
           m_integer_count(0),
           m_real_count(0),
           m_quantity_count(0),
           m_money_count(0),
           m_text_count(0),
-          m_numeric_count(0),
-          m_visit(std::move(visit)) {}
+          m_numeric_count(0) {}
+
+      void set_visitor(std::function<void (const TableValueVisitor&)> visit) {
+        if(m_numeric_count == 0 && m_text_count == 0) {
+          m_visit = std::move(visit);
+        }
+      }
 
       void add(const AnyRef& value) override {
         apply(value, 1);
@@ -246,13 +250,12 @@ namespace {
 }
 
 std::unique_ptr<TableAggregation> Spire::make_default_table_aggregation() {
-  return std::make_unique<DefaultAggregation>(nullptr);
+  return std::make_unique<DefaultAggregation>();
 }
 
-std::unique_ptr<TableAggregation>
-    Spire::Details::make_default_table_aggregation(
-      std::function<void (const TableValueVisitor&)> visit) {
-  return std::make_unique<DefaultAggregation>(std::move(visit));
+void Spire::Details::set_table_value_visitor(TableAggregation& aggregation,
+    std::function<void (const TableValueVisitor&)> visit) {
+  static_cast<DefaultAggregation&>(aggregation).set_visitor(std::move(visit));
 }
 
 bool Spire::Details::is_default_table_aggregation(

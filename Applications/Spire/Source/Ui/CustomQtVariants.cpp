@@ -131,12 +131,49 @@ namespace {
     }
   }
 
-  template<typename... T>
-  bool is_equal_any(const AnyRef& left, const AnyRef& right) {
-    return ComparableTypes<T...>()(left, right,
-      [&] (const auto& left, const auto& right) {
-        return left == right;
-      });
+  using EqualityTypes = ComparableTypes<bool, Quantity, gregorian::date, ptime,
+    posix_time::time_duration, std::string, CountryCode, CurrencyId,
+    DirectoryEntry, Money, Scope, OrderStatus, OrderType, PositionSide,
+    PositionSideToken, Side, Ticker, TimeInForce, TradeSide, Venue, QColor,
+    QKeySequence, QString, AccountListItem::Account, TimeAndSale::Condition,
+    Task::State, optional<Money>, optional<Quantity>, optional<QString>,
+    optional<std::string>>;
+
+  template<typename T>
+  std::size_t hash_item(const T& value) {
+    if constexpr(requires { std::hash<T>()(value); }) {
+      return std::hash<T>()(value);
+    } else if constexpr(std::same_as<T, gregorian::date>) {
+      return value.day_number();
+    } else if constexpr(std::same_as<T, posix_time::time_duration>) {
+      return std::hash<decltype(value.ticks())>()(value.ticks());
+    } else if constexpr(std::same_as<T, ptime>) {
+      auto hash = hash_item(value.date());
+      hash_combine(hash, value.time_of_day().ticks());
+      return hash;
+    } else if constexpr(requires { value.m_side; }) {
+      return hash_item(value.m_side);
+    } else if constexpr(std::same_as<T, AccountListItem::Account>) {
+      auto hash = hash_item(value.m_account);
+      hash_combine(hash, qHash(value.m_name));
+      return hash;
+    } else if constexpr(std::same_as<T, TimeAndSale::Condition>) {
+      auto hash = hash_item(value.m_type);
+      hash_combine(hash, value.m_code);
+      return hash;
+    } else if constexpr(std::same_as<T, QColor>) {
+      return value.rgba();
+    } else {
+      return qHash(value);
+    }
+  }
+
+  template<typename T>
+  std::size_t hash_item(const optional<T>& value) {
+    if(value) {
+      return hash_item(*value);
+    }
+    return 0;
   }
 
   template<typename T>
@@ -649,17 +686,22 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     TradeSide, QKeySequence, QString>(left, right);
 }
 
+std::optional<std::size_t> Spire::hash_value(const AnyRef& value) {
+  auto hash = std::optional<std::size_t>();
+  EqualityTypes()(value, [&] (const auto& item) {
+    hash = hash_item(item);
+    return true;
+  });
+  return hash;
+}
+
 bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
   if(left.get_type() != right.get_type()) {
     return false;
   }
-  return is_equal_any<bool, Quantity, gregorian::date, ptime,
-    posix_time::time_duration, std::string, CountryCode, CurrencyId,
-    DirectoryEntry, Money, Scope, OrderStatus, OrderType,
-    PositionSide, PositionSideToken, Side, Ticker, TimeInForce, TradeSide,
-    Venue, QColor, QKeySequence, QString, AccountListItem::Account,
-    TimeAndSale::Condition, Task::State, optional<Money>, optional<Quantity>,
-    optional<QString>, optional<std::string>>(left, right);
+  return EqualityTypes()(left, right, [] (const auto& a, const auto& b) {
+    return a == b;
+  });
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {

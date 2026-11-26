@@ -9,6 +9,59 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("FilteredListModel") {
+  TEST_CASE("range_refresh") {
+    auto source =
+      std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2, 3, 4, 5, 6});
+    auto collapsed = false;
+    auto visited = std::vector<int>();
+    auto filtered = FilteredListModel(source, [&] (const auto&, int row) {
+      visited.push_back(row);
+      return row == 3 || (collapsed && row >= 1 && row < 5);
+    });
+    auto snapshots = std::vector<std::vector<int>>();
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      if(std::holds_alternative<AnyListModel::AddOperation>(operation) ||
+          std::holds_alternative<AnyListModel::RemoveOperation>(operation)) {
+        snapshots.emplace_back(filtered.cbegin(), filtered.cend());
+      }
+      for(auto i = 0; i != filtered.get_size(); ++i) {
+        REQUIRE(filtered.index_from_source(filtered.index_to_source(i)) == i);
+      }
+    });
+    visited.clear();
+    collapsed = true;
+    filtered.refresh(1, 5);
+    REQUIRE(visited == std::vector{1, 2, 3, 4});
+    REQUIRE(snapshots == std::vector<std::vector<int>>{
+      {0, 2, 4, 5, 6}, {0, 4, 5, 6}, {0, 5, 6}});
+    snapshots.clear();
+    visited.clear();
+    collapsed = false;
+    filtered.refresh(1, 5);
+    REQUIRE(visited == std::vector{1, 2, 3, 4});
+    REQUIRE(snapshots == std::vector<std::vector<int>>{
+      {0, 1, 5, 6}, {0, 1, 2, 5, 6}, {0, 1, 2, 4, 5, 6}});
+  }
+
+  TEST_CASE("range_refresh_with_source_edit") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2});
+    auto hide = false;
+    auto filtered = FilteredListModel(source, [&] (const auto&, int row) {
+      return hide && row < 2;
+    });
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      visit(operation, [&] (const AnyListModel::PreRemoveOperation&) {
+        if(source->get_size() == 3) {
+          source->push(3);
+        }
+      });
+    });
+    hide = true;
+    filtered.refresh(0, 2);
+    REQUIRE(
+      std::vector(filtered.cbegin(), filtered.cend()) == std::vector{2, 3});
+  }
+
   TEST_CASE("attach_at_transaction_start") {
     auto source = std::make_shared<ArrayListModel<int>>(std::vector{2});
     auto filtered = std::unique_ptr<FilteredListModel<int>>();

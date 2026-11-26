@@ -134,12 +134,10 @@ TEST_SUITE("TableAggregation") {
     auto midnight = time_from_string("2026-11-25 00:00:00");
     auto previous = midnight - seconds(1);
     auto values = std::vector<std::any>{previous, midnight, previous, 7};
-    auto aggregate = std::unique_ptr<TableAggregation>();
-    SUBCASE("standalone") {
-      aggregate = make_default_table_aggregation();
-    }
+    auto aggregate = make_default_table_aggregation();
+    SUBCASE("standalone") {}
     SUBCASE("group") {
-      aggregate = Spire::Details::make_default_table_aggregation(
+      Spire::Details::set_table_value_visitor(*aggregate,
         [&] (const Spire::Details::TableValueVisitor& visit) {
           for(auto& value : values) {
             visit(value);
@@ -165,13 +163,11 @@ TEST_SUITE("TableAggregation") {
     auto values = std::vector<std::any>{3, -2, optional<int>()};
     auto visits = 0;
     auto expected_visits = 0;
-    auto aggregate = std::unique_ptr<TableAggregation>();
-    SUBCASE("standalone") {
-      aggregate = make_default_table_aggregation();
-    }
+    auto aggregate = make_default_table_aggregation();
+    SUBCASE("standalone") {}
     SUBCASE("group") {
       expected_visits = 1;
-      aggregate = Spire::Details::make_default_table_aggregation(
+      Spire::Details::set_table_value_visitor(*aggregate,
         [&] (const Spire::Details::TableValueVisitor& visit) {
           ++visits;
           for(auto& value : values) {

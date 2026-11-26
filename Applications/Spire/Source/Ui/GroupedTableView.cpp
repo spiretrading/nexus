@@ -115,7 +115,8 @@ namespace {
   class GroupFilter : public EmptyTableFilter {
     public:
       explicit GroupFilter(const GroupedTableModel& table)
-          : m_expansions(table.get_row_size()) {
+          : m_table(table),
+            m_expansions(table.get_row_size()) {
         m_table_connection = table.connect_operation_signal(
           [=, this] (const TableModel::Operation& operation) {
             visit(operation,
@@ -140,9 +141,17 @@ namespace {
         if(!expansion) {
           expansion = std::make_unique<Expansion>();
           expansion->m_current = std::make_shared<LocalBooleanModel>(true);
+          auto entry = expansion.get();
           expansion->m_connection = expansion->m_current->connect_update_signal(
-            [=, this] (auto) {
-              m_signal(0, Filter::NONE);
+            [=, this] (auto) mutable {
+              if(row >= std::ssize(m_expansions) ||
+                  m_expansions[row].get() != entry) {
+                auto i = std::ranges::find(
+                  m_expansions, entry, &std::unique_ptr<Expansion>::get);
+                row = static_cast<int>(i - m_expansions.begin());
+              }
+              auto first = row + 1;
+              m_rows_signal(first, first + m_table.get_descendant_count(row));
             });
         }
         return expansion->m_current;
@@ -164,12 +173,19 @@ namespace {
         return m_signal.connect(slot);
       }
 
+      connection connect_rows_signal(
+          const RowsSignal::slot_type& slot) const override {
+        return m_rows_signal.connect(slot);
+      }
+
     private:
       struct Expansion {
         std::shared_ptr<LocalBooleanModel> m_current;
         scoped_connection m_connection;
       };
       mutable FilterSignal m_signal;
+      mutable RowsSignal m_rows_signal;
+      const GroupedTableModel& m_table;
       std::vector<std::unique_ptr<Expansion>> m_expansions;
       scoped_connection m_table_connection;
       scoped_connection m_grouping_connection;
