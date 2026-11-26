@@ -1,9 +1,11 @@
 #include "Spire/Ui/GroupedTableView.hpp"
 #include <algorithm>
 #include <map>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ReadOnlyTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
+#include "Spire/Spire/TransformListModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -17,11 +19,55 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  enum class HeaderDisplay {
+    PLAIN,
+    GROUP_COUNT
+  };
+
+  struct GroupHeaderItem {
+    TableHeaderItem::Model m_header;
+    int m_additional_groups;
+  };
+
+  auto make_header_model(
+      const std::shared_ptr<ArrayListModel<GroupHeaderItem>>& columns,
+      HeaderDisplay mode) {
+    auto display = [=] (const auto& column) {
+      auto header = column.m_header;
+      if(mode == HeaderDisplay::GROUP_COUNT &&
+          column.m_additional_groups != 0) {
+        auto suffix = QObject::tr(" (+%1)").arg(column.m_additional_groups);
+        if(!header.m_name.isEmpty()) {
+          header.m_name += suffix;
+        }
+        if(!header.m_short_name.isEmpty()) {
+          header.m_short_name += suffix;
+        }
+      }
+      return header;
+    };
+    auto update = [=] (const auto& column, auto header) {
+      auto previous = display(column);
+      if(header.m_name == previous.m_name) {
+        header.m_name = column.m_header.m_name;
+      }
+      if(header.m_short_name == previous.m_short_name) {
+        header.m_short_name = column.m_header.m_short_name;
+      }
+      return GroupHeaderItem(std::move(header), column.m_additional_groups);
+    };
+    using Model = TransformListModel<TableHeaderItem::Model, GroupHeaderItem,
+      decltype(display), decltype(update)>;
+    return std::make_shared<Model>(columns, display, update);
+  }
+
   class GroupColumns : public QObject {
     public:
-      GroupColumns(TableView& view, const GroupedTableModel& table)
+      GroupColumns(TableView& view, const GroupedTableModel& table,
+          std::shared_ptr<ArrayListModel<GroupHeaderItem>> columns)
           : QObject(&view),
             m_view(view),
+            m_columns(std::move(columns)),
             m_group_column(-1) {
         on_grouping(table.get_grouping());
         m_connection = table.connect_grouping_signal(
@@ -29,15 +75,10 @@ namespace {
       }
 
     private:
-      struct Column {
-        bool m_was_hidden;
-        int m_suffix_size;
-        QString m_display_name;
-        QString m_display_short_name;
-      };
       TableView& m_view;
+      std::shared_ptr<ArrayListModel<GroupHeaderItem>> m_columns;
       int m_group_column;
-      std::map<int, Column> m_originals;
+      std::map<int, bool> m_was_hidden;
       scoped_connection m_connection;
 
       void on_grouping(const std::vector<int>& grouping) {
@@ -51,49 +92,24 @@ namespace {
           if(column == m_group_column) {
             destination = i;
           }
+          auto additional_groups = 0;
           if(!grouping.empty() && column == grouping.front()) {
             source = i;
+            additional_groups = static_cast<int>(grouping.size()) - 1;
+          }
+          if(m_columns->get(i).m_additional_groups != additional_groups) {
+            auto item = m_columns->get(i);
+            item.m_additional_groups = additional_groups;
+            m_columns->set(i, item);
           }
           auto grouped = std::ranges::contains(grouping, column);
-          auto original = m_originals.find(column);
-          if(!grouped && original == m_originals.end()) {
-            continue;
-          }
-          auto& item = items.get(i);
           auto hidden = header.get_item(i)->isHidden();
-          if(original == m_originals.end()) {
-            original = m_originals.try_emplace(column, hidden, 0).first;
-          }
-          auto& state = original->second;
-          auto hide = state.m_was_hidden;
-          auto revised = item;
-          if(state.m_suffix_size != 0) {
-            if(revised.m_name == state.m_display_name) {
-              revised.m_name.chop(state.m_suffix_size);
-            }
-            if(revised.m_short_name == state.m_display_short_name) {
-              revised.m_short_name.chop(state.m_suffix_size);
-            }
-            state.m_suffix_size = 0;
-          }
+          auto hide = hidden;
           if(grouped) {
+            m_was_hidden.try_emplace(column, hidden);
             hide = column != grouping.front();
-            if(!hide && grouping.size() > 1) {
-              auto suffix = tr(" (+%1)").arg(grouping.size() - 1);
-              revised.m_name += suffix;
-              if(!revised.m_short_name.isEmpty()) {
-                revised.m_short_name += suffix;
-              }
-              state.m_suffix_size = suffix.size();
-              state.m_display_name = revised.m_name;
-              state.m_display_short_name = revised.m_short_name;
-            }
-          } else {
-            m_originals.erase(original);
-          }
-          if(revised.m_name != item.m_name ||
-              revised.m_short_name != item.m_short_name) {
-            items.set(i, revised);
+          } else if(auto original = m_was_hidden.extract(column)) {
+            hide = original.mapped();
           }
           if(hide && !hidden) {
             m_view.hide_column(i);
@@ -430,10 +446,12 @@ TableView* GroupedTableViewBuilder::make() const {
   auto builder = TableViewBuilder(table, m_parent);
   builder.set_sort_handler(
     std::bind_front(&GroupedTableModel::set_column_order, table));
+  auto columns = std::make_shared<ArrayListModel<GroupHeaderItem>>();
   for(auto& column : m_columns) {
-    builder.add_header_item(column.m_name, column.m_short_name, column.m_order,
-      TableFilter::Filter::NONE);
+    columns->push(GroupHeaderItem(TableHeaderItem::Model(column.m_name,
+      column.m_short_name, column.m_order, TableFilter::Filter::NONE), 0));
   }
+  builder.set_header(make_header_model(columns, HeaderDisplay::GROUP_COUNT));
   auto view = builder.set_filter(filter).set_item_builder(GroupItemBuilder(
     table, std::make_shared<ReadOnlyTableModel>(m_source), filter,
     m_item_builder, m_aggregate_item_builder)).make();
@@ -441,14 +459,11 @@ TableView* GroupedTableViewBuilder::make() const {
     style.get(Any() > is_a<TableBody>() > (AggregateRow() && !Selected())).
       set(BackgroundColor(QColor(0, 0, 0, 16)));
   });
-  new GroupColumns(*view, *table);
+  new GroupColumns(*view, *table, columns);
   if(!m_grouping) {
-    auto names = QStringList();
-    for(auto& column : m_columns) {
-      names.push_back(column.m_name);
-    }
+    auto headers = make_header_model(columns, HeaderDisplay::PLAIN);
     static_cast<QVBoxLayout*>(view->layout())->insertWidget(
-      0, new TableGroupingBar(table, names, view));
+      0, new TableGroupingBar(table, headers, view));
   }
   return view;
 }

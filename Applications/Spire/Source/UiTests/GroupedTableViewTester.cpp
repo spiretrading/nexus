@@ -629,8 +629,15 @@ TEST_SUITE("GroupedTableView") {
     auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
     auto& items = *view->get_header().get_items();
     auto account = items.get(0);
+    REQUIRE(account.m_name == "Account (+1)");
+    REQUIRE(account.m_short_name == "Acct (+1)");
     account.m_name = "Desk (+1)";
     items.set(0, account);
+    REQUIRE(items.get(0).m_name == "Desk (+1) (+1)");
+    REQUIRE(items.get(0).m_short_name == "Acct (+1)");
+    view->set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
+    REQUIRE(items.get(0).m_order == TableHeaderItem::Order::ASCENDING);
+    REQUIRE(items.get(0).m_name == "Desk (+1) (+1)");
     auto currency = items.get(1);
     currency.m_short_name = "FX";
     items.set(1, currency);
@@ -638,10 +645,13 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(items.get(0).m_name == "Desk (+1) (+2)");
     REQUIRE(items.get(0).m_short_name == "Acct (+2)");
     table->set_grouping({1, 0});
+    REQUIRE(items.get(0).m_name == "Currency (+1)");
     REQUIRE(items.get(0).m_short_name == "FX (+1)");
     auto renamed = items.get(0);
     renamed.m_short_name.clear();
     items.set(0, renamed);
+    REQUIRE(items.get(0).m_name == "Currency (+1)");
+    REQUIRE(items.get(0).m_short_name.isEmpty());
     table->set_grouping({});
     REQUIRE(items.get(0).m_name == "Currency");
     REQUIRE(items.get(0).m_short_name.isEmpty());
@@ -1064,6 +1074,7 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(headers.get(0).m_short_name == "Acct (+2)");
     select(2);
     REQUIRE(headers.get(0).m_name == "Account (+1)");
+    REQUIRE(headers.get(0).m_short_name == "Acct (+1)");
     remove(0);
     REQUIRE(headers.get(0).m_name == "Currency");
     REQUIRE(headers.get(0).m_short_name.isEmpty());
@@ -1083,7 +1094,16 @@ TEST_SUITE("GroupedTableView") {
     table->set_grouping({2, 1});
     REQUIRE(tag_at(0)->get_label()->get() == "Shares");
     REQUIRE(tag_at(2)->get_label()->get() == "Currency");
+    headers.move(0, 2);
+    auto shares = headers.get(2);
+    shares.m_name = "Quantity";
+    headers.set(2, shares);
+    REQUIRE(tag_at(0)->get_label()->get() == "Quantity");
+    REQUIRE(headers.get(2).m_name == "Quantity (+1)");
+    tag_at(0)->get_label()->set("Position size");
+    REQUIRE(headers.get(2).m_name == "Position size (+1)");
     select(2);
+    REQUIRE(submitted == "Position size");
     REQUIRE(table->get_grouping() == std::vector{1});
     auto fixed = std::unique_ptr<TableView>(builder.set_grouping({}).make());
     REQUIRE_FALSE(

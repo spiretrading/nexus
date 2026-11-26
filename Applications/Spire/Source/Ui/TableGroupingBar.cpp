@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -97,7 +99,8 @@ namespace {
 }
 
 TableGroupingBar::TableGroupingBar(std::shared_ptr<GroupedTableModel> table,
-    const QStringList& columns, QWidget* parent)
+    const std::shared_ptr<ListModel<TableHeaderItem::Model>>& columns,
+    QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_tags(make_hbox_layout()) {
@@ -111,20 +114,42 @@ TableGroupingBar::TableGroupingBar(std::shared_ptr<GroupedTableModel> table,
   auto button = new GroupByButton(tr("Group by"));
   layout->addWidget(button);
   layout->addStretch();
-  for(auto& name : columns) {
-    auto index = static_cast<int>(m_columns.size());
-    auto selected = button->get_menu().add_check_box(name);
+  for(auto index = 0; index != columns->get_size(); ++index) {
+    auto name = make_field_value_model(
+      make_list_value_model(columns, index), &TableHeaderItem::Model::m_name);
+    auto selected = std::make_shared<LocalBooleanModel>(false);
     auto connection = selected->connect_update_signal([=, this] (auto value) {
       on_select(index, value);
     });
-    m_columns.emplace_back(name, std::move(selected), std::move(connection));
+    m_columns.emplace_back(
+      std::move(name), std::move(selected), std::move(connection));
   }
+  populate_menu(button->get_menu());
+  m_columns_connection = columns->connect_operation_signal(
+    std::bind_front(&TableGroupingBar::on_columns_operation, this,
+      std::ref(button->get_menu())));
   button->get_menu().connect_submit_signal([=] (const auto&, const auto&) {
     button->get_menu().hide();
   });
   on_grouping(m_table->get_grouping());
   m_grouping_connection = m_table->connect_grouping_signal(
     std::bind_front(&TableGroupingBar::on_grouping, this));
+}
+
+void TableGroupingBar::populate_menu(ContextMenu& menu) {
+  menu.reset();
+  for(auto& column : m_columns) {
+    menu.add_check_box(column.m_name->get(), column.m_selected);
+  }
+}
+
+void TableGroupingBar::on_columns_operation(
+    ContextMenu& menu, const Header::Operation& operation) {
+  visit(operation, [&] (const Header::UpdateOperation& update) {
+    if(update.get_value().m_name != update.get_previous().m_name) {
+      populate_menu(menu);
+    }
+  });
 }
 
 void TableGroupingBar::on_select(int column, bool selected) {
