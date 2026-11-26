@@ -600,9 +600,17 @@ TEST_SUITE("GroupedTableView") {
   }
 
   UI_TEST_CASE("item_builders") {
+    using Highlight = StateSelector<void, struct HighlightTag>;
     struct LeafBuilder {
       std::shared_ptr<TableModel> m_source;
       int& m_reused;
+
+      std::optional<Selector> get_row_selector(int row) const {
+        if(row == 2) {
+          return Highlight();
+        }
+        return std::nullopt;
+      }
 
       QWidget* mount(
           const std::shared_ptr<TableModel>& table, int row, int column) {
@@ -678,6 +686,8 @@ TEST_SUITE("GroupedTableView") {
       return label->get_current()->get();
     };
     REQUIRE(text(2, 2) == "20");
+    auto leaf = body.find_item(TableIndex(2, 2));
+    REQUIRE(is_match(*leaf->parentWidget(), Highlight()));
     REQUIRE(text(0, 1) == "(2)");
     REQUIRE(text(0, 2) == "30");
     if(custom) {

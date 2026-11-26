@@ -98,6 +98,10 @@ namespace {
         m_source(std::move(source)),
         m_column(column) {}
 
+    std::optional<Selector> get_row_selector(int row) const {
+      return m_builder.get_row_selector(row);
+    }
+
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       return m_builder.mount(m_source, row, m_column);

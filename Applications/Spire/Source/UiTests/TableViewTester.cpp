@@ -9,11 +9,14 @@
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/SpireTester/ListModelTester.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
 using namespace boost;
@@ -269,9 +272,8 @@ TEST_SUITE("TableView") {
         return std::nullopt;
       }
 
-      QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
-          int column) {
-        return TableView::default_item_builder(table, row, column);
+      QWidget* mount(const std::shared_ptr<TableModel>&, int, int) {
+        return new EditableBox(*new TextBox());
       }
 
       void unmount(QWidget* widget) {
@@ -280,8 +282,47 @@ TEST_SUITE("TableView") {
     };
     auto table = std::make_shared<ArrayTableModel>();
     table->push({1});
-    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
-      add_header_item("Value").set_item_builder(Builder(table)).make());
+    auto builder = Builder(table);
+    auto view = std::unique_ptr<TableView>();
+    SUBCASE("table") {
+      view.reset(TableViewBuilder(table).
+        add_header_item("Value").set_item_builder(builder).make());
+    }
+    SUBCASE("editable") {
+      view.reset(EditableTableViewBuilder(table).
+        add_header_item("Value").set_item_builder(builder).make());
+    }
+    SUBCASE("drag_preview") {
+      view.reset(TableViewBuilder(table).add_header_item("Value").make());
+      auto controller = TableColumnReorderController(*view, builder);
+      view->resize(300, 200);
+      view->show();
+      QApplication::processEvents();
+      auto& header = view->get_header();
+      auto start = header.get_item(0)->mapTo(&header,
+        header.get_item(0)->rect().center());
+      auto send = [&] (QEvent::Type type, QPoint position,
+          Qt::MouseButton button, Qt::MouseButtons buttons) {
+        auto event = QMouseEvent(type, position, header.mapToGlobal(position),
+          button, buttons, Qt::NoModifier);
+        QApplication::sendEvent(&header, &event);
+      };
+      auto end = start + QPoint(QApplication::startDragDistance(), 0);
+      send(QEvent::MouseButtonPress, start, Qt::LeftButton, Qt::LeftButton);
+      send(QEvent::MouseMove, end, Qt::NoButton, Qt::LeftButton);
+      QApplication::processEvents();
+      auto matched = false;
+      for(auto widget : view->findChildren<QWidget*>()) {
+        if(auto preview = dynamic_cast<TableView*>(widget)) {
+          if(auto item = preview->get_body().find_item(TableIndex(0, 0))) {
+            matched = is_match(*item->parentWidget(), Positive());
+          }
+        }
+      }
+      send(QEvent::MouseButtonRelease, end, Qt::LeftButton, Qt::NoButton);
+      REQUIRE(matched);
+      return;
+    }
     view->show();
     QApplication::processEvents();
     auto item = view->get_body().find_item(TableIndex(0, 0));
