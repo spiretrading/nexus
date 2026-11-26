@@ -20,6 +20,16 @@ namespace Spire {
       using GroupingSignal = Signal<void (const std::vector<int>&)>;
 
       /**
+       * Compares group keys, aggregates, or leaf values at grouped row indices
+       * and the source column of the values. Default distinct counts are
+       * supplied as std::int64_t.
+       */
+      using Comparator = SortedTableModel::Comparator;
+
+      /** Compares the same sibling values without their coordinates. */
+      using ValueComparator = SortedTableModel::ValueComparator;
+
+      /**
        * Groups a table using the default column aggregations.
        * @param source The table containing the leaves.
        * @param columns Distinct column indices, from outermost to innermost.
@@ -27,6 +37,13 @@ namespace Spire {
        */
       GroupedTableModel(
         std::shared_ptr<TableModel> source, std::vector<int> columns);
+
+      /** Groups a table using default aggregations and a custom comparator. */
+      template<typename C> requires
+        (std::convertible_to<C, SortedTableModel::Comparator> ||
+          std::convertible_to<C, SortedTableModel::ValueComparator>)
+      GroupedTableModel(std::shared_ptr<TableModel> source,
+        std::vector<int> columns, C comparator);
 
       /**
        * Groups a table with custom column aggregations.
@@ -39,10 +56,25 @@ namespace Spire {
         std::vector<int> columns,
         std::vector<TableAggregationFactory> aggregations);
 
+      /** Groups a table with custom aggregations and a value comparator. */
+      GroupedTableModel(std::shared_ptr<TableModel> source,
+        std::vector<int> columns,
+        std::vector<TableAggregationFactory> aggregations,
+        ValueComparator comparator);
+
+      /** Groups a table with custom aggregations and a row comparator. */
+      GroupedTableModel(std::shared_ptr<TableModel> source,
+        std::vector<int> columns,
+        std::vector<TableAggregationFactory> aggregations,
+        Comparator comparator);
+
       ~GroupedTableModel() override;
 
       /** Returns the table containing the leaves. */
       const std::shared_ptr<TableModel>& get_source() const;
+
+      /** Returns the comparator used to order siblings. */
+      const Comparator& get_comparator() const;
 
       /** Returns the grouping columns, from outermost to innermost. */
       const std::vector<int>& get_grouping() const;
@@ -93,6 +125,8 @@ namespace Spire {
       bool m_has_matching_columns;
       std::vector<int> m_columns;
       std::vector<TableAggregationFactory> m_aggregations;
+      bool m_uses_default_comparator;
+      Comparator m_comparator;
       std::vector<SortedTableModel::ColumnOrder> m_order;
       std::set<std::shared_ptr<Group>> m_unsorted;
       std::size_t m_next_group;
@@ -130,6 +164,14 @@ namespace Spire {
       void apply(const Operation& operation);
       void on_operation(const Operation& operation);
   };
+
+  template<typename C> requires
+    (std::convertible_to<C, SortedTableModel::Comparator> ||
+      std::convertible_to<C, SortedTableModel::ValueComparator>)
+  GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
+    std::vector<int> columns, C comparator)
+    : GroupedTableModel(std::move(source), std::move(columns), {},
+        std::move(comparator)) {}
 }
 
 #endif

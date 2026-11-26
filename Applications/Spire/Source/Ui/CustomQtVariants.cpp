@@ -57,9 +57,33 @@ namespace {
   };
 
   template<typename... T>
+  using ComparableTypes = apply_any<int, double, std::int64_t, std::uint64_t,
+    unsigned int, float, long double, short, unsigned short, signed char,
+    unsigned char, long, unsigned long, long long, unsigned long long,
+    optional<int>, optional<double>, optional<std::int64_t>,
+    optional<std::uint64_t>, optional<unsigned int>, optional<float>,
+    optional<long double>, optional<short>, optional<unsigned short>,
+    optional<signed char>, optional<unsigned char>, optional<long>,
+    optional<unsigned long>, optional<long long>, optional<unsigned long long>,
+    T...>;
+
+  template<std::floating_point T>
+  bool is_nan(const T& value) {
+    return std::isnan(value);
+  }
+
+  template<std::floating_point T>
+  bool is_nan(const optional<T>& value) {
+    return value && std::isnan(*value);
+  }
+
+  template<typename... T>
   bool compare_any(const AnyRef& left, const AnyRef& right) {
-    return apply_any<T...>()(left, right,
+    return ComparableTypes<T...>()(left, right,
       [&] (const auto& left, const auto& right) {
+        if constexpr(requires { is_nan(left); }) {
+          return !is_nan(left) && (is_nan(right) || left < right);
+        }
         return left < right;
       });
   }
@@ -109,7 +133,7 @@ namespace {
 
   template<typename... T>
   bool is_equal_any(const AnyRef& left, const AnyRef& right) {
-    return apply_any<T...>()(left, right,
+    return ComparableTypes<T...>()(left, right,
       [&] (const auto& left, const auto& right) {
         return left == right;
       });
@@ -618,10 +642,11 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   } else if(left.get_type() == typeid(DirectoryEntry)) {
     return DirectoryEntry::name_comparator(
       any_cast<DirectoryEntry>(left), any_cast<DirectoryEntry>(right));
+  } else if(left.get_type() == typeid(const char*)) {
+    return qstrcmp(
+      any_cast<const char*>(left), any_cast<const char*>(right)) < 0;
   }
-  return compare_any<bool, int, optional<int>, std::int64_t,
-    optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
-    optional<Quantity>, double, optional<double>, gregorian::date, ptime,
+  return compare_any<bool, Quantity, optional<Quantity>, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,
     optional<Money>, OrderStatus, OrderType, PositionSide, Side, Ticker,
     TradeSide, QKeySequence, QString>(left, right);
@@ -631,9 +656,9 @@ bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
   if(left.get_type() != right.get_type()) {
     return false;
   }
-  return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
-    gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
-    CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
+  return is_equal_any<bool, Quantity, gregorian::date, ptime,
+    posix_time::time_duration, std::string, CountryCode, CurrencyId,
+    DirectoryEntry, Money, Scope, OrderStatus, OrderType,
     PositionSide, PositionSideToken, Side, Ticker, TimeInForce, TradeSide,
     Venue, QColor, QKeySequence, QString, AccountListItem::Account,
     TimeAndSale::Condition, Task::State, optional<Money>, optional<Quantity>,

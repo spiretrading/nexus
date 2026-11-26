@@ -55,6 +55,39 @@ TEST_SUITE("GroupedTableView") {
     }
   }
 
+  UI_TEST_CASE("grouped_comparator") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), QString("CAD")});
+    source->push({QString("A"), QString("USD")});
+    source->push({QString("B"), QString("CAD")});
+    auto builder = GroupedTableViewBuilder(source);
+    builder.add_column("Account").add_column("Currency").
+      set_order(TableHeaderItem::Order::ASCENDING).set_grouping({0});
+    auto reverse = [] (const AnyRef& left, const AnyRef& right) {
+      if(left.get_type() == typeid(QString)) {
+        return any_cast<QString>(left) > any_cast<QString>(right);
+      }
+      return any_cast<std::int64_t>(left) > any_cast<std::int64_t>(right);
+    };
+    SUBCASE("values") {
+      builder.set_comparator(reverse);
+    }
+    SUBCASE("rows") {
+      builder.set_comparator([&] (const AnyRef& left, int left_row,
+          const AnyRef& right, int right_row, int column) {
+        REQUIRE(left_row != right_row);
+        REQUIRE(column == 1);
+        return reverse(left, right);
+      });
+    }
+    auto view = std::unique_ptr<TableView>(builder.make());
+    auto& table = *view->get_table();
+    REQUIRE(table.get<QString>(0, 0) == "A (2)");
+    REQUIRE(table.get<QString>(0, 1) == "(2)");
+    REQUIRE(table.get<QString>(1, 1) == "USD");
+    REQUIRE(table.get<QString>(2, 1) == "CAD");
+  }
+
   UI_TEST_CASE("selection_across_groups") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CAD"), 10});

@@ -39,6 +39,13 @@ namespace Details {
       /** Sets the last column's initial order. UNORDERED disables sorting. */
       GroupedTableViewBuilder& set_order(TableHeaderItem::Order order);
 
+      /** Compares sibling values at grouped row indices and a logical column. */
+      GroupedTableViewBuilder& set_comparator(TableView::Comparator comparator);
+
+      /** Compares sibling group keys, aggregates, or leaf values. */
+      GroupedTableViewBuilder& set_comparator(
+        TableView::ValueComparator comparator);
+
       /** Sets the last column's aggregation factory. */
       GroupedTableViewBuilder& set_aggregation(TableAggregationFactory factory);
 
@@ -80,6 +87,7 @@ namespace Details {
       std::shared_ptr<TableModel> m_source;
       QWidget* m_parent;
       std::vector<Column> m_columns;
+      TableView::Comparator m_comparator;
       std::optional<std::vector<int>> m_grouping;
       TableViewItemBuilder m_item_builder;
       TableViewItemBuilder m_aggregate_item_builder;

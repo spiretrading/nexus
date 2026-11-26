@@ -38,28 +38,17 @@ namespace {
     return value;
   }
 
-  AnyRef make_text_key(std::string_view bytes) {
-    auto text = QString::fromUtf8(bytes.data(), static_cast<int>(bytes.size()));
-    if(text.toStdString() == bytes) {
-      return AnyRef(std::move(text), AnyRef::by_value);
-    }
-    return std::string(bytes);
-  }
-
   AnyRef make_key(AnyRef value) {
-    if(value.get_type() == typeid(QString)) {
+    if(value.get_type() == typeid(QString) ||
+        value.get_type() == typeid(std::string)) {
       return value;
-    } else if(auto text = any_cast<std::string>(&std::as_const(value))) {
-      return make_text_key(*text);
     } else if(auto text = any_cast<const char*>(&std::as_const(value))) {
       if(!*text) {
         return AnyRef();
       }
-      return make_text_key(*text);
+      return std::string(*text);
     }
-    return make_numeric_key<int, double, long long, unsigned long long,
-      unsigned int, long, unsigned long, short, unsigned short, signed char,
-      unsigned char, float, long double>(std::move(value));
+    return make_numeric_key<float, double, long double>(std::move(value));
   }
 
   bool equal_keys(const std::any& left, const AnyRef& right) {
@@ -76,14 +65,13 @@ namespace {
     return Spire::is_equal(left, right);
   }
 
-  bool less(const AnyRef& left, const AnyRef& right) {
+  bool compare_siblings(const AnyRef& left, int left_row, const AnyRef& right,
+      int right_row, int column) {
     if(!left.has_value() || !right.has_value()) {
       return !left.has_value() && right.has_value();
-    } else if(left.get_type() != right.get_type()) {
-      return left.get_type().before(right.get_type());
     } else if(auto a = any_cast<cpp_bin_float_quad>(&left)) {
-      auto& b = any_cast<cpp_bin_float_quad>(right);
-      return !isnan(*a) && (isnan(b) || *a < b);
+      auto b = any_cast<cpp_bin_float_quad>(&right);
+      return b && !isnan(*a) && (isnan(*b) || *a < *b);
     }
     return compare(left, right);
   }
@@ -125,13 +113,33 @@ GroupedTableModel::GroupedTableModel(
   : GroupedTableModel(std::move(source), std::move(columns), {}) {}
 
 GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
-    std::vector<int> columns, std::vector<TableAggregationFactory> aggregations)
+  std::vector<int> columns, std::vector<TableAggregationFactory> aggregations)
+  : GroupedTableModel(std::move(source), std::move(columns),
+      std::move(aggregations), Comparator()) {}
+
+GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
+  std::vector<int> columns, std::vector<TableAggregationFactory> aggregations,
+  ValueComparator comparator)
+  : GroupedTableModel(std::move(source), std::move(columns),
+      std::move(aggregations), [comparator = std::move(comparator)] (
+          const AnyRef& left, int, const AnyRef& right, int, int) {
+        return comparator(left, right);
+      }) {}
+
+GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
+    std::vector<int> columns, std::vector<TableAggregationFactory> aggregations,
+    Comparator comparator)
     : m_source(std::move(source)),
       m_has_matching_columns(true),
       m_columns(std::move(columns)),
       m_aggregations(std::move(aggregations)),
+      m_uses_default_comparator(!comparator),
+      m_comparator(std::move(comparator)),
       m_next_group(0),
       m_is_source_transaction(false) {
+  if(!m_comparator) {
+    m_comparator = &compare_siblings;
+  }
   validate_columns(m_columns);
   if(m_columns.empty()) {
     m_transaction.set_size(m_source->get_row_size());
@@ -150,6 +158,10 @@ GroupedTableModel::~GroupedTableModel() = default;
 
 const std::shared_ptr<TableModel>& GroupedTableModel::get_source() const {
   return m_source;
+}
+
+const GroupedTableModel::Comparator& GroupedTableModel::get_comparator() const {
+  return m_comparator;
 }
 
 const std::vector<int>& GroupedTableModel::get_grouping() const {
@@ -426,9 +438,13 @@ AnyRef GroupedTableModel::sort_value(const Row& row, int column) const {
   auto& cell = group.m_aggregates[column];
   if(Details::is_default_table_aggregation(cell.m_accumulator.get())) {
     if(auto count = std::any_cast<QString>(&cell.m_value)) {
-      return QStringView(*count).mid(1, count->size() - 2).toLongLong();
-    } else if(auto sum = std::any_cast<std::string>(&cell.m_value)) {
-      return cpp_bin_float_quad(*sum);
+      return static_cast<std::int64_t>(
+        QStringView(*count).mid(1, count->size() - 2).toLongLong());
+    } else if(m_uses_default_comparator) {
+      if(auto sum = std::any_cast<std::string>(&cell.m_value)) {
+        return cpp_bin_float_quad(*sum);
+      }
+      return make_numeric_key<std::int64_t, std::uint64_t>(cell.m_value);
     }
   }
   return cell.m_value;
@@ -443,29 +459,35 @@ void GroupedTableModel::sort_siblings(const std::shared_ptr<Group>& parent) {
   }
   struct Sibling {
     Row m_row;
+    int m_index;
     std::vector<AnyRef> m_keys;
   };
   auto siblings = std::vector<Sibling>();
   for(auto i = first; i < end; ++i) {
     auto& row = m_rows[i];
+    auto index = i;
     if(row.is_heading()) {
       i += row.m_group->m_descendant_count;
     }
     if(siblings.empty() && i + 1 == end) {
       return;
     }
-    auto& sibling = siblings.emplace_back(row, std::vector<AnyRef>());
+    auto& sibling = siblings.emplace_back(row, index, std::vector<AnyRef>());
     for(auto& column : m_order) {
-      sibling.m_keys.push_back(make_key(sort_value(row, column.m_index)));
+      sibling.m_keys.push_back(sort_value(row, column.m_index));
     }
   }
   std::ranges::sort(siblings, [&] (const Sibling& left, const Sibling& right) {
     for(auto i = 0; i != std::ssize(m_order); ++i) {
       auto& a = left.m_keys[i];
       auto& b = right.m_keys[i];
-      if(less(a, b)) {
+      auto column = m_order[i].m_index;
+      if(left.m_row.is_heading() && column == m_columns.front()) {
+        column = m_columns[left.m_row.m_group->m_depth];
+      }
+      if(m_comparator(a, left.m_index, b, right.m_index, column)) {
         return m_order[i].m_order == SortedTableModel::Ordering::ASCENDING;
-      } else if(less(b, a)) {
+      } else if(m_comparator(b, right.m_index, a, left.m_index, column)) {
         return m_order[i].m_order == SortedTableModel::Ordering::DESCENDING;
       }
     }

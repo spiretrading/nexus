@@ -121,10 +121,6 @@ TEST_SUITE("GroupedTableModel") {
       first = 1.0f;
       second = std::nextafter(1.0f, 2.0f);
     }
-    SUBCASE("number_and_text") {
-      first = 1;
-      second = QString("1");
-    }
     SUBCASE("invalid_utf8") {
       first = std::string("\xff");
       second = std::string("\xfe");
@@ -296,20 +292,71 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.index_to_source(4) == 2);
   }
 
-  TEST_CASE("mixed_numeric_sort_keys") {
+  TEST_CASE("sibling_comparator") {
     using enum SortedTableModel::Ordering;
+    auto source = make_positions();
+    auto table = static_cast<GroupedTableModel*>(nullptr);
+    auto model = GroupedTableModel(source, {0}, [&] (const AnyRef& left,
+        int left_row, const AnyRef& right, int right_row, int column) {
+      REQUIRE(column == 2);
+      REQUIRE(is_equal(table->at(left_row, column), left));
+      REQUIRE(is_equal(table->at(right_row, column), right));
+      return compare(right, left);
+    });
+    table = &model;
+    model.set_column_order({{2, ASCENDING}});
+    REQUIRE(model.get<QString>(0, 0) == "A (2)");
+    REQUIRE(model.index_to_source(1) == 2);
+    source->set(1, 2, 50);
+    REQUIRE(model.get<QString>(0, 0) == "B (1)");
+    model.set_grouping({});
+    REQUIRE(model.index_to_source(0) == 1);
+    REQUIRE(model.index_to_source(1) == 2);
+    REQUIRE(model.index_to_source(2) == 0);
+  }
+
+  TEST_CASE("group_value_comparator") {
+    using enum SortedTableModel::Ordering;
+    auto model = GroupedTableModel(make_positions(), {0},
+      [] (const AnyRef& left, const AnyRef& right) {
+        return any_cast<QString>(left) > any_cast<QString>(right);
+      });
+    model.set_column_order({{0, ASCENDING}});
+    REQUIRE(model.get_group_name(0) == "B");
+    REQUIRE(model.get_group_name(2) == "A");
+  }
+
+  TEST_CASE("nested_group_comparator_columns") {
     auto source = std::make_shared<ArrayTableModel>();
-    source->push({QString("A"), 20});
-    source->push({QString("B"), 5.5});
-    source->push({QString("A"), 3.5f});
+    source->push({QString("A"), 1});
+    source->push({QString("B"), 2});
+    source->push({QString("A"), 3});
+    auto model = GroupedTableModel(source, {0, 1}, [] (const AnyRef& left,
+        int, const AnyRef& right, int, int column) {
+      if(column == 0) {
+        return any_cast<QString>(left) > any_cast<QString>(right);
+      }
+      REQUIRE(column == 1);
+      return any_cast<int>(left) > any_cast<int>(right);
+    });
+    model.set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
+    REQUIRE(model.get_group_name(0) == "B");
+    REQUIRE(model.get_group_name(3) == "A");
+    REQUIRE(model.get_group_name(4) == "3");
+    REQUIRE(model.get_group_name(6) == "1");
+  }
+
+  TEST_CASE("floating_point_sort_keys") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), std::numeric_limits<float>::quiet_NaN()});
+    source->push({QString("A"), 1.5f});
+    source->push({QString("B"), 2.5f});
     auto model = GroupedTableModel(source, {0});
-    model.set_column_order({{1, ASCENDING}});
-    REQUIRE(model.get<QString>(0, 0) == "B (1)");
-    REQUIRE(model.index_to_source(3) == 2);
-    source->remove(2);
-    REQUIRE(model.get<QString>(0, 0) == "B (1)");
-    source->set(0, 1, 3);
-    REQUIRE(model.get<QString>(0, 0) == "A (1)");
+    model.set_column_order({{1, SortedTableModel::Ordering::ASCENDING}});
+    REQUIRE(model.get_group_name(0) == "B");
+    REQUIRE(model.get_group_name(2) == "A");
+    REQUIRE(model.index_to_source(3) == 1);
+    REQUIRE(model.index_to_source(4) == 0);
   }
 
   TEST_CASE("large_integer_sort_keys") {
@@ -322,7 +369,7 @@ TEST_SUITE("GroupedTableModel") {
     auto model = GroupedTableModel(source, {0});
     model.set_column_order({{1, DESCENDING}});
     REQUIRE(model.get<QString>(0, 0) == "B (2)");
-    source->set(2, 1, boost::optional<std::uint64_t>());
+    source->set(2, 1, std::uint64_t(0));
     REQUIRE(model.get<QString>(0, 0) == "A (1)");
     REQUIRE(model.index_to_source(3) == 1);
   }

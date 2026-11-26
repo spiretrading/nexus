@@ -340,6 +340,20 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::set_order(
   return *this;
 }
 
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_comparator(
+    TableView::Comparator comparator) {
+  m_comparator = std::move(comparator);
+  return *this;
+}
+
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_comparator(
+    TableView::ValueComparator comparator) {
+  return set_comparator([comparator = std::move(comparator)] (
+      const AnyRef& left, int, const AnyRef& right, int, int) {
+    return comparator(left, right);
+  });
+}
+
 GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregation(
     TableAggregationFactory factory) {
   if(m_columns.empty()) {
@@ -378,7 +392,8 @@ TableView* GroupedTableViewBuilder::make() const {
     factories.push_back(column.m_aggregation);
   }
   auto table = std::make_shared<GroupedTableModel>(
-    m_source, m_grouping.value_or(std::vector<int>()), std::move(factories));
+    m_source, m_grouping.value_or(std::vector<int>()), std::move(factories),
+    m_comparator);
   table->set_column_count(column_count);
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
