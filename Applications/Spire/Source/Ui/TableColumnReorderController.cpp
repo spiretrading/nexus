@@ -1,5 +1,4 @@
 #include "Spire/Ui/TableColumnReorderController.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
@@ -161,7 +160,7 @@ TableColumnReorderController::TableColumnReorderController(
       m_last_mouse_x(0),
       m_left_padding(0),
       m_source_index(-1),
-      m_current_index(-1),
+      m_pressed_item(nullptr),
       m_preview_x_offset(0) {
   auto& header = m_table_view->get_header();
   header.setMouseTracking(true);
@@ -193,10 +192,9 @@ connection TableColumnReorderController::connect_column_moved_signal(
 
 bool TableColumnReorderController::eventFilter(QObject* watched,
     QEvent* event) {
-  if(m_column_cover &&
-      watched == m_table_view->get_header().get_item(m_current_index) &&
+  if(m_column_cover && watched == m_pressed_item &&
       event->type() == QEvent::Move) {
-    move_column_cover(m_current_index);
+    move_column_cover();
   } else if(watched == &m_table_view->get_header()) {
     if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
@@ -205,18 +203,15 @@ bool TableColumnReorderController::eventFilter(QObject* watched,
         auto index = find_column_at_position(header, mouse_event.x());
         if(index != -1 && header.get_item(index)->rect().contains(
             header.get_item(index)->mapFromGlobal(mouse_event.globalPos()))) {
-          m_source_index = index;
+          m_pressed_item = header.get_item(index);
           m_press_position = mouse_event.globalPos();
         }
       }
     } else if(event->type() == QEvent::MouseButtonRelease) {
       if(static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton) {
-        if(m_column_preview) {
-          stop_drag();
-        }
-        m_source_index = -1;
+        stop_drag();
       }
-    } else if(event->type() == QEvent::MouseMove && m_source_index >= 0) {
+    } else if(event->type() == QEvent::MouseMove && m_pressed_item) {
       auto& mouse = *static_cast<QMouseEvent*>(event);
       if(!m_column_preview && (mouse.buttons() & Qt::LeftButton) &&
           (mouse.globalPos() - m_press_position).manhattanLength() >=
@@ -225,10 +220,7 @@ bool TableColumnReorderController::eventFilter(QObject* watched,
       }
       drag_move(mouse);
     } else if(event->type() == QEvent::Hide) {
-      if(m_column_preview) {
-        stop_drag();
-      }
-      m_source_index = -1;
+      stop_drag();
     }
   }
   return QObject::eventFilter(watched, event);
@@ -236,10 +228,8 @@ bool TableColumnReorderController::eventFilter(QObject* watched,
 
 void TableColumnReorderController::start_drag() {
   auto& header = m_table_view->get_header();
-  auto index = m_source_index;
-  m_current_index = index;
   m_last_mouse_x = header.mapFromGlobal(m_press_position).x();
-  match(*header.get_item(index), Drag());
+  match(*m_pressed_item, Drag());
   QApplication::setOverrideCursor(Qt::ClosedHandCursor);
   if(m_item_builder) {
     auto& header_stylist = find_stylist(header);
@@ -252,15 +242,15 @@ void TableColumnReorderController::start_drag() {
       });
     }
   }
-  auto item = header.get_item(index);
-  item->installEventFilter(this);
-  auto top = item->mapTo(m_table_view, QPoint(0, 0));
-  auto column = QRect(top,
-    QSize(item->width() + m_left_padding, m_table_view->height() - top.y()));
+  m_pressed_item->installEventFilter(this);
+  auto top = m_pressed_item->mapTo(m_table_view, QPoint(0, 0));
+  auto column = QRect(top, QSize(m_pressed_item->width() + m_left_padding,
+    m_table_view->height() - top.y()));
   column.translate(-m_left_padding, 0);
   auto& horizontal_scroll_bar =
     m_table_view->get_scroll_box().get_horizontal_scroll_bar();
   if(m_item_builder) {
+    auto index = header.get_index(m_pressed_item).value();
     m_column_preview = make_column_preview(*m_table_view, *m_item_builder,
       index, m_column_order[index]);
   } else {
@@ -307,12 +297,14 @@ void TableColumnReorderController::start_drag() {
 }
 
 void TableColumnReorderController::stop_drag() {
-  QApplication::restoreOverrideCursor();
-  if(m_column_preview) {
-    m_column_preview->hide();
-    m_column_preview->deleteLater();
-    m_column_preview = nullptr;
+  auto item = std::exchange(m_pressed_item, nullptr);
+  if(!m_column_preview) {
+    return;
   }
+  QApplication::restoreOverrideCursor();
+  m_column_preview->hide();
+  m_column_preview->deleteLater();
+  m_column_preview = nullptr;
   if(m_column_cover) {
     m_column_cover->hide();
     m_column_cover->deleteLater();
@@ -330,14 +322,12 @@ void TableColumnReorderController::stop_drag() {
       m_vertical_scroll_bar_parent, 0, 1);
     m_vertical_scroll_bar_parent = nullptr;
   }
-  auto& header = m_table_view->get_header();
-  if(m_current_index >= 0) {
-    auto item = header.get_item(m_current_index);
-    unmatch(*item, Drag());
-    item->removeEventFilter(this);
-    m_column_moved_signal(m_source_index, m_current_index);
-    m_source_index = -1;
-    m_current_index = -1;
+  unmatch(*item, Drag());
+  item->removeEventFilter(this);
+  auto source = std::exchange(m_source_index, -1);
+  auto destination = m_table_view->get_header().get_index(item).value();
+  if(source != -1 && source != destination) {
+    m_column_moved_signal(source, destination);
   }
 }
 
@@ -353,15 +343,16 @@ void TableColumnReorderController::drag_move(const QMouseEvent& mouse_event) {
   auto mouse_x = std::max(0, mouse_event.x());
   update_horizontal_scroll_position(mouse_x);
   auto& header = m_table_view->get_header();
+  auto current = header.get_index(m_pressed_item).value();
   auto index = find_column_at_position(header, mouse_x);
-  if(index != -1 && ((moving_right && index > m_current_index) ||
-      (!moving_right && index < m_current_index))) {
-    auto blocker = shared_connection_block(m_connection);
-    header.get_items()->move(m_current_index, index);
-    move_element(m_column_order, m_current_index, index);
-    m_current_index = index;
+  if(index != -1 && ((moving_right && index > current) ||
+      (!moving_right && index < current))) {
+    auto state = header.get_items()->move(current, index);
+    if(state == QValidator::Acceptable && m_source_index == -1) {
+      m_source_index = current;
+    }
   }
-  move_column_cover(m_current_index);
+  move_column_cover();
   auto parent = m_column_preview->parentWidget();
   auto left = m_table_view->mapTo(parent, QPoint(0, 0)).x();
   auto x = std::clamp(parent->mapFromGlobal(
@@ -370,8 +361,8 @@ void TableColumnReorderController::drag_move(const QMouseEvent& mouse_event) {
   m_column_preview->move(x, m_column_preview->y());
 }
 
-void TableColumnReorderController::move_column_cover(int index) {
-  m_column_cover->move(m_table_view->get_header().get_item(index)->mapTo(
+void TableColumnReorderController::move_column_cover() {
+  m_column_cover->move(m_pressed_item->mapTo(
     m_table_view, QPoint(0, 0)) - QPoint(m_left_padding, 0));
 }
 

@@ -294,14 +294,45 @@ TEST_SUITE("GroupedTableView") {
       QApplication::sendEvent(receiver, &move);
       positions.push_back(header.get_index(account).value());
     };
-    drag_to(100);
-    drag_to(110);
-    drag_to(280);
-    drag_to(60);
-    release_mouse(*receiver, Qt::LeftButton);
-    REQUIRE(positions == std::vector{2, 2, 3, 1});
-    REQUIRE(currency->isHidden());
-    REQUIRE(header.get_column_order()->get(1) == 0);
+    SUBCASE("move_across_hidden_column") {
+      drag_to(100);
+      drag_to(110);
+      drag_to(280);
+      drag_to(60);
+      release_mouse(*receiver, Qt::LeftButton);
+      REQUIRE(positions == std::vector{2, 2, 3, 1});
+      REQUIRE(currency->isHidden());
+      REQUIRE(header.get_column_order()->get(1) == 0);
+    }
+    SUBCASE("regroup_during_drag") {
+      auto moves = std::vector<std::pair<int, int>>();
+      controller.connect_column_moved_signal([&] (int source, int destination) {
+        moves.emplace_back(source, destination);
+      });
+      drag_to(65);
+      REQUIRE(is_match(*account, Drag()));
+      auto table =
+        std::static_pointer_cast<GroupedTableModel>(view->get_table());
+      table->set_grouping({2});
+      REQUIRE(header.get_item(1) == account);
+      SUBCASE("drop") {
+        release_mouse(*receiver, Qt::LeftButton);
+        REQUIRE(moves.empty());
+      }
+      SUBCASE("continue_drag") {
+        drag_to(20);
+        release_mouse(*receiver, Qt::LeftButton);
+        REQUIRE(header.get_item(0) == account);
+        REQUIRE(moves == std::vector{std::pair(1, 0)});
+      }
+      REQUIRE_FALSE(is_match(*account, Drag()));
+      QApplication::processEvents();
+      move_cursor(*account, account->rect().center());
+      press_mouse(*account, Qt::LeftButton);
+      release_mouse(*account, Qt::LeftButton);
+      REQUIRE(header.get_items()->get(*header.get_index(account)).m_order ==
+        TableHeaderItem::Order::ASCENDING);
+    }
   }
 
   UI_TEST_CASE("drag_column_with_collapsed_group") {

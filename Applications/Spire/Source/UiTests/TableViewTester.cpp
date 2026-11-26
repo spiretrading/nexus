@@ -158,6 +158,42 @@ TEST_SUITE("TableView") {
     REQUIRE(rows.get<int>(1, 2) == 30);
   }
 
+  UI_TEST_CASE("rejected_column_drag") {
+    struct FixedHeader : ArrayListModel<TableHeaderItem::Model> {
+      QValidator::State move(int, int) override {
+        return QValidator::Invalid;
+      }
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 20});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      set_header(std::make_shared<FixedHeader>()).
+      add_header_item("Account").add_header_item("Shares").make());
+    auto controller = TableColumnReorderController(*view);
+    auto moves = 0;
+    controller.connect_column_moved_signal([&] (int, int) {
+      ++moves;
+    });
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& header = view->get_header();
+    auto account = header.get_item(0);
+    auto shares = header.get_item(1);
+    move_cursor(*account, account->rect().center());
+    press_mouse(header, Qt::LeftButton);
+    move_cursor(*shares, shares->rect().center());
+    auto position = QCursor::pos();
+    auto move = QMouseEvent(QEvent::MouseMove, header.mapFromGlobal(position),
+      position, Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(&header, &move);
+    REQUIRE(is_match(*account, Drag()));
+    release_mouse(header, Qt::LeftButton);
+    REQUIRE_FALSE(is_match(*account, Drag()));
+    REQUIRE(header.get_item(0) == account);
+    REQUIRE(moves == 0);
+  }
+
   UI_TEST_CASE("header_sort_after_programmatic_sort") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({1, 20});

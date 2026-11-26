@@ -58,14 +58,14 @@ namespace Spire {
       int m_last_mouse_x;
       int m_left_padding;
       int m_source_index;
-      int m_current_index;
+      TableHeaderItem* m_pressed_item;
       int m_preview_x_offset;
       boost::signals2::scoped_connection m_connection;
 
       void start_drag();
       void stop_drag();
       void drag_move(const QMouseEvent& mouse_event);
-      void move_column_cover(int index);
+      void move_column_cover();
       void update_horizontal_scroll_position(int mouse_x);
       void on_operation(
         const ListModel<TableHeaderItem::Model>::Operation& operation);
