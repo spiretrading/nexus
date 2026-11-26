@@ -655,9 +655,10 @@ void ContextMenu::on_submit(const std::any& submission) {
     m_window->hide();
     m_submit_signal(*this, menu_item.m_name);
   } else if(menu_item.m_type == MenuItemType::CHECK) {
-    auto& model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
+    auto name = menu_item.m_name;
+    auto model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
     model->set(!model->get());
-    m_submit_signal(*this, menu_item.m_name);
+    m_submit_signal(*this, name);
   }
 }
 
