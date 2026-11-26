@@ -1,6 +1,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include <QString>
 #include "Nexus/Definitions/Money.hpp"
@@ -8,6 +9,7 @@
 #include "Spire/Ui/TableAggregation.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
@@ -79,6 +81,37 @@ TEST_SUITE("TableAggregation") {
     first->remove(QString("USD"));
     REQUIRE_FALSE(first->get().has_value());
     REQUIRE(std::any_cast<QString>(second->get()) == "(1)");
+  }
+
+  TEST_CASE("timestamp_distinct_count") {
+    auto midnight = time_from_string("2026-11-25 00:00:00");
+    auto previous = midnight - seconds(1);
+    auto values = std::vector<std::any>{previous, midnight, previous, 7};
+    auto aggregate = std::unique_ptr<TableAggregation>();
+    SUBCASE("standalone") {
+      aggregate = make_default_table_aggregation();
+    }
+    SUBCASE("group") {
+      aggregate = Spire::Details::make_default_table_aggregation(
+        [&] (const Spire::Details::TableValueVisitor& visit) {
+          for(auto& value : values) {
+            visit(value);
+          }
+        });
+    }
+    for(auto& value : values) {
+      aggregate->add(value);
+    }
+    REQUIRE(std::any_cast<QString>(aggregate->get()) == "(3)");
+    values[0] = QString("2026-11-24T23:59:59");
+    aggregate->update(previous, values[0]);
+    REQUIRE(std::any_cast<QString>(aggregate->get()) == "(3)");
+    aggregate->remove(values[2]);
+    REQUIRE(std::any_cast<QString>(aggregate->get()) == "(3)");
+    aggregate->remove(values[0]);
+    REQUIRE(std::any_cast<QString>(aggregate->get()) == "(2)");
+    aggregate->remove(midnight);
+    REQUIRE(std::any_cast<std::int64_t>(aggregate->get()) == 7);
   }
 
   TEST_CASE("mixed_values") {

@@ -8,6 +8,7 @@
 #include "Spire/Ui/Details/DefaultTableAggregation.hpp"
 
 using namespace boost::multiprecision;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Details;
@@ -48,7 +49,7 @@ namespace {
   }
 
   template<typename T>
-  QString display_value(const T& value) {
+  QString frequency_key(const T& value) {
     if constexpr(std::signed_integral<T>) {
       return to_text(static_cast<std::int64_t>(value));
     } else if constexpr(std::unsigned_integral<T>) {
@@ -58,6 +59,13 @@ namespace {
     } else {
       return to_text(value);
     }
+  }
+
+  QString frequency_key(const AnyRef& value) {
+    if(auto timestamp = any_cast<ptime>(&value)) {
+      return QString::fromStdString(to_iso_extended_string(*timestamp));
+    }
+    return to_text(value);
   }
 
   struct RealSum {
@@ -132,7 +140,7 @@ namespace {
             auto frequencies = QHash<QString, int>();
             m_visit([&] (const AnyRef& value) {
               visit_value(value, [&] (const auto& contribution) {
-                ++frequencies[display_value(contribution)];
+                ++frequencies[frequency_key(contribution)];
               });
             });
             m_frequencies = std::move(frequencies);
@@ -206,11 +214,17 @@ namespace {
               return;
             }
           }
-          auto key = display_value(contribution);
-          auto& frequency = m_frequencies[key];
-          frequency += count;
-          if(frequency == 0) {
-            m_frequencies.remove(key);
+          auto key = frequency_key(contribution);
+          if(count > 0) {
+            ++m_frequencies[key];
+            return;
+          }
+          auto i = m_frequencies.find(key);
+          if(i != m_frequencies.end()) {
+            --i.value();
+            if(i.value() == 0) {
+              m_frequencies.erase(i);
+            }
           }
         });
       }

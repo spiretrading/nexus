@@ -30,7 +30,8 @@ namespace Spire {
   /**
    * Makes a default accumulator. Numeric contributions are summed. If any
    * text is present, the result is the distinct display-value count "(n)".
-   * Missing values are ignored. An empty aggregate returns an empty std::any.
+   * Timestamps use their full ISO date and time for this count. Missing values
+   * are ignored. An empty aggregate returns an empty std::any.
    */
   std::unique_ptr<TableAggregation> make_default_table_aggregation();
 }
