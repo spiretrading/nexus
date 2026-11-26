@@ -155,6 +155,29 @@ TEST_SUITE("TableView") {
     REQUIRE(rows.get<int>(1, 2) == 30);
   }
 
+  UI_TEST_CASE("header_sort_after_programmatic_sort") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 20});
+    source->push({2, 10});
+    source->push({3, 20});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Account").add_header_item("Quantity").make());
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto sorted = std::static_pointer_cast<SortedTableModel>(
+      view->get_body().get_table());
+    sorted->set_column_order({{0, SortedTableModel::Ordering::DESCENDING}});
+    auto item = view->get_header().get_item(1);
+    move_cursor(*item, item->rect().center());
+    press_mouse(*item, Qt::LeftButton);
+    release_mouse(*item, Qt::LeftButton);
+    REQUIRE(sorted->get_column_order().size() == 2);
+    REQUIRE(sorted->get<int>(0, 0) == 2);
+    REQUIRE(sorted->get<int>(1, 0) == 3);
+    REQUIRE(sorted->get<int>(2, 0) == 1);
+  }
+
   UI_TEST_CASE("source_sort_handler") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({1, 30});

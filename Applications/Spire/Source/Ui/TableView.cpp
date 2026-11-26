@@ -292,6 +292,9 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   auto header_item = m_header->get(index);
   header_item.m_order = order;
   auto source = m_header_view->get_column_order()->get(index);
+  if(m_sorted_table) {
+    m_order = m_sorted_table->get_column_order();
+  }
   adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)), m_order);
   m_sort(m_order);
   for(auto i = 0; i != m_header->get_size(); ++i) {
