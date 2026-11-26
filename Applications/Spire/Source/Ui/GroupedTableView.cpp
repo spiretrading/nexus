@@ -66,9 +66,12 @@ namespace {
           auto display = original->second;
           if(grouped) {
             display.m_is_hidden = column != grouping.front();
-            if(!display.m_is_hidden) {
-              display.m_name = tr("Group");
-              display.m_short_name.clear();
+            if(!display.m_is_hidden && grouping.size() > 1) {
+              auto suffix = tr(" (+%1)").arg(grouping.size() - 1);
+              display.m_name += suffix;
+              if(!display.m_short_name.isEmpty()) {
+                display.m_short_name += suffix;
+              }
             }
           } else {
             m_originals.erase(original);

@@ -66,7 +66,7 @@ TEST_SUITE("GroupedTableView") {
     auto leaf = body.find_item(TableIndex(2, 0));
     REQUIRE(leaf);
     REQUIRE(leaf->get_body().layout()->itemAt(0)->widget()->isHidden());
-    REQUIRE(view->get_header().get_items()->get(0).m_name == "Group");
+    REQUIRE(view->get_header().get_items()->get(0).m_name == "Account (+1)");
     REQUIRE(view->get_header().get_item(1)->isHidden());
     toggle(1, 0, "CAD");
     REQUIRE(visible.get_row_size() == 7);
@@ -188,7 +188,7 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(first->get_label()->get() == "Account");
     REQUIRE(second->get_label()->get() == "Currency");
     table->set_grouping({1});
-    REQUIRE(header.get_items()->get(1).m_name == "Group");
+    REQUIRE(header.get_items()->get(1).m_name == "Currency");
     REQUIRE(header.get_items()->get(2).m_name == "Account");
     REQUIRE_FALSE(header.get_item(1)->isHidden());
     table->set_grouping({});
@@ -294,7 +294,7 @@ TEST_SUITE("GroupedTableView") {
       return leaf(column)->get_body().layout()->itemAt(0)->widget();
     };
     table->set_grouping({1});
-    REQUIRE(items.get(0).m_name == "Group");
+    REQUIRE(items.get(0).m_name == "Side");
     REQUIRE(header.get_column_order()->get(0) == 1);
     REQUIRE(table->get_group_name(0) == "Long");
     REQUIRE(label(0)->isHidden());
@@ -308,7 +308,8 @@ TEST_SUITE("GroupedTableView") {
     table->set_grouping({0, 1});
     REQUIRE(header.get_item(0)->isHidden());
     REQUIRE_FALSE(header.get_item(1)->isHidden());
-    REQUIRE(items.get(1).m_name == "Group");
+    REQUIRE(items.get(1).m_name == "Account (+1)");
+    REQUIRE(items.get(1).m_short_name == "Acct (+1)");
     table->set_grouping({});
     REQUIRE(items.get(0).m_name == "Side");
     REQUIRE(items.get(1).m_name == "Account");
@@ -656,7 +657,15 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(tag_at(0)->get_label()->get() == "Account");
     REQUIRE(dynamic_cast<Icon*>(tags->itemAt(1)->widget()));
     REQUIRE(tag_at(2)->get_label()->get() == "Currency");
+    select(2);
+    auto& headers = *view->get_header().get_items();
+    REQUIRE(headers.get(0).m_name == "Account (+2)");
+    REQUIRE(headers.get(0).m_short_name == "Acct (+2)");
+    select(2);
+    REQUIRE(headers.get(0).m_name == "Account (+1)");
     remove(0);
+    REQUIRE(headers.get(0).m_name == "Currency");
+    REQUIRE(headers.get(0).m_short_name.isEmpty());
     REQUIRE(table->get_grouping() == std::vector{1});
     REQUIRE(tags->count() == 1);
     REQUIRE(tag_at(0)->get_label()->get() == "Currency");
