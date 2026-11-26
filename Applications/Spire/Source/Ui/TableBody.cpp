@@ -179,12 +179,22 @@ struct TableBody::RowCover : Cover {
     return nullptr;
   }
 
-  void mount(int index) {
-    auto& body = *static_cast<TableBody*>(parentWidget());
-    m_selector = body.m_item_builder.get_row_selector(index);
+  void set_selector(std::optional<Selector> selector) {
+    if(m_selector == selector) {
+      return;
+    }
+    if(m_selector) {
+      unmatch(*this, *m_selector);
+    }
+    m_selector = std::move(selector);
     if(m_selector) {
       match(*this, *m_selector);
     }
+  }
+
+  void mount(int index) {
+    auto& body = *static_cast<TableBody*>(parentWidget());
+    set_selector(body.m_item_builder.get_row_selector(index));
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       get_item(i)->mount(*body.m_item_builder.mount(
         body.m_table, index, body.m_visual_to_logical_columns[i]));
@@ -199,10 +209,7 @@ struct TableBody::RowCover : Cover {
         body.m_item_builder.unmount(item->unmount());
       }
     }
-    if(m_selector) {
-      unmatch(*this, *m_selector);
-      m_selector.reset();
-    }
+    set_selector(std::nullopt);
     unmatch(*this, CurrentRow());
     unmatch(*this, Selected());
     if(!testAttribute(Qt::WA_WState_Hidden)) {
@@ -1702,6 +1709,11 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     },
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
+    },
+    [&] (const TableModel::UpdateOperation& operation) {
+      if(auto row = find_row(operation.m_row)) {
+        row->set_selector(m_item_builder.get_row_selector(operation.m_row));
+      }
     });
   if(!m_is_transaction &&
       !std::holds_alternative<TableModel::PreRemoveOperation>(operation)) {

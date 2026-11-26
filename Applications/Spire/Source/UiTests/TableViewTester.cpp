@@ -253,6 +253,50 @@ TEST_SUITE("TableView") {
     REQUIRE(body.get_table()->get<int>(0, 0) == 50);
   }
 
+  UI_TEST_CASE("row_selector_update") {
+    using Positive = StateSelector<void, struct PositiveTag>;
+    using Negative = StateSelector<void, struct NegativeTag>;
+    struct Builder {
+      std::shared_ptr<TableModel> m_table;
+
+      std::optional<Selector> get_row_selector(int row) const {
+        auto value = m_table->get<int>(row, 0);
+        if(value > 0) {
+          return Positive();
+        } else if(value < 0) {
+          return Negative();
+        }
+        return std::nullopt;
+      }
+
+      QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
+          int column) {
+        return TableView::default_item_builder(table, row, column);
+      }
+
+      void unmount(QWidget* widget) {
+        delete widget;
+      }
+    };
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({1});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Value").set_item_builder(Builder(table)).make());
+    view->show();
+    QApplication::processEvents();
+    auto item = view->get_body().find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    auto& row = *item->parentWidget();
+    REQUIRE(is_match(row, Positive()));
+    table->set(0, 0, -1);
+    REQUIRE_FALSE(is_match(row, Positive()));
+    REQUIRE(is_match(row, Negative()));
+    table->set(0, 0, 0);
+    REQUIRE_FALSE(is_match(row, Negative()));
+    table->set(0, 0, 2);
+    REQUIRE(is_match(row, Positive()));
+  }
+
   UI_TEST_CASE("focus_colors") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({1});
