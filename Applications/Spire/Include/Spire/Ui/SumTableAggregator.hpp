@@ -1,5 +1,7 @@
 #ifndef SPIRE_SUM_TABLE_AGGREGATOR_HPP
 #define SPIRE_SUM_TABLE_AGGREGATOR_HPP
+#include <cstdint>
+#include <limits>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/Ui/TableAggregator.hpp"
@@ -14,10 +16,9 @@ namespace Details {
     int m_negative_infinity = 0;
 
     void apply(long double value, int count);
-    double get() const;
+    template<std::floating_point T>
+    T get() const;
   };
-
-  std::any integer_sum(const boost::multiprecision::int128_t& value);
 }
 
   /**
@@ -32,8 +33,10 @@ namespace Details {
       std::any get() const override;
 
     private:
-      std::conditional_t<std::integral<T>, boost::multiprecision::int128_t,
-        Details::RealSum> m_sum = {};
+      using IntegerSum = std::conditional_t<(sizeof(T) <= sizeof(std::int32_t)),
+        std::int64_t, boost::multiprecision::int128_t>;
+      std::conditional_t<std::integral<T>, IntegerSum, Details::RealSum>
+        m_sum = {};
       int m_count = 0;
 
       void apply(const AnyRef& value, int count);
@@ -55,11 +58,16 @@ namespace Details {
       return {};
     }
     if constexpr(std::integral<T>) {
-      return Details::integer_sum(m_sum);
+      if(m_sum < std::numeric_limits<T>::min() ||
+          m_sum > std::numeric_limits<T>::max()) {
+        return {};
+      }
+      return static_cast<T>(m_sum);
     } else if constexpr(std::floating_point<T>) {
-      return m_sum.get();
+      return m_sum.template get<T>();
     } else {
-      return T(Nexus::Quantity::from_representation(m_sum.get()));
+      return T(Nexus::Quantity::from_representation(
+        m_sum.template get<double>()));
     }
   }
 
@@ -70,7 +78,7 @@ namespace Details {
     }
     auto& item = any_cast<T>(value);
     if constexpr(std::integral<T>) {
-      m_sum += boost::multiprecision::int128_t(item) * count;
+      m_sum += IntegerSum(item) * count;
     } else if constexpr(std::floating_point<T>) {
       m_sum.apply(item, count);
     } else {

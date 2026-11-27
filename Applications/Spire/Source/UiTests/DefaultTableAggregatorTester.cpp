@@ -11,10 +11,10 @@ TEST_SUITE("DefaultTableAggregator") {
     REQUIRE_FALSE(aggregator.get().has_value());
     aggregator.update(AnyRef(), 7);
     aggregator.add(5);
-    REQUIRE(std::any_cast<std::int64_t>(aggregator.get()) == 12);
+    REQUIRE(std::any_cast<int>(aggregator.get()) == 12);
     aggregator.update(7, 3);
     aggregator.remove(5);
-    REQUIRE(std::any_cast<std::int64_t>(aggregator.get()) == 3);
+    REQUIRE(std::any_cast<int>(aggregator.get()) == 3);
   }
 
   TEST_CASE("text_column") {

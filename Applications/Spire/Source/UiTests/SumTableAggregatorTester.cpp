@@ -16,7 +16,7 @@ TEST_SUITE("SumTableAggregator") {
     aggregate.add(5);
     aggregate.update(missing, 7);
     aggregate.remove(5);
-    REQUIRE(std::any_cast<std::int64_t>(aggregate.get()) == 12);
+    REQUIRE(std::any_cast<int>(aggregate.get()) == 12);
     aggregate.update(7, missing);
     aggregate.remove(5);
     REQUIRE_FALSE(aggregate.get().has_value());
@@ -48,6 +48,27 @@ TEST_SUITE("SumTableAggregator") {
     aggregate.update(maximum, 0.25);
     aggregate.add(1.0);
     REQUIRE(std::any_cast<double>(aggregate.get()) == 1.25);
+  }
+
+  TEST_CASE("integer_overflow") {
+    auto aggregate = SumTableAggregator<int>();
+    auto minimum = std::numeric_limits<int>::min();
+    aggregate.add(minimum);
+    aggregate.add(-1);
+    REQUIRE_FALSE(aggregate.get().has_value());
+    aggregate.remove(-1);
+    REQUIRE(std::any_cast<int>(aggregate.get()) == minimum);
+  }
+
+  TEST_CASE("floating_point_result_type") {
+    auto check = [] (auto value) {
+      using T = decltype(value);
+      auto aggregate = SumTableAggregator<T>();
+      aggregate.add(value);
+      REQUIRE(std::any_cast<T>(aggregate.get()) == value);
+    };
+    check(0.25f);
+    check(std::numeric_limits<long double>::max());
   }
 
   TEST_CASE("real_sum_after_cancellation") {

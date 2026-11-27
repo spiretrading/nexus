@@ -33,24 +33,18 @@ void Details::RealSum::apply(long double value, int count) {
   }
 }
 
-double Details::RealSum::get() const {
+template<std::floating_point T>
+T Details::RealSum::get() const {
   if(m_nan != 0 || (m_positive_infinity != 0 && m_negative_infinity != 0)) {
-    return std::numeric_limits<double>::quiet_NaN();
+    return std::numeric_limits<T>::quiet_NaN();
   } else if(m_positive_infinity != 0) {
-    return std::numeric_limits<double>::infinity();
+    return std::numeric_limits<T>::infinity();
   } else if(m_negative_infinity != 0) {
-    return -std::numeric_limits<double>::infinity();
+    return -std::numeric_limits<T>::infinity();
   }
-  return static_cast<double>(
-    ldexp(cpp_bin_float_50(m_significand), m_exponent));
+  return static_cast<T>(ldexp(cpp_bin_float_50(m_significand), m_exponent));
 }
 
-std::any Details::integer_sum(const int128_t& value) {
-  if(value >= std::numeric_limits<std::int64_t>::min() &&
-      value <= std::numeric_limits<std::int64_t>::max()) {
-    return value.convert_to<std::int64_t>();
-  } else if(value >= 0 && value <= std::numeric_limits<std::uint64_t>::max()) {
-    return value.convert_to<std::uint64_t>();
-  }
-  return value;
-}
+template float Details::RealSum::get<float>() const;
+template double Details::RealSum::get<double>() const;
+template long double Details::RealSum::get<long double>() const;
