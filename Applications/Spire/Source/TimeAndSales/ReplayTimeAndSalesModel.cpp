@@ -153,6 +153,9 @@ time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
 
 time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
   static const auto JUMP_THRESHOLD = seconds(2);
+  if(m_session->get_state()->get() != PlaybackState::REPLAYING) {
+    return JUMP_THRESHOLD;
+  }
   return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
 }
 
