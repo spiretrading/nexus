@@ -98,8 +98,24 @@ TEST_SUITE("GroupedTableView") {
     source->push({QString("Long"), QString("B"), 10});
     source->push({QString("Long"), QString("C"), 20});
     auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
-      add_column("Side").add_column("Account").add_column("Shares").
+      add_column("Side").set_order(TableHeaderItem::Order::ASCENDING).
+      add_column("Account").set_order(TableHeaderItem::Order::DESCENDING).
+      add_column("Shares").
       set_grouping({0}).make());
+    REQUIRE(view->get_header().get_items()->get(0).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(view->get_header().get_items()->get(1).m_order ==
+      TableHeaderItem::Order::NONE);
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 0);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 1);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
+    REQUIRE(view->get_table()->get<QString>(1, 1) == "C");
+    REQUIRE(view->get_table()->get<QString>(2, 1) == "B");
+    REQUIRE(view->get_table()->get<QString>(3, 1) == "A");
     view->resize(500, 200);
     view->show();
     auto& table = *view->get_table();

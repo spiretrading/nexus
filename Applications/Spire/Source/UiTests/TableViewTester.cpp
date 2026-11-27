@@ -200,7 +200,19 @@ TEST_SUITE("TableView") {
     source->push({2, 10});
     source->push({3, 20});
     auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
-      add_header_item("Account").add_header_item("Quantity").make());
+      add_header_item("Account", TableHeaderItem::Order::ASCENDING).
+      add_header_item("Quantity", TableHeaderItem::Order::DESCENDING).make());
+    REQUIRE(view->get_header().get_items()->get(0).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(view->get_header().get_items()->get(1).m_order ==
+      TableHeaderItem::Order::NONE);
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 0);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 1);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     view->resize(400, 200);
     view->show();
     QApplication::processEvents();

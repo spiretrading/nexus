@@ -130,6 +130,7 @@ TableView::TableView(std::shared_ptr<TableModel> table,
   } else {
     m_sort(m_order);
   }
+  update_sort_indicators();
   initialize_body(std::move(item_builder), std::move(tracking));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
@@ -227,25 +228,7 @@ void TableView::set_column_order(
   });
   m_sort(order);
   m_order = std::move(order);
-  auto& columns = *m_header_view->get_column_order();
-  for(auto i = 0; i != m_header->get_size(); ++i) {
-    auto item = m_header->get(i);
-    if(item.m_order == TableHeaderItem::Order::UNORDERED) {
-      continue;
-    }
-    auto direction = TableHeaderItem::Order::NONE;
-    if(!m_order.empty() && columns.get(i) == m_order.front().m_index) {
-      if(m_order.front().m_order == SortedTableModel::Ordering::ASCENDING) {
-        direction = TableHeaderItem::Order::ASCENDING;
-      } else {
-        direction = TableHeaderItem::Order::DESCENDING;
-      }
-    }
-    if(item.m_order != direction) {
-      item.m_order = direction;
-      m_header->set(i, item);
-    }
-  }
+  update_sort_indicators();
 }
 
 connection TableView::connect_sort_signal(
@@ -325,6 +308,28 @@ void TableView::initialize_body(
   columns->track(refresh);
   body_current->set_source(std::make_shared<SourceToViewIndexModel>(
     mapping, column_order, m_current));
+}
+
+void TableView::update_sort_indicators() {
+  auto& columns = *m_header_view->get_column_order();
+  for(auto i = 0; i != m_header->get_size(); ++i) {
+    auto item = m_header->get(i);
+    if(item.m_order == TableHeaderItem::Order::UNORDERED) {
+      continue;
+    }
+    auto direction = TableHeaderItem::Order::NONE;
+    if(!m_order.empty() && columns.get(i) == m_order.front().m_index) {
+      if(m_order.front().m_order == SortedTableModel::Ordering::ASCENDING) {
+        direction = TableHeaderItem::Order::ASCENDING;
+      } else {
+        direction = TableHeaderItem::Order::DESCENDING;
+      }
+    }
+    if(item.m_order != direction) {
+      item.m_order = direction;
+      m_header->set(i, item);
+    }
+  }
 }
 
 void TableView::update_scroll_sizes() {
