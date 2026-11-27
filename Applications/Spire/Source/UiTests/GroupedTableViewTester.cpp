@@ -9,11 +9,13 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DefaultTableAggregator.hpp"
 #include "Spire/Ui/DistinctTableAggregator.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableGroupingBar.hpp"
@@ -104,6 +106,10 @@ TEST_SUITE("GroupedTableView") {
     auto& header = view->get_header();
     header.get_items()->move(2, 1);
     view->set_column_order({{1, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(view->get_column_order().size() == 1);
+    REQUIRE(view->get_column_order().front().m_index == 1);
+    REQUIRE(view->get_column_order().front().m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     QApplication::processEvents();
     REQUIRE(header.get_items()->get(2).m_order ==
       TableHeaderItem::Order::DESCENDING);
@@ -118,7 +124,15 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(table.get<QString>(1, 1) == "B");
     REQUIRE(table.get<QString>(2, 1) == "C");
     REQUIRE(table.get<QString>(3, 1) == "A");
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 2);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 1);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     view->set_column_order({});
+    REQUIRE(view->get_column_order().empty());
     REQUIRE(header.get_items()->get(1).m_order == TableHeaderItem::Order::NONE);
     REQUIRE(table.get<QString>(1, 1) == "A");
   }
@@ -195,6 +209,43 @@ TEST_SUITE("GroupedTableView") {
     check_selection();
     source->remove(0);
     REQUIRE(rows.get_size() == 0);
+  }
+
+  UI_TEST_CASE("multiple_selection") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 10});
+    source->push({QString("B"), 20});
+    source->push({QString("A"), 30});
+    auto selection = std::make_shared<TableSelectionModel>(
+      std::make_shared<TableEmptySelectionModel>(),
+      std::make_shared<ListMultiSelectionModel>(),
+      std::make_shared<ListEmptySelectionModel>());
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Shares").set_grouping({0}).
+      set_selection(selection).make());
+    REQUIRE(view->get_selection() == selection);
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    auto& rows = *view->get_body().get_selection()->get_row_selection();
+    REQUIRE(rows.push(table->index_from_source(0)) == QValidator::Acceptable);
+    REQUIRE(rows.push(table->index_from_source(1)) == QValidator::Acceptable);
+    auto check_selection = [&] {
+      REQUIRE(rows.get_size() == 2);
+      REQUIRE(selection->get_row_selection()->get_size() == 2);
+      for(auto i = 0; i != 2; ++i) {
+        REQUIRE(rows.get(i) == table->index_from_source(i));
+        REQUIRE(selection->get_row_selection()->get(i) == rows.get(i));
+      }
+    };
+    check_selection();
+    view->set_column_order({{1, SortedTableModel::Ordering::DESCENDING}});
+    check_selection();
+    source->set(0, 0, QString("B"));
+    check_selection();
+    source->remove(0);
+    REQUIRE(rows.get_size() == 1);
+    REQUIRE(rows.get(0) == table->index_from_source(0));
+    REQUIRE(selection->get_row_selection()->get_size() == 1);
+    REQUIRE(selection->get_row_selection()->get(0) == rows.get(0));
   }
 
   UI_TEST_CASE("disclosure_name_after_account_rename") {

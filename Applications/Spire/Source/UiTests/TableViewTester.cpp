@@ -207,11 +207,22 @@ TEST_SUITE("TableView") {
     auto sorted = std::static_pointer_cast<SortedTableModel>(
       view->get_body().get_table());
     sorted->set_column_order({{0, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(view->get_column_order().size() == 1);
+    REQUIRE(view->get_column_order().front().m_index == 0);
+    REQUIRE(view->get_column_order().front().m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     auto item = view->get_header().get_item(1);
     move_cursor(*item, item->rect().center());
     press_mouse(*item, Qt::LeftButton);
     release_mouse(*item, Qt::LeftButton);
     REQUIRE(sorted->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 1);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 0);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     REQUIRE(sorted->get<int>(0, 0) == 2);
     REQUIRE(sorted->get<int>(1, 0) == 3);
     REQUIRE(sorted->get<int>(2, 0) == 1);
