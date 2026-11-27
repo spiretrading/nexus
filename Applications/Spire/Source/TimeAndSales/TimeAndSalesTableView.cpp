@@ -158,38 +158,42 @@ namespace {
   };
 
   struct TableUpdateHandler : QObject {
+    std::shared_ptr<TableModel> m_table;
+    std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+    ItemBuilder m_builder;
     bool m_is_updated;
     scoped_connection m_connection;
 
     TableUpdateHandler(TableView& table_view, std::shared_ptr<TableModel> table,
-        std::shared_ptr<TimeAndSalesPropertiesModel> properties,
-        ItemBuilder builder)
-        : QObject(&table_view),
-          m_is_updated(false) {
-      m_connection = table->connect_operation_signal(
-        [=, this, &table_view] (
-            const TableModel::Operation& operation) mutable {
-          if(std::holds_alternative<TableModel::EndTransaction>(operation)) {
-            if(m_is_updated) {
-              m_is_updated = false;
-              table_view.get_scroll_box().get_vertical_scroll_bar().
-                set_position(0);
-            }
-            return;
+      std::shared_ptr<TimeAndSalesPropertiesModel> properties,
+      ItemBuilder builder)
+      : QObject(&table_view),
+        m_table(std::move(table)),
+        m_properties(std::move(properties)),
+        m_builder(builder),
+        m_is_updated(false),
+        m_connection(m_table->connect_operation_signal(
+          std::bind_front(&TableUpdateHandler::on_operation, this))) {}
+
+    void on_operation(const TableModel::Operation& operation) {
+      auto& table_view = *static_cast<TableView*>(parent());
+      visit(operation,
+        [&] (const TableModel::EndTransaction&) {
+          if(m_is_updated) {
+            m_is_updated = false;
+            table_view.get_scroll_box().get_vertical_scroll_bar().
+              set_position(0);
           }
-          auto update = std::get_if<TableModel::UpdateOperation>(&operation);
-          if(!update ||
-              update->m_column >= TimeAndSalesTableModel::COLUMN_SIZE) {
-            return;
-          }
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
           m_is_updated = true;
-          auto& order = properties->get().get_column_order();
+          auto& order = m_properties->get().get_column_order();
           auto column = static_cast<int>(std::distance(order.begin(),
-            std::find(order.begin(), order.end(), update->m_column)));
+            std::find(order.begin(), order.end(), operation.m_column)));
           if(auto item = table_view.get_body().find_item(
-              TableIndex(update->m_row, column))) {
-            builder.reset(
-              item->get_body(), table, update->m_row, update->m_column);
+              TableIndex(operation.m_row, column))) {
+            m_builder.reset(
+              item->get_body(), m_table, operation.m_row, operation.m_column);
           }
         });
     }
