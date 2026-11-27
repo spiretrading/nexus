@@ -2,6 +2,11 @@
 
 using namespace Spire;
 
+std::optional<Styles::Selector> TableViewItemBuilder::get_row_selector(
+    int row) const {
+  return m_builder->get_row_selector(row);
+}
+
 QWidget* TableViewItemBuilder::mount(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   return m_builder->mount(table, row, column);

@@ -633,6 +633,9 @@ void Nexus::Python::export_time_in_force(module& module) {
 }
 
 void Nexus::Python::export_trading_schedule(module& module) {
+  module.def("set_trading_schedule", [] (const TradingSchedule& schedule) {
+    set_trading_schedule(schedule);
+  });
   auto outer = class_<TradingSchedule>(module, "TradingSchedule").
     def(init<std::vector<TradingSchedule::Rule>>()).
     def("find", [] (const TradingSchedule& self, ptime timestamp, Venue venue) {
@@ -661,6 +664,8 @@ void Nexus::Python::export_trading_schedule(module& module) {
     const YAML::Node&, const VenueDatabase&>(&parse_trading_schedule));
   module.def("parse_trading_schedule",
     overload_cast<const YAML::Node&>(&parse_trading_schedule));
+  module.attr("TRADING_SCHEDULE") =
+    cast(TRADING_SCHEDULE, return_value_policy::reference);
 }
 
 void Nexus::Python::export_venue(module& module) {

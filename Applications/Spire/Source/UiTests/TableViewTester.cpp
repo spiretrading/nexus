@@ -1,19 +1,28 @@
+#include <algorithm>
 #include <QApplication>
+#include <QLabel>
+#include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/SpireTester/ListModelTester.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/UiTests/UiTests.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 using namespace Spire::Tests;
 
 namespace {
@@ -70,6 +79,356 @@ namespace {
 }
 
 TEST_SUITE("TableView") {
+  UI_TEST_CASE("drag_displayed_column") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, QString("A"), 10});
+    source->push({0, QString("B"), 90});
+    source->push({2, QString("C"), 30});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Desk").add_header_item("Account").
+      add_header_item("Shares", TableHeaderItem::Order::DESCENDING).
+      set_filter(std::make_shared<MinimumFilter>()).make());
+    auto controller = TableColumnReorderController(*view);
+    auto moves = std::vector<std::pair<int, int>>();
+    controller.connect_column_moved_signal([&] (int from, int to) {
+      moves.emplace_back(from, to);
+    });
+    auto& header = view->get_header();
+    header.get_widths()->set(0, 230);
+    header.get_widths()->set(1, 120);
+    header.get_widths()->set(2, 90);
+    view->resize(300, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& scroll = view->get_scroll_box().get_horizontal_scroll_bar();
+    scroll.set_position(scroll.get_range().m_end);
+    QApplication::processEvents();
+    auto offset = scroll.get_position();
+    REQUIRE(offset > 0);
+    auto& body = view->get_body();
+    auto& rows = *body.get_table();
+    REQUIRE(rows.get_row_size() == 2);
+    REQUIRE(rows.get<int>(0, 2) == 30);
+    REQUIRE(rows.get<int>(1, 2) == 10);
+    auto shares = header.get_item(2);
+    move_cursor(*shares, shares->rect().center());
+    auto receiver = QApplication::widgetAt(QCursor::pos());
+    REQUIRE(receiver);
+    REQUIRE((receiver == shares || shares->isAncestorOf(receiver)));
+    press_mouse(*receiver, Qt::LeftButton);
+    auto top = shares->mapTo(view.get(), QPoint());
+    auto last = body.find_item(TableIndex(1, 2));
+    REQUIRE(last);
+    auto bottom = last->mapTo(view.get(), last->rect().bottomRight());
+    auto displayed = view->grab(QRect(top, QSize(shares->width(),
+      bottom.y() - top.y() + 1)));
+    auto account = header.get_item(1);
+    move_cursor(*account, account->rect().center());
+    auto position = QCursor::pos();
+    auto move = QMouseEvent(QEvent::MouseMove,
+      receiver->mapFromGlobal(position), position, Qt::NoButton,
+      Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(receiver, &move);
+    REQUIRE(header.get_item(1) == shares);
+    auto area = displayed.rect();
+    area.setTop(qRound(shares->height() * displayed.devicePixelRatio()));
+    auto cells = displayed.copy(area).toImage();
+    auto matches = std::ranges::any_of(view->findChildren<QLabel*>(),
+      [&] (auto label) {
+        auto preview = label->pixmap(Qt::ReturnByValue);
+        return preview.rect().contains(area) &&
+          preview.copy(area).toImage() == cells;
+      });
+    REQUIRE(matches);
+    release_mouse(*receiver, Qt::LeftButton);
+    QApplication::processEvents();
+    REQUIRE(moves == std::vector{std::pair(2, 1)});
+    REQUIRE(scroll.get_position() == offset);
+    REQUIRE(header.get_column_order()->get(1) == 2);
+    REQUIRE(header.get_widths()->get(1) == 90);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::DESCENDING);
+    move_cursor(*shares, shares->rect().center());
+    press_mouse(*shares, Qt::LeftButton);
+    release_mouse(*shares, Qt::LeftButton);
+    REQUIRE(moves.size() == 1);
+    REQUIRE(header.get_items()->get(1).m_order ==
+      TableHeaderItem::Order::ASCENDING);
+    REQUIRE(rows.get<int>(0, 2) == 10);
+    REQUIRE(rows.get<int>(1, 2) == 30);
+  }
+
+  UI_TEST_CASE("rejected_column_drag") {
+    struct FixedHeader : ArrayListModel<TableHeaderItem::Model> {
+      QValidator::State move(int, int) override {
+        return QValidator::Invalid;
+      }
+    };
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 20});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      set_header(std::make_shared<FixedHeader>()).
+      add_header_item("Account").add_header_item("Shares").make());
+    auto controller = TableColumnReorderController(*view);
+    auto moves = 0;
+    controller.connect_column_moved_signal([&] (int, int) {
+      ++moves;
+    });
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& header = view->get_header();
+    auto account = header.get_item(0);
+    auto shares = header.get_item(1);
+    move_cursor(*account, account->rect().center());
+    press_mouse(header, Qt::LeftButton);
+    move_cursor(*shares, shares->rect().center());
+    auto position = QCursor::pos();
+    auto move = QMouseEvent(QEvent::MouseMove, header.mapFromGlobal(position),
+      position, Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(&header, &move);
+    REQUIRE(is_match(*account, Drag()));
+    release_mouse(header, Qt::LeftButton);
+    REQUIRE_FALSE(is_match(*account, Drag()));
+    REQUIRE(header.get_item(0) == account);
+    REQUIRE(moves == 0);
+  }
+
+  UI_TEST_CASE("header_sort_after_programmatic_sort") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 20});
+    source->push({2, 10});
+    source->push({3, 20});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Account").add_header_item("Quantity").make());
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto sorted = std::static_pointer_cast<SortedTableModel>(
+      view->get_body().get_table());
+    sorted->set_column_order({{0, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(view->get_column_order().size() == 1);
+    REQUIRE(view->get_column_order().front().m_index == 0);
+    REQUIRE(view->get_column_order().front().m_order ==
+      SortedTableModel::Ordering::DESCENDING);
+    auto item = view->get_header().get_item(1);
+    move_cursor(*item, item->rect().center());
+    press_mouse(*item, Qt::LeftButton);
+    release_mouse(*item, Qt::LeftButton);
+    REQUIRE(sorted->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 1);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 0);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
+    REQUIRE(sorted->get<int>(0, 0) == 2);
+    REQUIRE(sorted->get<int>(1, 0) == 3);
+    REQUIRE(sorted->get<int>(2, 0) == 1);
+  }
+
+  UI_TEST_CASE("source_sort_handler") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 30});
+    source->push({0, 500});
+    source->push({2, 10});
+    auto requests = std::vector<std::vector<SortedTableModel::ColumnOrder>>();
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(source).
+      add_header_item("Account", TableHeaderItem::Order::DESCENDING).
+      add_header_item("Quantity").set_filter(std::make_shared<MinimumFilter>()).
+      set_sort_handler([&] (const auto& order) {
+        requests.push_back(order);
+        if(requests.size() == 2) {
+          source->move(2, 0);
+        }
+      }).make());
+    REQUIRE(requests.size() == 1);
+    REQUIRE(requests[0].size() == 1);
+    REQUIRE(requests[0][0].m_index == 0);
+    REQUIRE(requests[0][0].m_order == SortedTableModel::Ordering::DESCENDING);
+    view->resize(400, 200);
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto& rows = *body.get_table();
+    REQUIRE(rows.get_row_size() == 2);
+    REQUIRE(rows.get<int>(0, 1) == 30);
+    view->get_current()->set(TableIndex(2, 1));
+    view->get_selection()->get_row_selection()->push(2);
+    auto& header = view->get_header();
+    header.get_items()->move(1, 0);
+    QApplication::processEvents();
+    REQUIRE(body.get_current()->get().value() == TableIndex(1, 0));
+    auto item = header.get_item(0);
+    move_cursor(*item, item->rect().center());
+    press_mouse(*item, Qt::LeftButton);
+    release_mouse(*item, Qt::LeftButton);
+    REQUIRE(requests.size() == 2);
+    REQUIRE(requests[1].size() == 2);
+    REQUIRE(requests[1][0].m_index == 1);
+    REQUIRE(requests[1][0].m_order == SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(requests[1][1].m_index == 0);
+    REQUIRE(rows.get<int>(0, 1) == 10);
+    REQUIRE(body.get_current()->get().value() == TableIndex(0, 0));
+    REQUIRE(body.get_selection()->get_row_selection()->get(0) == 0);
+    REQUIRE(view->get_current()->get().value() == TableIndex(0, 1));
+  }
+
+  UI_TEST_CASE("filtered_row_removal") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({100});
+    auto view = std::unique_ptr<TableView>(TableViewBuilder(table).
+      add_header_item("Quantity").
+      set_filter(std::make_shared<MinimumFilter>()).make());
+    view->resize(240, 160);
+    view->show();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto index = TableIndex(0, 0);
+    REQUIRE(body.find_item(index));
+    SUBCASE("unselected") {}
+    SUBCASE("selected") {
+      view->get_current()->set(index);
+      view->get_selection()->get_row_selection()->push(0);
+    }
+    table->set(0, 0, 0);
+    QApplication::processEvents();
+    REQUIRE(body.get_table()->get_row_size() == 0);
+    REQUIRE_FALSE(body.find_item(index));
+    table->set(0, 0, 50);
+    QApplication::processEvents();
+    REQUIRE(body.get_table()->get_row_size() == 1);
+    REQUIRE(body.find_item(index));
+    REQUIRE(body.get_table()->get<int>(0, 0) == 50);
+  }
+
+  UI_TEST_CASE("row_selector_update") {
+    using Positive = StateSelector<void, struct PositiveTag>;
+    using Negative = StateSelector<void, struct NegativeTag>;
+    struct Builder {
+      std::shared_ptr<TableModel> m_table;
+
+      std::optional<Selector> get_row_selector(int row) const {
+        auto value = m_table->get<int>(row, 0);
+        if(value > 0) {
+          return Positive();
+        } else if(value < 0) {
+          return Negative();
+        }
+        return std::nullopt;
+      }
+
+      QWidget* mount(const std::shared_ptr<TableModel>&, int, int) {
+        return new EditableBox(*new TextBox());
+      }
+
+      void unmount(QWidget* widget) {
+        delete widget;
+      }
+    };
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({1});
+    auto builder = Builder(table);
+    auto view = std::unique_ptr<TableView>();
+    SUBCASE("table") {
+      view.reset(TableViewBuilder(table).
+        add_header_item("Value").set_item_builder(builder).make());
+    }
+    SUBCASE("editable") {
+      view.reset(EditableTableViewBuilder(table).
+        add_header_item("Value").set_item_builder(builder).make());
+    }
+    SUBCASE("drag_preview") {
+      view.reset(TableViewBuilder(table).add_header_item("Value").make());
+      auto controller = TableColumnReorderController(*view, builder);
+      view->resize(300, 200);
+      view->show();
+      QApplication::processEvents();
+      auto& header = view->get_header();
+      auto start = header.get_item(0)->mapTo(&header,
+        header.get_item(0)->rect().center());
+      auto send = [&] (QEvent::Type type, QPoint position,
+          Qt::MouseButton button, Qt::MouseButtons buttons) {
+        auto event = QMouseEvent(type, position, header.mapToGlobal(position),
+          button, buttons, Qt::NoModifier);
+        QApplication::sendEvent(&header, &event);
+      };
+      auto end = start + QPoint(QApplication::startDragDistance(), 0);
+      send(QEvent::MouseButtonPress, start, Qt::LeftButton, Qt::LeftButton);
+      send(QEvent::MouseMove, end, Qt::NoButton, Qt::LeftButton);
+      QApplication::processEvents();
+      auto matched = false;
+      for(auto widget : view->findChildren<QWidget*>()) {
+        if(auto preview = dynamic_cast<TableView*>(widget)) {
+          if(auto item = preview->get_body().find_item(TableIndex(0, 0))) {
+            matched = is_match(*item->parentWidget(), Positive());
+          }
+        }
+      }
+      send(QEvent::MouseButtonRelease, end, Qt::LeftButton, Qt::NoButton);
+      REQUIRE(matched);
+      return;
+    }
+    view->show();
+    QApplication::processEvents();
+    auto item = view->get_body().find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    auto& row = *item->parentWidget();
+    REQUIRE(is_match(row, Positive()));
+    table->set(0, 0, -1);
+    REQUIRE_FALSE(is_match(row, Positive()));
+    REQUIRE(is_match(row, Negative()));
+    table->set(0, 0, 0);
+    REQUIRE_FALSE(is_match(row, Negative()));
+    table->set(0, 0, 2);
+    REQUIRE(is_match(row, Positive()));
+  }
+
+  UI_TEST_CASE("focus_colors") {
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({1});
+    auto window = QWidget();
+    auto view = TableViewBuilder(table).add_header_item("Value").make();
+    view->setParent(&window);
+    view->resize(240, 160);
+    auto outside = QWidget(&window);
+    outside.setFocusPolicy(Qt::StrongFocus);
+    window.show();
+    window.activateWindow();
+    QApplication::processEvents();
+    auto& body = view->get_body();
+    auto index = TableIndex(0, 0);
+    view->get_current()->set(index);
+    view->get_selection()->get_row_selection()->push(0);
+    auto item = body.find_item(index);
+    REQUIRE(item);
+    auto row_outline = false;
+    SUBCASE("row") {
+      match(body, CurrentRowOutline());
+      row_outline = true;
+    }
+    SUBCASE("cell") {}
+    auto check = [&] (QColor outline, QColor fill) {
+      QApplication::processEvents();
+      auto& row = get_computed_block(*item->parentWidget());
+      REQUIRE((find<BackgroundColor>(row) == BackgroundColor(fill)));
+      if(row_outline) {
+        REQUIRE((find<HorizontalGridColor>(row) ==
+          HorizontalGridColor(outline)));
+        REQUIRE(item->get_styles().m_border_top_color == Qt::transparent);
+      } else {
+        REQUIRE(item->get_styles().m_border_top_color == outline);
+      }
+    };
+    view->get_header().get_item(0)->setFocus();
+    check(QColor(0x4B23A0), QColor(0xE2E0FF));
+    outside.setFocus();
+    check(QColor(0xA0A0A0), QColor(0xE0E0E0));
+    body.setFocus();
+    check(QColor(0x4B23A0), QColor(0xE2E0FF));
+  }
+
   UI_TEST_CASE("retained_body_selection") {
     auto table = std::make_shared<ArrayTableModel>();
     table->push({0});

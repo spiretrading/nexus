@@ -18,6 +18,9 @@ namespace Spire {
        */
       using ColumnMoved = Signal<void(int source, int destination)>;
 
+      /** Enables header dragging with a preview of the displayed column. */
+      explicit TableColumnReorderController(TableView& table_view);
+
       /**
        * Constructs TableColumnReorderController with the default column order.
        * @param table_view The TableView that the controller works on.
@@ -45,24 +48,24 @@ namespace Spire {
     private:
       mutable ColumnMoved m_column_moved_signal;
       TableView* m_table_view;
-      TableViewItemBuilder m_item_builder;
+      boost::optional<TableViewItemBuilder> m_item_builder;
       std::vector<int> m_column_order;
       QWidget* m_column_preview;
       QWidget* m_column_cover;
       QWidget* m_horizontal_scroll_bar_parent;
       QWidget* m_vertical_scroll_bar_parent;
+      QPoint m_press_position;
       int m_last_mouse_x;
       int m_left_padding;
       int m_source_index;
-      int m_current_index;
+      TableHeaderItem* m_pressed_item;
       int m_preview_x_offset;
-      std::vector<int> m_widths;
       boost::signals2::scoped_connection m_connection;
 
-      void start_drag(const QMouseEvent& mouse_event);
+      void start_drag();
       void stop_drag();
       void drag_move(const QMouseEvent& mouse_event);
-      void move_column_cover(int index);
+      void move_column_cover();
       void update_horizontal_scroll_position(int mouse_x);
       void on_operation(
         const ListModel<TableHeaderItem::Model>::Operation& operation);

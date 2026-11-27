@@ -1,12 +1,18 @@
+#include <vector>
+#include <Aspen/Executor.hpp>
+#include <Aspen/Lift.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/StandardTimeZones.hpp"
+#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
 #include "Spire/Canvas/ControlNodes/UntilNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
+#include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TaskVolumeNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/Tasks/Executor.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
@@ -170,6 +176,57 @@ TEST_SUITE("Translation") {
     REQUIRE(executionReports->pop().m_status == OrderStatus::PENDING_CANCEL);
     environment.m_environment.cancel(*receivedOrder1);
     REQUIRE(taskState->pop().m_state == Task::State::CANCELED);
+  }
+
+  TEST_CASE("translating_order_reference") {
+    auto environment = Environment();
+    auto order = std::make_unique<SingleOrderTaskNode>()->Replace(
+      "ticker", std::make_unique<TickerNode>(TEST_TICKER));
+    order = order->Replace("quantity", std::make_unique<IntegerNode>(100));
+    order = order->Replace("side", std::make_unique<SideNode>(Side::BID));
+    order = order->Replace("price", std::make_unique<MoneyNode>(Money::ONE));
+    auto chain = std::unique_ptr<CanvasNode>(std::make_unique<ChainNode>());
+    chain = chain->Replace("i0", std::move(order));
+    chain = chain->Replace("i1", std::make_unique<ReferenceNode>("i0"));
+    auto executor = Executor();
+    auto context = CanvasNodeTranslationContext(Ref(environment.m_userProfile),
+      Ref(executor), DirectoryEntry());
+    auto translation = Translate(context, *chain->FindChild("i1"));
+    auto result = translation.Extract<Aspen::Box<std::shared_ptr<Order>>>();
+    REQUIRE(result.commit(0) == Aspen::State::COMPLETE);
+  }
+
+  TEST_CASE("translating_task_volume") {
+    auto environment = Environment();
+    auto node = MakeTaskVolumeNode();
+    node = node->Replace(
+      "task", std::make_unique<SingleOrderTaskNode>());
+    node = PreprocessTranslation(*node);
+    auto order = std::make_shared<PrimitiveOrder>(OrderInfo());
+    auto report = ExecutionReport();
+    report.m_status = OrderStatus::PARTIALLY_FILLED;
+    report.m_sequence = 1;
+    report.m_last_quantity = 40;
+    order->update(report);
+    report.m_status = OrderStatus::FILLED;
+    report.m_sequence = 2;
+    report.m_last_quantity = 60;
+    order->update(report);
+    auto executor = Executor();
+    auto context = CanvasNodeTranslationContext(Ref(environment.m_userProfile),
+      Ref(executor), DirectoryEntry());
+    auto source = Translation(
+      Aspen::constant(std::shared_ptr<Order>(order)));
+    context.Add(Ref(*node->FindChild("task")), source.ToWeak());
+    auto translation = Translate(context, *node);
+    auto volumes = std::vector<Quantity>();
+    auto record = Aspen::lift([&] (const auto& volume) {
+      volumes.push_back(volume);
+    }, translation.Extract<Aspen::Box<Quantity>>());
+    Aspen::Executor(std::move(record)).run_until_complete();
+    REQUIRE_FALSE(volumes.empty());
+    REQUIRE(volumes.front() == 0);
+    REQUIRE(volumes.back() == 100);
   }
 
   TEST_CASE("translating_spawn") {

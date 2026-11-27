@@ -1,8 +1,18 @@
 find_package(Qt5Widgets REQUIRED)
-set(library_source_files ${SPIRE_SOURCE_PATH}/SpireTester/SpireTester.cpp)
+set(library_source_files ${SPIRE_SOURCE_PATH}/SpireTester/UiTestFixture.cpp)
 add_library(SpireTesterLibrary ${library_source_files})
 beam_configure_target(SpireTesterLibrary)
+target_link_libraries(SpireTesterLibrary Resources)
 if(WIN32)
+  target_link_libraries(SpireTesterLibrary
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH})
   target_compile_definitions(SpireTesterLibrary PRIVATE
     SPIRE_TEST_FONT_DIRECTORY="${SPIRE_RESOURCES_PATH}/Fonts/Roboto")
 endif()
@@ -10,7 +20,7 @@ set_target_properties(SpireTesterLibrary PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_tester)
 file(GLOB_RECURSE header_files ../../Include/Spire/SpireTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/SpireTester/*.cpp)
-list(FILTER source_files EXCLUDE REGEX "/SpireTester/SpireTester\\.cpp$")
+list(FILTER source_files EXCLUDE REGEX "/SpireTester/UiTestFixture\\.cpp$")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(SpireTester ${header_files} ${source_files})
 beam_configure_target(SpireTester)

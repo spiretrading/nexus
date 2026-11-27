@@ -63,7 +63,7 @@ namespace Nexus {
   }
 
   inline TradingSchedule DefaultDefinitionsClient::load_trading_schedule() {
-    return {};
+    return TRADING_SCHEDULE;
   }
 
   void DefaultDefinitionsClient::close() {}

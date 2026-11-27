@@ -32,6 +32,9 @@ namespace Spire {
 
       ~RecycledTableViewItemBuilder();
 
+      /** Returns the wrapped builder's optional row style. */
+      std::optional<Styles::Selector> get_row_selector(int row) const;
+
       QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column);
       void unmount(QWidget* widget);
@@ -56,6 +59,16 @@ namespace Spire {
         row.pop_front();
         m_builder.unmount(widget);
       }
+    }
+  }
+
+  template<typename B>
+  std::optional<Styles::Selector>
+      RecycledTableViewItemBuilder<B>::get_row_selector(int row) const {
+    if constexpr(requires { m_builder.get_row_selector(row); }) {
+      return m_builder.get_row_selector(row);
+    } else {
+      return std::nullopt;
     }
   }
 

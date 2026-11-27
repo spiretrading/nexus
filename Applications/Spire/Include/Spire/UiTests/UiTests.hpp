@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_TESTS_HPP
 #define SPIRE_UI_TESTS_HPP
+#include <QObject>
 #include <QPoint>
 #include <QString>
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -7,6 +8,24 @@
 class QWidget;
 
 namespace Spire::Tests {
+
+  /** Controls tooltip timers and fades without waiting for physical time. */
+  class InfoTipTestDriver : public QObject {
+    public:
+
+      /** Suspends physical timer events for the lifetime of the driver. */
+      InfoTipTestDriver();
+
+      ~InfoTipTestDriver() override;
+
+      /** Fires active tooltip timers once and completes their fades. */
+      void advance();
+
+    private:
+      bool m_is_advancing;
+
+      bool eventFilter(QObject* watched, QEvent* event) override;
+  };
 
   /**
    * Moves the mouse cursor to a position within a widget.

@@ -122,10 +122,10 @@ add_executable(CanvasTests ${test_source_files})
 beam_configure_target(CanvasTests)
 target_link_libraries(CanvasTests BeamRoutines)
 target_compile_definitions(CanvasTests PRIVATE YAML_CPP_STATIC_DEFINE)
-target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
-  Utilities RiskTimer Blotter Catalog BookView TimeAndSales
+target_link_libraries(CanvasTests SpireTesterLibrary Async Dashboard Charting
+  PortfolioViewer Utilities RiskTimer Blotter Catalog BookView TimeAndSales
   OrderImbalanceIndicator InputWidgets CanvasView Canvas KeyBindings Styles
-  Library LegacyResources LegacyUI Toolbar
+  Library LegacyResources LegacyUI Resources Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
@@ -140,6 +140,10 @@ target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
   target_link_libraries(CanvasTests
+    debug ${QT_OFFSCREEN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_OFFSCREEN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_CORE_LIBRARY_DEBUG_PATH}
     optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}

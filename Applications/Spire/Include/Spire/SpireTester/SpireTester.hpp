@@ -12,7 +12,7 @@
 namespace Spire::Tests {
 
   /**
-   * Provides a QApplication that uses the offscreen platform at a fixed DPI.
+   * Provides an offscreen QApplication with Spire resources at a fixed DPI.
    */
   class UiTestFixture {
     public:

@@ -93,6 +93,7 @@ namespace Spire {
 
       /**
        * Returns the value at a specified row and column.
+       * Computed values remain valid until the next call to get.
        * @throws <code>std::out_of_range</code> iff row or column is out of
        *         range.
        */
@@ -131,6 +132,8 @@ namespace Spire {
       TableModel() = default;
 
     private:
+      mutable AnyRef m_last;
+
       TableModel(const TableModel&) = delete;
       TableModel& operator =(const TableModel&) = delete;
   };
@@ -143,7 +146,8 @@ namespace Spire {
 
   template<typename T>
   const T& TableModel::get(int row, int column) const {
-    return any_cast<const T>(at(row, column));
+    m_last = at(row, column);
+    return any_cast<const T>(m_last);
   }
 }
 

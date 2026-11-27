@@ -18,9 +18,28 @@ namespace {
     TestEnvironment m_environment;
     std::shared_ptr<SimulationExecutionReportQueue> m_reports;
 
-    Fixture()
-      : m_environment(time_from_string("2025-08-14 09:00:00.000")),
+    explicit Fixture(
+      ptime time = time_from_string("2025-08-14 09:00:00.000"))
+      : m_environment(time),
         m_reports(std::make_shared<SimulationExecutionReportQueue>()) {
+    }
+  };
+
+  const auto PRE_OPEN_TIME = time_from_string("2025-08-14 13:00:00.000");
+  const auto BEFORE_CLOSE_TIME = time_from_string("2025-08-14 19:59:00.000");
+  const auto CLOSE =
+    TimeAndSale::Condition(TimeAndSale::Condition::Type::CLOSE, "C");
+
+  struct ScopedTradingSchedule {
+    TradingSchedule m_schedule;
+
+    explicit ScopedTradingSchedule(TradingSchedule schedule)
+        : m_schedule(TRADING_SCHEDULE) {
+      set_trading_schedule(std::move(schedule));
+    }
+
+    ~ScopedTradingSchedule() {
+      set_trading_schedule(m_schedule);
     }
   };
 
@@ -35,6 +54,13 @@ namespace {
   void update_bbo_price(
       Fixture& fixture, auto& simulator, Money bid_price, Money ask_price) {
     fixture.m_environment.update_bbo_price(ABX, bid_price, ask_price);
+    simulator.update(
+      BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100),
+        fixture.m_environment.get_time_environment().get_time()));
+  }
+
+  void publish_bbo_quote(
+      Fixture& fixture, auto& simulator, Money bid_price, Money ask_price) {
     simulator.update(
       BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100),
         fixture.m_environment.get_time_environment().get_time()));
@@ -55,6 +81,12 @@ namespace {
     simulator.submit(order);
     fixture.m_reports->flush();
     return order;
+  }
+
+  OrderFields make_market_on_close(
+      OrderType type, Side side, Quantity quantity, Money price) {
+    return OrderFields({}, ABX, CurrencyId::NONE, type, side, {}, quantity,
+      price, TimeInForce(TimeInForce::Type::MOC), {});
   }
 
   std::shared_ptr<PrimitiveOrder> submit_limit_order(Fixture& fixture,
@@ -82,12 +114,19 @@ namespace {
   }
 
   void publish_time_and_sale(Fixture& fixture, auto& simulator, Money price,
-      Quantity size, const std::string& code = "@",
+      Quantity size, TimeAndSale::Condition condition,
       const std::string& market_center = "TSE") {
     simulator.update(TimeAndSale(
       fixture.m_environment.get_time_environment().get_time(), price, size,
+      std::move(condition), market_center));
+  }
+
+  void publish_time_and_sale(Fixture& fixture, auto& simulator, Money price,
+      Quantity size, const std::string& code = "@",
+      const std::string& market_center = "TSE") {
+    publish_time_and_sale(fixture, simulator, price, size,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, code),
-      market_center));
+      market_center);
   }
 
   void publish_book_quote(Fixture& fixture, auto& simulator,
@@ -834,21 +873,44 @@ TEST_SUITE("TickerOrderSimulator") {
     auto reports = monitor_reports(order);
     fixture.m_environment.advance(minutes(1));
 
-    SUBCASE("no_fill_on_irregular_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "X");
+    SUBCASE("no_fill_on_untyped_irregular_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "X"));
       REQUIRE(!reports->try_pop());
     }
 
-    SUBCASE("no_fill_on_empty_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "");
+    SUBCASE("no_fill_on_untyped_empty_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, ""));
       REQUIRE(!reports->try_pop());
     }
 
-    SUBCASE("fill_on_regular_condition") {
-      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "@");
+    SUBCASE("fill_on_untyped_regular_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "@"));
       auto report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_quantity == 100);
+    }
+
+    SUBCASE("fill_on_regular_type_with_any_code") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100, "X");
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_quantity == 100);
+    }
+
+    SUBCASE("no_fill_on_correction") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::CORRECTION, "@"));
+      REQUIRE(!reports->try_pop());
+    }
+
+    SUBCASE("no_fill_on_cancellation") {
+      publish_time_and_sale(fixture, simulator, parse_money("0.98"), 100,
+        TimeAndSale::Condition(
+          TimeAndSale::Condition::Type::CANCELLATION, "@"));
+      REQUIRE(!reports->try_pop());
     }
   }
 
@@ -1309,5 +1371,580 @@ TEST_SUITE("TickerOrderSimulator") {
     auto report = reports->pop();
     REQUIRE(report.m_status == OrderStatus::FILLED);
     REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("pre_open_holds_marketable_orders") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto bid = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto bid_reports = monitor_reports(bid);
+    auto ask = submit_limit_order(
+      fixture, simulator, 2, Side::ASK, 100, parse_money("0.95"));
+    auto ask_reports = monitor_reports(ask);
+    REQUIRE(!bid_reports->try_pop());
+    REQUIRE(!ask_reports->try_pop());
+    fixture.m_environment.advance(minutes(1));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.02"), parse_money("1.02"));
+    REQUIRE(!bid_reports->try_pop());
+    REQUIRE(!ask_reports->try_pop());
+  }
+
+  TEST_CASE("pre_open_holds_orders_when_the_quote_is_not_crossed") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.05")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(30));
+
+    SUBCASE("quote_at_the_open") {
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.00"), parse_money("1.04"));
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
+
+    SUBCASE("time_and_sale_at_the_open") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.03"), 100);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.05"));
+    }
+
+    SUBCASE("submission_at_the_open") {
+      auto second = submit_limit_order(
+        fixture, simulator, 2, Side::BID, 100, parse_money("1.00"));
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.05"));
+    }
+  }
+
+  TEST_CASE("opening_cross_fills_through_orders_at_the_cross_price") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto bid = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto bid_reports = monitor_reports(bid);
+    auto ask = submit_limit_order(
+      fixture, simulator, 2, Side::ASK, 100, parse_money("0.95"));
+    auto ask_reports = monitor_reports(ask);
+    fixture.m_environment.advance(minutes(30));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.02"), parse_money("1.02"));
+    REQUIRE(!bid_reports->try_pop());
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 300);
+    auto report = bid_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+    report = ask_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("opening_cross_is_capped_by_its_size") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 500, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 200);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 200);
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 150);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+    fixture.m_environment.advance(seconds(1));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.02"), parse_money("1.10"));
+    REQUIRE(!reports->try_pop());
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.02"), parse_money("1.04"));
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.04"));
+    REQUIRE(report.m_last_quantity == 200);
+  }
+
+  TEST_CASE("opening_cross_fills_orders_at_the_cross_price") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto bid = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.02"));
+    auto bid_reports = monitor_reports(bid);
+    auto ask = submit_limit_order(
+      fixture, simulator, 2, Side::ASK, 100, parse_money("1.02"));
+    auto ask_reports = monitor_reports(ask);
+    fixture.m_environment.advance(minutes(30));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 300);
+    auto report = bid_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+    report = ask_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("opening_cross_fills_through_orders_before_at_price_orders") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto at_price = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 200, parse_money("1.02"));
+    auto at_price_reports = monitor_reports(at_price);
+    auto through = submit_limit_order(
+      fixture, simulator, 2, Side::BID, 200, parse_money("1.05"));
+    auto through_reports = monitor_reports(through);
+    fixture.m_environment.advance(minutes(30));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 300);
+    auto report = through_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 200);
+    report = at_price_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("opening_cross_ignores_orders_priced_behind_it") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.00"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 300);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(seconds(1));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.01"), parse_money("1.03"));
+    publish_time_and_sale(fixture, simulator, parse_money("1.01"), 100);
+    REQUIRE(!reports->try_pop());
+  }
+
+  TEST_CASE("opening_print_is_the_cross_without_a_crossed_quote") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.05")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.04"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    auto open =
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::OPEN, "O");
+
+    SUBCASE("first_at_the_open") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100, open);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.02"));
+    }
+
+    SUBCASE("after_a_quote_at_the_open") {
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.00"), parse_money("1.05"));
+      REQUIRE(!reports->try_pop());
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100, open);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.02"));
+    }
+
+    SUBCASE("regular_print") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
+
+    SUBCASE("other_venue") {
+      publish_time_and_sale(
+        fixture, simulator, parse_money("1.02"), 100, open, "OMG");
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
+  }
+
+  TEST_CASE("opening_cross_fills_market_orders_first") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto limit = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto limit_reports = monitor_reports(limit);
+    auto market = submit_order(fixture, simulator, 2,
+      make_market_order_fields(ABX, CurrencyId::NONE, Side::BID, 100));
+    auto market_reports = monitor_reports(market);
+    REQUIRE(!market_reports->try_pop());
+    fixture.m_environment.advance(minutes(30));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+    auto report = market_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(!limit_reports->try_pop());
+  }
+
+  TEST_CASE("opening_cross_follows_a_quote_sharing_its_timestamp") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.01"), parse_money("1.04"));
+    REQUIRE(!reports->try_pop());
+
+    SUBCASE("cross") {
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.02"));
+    }
+
+    SUBCASE("no_cross") {
+      fixture.m_environment.advance(seconds(1));
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.01"), parse_money("1.03"));
+      REQUIRE(!reports->try_pop());
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.03"));
+    }
+  }
+
+  TEST_CASE("opening_cross_published_after_later_time_and_sales") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(30));
+    auto open = fixture.m_environment.get_time_environment().get_time();
+    fixture.m_environment.advance(milliseconds(40));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.01"), parse_money("1.10"));
+    fixture.m_environment.advance(milliseconds(300));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.03"), 100, "@", "OMG");
+    REQUIRE(!reports->try_pop());
+    simulator.update(TimeAndSale(open + milliseconds(30), parse_money("1.02"),
+      100, TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+      "TSE"));
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+  }
+
+  TEST_CASE("delayed_opening_holds_orders_until_the_cross") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(45));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.03"), parse_money("1.03"));
+    REQUIRE(!reports->try_pop());
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.04"), 100, "@", "OMG");
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.03"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.03"));
+  }
+
+  TEST_CASE("simulator_started_at_the_open_awaits_the_cross") {
+    auto fixture = Fixture(time_from_string("2025-08-14 13:30:00.000"));
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.02"), parse_money("1.02")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    REQUIRE(!reports->try_pop());
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+  }
+
+  TEST_CASE("open_venue_trades_while_the_listing_venue_is_in_its_pre_open") {
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.00")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"), "OMEGA");
+    auto reports = monitor_reports(order);
+    REQUIRE(!reports->try_pop());
+
+    SUBCASE("time_and_sale_on_the_venue") {
+      fixture.m_environment.advance(minutes(1));
+      publish_time_and_sale(
+        fixture, simulator, parse_money("1.05"), 100, "@", "OMG");
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.05"));
+    }
+
+    SUBCASE("opening_cross") {
+      fixture.m_environment.advance(minutes(30));
+      publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+      REQUIRE(!reports->try_pop());
+      fixture.m_environment.advance(seconds(1));
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.00"), parse_money("1.04"));
+      auto report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("1.04"));
+    }
+  }
+
+  TEST_CASE("venue_pre_open_holds_orders_until_the_venue_opens") {
+    auto fixture = Fixture(time_from_string("2025-08-14 11:30:00.000"));
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.10")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"), "ALPHA");
+    auto reports = monitor_reports(order);
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.04"), 100, "@", "ALP");
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(31));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.04"), 100, "@", "ALP");
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.05"));
+  }
+
+  TEST_CASE("closing_cross_fills_market_on_close_orders") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto limit = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::LIMIT, Side::BID, 100, parse_money("1.01")));
+    auto limit_reports = monitor_reports(limit);
+    auto market = submit_order(fixture, simulator, 2, make_market_on_close(
+      OrderType::MARKET, Side::ASK, 100, Money::ZERO));
+    auto market_reports = monitor_reports(market);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 300);
+    REQUIRE(!limit_reports->try_pop());
+    REQUIRE(!market_reports->try_pop());
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.00"), 300, CLOSE, "OMG");
+    REQUIRE(!limit_reports->try_pop());
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 300, CLOSE);
+    auto report = limit_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.00"));
+    REQUIRE(report.m_last_quantity == 100);
+    report = market_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.00"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("closing_cross_is_capped_by_its_size") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::MARKET, Side::BID, 500, Money::ZERO));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 200, CLOSE);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_quantity == 200);
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 150, CLOSE);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_quantity == 100);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(seconds(1));
+
+    SUBCASE("expires_on_a_time_and_sale") {
+      publish_time_and_sale(
+        fixture, simulator, parse_money("1.00"), 100, "@", "OMG");
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::EXPIRED);
+    }
+
+    SUBCASE("expires_on_a_quote") {
+      publish_bbo_quote(
+        fixture, simulator, parse_money("1.00"), parse_money("1.01"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::EXPIRED);
+    }
+  }
+
+  TEST_CASE("closing_cross_ignores_orders_priced_behind_it") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::LIMIT, Side::BID, 100, parse_money("0.99")));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 300, CLOSE);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(seconds(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.98"), 300);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::EXPIRED);
+  }
+
+  TEST_CASE("closing_cross_without_size_fills_nothing") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::MARKET, Side::BID, 100, Money::ZERO));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 0, CLOSE);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(seconds(1));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.00"), parse_money("1.01"));
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::EXPIRED);
+  }
+
+  TEST_CASE("closing_cross_fills_resting_orders_at_the_closing_price") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.10")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.05"));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 300, CLOSE);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+  }
+
+  TEST_CASE("delayed_closing_cross_fills_market_on_close_orders") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::MARKET, Side::BID, 100, Money::ZERO));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(6));
+    publish_bbo_quote(
+      fixture, simulator, parse_money("1.00"), parse_money("1.02"));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("1.00"), 100, "@", "OMG");
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(5));
+    publish_time_and_sale(fixture, simulator, parse_money("1.03"), 100, CLOSE);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.03"));
+  }
+
+  TEST_CASE("market_on_close_orders_expire_without_a_closing_cross") {
+    auto fixture = Fixture(time_from_string("2026-12-24 17:59:00.000"));
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::LIMIT, Side::BID, 100, parse_money("1.01")));
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 100);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(14));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 100);
+    REQUIRE(!reports->try_pop());
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::EXPIRED);
+  }
+
+  TEST_CASE("market_on_close_order_is_rejected_after_the_close") {
+    auto fixture = Fixture(BEFORE_CLOSE_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.00"), 100, CLOSE);
+    auto accepted = submit_order(fixture, simulator, 1, make_market_on_close(
+      OrderType::MARKET, Side::BID, 100, Money::ZERO));
+    monitor_reports(accepted);
+    fixture.m_environment.advance(seconds(1));
+    auto order = submit_order(fixture, simulator, 2, make_market_on_close(
+      OrderType::MARKET, Side::BID, 100, Money::ZERO));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::REJECTED);
+  }
+
+  TEST_CASE("empty_trading_schedule_has_no_pre_open") {
+    auto schedule = ScopedTradingSchedule(TradingSchedule());
+    auto fixture = Fixture(PRE_OPEN_TIME);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.01"));
+    auto report = monitor_reports(order)->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.01"));
   }
 }

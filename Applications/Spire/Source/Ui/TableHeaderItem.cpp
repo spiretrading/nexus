@@ -491,6 +491,9 @@ void TableHeaderItem::keyPressEvent(QKeyEvent* event) {
 }
 
 void TableHeaderItem::on_click() {
+  if(is_match(*this, Drag())) {
+    return;
+  }
   auto order = m_model->get().m_order;
   if(order == Order::NONE || order == Order::DESCENDING) {
     m_sort_signal(Order::ASCENDING);

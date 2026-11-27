@@ -19,8 +19,12 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
-      /** Signals a change to a source column's sort order. */
+      /** Signals a header sort request in source-column coordinates. */
       using SortSignal = TableHeader::SortSignal;
+
+      /** Applies the header's sort keys in source-column coordinates. */
+      using SortHandler =
+        std::function<void (const std::vector<SortedTableModel::ColumnOrder>&)>;
 
       using Index = TableBody::Index;
       using CurrentModel = TableBody::CurrentModel;
@@ -78,6 +82,17 @@ namespace Spire {
       /** Hide the given column. */
       void hide_column(int column);
 
+      /** Returns the sort keys in source-column coordinates, primary first. */
+      const std::vector<SortedTableModel::ColumnOrder>&
+        get_column_order() const;
+
+      /**
+       * Sets the sort keys and marks the primary key in the header.
+       * @param order Source columns in priority order. An empty list clears
+       *        sorting.
+       */
+      void set_column_order(std::vector<SortedTableModel::ColumnOrder> order);
+
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
@@ -86,9 +101,14 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      friend class TableColumnReorderController;
+      friend class TableViewBuilder;
+      class Rows;
       class SourceToViewIndexModel;
       template<typename T> class DisplayedSelection;
       mutable SortSignal m_sort_signal;
+      SortHandler m_sort;
+      std::vector<SortedTableModel::ColumnOrder> m_order;
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<SelectionModel> m_selection;
@@ -104,6 +124,15 @@ namespace Spire {
       boost::signals2::scoped_connection m_body_style_connection;
       boost::signals2::scoped_connection m_selection_filter_connection;
 
+      TableView(std::shared_ptr<TableModel> table,
+        std::shared_ptr<HeaderModel> header, std::shared_ptr<TableFilter> filter,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
+        TableViewItemBuilder item_builder, Comparator comparator,
+        SortHandler sort_handler, QWidget* parent);
+
+      TableViewItemBuilder make_displayed_item_builder(
+        TableViewItemBuilder item_builder) const;
       void initialize_body(TableViewItemBuilder item_builder,
         boost::signals2::connection tracking);
       void update_scroll_sizes();
@@ -208,6 +237,14 @@ namespace Spire {
       TableViewBuilder& set_comparator(
         TableView::ValueComparator comparator);
 
+      /**
+       * Displays rows in source order after filtering. Calls the handler at
+       * construction and whenever the view applies a sort, with the primary
+       * key first. The handler can reorder the source through model operations.
+       * An empty handler restores default sorting.
+       */
+      TableViewBuilder& set_sort_handler(TableView::SortHandler handler);
+
       /** Makes a new TableView using the current state of this builder. */
       TableView* make() const;
 
@@ -220,6 +257,7 @@ namespace Spire {
       std::shared_ptr<TableView::SelectionModel> m_selection;
       TableViewItemBuilder m_item_builder;
       TableView::Comparator m_comparator;
+      TableView::SortHandler m_sort;
   };
 }
 

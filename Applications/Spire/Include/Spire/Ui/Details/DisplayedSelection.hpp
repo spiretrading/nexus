@@ -2,7 +2,7 @@
 #define SPIRE_DISPLAYED_SELECTION_HPP
 #include <utility>
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/FilteredTableModel.hpp"
+#include "Spire/Ui/Details/TableViewRows.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
@@ -10,8 +10,7 @@ namespace Spire {
   class TableView::DisplayedSelection : public ArrayListModel<T> {
     public:
       DisplayedSelection(std::shared_ptr<ListModel<T>> source,
-        std::shared_ptr<FilteredTableModel> filtered,
-        std::shared_ptr<SortedTableModel> sorted,
+        Rows rows,
         std::shared_ptr<const TranslatedListModel<int>> columns,
         std::shared_ptr<SelectionModel> selection,
         boost::signals2::connection tracking);
@@ -30,8 +29,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<ListModel<T>> m_source;
-      std::shared_ptr<FilteredTableModel> m_filtered;
-      std::shared_ptr<SortedTableModel> m_sorted;
+      Rows m_rows;
       std::shared_ptr<const TranslatedListModel<int>> m_columns;
       std::vector<int> m_indices;
       mutable std::vector<T> m_transaction_values;
@@ -57,14 +55,12 @@ namespace Spire {
   template<typename T>
   TableView::DisplayedSelection<T>::DisplayedSelection(
       std::shared_ptr<ListModel<T>> source,
-      std::shared_ptr<FilteredTableModel> filtered,
-      std::shared_ptr<SortedTableModel> sorted,
+      Rows rows,
       std::shared_ptr<const TranslatedListModel<int>> columns,
       std::shared_ptr<SelectionModel> selection,
       boost::signals2::connection tracking)
       : m_source(std::move(source)),
-        m_filtered(std::move(filtered)),
-        m_sorted(std::move(sorted)),
+        m_rows(std::move(rows)),
         m_columns(std::move(columns)),
         m_is_refresh_pending(false),
         m_is_pruning(false),
@@ -72,8 +68,8 @@ namespace Spire {
         m_tracking_connection(std::move(tracking)) {
     m_connection = m_source->connect_operation_signal(
       [=, this, depth = 0] (const auto& operation) mutable {
-        auto is_remapping = m_filtered && selection->m_is_updating &&
-          m_tracking_connection.connected();
+        auto is_remapping = m_rows.get_filtered_table() &&
+          selection->m_is_updating && m_tracking_connection.connected();
         visit(operation,
           [&] (const AnyListModel::StartTransaction&) {
             ++depth;
@@ -132,10 +128,10 @@ namespace Spire {
           });
         });
     }
-    if(!m_filtered) {
+    if(!m_rows.get_filtered_table()) {
       return;
     }
-    auto& source = *m_filtered->get_source();
+    auto& source = *m_rows.get_filtered_table()->get_source();
     m_source_connection = source.connect_operation_signal(
       [=, this, is_transacting = false] (
           const TableModel::Operation& operation) mutable {
@@ -150,15 +146,17 @@ namespace Spire {
             }
           },
           [&] (const TableModel::AddOperation& add) {
+            auto& filtered = *m_rows.get_filtered_table();
             if(m_is_refresh_pending ||
-                (add.m_index != m_filtered->get_source()->get_row_size() - 1 &&
-                  m_filtered->index_from_source(add.m_index) == -1)) {
+                (add.m_index + 1 != filtered.get_source()->get_row_size() &&
+                  filtered.index_from_source(add.m_index) == -1)) {
               refresh(*this);
             }
           },
           [&] (const TableModel::UpdateOperation& update) {
             if(m_is_refresh_pending &&
-                m_filtered->index_from_source(update.m_row) == -1) {
+                m_rows.get_filtered_table()->index_from_source(update.m_row) ==
+                  -1) {
               refresh(*this);
             }
           },
@@ -170,7 +168,7 @@ namespace Spire {
             }
           });
       });
-    m_view_connection = m_sorted->connect_operation_signal(
+    m_view_connection = m_rows.get_table()->connect_operation_signal(
       [=, this, is_transacting = false] (
           const TableModel::Operation& operation) mutable {
         visit(operation,

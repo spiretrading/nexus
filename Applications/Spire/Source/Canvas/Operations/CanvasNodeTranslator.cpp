@@ -955,15 +955,6 @@ namespace {
     }
   };
 
-  struct ReferenceTranslator {
-    using type = NativeTypes;
-
-    template<typename T>
-    Translation operator ()(const Translation& source) const {
-      return source.Extract<Aspen::Box<T>>();
-    }
-  };
-
   struct RoundToTranslator {
     using type = RoundingNodeSignatures::type;
 
@@ -1523,9 +1514,7 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
       return;
     }
   }
-  auto translation = instantiate<ReferenceTranslator>(
-    static_cast<const NativeType&>(referent->GetType()).GetNativeType())(
-    InternalTranslation(*referent));
+  auto translation = InternalTranslation(*referent);
   if(dynamic_cast<const SingleOrderTaskNode*>(referent)) {
     m_translation = translation.ToWeak();
   } else {

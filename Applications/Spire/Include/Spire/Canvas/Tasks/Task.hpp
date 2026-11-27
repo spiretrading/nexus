@@ -1,12 +1,11 @@
 #ifndef SPIRE_TASK_HPP
 #define SPIRE_TASK_HPP
-#include <atomic>
 #include <format>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <Aspen/Aspen.hpp>
-#include <Beam/Queues/SequencePublisher.hpp>
+#include <Beam/Queues/Publisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Tasks/Executor.hpp"
@@ -74,11 +73,13 @@ namespace Spire {
        * Constructs a Task.
        * @param node The CanvasNode to translate and execute.
        * @param executingAccount The account used to submit orders.
-       * @param userProfile The user's profile.
+       * @param userProfile The user's profile, which must outlive execution.
        */
       Task(const CanvasNode& node,
         Beam::DirectoryEntry executingAccount,
         Beam::Ref<UserProfile> userProfile);
+
+      ~Task();
 
       /** Returns the CanvasNode used to execute this task. */
       const CanvasNode& GetNode() const;
@@ -108,16 +109,8 @@ namespace Spire {
       const Beam::Publisher<StateEntry>& GetPublisher() const;
 
     private:
-      std::unique_ptr<CanvasNode> m_node;
-      Executor m_executor;
-      CanvasNodeTranslationContext m_context;
-      bool m_isExecutable;
-      bool m_isFailed;
-      std::atomic_bool m_isCancelable;
-      State m_state;
-      Aspen::Shared<Aspen::Cell<bool>> m_cancelToken;
-      int m_id;
-      Beam::SequencePublisher<StateEntry> m_publisher;
+      struct Execution;
+      std::shared_ptr<Execution> m_execution;
 
       Task(const Task&) = delete;
       Task(Task&&) = delete;

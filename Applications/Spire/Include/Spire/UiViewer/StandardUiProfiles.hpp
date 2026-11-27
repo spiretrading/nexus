@@ -128,6 +128,9 @@ namespace Spire {
   /** Returns a UiProfile for the FontStyleBox. */
   UiProfile make_font_style_box_profile();
 
+  /** Returns a UiProfile for the grouped TableView. */
+  UiProfile make_grouped_table_view_profile();
+
   /** Returns a UiProfile for the HexColorBox. */
   UiProfile make_hex_color_box_profile();
 
