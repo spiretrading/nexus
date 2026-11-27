@@ -11,10 +11,10 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
-#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -94,7 +94,8 @@ namespace {
         header.get_items()->get(i).m_name;
     }
     auto out = std::ofstream(std::filesystem::path(file_name.toStdWString()));
-    export_as_csv(*view.get_table(), headers, out);
+    auto& table = static_cast<const GroupedTableModel&>(*view.get_table());
+    export_as_csv(*table.get_source(), headers, out);
   }
 }
 
@@ -106,19 +107,27 @@ BlotterProfitLossView::BlotterProfitLossView(
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto table = std::make_shared<ListToTableModel<PortfolioUpdateEntry>>(
     m_portfolio, static_cast<int>(ProfitLossColumn::VOLUME) + 1, &extract);
-  m_table = TableViewBuilder(table).
-    add_header_item(tr("Currency"), tr("Curr")).
-    add_header_item(tr("Security"), TableHeaderItem::Order::ASCENDING).
-    add_header_item(tr("Profit/Loss"), tr("P/L")).
-    add_header_item(tr("Fees")).
-    add_header_item(tr("Volume"), tr("Vol")).
+  m_table = GroupedTableViewBuilder(table).
+    add_column(tr("Currency"), tr("Curr")).
+      set_order(TableHeaderItem::Order::ASCENDING).
+    add_column(tr("Security")).set_order(TableHeaderItem::Order::ASCENDING).
+    add_column(tr("Profit/Loss"), tr("P/L")).
+    add_column(tr("Fees")).
+    add_column(tr("Volume"), tr("Vol")).
+    set_grouping({static_cast<int>(ProfitLossColumn::CURRENCY)}).
     set_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListMultiSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>())).
     set_item_builder(&make_item).
+    set_aggregate_item_builder([] (const auto& table, auto row, auto column) {
+      if(column == static_cast<int>(ProfitLossColumn::TICKER)) {
+        return new QWidget();
+      }
+      return make_item(table, row, column);
+    }).
     make();
-  const auto DEFAULT_WIDTHS = std::array{70, 90, 90, 70, 60};
+  const auto DEFAULT_WIDTHS = std::array{110, 90, 90, 70, 60};
   for(auto i = 0; i != table->get_column_size(); ++i) {
     m_table->get_header().get_widths()->set(i, scale_width(DEFAULT_WIDTHS[i]));
     update_style(*m_table->get_header().get_item(i), [=] (auto& style) {
