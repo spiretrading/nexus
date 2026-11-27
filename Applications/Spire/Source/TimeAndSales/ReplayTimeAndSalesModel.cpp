@@ -148,15 +148,10 @@ Range::Point ReplayTimeAndSalesModel::get_cursor() const {
 
 time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
   static const auto READ_AHEAD = seconds(30);
-  return scale_duration(READ_AHEAD, get_speed_factor(*m_session));
-}
-
-time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
-  static const auto JUMP_THRESHOLD = seconds(2);
   if(m_session->get_state()->get() != PlaybackState::REPLAYING) {
-    return JUMP_THRESHOLD;
+    return READ_AHEAD;
   }
-  return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
+  return scale_duration(READ_AHEAD, get_speed_factor(*m_session));
 }
 
 int ReplayTimeAndSalesModel::get_low_water() const {
@@ -422,6 +417,9 @@ void ReplayTimeAndSalesModel::start_live() {
 }
 
 void ReplayTimeAndSalesModel::stop_live() {
+  if(m_live_handler) {
+    m_read_end = std::max(m_read_end, m_time_client.get_time());
+  }
   m_live_handler = nullptr;
 }
 
@@ -443,6 +441,11 @@ void ReplayTimeAndSalesModel::on_read(int generation, ptime end,
     m_read_end =
       entries->back().m_time_and_sale->m_timestamp - time_duration::unit();
     m_last_present_read_time = ptime(neg_infin);
+    if(entries->back().m_time_and_sale->m_timestamp < m_position &&
+        m_session->get_state()->get() != PlaybackState::REAL_TIME) {
+      seek();
+      return;
+    }
   } else {
     m_read_end = std::max(m_read_end, end);
   }
@@ -566,14 +569,8 @@ void ReplayTimeAndSalesModel::on_position(const ptime& position) {
   m_position = position;
   auto is_real_time =
     m_session->get_state()->get() == PlaybackState::REAL_TIME;
-  auto read_end = [&] {
-    if(m_seek_state == SeekState::NONE) {
-      return std::min(previous, m_read_end);
-    }
-    return previous;
-  }();
   if(position < previous ||
-      (!is_real_time && position - read_end > get_jump_threshold())) {
+      (!is_real_time && position - m_read_end > get_read_ahead())) {
     seek();
   } else {
     update_playback();

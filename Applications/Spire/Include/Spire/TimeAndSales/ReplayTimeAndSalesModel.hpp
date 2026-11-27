@@ -70,7 +70,6 @@ namespace Spire {
       const boost::posix_time::ptime& get_start() const;
       Beam::Range::Point get_cursor() const;
       boost::posix_time::time_duration get_read_ahead() const;
-      boost::posix_time::time_duration get_jump_threshold() const;
       int get_low_water() const;
       void append(Type entry);
       void pop_front();

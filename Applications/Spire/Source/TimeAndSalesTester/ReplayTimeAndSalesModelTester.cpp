@@ -535,7 +535,7 @@ TEST_SUITE("ReplayTimeAndSalesModel") {
     REQUIRE(*count == queries + 1);
   }
 
-  UI_TEST_CASE("a_higher_speed_raises_the_jump_threshold") {
+  UI_TEST_CASE("a_step_within_the_read_ahead_does_not_query") {
     auto fixture = Fixture(seconds(0));
     auto offsets = std::vector<time_duration>();
     for(auto i = 1; i <= 60; ++i) {
