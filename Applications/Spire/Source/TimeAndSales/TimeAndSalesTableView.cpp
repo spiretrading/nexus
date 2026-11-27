@@ -189,7 +189,7 @@ namespace {
           m_is_updated = true;
           auto& order = m_properties->get().get_column_order();
           auto column = static_cast<int>(std::distance(order.begin(),
-            std::find(order.begin(), order.end(), operation.m_column)));
+            std::ranges::find(order, operation.m_column)));
           if(auto item = table_view.get_body().find_item(
               TableIndex(operation.m_row, column))) {
             m_builder.reset(
