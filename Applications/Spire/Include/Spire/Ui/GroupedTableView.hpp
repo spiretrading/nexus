@@ -73,6 +73,13 @@ namespace Styles {
         GroupedTableModel::AggregateEquality is_equal);
 
       /**
+       * Sets the selection model.
+       * @param selection The selection in grouped table coordinates.
+       */
+      GroupedTableViewBuilder& set_selection(
+        const std::shared_ptr<TableView::SelectionModel>& selection);
+
+      /**
        * Sets the builder for leaf cells and group keys.
        * @param item_builder Builds widgets using the source table and its row
        *        and column indices.
@@ -114,6 +121,7 @@ namespace Styles {
       TableView::Comparator m_comparator;
       GroupedTableModel::AggregateEquality m_is_equal;
       std::optional<std::vector<int>> m_grouping;
+      std::shared_ptr<TableView::SelectionModel> m_selection;
       TableViewItemBuilder m_item_builder;
       TableViewItemBuilder m_aggregate_item_builder;
   };
