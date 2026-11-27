@@ -1,13 +1,13 @@
 #ifndef SPIRE_SOURCE_TO_VIEW_INDEX_MODEL_HPP
 #define SPIRE_SOURCE_TO_VIEW_INDEX_MODEL_HPP
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Details/TableViewRows.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
   class TableView::SourceToViewIndexModel : public TableView::CurrentModel {
     public:
-      SourceToViewIndexModel(std::shared_ptr<SortedTableModel> sorted_table,
-        std::shared_ptr<FilteredTableModel> filtered_table,
+      SourceToViewIndexModel(Rows rows,
         std::shared_ptr<const TranslatedListModel<int>> columns,
         std::shared_ptr<TableView::CurrentModel> current);
 
@@ -18,8 +18,7 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<SortedTableModel> m_sorted_table;
-      std::shared_ptr<FilteredTableModel> m_filtered_table;
+      Rows m_rows;
       std::shared_ptr<const TranslatedListModel<int>> m_columns;
       std::shared_ptr<TableView::CurrentModel> m_current;
       LocalValueModel<Type> m_index;

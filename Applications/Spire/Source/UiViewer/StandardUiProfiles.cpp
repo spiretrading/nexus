@@ -69,6 +69,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/HexColorBox.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 #include "Spire/Ui/HighlightPicker.hpp"
@@ -122,6 +123,7 @@
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -2820,6 +2822,72 @@ UiProfile Spire::make_font_style_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_grouped_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>{
+    make_standard_property("enabled", true),
+    make_standard_property("width", 630),
+    make_standard_property("height", 350),
+    make_standard_property("AR.TSX shares", 1200)};
+  auto default_style = R"(
+    any > TableBody > (:aggregate_row and !:selected) {
+      background_color: 0xEFEFEF;
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet", default_style));
+  return UiProfile("GroupedTableView", properties, [] (auto& profile) {
+    auto positions = std::make_shared<ArrayTableModel>();
+    auto& shares = get<int>("AR.TSX shares", profile.get_properties());
+    positions->push({QString("conglg15"), QString("CAD"), QString("AR.TSX"),
+      QString("Long"), shares.get(), Countries::CA});
+    positions->push({QString("conglg15"), QString("USD"),
+      QString("MSFT.NASDAQ"), QString("Long"), 600, Countries::US});
+    positions->push({QString("dichch10"), QString("CAD"), QString("AGRA.CSE"),
+      QString("Long"), 800, Countries::CA});
+    positions->push({QString("conglg15"), QString("CAD"), QString("BHS.TSXV"),
+      QString("Long"), 400, Countries::CA});
+    positions->push({QString("dichch10"), QString("CAD"), QString("ATMO.CSE"),
+      QString("Short"), 300, Countries::CA});
+    auto view = GroupedTableViewBuilder(positions).
+      add_column("Account", "Acct").add_column("Currency", "Ccy").
+      add_column("Ticker").add_column("Side").add_column("Shares").
+      add_column("Country").set_item_builder(
+        [] (const std::shared_ptr<TableModel>& table, int row, int column) ->
+            QWidget* {
+          if(column != 5) {
+            return TableView::default_item_builder(table, row, column);
+          }
+          auto code = to_text(table->get<CountryCode>(row, column));
+          auto size = scale(16, 10);
+          auto flag = new Icon(image_from_svg(
+            QString(":/Icons/flag_icons/%1.svg").arg(code.toLower()), size));
+          flag->setFixedSize(size);
+          flag->setAccessibleName(code);
+          set_style(*flag, StyleSheet());
+          return flag;
+        }).make();
+    new TableColumnReorderController(*view);
+    auto& widths = *view->get_header().get_widths();
+    widths.set(0, scale_width(180));
+    widths.set(1, scale_width(85));
+    widths.set(2, scale_width(115));
+    widths.set(3, scale_width(70));
+    widths.set(4, scale_width(80));
+    widths.set(5, scale_width(85));
+    apply_widget_properties(view, profile.get_properties());
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      if(styles) {
+        set_style(*view, *styles);
+      }
+    });
+    shares.connect_changed_signal([=] (int value) {
+      positions->set(0, 4, value);
+    });
+    return view;
+  });
 }
 
 UiProfile Spire::make_hex_color_box_profile() {

@@ -29,6 +29,10 @@ void FilteredTableModel::set_filter(const Filter& filter) {
   m_filtered_list.set_filter(make_filter(*m_source, filter));
 }
 
+void FilteredTableModel::refresh(int first, int end) {
+  m_filtered_list.refresh(first, end);
+}
+
 int FilteredTableModel::index_to_source(int index) const {
   return m_filtered_list.index_to_source(index);
 }

@@ -3,9 +3,11 @@
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <QWidget>
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Styles/Selector.hpp"
 
 namespace Spire {
 
@@ -40,6 +42,9 @@ namespace Spire {
       TableViewItemBuilder(const TableViewItemBuilder&) = default;
       TableViewItemBuilder(TableViewItemBuilder&&) = default;
 
+      /** Returns the additional style state to match while a row is mounted. */
+      std::optional<Styles::Selector> get_row_selector(int row) const;
+
       /**
        * Returns the QWidget to represent a table element.
        * @param table The table containing the element to represent.
@@ -63,6 +68,8 @@ namespace Spire {
       struct VirtualTableViewItemBuilder {
         virtual ~VirtualTableViewItemBuilder() = default;
 
+        virtual std::optional<Styles::Selector>
+          get_row_selector(int row) const = 0;
         virtual QWidget* mount(
           const std::shared_ptr<TableModel>& table, int row, int column) = 0;
         virtual void unmount(QWidget* widget) = 0;
@@ -75,6 +82,8 @@ namespace Spire {
         template<typename... Args>
         WrappedTableViewItemBuilder(Args&&... args);
 
+        std::optional<Styles::Selector>
+          get_row_selector(int row) const override;
         QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
           int column) override;
         void unmount(QWidget* widget) override;
@@ -122,6 +131,16 @@ namespace Spire {
   TableViewItemBuilder::
     WrappedTableViewItemBuilder<B>::WrappedTableViewItemBuilder(Args&&... args)
     : m_builder(std::forward<Args>(args)...) {}
+
+  template<typename B>
+  std::optional<Styles::Selector> TableViewItemBuilder::
+      WrappedTableViewItemBuilder<B>::get_row_selector(int row) const {
+    if constexpr(requires { m_builder->get_row_selector(row); }) {
+      return m_builder->get_row_selector(row);
+    } else {
+      return std::nullopt;
+    }
+  }
 
   template<typename B>
   QWidget* TableViewItemBuilder::WrappedTableViewItemBuilder<B>::mount(

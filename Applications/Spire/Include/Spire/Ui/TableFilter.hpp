@@ -30,6 +30,9 @@ namespace Spire {
        */
       using FilterSignal = Signal<void (int column, Filter filter)>;
 
+      /** Signals a change in visibility for source rows in [first, end). */
+      using RowsSignal = Signal<void (int first, int end)>;
+
       virtual ~TableFilter() = default;
 
       /**
@@ -61,6 +64,10 @@ namespace Spire {
       /** Connects a slot to the FilterSignal. */
       virtual boost::signals2::connection connect_filter_signal(
         const FilterSignal::slot_type& slot) const = 0;
+
+      /** Connects a slot to changes limited to a range of source rows. */
+      virtual boost::signals2::connection connect_rows_signal(
+        const RowsSignal::slot_type& slot) const;
   };
 }
 
