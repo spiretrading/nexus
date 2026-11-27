@@ -1,12 +1,14 @@
 #ifndef SPIRE_GROUPED_TABLE_MODEL_HPP
 #define SPIRE_GROUPED_TABLE_MODEL_HPP
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
+#include <span>
 #include <unordered_map>
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Spire/TransactionLogModel.hpp"
-#include "Spire/Ui/TableAggregation.hpp"
+#include "Spire/Ui/TableAggregator.hpp"
 
 namespace Spire {
 
@@ -17,57 +19,95 @@ namespace Spire {
   class GroupedTableModel : public TransactionLogModel<TableModel> {
     public:
 
-      /** Signals the new grouping columns after regrouping. */
-      using GroupingSignal = Signal<void (const std::vector<int>&)>;
+      /** Creates an independent aggregator for one column in one group. */
+      using AggregatorFactory =
+        std::function<std::unique_ptr<TableAggregator> ()>;
 
       /**
-       * Compares group keys, aggregates, or leaf values at grouped row indices
-       * and the source column of the values. Default distinct counts are
-       * supplied as std::int64_t.
+       * Tests whether two aggregate snapshots are interchangeable.
+       * @param previous The last published value of the aggregate cell.
+       * @param current The newly computed value of the same cell.
+       * @return True if the cell update can be skipped.
+       */
+      using AggregateEquality =
+        std::function<bool (const AnyRef& previous, const AnyRef& current)>;
+
+      /**
+       * Signals the new grouping columns after regrouping.
+       * @param columns The source column indices from outermost to innermost
+       *        group, or an empty vector when the table is ungrouped.
+       */
+      using GroupingSignal = Signal<void (const std::vector<int>& columns)>;
+
+      /**
+       * Sibling rows are compared by group key, aggregate, or leaf value.
+       * Row indices refer to the grouped model and the column to the source.
        */
       using Comparator = SortedTableModel::Comparator;
 
-      /** Compares the same sibling values without their coordinates. */
       using ValueComparator = SortedTableModel::ValueComparator;
 
       /**
-       * Groups a table using the default column aggregations.
+       * Constructs an ungrouped model using the default column aggregators.
        * @param source The table containing the leaves.
-       * @param columns Distinct column indices, from outermost to innermost.
-       *        An empty list preserves the source layout.
        */
-      GroupedTableModel(
-        std::shared_ptr<TableModel> source, std::vector<int> columns);
+      explicit GroupedTableModel(std::shared_ptr<TableModel> source);
 
-      /** Groups a table using default aggregations and a custom comparator. */
+      /**
+       * Constructs an ungrouped model with a custom comparator.
+       * @param source The table whose rows form the leaves.
+       * @param comparator Orders sibling values, optionally taking their
+       *        grouped row indices and source column index.
+       */
       template<typename C> requires
         (std::convertible_to<C, SortedTableModel::Comparator> ||
           std::convertible_to<C, SortedTableModel::ValueComparator>)
-      GroupedTableModel(std::shared_ptr<TableModel> source,
-        std::vector<int> columns, C comparator);
+      GroupedTableModel(std::shared_ptr<TableModel> source, C comparator);
 
       /**
-       * Groups a table with custom column aggregations.
+       * Constructs an ungrouped model with custom column aggregators.
        * @param source The table containing the leaves.
-       * @param columns The grouping columns, from outermost to innermost.
-       * @param aggregations Factories indexed by source column. Omitted or
-       *        empty entries use the default aggregation.
+       * @param aggregators Factories indexed by source column. Omitted or empty
+       *        entries use the default aggregator.
        */
       GroupedTableModel(std::shared_ptr<TableModel> source,
-        std::vector<int> columns,
-        std::vector<TableAggregationFactory> aggregations);
+        std::vector<AggregatorFactory> aggregators);
 
-      /** Groups a table with custom aggregations and a value comparator. */
+      /**
+       * Constructs an ungrouped model with aggregators and a value comparator.
+       * @param source The table whose rows form the leaves.
+       * @param aggregators Factories indexed by source column. Omitted or empty
+       *        entries use the default aggregator.
+       * @param comparator Returns true if the first sibling value sorts
+       *        before the second.
+       */
       GroupedTableModel(std::shared_ptr<TableModel> source,
-        std::vector<int> columns,
-        std::vector<TableAggregationFactory> aggregations,
-        ValueComparator comparator);
+        std::vector<AggregatorFactory> aggregators, ValueComparator comparator);
 
-      /** Groups a table with custom aggregations and a row comparator. */
+      /**
+       * Constructs an ungrouped model with aggregators and a row comparator.
+       * @param source The table whose rows form the leaves.
+       * @param aggregators Factories indexed by source column. Omitted or empty
+       *        entries use the default aggregator.
+       * @param comparator Orders sibling values given their grouped row indices
+       *        and source column index. An empty comparator uses the default.
+       */
       GroupedTableModel(std::shared_ptr<TableModel> source,
-        std::vector<int> columns,
-        std::vector<TableAggregationFactory> aggregations,
-        Comparator comparator);
+        std::vector<AggregatorFactory> aggregators, Comparator comparator);
+
+      /**
+       * Constructs an ungrouped model with table-wide aggregate equality.
+       * @param source The table whose rows form the leaves.
+       * @param aggregators Factories indexed by source column. Omitted or empty
+       *        entries use the default aggregator.
+       * @param comparator Orders sibling values using their grouped row indices
+       *        and source column index, or empty to use the default ordering.
+       * @param is_equal Compares previous and current aggregate values across
+       *        all columns, or empty to use Spire::is_equal.
+       */
+      GroupedTableModel(std::shared_ptr<TableModel> source,
+        std::vector<AggregatorFactory> aggregators, Comparator comparator,
+        AggregateEquality is_equal);
 
       ~GroupedTableModel() override;
 
@@ -80,7 +120,11 @@ namespace Spire {
       /** Returns the grouping columns, from outermost to innermost. */
       const std::vector<int>& get_grouping() const;
 
-      /** Sets the grouping columns. */
+      /**
+       * Sets the grouping columns.
+       * @param columns Distinct source column indices from outermost to
+       *        innermost group, or an empty vector to ungroup the table.
+       */
       void set_grouping(std::vector<int> columns);
 
       /** Sorts siblings by column priority. An empty order clears sorting. */
@@ -129,9 +173,9 @@ namespace Spire {
       std::optional<int> m_column_count;
       bool m_has_matching_columns;
       std::vector<int> m_columns;
-      std::vector<TableAggregationFactory> m_aggregations;
-      bool m_uses_default_comparator;
+      std::vector<AggregatorFactory> m_aggregators;
       Comparator m_comparator;
+      AggregateEquality m_is_equal;
       std::vector<SortedTableModel::ColumnOrder> m_order;
       std::set<std::shared_ptr<Group>> m_unsorted;
       std::size_t m_next_group;
@@ -163,13 +207,12 @@ namespace Spire {
       void sort_all();
       void sort_pending();
       void touch(const std::shared_ptr<Group>& group, int column);
-      std::unique_ptr<TableAggregation> make_aggregation(
-        const Group& group, int column) const;
+      std::unique_ptr<TableAggregator> make_aggregator(int column) const;
       Group* find_group(const AnyRef& key, const Group* parent,
         std::optional<std::size_t> hash) const;
       std::shared_ptr<Group> make_group(const AnyRef& key, QString name,
-        const std::shared_ptr<Group>& parent, int depth, int heading_column,
-        std::optional<std::size_t> hash);
+        const std::shared_ptr<Group>& parent, int depth, int heading_column);
+      void initialize_aggregates(Group& group, std::span<const int> sources);
       void accumulate(const std::shared_ptr<Group>& group, int source);
       void insert(int source, std::shared_ptr<Group> parent);
       void remove_row(int row);
@@ -188,9 +231,8 @@ namespace Spire {
     (std::convertible_to<C, SortedTableModel::Comparator> ||
       std::convertible_to<C, SortedTableModel::ValueComparator>)
   GroupedTableModel::GroupedTableModel(std::shared_ptr<TableModel> source,
-    std::vector<int> columns, C comparator)
-    : GroupedTableModel(std::move(source), std::move(columns), {},
-        std::move(comparator)) {}
+    C comparator)
+    : GroupedTableModel(std::move(source), {}, std::move(comparator)) {}
 }
 
 #endif

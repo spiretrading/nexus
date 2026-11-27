@@ -6,6 +6,8 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DefaultTableAggregator.hpp"
+#include "Spire/Ui/DistinctTableAggregator.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 
 using namespace Beam;
@@ -88,7 +90,7 @@ namespace {
     });
   }
 
-  class SumOfSquares : public TableAggregation {
+  class SumOfSquares : public TableAggregator {
     public:
       void add(const AnyRef& value) override {
         auto number = any_cast<int>(value);
@@ -134,7 +136,8 @@ TEST_SUITE("GroupedTableModel") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({first, 10});
     source->push({second, 20});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     source->push({first, 30});
     auto heading = [&] (int source_row) {
       return model.get_parent(model.index_from_source(source_row));
@@ -143,13 +146,13 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(heading(0) == heading(2));
     REQUIRE(
       model.get_group_name(heading(0)) == model.get_group_name(heading(1)));
-    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 40);
-    REQUIRE(model.get<std::int64_t>(heading(1), 1) == 20);
+    REQUIRE(model.get<int>(heading(0), 1) == 40);
+    REQUIRE(model.get<int>(heading(1), 1) == 20);
     source->set(2, 0, second);
     REQUIRE(heading(1) == heading(2));
     REQUIRE(model.get_group_size(heading(0)) == 1);
-    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 10);
-    REQUIRE(model.get<std::int64_t>(heading(1), 1) == 50);
+    REQUIRE(model.get<int>(heading(0), 1) == 10);
+    REQUIRE(model.get<int>(heading(1), 1) == 50);
   }
 
   TEST_CASE("equal_color_group_keys") {
@@ -170,7 +173,8 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(first.rgba() != second.rgba());
     auto source = std::make_shared<ArrayTableModel>();
     source->push({first, 10});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     source->push({distinct, 30});
     source->push({second, 20});
     auto heading = [&] (int row) {
@@ -179,7 +183,7 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(heading(0) == heading(2));
     REQUIRE(heading(0) != heading(1));
     REQUIRE(model.get_group_size(heading(0)) == 2);
-    REQUIRE(model.get<std::int64_t>(heading(0), 1) == 30);
+    REQUIRE(model.get<int>(heading(0), 1) == 30);
   }
 
   TEST_CASE("numeric_group_names") {
@@ -189,7 +193,8 @@ TEST_SUITE("GroupedTableModel") {
       source->push({first});
       source->push({second});
       source->push({first});
-      auto model = GroupedTableModel(source, {0});
+      auto model = GroupedTableModel(source);
+      model.set_grouping({0});
       REQUIRE(model.get<QString>(0, 0) == first_name + " (2)");
       REQUIRE(model.get<QString>(3, 0) == second_name + " (1)");
     };
@@ -208,7 +213,8 @@ TEST_SUITE("GroupedTableModel") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({account});
     source->push({DirectoryEntry::make_account(20, "B")});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     model.set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
     auto commits = 0;
     auto moves = 0;
@@ -226,15 +232,18 @@ TEST_SUITE("GroupedTableModel") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("Desk"), account});
     source->push({QString("Desk"), DirectoryEntry::make_account(20, "B")});
-    SUBCASE("distinct_names") {
-      auto model = GroupedTableModel(source, {0});
-      REQUIRE(model.get<QString>(0, 1) == "(2)");
+    SUBCASE("distinct_accounts") {
+      auto model = GroupedTableModel(source);
+      model.set_grouping({0});
+      REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(2));
       account.m_name = "B";
       source->set(0, 1, account);
-      REQUIRE(model.get<QString>(0, 1) == "(1)");
+      REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(2));
+      source->set(0, 1, DirectoryEntry::make_account(20, "B"));
+      REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(1));
     }
     SUBCASE("custom_aggregate") {
-      struct FirstAccount : TableAggregation {
+      struct FirstAccount : TableAggregator {
         std::multiset<DirectoryEntry> m_accounts;
 
         void add(const AnyRef& value) override {
@@ -257,9 +266,19 @@ TEST_SUITE("GroupedTableModel") {
           return *m_accounts.begin();
         }
       };
-      auto model = GroupedTableModel(source, {0}, {{}, [] {
+      auto is_equal = [] (const AnyRef& previous, const AnyRef& current) {
+        REQUIRE(previous.is_const());
+        REQUIRE(current.is_const());
+        if(auto a = any_cast<DirectoryEntry>(&previous)) {
+          auto b = any_cast<DirectoryEntry>(&current);
+          return b && *a == *b && a->m_name == b->m_name;
+        }
+        return Spire::is_equal(previous, current);
+      };
+      auto model = GroupedTableModel(source, {{}, [] {
         return std::make_unique<FirstAccount>();
-      }});
+      }}, {}, is_equal);
+      model.set_grouping({0});
       auto updates = 0;
       model.connect_operation_signal([&] (const TableModel::Operation& op) {
         visit(op, [&] (const TableModel::UpdateOperation& update) {
@@ -284,7 +303,8 @@ TEST_SUITE("GroupedTableModel") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({Key(), 10});
     source->push({Key(), 20});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     REQUIRE(model.get_row_size() == 4);
     model.set_grouping({0, 1});
     REQUIRE(model.get_row_size() == 6);
@@ -295,8 +315,8 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get_group_size(0) == 1);
     model.set_grouping({0});
     REQUIRE(model.get_row_size() == 4);
-    REQUIRE(model.get<std::int64_t>(0, 1) == 11);
-    REQUIRE(model.get<std::int64_t>(2, 1) == 20);
+    REQUIRE(model.get<int>(0, 1) == 11);
+    REQUIRE(model.get<int>(2, 1) == 20);
   }
 
   TEST_CASE("group_lookup_after_removal") {
@@ -305,23 +325,25 @@ TEST_SUITE("GroupedTableModel") {
     source->push({0.0, 1});
     source->push({nan, 2});
     source->push({-0.0, 3});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     REQUIRE(model.get_row_size() == 5);
     REQUIRE(model.get_group_size(0) == 2);
     source->remove(2);
     REQUIRE(model.index_from_source(1) == 3);
     source->remove(0);
     source->push({-0.0, 4});
-    source->push({nan, 5});
+    source->push({-nan, 5});
     REQUIRE(model.get_group_size(0) == 2);
-    REQUIRE(model.get<std::int64_t>(0, 1) == 7);
+    REQUIRE(model.get<int>(0, 1) == 7);
     REQUIRE(model.index_from_source(1) == 4);
     REQUIRE(model.index_to_source(2) == 2);
   }
 
   TEST_CASE("source_order_without_groups") {
     auto source = make_positions();
-    auto model = GroupedTableModel(source, {});
+    auto model = GroupedTableModel(source);
+    REQUIRE(model.get_grouping().empty());
     auto moves = 0;
     model.connect_operation_signal([&] (const TableModel::Operation& op) {
       if(auto move = std::get_if<TableModel::MoveOperation>(&op)) {
@@ -344,7 +366,8 @@ TEST_SUITE("GroupedTableModel") {
     using enum SortedTableModel::Ordering;
     auto source = make_positions();
     source->push({QString("A"), QString("CAD"), 5});
-    auto model = GroupedTableModel(source, {0, 1});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0, 1});
     auto commits = 0;
     auto moves = 0;
     observe(model, commits, moves);
@@ -356,7 +379,7 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.index_to_source(6) == 0);
     source->set(0, 2, 50);
     REQUIRE(model.get<QString>(4, 0) == "USD (1)");
-    REQUIRE(model.get<std::int64_t>(6, 2) == 55);
+    REQUIRE(model.get<int>(6, 2) == 55);
     source->set(1, 2, 100);
     REQUIRE(model.get<QString>(0, 0) == "A (3)");
     REQUIRE(model.get<int>(2, 2) == 30);
@@ -383,20 +406,21 @@ TEST_SUITE("GroupedTableModel") {
     }
     source->push({10, QString("CAD")});
     source->push({10, QString("USD")});
-    auto factories = std::vector<TableAggregationFactory>();
+    auto factories = std::vector<GroupedTableModel::AggregatorFactory>();
     SUBCASE("implicit_default") {}
     SUBCASE("explicit_default") {
-      factories = {{}, make_default_table_aggregation};
+      factories.resize(2);
+      factories[1] = [] {
+        return std::make_unique<DefaultTableAggregator>();
+      };
     }
-    SUBCASE("wrapped_default") {
-      factories = {{}, [] { return make_default_table_aggregation(); }};
-    }
-    auto model = GroupedTableModel(source, {0}, factories);
+    auto model = GroupedTableModel(source, factories);
+    model.set_grouping({0});
     model.set_column_order({{0, DESCENDING}});
     REQUIRE(model.get<QString>(0, 0) == "10 (2)");
     model.set_column_order({{1, DESCENDING}});
-    REQUIRE(model.get<QString>(0, 1) == "(10)");
-    REQUIRE(model.get<QString>(11, 1) == "(2)");
+    REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(10));
+    REQUIRE(model.get<DistinctCount>(11, 1) == DistinctCount(2));
   }
 
   TEST_CASE("sort_by_custom_aggregate") {
@@ -405,9 +429,10 @@ TEST_SUITE("GroupedTableModel") {
     source->push({QString("A"), 4});
     source->push({QString("A"), 4});
     source->push({QString("B"), 7});
-    auto model = GroupedTableModel(source, {0}, {{}, [] {
+    auto model = GroupedTableModel(source, {{}, [] {
       return std::make_unique<SumOfSquares>();
     }});
+    model.set_grouping({0});
     auto commits = 0;
     auto moves = 0;
     observe(model, commits, moves);
@@ -430,7 +455,7 @@ TEST_SUITE("GroupedTableModel") {
     using enum SortedTableModel::Ordering;
     auto source = make_positions();
     auto table = static_cast<GroupedTableModel*>(nullptr);
-    auto model = GroupedTableModel(source, {0}, [&] (const AnyRef& left,
+    auto model = GroupedTableModel(source, [&] (const AnyRef& left,
         int left_row, const AnyRef& right, int right_row, int column) {
       REQUIRE(column == 2);
       REQUIRE(Spire::is_equal(table->at(left_row, column), left));
@@ -438,6 +463,7 @@ TEST_SUITE("GroupedTableModel") {
       return compare(right, left);
     });
     table = &model;
+    model.set_grouping({0});
     model.set_column_order({{2, ASCENDING}});
     REQUIRE(model.get<QString>(0, 0) == "A (2)");
     REQUIRE(model.index_to_source(1) == 2);
@@ -451,10 +477,11 @@ TEST_SUITE("GroupedTableModel") {
 
   TEST_CASE("group_value_comparator") {
     using enum SortedTableModel::Ordering;
-    auto model = GroupedTableModel(make_positions(), {0},
+    auto model = GroupedTableModel(make_positions(),
       [] (const AnyRef& left, const AnyRef& right) {
         return any_cast<QString>(left) > any_cast<QString>(right);
       });
+    model.set_grouping({0});
     model.set_column_order({{0, ASCENDING}});
     REQUIRE(model.get_group_name(0) == "B");
     REQUIRE(model.get_group_name(2) == "A");
@@ -465,7 +492,7 @@ TEST_SUITE("GroupedTableModel") {
     source->push({QString("A"), 1});
     source->push({QString("B"), 2});
     source->push({QString("A"), 3});
-    auto model = GroupedTableModel(source, {0, 1}, [] (const AnyRef& left,
+    auto model = GroupedTableModel(source, [] (const AnyRef& left,
         int, const AnyRef& right, int, int column) {
       if(column == 0) {
         return any_cast<QString>(left) > any_cast<QString>(right);
@@ -473,6 +500,7 @@ TEST_SUITE("GroupedTableModel") {
       REQUIRE(column == 1);
       return any_cast<int>(left) > any_cast<int>(right);
     });
+    model.set_grouping({0, 1});
     model.set_column_order({{0, SortedTableModel::Ordering::ASCENDING}});
     REQUIRE(model.get_group_name(0) == "B");
     REQUIRE(model.get_group_name(3) == "A");
@@ -485,7 +513,8 @@ TEST_SUITE("GroupedTableModel") {
     source->push({QString("A"), std::numeric_limits<float>::quiet_NaN()});
     source->push({QString("A"), 1.5f});
     source->push({QString("B"), 2.5f});
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     model.set_column_order({{1, SortedTableModel::Ordering::ASCENDING}});
     REQUIRE(model.get_group_name(0) == "B");
     REQUIRE(model.get_group_name(2) == "A");
@@ -497,21 +526,32 @@ TEST_SUITE("GroupedTableModel") {
     using enum SortedTableModel::Ordering;
     auto source = std::make_shared<ArrayTableModel>();
     auto maximum = std::numeric_limits<std::uint64_t>::max();
-    source->push({QString("A"), maximum});
+    source->push({QString("A"), maximum - 1});
     source->push({QString("B"), maximum - 1});
     source->push({QString("B"), std::uint64_t(2)});
-    auto model = GroupedTableModel(source, {0});
+    auto comparator = GroupedTableModel::Comparator();
+    SUBCASE("default_comparator") {}
+    SUBCASE("reused_comparator") {
+      comparator = GroupedTableModel(source).get_comparator();
+    }
+    auto model = GroupedTableModel(source, comparator);
+    model.set_grouping({0});
     model.set_column_order({{1, DESCENDING}});
-    REQUIRE(model.get<QString>(0, 0) == "B (2)");
-    source->set(2, 1, std::uint64_t(0));
     REQUIRE(model.get<QString>(0, 0) == "A (1)");
-    REQUIRE(model.index_to_source(3) == 1);
+    REQUIRE(model.get<std::uint64_t>(0, 1) == maximum - 1);
+    REQUIRE_FALSE(model.at(2, 1).has_value());
+    source->set(2, 1, std::uint64_t(1));
+    REQUIRE(model.get<QString>(0, 0) == "B (2)");
+    REQUIRE(model.get<std::uint64_t>(0, 1) == maximum);
+    auto locale = QLocale(QLocale::English, QLocale::Canada);
+    REQUIRE(to_text(model.at(0, 1), locale) == to_text(maximum, locale));
+    REQUIRE(model.index_to_source(1) == 1);
   }
 
   TEST_CASE("sort_order_across_regrouping") {
     using enum SortedTableModel::Ordering;
     auto source = make_positions();
-    auto model = GroupedTableModel(source, {});
+    auto model = GroupedTableModel(source);
     auto commits = 0;
     auto moves = 0;
     observe(model, commits, moves);
@@ -537,11 +577,12 @@ TEST_SUITE("GroupedTableModel") {
 
   TEST_CASE("group_membership_notifications") {
     auto source = make_positions();
-    auto model = GroupedTableModel(source, {0});
+    auto model = GroupedTableModel(source);
+    model.set_grouping({0});
     REQUIRE(model.get_row_size() == 5);
     REQUIRE(model.get<QString>(0, 0) == "A (2)");
-    REQUIRE(model.get<QString>(0, 1) == "(2)");
-    REQUIRE(model.get<std::int64_t>(0, 2) == 40);
+    REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(2));
+    REQUIRE(model.get<int>(0, 2) == 40);
     REQUIRE(model.get<QString>(3, 0) == "B (1)");
     REQUIRE(model.remove(0) == QValidator::Invalid);
     REQUIRE(model.set(0, 0, QString("C")) == QValidator::Invalid);
@@ -555,14 +596,14 @@ TEST_SUITE("GroupedTableModel") {
     });
     REQUIRE(commits == 1);
     REQUIRE(model.get<QString>(0, 0) == "A (1)");
-    REQUIRE(model.get<std::int64_t>(0, 2) == 30);
+    REQUIRE(model.get<int>(0, 2) == 30);
     REQUIRE(model.get<QString>(2, 0) == "B (2)");
-    REQUIRE(model.get<std::int64_t>(2, 2) == 35);
+    REQUIRE(model.get<int>(2, 2) == 35);
     REQUIRE(moves == 1);
     model.set(model.index_from_source(2), 0, QString("B"));
     REQUIRE(model.get_row_size() == 4);
     REQUIRE(model.get<QString>(0, 0) == "B (3)");
-    REQUIRE(model.get<std::int64_t>(0, 2) == 65);
+    REQUIRE(model.get<int>(0, 2) == 65);
     REQUIRE(moves == 2);
     source->transact([&] {
       source->set(2, 2, 40);
@@ -571,7 +612,7 @@ TEST_SUITE("GroupedTableModel") {
       source->insert({QString("C"), QString("USD"), 18}, 0);
     });
     REQUIRE(moves == 3);
-    REQUIRE(model.get<std::int64_t>(0, 2) == 65);
+    REQUIRE(model.get<int>(0, 2) == 65);
     REQUIRE(model.get<int>(1, 2) == 40);
     REQUIRE(model.get<int>(2, 2) == 5);
     REQUIRE(model.get<QString>(4, 0) == "C (1)");
@@ -584,7 +625,7 @@ TEST_SUITE("GroupedTableModel") {
   TEST_CASE("set_grouping") {
     auto source = make_positions();
     source->push({QString("A"), QString("CAD"), 40});
-    auto model = GroupedTableModel(source, {});
+    auto model = GroupedTableModel(source);
     auto commits = 0;
     auto moves = 0;
     observe(model, commits, moves);
@@ -597,14 +638,14 @@ TEST_SUITE("GroupedTableModel") {
     model.set_grouping({0});
     REQUIRE(commits == 1);
     REQUIRE(model.get<QString>(0, 0) == "A (3)");
-    REQUIRE(model.get<std::int64_t>(0, 2) == 80);
+    REQUIRE(model.get<int>(0, 2) == 80);
     REQUIRE(position.get_index() == 2);
     account.set(0);
     model.set_grouping({0, 1});
     REQUIRE(commits == 2);
     REQUIRE(account.get_index() == 0);
     REQUIRE(model.get<QString>(1, 0) == "CAD (2)");
-    REQUIRE(model.get<std::int64_t>(1, 2) == 50);
+    REQUIRE(model.get<int>(1, 2) == 50);
     REQUIRE(model.get<QString>(4, 0) == "USD (1)");
     REQUIRE(position.get_index() == 5);
     model.set_grouping({0, 1});
@@ -616,8 +657,8 @@ TEST_SUITE("GroupedTableModel") {
       model.set_grouping({1});
       REQUIRE(account.get_index() == -1);
       REQUIRE(model.get<QString>(0, 1) == "CAD (3)");
-      REQUIRE(model.get<QString>(0, 0) == "(2)");
-      REQUIRE(model.get<std::int64_t>(0, 2) == 70);
+      REQUIRE(model.get<DistinctCount>(0, 0) == DistinctCount(2));
+      REQUIRE(model.get<int>(0, 2) == 70);
       REQUIRE(model.get<int>(2, 2) == 20);
       REQUIRE(position.get_index() == 5);
     }
@@ -625,7 +666,7 @@ TEST_SUITE("GroupedTableModel") {
       model.set_grouping({0});
       REQUIRE(account.get_index() == 0);
       REQUIRE(model.get<QString>(0, 0) == "A (3)");
-      REQUIRE(model.get<std::int64_t>(0, 2) == 80);
+      REQUIRE(model.get<int>(0, 2) == 80);
       REQUIRE(model.get<int>(3, 2) == 40);
       REQUIRE(position.get_index() == 2);
     }
@@ -634,7 +675,7 @@ TEST_SUITE("GroupedTableModel") {
       REQUIRE(account.get_index() == -1);
       REQUIRE(model.get<QString>(0, 1) == "CAD (3)");
       REQUIRE(model.get<QString>(1, 1) == "A (2)");
-      REQUIRE(model.get<std::int64_t>(1, 2) == 50);
+      REQUIRE(model.get<int>(1, 2) == 50);
       REQUIRE(model.get<QString>(4, 1) == "B (1)");
       REQUIRE(model.get<QString>(6, 1) == "USD (1)");
       REQUIRE(position.get_index() == 8);
@@ -654,7 +695,7 @@ TEST_SUITE("GroupedTableModel") {
     for(auto i = 0; i != 120; ++i) {
       source->push({i % 12, i % 5, i});
     }
-    auto model = GroupedTableModel(source, {});
+    auto model = GroupedTableModel(source);
     SUBCASE("source_order") {}
     SUBCASE("sorted_leaves") {
       model.set_column_order({{2, SortedTableModel::Ordering::DESCENDING}});
@@ -681,7 +722,7 @@ TEST_SUITE("GroupedTableModel") {
     source->push({QString("A"), 2});
     source->push({QString("B"), 3});
     auto attempts = 0;
-    auto model = GroupedTableModel(source, {}, {{}, [&] {
+    auto model = GroupedTableModel(source, {{}, [&] {
       ++attempts;
       if(attempts == 2) {
         throw std::runtime_error("Aggregation unavailable.");
@@ -699,11 +740,12 @@ TEST_SUITE("GroupedTableModel") {
 
   TEST_CASE("grouping_during_source_transaction") {
     auto source = std::make_shared<ArrayTableModel>();
-    auto factories = std::vector<TableAggregationFactory>(3);
+    auto factories = std::vector<GroupedTableModel::AggregatorFactory>(3);
     factories[2] = [] {
       return std::make_unique<SumOfSquares>();
     };
-    auto model = GroupedTableModel(source, {0}, std::move(factories));
+    auto model = GroupedTableModel(source, std::move(factories));
+    model.set_grouping({0});
     model.set_grouping({1});
     source->push({QString("A"), QString("CAD"), 2});
     source->push({QString("A"), QString("USD"), 3});
@@ -723,13 +765,14 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get<int>(0, 2) == 61);
   }
 
-  TEST_CASE("nested_groups_and_custom_aggregation") {
+  TEST_CASE("nested_groups_and_custom_aggregator") {
     auto source = std::make_shared<ArrayTableModel>();
-    auto factories = std::vector<TableAggregationFactory>(3);
+    auto factories = std::vector<GroupedTableModel::AggregatorFactory>(3);
     factories[2] = [] {
       return std::make_unique<SumOfSquares>();
     };
-    auto model = GroupedTableModel(source, {1, 0}, std::move(factories));
+    auto model = GroupedTableModel(source, std::move(factories));
+    model.set_grouping({1, 0});
     source->push({QString("A"), QString("CAD"), 2});
     source->push({QString("A"), QString("USD"), 3});
     source->push({QString("B"), QString("CAD"), 4});
@@ -743,7 +786,7 @@ TEST_SUITE("GroupedTableModel") {
     });
     REQUIRE(model.get_row_size() == 7);
     REQUIRE(model.get<QString>(0, 1) == "CAD (2)");
-    REQUIRE(model.get<QString>(0, 0) == "(1)");
+    REQUIRE(model.get<DistinctCount>(0, 0) == DistinctCount(1));
     REQUIRE(model.get<QString>(1, 1) == "B (2)");
     REQUIRE(model.get<int>(0, 2) == 41);
     REQUIRE(model.get<int>(1, 2) == 41);
@@ -758,30 +801,54 @@ TEST_SUITE("GroupedTableModel") {
     REQUIRE(model.get<int>(0, 2) == 36);
   }
 
-  TEST_CASE("mixed_column_after_membership_change") {
+  TEST_CASE("distinct_count_after_membership_change") {
     auto source = make_positions();
-    auto factories = std::vector<TableAggregationFactory>();
+    auto factories = std::vector<GroupedTableModel::AggregatorFactory>();
     SUBCASE("implicit_default") {}
     SUBCASE("explicit_default") {
-      factories.resize(3);
-      factories[2] = &make_default_table_aggregation;
+      factories.resize(2);
+      factories[1] = [] {
+        return std::make_unique<DefaultTableAggregator>();
+      };
     }
-    auto model = GroupedTableModel(source, {0}, std::move(factories));
+    auto model = GroupedTableModel(source, std::move(factories));
+    model.set_grouping({0});
     source->transact([&] {
-      source->set(1, 2, QString("10"));
+      source->set(1, 1, QString("EUR"));
       source->set(1, 0, QString("A"));
     });
-    REQUIRE(model.get<QString>(0, 2) == "(2)");
+    REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(3));
     source->remove(0);
-    REQUIRE(model.get<QString>(0, 2) == "(2)");
-    source->set(0, 2, 5);
-    REQUIRE(model.get<std::int64_t>(0, 2) == 35);
+    REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(2));
+    source->set(0, 1, QString("USD"));
+    REQUIRE(model.get<DistinctCount>(0, 1) == DistinctCount(1));
+  }
+
+  TEST_CASE("aggregate_equality_on_empty_source") {
+    auto source = std::make_shared<ArrayTableModel>();
+    auto model = GroupedTableModel(source, {}, {},
+      [] (const auto&, const auto&) {
+        return false;
+      });
+    model.set_grouping({0});
+    source->push({QString("A"), 1, 2});
+    auto columns = std::set<int>();
+    model.connect_operation_signal([&] (const TableModel::Operation& op) {
+      if(auto update = std::get_if<TableModel::UpdateOperation>(&op)) {
+        if(update->m_row == 0 && update->m_column != 0) {
+          columns.insert(update->m_column);
+        }
+      }
+    });
+    source->push({QString("A"), 0, 0});
+    REQUIRE(columns == std::set<int>{1, 2});
   }
 
   TEST_CASE("invalid_grouping_columns") {
     auto source = make_positions();
-    REQUIRE_THROWS_AS(GroupedTableModel(source, {-1}), std::invalid_argument);
-    REQUIRE_THROWS_AS(GroupedTableModel(source, {3}), std::invalid_argument);
-    REQUIRE_THROWS_AS(GroupedTableModel(source, {1, 1}), std::invalid_argument);
+    auto model = GroupedTableModel(source);
+    REQUIRE_THROWS_AS(model.set_grouping({-1}), std::invalid_argument);
+    REQUIRE_THROWS_AS(model.set_grouping({3}), std::invalid_argument);
+    REQUIRE_THROWS_AS(model.set_grouping({1, 1}), std::invalid_argument);
   }
 }
