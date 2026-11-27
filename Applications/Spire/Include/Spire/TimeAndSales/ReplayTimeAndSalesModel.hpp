@@ -98,7 +98,7 @@ namespace Spire {
       void on_bbo(const Nexus::SequencedBboQuote& bbo);
       void on_time_and_sale(const Nexus::SequencedTimeAndSale& time_and_sale);
       void on_timeline(const Timeline& timeline);
-      void on_position(const boost::posix_time::ptime& position);
+      void on_position(boost::posix_time::ptime position);
       void on_speed(const Decimal& speed);
       void on_state(PlaybackState state);
   };

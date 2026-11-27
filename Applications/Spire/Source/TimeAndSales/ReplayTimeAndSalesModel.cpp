@@ -564,7 +564,7 @@ void ReplayTimeAndSalesModel::on_timeline(const Timeline& timeline) {
   }
 }
 
-void ReplayTimeAndSalesModel::on_position(const ptime& position) {
+void ReplayTimeAndSalesModel::on_position(ptime position) {
   auto previous = m_position;
   m_position = position;
   auto is_real_time =
