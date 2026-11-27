@@ -4,12 +4,14 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Blotter/BlotterRegistry.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::Tests;
 using namespace Spire;
@@ -29,34 +31,58 @@ namespace {
       m_environment.monitor_order_submissions(m_submissions);
     }
 
+    ~Fixture() {
+      for(auto& model :
+          std::as_const(*m_profile.GetBlotterRegistry().get_blotters())) {
+        for(auto& entry : std::as_const(*model->get_tasks())) {
+          entry.m_task->GetExecutor().Close();
+        }
+      }
+      flush_pending_routines();
+    }
+
     auto get_account() {
       return m_profile.GetClients().get_service_locator_client().get_account();
     }
 
-    auto submit() {
-      auto ticker = parse_ticker("RY.TSX");
+    auto submit(const Ticker& ticker, Side side) {
       m_environment.publish(ticker, BboQuote(make_bid(Money(10), 100),
         make_ask(Money(11), 100), time_from_string("2026-11-23 15:00:00")));
       m_profile.GetClients().get_order_execution_client().submit(
-        make_limit_order_fields(get_account(), ticker, Currencies::CAD,
-          Side::BID, "TSX", 100, Money(10)));
+        make_limit_order_fields(get_account(), ticker, Currencies::CAD, side,
+        "TSX", 100, Money(10)));
       auto order = m_submissions->pop();
       m_environment.accept(*order);
       return order;
     }
+
+    auto submit() {
+      return submit(parse_ticker("RY.TSX"), Side::BID);
+    }
   };
 
   void wait_for(auto& model, const auto& action, const auto& condition) {
-    auto loop = QEventLoop();
-    auto connection = boost::signals2::scoped_connection(
-      model.connect_operation_signal([&] (const auto&) {
-        if(condition()) {
-          loop.quit();
+    struct Waiter {
+      const std::remove_reference_t<decltype(condition)>* m_condition;
+      QEventLoop m_loop;
+
+      Waiter(decltype(condition) condition)
+        : m_condition(&condition) {}
+
+      void on_operation(
+          const typename std::remove_reference_t<decltype(model)>::
+            Operation&) {
+        if((*m_condition)()) {
+          m_loop.quit();
         }
-      }));
+      }
+    };
+    auto waiter = Waiter(condition);
+    auto connection = scoped_connection(model.connect_operation_signal(
+      std::bind_front(&Waiter::on_operation, &waiter)));
     action();
     if(!condition()) {
-      loop.exec();
+      waiter.m_loop.exec();
     }
     REQUIRE(condition());
   }
@@ -335,6 +361,16 @@ TEST_SUITE("BlotterRegistry") {
     }, [&] {
       return get_quantity(*model) == 140;
     });
+    wait_for(*model->get_tasks(), [] {
+    },
+    [&] {
+      return model->get_tasks()->get_size() == 1 &&
+        model->get_tasks()->get(0).m_state == Task::State::ACTIVE;
+    });
+    auto task = model->get_tasks()->get(0).m_task;
+    auto node = dynamic_cast<const OrderWrapperTaskNode*>(&task->GetNode());
+    REQUIRE(node);
+    REQUIRE(node->GetOrder()->get_info().m_id == initial->get_info().m_id);
     wait_for(*model->get_portfolio(), [&] {
       fixture.m_environment.fill(*initial, 60);
     }, [&] {

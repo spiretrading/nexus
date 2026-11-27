@@ -1,9 +1,7 @@
 #include "Spire/Blotter/BlotterRegistry.hpp"
 #include <algorithm>
 #include <fstream>
-#include <unordered_set>
 #include <Beam/IO/BasicIStreamReader.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
@@ -11,6 +9,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <QMessageBox>
 #include <QSaveFile>
+#include "Spire/Blotter/AccountOrderController.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/ControllerPortfolioModel.hpp"
 #include "Spire/Blotter/MonitoredTasksModel.hpp"
@@ -21,6 +20,7 @@
 
 using namespace Beam;
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Nexus;
 using namespace Spire;
@@ -47,36 +47,6 @@ namespace {
     RegisterLegacySpireTypes(out(legacy_registry));
     return load(legacy_registry);
   }
-
-  class AccountOrdersModel : public ArrayListModel<std::shared_ptr<Order>> {
-    public:
-      AccountOrdersModel(const DirectoryEntry& account, Clients& clients) {
-        auto now = clients.get_time_client().get_time();
-        auto query = AccountQuery();
-        query.set_index(account);
-        query.set_range(now, pos_infin);
-        query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
-        query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
-        clients.get_order_execution_client().query(query,
-          m_events.get_slot<std::shared_ptr<Order>>(
-            std::bind_front(&AccountOrdersModel::on_order, this)));
-        m_history = query_daily_order_submissions(account, now, now,
-          clients.get_order_execution_client(),
-          m_events.get_slot<std::shared_ptr<Order>>(
-            std::bind_front(&AccountOrdersModel::on_order, this)));
-      }
-
-    private:
-      std::unordered_set<OrderId> m_ids;
-      QtTaskQueue m_events;
-      RoutineHandler m_history;
-
-      void on_order(const std::shared_ptr<Order>& order) {
-        if(m_ids.insert(order->get_info().m_id).second) {
-          push(order);
-        }
-      }
-  };
 
   auto make_account_portfolio(const DirectoryEntry& account, Clients& clients) {
     auto [portfolio, sequence, excluded] = make_portfolio(
@@ -155,9 +125,10 @@ void Spire::save_blotter_settings(
 struct BlotterRegistry::Entry {
   std::shared_ptr<BlotterModel> m_source;
   std::unique_ptr<BlotterController> m_controller;
-  boost::signals2::scoped_connection m_open_connection;
-  boost::signals2::scoped_connection m_pinned_connection;
-  boost::signals2::scoped_connection m_active_connection;
+  std::unique_ptr<AccountOrderController> m_orders;
+  scoped_connection m_open_connection;
+  scoped_connection m_pinned_connection;
+  scoped_connection m_active_connection;
 };
 
 BlotterRegistry::State::State(const LegacyBlotterSettings& settings) {
@@ -425,6 +396,11 @@ BlotterController& BlotterRegistry::add(
   entry->m_active_connection = model->is_active()->connect_update_signal(
     std::bind_front(&BlotterRegistry::on_active, this, std::cref(*model)));
   auto& controller = *entry->m_controller;
+  if(is_consolidated) {
+    entry->m_orders = std::make_unique<AccountOrderController>(
+      controller, tasks, std::static_pointer_cast<AccountOrdersModel>(
+        entry->m_source->get_orders()), *m_profile);
+  }
   m_entries.emplace(model.get(), std::move(entry));
   update_lists(*model);
   return controller;

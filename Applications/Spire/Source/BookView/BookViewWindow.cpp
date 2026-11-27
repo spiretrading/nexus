@@ -490,8 +490,6 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   }
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
-    m_bid_order_connection.disconnect();
-    m_ask_order_connection.disconnect();
     m_transition_view->set_body(*new QWidget());
     m_transition_view->set_status(TransitionView::Status::NONE);
     m_book_depth = nullptr;
@@ -521,25 +519,5 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   body->setFocusProxy(m_book_depth);
   m_transition_view->set_body(*body);
   m_transition_view->set_status(TransitionView::Status::READY);
-  m_bid_order_connection = m_model->get_bid_orders()->connect_operation_signal(
-    std::bind_front(&BookViewWindow::on_order_operation, this, Side::BID));
-  m_ask_order_connection = m_model->get_ask_orders()->connect_operation_signal(
-    std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
   reset_key_observer();
-}
-
-void BookViewWindow::on_order_operation(Side side,
-    const ListModel<BookViewModel::UserOrder>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<BookViewModel::UserOrder>::UpdateOperation&
-        operation) {
-      auto cancel_operation = pick(side,
-        CancelKeyBindingsModel::Operation::ALL_ASKS,
-        CancelKeyBindingsModel::Operation::ALL_BIDS);
-      if(operation.get_value().m_status == OrderStatus::FILLED &&
-          m_interactions->is_cancel_on_fill()->get()) {
-        m_cancel_operation_signal(
-          cancel_operation, m_ticker, find_order_prices(), none);
-      }
-    });
 }

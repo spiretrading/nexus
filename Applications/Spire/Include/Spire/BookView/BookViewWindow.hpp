@@ -131,8 +131,6 @@ namespace Spire {
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;
-      boost::signals2::scoped_connection m_bid_order_connection;
-      boost::signals2::scoped_connection m_ask_order_connection;
 
       std::unique_ptr<CanvasNode> make_task_node(const CanvasNode& node);
       void reset_key_observer();
@@ -153,8 +151,6 @@ namespace Spire {
       void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();
       void on_current(const Nexus::Ticker& ticker);
-      void on_order_operation(Nexus::Side side,
-        const ListModel<BookViewModel::UserOrder>::Operation& operation);
   };
 }
 

@@ -110,7 +110,7 @@ BlotterProfitLossView::BlotterProfitLossView(
   m_table = GroupedTableViewBuilder(table).
     add_column(tr("Currency"), tr("Curr")).
       set_order(TableHeaderItem::Order::ASCENDING).
-    add_column(tr("Security")).set_order(TableHeaderItem::Order::ASCENDING).
+    add_column(tr("Ticker")).set_order(TableHeaderItem::Order::ASCENDING).
     add_column(tr("Profit/Loss"), tr("P/L")).
     add_column(tr("Fees")).
     add_column(tr("Volume"), tr("Vol")).
