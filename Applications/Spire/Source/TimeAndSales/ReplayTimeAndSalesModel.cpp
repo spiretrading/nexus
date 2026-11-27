@@ -197,12 +197,30 @@ void ReplayTimeAndSalesModel::pop_back() {
 
 void ReplayTimeAndSalesModel::replace(std::vector<Type> entries) {
   ++m_older_generation;
-  m_transaction.transact([&] {
-    while(!m_entries.empty()) {
-      pop_back();
+  auto updates = std::vector<Type>();
+  for(auto& entry : entries) {
+    if(entry.m_time_and_sale->m_timestamp >= get_start() &&
+        (updates.empty() || entry.m_time_and_sale.get_sequence() >
+          updates.back().m_time_and_sale.get_sequence())) {
+      updates.push_back(std::move(entry));
     }
-    for(auto& entry : entries) {
-      append(std::move(entry));
+  }
+  m_transaction.transact([&] {
+    while(get_size() > std::ssize(updates)) {
+      pop_front();
+    }
+    auto offset = static_cast<int>(std::ssize(updates)) - get_size();
+    for(auto i = 0; i < get_size(); ++i) {
+      if(m_entries[i] != updates[offset + i]) {
+        auto previous = std::move(m_entries[i]);
+        m_entries[i] = std::move(updates[offset + i]);
+        m_transaction.push(
+          UpdateOperation(i, std::move(previous), m_entries[i]));
+      }
+    }
+    for(auto i = offset; i > 0; --i) {
+      m_entries.push_front(std::move(updates[i - 1]));
+      m_transaction.push(AddOperation(0));
     }
   });
 }
@@ -447,12 +465,10 @@ void ReplayTimeAndSalesModel::on_read(int generation, ptime end,
     m_read_end = std::max(m_read_end, end);
   }
   for(auto& entry : *entries) {
-    auto sequence = entry.m_time_and_sale.get_sequence();
-    if(!m_buffer.empty() &&
-        sequence <= m_buffer.back().m_time_and_sale.get_sequence()) {
-      continue;
+    if(m_buffer.empty() || entry.m_time_and_sale.get_sequence() >
+        m_buffer.back().m_time_and_sale.get_sequence()) {
+      m_buffer.push_back(std::move(entry));
     }
-    m_buffer.push_back(std::move(entry));
   }
   publish(m_position);
   if(m_session->get_state()->get() == PlaybackState::REAL_TIME &&

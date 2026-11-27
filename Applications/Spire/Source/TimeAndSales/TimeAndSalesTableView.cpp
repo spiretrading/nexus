@@ -107,6 +107,12 @@ namespace {
       if(column >= TimeAndSalesTableModel::COLUMN_SIZE) {
         return;
       }
+      reset_text(widget, table, row, column);
+      reset_indicator(widget, table, row);
+    }
+
+    void reset_text(QWidget& widget, const std::shared_ptr<TableModel>& table,
+        int row, int column) {
       auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
       auto& cell = static_cast<TextBox&>(widget);
       auto& current = *cell.get_current();
@@ -126,18 +132,70 @@ namespace {
       } else {
         current.set(to_text(table->get<std::string>(row, column)));
       }
-      for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-        auto indicator = static_cast<BboIndicator>(i);
-        unmatch(cell, IndicatorRow(indicator));
-      }
+    }
+
+    void reset_indicator(
+        QWidget& widget, const std::shared_ptr<TableModel>& table, int row) {
       auto time_and_sales_table =
         std::static_pointer_cast<TimeAndSalesTableModel>(table);
       auto indicator = time_and_sales_table->get_bbo_indicator(row);
-      match(cell, IndicatorRow(indicator));
+      if(is_match(widget, IndicatorRow(indicator))) {
+        return;
+      }
+      for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+        auto previous = IndicatorRow(static_cast<BboIndicator>(i));
+        if(is_match(widget, previous)) {
+          unmatch(widget, previous);
+          break;
+        }
+      }
+      match(widget, IndicatorRow(indicator));
     }
 
     void unmount(QWidget* widget) {
       delete widget;
+    }
+  };
+
+  struct TableUpdateHandler : QObject {
+    std::shared_ptr<TableModel> m_table;
+    std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+    ItemBuilder m_builder;
+    bool m_is_updated;
+    scoped_connection m_connection;
+
+    TableUpdateHandler(TableView& table_view, std::shared_ptr<TableModel> table,
+      std::shared_ptr<TimeAndSalesPropertiesModel> properties,
+      ItemBuilder builder)
+      : QObject(&table_view),
+        m_table(std::move(table)),
+        m_properties(std::move(properties)),
+        m_builder(builder),
+        m_is_updated(false),
+        m_connection(m_table->connect_operation_signal(
+          std::bind_front(&TableUpdateHandler::on_operation, this))) {}
+
+    void on_operation(const TableModel::Operation& operation) {
+      auto& table_view = *static_cast<TableView*>(parent());
+      visit(operation,
+        [&] (const TableModel::EndTransaction&) {
+          if(m_is_updated) {
+            m_is_updated = false;
+            table_view.get_scroll_box().get_vertical_scroll_bar().
+              set_position(0);
+          }
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
+          m_is_updated = true;
+          auto& order = m_properties->get().get_column_order();
+          auto column = static_cast<int>(std::distance(order.begin(),
+            std::ranges::find(order, operation.m_column)));
+          if(auto item = table_view.get_body().find_item(
+              TableIndex(operation.m_row, column))) {
+            m_builder.reset(
+              item->get_body(), m_table, operation.m_row, operation.m_column);
+          }
+        });
     }
   };
 
@@ -327,6 +385,7 @@ TableView* Spire::make_time_and_sales_table_view(
       std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
     make();
   make_header_menu(*table_view, properties);
+  new TableUpdateHandler(*table_view, table, properties, builder);
   auto pull_indicator = new PullIndicator(*table_view);
   auto stylist = new TableViewStylist(*table_view, properties);
   auto& column_order = properties->get().get_column_order();
