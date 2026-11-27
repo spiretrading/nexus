@@ -130,28 +130,35 @@ namespace {
   class GroupFilter : public EmptyTableFilter {
     public:
       explicit GroupFilter(const GroupedTableModel& table)
-          : m_table(table),
-            m_expansions(table.get_row_size()) {
+          : m_table(table) {
         m_table_connection = table.connect_operation_signal(
           [=, this] (const TableModel::Operation& operation) {
             visit(operation,
               [&] (const TableModel::AddOperation& add) {
-                m_expansions.emplace(m_expansions.begin() + add.m_index);
+                insert_expansion(add.m_index);
               },
               [&] (const TableModel::RemoveOperation& removal) {
-                m_expansions.erase(m_expansions.begin() + removal.m_index);
+                if(removal.m_index < std::ssize(m_expansions)) {
+                  m_expansions.erase(m_expansions.begin() + removal.m_index);
+                }
               },
               [&] (const TableModel::MoveOperation& move) {
-                move_element(m_expansions, move.m_source, move.m_destination);
+                move_expansion(move.m_source, move.m_destination);
               });
           });
         m_grouping_connection = table.connect_grouping_signal(
-          [=, this] (const auto&) {
+          [=, this] (const auto& columns) {
+            if(columns.empty()) {
+              m_expansions.clear();
+            }
             m_signal(0, Filter::NONE);
           });
       }
 
       const std::shared_ptr<LocalBooleanModel>& is_expanded(int row) {
+        if(row >= std::ssize(m_expansions)) {
+          m_expansions.resize(row + 1);
+        }
         auto& expansion = m_expansions.at(row);
         if(!expansion) {
           expansion = std::make_unique<Expansion>();
@@ -175,8 +182,8 @@ namespace {
       bool is_filtered(const TableModel& model, int row) const override {
         auto& table = static_cast<const GroupedTableModel&>(model);
         for(auto i = table.get_parent(row); i != -1; i = table.get_parent(i)) {
-          auto& expansion = m_expansions[i];
-          if(expansion && !expansion->m_current->get()) {
+          if(i < std::ssize(m_expansions) && m_expansions[i] &&
+              !m_expansions[i]->m_current->get()) {
             return true;
           }
         }
@@ -204,6 +211,27 @@ namespace {
       std::vector<std::unique_ptr<Expansion>> m_expansions;
       scoped_connection m_table_connection;
       scoped_connection m_grouping_connection;
+
+      void insert_expansion(int row) {
+        if(row < std::ssize(m_expansions)) {
+          m_expansions.emplace(m_expansions.begin() + row);
+        }
+      }
+
+      void move_expansion(int source, int destination) {
+        if(source >= std::ssize(m_expansions)) {
+          insert_expansion(destination);
+        } else if(destination < std::ssize(m_expansions)) {
+          move_element(m_expansions, source, destination);
+        } else {
+          auto expansion = std::move(m_expansions[source]);
+          m_expansions.erase(m_expansions.begin() + source);
+          if(expansion) {
+            m_expansions.resize(destination + 1);
+            m_expansions.back() = std::move(expansion);
+          }
+        }
+      }
   };
 
   struct GroupItemBuilder {

@@ -9,6 +9,30 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("FilteredListModel") {
+  TEST_CASE("identity_mapping") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{0, 2, 3});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    auto operations = std::deque<ListModel<int>::Operation>();
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    source->transact([&] {
+      source->insert(1, 1);
+      source->move(3, 0);
+      source->insert(-1, 1);
+      source->move(3, 0);
+    });
+    require_list_transaction<int>(operations, {
+      AnyListModel::AddOperation(1), AnyListModel::MoveOperation(3, 0),
+      AnyListModel::MoveOperation(2, 0)});
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{1, 3, 0, 2});
+    REQUIRE(filtered.index_from_source(2) == -1);
+    REQUIRE(filtered.index_to_source(2) == 3);
+  }
+
   TEST_CASE("range_refresh") {
     auto source =
       std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2, 3, 4, 5, 6});

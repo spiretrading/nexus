@@ -29,6 +29,36 @@ using namespace Spire::Styles;
 using namespace Spire::Tests;
 
 TEST_SUITE("GroupedTableView") {
+  UI_TEST_CASE("first_grouping_distinct_keys") {
+    constexpr auto COUNT = 1000;
+    auto source = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != COUNT; ++i) {
+      source->push({i, i});
+    }
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Shares").make());
+    view->resize(400, 240);
+    view->show();
+    QApplication::processEvents();
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    table->set_grouping({0});
+    auto& body = view->get_body();
+    auto& visible = *body.get_table();
+    REQUIRE(visible.get_row_size() == 2 * COUNT);
+    REQUIRE(visible.get<int>(2 * COUNT - 1, 1) == COUNT - 1);
+    auto item = body.find_item(TableIndex(0, 0));
+    REQUIRE(item);
+    auto toggle = dynamic_cast<ToggleButton*>(item->get_body().focusProxy());
+    REQUIRE(toggle);
+    auto expanded = toggle->get_current();
+    expanded->set(false);
+    REQUIRE(visible.get_row_size() == 2 * COUNT - 1);
+    REQUIRE(visible.get<int>(1, 1) == 1);
+    expanded->set(true);
+    REQUIRE(visible.get_row_size() == 2 * COUNT);
+    REQUIRE(visible.get<int>(1, 1) == 0);
+  }
+
   UI_TEST_CASE("source_column_count") {
     auto source = std::make_shared<ArrayTableModel>();
     auto builder = GroupedTableViewBuilder(source);

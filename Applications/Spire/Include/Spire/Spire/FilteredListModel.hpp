@@ -291,25 +291,31 @@ namespace Spire {
         if(m_filter_removal) {
           m_filter_removal->update(operation);
         }
-        if(operation.m_index >= m_source->get_size() - 1) {
-          if(!m_filter(*m_source, operation.m_index)) {
-            m_filtered_data.push_back(operation.m_index);
-            this->m_transaction.push(
-              AddOperation(static_cast<int>(m_filtered_data.size()) - 1));
-          }
-        } else {
-          auto i = std::get<1>(find(operation.m_index));
+        auto last = m_source->get_size() - 1;
+        auto visible = !m_filter(*m_source, operation.m_index);
+        if(visible && get_size() == last) {
+          m_filtered_data.push_back(last);
+          this->m_transaction.push(operation);
+          return;
+        }
+        auto i = m_filtered_data.end();
+        if(operation.m_index < last) {
+          i = std::get<1>(find(operation.m_index));
           std::for_each(i, m_filtered_data.end(), [] (int& value) { ++value; });
-          if(!m_filter(*m_source, operation.m_index)) {
-            this->m_transaction.push(AddOperation(
-              static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
-                m_filtered_data.begin())));
-          }
+        }
+        if(visible) {
+          auto index = static_cast<int>(i - m_filtered_data.begin());
+          m_filtered_data.insert(i, operation.m_index);
+          this->m_transaction.push(AddOperation(index));
         }
       },
       [&] (const MoveOperation& operation) {
         if(m_filter_removal) {
           m_filter_removal->update(operation);
+        }
+        if(get_size() == m_source->get_size()) {
+          this->m_transaction.push(operation);
+          return;
         }
         auto [is_found, source] = find(operation.m_source);
         if(is_found) {
