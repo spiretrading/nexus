@@ -974,6 +974,10 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(text(0, 2) == "40");
     if(custom) {
       REQUIRE(cell(0, 2)->toolTip() == "B");
+      REQUIRE(is_match(*body.find_item(TableIndex(0, 0))->parentWidget(),
+        Highlight()));
+      REQUIRE_FALSE(is_match(*body.find_item(TableIndex(2, 0))->parentWidget(),
+        Highlight()));
     }
     source->set(1, 2, 45);
     REQUIRE(text(0, 2) == "45");

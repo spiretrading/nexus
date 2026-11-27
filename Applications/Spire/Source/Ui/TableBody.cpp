@@ -1189,6 +1189,18 @@ void TableBody::move_row(int source, int destination) {
     }
     layout.add_hidden_row(hidden_row, height);
   }
+  auto [first, last] = std::minmax(source, destination);
+  auto top = layout.get_top_index();
+  auto end = std::min(last + 1, top + layout.count());
+  for(auto i = std::max(first, top); i < end; ++i) {
+    layout.get_row(i - top).set_selector(m_item_builder.get_row_selector(i));
+  }
+  if(m_current_row) {
+    auto index = m_current_index->m_row;
+    if(index >= first && index <= last && !layout.is_visible(index)) {
+      m_current_row->set_selector(m_item_builder.get_row_selector(index));
+    }
+  }
   m_selection_controller.move_row(source, destination);
 }
 
