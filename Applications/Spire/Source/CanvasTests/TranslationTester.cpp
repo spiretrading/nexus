@@ -1,3 +1,6 @@
+#include <vector>
+#include <Aspen/Executor.hpp>
+#include <Aspen/Lift.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
@@ -216,20 +219,14 @@ TEST_SUITE("Translation") {
       Aspen::constant(std::shared_ptr<Order>(order)));
     context.Add(Ref(*node->FindChild("task")), source.ToWeak());
     auto translation = Translate(context, *node);
-    auto result = translation.Extract<Aspen::Box<Quantity>>();
-    auto state = result.commit(0);
-    REQUIRE(state == Aspen::State::CONTINUE_EVALUATED);
-    REQUIRE(result.eval() == 0);
-    auto volume = Quantity(0);
-    auto sequence = 1;
-    while(!Aspen::is_complete(state)) {
-      REQUIRE(Aspen::has_continuation(state));
-      state = result.commit(sequence++);
-      if(Aspen::has_evaluation(state)) {
-        volume = result.eval();
-      }
-    }
-    REQUIRE(volume == 100);
+    auto volumes = std::vector<Quantity>();
+    auto record = Aspen::lift([&] (const auto& volume) {
+      volumes.push_back(volume);
+    }, translation.Extract<Aspen::Box<Quantity>>());
+    Aspen::Executor(std::move(record)).run_until_complete();
+    REQUIRE_FALSE(volumes.empty());
+    REQUIRE(volumes.front() == 0);
+    REQUIRE(volumes.back() == 100);
   }
 
   TEST_CASE("translating_spawn") {
