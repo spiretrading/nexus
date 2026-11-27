@@ -82,6 +82,10 @@ namespace Spire {
       /** Hide the given column. */
       void hide_column(int column);
 
+      /** Returns the sort keys in source-column coordinates, primary first. */
+      const std::vector<SortedTableModel::ColumnOrder>&
+        get_column_order() const;
+
       /**
        * Sets the sort keys and marks the primary key in the header.
        * @param order Source columns in priority order. An empty list clears

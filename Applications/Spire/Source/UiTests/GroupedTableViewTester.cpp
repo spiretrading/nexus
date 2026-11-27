@@ -106,6 +106,10 @@ TEST_SUITE("GroupedTableView") {
     auto& header = view->get_header();
     header.get_items()->move(2, 1);
     view->set_column_order({{1, SortedTableModel::Ordering::DESCENDING}});
+    REQUIRE(view->get_column_order().size() == 1);
+    REQUIRE(view->get_column_order().front().m_index == 1);
+    REQUIRE(view->get_column_order().front().m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     QApplication::processEvents();
     REQUIRE(header.get_items()->get(2).m_order ==
       TableHeaderItem::Order::DESCENDING);
@@ -120,7 +124,15 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(table.get<QString>(1, 1) == "B");
     REQUIRE(table.get<QString>(2, 1) == "C");
     REQUIRE(table.get<QString>(3, 1) == "A");
+    REQUIRE(view->get_column_order().size() == 2);
+    REQUIRE(view->get_column_order()[0].m_index == 2);
+    REQUIRE(view->get_column_order()[0].m_order ==
+      SortedTableModel::Ordering::ASCENDING);
+    REQUIRE(view->get_column_order()[1].m_index == 1);
+    REQUIRE(view->get_column_order()[1].m_order ==
+      SortedTableModel::Ordering::DESCENDING);
     view->set_column_order({});
+    REQUIRE(view->get_column_order().empty());
     REQUIRE(header.get_items()->get(1).m_order == TableHeaderItem::Order::NONE);
     REQUIRE(table.get<QString>(1, 1) == "A");
   }

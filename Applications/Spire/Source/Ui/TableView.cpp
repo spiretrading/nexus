@@ -212,6 +212,14 @@ void TableView::hide_column(int column) {
   m_body->hide_column(column);
 }
 
+const std::vector<SortedTableModel::ColumnOrder>&
+    TableView::get_column_order() const {
+  if(m_sorted_table) {
+    return m_sorted_table->get_column_order();
+  }
+  return m_order;
+}
+
 void TableView::set_column_order(
     std::vector<SortedTableModel::ColumnOrder> order) {
   std::erase_if(order, [] (const auto& key) {
@@ -327,12 +335,7 @@ void TableView::update_scroll_sizes() {
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   auto source = m_header_view->get_column_order()->get(index);
-  auto keys = std::vector<SortedTableModel::ColumnOrder>();
-  if(m_sorted_table) {
-    keys = m_sorted_table->get_column_order();
-  } else {
-    keys = m_order;
-  }
+  auto keys = get_column_order();
   adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)), keys);
   set_column_order(std::move(keys));
   m_sort_signal(source, order);
