@@ -497,6 +497,12 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregate_equality(
   return *this;
 }
 
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_selection(
+    const std::shared_ptr<TableView::SelectionModel>& selection) {
+  m_selection = selection;
+  return *this;
+}
+
 GroupedTableViewBuilder& GroupedTableViewBuilder::set_item_builder(
     const TableViewItemBuilder& item_builder) {
   m_item_builder = item_builder;
@@ -533,6 +539,9 @@ TableView* GroupedTableViewBuilder::make() const {
   }
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
+  if(m_selection) {
+    builder.set_selection(m_selection);
+  }
   builder.set_sort_handler(
     std::bind_front(&GroupedTableModel::set_column_order, table));
   auto columns = std::make_shared<ArrayListModel<GroupHeaderItem>>();
