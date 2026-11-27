@@ -153,6 +153,9 @@ time_duration ReplayTimeAndSalesModel::get_read_ahead() const {
 
 time_duration ReplayTimeAndSalesModel::get_jump_threshold() const {
   static const auto JUMP_THRESHOLD = seconds(2);
+  if(m_session->get_state()->get() != PlaybackState::REPLAYING) {
+    return JUMP_THRESHOLD;
+  }
   return scale_duration(JUMP_THRESHOLD, get_speed_factor(*m_session));
 }
 
@@ -563,8 +566,14 @@ void ReplayTimeAndSalesModel::on_position(const ptime& position) {
   m_position = position;
   auto is_real_time =
     m_session->get_state()->get() == PlaybackState::REAL_TIME;
+  auto read_end = [&] {
+    if(m_seek_state == SeekState::NONE) {
+      return std::min(previous, m_read_end);
+    }
+    return previous;
+  }();
   if(position < previous ||
-      (!is_real_time && position - previous > get_jump_threshold())) {
+      (!is_real_time && position - read_end > get_jump_threshold())) {
     seek();
   } else {
     update_playback();
