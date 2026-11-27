@@ -135,6 +135,7 @@ namespace Spire {
         TableViewItemBuilder item_builder) const;
       void initialize_body(TableViewItemBuilder item_builder,
         boost::signals2::connection tracking);
+      void update_sort_indicators();
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_current(const boost::optional<Index>& current);
