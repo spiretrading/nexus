@@ -1,8 +1,10 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <QStyledItemDelegate>
 #include "Spire/Spire/Hash.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
+#include "Spire/Ui/DistinctTableAggregator.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -613,60 +615,65 @@ QString Spire::to_text(const AnyRef& value, const QLocale& locale) {
 }
 
 QString Spire::to_text(const std::any& value, const QLocale& locale) {
-  if(value.type() == typeid(gregorian::date)) {
-    return to_text(std::any_cast<gregorian::date>(value), locale);
-  } else if(value.type() == typeid(ptime)) {
-    return to_text(std::any_cast<ptime>(value), locale);
-  } else if(value.type() == typeid(posix_time::time_duration)) {
-    return to_text(std::any_cast<posix_time::time_duration>(value), locale);
-  } else if(value.type() == typeid(AccountListItem::Account)) {
-    return to_text(std::any_cast<AccountListItem::Account>(value), locale);
-  } else if(value.type() == typeid(CountryCode)) {
-    return to_text(std::any_cast<CountryCode>(value), locale);
-  } else if(value.type() == typeid(CurrencyId)) {
-    return to_text(std::any_cast<CurrencyId>(value), locale);
-  } else if(value.type() == typeid(DirectoryEntry)) {
-    return to_text(std::any_cast<DirectoryEntry>(value), locale);
-  } else if(value.type() == typeid(Money)) {
-    return to_text(std::any_cast<Money>(value), locale);
-  } else if(value.type() == typeid(OrderStatus)) {
-    return to_text(std::any_cast<OrderStatus>(value), locale);
-  } else if(value.type() == typeid(OrderType)) {
-    return to_text(std::any_cast<OrderType>(value), locale);
-  } else if(value.type() == typeid(PositionSide)) {
-    return to_text(std::any_cast<PositionSide>(value), locale);
-  } else if(value.type() == typeid(PositionSideToken)) {
-    return to_text(std::any_cast<PositionSideToken>(value), locale);
-  } else if(value.type() == typeid(Quantity)) {
-    return to_text(std::any_cast<Quantity>(value), locale);
-  } else if(value.type() == typeid(Scope)) {
-    return to_text(std::any_cast<Scope>(value), locale);
-  } else if(value.type() == typeid(Side)) {
-    return to_text(std::any_cast<Side>(value), locale);
-  } else if(value.type() == typeid(Task::State)) {
-    return to_text(std::any_cast<Task::State>(value), locale);
-  } else if(value.type() == typeid(Ticker)) {
-    return to_text(std::any_cast<Ticker>(value), locale);
-  } else if(value.type() == typeid(TimeAndSale::Condition)) {
-    return to_text(std::any_cast<TimeAndSale::Condition>(value), locale);
-  } else if(value.type() == typeid(TimeInForce)) {
-    return to_text(std::any_cast<TimeInForce>(value), locale);
-  } else if(value.type() == typeid(TradeSide)) {
-    return to_text(std::any_cast<TradeSide>(value), locale);
-  } else if(value.type() == typeid(Venue)) {
-    return to_text(std::any_cast<Venue>(value), locale);
-  } else if(value.type() == typeid(QKeySequence)) {
-    return to_text(std::any_cast<QKeySequence>(value), locale);
-  } else if(value.type() == typeid(std::string)) {
-    return QString::fromStdString(std::any_cast<std::string>(value));
-  } else if(value.type() == typeid(QColor)) {
-    return std::any_cast<QColor>(value).name();
-  } else if(value.type() == typeid(QString)) {
-    return std::any_cast<QString>(value);
-  } else if(value.type() == typeid(const char*)) {
-    return QString::fromUtf8(std::any_cast<const char*>(value));
-  } else if(value.type() == typeid(bool)) {
-    return to_text(std::any_cast<bool>(value), locale);
+  if(auto count = std::any_cast<DistinctCount>(&value)) {
+    return to_text(*count);
+  } else if(auto integer = std::any_cast<multiprecision::int128_t>(&value)) {
+    return QString::fromStdString(integer->str());
+  } else if(auto date = std::any_cast<gregorian::date>(&value)) {
+    return to_text(*date, locale);
+  } else if(auto timestamp = std::any_cast<ptime>(&value)) {
+    return to_text(*timestamp, locale);
+  } else if(auto duration = std::any_cast<posix_time::time_duration>(&value)) {
+    return to_text(*duration, locale);
+  } else if(auto account = std::any_cast<AccountListItem::Account>(&value)) {
+    return to_text(*account, locale);
+  } else if(auto country = std::any_cast<CountryCode>(&value)) {
+    return to_text(*country, locale);
+  } else if(auto currency = std::any_cast<CurrencyId>(&value)) {
+    return to_text(*currency, locale);
+  } else if(auto entry = std::any_cast<DirectoryEntry>(&value)) {
+    return to_text(*entry, locale);
+  } else if(auto money = std::any_cast<Money>(&value)) {
+    return to_text(*money, locale);
+  } else if(auto order_status = std::any_cast<OrderStatus>(&value)) {
+    return to_text(*order_status, locale);
+  } else if(auto order_type = std::any_cast<OrderType>(&value)) {
+    return to_text(*order_type, locale);
+  } else if(auto position_side = std::any_cast<PositionSide>(&value)) {
+    return to_text(*position_side, locale);
+  } else if(auto position_side_token =
+      std::any_cast<PositionSideToken>(&value)) {
+    return to_text(*position_side_token, locale);
+  } else if(auto quantity = std::any_cast<Quantity>(&value)) {
+    return to_text(*quantity, locale);
+  } else if(auto scope = std::any_cast<Scope>(&value)) {
+    return to_text(*scope, locale);
+  } else if(auto side = std::any_cast<Side>(&value)) {
+    return to_text(*side, locale);
+  } else if(auto state = std::any_cast<Task::State>(&value)) {
+    return to_text(*state, locale);
+  } else if(auto ticker = std::any_cast<Ticker>(&value)) {
+    return to_text(*ticker, locale);
+  } else if(auto condition = std::any_cast<TimeAndSale::Condition>(&value)) {
+    return to_text(*condition, locale);
+  } else if(auto time_in_force = std::any_cast<TimeInForce>(&value)) {
+    return to_text(*time_in_force, locale);
+  } else if(auto trade_side = std::any_cast<TradeSide>(&value)) {
+    return to_text(*trade_side, locale);
+  } else if(auto venue = std::any_cast<Venue>(&value)) {
+    return to_text(*venue, locale);
+  } else if(auto key_sequence = std::any_cast<QKeySequence>(&value)) {
+    return to_text(*key_sequence, locale);
+  } else if(auto string = std::any_cast<std::string>(&value)) {
+    return QString::fromStdString(*string);
+  } else if(auto color = std::any_cast<QColor>(&value)) {
+    return color->name();
+  } else if(auto text = std::any_cast<QString>(&value)) {
+    return *text;
+  } else if(auto characters = std::any_cast<const char*>(&value)) {
+    return QString::fromUtf8(*characters);
+  } else if(auto boolean = std::any_cast<bool>(&value)) {
+    return to_text(*boolean, locale);
   }
   auto text = QString();
   ComparableTypes<optional<Money>, optional<Quantity>>()(value,
@@ -707,6 +714,10 @@ std::optional<std::size_t> Spire::hash_value(const AnyRef& value) {
 bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
   if(left.get_type() != right.get_type()) {
     return false;
+  } else if(auto left_value = any_cast<DistinctCount>(&left)) {
+    return *left_value == any_cast<DistinctCount>(right);
+  } else if(auto left_integer = any_cast<multiprecision::int128_t>(&left)) {
+    return *left_integer == any_cast<multiprecision::int128_t>(right);
   }
   return EqualityTypes()(left, right, [] (const auto& a, const auto& b) {
     return a == b;

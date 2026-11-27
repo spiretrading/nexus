@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include "Spire/Ui/DefaultTableAggregator.hpp"
+#include "Spire/Ui/DistinctTableAggregator.hpp"
 
 using namespace Spire;
 

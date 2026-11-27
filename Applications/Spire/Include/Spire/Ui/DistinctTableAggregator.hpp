@@ -1,12 +1,24 @@
 #ifndef SPIRE_DISTINCT_TABLE_AGGREGATOR_HPP
 #define SPIRE_DISTINCT_TABLE_AGGREGATOR_HPP
 #include <cmath>
+#include <compare>
+#include <cstdint>
 #include <unordered_map>
 #include "Spire/Spire/Hash.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TableAggregator.hpp"
 
 namespace Spire {
+
+  /** The number of distinct values in an aggregate. */
+  struct DistinctCount {
+    std::int64_t m_value = 0;
+
+    auto operator <=>(const DistinctCount&) const = default;
+  };
+
+  /** Formats a distinct count as "(n)". */
+  QString to_text(DistinctCount count);
 
   /**
    * Counts distinct column values, ignoring missing values.
