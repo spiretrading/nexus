@@ -206,12 +206,24 @@ struct TableBody::RowCover : Cover {
     }
   }
 
+  TableItem* mount_item(int row, int column) {
+    auto item = get_item(column);
+    auto& body = *static_cast<TableBody*>(parentWidget());
+    if(item && column < body.m_table->get_column_size() &&
+        &item->get_body() == item) {
+      item->mount(*body.m_item_builder.mount(
+        body.m_table, row, body.m_visual_to_logical_columns[column]));
+    }
+    return item;
+  }
+
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     set_selector(body.m_item_builder.get_row_selector(index));
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(
-        body.m_table, index, body.m_visual_to_logical_columns[i]));
+      if(!body.m_column_covers[i]->isHidden()) {
+        mount_item(index, i);
+      }
     }
   }
 
@@ -220,7 +232,9 @@ struct TableBody::RowCover : Cover {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       if(auto item = get_item(i)) {
-        body.m_item_builder.unmount(item->unmount());
+        if(&item->get_body() != item) {
+          body.m_item_builder.unmount(item->unmount());
+        }
       }
     }
     set_selector(std::nullopt);
@@ -786,7 +800,7 @@ TableItem* TableBody::find_item(const Index& index) {
         *get_current_row_index() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
     }
-    return row->get_item(index.m_column);
+    return row->mount_item(index.m_row, index.m_column);
   }
   return nullptr;
 }
@@ -807,6 +821,13 @@ void TableBody::show_column(int column) {
     return;
   }
   m_column_covers[column]->show();
+  auto& layout = get_layout();
+  for(auto i = 0; i != layout.count(); ++i) {
+    layout.get_row(i).mount_item(layout.get_top_index() + i, column);
+  }
+  if(m_current_row && !layout.is_visible(m_current_index->m_row)) {
+    m_current_row->mount_item(m_current_index->m_row, column);
+  }
   update_column_covers();
   update_column_widths();
 }

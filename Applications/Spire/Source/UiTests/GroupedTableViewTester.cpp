@@ -770,6 +770,68 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(updates == 1);
   }
 
+  UI_TEST_CASE("hidden_grouping_column_widgets") {
+    auto source = std::make_shared<ArrayTableModel>();
+    for(auto i = 0; i != 64; ++i) {
+      source->push({QString("A"), QString::number(i), i});
+    }
+    auto leaves = 0;
+    auto aggregates = 0;
+    auto keys = 0;
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Country").add_column("Shares").
+      set_grouping({0, 1}).set_item_builder(
+        [&] (const auto& table, int row, int column) {
+          if(column == 1) {
+            if(table == source) {
+              ++leaves;
+            } else {
+              ++keys;
+            }
+          }
+          return TableView::default_item_builder(table, row, column);
+        }).set_aggregate_item_builder(
+          [&] (const auto& table, int row, int column) {
+            if(column == 1) {
+              ++aggregates;
+            }
+            return TableView::default_item_builder(table, row, column);
+          }).make());
+    view->resize(400, 240);
+    view->show();
+    QApplication::processEvents();
+    auto mounted = keys;
+    REQUIRE(mounted > 0);
+    auto& scroll = view->get_scroll_box().get_vertical_scroll_bar();
+    scroll.set_position(scroll.get_range().m_end);
+    QApplication::processEvents();
+    REQUIRE(keys > mounted);
+    REQUIRE(leaves == 0);
+    REQUIRE(aggregates == 0);
+    auto& body = view->get_body();
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    SUBCASE("show_column") {
+      auto last = body.get_table()->get_row_size() - 1;
+      REQUIRE(body.find_item(TableIndex(last, 1)));
+      REQUIRE(leaves == 1);
+      REQUIRE(aggregates == 0);
+      view->show_column(1);
+      REQUIRE(leaves > 1);
+      REQUIRE(aggregates > 0);
+    }
+    SUBCASE("remove_grouping_column") {
+      table->set_grouping({0});
+    }
+    scroll.set_position(0);
+    QApplication::processEvents();
+    REQUIRE(leaves > 0);
+    auto item = body.find_item(TableIndex(table->index_from_source(0), 1));
+    REQUIRE(item);
+    auto label = dynamic_cast<TextBox*>(item->get_body().focusProxy());
+    REQUIRE(label);
+    REQUIRE(label->get_current()->get() == "0");
+  }
+
   UI_TEST_CASE("heading_item_builder") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), QString("CA"), 10});
