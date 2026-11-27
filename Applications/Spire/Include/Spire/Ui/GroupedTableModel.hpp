@@ -168,6 +168,7 @@ namespace Spire {
       struct Row;
       struct PendingRows;
       using Changes = std::map<int, std::any>;
+      using GroupIndex = std::unordered_multimap<std::size_t, Group*>;
       mutable GroupingSignal m_grouping_signal;
       std::shared_ptr<TableModel> m_source;
       std::optional<int> m_column_count;
@@ -179,7 +180,7 @@ namespace Spire {
       std::vector<SortedTableModel::ColumnOrder> m_order;
       std::set<std::shared_ptr<Group>> m_unsorted;
       std::size_t m_next_group;
-      std::unordered_multimap<std::size_t, Group*> m_groups;
+      GroupIndex m_groups;
       std::vector<Row> m_rows;
       PendingRows* m_pending_rows;
       std::vector<int> m_indices;
@@ -188,15 +189,18 @@ namespace Spire {
       bool m_is_source_transaction;
       boost::signals2::scoped_connection m_connection;
 
+      static Group* find_group(const GroupIndex& groups, const AnyRef& key,
+        const Group* parent, std::optional<std::size_t> hash);
       int get_source_row_size() const;
       void set_column_count(int count);
       void validate_columns(const std::vector<int>& columns) const;
       bool is_identity() const;
+      int resolve_index(int index) const;
       const Row& get_row(int index) const;
       void materialize_rows();
       void group_leaves(std::vector<int> columns);
       std::vector<Row> make_grouped_rows(const std::vector<int>& columns);
-      void append_groups(std::vector<Row>& rows,
+      void append_groups(std::vector<Row>& rows, GroupIndex& groups,
         const std::vector<int>& sources, const std::vector<int>& columns,
         const std::shared_ptr<Group>& parent, int depth);
       void restore_source_order();
@@ -208,8 +212,6 @@ namespace Spire {
       void sort_pending();
       void touch(const std::shared_ptr<Group>& group, int column);
       std::unique_ptr<TableAggregator> make_aggregator(int column) const;
-      Group* find_group(const AnyRef& key, const Group* parent,
-        std::optional<std::size_t> hash) const;
       std::shared_ptr<Group> make_group(const AnyRef& key, QString name,
         const std::shared_ptr<Group>& parent, int depth, int heading_column);
       void initialize_aggregates(Group& group, std::span<const int> sources);

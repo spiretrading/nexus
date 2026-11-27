@@ -717,6 +717,41 @@ TEST_SUITE("GroupedTableModel") {
     }
   }
 
+  TEST_CASE("additional_grouping_row_mapping") {
+    auto source = make_positions();
+    auto model = GroupedTableModel(source);
+    SUBCASE("one_existing_level") {
+      model.set_grouping({0});
+    }
+    SUBCASE("two_existing_levels") {
+      model.set_grouping({0, 1});
+    }
+    auto position = TableRowIndexTracker(model.index_from_source(1));
+    auto heading = TableRowIndexTracker(model.get_parent(position.get_index()));
+    auto name = model.get_group_name(heading.get_index());
+    model.connect_operation_signal([&] (const TableModel::Operation& op) {
+      heading.update(op);
+      position.update(op);
+      if(std::holds_alternative<TableModel::StartTransaction>(op)) {
+        return;
+      }
+      auto row = heading.get_index();
+      REQUIRE(model.get_group_name(row) == name);
+      REQUIRE(model.get_group_size(row) == 1);
+      REQUIRE(model.get<int>(row, 2) == 20);
+      REQUIRE(model.index_from_source(1) == position.get_index());
+      REQUIRE(model.index_to_source(position.get_index()) == 1);
+      auto parent = model.get_parent(position.get_index());
+      while(parent != row && parent != -1) {
+        parent = model.get_parent(parent);
+      }
+      REQUIRE(parent == row);
+    });
+    model.set_grouping({0, 1, 2});
+    REQUIRE(model.get_row_size() == 11);
+    REQUIRE(model.get_first_leaf(heading.get_index()) == position.get_index());
+  }
+
   TEST_CASE("first_grouping_factory_failure") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), 2});
