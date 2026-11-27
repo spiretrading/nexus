@@ -7,6 +7,8 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DefaultTableAggregator.hpp"
+#include "Spire/Ui/DistinctTableAggregator.hpp"
 #include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -108,6 +110,11 @@ TEST_SUITE("GroupedTableView") {
     SUBCASE("values") {
       builder.set_comparator(reverse);
     }
+    SUBCASE("custom_aggregator") {
+      builder.set_aggregator([] {
+        return std::make_unique<DistinctTableAggregator<QString>>();
+      }).set_comparator(reverse);
+    }
     SUBCASE("rows") {
       builder.set_comparator([&] (const AnyRef& left, int left_row,
           const AnyRef& right, int right_row, int column) {
@@ -119,7 +126,7 @@ TEST_SUITE("GroupedTableView") {
     auto view = std::unique_ptr<TableView>(builder.make());
     auto& table = *view->get_table();
     REQUIRE(table.get<QString>(0, 0) == "A (2)");
-    REQUIRE(table.get<QString>(0, 1) == "(2)");
+    REQUIRE(table.get<DistinctCount>(0, 1) == DistinctCount(2));
     REQUIRE(table.get<QString>(1, 1) == "USD");
     REQUIRE(table.get<QString>(2, 1) == "CAD");
   }
@@ -263,11 +270,11 @@ TEST_SUITE("GroupedTableView") {
       source->push({QString("A"), QString("CAD"), 5});
       REQUIRE(visible.get_row_size() == 4);
       REQUIRE(visible.get<QString>(0, 0) == "A (3)");
-      REQUIRE(visible.get<std::int64_t>(0, 2) == 47);
+      REQUIRE(visible.get<int>(0, 2) == 47);
       toggle(0, 0, "A");
       REQUIRE(visible.get_row_size() == 7);
       REQUIRE(visible.get<QString>(1, 0) == "CAD (2)");
-      REQUIRE(visible.get<std::int64_t>(1, 2) == 17);
+      REQUIRE(visible.get<int>(1, 2) == 17);
       toggle(1, 0, "CAD");
       REQUIRE(visible.get_row_size() == 9);
       REQUIRE(visible.get<int>(2, 2) == 12);
@@ -978,6 +985,40 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(text(2, 2) == "25");
   }
 
+  UI_TEST_CASE("aggregate_value_at_mount") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({QString("A"), 10});
+    source->push({QString("A"), 20});
+    auto values = std::vector<std::optional<int>>();
+    auto view = std::unique_ptr<TableView>(GroupedTableViewBuilder(source).
+      add_column("Account").add_column("Shares").set_aggregate_item_builder(
+        [&] (const std::shared_ptr<TableModel>& table, int row, int column) {
+          auto& value = values.emplace_back();
+          if(table->at(row, column).has_value()) {
+            value = table->get<int>(row, column);
+          }
+          return new QLabel();
+        }).make());
+    view->resize(400, 300);
+    view->show();
+    QApplication::processEvents();
+    auto table = std::static_pointer_cast<GroupedTableModel>(view->get_table());
+    table->set_grouping({0});
+    REQUIRE_FALSE(values.empty());
+    REQUIRE(values.front() == 30);
+    auto heading = view->get_body().find_item(TableIndex(0, 0));
+    REQUIRE(heading);
+    auto key = dynamic_cast<TextBox*>(
+      heading->get_body().layout()->itemAt(1)->widget());
+    REQUIRE(key);
+    REQUIRE(key->get_current()->get() == "A");
+    values.clear();
+    source->set(0, 0, QString("B"));
+    QApplication::processEvents();
+    REQUIRE(std::ranges::contains(values, 10));
+    REQUIRE(table->get<int>(0, 1) == 20);
+  }
+
   UI_TEST_CASE("column_order_settings") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({QString("A"), 3});
@@ -1000,25 +1041,25 @@ TEST_SUITE("GroupedTableView") {
       TableHeaderItem::Order::UNORDERED);
   }
 
-  UI_TEST_CASE("accumulator_factory") {
-    class Total {
+  UI_TEST_CASE("aggregator_factory") {
+    class Total final : public TableAggregator {
       public:
         explicit Total(int opening) noexcept
           : m_total(opening) {}
 
-        void add(const AnyRef& value) {
+        void add(const AnyRef& value) override {
           m_total += any_cast<int>(value);
         }
 
-        void remove(const AnyRef& value) {
+        void remove(const AnyRef& value) override {
           m_total -= any_cast<int>(value);
         }
 
-        void update(const AnyRef& previous, const AnyRef& current) {
+        void update(const AnyRef& previous, const AnyRef& current) override {
           m_total += any_cast<int>(current) - any_cast<int>(previous);
         }
 
-        int get() const {
+        std::any get() const override {
           return m_total;
         }
 
@@ -1031,20 +1072,45 @@ TEST_SUITE("GroupedTableView") {
     source->push({QString("A"), 20, 2});
     auto builder = GroupedTableViewBuilder(source);
     auto opening = 100;
-    auto view = std::unique_ptr<TableView>(builder.add_column("Account").
-      add_column("Balance").set_aggregation([=] {
-        return Total(opening);
-      }).add_column("Shares").set_aggregation(make_default_table_aggregation).
-      set_grouping({0}).make());
+    auto notify_equal = false;
+    SUBCASE("default_equality") {}
+    SUBCASE("custom_equality") {
+      notify_equal = true;
+      builder.set_aggregate_equality([] (const auto&, const auto&) {
+        return false;
+      });
+    }
+    builder.add_column("Account").
+      add_column("Balance").set_aggregator([=] {
+        return std::make_unique<Total>(opening);
+      });
+    auto view = std::unique_ptr<TableView>(builder.add_column("Shares").
+      set_aggregator([] {
+        return std::make_unique<DefaultTableAggregator>();
+      }).set_grouping({0}).make());
     auto& table = *view->get_table();
     REQUIRE(table.get<int>(0, 1) == 130);
     REQUIRE(table.get<int>(3, 1) == 130);
-    REQUIRE(table.get<std::int64_t>(0, 2) == 7);
+    REQUIRE(table.get<int>(0, 2) == 7);
     source->set(0, 1, 25);
     REQUIRE(table.get<int>(0, 1) == 145);
     source->remove(2);
     REQUIRE(table.get<int>(0, 1) == 125);
     REQUIRE(table.get<int>(2, 1) == 130);
+    auto updates = 0;
+    table.connect_operation_signal([&] (const TableModel::Operation& op) {
+      if(auto update = std::get_if<TableModel::UpdateOperation>(&op)) {
+        if(update->m_row == 0 && update->m_column == 1) {
+          ++updates;
+        }
+      }
+    });
+    source->push({QString("A"), 0, 0});
+    REQUIRE(updates == static_cast<int>(notify_equal));
+    updates = 0;
+    source->set(2, 1, 1);
+    REQUIRE(updates == 1);
+    REQUIRE(table.get<int>(0, 1) == 126);
   }
 
   UI_TEST_CASE("grouping_bar") {
@@ -1141,7 +1207,7 @@ TEST_SUITE("GroupedTableView") {
     REQUIRE(tags->count() == 1);
     REQUIRE(tag_at(0)->get_label()->get() == "Currency");
     REQUIRE(rows.get<QString>(0, 1) == "CAD (2)");
-    REQUIRE(rows.get<std::int64_t>(0, 2) == 30);
+    REQUIRE(rows.get<int>(0, 2) == 30);
     select(0);
     REQUIRE(table->get_grouping() == std::vector{1, 0});
     remove(2);

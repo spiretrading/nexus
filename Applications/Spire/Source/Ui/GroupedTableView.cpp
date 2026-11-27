@@ -7,7 +7,6 @@
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Spire/TransformListModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
-#include "Spire/Ui/GroupedTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableGroupingBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -428,7 +427,7 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(QString name) {
 GroupedTableViewBuilder& GroupedTableViewBuilder::add_column(
     QString name, QString short_name) {
   m_columns.emplace_back(std::move(name), std::move(short_name),
-    TableHeaderItem::Order::NONE, TableAggregationFactory());
+    TableHeaderItem::Order::NONE);
   return *this;
 }
 
@@ -455,12 +454,18 @@ GroupedTableViewBuilder& GroupedTableViewBuilder::set_comparator(
   });
 }
 
-GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregation(
-    TableAggregationFactory factory) {
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregator(
+    GroupedTableModel::AggregatorFactory factory) {
   if(m_columns.empty()) {
-    throw std::logic_error("Add a column before setting its aggregation.");
+    throw std::logic_error("Add a column before setting its aggregator.");
   }
-  m_columns.back().m_aggregation = std::move(factory);
+  m_columns.back().m_aggregator = std::move(factory);
+  return *this;
+}
+
+GroupedTableViewBuilder& GroupedTableViewBuilder::set_aggregate_equality(
+    GroupedTableModel::AggregateEquality is_equal) {
+  m_is_equal = std::move(is_equal);
   return *this;
 }
 
@@ -488,14 +493,16 @@ TableView* GroupedTableViewBuilder::make() const {
       m_source->get_column_size() != column_count) {
     throw std::invalid_argument("Expected a header for each source column.");
   }
-  auto factories = std::vector<TableAggregationFactory>();
+  auto factories = std::vector<GroupedTableModel::AggregatorFactory>();
   for(auto& column : m_columns) {
-    factories.push_back(column.m_aggregation);
+    factories.push_back(column.m_aggregator);
   }
   auto table = std::make_shared<GroupedTableModel>(
-    m_source, m_grouping.value_or(std::vector<int>()), std::move(factories),
-    m_comparator);
+    m_source, std::move(factories), m_comparator, m_is_equal);
   table->set_column_count(column_count);
+  if(m_grouping) {
+    table->set_grouping(*m_grouping);
+  }
   auto filter = std::make_shared<GroupFilter>(*table);
   auto builder = TableViewBuilder(table, m_parent);
   builder.set_sort_handler(
