@@ -98,8 +98,9 @@ QWidget* BlotterWindowSettings::Reopen(Ref<UserProfile> profile) const {
   for(auto& model : std::as_const(*registry.get_blotters())) {
     auto& controller = registry.get(*model);
     if(controller.m_id == m_id) {
+      auto settings = *this;
       auto& window = controller.open();
-      Apply(profile, out(window));
+      settings.Apply(profile, out(window));
       return &window;
     }
   }

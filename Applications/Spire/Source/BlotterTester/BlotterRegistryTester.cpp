@@ -8,6 +8,7 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Ui/TabView.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
@@ -85,6 +86,15 @@ namespace {
       waiter.m_loop.exec();
     }
     REQUIRE(condition());
+  }
+
+  TabView& get_tabs(QWidget& window) {
+    for(auto widget : window.findChildren<QWidget*>()) {
+      if(auto tabs = dynamic_cast<TabView*>(widget)) {
+        return *tabs;
+      }
+    }
+    throw std::runtime_error("Tabs not found.");
   }
 
   auto get_quantity(const BlotterModel& model) {
@@ -165,6 +175,7 @@ TEST_SUITE("BlotterRegistry") {
     QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     REQUIRE(window.isNull());
     REQUIRE(model.expired());
+    REQUIRE(fixture.m_profile.GetRecentlyClosedWindows()->get_size() == 0);
   }
 
   UI_TEST_CASE("close_pinned") {
@@ -197,6 +208,68 @@ TEST_SUITE("BlotterRegistry") {
     REQUIRE(registry.get_available()->get_size() == 1);
     REQUIRE(registry.get_pinned()->get_size() == 0);
     REQUIRE(registry.get_active()->get()->is_consolidated());
+  }
+
+  UI_TEST_CASE("recently_closed") {
+    auto fixture = Fixture();
+    auto& registry = fixture.m_profile.GetBlotterRegistry();
+    auto model = registry.get_consolidated().get_model();
+    SUBCASE("consolidated") {
+    }
+    SUBCASE("pinned") {
+      model = registry.create("Pinned", fixture.get_account()).get_model();
+      model->is_pinned()->set(true);
+    }
+    auto& controller = registry.get(*model);
+    auto recent = fixture.m_profile.GetRecentlyClosedWindows();
+    REQUIRE(recent->get_size() == 0);
+    get_tabs(controller.open()).get_current()->set(3);
+    controller.close();
+    REQUIRE(recent->get_size() == 1);
+    REQUIRE(recent->get(0)->GetName() ==
+      "Blotter - " + model->get_name()->get().toStdString());
+    controller.close();
+    REQUIRE(recent->get_size() == 1);
+    auto window = dynamic_cast<BlotterWindow*>(
+      recent->get(0)->Reopen(Ref(fixture.m_profile)));
+    REQUIRE(window);
+    REQUIRE(window->get_model() == model);
+    REQUIRE(get_tabs(*window).get_current()->get().value_or(-1) == 3);
+    REQUIRE(controller.is_open()->get());
+    REQUIRE(recent->get_size() == 0);
+    get_tabs(*window).get_current()->set(1);
+    controller.close();
+    REQUIRE(recent->get_size() == 1);
+    auto& reopened = controller.open();
+    REQUIRE(reopened.get_model() == model);
+    REQUIRE(get_tabs(reopened).get_current()->get().value_or(-1) == 1);
+    REQUIRE(recent->get_size() == 0);
+    controller.close();
+  }
+
+  UI_TEST_CASE("recently_closed_removal") {
+    auto fixture = Fixture();
+    auto& registry = fixture.m_profile.GetBlotterRegistry();
+    auto& first = registry.create("First", fixture.get_account());
+    auto& second = registry.create("Second", fixture.get_account());
+    first.get_model()->is_pinned()->set(true);
+    second.get_model()->is_pinned()->set(true);
+    auto recent = fixture.m_profile.GetRecentlyClosedWindows();
+    first.open();
+    first.close();
+    second.open();
+    second.close();
+    REQUIRE(recent->get_size() == 2);
+    REQUIRE(recent->get(0)->GetName() == "Blotter - First");
+    REQUIRE(recent->get(1)->GetName() == "Blotter - Second");
+    first.open();
+    REQUIRE(recent->get_size() == 1);
+    REQUIRE(recent->get(0)->GetName() == "Blotter - Second");
+    auto model = second.get_model();
+    model->is_pinned()->set(false);
+    REQUIRE(recent->get_size() == 0);
+    REQUIRE(registry.get_blotters()->get_size() == 2);
+    first.close();
   }
 
   UI_TEST_CASE("close_all") {

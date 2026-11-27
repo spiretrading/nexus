@@ -48,6 +48,18 @@ namespace {
     return load(legacy_registry);
   }
 
+  void remove_recently_closed(UserProfile& profile, auto& settings) {
+    if(!settings) {
+      return;
+    }
+    auto& windows = *profile.GetRecentlyClosedWindows();
+    auto i = std::ranges::find(std::as_const(windows), settings);
+    if(i != windows.cend()) {
+      windows.remove(i);
+    }
+    settings.reset();
+  }
+
   auto make_account_portfolio(const DirectoryEntry& account, Clients& clients) {
     auto [portfolio, sequence, excluded] = make_portfolio(
       clients.get_risk_client().load_inventory_snapshot(account), account,
@@ -126,6 +138,7 @@ struct BlotterRegistry::Entry {
   std::shared_ptr<BlotterModel> m_source;
   std::unique_ptr<BlotterController> m_controller;
   std::unique_ptr<AccountOrderController> m_orders;
+  std::shared_ptr<LegacyUI::WindowSettings> m_recently_closed;
   scoped_connection m_open_connection;
   scoped_connection m_pinned_connection;
   scoped_connection m_active_connection;
@@ -417,6 +430,7 @@ void BlotterRegistry::update_lists(const BlotterModel& blotter) {
 
 void BlotterRegistry::remove(const BlotterModel& blotter) {
   auto model = get(blotter).get_model();
+  remove_recently_closed(*m_profile, m_entries.at(&blotter)->m_recently_closed);
   if(m_active->get() == model) {
     set_active(*get_consolidated().get_model());
   }
@@ -429,9 +443,16 @@ void BlotterRegistry::remove(const BlotterModel& blotter) {
 void BlotterRegistry::on_open(const BlotterModel& blotter, bool is_open) {
   if(!is_open && !blotter.is_pinned()->get()) {
     remove(blotter);
-  } else {
-    update_lists(blotter);
+    return;
   }
+  auto& entry = *m_entries.at(&blotter);
+  remove_recently_closed(*m_profile, entry.m_recently_closed);
+  if(!is_open) {
+    entry.m_recently_closed = std::make_shared<BlotterWindowSettings>(
+      *entry.m_controller->m_window_settings);
+    m_profile->GetRecentlyClosedWindows()->push(entry.m_recently_closed);
+  }
+  update_lists(blotter);
 }
 
 void BlotterRegistry::on_pinned(const BlotterModel& blotter, bool is_pinned) {
