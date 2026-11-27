@@ -19,6 +19,7 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
+#include "Spire/Ui/GroupedTableView.hpp"
 #include "Spire/Ui/HighlightPicker.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -380,6 +381,8 @@ void Spire::register_selectors() {
   register_state_selector("pop_up", PopUp());
   register_state_selector("body", Body());
   register_state_selector("row", Row());
+  register_state_selector("aggregate_row", AggregateRow());
+  register_state_selector("selected", Selected());
   register_state_selector("current_row", CurrentRow());
   register_state_selector("column", Column());
   register_state_selector("current_column", CurrentColumn());

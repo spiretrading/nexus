@@ -178,14 +178,16 @@ void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
 }
 
 void ContextMenu::add_action(const QString& name, const Action& action) {
-  m_list->push(MenuItem(++m_next_id, MenuItemType::ACTION, name, action));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::ACTION, name,
+    std::make_shared<Action>(action)));
 }
 
 void ContextMenu::add_action(
     const QString& name, const Action& action, QWidget* view) {
   auto id = ++m_next_id;
   m_custom_views.insert(std::pair(id, view));
-  m_list->push(MenuItem(id, MenuItemType::ACTION, name, action));
+  m_list->push(MenuItem(id, MenuItemType::ACTION, name,
+    std::make_shared<Action>(action)));
 }
 
 void ContextMenu::add_disabled_action(const QString& name) {
@@ -380,7 +382,14 @@ QWidget* ContextMenu::build_item(
     m_submenus[index] = static_cast<OverlayPanel*>(submenu->window());
     return submenu_item;
   }
-  return m_item_view_builder(item.m_type, item.m_name, item.m_data);
+  if(item.m_type == MenuItemType::ACTION) {
+    return m_item_view_builder(item.m_type, item.m_name,
+      *std::get<std::shared_ptr<Action>>(item.m_data));
+  } else if(item.m_type == MenuItemType::CHECK) {
+    return m_item_view_builder(item.m_type, item.m_name,
+      std::get<std::shared_ptr<BooleanModel>>(item.m_data));
+  }
+  return m_item_view_builder(item.m_type, item.m_name, Data());
 }
 
 ListItem* ContextMenu::get_current_item() const {
@@ -647,17 +656,18 @@ void ContextMenu::on_list_operation(
 }
 
 void ContextMenu::on_submit(const std::any& submission) {
-  auto& menu_item = m_list->get(*m_list_view->get_current()->get());
+  auto& menu_item = std::any_cast<const MenuItem&>(submission);
   if(menu_item.m_type == MenuItemType::ACTION) {
-    if(auto& action = std::get<Action>(menu_item.m_data)) {
+    if(auto& action = *std::get<std::shared_ptr<Action>>(menu_item.m_data)) {
       action();
     }
     m_window->hide();
     m_submit_signal(*this, menu_item.m_name);
   } else if(menu_item.m_type == MenuItemType::CHECK) {
-    auto& model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
+    auto name = menu_item.m_name;
+    auto model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
     model->set(!model->get());
-    m_submit_signal(*this, menu_item.m_name);
+    m_submit_signal(*this, name);
   }
 }
 

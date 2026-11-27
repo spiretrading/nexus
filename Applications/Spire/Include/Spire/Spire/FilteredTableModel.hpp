@@ -37,6 +37,9 @@ namespace Spire {
       /** Applies a new filter to this model. */
       void set_filter(const Filter& filter);
 
+      /** Reapplies the filter to source rows in [first, end). */
+      void refresh(int first, int end);
+
       /**
        * Maps a row index from this table into the source table.
        * @param index An index into a row of this table.

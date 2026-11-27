@@ -22,8 +22,6 @@
     <file>Icons/blotter/bell.svg</file>
     <file>Icons/blotter/positions/flatten.svg</file>
     <file>Icons/blotter/positions/flatten_all.svg</file>
-    <file>Icons/blotter/profit_and_loss/collapse_arrow.svg</file>
-    <file>Icons/blotter/profit_and_loss/expand_arrow.svg</file>
     <file>Icons/blotter/tasks/active.svg</file>
     <file>Icons/blotter/tasks/cancel.svg</file>
     <file>Icons/blotter/tasks/pin.svg</file>
@@ -43,6 +41,8 @@
     <file>Icons/slash-texture.svg</file>
     <file>Icons/arrow-left.svg</file>
     <file>Icons/arrow-right.svg</file>
+    <file>Icons/collapse-arrow.svg</file>
+    <file>Icons/expand-arrow.svg</file>
     <file>Icons/text_effects/bold-active.svg</file>
     <file>Icons/text_effects/bold-hover.svg</file>
     <file>Icons/text_effects/bold-inactive.svg</file>
@@ -153,6 +153,7 @@
     <file>Icons/info_panel/warning.svg</file>
     <file>Icons/info_panel/close.svg</file>
     <file>Icons/add.svg</file>
+    <file>Icons/plus-circle.svg</file>
     <file>Icons/delete3.svg</file>
     <file>Icons/duplicate.svg</file>
     <file>Icons/sign_in/check.svg</file>

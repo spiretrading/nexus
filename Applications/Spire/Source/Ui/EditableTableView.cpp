@@ -371,6 +371,10 @@ struct EditableTableView::ItemBuilder {
       m_builder(std::move(builder)),
       m_editable_builder(EditableItemBuilder(view)) {}
 
+  std::optional<Selector> get_row_selector(int row) const {
+    return m_builder.get_row_selector(row);
+  }
+
   QWidget* mount(
       const std::shared_ptr<TableModel>& table, int row, int column) {
     if(column == 0) {

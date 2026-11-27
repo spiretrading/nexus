@@ -154,8 +154,10 @@ void Tag::paintEvent(QPaintEvent* event) {
   auto& content_area = m_geometry.get_content_area();
   painter.setPen(m_text_color);
   painter.setFont(m_font);
-  painter.drawText(content_area.left(),
-    content_area.top() + m_font_metrics.ascent(), m_elided_label);
+  auto text_top = content_area.top() +
+    (content_area.height() - m_font_metrics.height()) / 2;
+  painter.drawText(content_area.left(), text_top + m_font_metrics.ascent(),
+    m_elided_label);
   if(is_delete_visible()) {
     if(m_is_delete_pressed || m_is_delete_hovered) {
       painter.drawPixmap(get_delete_rect().topLeft(), DELETE_HOVER_PIXMAP());

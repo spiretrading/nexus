@@ -1,6 +1,8 @@
 #ifndef SPIRE_CUSTOM_VARIANTS_HPP
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
+#include <cstddef>
+#include <optional>
 #include <boost/any.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
@@ -224,6 +226,12 @@ namespace Spire {
    * <i>right</i> value in the type's natural ordering.
    */
   bool compare(const AnyRef& left, const AnyRef& right);
+
+  /**
+   * Returns a hash consistent with is_equal, or std::nullopt if the value's
+   * type is unsupported.
+   */
+  std::optional<std::size_t> hash_value(const AnyRef& value);
 
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);

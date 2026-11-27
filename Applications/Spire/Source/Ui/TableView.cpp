@@ -35,28 +35,13 @@ namespace {
           [=, this] (int, TableFilter::Filter) {
             set_filter(std::bind_front(&TableFilter::is_filtered, filter));
           });
+        m_rows_connection = filter->connect_rows_signal(
+          std::bind_front(&FilteredTableModel::refresh, this));
       }
 
     private:
       scoped_connection m_connection;
-  };
-
-  struct TranslatedItemBuilder {
-    TableViewItemBuilder m_builder;
-
-    QWidget* mount(
-        const std::shared_ptr<TableModel>& table, int row, int column) {
-      auto sorted_table = std::static_pointer_cast<SortedTableModel>(table);
-      auto filtered_table = std::static_pointer_cast<FilteredTableModel>(
-        sorted_table->get_source());
-      return m_builder.mount(filtered_table->get_source(),
-        filtered_table->index_to_source(sorted_table->index_to_source(row)),
-        column);
-    }
-
-    void unmount(QWidget* widget) {
-      m_builder.unmount(widget);
-    }
+      scoped_connection m_rows_connection;
   };
 
   SortedTableModel::Ordering to_table_order(TableHeaderItem::Order order) {
@@ -92,7 +77,19 @@ TableView::TableView(
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
     TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
+    : TableView(std::move(table), std::move(header), std::move(filter),
+        std::move(current), std::move(selection), std::move(item_builder),
+        std::move(comparator), {}, parent) {}
+
+TableView::TableView(std::shared_ptr<TableModel> table,
+    std::shared_ptr<HeaderModel> header, std::shared_ptr<TableFilter> filter,
+    std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection,
+    TableViewItemBuilder item_builder, Comparator comparator,
+    SortHandler sort_handler, QWidget* parent)
     : QWidget(parent),
+      m_sort(std::move(sort_handler)),
+      m_order(make_column_order(*header)),
       m_table(std::move(table)),
       m_current(std::move(current)),
       m_selection(std::move(selection)),
@@ -120,12 +117,18 @@ TableView::TableView(
         excluded = true;
       }
     });
-  if(comparator) {
-    m_sorted_table = std::make_shared<SortedTableModel>(
-      m_filtered_table, make_column_order(*m_header), std::move(comparator));
+  if(!m_sort) {
+    if(comparator) {
+      m_sorted_table = std::make_shared<SortedTableModel>(
+        m_filtered_table, m_order, std::move(comparator));
+    } else {
+      m_sorted_table =
+        std::make_shared<SortedTableModel>(m_filtered_table, m_order);
+    }
+    m_sort =
+      std::bind_front(&SortedTableModel::set_column_order, m_sorted_table);
   } else {
-    m_sorted_table = std::make_shared<SortedTableModel>(
-      m_filtered_table, make_column_order(*m_header));
+    m_sort(m_order);
   }
   initialize_body(std::move(item_builder), std::move(tracking));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
@@ -209,6 +212,34 @@ void TableView::hide_column(int column) {
   m_body->hide_column(column);
 }
 
+void TableView::set_column_order(
+    std::vector<SortedTableModel::ColumnOrder> order) {
+  std::erase_if(order, [] (const auto& key) {
+    return key.m_order == SortedTableModel::Ordering::NONE;
+  });
+  m_sort(order);
+  m_order = std::move(order);
+  auto& columns = *m_header_view->get_column_order();
+  for(auto i = 0; i != m_header->get_size(); ++i) {
+    auto item = m_header->get(i);
+    if(item.m_order == TableHeaderItem::Order::UNORDERED) {
+      continue;
+    }
+    auto direction = TableHeaderItem::Order::NONE;
+    if(!m_order.empty() && columns.get(i) == m_order.front().m_index) {
+      if(m_order.front().m_order == SortedTableModel::Ordering::ASCENDING) {
+        direction = TableHeaderItem::Order::ASCENDING;
+      } else {
+        direction = TableHeaderItem::Order::DESCENDING;
+      }
+    }
+    if(item.m_order != direction) {
+      item.m_order = direction;
+      m_header->set(i, item);
+    }
+  }
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
@@ -225,6 +256,31 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+TableViewItemBuilder TableView::make_displayed_item_builder(
+    TableViewItemBuilder item_builder) const {
+  struct TranslatedItemBuilder {
+    TableViewItemBuilder m_builder;
+    Rows m_rows;
+
+    std::optional<Selector> get_row_selector(int row) const {
+      return m_builder.get_row_selector(m_rows.index_to_source(row));
+    }
+
+    QWidget* mount(
+        const std::shared_ptr<TableModel>& table, int row, int column) {
+      return m_builder.mount(
+        m_rows.get_filtered_table()->get_source(),
+        m_rows.index_to_source(row), column);
+    }
+
+    void unmount(QWidget* widget) {
+      m_builder.unmount(widget);
+    }
+  };
+  return TranslatedItemBuilder(
+    std::move(item_builder), Rows(m_filtered_table, m_sorted_table));
+}
+
 void TableView::initialize_body(
     TableViewItemBuilder item_builder, connection tracking) {
   if(!m_current) {
@@ -232,21 +288,21 @@ void TableView::initialize_body(
   }
   auto body_current = make_proxy_value_model(
     std::make_shared<LocalValueModel<optional<Index>>>());
+  auto mapping = Rows(m_filtered_table, m_sorted_table);
   auto rows = std::make_shared<DisplayedSelection<int>>(
-    m_selection->get_row_selection(), m_filtered_table, m_sorted_table,
-    nullptr, m_selection, tracking);
+    m_selection->get_row_selection(), mapping, nullptr, m_selection, tracking);
   auto& column_order = m_header_view->m_translation;
   auto items = std::make_shared<DisplayedSelection<TableIndex>>(
-    m_selection->get_item_selection(), m_filtered_table, m_sorted_table,
-    column_order, m_selection, tracking);
+    m_selection->get_item_selection(), mapping, column_order, m_selection,
+    tracking);
   auto columns = std::make_shared<DisplayedSelection<int>>(
-    m_selection->get_column_selection(), nullptr, nullptr, column_order,
-    m_selection, tracking);
+    m_selection->get_column_selection(), Rows(), column_order, m_selection,
+    tracking);
   auto body_selection = std::make_shared<SelectionModel>(items, rows, columns);
   body_selection->m_source_tracking = tracking;
-  m_body = new TableBody(m_sorted_table, body_current, body_selection,
+  m_body = new TableBody(mapping.get_table(), body_current, body_selection,
     m_header_view->get_widths(),
-    TranslatedItemBuilder(std::move(item_builder)));
+    make_displayed_item_builder(std::move(item_builder)));
   auto refresh = [selection = std::weak_ptr(body_selection)] (
       auto& list, const auto&... operation) {
     if(auto model = selection.lock()) {
@@ -260,7 +316,7 @@ void TableView::initialize_body(
   items->track(refresh);
   columns->track(refresh);
   body_current->set_source(std::make_shared<SourceToViewIndexModel>(
-    m_sorted_table, m_filtered_table, column_order, m_current));
+    mapping, column_order, m_current));
 }
 
 void TableView::update_scroll_sizes() {
@@ -270,24 +326,15 @@ void TableView::update_scroll_sizes() {
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
-  auto header_item = m_header->get(index);
-  header_item.m_order = order;
-  auto column_order = m_sorted_table->get_column_order();
   auto source = m_header_view->get_column_order()->get(index);
-  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)),
-    column_order);
-  m_sorted_table->set_column_order(column_order);
-  for(auto i = 0; i != m_header->get_size(); ++i) {
-    if(i == index) {
-      m_header->set(i, header_item);
-    } else {
-      auto item = m_header->get(i);
-      if(item.m_order != TableHeaderItem::Order::UNORDERED) {
-        item.m_order = TableHeaderItem::Order::NONE;
-        m_header->set(i, item);
-      }
-    }
+  auto keys = std::vector<SortedTableModel::ColumnOrder>();
+  if(m_sorted_table) {
+    keys = m_sorted_table->get_column_order();
+  } else {
+    keys = m_order;
   }
+  adjust(SortedTableModel::ColumnOrder(source, to_table_order(order)), keys);
+  set_column_order(std::move(keys));
   m_sort_signal(source, order);
 }
 
@@ -435,12 +482,14 @@ TableViewBuilder& TableViewBuilder::set_item_builder(
 
 TableViewBuilder& TableViewBuilder::set_comparator(
     TableView::Comparator comparator) {
+  m_sort = {};
   m_comparator = comparator;
   return *this;
 }
 
 TableViewBuilder& TableViewBuilder::set_comparator(
     TableView::ValueComparator comparator) {
+  m_sort = {};
   m_comparator = [comparator = std::move(comparator)] (const AnyRef& left,
       int left_row, const AnyRef& right, int right_row, int column) {
     return comparator(left, right);
@@ -448,7 +497,14 @@ TableViewBuilder& TableViewBuilder::set_comparator(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::set_sort_handler(
+    TableView::SortHandler handler) {
+  m_comparator = {};
+  m_sort = std::move(handler);
+  return *this;
+}
+
 TableView* TableViewBuilder::make() const {
   return new TableView(m_table, m_header, m_filter, m_current, m_selection,
-    m_item_builder, m_comparator, m_parent);
+    m_item_builder, m_comparator, m_sort, m_parent);
 }

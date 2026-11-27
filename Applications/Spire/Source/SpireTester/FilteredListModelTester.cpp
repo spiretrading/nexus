@@ -9,6 +9,133 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TEST_SUITE("FilteredListModel") {
+  TEST_CASE("identity_mapping") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{0, 2, 3});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    auto operations = std::deque<ListModel<int>::Operation>();
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
+    source->transact([&] {
+      source->insert(1, 1);
+      source->move(3, 0);
+      source->insert(-1, 1);
+      source->move(3, 0);
+    });
+    require_list_transaction<int>(operations, {
+      AnyListModel::AddOperation(1), AnyListModel::MoveOperation(3, 0),
+      AnyListModel::MoveOperation(2, 0)});
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{1, 3, 0, 2});
+    REQUIRE(filtered.index_from_source(2) == -1);
+    REQUIRE(filtered.index_to_source(2) == 3);
+  }
+
+  TEST_CASE("range_refresh") {
+    auto source =
+      std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2, 3, 4, 5, 6});
+    auto collapsed = false;
+    auto visited = std::vector<int>();
+    auto filtered = FilteredListModel(source, [&] (const auto&, int row) {
+      visited.push_back(row);
+      return row == 3 || (collapsed && row >= 1 && row < 5);
+    });
+    auto snapshots = std::vector<std::vector<int>>();
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      if(std::holds_alternative<AnyListModel::AddOperation>(operation) ||
+          std::holds_alternative<AnyListModel::RemoveOperation>(operation)) {
+        snapshots.emplace_back(filtered.cbegin(), filtered.cend());
+      }
+      for(auto i = 0; i != filtered.get_size(); ++i) {
+        REQUIRE(filtered.index_from_source(filtered.index_to_source(i)) == i);
+      }
+    });
+    visited.clear();
+    collapsed = true;
+    filtered.refresh(1, 5);
+    REQUIRE(visited == std::vector{1, 2, 3, 4});
+    REQUIRE(snapshots == std::vector<std::vector<int>>{
+      {0, 2, 4, 5, 6}, {0, 4, 5, 6}, {0, 5, 6}});
+    snapshots.clear();
+    visited.clear();
+    collapsed = false;
+    filtered.refresh(1, 5);
+    REQUIRE(visited == std::vector{1, 2, 3, 4});
+    REQUIRE(snapshots == std::vector<std::vector<int>>{
+      {0, 1, 5, 6}, {0, 1, 2, 5, 6}, {0, 1, 2, 4, 5, 6}});
+  }
+
+  TEST_CASE("updates_after_range_refresh") {
+    auto source = std::make_shared<ArrayListModel<int>>(
+      std::vector{0, 1, 2, 3, 4, 5});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    filtered.refresh(0, 2);
+    auto updates = std::vector<int>();
+    filtered.connect_operation_signal([&] (const ListModel<int>::Operation& op) {
+      visit(op, [&] (const ListModel<int>::UpdateOperation& update) {
+        updates.push_back(update.m_index);
+      });
+    });
+    source->set(4, 40);
+    source->set(1, -1);
+    source->set(1, -2);
+    source->set(4, 41);
+    source->set(1, 10);
+    REQUIRE(updates == std::vector{4, 3});
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{0, 10, 2, 3, 41, 5});
+  }
+
+  TEST_CASE("range_refresh_with_source_edit") {
+    auto source = std::make_shared<ArrayListModel<int>>(std::vector{0, 1, 2});
+    auto hide = false;
+    auto filtered = FilteredListModel(source, [&] (const auto&, int row) {
+      return hide && row < 2;
+    });
+    auto operations = std::deque<ListModel<int>::Operation>();
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+      visit(operation, [&] (const AnyListModel::PreRemoveOperation&) {
+        if(source->get_size() == 3) {
+          source->push(3);
+        }
+      });
+    });
+    hide = true;
+    filtered.refresh(0, 2);
+    require_list_transaction<int>(operations, {
+      AnyListModel::PreRemoveOperation(0), AnyListModel::AddOperation(3),
+      AnyListModel::RemoveOperation(0), AnyListModel::PreRemoveOperation(0),
+      AnyListModel::RemoveOperation(0)});
+    REQUIRE(
+      std::vector(filtered.cbegin(), filtered.cend()) == std::vector{2, 3});
+  }
+
+  TEST_CASE("update_during_filter_removal") {
+    auto source = std::make_shared<ArrayListModel<int>>(
+      std::vector{-1, 1, 2, 3, 4});
+    auto filtered = FilteredListModel(source, [] (const auto& list, int row) {
+      return list.get(row) < 0;
+    });
+    filtered.connect_operation_signal([&] (const auto& operation) {
+      visit(operation,
+        [&] (const AnyListModel::PreRemoveOperation& removal) {
+          REQUIRE(removal.m_index == 2);
+          source->set(0, 0);
+        },
+        [&] (const AnyListModel::RemoveOperation& removal) {
+          REQUIRE(removal.m_index == 3);
+        });
+    });
+    source->set(3, -3);
+    REQUIRE(std::vector(filtered.cbegin(), filtered.cend()) ==
+      std::vector{0, 1, 2, 4});
+  }
+
   TEST_CASE("attach_at_transaction_start") {
     auto source = std::make_shared<ArrayListModel<int>>(std::vector{2});
     auto filtered = std::unique_ptr<FilteredListModel<int>>();
@@ -580,7 +707,9 @@ TEST_SUITE("FilteredListModel") {
       });
     REQUIRE(filtered_list.get_size() == 4);
     auto is_filter_reset = false;
+    auto operations = std::deque<ListModel<int>::Operation>();
     filtered_list.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
       visit(operation,
         [&] (const ListModel<int>::PreRemoveOperation& operation) {
           if(std::exchange(is_filter_reset, true)) {
@@ -594,6 +723,11 @@ TEST_SUITE("FilteredListModel") {
     filtered_list.set_filter([] (const auto& list, auto index) {
       return list.get(index) % 2 == 0;
     });
+    require_list_transaction<int>(operations, {
+      AnyListModel::PreRemoveOperation(0), AnyListModel::RemoveOperation(0),
+      AnyListModel::AddOperation(0), AnyListModel::PreRemoveOperation(1),
+      AnyListModel::RemoveOperation(1), AnyListModel::PreRemoveOperation(2),
+      AnyListModel::RemoveOperation(2)});
     REQUIRE(filtered_list.get_size() == 2);
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 2);

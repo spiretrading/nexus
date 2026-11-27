@@ -7,6 +7,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
+#include "Spire/Styles/AndSelector.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -22,6 +23,15 @@ using namespace Spire::Styles;
 namespace {
   const auto OPERATION_THRESHOLD = 10;
   const auto SCROLL_BUFFER = 1;
+
+  void visit_row_states(const Selector& selector, const auto& function) {
+    if(selector.get_type() == typeid(AndSelector)) {
+      auto& conjunction = selector.as<AndSelector>();
+      visit_row_states(conjunction.get_left(), function);
+      visit_row_states(conjunction.get_right(), function);
+    }
+    function(selector);
+  }
 
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
@@ -131,6 +141,7 @@ struct TableBody::ColumnCover : Cover {
 };
 
 struct TableBody::RowCover : Cover {
+  std::optional<Selector> m_selector;
   bool m_is_pending_layout;
 
   RowCover(TableBody& body)
@@ -178,11 +189,41 @@ struct TableBody::RowCover : Cover {
     return nullptr;
   }
 
+  void set_selector(std::optional<Selector> selector) {
+    if(m_selector == selector) {
+      return;
+    }
+    if(m_selector) {
+      visit_row_states(*m_selector, [&] (const auto& state) {
+        unmatch(*this, state);
+      });
+    }
+    m_selector = std::move(selector);
+    if(m_selector) {
+      visit_row_states(*m_selector, [&] (const auto& state) {
+        match(*this, state);
+      });
+    }
+  }
+
+  TableItem* mount_item(int row, int column) {
+    auto item = get_item(column);
+    auto& body = *static_cast<TableBody*>(parentWidget());
+    if(item && column < body.m_table->get_column_size() &&
+        &item->get_body() == item) {
+      item->mount(*body.m_item_builder.mount(
+        body.m_table, row, body.m_visual_to_logical_columns[column]));
+    }
+    return item;
+  }
+
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
+    set_selector(body.m_item_builder.get_row_selector(index));
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(
-        body.m_table, index, body.m_visual_to_logical_columns[i]));
+      if(!body.m_column_covers[i]->isHidden()) {
+        mount_item(index, i);
+      }
     }
   }
 
@@ -191,9 +232,12 @@ struct TableBody::RowCover : Cover {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       if(auto item = get_item(i)) {
-        body.m_item_builder.unmount(item->unmount());
+        if(&item->get_body() != item) {
+          body.m_item_builder.unmount(item->unmount());
+        }
       }
     }
+    set_selector(std::nullopt);
     unmatch(*this, CurrentRow());
     unmatch(*this, Selected());
     if(!testAttribute(Qt::WA_WState_Hidden)) {
@@ -756,7 +800,7 @@ TableItem* TableBody::find_item(const Index& index) {
         *get_current_row_index() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
     }
-    return row->get_item(index.m_column);
+    return row->mount_item(index.m_row, index.m_column);
   }
   return nullptr;
 }
@@ -777,6 +821,13 @@ void TableBody::show_column(int column) {
     return;
   }
   m_column_covers[column]->show();
+  auto& layout = get_layout();
+  for(auto i = 0; i != layout.count(); ++i) {
+    layout.get_row(i).mount_item(layout.get_top_index() + i, column);
+  }
+  if(m_current_row && !layout.is_visible(m_current_index->m_row)) {
+    m_current_row->mount_item(m_current_index->m_row, column);
+  }
   update_column_covers();
   update_column_widths();
 }
@@ -1158,6 +1209,18 @@ void TableBody::move_row(int source, int destination) {
       --hidden_row;
     }
     layout.add_hidden_row(hidden_row, height);
+  }
+  auto [first, last] = std::minmax(source, destination);
+  auto top = layout.get_top_index();
+  auto end = std::min(last + 1, top + layout.count());
+  for(auto i = std::max(first, top); i < end; ++i) {
+    layout.get_row(i - top).set_selector(m_item_builder.get_row_selector(i));
+  }
+  if(m_current_row) {
+    auto index = m_current_index->m_row;
+    if(index >= first && index <= last && !layout.is_visible(index)) {
+      m_current_row->set_selector(m_item_builder.get_row_selector(index));
+    }
   }
   m_selection_controller.move_row(source, destination);
 }
@@ -1693,6 +1756,11 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     },
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
+    },
+    [&] (const TableModel::UpdateOperation& operation) {
+      if(auto row = find_row(operation.m_row)) {
+        row->set_selector(m_item_builder.get_row_selector(operation.m_row));
+      }
     });
   if(!m_is_transaction &&
       !std::holds_alternative<TableModel::PreRemoveOperation>(operation)) {

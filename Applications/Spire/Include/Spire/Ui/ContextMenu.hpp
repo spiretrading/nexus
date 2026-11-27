@@ -162,7 +162,8 @@ namespace Spire {
         int m_id;
         MenuItemType m_type;
         QString m_name;
-        Data m_data;
+        std::variant<ContextMenu*, std::shared_ptr<Action>,
+          std::shared_ptr<BooleanModel>> m_data;
       };
       mutable SubmitSignal m_submit_signal;
       ItemViewBuilder m_item_view_builder;
