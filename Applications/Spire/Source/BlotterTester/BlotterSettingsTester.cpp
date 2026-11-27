@@ -97,8 +97,7 @@ namespace {
       REQUIRE(header.get_widths()->get(visual) == scale_width(90 + 7 * index));
       REQUIRE(header.get_item(visual)->isHidden() == (index == 1));
     }
-    auto& sort = static_cast<const SortedTableModel&>(
-      *table.get_body().get_table()).get_column_order();
+    auto& sort = table.get_column_order();
     REQUIRE(sort.size() == 1);
     REQUIRE(sort.front().m_index == columns.back());
     REQUIRE(sort.front().m_order == SortedTableModel::Ordering::DESCENDING);
@@ -154,12 +153,8 @@ namespace {
     header.get_items()->move(last, 1);
     header.get_widths()->set(1, scale_width(173));
     table.hide_column(2);
-    auto item = header.get_items()->get(1);
-    item.m_order = TableHeaderItem::Order::DESCENDING;
-    header.get_items()->set(1, item);
-    static_cast<SortedTableModel&>(*table.get_body().get_table()).
-      set_column_order({{last, SortedTableModel::Ordering::DESCENDING},
-        {0, SortedTableModel::Ordering::ASCENDING}});
+    table.set_column_order({{last, SortedTableModel::Ordering::DESCENDING},
+      {0, SortedTableModel::Ordering::ASCENDING}});
   }
 
   void require_table(TableView& table) {
@@ -170,8 +165,7 @@ namespace {
     REQUIRE(header.get_item(2)->isHidden());
     REQUIRE(
       header.get_items()->get(1).m_order == TableHeaderItem::Order::DESCENDING);
-    auto& sort = static_cast<SortedTableModel&>(
-      *table.get_body().get_table()).get_column_order();
+    auto& sort = table.get_column_order();
     REQUIRE(sort.size() == 2);
     REQUIRE(sort[0].m_index == header.get_items()->get_size() - 1);
     REQUIRE(sort[0].m_order == SortedTableModel::Ordering::DESCENDING);

@@ -22,9 +22,7 @@ BlotterWindowSettings::TableState::TableState(TableView& table) {
       !header.get_item(i)->isHidden(),
       static_cast<int>(header.get_items()->get(i).m_order)));
   }
-  auto& sorted =
-    static_cast<const SortedTableModel&>(*table.get_body().get_table());
-  for(auto& order : sorted.get_column_order()) {
+  for(auto& order : table.get_column_order()) {
     m_sort.push_back(Sort(order.m_index, static_cast<int>(order.m_order)));
   }
 }
@@ -70,8 +68,7 @@ void BlotterWindowSettings::TableState::apply(TableView& table) const {
         static_cast<SortedTableModel::Ordering>(order.m_order)));
     }
   }
-  static_cast<SortedTableModel&>(*table.get_body().get_table()).
-    set_column_order(sort);
+  table.set_column_order(std::move(sort));
 }
 
 BlotterWindowSettings::BlotterWindowSettings()
