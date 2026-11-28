@@ -233,6 +233,43 @@ namespace {
     return to_string(value);
   }
 
+  auto make_scalar_table_row(int value) {
+    return std::vector<std::any>{value, Decimal(Decimal(value) / 10),
+      time_duration(seconds(value)), value * Money::CENT, Quantity(value)};
+  }
+
+  QWidget* make_scalar_table_item(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column == 1) {
+      return make_label(make_read_only_to_text_model(
+        make_table_value_model<Decimal>(table, row, column),
+        static_cast<QString (*)(const Decimal&)>(&to_string)));
+    }
+    return TableView::default_item_builder(table, row, column);
+  }
+
+  bool compare_scalar_table_values(const AnyRef& left, const AnyRef& right) {
+    if(left.get_type() == typeid(Decimal)) {
+      return any_cast<Decimal>(left) < any_cast<Decimal>(right);
+    }
+    return compare(left, right);
+  }
+
+  void on_scalar_table_update(TableView* view, int value) {
+    if(auto current = view->get_current()->get()) {
+      view->get_table()->set(current->m_row, current->m_column,
+        make_scalar_table_row(value)[current->m_column]);
+    }
+  }
+
+  void on_scalar_table_insert(const std::shared_ptr<ArrayTableModel>& model,
+      const TableModel::AddOperation& operation) {
+    if(operation.m_index >= 0 && operation.m_index <= model->get_row_size()) {
+      model->insert(
+        make_scalar_table_row(model->get_row_size()), operation.m_index);
+    }
+  }
+
   void update_widget_style(QWidget& widget,
       const optional<StyleSheet>& styles) {
     if(!styles) {
@@ -5349,22 +5386,17 @@ UiProfile Spire::make_table_view_profile() {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
     for(auto row = 0; row != row_count.get(); ++row) {
-      auto values = std::vector<std::any>();
-      for(auto column = 0; column != 4; ++column) {
-        values.push_back(row * 4 + column);
-      }
-      model->push(values);
+      model->push(make_scalar_table_row(row));
     }
     auto view = TableViewBuilder(model).
-      add_header_item("Ticker", "Sec", filter<int>()).
-      add_header_item("Quantity", "Qty", TableHeaderItem::Order::ASCENDING,
+      add_header_item("Integer", "Int", TableHeaderItem::Order::ASCENDING,
         filter<int>()).
-      add_header_item("Side", "Sd", filter<int>()).
-      add_header_item("Date", "Date", filter<int>()).
-      set_item_builder([] (const auto& table, auto row, auto column) {
-        return make_label(make_to_text_model(
-          make_table_value_model<int>(table, row, column)));
-      }).
+      add_header_item("Decimal", "Dec", filter<Decimal>()).
+      add_header_item("Duration", "Dur", filter<time_duration>()).
+      add_header_item("Money", "Money", filter<Money>()).
+      add_header_item("Quantity", "Qty", filter<Quantity>()).
+      set_item_builder(&make_scalar_table_item).
+      set_comparator(&compare_scalar_table_values).
       make();
     apply_widget_properties(view, profile.get_properties());
     view->get_current()->connect_update_signal(
@@ -5387,22 +5419,12 @@ UiProfile Spire::make_table_view_profile() {
       view->get_current()->set(TableView::Index(value, 0));
     });
     auto& update_operation = get<int>("update", profile.get_properties());
-    update_operation.connect_changed_signal([&, view] (auto value) {
-      if(auto current = view->get_current()->get()) {
-        view->get_table()->set(current->m_row, current->m_column, value);
-      }
-    });
+    update_operation.connect_changed_signal(
+      std::bind_front(&on_scalar_table_update, view));
     auto& insert_operation =
       get<TableModel::AddOperation>("insert", profile.get_properties());
-    insert_operation.connect_changed_signal([=] (const auto& operation) {
-      if(operation.m_index >= 0 &&
-          operation.m_index <= model->get_row_size()) {
-        auto value = model->get_row_size() * 4;
-        model->insert(
-          std::vector<std::any>{value, value + 1, value + 2, value + 3},
-          operation.m_index);
-      }
-    });
+    insert_operation.connect_changed_signal(
+      std::bind_front(&on_scalar_table_insert, model));
     auto& remove_operation =
       get<TableModel::RemoveOperation>("remove", profile.get_properties());
     remove_operation.connect_changed_signal([=] (const auto& operation) {

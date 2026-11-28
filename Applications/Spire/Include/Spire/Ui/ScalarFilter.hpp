@@ -97,11 +97,16 @@ namespace Spire {
 
   template<typename T>
   QWidget* ScalarFilter<T>::make_widget(QWidget* parent) {
-    auto panel = new ScalarFilterPanel<ScalarBox>(
-      make_scalar_value_model_decorator(
-        make_field_value_model(m_current, &Range::m_min)),
-      make_scalar_value_model_decorator(
-        make_field_value_model(m_current, &Range::m_max)), parent);
+    auto minimum = make_scalar_value_model_decorator(
+      make_field_value_model(m_current, &Range::m_min));
+    auto maximum = make_scalar_value_model_decorator(
+      make_field_value_model(m_current, &Range::m_max));
+    if constexpr(std::is_same_v<ScalarBox, DecimalBox>) {
+      auto increment = Decimal("0.01");
+      minimum->set_increment(increment);
+      maximum->set_increment(increment);
+    }
+    auto panel = new ScalarFilterPanel<ScalarBox>(minimum, maximum, parent);
     panel->connect_reset_signal(
       std::bind_front(&ScalarFilter::on_reset, m_current));
     return panel;

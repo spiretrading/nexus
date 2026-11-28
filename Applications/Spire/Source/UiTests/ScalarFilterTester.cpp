@@ -1,3 +1,4 @@
+#include <vector>
 #include <doctest/doctest.h>
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ScalarFilter.hpp"
@@ -8,6 +9,14 @@ using namespace Spire;
 using namespace Spire::Tests;
 
 namespace {
+  QWidget& get_input(QWidget& widget) {
+    auto input = &widget;
+    while(auto proxy = input->focusProxy()) {
+      input = proxy;
+    }
+    return *input;
+  }
+
   Button& get_reset_button(QWidget& widget) {
     for(auto child : widget.findChildren<QWidget*>()) {
       if(auto panel = dynamic_cast<FilterPanel*>(child)) {
@@ -39,6 +48,30 @@ TEST_SUITE("ScalarFilter") {
     REQUIRE(!filter.is_active());
     REQUIRE(!filter.is_filtered(minimum - Money::CENT));
     REQUIRE(!filter.is_filtered(maximum + Money::CENT));
+  }
+
+  UI_TEST_CASE("decimal_bounds") {
+    auto filter = ScalarFilter<DecimalBox>();
+    auto panel = std::unique_ptr<QWidget>(filter.make_widget());
+    panel->show();
+    auto boxes = std::vector<DecimalBox*>();
+    for(auto child : panel->findChildren<QWidget*>()) {
+      if(auto box = dynamic_cast<DecimalBox*>(child)) {
+        boxes.push_back(box);
+      }
+    }
+    REQUIRE(boxes.size() == 2);
+    type_text(get_input(*boxes[0]), "1.1");
+    type_text(get_input(*boxes[1]), "2.25");
+    auto& range = filter.get_current()->get();
+    REQUIRE(static_cast<bool>(range.m_min));
+    REQUIRE(static_cast<bool>(range.m_max));
+    REQUIRE(*range.m_min == Decimal("1.1"));
+    REQUIRE(*range.m_max == Decimal("2.25"));
+    REQUIRE(filter.is_filtered(Decimal("1.09")));
+    REQUIRE(!filter.is_filtered(Decimal("1.1")));
+    REQUIRE(!filter.is_filtered(Decimal("2.25")));
+    REQUIRE(filter.is_filtered(Decimal("2.26")));
   }
 
   UI_TEST_CASE("widget_lifetime") {
