@@ -1,8 +1,6 @@
 #ifndef SPIRE_SCALAR_FILTER_PANEL_HPP
 #define SPIRE_SCALAR_FILTER_PANEL_HPP
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
@@ -17,7 +15,7 @@ namespace Spire {
 
   /**
    * Displays a FilterPanel over a range of scalar values.
-   * @param <T> The type of component used to input the scalar values.
+   * @tparam T The type of component used to input the scalar values.
    */
   template<typename T>
   class ScalarFilterPanel : public QWidget {
@@ -30,93 +28,83 @@ namespace Spire {
       using Type = typename std::remove_reference_t<
         decltype(*std::declval<ScalarBox>().get_current())>::Scalar;
 
-      /** Stores the range of permissible values. */
-      struct Range {
+      /** The model of an optional bound. */
+      using BoundModel = ScalarValueModel<boost::optional<Type>>;
 
-        /** The minimum permissible value (inclusive). */
-        boost::optional<Type> m_min;
-
-        /** The maximum permissible value (inclusive). */
-        boost::optional<Type> m_max;
-
-        bool operator ==(const Range&) const = default;
-      };
-
-      /** The type of model over the permissible range of values. */
-      using RangeModel = ValueModel<Range>;
+      /** Signals a request to reset the bounds. */
+      using ResetSignal = FilterPanel::ResetSignal;
 
       /**
        * Constructs a ScalarFilterPanel.
-       * @param current The current value model.
+       * @param minimum The minimum value model.
+       * @param maximum The maximum value model.
        * @param parent The parent widget.
        */
-      explicit ScalarFilterPanel(
-        std::shared_ptr<RangeModel> current, QWidget* parent = nullptr);
+      ScalarFilterPanel(std::shared_ptr<BoundModel> minimum,
+        std::shared_ptr<BoundModel> maximum, QWidget* parent = nullptr);
 
-      /**
-       * Constructs a ScalarFilterPanel with a reset range.
-       * @param current The current value model.
-       * @param default_range The range restored by Reset.
-       * @param parent The parent widget.
-       */
-      ScalarFilterPanel(std::shared_ptr<RangeModel> current,
-        Range default_range, QWidget* parent = nullptr);
+      /** Returns the minimum value model. */
+      const std::shared_ptr<BoundModel>& get_minimum() const;
 
-      /** Returns the current value model. */
-      const std::shared_ptr<RangeModel>& get_current() const;
+      /** Returns the maximum value model. */
+      const std::shared_ptr<BoundModel>& get_maximum() const;
+
+      /** Connects a slot to reset requests. */
+      boost::signals2::connection connect_reset_signal(
+        const ResetSignal::slot_type& slot) const;
 
     protected:
       void showEvent(QShowEvent* event) override;
 
     private:
-      std::shared_ptr<RangeModel> m_current;
-      Range m_default_range;
       ScalarBox* m_min_box;
+      ScalarBox* m_max_box;
+      FilterPanel* m_panel;
 
       static TextBox* make_label_box(const QString& label);
       static ScalarBox* make_scalar_box(
         std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current);
-      void on_reset();
   };
 
   template<typename T>
-  ScalarFilterPanel<T>::ScalarFilterPanel(
-      std::shared_ptr<RangeModel> current, QWidget* parent)
-    : ScalarFilterPanel(current, current->get(), parent) {}
-
-  template<typename T>
-  ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<RangeModel> current,
-      Range default_range, QWidget* parent)
-      : QWidget(parent),
-        m_current(std::move(current)),
-        m_default_range(std::move(default_range)) {
+  ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<BoundModel> minimum,
+      std::shared_ptr<BoundModel> maximum, QWidget* parent)
+      : QWidget(parent) {
     auto container = new QWidget();
     auto layout = make_hbox_layout(container);
     layout->addWidget(make_label_box(tr("Min")));
-    m_min_box = make_scalar_box(make_scalar_value_model_decorator(
-      make_field_value_model(m_current, &Range::m_min)));
+    m_min_box = make_scalar_box(std::move(minimum));
     layout->addWidget(m_min_box, 1);
     layout->addSpacing(scale_width(18));
     layout->addWidget(make_label_box(tr("Max")));
-    auto max_box = make_scalar_box(make_scalar_value_model_decorator(
-      make_field_value_model(m_current, &Range::m_max)));
-    layout->addWidget(max_box, 1);
+    m_max_box = make_scalar_box(std::move(maximum));
+    layout->addWidget(m_max_box, 1);
     layout->addStretch();
     container->setMinimumWidth(layout->minimumSize().width());
     auto body = new QWidget();
     body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     enclose(*body, *container);
-    auto panel = new FilterPanel(*body);
-    panel->connect_reset_signal(
-      std::bind_front(&ScalarFilterPanel::on_reset, this));
-    enclose(*this, *panel);
-    Styles::proxy_style(*this, *panel);
+    m_panel = new FilterPanel(*body);
+    enclose(*this, *m_panel);
+    Styles::proxy_style(*this, *m_panel);
   }
 
   template<typename T>
-  const std::shared_ptr<typename ScalarFilterPanel<T>::RangeModel>&
-      ScalarFilterPanel<T>::get_current() const {
-    return m_current;
+  const std::shared_ptr<typename ScalarFilterPanel<T>::BoundModel>&
+      ScalarFilterPanel<T>::get_minimum() const {
+    return m_min_box->get_current();
+  }
+
+  template<typename T>
+  const std::shared_ptr<typename ScalarFilterPanel<T>::BoundModel>&
+      ScalarFilterPanel<T>::get_maximum() const {
+    return m_max_box->get_current();
+  }
+
+  template<typename T>
+  boost::signals2::connection ScalarFilterPanel<T>::connect_reset_signal(
+      const ResetSignal::slot_type& slot) const {
+    return m_panel->connect_reset_signal(slot);
   }
 
   template<typename T>
@@ -148,11 +136,6 @@ namespace Spire {
       box->setMaximumWidth(scale_width(120));
     }
     return box;
-  }
-
-  template<typename T>
-  void ScalarFilterPanel<T>::on_reset() {
-    m_current->set(m_default_range);
   }
 
   using DecimalFilterPanel = ScalarFilterPanel<DecimalBox>;

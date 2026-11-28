@@ -89,7 +89,8 @@ TEST_SUITE("StandardTableFilter") {
     auto panel =
       dynamic_cast<IntegerFilterPanel*>(filter.make_filter_widget(1, parent));
     REQUIRE(panel);
-    REQUIRE(panel->get_current()->get() == Filter<int>::Range(10, 20));
+    REQUIRE(panel->get_minimum()->get().value_or(-1) == 10);
+    REQUIRE(panel->get_maximum()->get().value_or(-1) == 20);
   }
 
   UI_TEST_CASE("builder_filters") {

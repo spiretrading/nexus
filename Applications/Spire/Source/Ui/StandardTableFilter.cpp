@@ -3,7 +3,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
-#include "Spire/Ui/ScalarFilterPanel.hpp"
+#include "Spire/Ui/ScalarFilter.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
@@ -163,50 +163,6 @@ struct StandardTableFilter::ItemColumnFilter : ColumnFilter {
   }
 };
 
-template<typename T>
-struct StandardTableFilter::ScalarColumnFilter : ColumnFilter {
-  using InputBox = T;
-  using FilterPanel = ScalarFilterPanel<InputBox>;
-  using Scalar = typename FilterPanel::Type;
-  using Range = typename FilterPanel::Range;
-  mutable FilterSignal m_filter_signal;
-  std::shared_ptr<LocalValueModel<Range>> m_range;
-
-  ScalarColumnFilter()
-      : m_range(std::make_shared<LocalValueModel<Range>>()) {
-    m_range->connect_update_signal(
-      std::bind_front(&ScalarColumnFilter::on_current, this));
-  }
-
-  TableFilter::Filter get_filter() const override {
-    if(m_range->get() == Range(none, none)) {
-      return TableFilter::Filter::UNFILTERED;
-    }
-    return TableFilter::Filter::FILTERED;
-  }
-
-  QWidget* make_panel(QWidget& parent) override {
-    return new FilterPanel(m_range, &parent);
-  }
-
-  bool is_filtered(const TableModel& model, int row, int column) const
-      override {
-    auto& value = model.get<Scalar>(row, column);
-    auto& current = m_range->get();
-    return current.m_min && value < current.m_min ||
-      current.m_max && value > current.m_max;
-  }
-
-  connection connect_filter_signal(const FilterSignal::slot_type& slot) const
-      override {
-    return m_filter_signal.connect(slot);
-  }
-
-  void on_current(const Range&) {
-    m_filter_signal(get_filter());
-  }
-};
-
 StandardTableFilter::StandardTableFilter(
     std::vector<std::unique_ptr<ItemFilter>> filters) {
   for(auto column = 0; column != std::ssize(filters); ++column) {
@@ -229,15 +185,20 @@ StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
       if(type == typeid(date)) {
         return std::make_unique<DateColumnFilter>();
       } else if(type == typeid(Decimal)) {
-        return std::make_unique<ScalarColumnFilter<DecimalBox>>();
+        return std::make_unique<ItemColumnFilter>(
+          std::make_unique<ScalarFilter<DecimalBox>>());
       } else if(type == typeid(time_duration)) {
-        return std::make_unique<ScalarColumnFilter<DurationBox>>();
+        return std::make_unique<ItemColumnFilter>(
+          std::make_unique<ScalarFilter<DurationBox>>());
       } else if(type == typeid(int)) {
-        return std::make_unique<ScalarColumnFilter<IntegerBox>>();
+        return std::make_unique<ItemColumnFilter>(
+          std::make_unique<ScalarFilter<IntegerBox>>());
       } else if(type == typeid(Money)) {
-        return std::make_unique<ScalarColumnFilter<MoneyBox>>();
+        return std::make_unique<ItemColumnFilter>(
+          std::make_unique<ScalarFilter<MoneyBox>>());
       } else if(type == typeid(Quantity)) {
-        return std::make_unique<ScalarColumnFilter<QuantityBox>>();
+        return std::make_unique<ItemColumnFilter>(
+          std::make_unique<ScalarFilter<QuantityBox>>());
       } else {
         return std::make_unique<EmptyColumnFilter>();
       }

@@ -1,16 +1,22 @@
 #ifndef SPIRE_FILTER_HPP
 #define SPIRE_FILTER_HPP
-#include "Spire/Ui/ItemFilter.hpp"
-#include "Spire/Ui/ScalarFilterPanel.hpp"
+#include "Spire/Ui/ScalarFilter.hpp"
 
 namespace Spire {
 
   /**
-   * Provides the standard item filter for a type.
+   * Selects the standard item filter for a type.
    * @tparam T The type to filter.
    */
   template<typename T>
-  class Filter;
+  struct filter_type;
+
+  /**
+   * The standard item filter for a type.
+   * @tparam T The type to filter.
+   */
+  template<typename T>
+  using Filter = typename filter_type<T>::type;
 
   /**
    * Constructs a standard item filter.
@@ -23,37 +29,44 @@ namespace Spire {
     return std::make_unique<Filter<T>>(std::forward<Args>(args)...);
   }
 
+  /** Filters durations using inclusive bounds. */
+  template<>
+  struct filter_type<boost::posix_time::time_duration> {
+
+    /** The filter used for durations. */
+    using type = ScalarFilter<DurationBox>;
+  };
+
+  /** Filters decimals using inclusive bounds. */
+  template<>
+  struct filter_type<Decimal> {
+
+    /** The filter used for decimals. */
+    using type = ScalarFilter<DecimalBox>;
+  };
+
   /** Filters integers using inclusive bounds. */
   template<>
-  class Filter<int> : public ItemFilter {
-    public:
-      using Range = IntegerFilterPanel::Range;
-      using RangeModel = IntegerFilterPanel::RangeModel;
+  struct filter_type<int> {
 
-      /** Constructs a filter with no bounds. */
-      Filter();
+    /** The filter used for integers. */
+    using type = ScalarFilter<IntegerBox>;
+  };
 
-      /**
-       * Constructs a filter over a range model.
-       * @param current The filtering bounds.
-       */
-      explicit Filter(std::shared_ptr<RangeModel> current) noexcept;
+  /** Filters money using inclusive bounds. */
+  template<>
+  struct filter_type<Nexus::Money> {
 
-      /** Returns the filtering bounds. */
-      const std::shared_ptr<RangeModel>& get_current() const;
+    /** The filter used for money. */
+    using type = ScalarFilter<MoneyBox>;
+  };
 
-      bool is_active() const override;
-      bool is_filtered(const AnyRef& value) const override;
-      QWidget* make_widget(QWidget& parent) override;
-      void reset() override;
-      boost::signals2::connection connect_filter_signal(
-        const FilterSignal::slot_type& slot) const override;
+  /** Filters quantities using inclusive bounds. */
+  template<>
+  struct filter_type<Nexus::Quantity> {
 
-    private:
-      std::shared_ptr<RangeModel> m_current;
-
-      static void on_current(
-        const FilterSignal::slot_type& slot, const Range& range);
+    /** The filter used for quantities. */
+    using type = ScalarFilter<QuantityBox>;
   };
 }
 

@@ -119,7 +119,6 @@ TEST_SUITE("Filter") {
       dynamic_cast<IntegerFilterPanel*>(fixture.m_filter.make_widget(parent));
     REQUIRE(panel);
     REQUIRE(panel->parentWidget() == &parent);
-    REQUIRE(panel->get_current() == current);
     auto boxes = std::vector<IntegerBox*>();
     for(auto child : panel->findChildren<QWidget*>()) {
       if(auto box = dynamic_cast<IntegerBox*>(child)) {
@@ -144,15 +143,5 @@ TEST_SUITE("Filter") {
     REQUIRE(!boxes[0]->get_current()->get());
     REQUIRE(!boxes[1]->get_current()->get());
     REQUIRE(fixture.m_updates.size() == 1);
-  }
-
-  UI_TEST_CASE("scalar_panel_reset_range") {
-    auto initial = IntegerFilterPanel::Range(10, 20);
-    auto current =
-      std::make_shared<LocalValueModel<IntegerFilterPanel::Range>>(initial);
-    auto panel = IntegerFilterPanel(current);
-    current->set(IntegerFilterPanel::Range(15, 25));
-    press_key(get_reset_button(panel), Qt::Key_Return);
-    REQUIRE(current->get() == initial);
   }
 }

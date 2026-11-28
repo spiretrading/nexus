@@ -660,9 +660,9 @@ namespace {
 
   template<typename B, typename T = typename ScalarFilterPanel<B>::Type>
   auto setup_scalar_filter_panel_profile(UiProfile& profile) {
-    using Panel = ScalarFilterPanel<B>;
+    using Filter = ScalarFilter<B>;
     using Type = T;
-    using PanelType = typename Panel::Type;
+    using PanelType = typename Filter::Type;
     auto from_panel_type = [] (const PanelType& value) {
       if constexpr(std::is_same_v<Type, QString> &&
           std::is_same_v<PanelType, time_duration>) {
@@ -681,9 +681,10 @@ namespace {
     };
     auto& min = get<Type>("min", profile.get_properties());
     auto& max = get<Type>("max", profile.get_properties());
-    auto range = std::make_shared<LocalValueModel<typename Panel::Range>>();
+    auto range = std::make_shared<LocalValueModel<typename Filter::Range>>();
     range->set({to_panel_type(min.get()), to_panel_type(max.get())});
-    auto panel = new Panel(range);
+    auto filter = Filter(range);
+    auto panel = filter.make_widget();
     apply_widget_properties(panel, profile.get_properties());
     min.connect_changed_signal([=] (auto& value) {
       if(auto min_value = to_panel_type(value);
@@ -699,7 +700,7 @@ namespace {
     });
     auto filter_slot = profile.make_event_slot<QString>("CurrentSignal");
     range->connect_update_signal(
-      [=, &min, &max] (const typename Panel::Range& value) {
+      [=, &min, &max] (const typename Filter::Range& value) {
         if(value.m_min) {
           if(auto min_value = from_panel_type(*value.m_min);
               min.get() != min_value) {
