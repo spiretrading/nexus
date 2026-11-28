@@ -3,6 +3,7 @@
 #include <memory>
 #include <QWidget>
 #include "Spire/Spire/SortedTableModel.hpp"
+#include "Spire/Ui/ItemFilter.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableHeader.hpp"
@@ -213,11 +214,35 @@ namespace Spire {
       TableViewBuilder& add_header_item(QString name, QString short_name,
         TableHeaderItem::Order order, TableFilter::Filter filter);
 
-      /** Sets the filter to apply. */
-      TableViewBuilder& set_filter(const std::shared_ptr<TableFilter>& filter);
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param filter The filter, or null to disable filtering.
+       */
+      TableViewBuilder& add_header_item(
+        QString name, std::unique_ptr<ItemFilter> filter);
 
-      /** Applies the standard filter. */
-      TableViewBuilder& set_standard_filter();
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param short_name The short column name.
+       * @param filter The filter, or null to disable filtering.
+       */
+      TableViewBuilder& add_header_item(
+        QString name, QString short_name, std::unique_ptr<ItemFilter> filter);
+
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param short_name The short column name.
+       * @param order The initial sort order.
+       * @param filter The filter, or null to disable filtering.
+       */
+      TableViewBuilder& add_header_item(QString name, QString short_name,
+        TableHeaderItem::Order order, std::unique_ptr<ItemFilter> filter);
+
+      /** Sets a custom table filter, overriding the column filters. */
+      TableViewBuilder& set_filter(const std::shared_ptr<TableFilter>& filter);
 
       /** Sets the current index. */
       TableViewBuilder& set_current(
@@ -247,13 +272,14 @@ namespace Spire {
       TableViewBuilder& set_sort_handler(TableView::SortHandler handler);
 
       /** Makes a new TableView using the current state of this builder. */
-      TableView* make() const;
+      TableView* make();
 
     private:
       std::shared_ptr<TableModel> m_table;
       QWidget* m_parent;
       std::shared_ptr<TableView::HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
+      std::vector<std::unique_ptr<ItemFilter>> m_filters;
       std::shared_ptr<TableView::CurrentModel> m_current;
       std::shared_ptr<TableView::SelectionModel> m_selection;
       TableViewItemBuilder m_item_builder;

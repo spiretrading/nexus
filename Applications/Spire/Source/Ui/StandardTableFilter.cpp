@@ -26,7 +26,7 @@ struct StandardTableFilter::ColumnFilter {
   using FilterSignal = Signal<void (Filter filter)>;
   QPointer<QWidget> m_filter_widget;
 
-  ~ColumnFilter() = default;
+  virtual ~ColumnFilter() = default;
   virtual TableFilter::Filter get_filter() const = 0;
   virtual QWidget* make_panel(QWidget& parent) = 0;
   virtual bool is_filtered(const TableModel& model, int row, int column) const =
@@ -126,6 +126,43 @@ struct StandardTableFilter::EmptyColumnFilter : ColumnFilter {
   }
 };
 
+struct StandardTableFilter::ItemColumnFilter : ColumnFilter {
+  mutable FilterSignal m_filter_signal;
+  std::unique_ptr<ItemFilter> m_filter;
+  scoped_connection m_connection;
+
+  explicit ItemColumnFilter(std::unique_ptr<ItemFilter> filter)
+      : m_filter(std::move(filter)) {
+    m_connection = m_filter->connect_filter_signal(
+      std::bind_front(&ItemColumnFilter::on_filter, this));
+  }
+
+  TableFilter::Filter get_filter() const override {
+    if(m_filter->is_active()) {
+      return TableFilter::Filter::FILTERED;
+    }
+    return TableFilter::Filter::UNFILTERED;
+  }
+
+  QWidget* make_panel(QWidget& parent) override {
+    return m_filter->make_widget(parent);
+  }
+
+  bool is_filtered(
+      const TableModel& model, int row, int column) const override {
+    return m_filter->is_filtered(model.at(row, column));
+  }
+
+  connection connect_filter_signal(const FilterSignal::slot_type& slot) const
+      override {
+    return m_filter_signal.connect(slot);
+  }
+
+  void on_filter() {
+    m_filter_signal(get_filter());
+  }
+};
+
 template<typename T>
 struct StandardTableFilter::ScalarColumnFilter : ColumnFilter {
   using InputBox = T;
@@ -170,6 +207,21 @@ struct StandardTableFilter::ScalarColumnFilter : ColumnFilter {
   }
 };
 
+StandardTableFilter::StandardTableFilter(
+    std::vector<std::unique_ptr<ItemFilter>> filters) {
+  for(auto column = 0; column != std::ssize(filters); ++column) {
+    auto filter = [&] () -> std::unique_ptr<ColumnFilter> {
+      if(filters[column]) {
+        return std::make_unique<ItemColumnFilter>(std::move(filters[column]));
+      }
+      return std::make_unique<EmptyColumnFilter>();
+    }();
+    filter->connect_filter_signal(
+      std::bind_front(&StandardTableFilter::on_filter, this, column));
+    m_column_filters.push_back(std::move(filter));
+  }
+}
+
 StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
   for(auto column = 0; column != static_cast<int>(types.size()); ++column) {
     auto& type = types[column];
@@ -199,10 +251,16 @@ StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
 StandardTableFilter::~StandardTableFilter() = default;
 
 TableFilter::Filter StandardTableFilter::get_filter(int column) {
+  if(column >= std::ssize(m_column_filters)) {
+    return Filter::NONE;
+  }
   return m_column_filters[column]->get_filter();
 }
 
 QWidget* StandardTableFilter::make_filter_widget(int column, QWidget& parent) {
+  if(column >= std::ssize(m_column_filters)) {
+    return nullptr;
+  }
   return m_column_filters[column]->make_filter_widget(parent);
 }
 

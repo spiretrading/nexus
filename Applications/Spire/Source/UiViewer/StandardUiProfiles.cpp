@@ -64,6 +64,7 @@
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
+#include "Spire/Ui/Filter.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontBox.hpp"
@@ -2554,10 +2555,9 @@ UiProfile Spire::make_editable_table_view_profile() {
       optional<Quantity>(20), QKeySequence("F7")});
     table->push({QString("Test3"), OrderType(OrderType::LIMIT),
       optional<Quantity>(30), QKeySequence("Ctrl+F2")});
-    auto builder = EditableTableViewBuilder(table).
+    auto table_view = EditableTableViewBuilder(table).
       set_header(make_header_model()).
-      set_item_builder(make_row_cell);
-    auto table_view = builder.make();
+      set_item_builder(make_row_cell).make();
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto& remove_operation =
@@ -5354,32 +5354,16 @@ UiProfile Spire::make_table_view_profile() {
       }
       model->push(values);
     }
-    auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    auto item = TableHeaderItem::Model();
-    item.m_name = "Ticker";
-    item.m_short_name = "Sec";
-    header->push(item);
-    item = TableHeaderItem::Model();
-    item.m_name = "Quantity";
-    item.m_short_name = "Qty";
-    item.m_order = TableHeaderItem::Order::ASCENDING;
-    header->push(item);
-    item = TableHeaderItem::Model();
-    item.m_name = "Side";
-    item.m_short_name = "Sd";
-    header->push(item);
-    item = TableHeaderItem::Model();
-    item.m_name = "Date";
-    item.m_short_name = "Date";
-    header->push(item);
     auto view = TableViewBuilder(model).
-      set_header(header).
-      set_standard_filter().
-      set_item_builder(
-        [] (const std::shared_ptr<TableModel>& table, int row, int column) {
-          return make_label(make_to_text_model(
-            make_table_value_model<int>(table, row, column)));
-        }).
+      add_header_item("Ticker", "Sec", filter<int>()).
+      add_header_item("Quantity", "Qty", TableHeaderItem::Order::ASCENDING,
+        filter<int>()).
+      add_header_item("Side", "Sd", filter<int>()).
+      add_header_item("Date", "Date", filter<int>()).
+      set_item_builder([] (const auto& table, auto row, auto column) {
+        return make_label(make_to_text_model(
+          make_table_value_model<int>(table, row, column)));
+      }).
       make();
     apply_widget_properties(view, profile.get_properties());
     view->get_current()->connect_update_signal(

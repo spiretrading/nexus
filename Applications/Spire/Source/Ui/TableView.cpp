@@ -10,7 +10,6 @@
 #include "Spire/Ui/Details/DisplayedSelection.hpp"
 #include "Spire/Ui/Details/SourceToViewIndexModel.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
-#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -405,7 +404,6 @@ TableViewBuilder::TableViewBuilder(
   : m_table(table),
     m_parent(parent),
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
-    m_filter(std::make_shared<EmptyTableFilter>()),
     m_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
@@ -453,21 +451,32 @@ TableViewBuilder& TableViewBuilder::add_header_item(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, std::unique_ptr<ItemFilter> filter) {
+  return add_header_item(std::move(name), QString(), std::move(filter));
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name, std::unique_ptr<ItemFilter> filter) {
+  return add_header_item(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, std::move(filter));
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name, TableHeaderItem::Order order,
+    std::unique_ptr<ItemFilter> filter) {
+  auto column = m_header->get_size();
+  add_header_item(std::move(name), std::move(short_name), order,
+    TableFilter::Filter::NONE);
+  m_filters.resize(column + 1);
+  m_filters[column] = std::move(filter);
+  return *this;
+}
+
 TableViewBuilder& TableViewBuilder::set_filter(
     const std::shared_ptr<TableFilter>& filter) {
   m_filter = filter;
   return *this;
-}
-
-TableViewBuilder& TableViewBuilder::set_standard_filter() {
-  if(m_table->get_row_size() == 0) {
-    return *this;
-  }
-  auto types = std::vector<std::type_index>();
-  for(auto i = 0; i != m_table->get_column_size(); ++i) {
-    types.push_back(m_table->at(0, i).get_type());
-  }
-  return set_filter(std::make_shared<StandardTableFilter>(std::move(types)));
 }
 
 TableViewBuilder& TableViewBuilder::set_current(
@@ -512,7 +521,13 @@ TableViewBuilder& TableViewBuilder::set_sort_handler(
   return *this;
 }
 
-TableView* TableViewBuilder::make() const {
-  return new TableView(m_table, m_header, m_filter, m_current, m_selection,
-    m_item_builder, m_comparator, m_sort, m_parent);
+TableView* TableViewBuilder::make() {
+  auto filter = m_filter;
+  if(!filter) {
+    auto filters = std::move(m_filters);
+    filters.resize(m_header->get_size());
+    filter = std::make_shared<StandardTableFilter>(std::move(filters));
+  }
+  return new TableView(m_table, m_header, std::move(filter), m_current,
+    m_selection, m_item_builder, m_comparator, m_sort, m_parent);
 }

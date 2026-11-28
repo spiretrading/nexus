@@ -384,12 +384,11 @@ TableView* Spire::make_task_keys_table_view(
     AdditionalTagDatabase additional_tags, QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
-  auto builder = EditableTableViewBuilder(std::move(table)).
+  auto table_view = EditableTableViewBuilder(std::move(table)).
     set_header(make_header_model()).
     set_item_builder(RecycledTableViewItemBuilder(
       TaskKeysTableViewItemBuilder(scopes, additional_tags))).
-    set_comparator(&comparator);
-  auto table_view = builder.make();
+    set_comparator(&comparator).make();
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);

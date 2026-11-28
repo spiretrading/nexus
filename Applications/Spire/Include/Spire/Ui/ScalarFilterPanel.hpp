@@ -53,6 +53,15 @@ namespace Spire {
       explicit ScalarFilterPanel(
         std::shared_ptr<RangeModel> current, QWidget* parent = nullptr);
 
+      /**
+       * Constructs a ScalarFilterPanel with a reset range.
+       * @param current The current value model.
+       * @param default_range The range restored by Reset.
+       * @param parent The parent widget.
+       */
+      ScalarFilterPanel(std::shared_ptr<RangeModel> current,
+        Range default_range, QWidget* parent = nullptr);
+
       /** Returns the current value model. */
       const std::shared_ptr<RangeModel>& get_current() const;
 
@@ -73,9 +82,14 @@ namespace Spire {
   template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(
       std::shared_ptr<RangeModel> current, QWidget* parent)
+    : ScalarFilterPanel(current, current->get(), parent) {}
+
+  template<typename T>
+  ScalarFilterPanel<T>::ScalarFilterPanel(std::shared_ptr<RangeModel> current,
+      Range default_range, QWidget* parent)
       : QWidget(parent),
         m_current(std::move(current)),
-        m_default_range(m_current->get()) {
+        m_default_range(std::move(default_range)) {
     auto container = new QWidget();
     auto layout = make_hbox_layout(container);
     layout->addWidget(make_label_box(tr("Min")));

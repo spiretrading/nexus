@@ -1026,7 +1026,8 @@ TEST_SUITE("TableView") {
     auto columns = std::make_shared<ArrayListModel<int>>();
     auto selection = std::make_shared<TableSelectionModel>(
       cells, std::make_shared<ArrayListModel<int>>(), columns);
-    auto builder = TableViewBuilder(table).set_selection(selection);
+    auto builder = TableViewBuilder(table);
+    builder.set_selection(selection);
     SUBCASE("no_columns") {
       auto view = std::unique_ptr<TableView>(builder.make());
       table->push({});
@@ -1227,7 +1228,8 @@ TEST_SUITE("TableView") {
     table->push({20});
     auto current = make_proxy_value_model(
       std::make_shared<LocalValueModel<optional<TableIndex>>>());
-    auto builder = TableViewBuilder(table).set_current(current);
+    auto builder = TableViewBuilder(table);
+    builder.set_current(current);
     auto make_view = [&] {
       SUBCASE("source_order") {
         builder.add_header_item("Value");

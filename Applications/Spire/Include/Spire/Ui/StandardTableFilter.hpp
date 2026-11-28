@@ -3,16 +3,24 @@
 #include <memory>
 #include <typeindex>
 #include <vector>
+#include "Spire/Ui/ItemFilter.hpp"
 #include "Spire/Ui/TableFilter.hpp"
 
 namespace Spire {
 
   /**
-   * Implements a TableFilter that maps column types to a standard set of
-   * FilterPanels.
+   * Combines filters applied to individual columns.
    */
   class StandardTableFilter : public TableFilter {
     public:
+
+      /**
+       * Constructs a filter from column filters.
+       * @param filters Filters in source-column order; null entries disable
+       *        filtering. Remaining columns are unfiltered.
+       */
+      explicit StandardTableFilter(
+        std::vector<std::unique_ptr<ItemFilter>> filters);
 
       /**
        * Constructs a StandardTableFilter.
@@ -32,6 +40,7 @@ namespace Spire {
       struct ColumnFilter;
       struct DateColumnFilter;
       struct EmptyColumnFilter;
+      struct ItemColumnFilter;
       template<typename T> struct ScalarColumnFilter;
       mutable FilterSignal m_filter_signal;
       std::vector<std::unique_ptr<ColumnFilter>> m_column_filters;

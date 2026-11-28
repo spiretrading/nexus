@@ -63,7 +63,10 @@ namespace Styles {
       explicit EditableTableViewBuilder(
         std::shared_ptr<TableModel> table, QWidget* parent = nullptr);
 
-      /** Sets the model of the header to display. */
+      /**
+       * Sets the header model.
+       * @param header The header model to display.
+       */
       EditableTableViewBuilder& set_header(
         const std::shared_ptr<TableView::HeaderModel>& header);
 
@@ -113,16 +116,42 @@ namespace Styles {
        * @param order The column's sort order.
        * @param filter How the column is filtered.
        */
-      EditableTableViewBuilder& add_header_item(QString name,
-        QString short_name, TableHeaderItem::Order order,
+      EditableTableViewBuilder& add_header_item(
+        QString name, QString short_name, TableHeaderItem::Order order,
         TableFilter::Filter filter);
 
-      /** Sets the filter to apply. */
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param filter The filter, or null to disable filtering.
+       */
+      EditableTableViewBuilder& add_header_item(
+        QString name, std::unique_ptr<ItemFilter> filter);
+
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param short_name The short column name.
+       * @param filter The filter, or null to disable filtering.
+       */
+      EditableTableViewBuilder& add_header_item(
+        QString name, QString short_name, std::unique_ptr<ItemFilter> filter);
+
+      /**
+       * Adds a filtered column.
+       * @param name The column name.
+       * @param short_name The short column name.
+       * @param order The initial sort order.
+       * @param filter The filter, or null to disable filtering.
+       */
+      EditableTableViewBuilder& add_header_item(
+        QString name, QString short_name, TableHeaderItem::Order order,
+        std::unique_ptr<ItemFilter> filter);
+
+
+      /** Sets a custom table filter, overriding the column filters. */
       EditableTableViewBuilder& set_filter(
         const std::shared_ptr<TableFilter>& filter);
-
-      /** Applies the standard filter. */
-      EditableTableViewBuilder& set_standard_filter();
 
       /** Sets the current index. */
       EditableTableViewBuilder& set_current(
@@ -141,13 +170,14 @@ namespace Styles {
         TableView::Comparator comparator);
 
       /** Makes a new TableView using the current state of this builder. */
-      EditableTableView* make() const;
+      EditableTableView* make();
 
     private:
       std::shared_ptr<TableModel> m_table;
       QWidget* m_parent;
       std::shared_ptr<TableView::HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
+      std::vector<std::unique_ptr<ItemFilter>> m_filters;
       std::shared_ptr<TableView::CurrentModel> m_current;
       std::shared_ptr<TableView::SelectionModel> m_selection;
       TableViewItemBuilder m_item_builder;
